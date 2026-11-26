@@ -1,0 +1,573 @@
+{
+  "autonomy": {
+    "away_seconds": 1378374,
+    "decisions": [
+      {
+        "count": 50410,
+        "decider": "PermissionMode",
+        "decision": "Accept"
+      },
+      {
+        "count": 23776,
+        "decider": "Classifier",
+        "decision": "Accept"
+      },
+      {
+        "count": 257,
+        "decider": "NotRecorded",
+        "decision": "Accept"
+      },
+      {
+        "count": 234,
+        "decider": "Human",
+        "decision": "Accept"
+      },
+      {
+        "count": 212,
+        "decider": "Hook",
+        "decision": "Refuse"
+      },
+      {
+        "count": 60,
+        "decider": "Classifier",
+        "decision": "Refuse"
+      },
+      {
+        "count": 16,
+        "decider": "Rule",
+        "decision": "Accept"
+      },
+      {
+        "count": 9,
+        "decider": "SafetyCheck",
+        "decision": "Refuse"
+      },
+      {
+        "count": 5,
+        "decider": "Rule",
+        "decision": "Refuse"
+      }
+    ],
+    "prompts": [
+      {
+        "attribution": "Known",
+        "author": "Harness",
+        "count": 13565
+      },
+      {
+        "attribution": "Known",
+        "author": "PeerSession",
+        "count": 2835
+      },
+      {
+        "attribution": "Inferred",
+        "author": "Human",
+        "count": 1422
+      },
+      {
+        "attribution": "Inferred",
+        "author": "Delegate",
+        "count": 766
+      },
+      {
+        "attribution": "Known",
+        "author": "Human",
+        "count": 393
+      }
+    ],
+    "waiting_on_human_seconds": 239302,
+    "working_seconds": 996433
+  },
+  "busts": [
+    {
+      "cause": "ttl_expired",
+      "count": 210,
+      "scope": "main",
+      "tokens_written_again": 45876854
+    },
+    {
+      "cause": "model_changed",
+      "count": 26,
+      "scope": "main",
+      "tokens_written_again": 4054959
+    },
+    {
+      "cause": "compacted",
+      "count": 2,
+      "scope": "main",
+      "tokens_written_again": 113196
+    },
+    {
+      "cause": "unexplained",
+      "count": 46,
+      "scope": "main",
+      "tokens_written_again": 9295335
+    },
+    {
+      "cause": "ttl_expired",
+      "count": 2225,
+      "scope": "sub",
+      "tokens_written_again": 390810901
+    },
+    {
+      "cause": "model_changed",
+      "count": 2,
+      "scope": "sub",
+      "tokens_written_again": 416586
+    },
+    {
+      "cause": "compacted",
+      "count": 119,
+      "scope": "sub",
+      "tokens_written_again": 5881402
+    },
+    {
+      "cause": "unexplained",
+      "count": 71,
+      "scope": "sub",
+      "tokens_written_again": 9835191
+    }
+  ],
+  "cache": [
+    {
+      "hit_permille": 984,
+      "read_tokens": 13479428638,
+      "scope": "main",
+      "uncached_tokens": 167204,
+      "write_tokens": 212931572
+    },
+    {
+      "hit_permille": 977,
+      "read_tokens": 48045839054,
+      "scope": "sub",
+      "uncached_tokens": 624457,
+      "write_tokens": 1104263300
+    }
+  ],
+  "concurrency": [
+    {
+      "max": 43,
+      "p50": 8,
+      "p90": 13,
+      "scope": "main"
+    },
+    {
+      "max": 67,
+      "p50": 23,
+      "p90": 51,
+      "scope": "sub"
+    }
+  ],
+  "exposures": [
+    {
+      "channel": "ToolOutput",
+      "class": "PersonalData",
+      "count": 11269,
+      "kind": "email",
+      "sessions": 88,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "PersonalData",
+      "count": 2438,
+      "kind": "email",
+      "sessions": 62,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "PersonalData",
+      "count": 1868,
+      "kind": "email",
+      "sessions": 53,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "Prompt",
+      "class": "PersonalData",
+      "count": 1593,
+      "kind": "email",
+      "sessions": 61,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "PersonalData",
+      "count": 528,
+      "kind": "email",
+      "sessions": 30,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "AgentText",
+      "class": "PersonalData",
+      "count": 212,
+      "kind": "email",
+      "sessions": 25,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 67,
+      "kind": "bearer",
+      "sessions": 4,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 33,
+      "kind": "private_key",
+      "sessions": 7,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "Prompt",
+      "class": "PersonalData",
+      "count": 28,
+      "kind": "email",
+      "sessions": 10,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 24,
+      "kind": "bearer",
+      "sessions": 9,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 22,
+      "kind": "jwt",
+      "sessions": 5,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 21,
+      "kind": "bearer",
+      "sessions": 3,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 16,
+      "kind": "private_key",
+      "sessions": 5,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 15,
+      "kind": "aws_access_key",
+      "sessions": 4,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 14,
+      "kind": "aws_access_key",
+      "sessions": 4,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "AgentText",
+      "class": "PersonalData",
+      "count": 11,
+      "kind": "email",
+      "sessions": 4,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 10,
+      "kind": "anthropic_key",
+      "sessions": 2,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 9,
+      "kind": "slack_token",
+      "sessions": 5,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 7,
+      "kind": "gitlab_token",
+      "sessions": 3,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 7,
+      "kind": "aws_access_key",
+      "sessions": 3,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 6,
+      "kind": "slack_token",
+      "sessions": 1,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 5,
+      "kind": "gitlab_token",
+      "sessions": 3,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 5,
+      "kind": "gitlab_token",
+      "sessions": 3,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 5,
+      "kind": "anthropic_key",
+      "sessions": 2,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 4,
+      "kind": "github_token",
+      "sessions": 2,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 4,
+      "kind": "anthropic_key",
+      "sessions": 3,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 4,
+      "kind": "anthropic_key",
+      "sessions": 3,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 3,
+      "kind": "gitlab_token",
+      "sessions": 1,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 2,
+      "kind": "github_token",
+      "sessions": 2,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 2,
+      "kind": "bearer",
+      "sessions": 1,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolOutput",
+      "class": "Secret",
+      "count": 2,
+      "kind": "slack_token",
+      "sessions": 1,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "Prompt",
+      "class": "Secret",
+      "count": 2,
+      "kind": "jwt",
+      "sessions": 2,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 2,
+      "kind": "slack_token",
+      "sessions": 1,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "ToolInput",
+      "class": "Secret",
+      "count": 2,
+      "kind": "github_token",
+      "sessions": 1,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "AgentText",
+      "class": "Secret",
+      "count": 1,
+      "kind": "anthropic_key",
+      "sessions": 1,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "Prompt",
+      "class": "Secret",
+      "count": 1,
+      "kind": "anthropic_key",
+      "sessions": 1,
+      "verdict": "Unk"
+    },
+    {
+      "channel": "AgentText",
+      "class": "Secret",
+      "count": 1,
+      "kind": "bearer",
+      "sessions": 1,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "Prompt",
+      "class": "Secret",
+      "count": 1,
+      "kind": "bearer",
+      "sessions": 1,
+      "verdict": "Ok"
+    },
+    {
+      "channel": "AgentText",
+      "class": "Secret",
+      "count": 1,
+      "kind": "jwt",
+      "sessions": 1,
+      "verdict": "Unk"
+    }
+  ],
+  "models": [
+    {
+      "context_max": 566918,
+      "context_p50": 184004,
+      "context_p90": 255257,
+      "messages": 33140,
+      "model": "claude-fable-5-2",
+      "output_tokens": 30483489,
+      "scope": "main"
+    },
+    {
+      "context_max": 396476,
+      "context_p50": 210285,
+      "context_p90": 330223,
+      "messages": 29494,
+      "model": "claude-opus-5-5",
+      "output_tokens": 16108602,
+      "scope": "main"
+    },
+    {
+      "context_max": 268146,
+      "context_p50": 154127,
+      "context_p90": 237908,
+      "messages": 7779,
+      "model": "claude-sonnet-5-5",
+      "output_tokens": 4125906,
+      "scope": "main"
+    },
+    {
+      "context_max": 266367,
+      "context_p50": 206872,
+      "context_p90": 245068,
+      "messages": 107,
+      "model": "claude-sonnet-5",
+      "output_tokens": 72689,
+      "scope": "main"
+    },
+    {
+      "context_max": 29388,
+      "context_p50": 29388,
+      "context_p90": 29388,
+      "messages": 2,
+      "model": "claude-haiku-5-5",
+      "output_tokens": 186,
+      "scope": "main"
+    },
+    {
+      "context_max": 367886,
+      "context_p50": 165086,
+      "context_p90": 305638,
+      "messages": 204359,
+      "model": "claude-opus-5-5",
+      "output_tokens": 140638366,
+      "scope": "sub"
+    },
+    {
+      "context_max": 268093,
+      "context_p50": 114931,
+      "context_p90": 222886,
+      "messages": 77626,
+      "model": "claude-sonnet-5-5",
+      "output_tokens": 59342752,
+      "scope": "sub"
+    },
+    {
+      "context_max": 566960,
+      "context_p50": 145952,
+      "context_p90": 243012,
+      "messages": 24369,
+      "model": "claude-fable-5-2",
+      "output_tokens": 29757955,
+      "scope": "sub"
+    },
+    {
+      "context_max": 97184,
+      "context_p50": 53876,
+      "context_p90": 65528,
+      "messages": 907,
+      "model": "claude-haiku-5-5",
+      "output_tokens": 1447078,
+      "scope": "sub"
+    },
+    {
+      "context_max": 202519,
+      "context_p50": 182604,
+      "context_p90": 196683,
+      "messages": 23,
+      "model": "claude-opus-4-8",
+      "output_tokens": 36635,
+      "scope": "sub"
+    }
+  ],
+  "refused_commands": 0,
+  "sessions": 106,
+  "sub_agents": 3200,
+  "transcripts": 3308,
+  "window_from": "2026-11-23T00:38:56.336Z",
+  "window_to": "2026-11-26T00:38:56.336Z"
+}

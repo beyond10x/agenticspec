@@ -1,0 +1,8 @@
+{
+  "view": "sessionspec.view.SessionList",
+  "rows": [
+    {"session_id": "ses-demo-0001", "project": "alpha", "title": "Port the store", "names": "alpha port the store model-demo-large bash read edit", "rank": 3, "harness": "ClaudeCode", "first_at": "2026-11-20T09:00:00Z", "last_at": "2026-11-20T09:20:21Z", "agents": 2, "cost_usd": 0.55, "output_tokens": 5100, "context_max": 31000, "cache_hit_share": 0.539, "busts": 1, "human_prompts": 2, "tool_calls": 3, "refused_tool_calls": 1, "exposures": 1, "working_seconds": 72, "waiting_on_human_seconds": 1149, "waiting_share": 0.941},
+    {"session_id": "ses-demo-0002", "project": "beta", "title": "Fix the planner", "names": "beta fix the planner model-demo-large bash read edit", "rank": 2, "harness": "ClaudeCode", "first_at": "2026-11-20T10:00:00Z", "last_at": "2026-11-20T10:00:31Z", "agents": 1, "cost_usd": 0.38, "output_tokens": 3500, "context_max": 42000, "cache_hit_share": 0.476, "busts": 0, "human_prompts": 0, "tool_calls": 1, "refused_tool_calls": 0, "exposures": 0, "working_seconds": 31, "waiting_on_human_seconds": 0, "waiting_share": 0},
+    {"session_id": "ses-demo-0003", "project": "gamma", "title": "Read the logs", "names": "gamma read the logs model-demo-large bash read edit", "rank": 1, "harness": "Codex", "first_at": "2026-11-20T11:00:00Z", "last_at": "2026-11-20T11:00:10Z", "agents": 1, "cost_usd": 0.03, "output_tokens": 300, "context_max": 9000, "cache_hit_share": 0, "busts": 0, "human_prompts": 1, "tool_calls": 0, "refused_tool_calls": 0, "exposures": 0, "working_seconds": 10, "waiting_on_human_seconds": 0, "waiting_share": 0}
+  ]
+}

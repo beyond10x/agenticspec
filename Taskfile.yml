@@ -1,0 +1,91 @@
+version: '3'
+
+tasks:
+  check:
+    desc: Run the repository gate.
+    cmds:
+      - task: check:spec
+      - task: check:ui
+      - task: check:generated
+      - task: check:scripts
+      - task: check:rust
+      - task: test
+
+  check:scripts:
+    desc: Run every script test, scripts/*.test.sh.
+    cmds:
+      - |
+        set -eu
+        n=0
+        for t in scripts/*.test.sh; do
+          [ -f "$t" ] || { echo "check:scripts: no scripts/*.test.sh"; exit 1; }
+          echo "check:scripts: sh $t"
+          sh "$t"
+          n=$((n + 1))
+        done
+        echo "check:scripts: $n script test(s) passed"
+
+  site:
+    desc: Build the documentation site (website/, pages read in place from docs/, research/ and ui/README.md) into website/build, as the job build of .github/workflows/pages.yml does.
+    dir: website
+    cmds:
+      - npm ci
+      - npm run build
+
+  check:spec:
+    desc: Validate the specification and synthesize its conformance suite with no refusal.
+    cmds:
+      - ess specify validate --path spec
+      - mkdir -p target/spec && ess verify conform synthesize --path spec --out target/spec/suite.json
+
+  check:ui:
+    desc: Check the ess-ui document against the specification and run its headless tests on the fixtures.
+    cmds:
+      - ess ui check --path ui/sessionspec.ui.yaml --model spec
+      - ess ui test --path ui/sessionspec.ui.yaml ui/tests/session.yaml
+
+  check:generated:
+    desc: Compare each generated directory, byte for byte, with a fresh generation. The lines are in scripts/check-generated.sh.
+    cmds:
+      - sh scripts/check-generated.sh
+
+  generate:
+    desc: Replace each generated directory with a fresh generation. A generated file is never edited.
+    cmds:
+      - sh scripts/check-generated.sh --write
+
+  check:rust:
+    desc: Format and lints of the hand-written crates.
+    cmds:
+      - cargo fmt --check
+      - cargo clippy --workspace --all-targets --locked -- -D warnings
+
+  test:
+    desc: Tests with cargo-nextest; .config/nextest.toml ends a test at 60 s and the run at 120 s.
+    cmds:
+      - cargo nextest run --workspace --locked
+
+  ui:build:
+    desc: Generate the React app from ui/sessionspec.ui.yaml and build it into target/ui/www, which `sessionspec serve` serves. The lines are in scripts/ui-build.sh.
+    cmds:
+      - sh scripts/ui-build.sh
+
+  sync:
+    desc: Lift the new and changed Claude Code sessions of the last 72 hours into the local store.
+    cmds:
+      - cargo run --release --locked -p sessionspec -- sync
+
+  serve:
+    desc: Serve the UI and its views from the local store on http://127.0.0.1:7420, synced every 5 seconds.
+    cmds:
+      - cargo run --release --locked -p sessionspec -- serve
+
+  analyze:
+    desc: Write sessionspec-dashboard.html for the Claude Code sessions of the last 72 hours on this host.
+    cmds:
+      - cargo run --release --locked -p sessionspec -- analyze
+
+  kpi:
+    desc: KPIs over the Claude Code sessions of the last 72 hours on this host.
+    cmds:
+      - cargo run --release --locked -p sessionspec -- kpi --output json

@@ -1,0 +1,53 @@
+components:
+  - component: session-ir
+    summary: Replays the commands an adapter lifted from a transcript and holds the resulting session state.
+    owns:
+      domains:
+        - sessionspec.session
+    accepts:
+      commands:
+        - sessionspec.session.OpenSession
+        - sessionspec.session.EndSession
+        - sessionspec.session.StartAgent
+        - sessionspec.session.EndAgent
+        - sessionspec.session.SubmitPrompt
+        - sessionspec.session.EndTurn
+        - sessionspec.session.RecordModelTurn
+        - sessionspec.session.CompactContext
+        - sessionspec.session.RequestToolCall
+        - sessionspec.session.DecideToolCall
+        - sessionspec.session.CompleteToolCall
+        - sessionspec.session.RecordExposure
+    publishes:
+      events:
+        - sessionspec.session.SessionOpened
+        - sessionspec.session.SessionEnded
+        - sessionspec.session.AgentStarted
+        - sessionspec.session.AgentEnded
+        - sessionspec.session.PromptSubmitted
+        - sessionspec.session.TurnEnded
+        - sessionspec.session.ModelTurnRecorded
+        - sessionspec.session.ContextCompacted
+        - sessionspec.session.ToolCallRequested
+        - sessionspec.session.ToolCallDecided
+        - sessionspec.session.ToolCallCompleted
+        - sessionspec.session.ExposureDetected
+    reached_by: network
+
+  # No command writes the rows of `sessionspec.view` and no outcome emits its three events: they
+  # are a projection of what `session-ir` publishes, which `sessionspec sync` writes to the local
+  # store and `sessionspec serve` reads and streams (decided 2026-11-26). A gateway that pushes a
+  # running session sends the same three events.
+  - component: session-view
+    summary: >-
+      Serves the read models of the UI (`ui/sessionspec.ui.yaml`) over HTTP: the session list, one
+      session, its agents and its events, and publishes their changes for a live page.
+    owns:
+      domains:
+        - sessionspec.view
+    publishes:
+      events:
+        - sessionspec.view.SessionUpdated
+        - sessionspec.view.AgentUpdated
+        - sessionspec.view.EventAppended
+    reached_by: network

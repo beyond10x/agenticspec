@@ -1,0 +1,42 @@
+{
+  "about": "Synthetic, written by hand. A Codex-like session on the responses wire: the server holds the history, so the second call names the first answer by previous_response_id.",
+  "session": "fixture-session-b",
+  "calls": [
+    {
+      "wire": "responses",
+      "path": "/v1/responses",
+      "started_ms": 1795600100000,
+      "finished_ms": 1795600101000,
+      "request": {
+        "model": "gpt-6",
+        "instructions": "You are a coding agent.",
+        "tools": [{"type": "function", "name": "shell"}],
+        "input": "List the files"
+      },
+      "events": [
+        {"type": "response.created", "response": {"id": "resp_1", "model": "gpt-6", "status": "in_progress"}},
+        {"type": "response.output_item.done", "item": {"type": "function_call", "call_id": "fc_1", "name": "shell", "arguments": "{\"cmd\":\"ls\"}"}},
+        {"type": "response.completed", "response": {"id": "resp_1", "model": "gpt-6", "status": "completed", "usage": {"input_tokens": 30, "input_tokens_details": {"cached_tokens": 0}, "output_tokens": 9}}}
+      ],
+      "facts": {"call_id": "r1", "route": "openai", "upstream": "openai", "attempts": 1}
+    },
+    {
+      "wire": "responses",
+      "path": "/v1/responses",
+      "started_ms": 1795600102000,
+      "finished_ms": 1795600103000,
+      "request": {
+        "model": "gpt-6",
+        "tools": [{"type": "function", "name": "shell"}],
+        "previous_response_id": "resp_1",
+        "input": [{"type": "function_call_output", "call_id": "fc_1", "output": "a.txt b.txt"}]
+      },
+      "body": {
+        "id": "resp_2", "model": "gpt-6", "status": "completed",
+        "output": [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Two files."}]}],
+        "usage": {"input_tokens": 45, "input_tokens_details": {"cached_tokens": 30}, "output_tokens": 4}
+      },
+      "facts": {"call_id": "r2", "route": "openai", "upstream": "openai", "attempts": 1}
+    }
+  ]
+}

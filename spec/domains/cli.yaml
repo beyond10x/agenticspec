@@ -1,0 +1,490 @@
+domain: sessionspec.cli
+
+summary: >-
+  The typed inputs, results and refusals of the `sessionspec` command line, presented by the
+  ess-cli/2 binding in `spec/cli.yaml`. It declares no entity. The KPI report is typed here, so
+  every figure the report carries is a declared field.
+
+# ess-cli projects String, Boolean, Integer, enums, newtypes and structs, Optional, List and Json
+# in results only. A ratio is an Integer in permille; a time is RFC 3339 text.
+
+types:
+  - name: sessionspec.cli.Refusal
+    kind: struct
+    fields:
+      - name: detail
+        type: String
+
+  - name: sessionspec.cli.LiftInput
+    kind: struct
+    fields:
+      - name: transcript
+        type: String
+        summary: The main transcript file of one Claude Code session, `<session>.jsonl`; its sub-agents are read from `<session>/subagents/`.
+
+  - name: sessionspec.cli.LiftedCommand
+    kind: struct
+    naming:
+      summary: One command of the lifted session, as replayed, with the outcome the session IR answered.
+    fields:
+      - name: seq
+        type: Integer
+      - name: at
+        type: String
+      - name: actor
+        type: String
+      - name: command
+        type: String
+      - name: outcome
+        type: String
+      - name: input
+        type: Json
+
+  - name: sessionspec.cli.LiftResult
+    kind: struct
+    fields:
+      - name: session_id
+        type: String
+      - name: agents
+        type: Integer
+      - name: commands
+        type: List<sessionspec.cli.LiftedCommand>
+      - name: refused
+        type: Integer
+        summary: Commands the session IR answered with a declared refusal (a wrong state, an unknown agent).
+
+  - name: sessionspec.cli.KpiInput
+    kind: struct
+    fields:
+      - name: root
+        type: Optional<String>
+        summary: The Claude Code projects directory; `~/.claude/projects` by default.
+      - name: since_hours
+        type: Optional<Integer>
+        summary: The window ends now and starts this many hours before; 72 by default.
+
+  - name: sessionspec.cli.AgentScope
+    kind: enum
+    variants: [main, sub]
+
+  - name: sessionspec.cli.BustCause
+    kind: enum
+    variants: [ttl_expired, model_changed, compacted, unexplained]
+
+  - name: sessionspec.cli.ModelFigures
+    kind: struct
+    fields:
+      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: model, type: String}
+      - {name: messages, type: Integer}
+      - {name: output_tokens, type: Integer}
+      - {name: context_p50, type: Integer}
+      - {name: context_p90, type: Integer}
+      - {name: context_max, type: Integer}
+      - name: cost_microdollars
+        type: Integer
+        summary: The tokens of these messages at the API list price of the model (src/pricing.rs), in millionths of a dollar; 0 for a model with no price.
+
+  - name: sessionspec.cli.CacheFigures
+    kind: struct
+    fields:
+      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: read_tokens, type: Integer}
+      - {name: write_tokens, type: Integer}
+      - {name: uncached_tokens, type: Integer}
+      - {name: hit_permille, type: Integer}
+
+  - name: sessionspec.cli.BustFigures
+    kind: struct
+    fields:
+      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: cause, type: sessionspec.cli.BustCause}
+      - {name: count, type: Integer}
+      - {name: tokens_written_again, type: Integer}
+
+  - name: sessionspec.cli.ConcurrencyFigures
+    kind: struct
+    naming:
+      summary: Agents active in the same minute; active means two of its records at most 5 minutes apart around the minute.
+    fields:
+      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: p50, type: Integer}
+      - {name: p90, type: Integer}
+      - {name: max, type: Integer}
+
+  - name: sessionspec.cli.PromptFigures
+    kind: struct
+    fields:
+      - {name: author, type: sessionspec.session.PromptAuthor}
+      - {name: attribution, type: sessionspec.session.Attribution}
+      - {name: count, type: Integer}
+
+  - name: sessionspec.cli.DecisionFigures
+    kind: struct
+    fields:
+      - {name: decider, type: sessionspec.session.Decider}
+      - {name: decision, type: sessionspec.session.Decision}
+      - {name: count, type: Integer}
+
+  - name: sessionspec.cli.AutonomyFigures
+    kind: struct
+    naming:
+      summary: >-
+        Prompts and decisions of main agents. Working is time in which at least one agent of the
+        session was Working (gaps up to 10 minutes). Waiting on the human is time in which no agent
+        was Working, from a main agent's turn end to its next Human or Delegate prompt; over one
+        hour it counts as away.
+    fields:
+      - {name: working_seconds, type: Integer}
+      - {name: waiting_on_human_seconds, type: Integer}
+      - {name: away_seconds, type: Integer}
+      - {name: prompts, type: List<sessionspec.cli.PromptFigures>}
+      - {name: decisions, type: List<sessionspec.cli.DecisionFigures>}
+
+  - name: sessionspec.cli.ExposureFigures
+    kind: struct
+    fields:
+      - {name: channel, type: sessionspec.session.ExposureChannel}
+      - {name: class, type: sessionspec.session.ExposureClass}
+      - {name: kind, type: String}
+      - {name: verdict, type: sessionspec.session.Verdict}
+      - {name: count, type: Integer}
+      - {name: sessions, type: Integer}
+
+  - name: sessionspec.cli.KpiReport
+    kind: struct
+    fields:
+      - {name: window_from, type: String}
+      - {name: window_to, type: String}
+      - {name: transcripts, type: Integer}
+      - {name: sessions, type: Integer}
+      - {name: sub_agents, type: Integer}
+      - {name: refused_commands, type: Integer}
+      - name: cost_microdollars
+        type: Integer
+        summary: The sum of the model figures, at API list price; a subscription bills otherwise.
+      - name: unpriced_messages
+        type: Integer
+        summary: Model messages of a model with no price in src/pricing.rs, not in the cost.
+      - {name: models, type: List<sessionspec.cli.ModelFigures>}
+      - {name: cache, type: List<sessionspec.cli.CacheFigures>}
+      - {name: busts, type: List<sessionspec.cli.BustFigures>}
+      - {name: concurrency, type: List<sessionspec.cli.ConcurrencyFigures>}
+      - {name: autonomy, type: sessionspec.cli.AutonomyFigures}
+      - {name: exposures, type: List<sessionspec.cli.ExposureFigures>}
+
+  - name: sessionspec.cli.AnalyzeInput
+    kind: struct
+    fields:
+      - name: root
+        type: Optional<String>
+        summary: The Claude Code projects directory; `~/.claude/projects` by default.
+      - name: since_hours
+        type: Optional<Integer>
+        summary: The window ends now and starts this many hours before; 72 by default.
+      - name: out
+        type: Optional<String>
+        summary: The dashboard file to write; `sessionspec-dashboard.html` in the working directory by default.
+
+  - name: sessionspec.cli.AnalyzeResult
+    kind: struct
+    fields:
+      - {name: path, type: String}
+      - {name: sessions, type: Integer}
+
+  - name: sessionspec.cli.ToolFigures
+    kind: struct
+    fields:
+      - {name: category, type: sessionspec.session.ToolCategory}
+      - {name: calls, type: Integer}
+      - {name: refused, type: Integer}
+      - {name: failed, type: Integer}
+
+  - name: sessionspec.cli.MarkKind
+    kind: enum
+    variants: [turn, human_prompt, delegate_prompt, peer_prompt, harness_prompt, compaction, cache_bust, refusal]
+
+  - name: sessionspec.cli.TimelineMark
+    kind: struct
+    naming:
+      summary: One point of a session's timeline. For a turn the value is the context size, for a cache bust the tokens written again, otherwise 0.
+    fields:
+      - {name: at, type: String}
+      - {name: kind, type: sessionspec.cli.MarkKind}
+      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: value, type: Integer}
+
+  - name: sessionspec.cli.SessionSummary
+    kind: struct
+    naming:
+      summary: One session with its own KPI report. The title is the harness's title of the session and is shown only on the host that holds the transcript.
+    fields:
+      - {name: session_id, type: String}
+      - {name: project, type: String}
+      - {name: title, type: Optional<String>}
+      - {name: first_at, type: String}
+      - {name: last_at, type: String}
+      - {name: kpis, type: sessionspec.cli.KpiReport}
+      - {name: tools, type: List<sessionspec.cli.ToolFigures>}
+      - {name: timeline, type: List<sessionspec.cli.TimelineMark>}
+
+  - name: sessionspec.cli.QueryInput
+    kind: struct
+    naming:
+      summary: An sq module, from a file or inline text, run over one session or over the sessions of a window.
+    fields:
+      - name: module
+        type: Optional<String>
+        summary: An `.sq` file of rules, queries and checks.
+      - name: text
+        type: Optional<String>
+        summary: sq text given inline; appended to the module when both are given.
+      - name: transcript
+        type: Optional<String>
+        summary: One main transcript; the window is not read when it is given.
+      - name: root
+        type: Optional<String>
+        summary: The Claude Code projects directory; `~/.claude/projects` by default.
+      - name: since_hours
+        type: Optional<Integer>
+        summary: The window ends now and starts this many hours before; 72 by default.
+
+  - name: sessionspec.cli.Certainty
+    kind: enum
+    variants: [definite, possible]
+
+  - name: sessionspec.cli.QueryRow
+    kind: struct
+    naming:
+      summary: One answer of a query. Possible when it rests on an inferred or missing fact; unknown names each such fact.
+    fields:
+      - {name: query, type: Integer}
+      - {name: session_id, type: String}
+      - {name: values, type: List<String>}
+      - {name: certainty, type: sessionspec.cli.Certainty}
+      - {name: unknown, type: List<String>}
+
+  - name: sessionspec.cli.CheckVerdict
+    kind: struct
+    fields:
+      - {name: check, type: String}
+      - {name: session_id, type: String}
+      - {name: verdict, type: sessionspec.session.Verdict}
+      - {name: rows, type: Integer}
+
+  - name: sessionspec.cli.CheckFigures
+    kind: struct
+    fields:
+      - {name: check, type: String}
+      - {name: about, type: String}
+      - {name: severity, type: String}
+      - {name: ok, type: Integer}
+      - {name: gap, type: Integer}
+      - {name: unk, type: Integer}
+
+  - name: sessionspec.cli.QueryReport
+    kind: struct
+    naming:
+      summary: The report of `sessionspec query`, format `sessionspec-query-report/1`.
+    fields:
+      - {name: format, type: String}
+      - {name: sessions, type: Integer}
+      - {name: queries, type: List<String>}
+      - {name: rows, type: List<sessionspec.cli.QueryRow>}
+      - {name: checks, type: List<sessionspec.cli.CheckFigures>}
+      - {name: verdicts, type: List<sessionspec.cli.CheckVerdict>}
+
+  - name: sessionspec.cli.MineInput
+    kind: struct
+    fields:
+      - name: root
+        type: Optional<String>
+        summary: The Claude Code projects directory; `~/.claude/projects` by default.
+      - name: since_hours
+        type: Optional<Integer>
+        summary: The window ends now and starts this many hours before; 72 by default.
+      - name: level
+        type: Optional<String>
+        summary: The token alphabet, `coarse` (tool category) or `tool` (tool name, a shell call by its dominant shellspec category); `tool` by default.
+      - name: min_sessions
+        type: Optional<Integer>
+        summary: A pattern is kept when it occurs in at least this many sessions; 5 by default.
+      - name: min_projects
+        type: Optional<Integer>
+        summary: … and in at least this many projects; 2 by default.
+      - name: top
+        type: Optional<Integer>
+        summary: The number of patterns reported, by support; 50 by default.
+
+  - name: sessionspec.cli.Pattern
+    kind: struct
+    naming:
+      summary: >-
+        A run of tokens that recurs in the turns of agents across sessions. Support counts distinct
+        sessions, not occurrences. The query is the sq text that finds the pattern again.
+    fields:
+      - {name: id, type: String}
+      - {name: tokens, type: List<String>}
+      - {name: sessions, type: Integer}
+      - {name: projects, type: Integer}
+      - {name: occurrences, type: Integer}
+      - {name: ok_permille, type: Integer}
+      - {name: query, type: String}
+
+  - name: sessionspec.cli.MineReport
+    kind: struct
+    naming:
+      summary: The report of `sessionspec mine`, format `sessionspec-patterns/1`.
+    fields:
+      - {name: format, type: String}
+      - {name: level, type: String}
+      - {name: sessions, type: Integer}
+      - {name: turns, type: Integer}
+      - {name: patterns, type: List<sessionspec.cli.Pattern>}
+
+  - name: sessionspec.cli.ProcedureInput
+    kind: struct
+    fields:
+      - name: pattern
+        type: String
+        summary: The tokens of a mined pattern, space-separated, or its id from a report of `sessionspec mine`.
+      - name: root
+        type: Optional<String>
+      - name: since_hours
+        type: Optional<Integer>
+      - name: level
+        type: Optional<String>
+      - name: out
+        type: Optional<String>
+        summary: The file the procedure is written to; printed only by default.
+
+  - name: sessionspec.cli.StepKind
+    kind: enum
+    variants: [program, judgement, person, child]
+
+  - name: sessionspec.cli.ProcedureParameter
+    kind: struct
+    naming:
+      summary: A value that varies across the matches of a pattern. Values are kept only when they are not content (a tool name, a category, a count), never a path or a command.
+    fields:
+      - {name: name, type: String}
+      - {name: step, type: String}
+      - {name: kind, type: String}
+      - {name: values, type: List<String>}
+
+  - name: sessionspec.cli.ProcedureStep
+    kind: struct
+    fields:
+      - {name: id, type: String}
+      - {name: kind, type: sessionspec.cli.StepKind}
+      - {name: token, type: String}
+      - {name: tool, type: String}
+      - {name: category, type: String}
+      - name: shape
+        type: Optional<String>
+        summary: The shellspec shape of a shell step when every match agrees; no values.
+      - name: effect
+        type: String
+        summary: read, write, external or none.
+      - {name: after, type: List<String>}
+      - name: retry_max
+        type: Integer
+        summary: The most times the step ran again in one match after it failed.
+      - name: timeout_seconds
+        type: Integer
+        summary: The longest observed duration of the step, rounded up to a minute.
+      - {name: ok_permille, type: Integer}
+
+  - name: sessionspec.cli.Procedure
+    kind: struct
+    naming:
+      summary: >-
+        A mined pattern lifted into a procedure, format `sessionspec-procedure/1`: steps, the
+        parameters that vary across matches, and the sessions it came from. A draft until a person
+        promotes it.
+    fields:
+      - {name: format, type: String}
+      - {name: id, type: String}
+      - {name: description, type: String}
+      - {name: pattern, type: List<String>}
+      - {name: matches, type: Integer}
+      - {name: sessions, type: List<String>}
+      - {name: parameters, type: List<sessionspec.cli.ProcedureParameter>}
+      - {name: steps, type: List<sessionspec.cli.ProcedureStep>}
+      - {name: query, type: String}
+
+  - name: sessionspec.cli.ExportInput
+    kind: struct
+    fields:
+      - name: procedure
+        type: String
+        summary: A `sessionspec-procedure/1` file.
+      - name: out
+        type: String
+        summary: The directory the protocol and the bindings are written to.
+
+  - name: sessionspec.cli.ExportResult
+    kind: struct
+    fields:
+      - {name: protocol, type: String}
+      - {name: bindings, type: String}
+      - name: validated
+        type: Boolean
+        summary: canon accepted the protocol; false when canon refused it or is not installed.
+      - {name: detail, type: String}
+
+  - name: sessionspec.cli.Dashboard
+    kind: struct
+    naming:
+      summary: What the dashboard file embeds.
+    fields:
+      - {name: generated_at, type: String}
+      - {name: overall, type: sessionspec.cli.KpiReport}
+      - {name: sessions, type: List<sessionspec.cli.SessionSummary>}
+
+  - name: sessionspec.cli.SyncInput
+    kind: struct
+    fields:
+      - name: root
+        type: Optional<String>
+        summary: The Claude Code projects directory; `~/.claude/projects` by default.
+      - name: since_hours
+        type: Optional<Integer>
+        summary: Main transcripts with a file modified in this many hours before now; 72 by default.
+
+  - name: sessionspec.cli.SyncResult
+    kind: struct
+    naming:
+      summary: >-
+        One pass of the store over the transcripts of a window. A main transcript whose own file
+        and sub-agent files keep their size and modification time is `unchanged`; every other one
+        is lifted, redacted and written again in one transaction.
+    fields:
+      - name: db
+        type: String
+        summary: The store, `<state-dir>/sessions.db`.
+      - {name: scanned, type: Integer}
+      - {name: lifted, type: Integer}
+      - {name: unchanged, type: Integer}
+      - {name: failed, type: Integer}
+      - name: sessions
+        type: Integer
+        summary: Sessions the store holds after the pass, of every window.
+      - {name: ms, type: Integer}
+
+  - name: sessionspec.cli.ServeInput
+    kind: struct
+    fields:
+      - name: root
+        type: Optional<String>
+      - name: since_hours
+        type: Optional<Integer>
+        summary: The window the server keeps in sync every 5 seconds; 72 by default.
+      - name: port
+        type: Optional<Integer>
+        summary: The local port; 7420 by default. The server listens on 127.0.0.1 only.
+
+  - name: sessionspec.cli.ServeResult
+    kind: struct
+    fields:
+      - {name: url, type: String}

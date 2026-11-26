@@ -1,0 +1,12 @@
+views:
+  sessionspec.view.SessionList: sessions.json
+  sessionspec.view.SessionAgents: agents.json
+  sessionspec.view.SessionEvents: events.json
+  sessionspec.view.SessionTurns: turns.json
+  sessionspec.view.SessionChecks: checks.json
+derived:
+  sessionspec.view.SessionById: {by_id_from: sessionspec.view.SessionList, key: session_id}
+  sessionspec.view.AgentTurns: {same_as: sessionspec.view.SessionTurns}
+scripts:
+  sessions: scripts/sessions.json
+  session_events: scripts/session_events.json

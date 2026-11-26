@@ -1,0 +1,40 @@
+format: ess-ui-test/1
+document: ../sessionspec.ui.yaml
+tests:
+  - name: the overview lists every session and opens one
+    steps:
+      - open: overview
+      - expect: {at: pages/overview/sections/sessions, rows: [ses-demo-0003, ses-demo-0002, ses-demo-0001]}
+      - expect: {at: pages/overview/sections/sessions/rows/ses-demo-0001, text: alpha}
+      - act: pages/overview/sections/sessions/rows/ses-demo-0001/row_actions/open
+      - expect: {at: pages/session/sections/agents, rows: [agt-demo-0001-main, agt-demo-0001-sub1]}
+
+  - name: the session view reads one session only
+    steps:
+      - open: {page: embed.session, params: {session_id: ses-demo-0002}}
+      - expect: {at: pages/embed.session/sections/agents, rows: [agt-demo-0002-main]}
+      - expect: {at: pages/embed.session/sections/log, rows: 8}
+      - expect: {at: pages/embed.session/sections/lanes, rows: 3}
+
+  - name: a pushed event lands in the log of its session
+    steps:
+      - open: {page: session, params: {session_id: ses-demo-0001}}
+      - expect: {at: pages/session/sections/log, rows: 25}
+      # session_events.json plays events 26 to 29 by 6 s.
+      - play: {event: sessionspec.view.EventAppended, with: {event_id: ses-demo-0001.28}}
+      - advance: 100ms
+      - expect: {at: pages/session/sections/log, rows: 29}
+      - expect: {at: pages/session/sections/log/rows/ses-demo-0001.28, text: Grep}
+
+  - name: a pushed event of another session stays out
+    steps:
+      - open: {page: session, params: {session_id: ses-demo-0002}}
+      - play: {event: sessionspec.view.EventAppended, with: {event_id: ses-demo-0001.28}}
+      - advance: 100ms
+      - expect: {at: pages/session/sections/log, rows: 8}
+
+  - name: the session page lists the check verdicts of its session
+    steps:
+      - open: {page: session, params: {session_id: ses-demo-0001}}
+      - expect: {at: pages/session/sections/checks, rows: [ses-demo-0001.cache-bust-after-idle, ses-demo-0001.human-correction, ses-demo-0001.refused-then-retried]}
+      - expect: {at: pages/session/sections/checks/rows/ses-demo-0001.cache-bust-after-idle, text: Gap}

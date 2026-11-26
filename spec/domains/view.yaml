@@ -1,0 +1,553 @@
+domain: sessionspec.view
+
+summary: >-
+  What a session renderer reads: one session as agents and a flat, ordered list of view events
+  derived from the session IR's published events, and the read models of the UI
+  (`ui/sessionspec.ui.yaml`): sessions, agents, events and check verdicts. It holds no content,
+  only names, counts and times, except the harness's session title, which stays in the host's
+  local store. A renderer takes a whole document or an update that appends events; the UI reads
+  the views and takes their changes live. Renderers are generated from the UI document
+  (`ess generate ui`); a gateway UI reuses the document's `embed.*` pages.
+
+types:
+  - name: sessionspec.view.EventKind
+    kind: enum
+    variants: [agent_started, prompt, model_turn, tool_call, decision, tool_result, turn_end, compaction, exposure, cache_bust]
+
+  - name: sessionspec.view.Agent
+    kind: struct
+    fields:
+      - {name: id, type: String}
+      - {name: parent, type: Optional<String>}
+      - {name: role, type: String}
+      - {name: spawned_by, type: Optional<String>}
+      - {name: started_at, type: Integer}
+
+  - name: sessionspec.view.Event
+    kind: struct
+    naming:
+      summary: >-
+        One thing that happened, at an instant in milliseconds since the epoch. `label` names it: the
+        tool, the prompt author, the model, the decider, the exposure kind, the bust cause. Numbers
+        that do not apply are absent.
+    fields:
+      - {name: seq, type: Integer}
+      - {name: at, type: Integer}
+      - {name: agent, type: String}
+      - {name: kind, type: sessionspec.view.EventKind}
+      - {name: label, type: String}
+      - name: detail
+        type: Optional<String>
+        summary: A second name, by kind - a tool category, a prompt class and attribution, a decision, a channel.
+      - {name: call, type: Optional<String>}
+      - {name: ok, type: Optional<Boolean>}
+      - name: context_tokens
+        type: Optional<Integer>
+      - name: output_tokens
+        type: Optional<Integer>
+      - name: cache_read_tokens
+        type: Optional<Integer>
+      - name: cache_write_tokens
+        type: Optional<Integer>
+      - name: cost_microdollars
+        type: Optional<Integer>
+        summary: At API list price.
+      - name: bytes
+        type: Optional<Integer>
+        summary: The length of the prompt, the tool input or the tool output.
+
+  - name: sessionspec.view.Document
+    kind: struct
+    naming:
+      summary: One session for a renderer, format `sessionspec-view/1`.
+    fields:
+      - {name: format, type: String}
+      - {name: session_id, type: String}
+      - {name: title, type: Optional<String>}
+      - {name: project, type: String}
+      - {name: harness, type: String}
+      - {name: agents, type: List<sessionspec.view.Agent>}
+      - {name: events, type: List<sessionspec.view.Event>}
+
+  - name: sessionspec.view.Update
+    kind: struct
+    naming:
+      summary: >-
+        What a live source sends after the first document: the agents so far and the events from
+        `from_seq` on. With `reset` the renderer drops what it holds first, because the session's
+        earlier events changed.
+    fields:
+      - {name: format, type: String}
+      - {name: session_id, type: String}
+      - {name: reset, type: Boolean}
+      - {name: from_seq, type: Integer}
+      - {name: agents, type: List<sessionspec.view.Agent>}
+      - {name: events, type: List<sessionspec.view.Event>}
+
+  - name: sessionspec.view.EventId
+    kind: newtype
+    of: String
+    naming:
+      summary: One view event of one session, `<session_id>.<seq>`; a dot, since a row key is one segment of an ess-ui node path, which `/` separates.
+
+  - name: sessionspec.view.CheckId
+    kind: newtype
+    of: String
+    naming:
+      summary: One check of one session, `<session_id>.<check>`.
+
+# Read models of the UI (`ui/sessionspec.ui.yaml`), served by the `session-view` component. Rows
+# hold names, counts, times and digests, never content: no prompt text, no command, no path.
+entities:
+  - name: sessionspec.view.SessionListing
+    naming:
+      summary: >-
+        One session with the figures the overview lists and the session page heads with. The flat
+        figures are derived from `kpis`, so a table can sort and sum them.
+    identity:
+      name: session_id
+      type: sessionspec.session.SessionId
+    fields:
+      - name: project
+        type: String
+        summary: >-
+          The working directory of the session's first record, relative to the home directory
+          (`~/src/ess`); the projects directory name when no record names one. The owner,
+          2026-11-26: the project shows the home-relative working directory.
+      - name: title
+        type: Optional<String>
+        summary: >-
+          The harness's title of the session, which it derives from prompt text. The owner,
+          2026-11-26: a host-local UI may show it; it is written only to the host's local store,
+          never to this repository.
+      - name: names
+        type: String
+        summary: >-
+          The project, the title, the model names and the tool names of the session, lower case
+          and space-separated: the text `search` is found in.
+      - name: rank
+        type: Integer
+        summary: The session's place by `last_at` among the sessions the store holds, newest 1.
+      - name: harness
+        type: sessionspec.session.Harness
+      - name: first_at
+        type: Timestamp
+      - name: last_at
+        type: Timestamp
+      - name: agents
+        type: Integer
+        summary: Agents of the session, the main agent included.
+      - name: cost_usd
+        type: Binary64
+        summary: '`kpis.cost_microdollars` in dollars: the tokens at API list price.'
+      - name: output_tokens
+        type: Integer
+        summary: The sum of `kpis.models[].output_tokens`.
+      - name: context_max
+        type: Integer
+        summary: The largest context of any agent, in tokens.
+      - name: cache_hit_share
+        type: Binary64
+        summary: Cache read tokens over all input tokens, 0 to 1.
+      - name: busts
+        type: Integer
+        summary: The sum of `kpis.busts[].count`.
+      - name: human_prompts
+        type: Integer
+        summary: The sum of `kpis.autonomy.prompts[].count` with author `Human`.
+      - name: tool_calls
+        type: Integer
+      - name: refused_tool_calls
+        type: Integer
+      - name: exposures
+        type: Integer
+        summary: The sum of `kpis.exposures[].count`.
+      - name: working_seconds
+        type: Integer
+        summary: '`kpis.autonomy.working_seconds`.'
+      - name: waiting_on_human_seconds
+        type: Integer
+        summary: '`kpis.autonomy.waiting_on_human_seconds`.'
+      - name: waiting_share
+        type: Binary64
+        summary: >-
+          The autonomy KPI: `waiting_on_human_seconds` over the session's wall time
+          (`last_at - first_at`), 0 to 1.
+      - name: kpis
+        type: sessionspec.cli.KpiReport
+        summary: The session's own KPI report, as `sessionspec.cli.SessionSummary.kpis`.
+    relations:
+      - name: agents_of
+        kind: owns
+        target: sessionspec.view.AgentListing
+        cardinality: many
+        via: session_id
+      - name: events_of
+        kind: owns
+        target: sessionspec.view.EventRow
+        cardinality: many
+        via: session_id
+    lifecycle:
+      initial: Listed
+      states: [Listed]
+      terminal: [Listed]
+
+  - name: sessionspec.view.AgentListing
+    naming:
+      summary: One agent of a session with its own figures, as `sessionspec.view.Agent` and more.
+    identity:
+      name: agent_id
+      type: sessionspec.session.AgentId
+    fields:
+      - name: session_id
+        type: sessionspec.session.SessionId
+      - name: parent
+        type: Optional<sessionspec.session.AgentId>
+      - name: role
+        type: sessionspec.session.AgentRole
+      - name: model
+        type: Optional<String>
+        summary: The model of the agent's last turn.
+      - name: started_at
+        type: Timestamp
+      - name: turns
+        type: Integer
+      - name: context_tokens
+        type: Integer
+        summary: The context of the agent's last turn.
+      - name: context_max
+        type: Integer
+      - name: output_tokens
+        type: Integer
+      - name: cost_usd
+        type: Binary64
+      - name: tool_calls
+        type: Integer
+      - name: busts
+        type: Integer
+    relations:
+      - name: parent_agent
+        kind: references
+        target: sessionspec.view.AgentListing
+        cardinality: one
+        via: parent
+    lifecycle:
+      initial: Listed
+      states: [Listed]
+      terminal: [Listed]
+
+  - name: sessionspec.view.EventRow
+    naming:
+      summary: >-
+        One `sessionspec.view.Event` of a session as a row: the same fields, its time as a
+        `Timestamp`, and the running cost of its agent and of its session.
+    identity:
+      name: event_id
+      type: sessionspec.view.EventId
+    fields:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: seq, type: Integer}
+      - {name: at, type: Timestamp}
+      - {name: agent, type: sessionspec.session.AgentId}
+      - {name: kind, type: sessionspec.view.EventKind}
+      - {name: label, type: String}
+      - {name: detail, type: Optional<String>}
+      - {name: call, type: Optional<String>}
+      - {name: ok, type: Optional<Boolean>}
+      - {name: context_tokens, type: Optional<Integer>}
+      - {name: output_tokens, type: Optional<Integer>}
+      - {name: cache_read_tokens, type: Optional<Integer>}
+      - {name: cache_write_tokens, type: Optional<Integer>}
+      - {name: cost_microdollars, type: Optional<Integer>}
+      - {name: bytes, type: Optional<Integer>}
+      - name: agent_cost_usd
+        type: Binary64
+        summary: The cost of this event's agent up to and including this event.
+      - name: session_cost_usd
+        type: Binary64
+        summary: The cost of the session up to and including this event.
+    relations:
+      - name: of_agent
+        kind: references
+        target: sessionspec.view.AgentListing
+        cardinality: one
+        via: agent
+    lifecycle:
+      initial: Logged
+      states: [Logged]
+      terminal: [Logged]
+
+  - name: sessionspec.view.SessionCheck
+    naming:
+      summary: >-
+        The verdict of one check of `queries/session.sq` on one session, as `sessionspec query`
+        reports it: the rows the check found, definite and possible.
+    identity:
+      name: check_id
+      type: sessionspec.view.CheckId
+    fields:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: check, type: String}
+      - {name: about, type: String}
+      - {name: severity, type: String}
+      - {name: verdict, type: sessionspec.session.Verdict}
+      - name: rows
+        type: Integer
+        summary: Rows the check's rule found, definite and possible.
+      - name: possible
+        type: Integer
+        summary: Rows that hold only under an unknown (an inferred author, a decision not recorded).
+    lifecycle:
+      initial: Judged
+      states: [Judged]
+      terminal: [Judged]
+
+actors:
+  - name: sessionspec.view.Viewer
+    naming:
+      display: Viewer
+      summary: Whoever looks at sessions; the host's user, or a gateway UI showing a running session.
+    may:
+      - sessionspec.view.SessionList
+      - sessionspec.view.SessionById
+      - sessionspec.view.SessionAgents
+      - sessionspec.view.SessionEvents
+      - sessionspec.view.SessionTurns
+      - sessionspec.view.AgentTurns
+      - sessionspec.view.SessionChecks
+
+events:
+  - name: sessionspec.view.SessionUpdated
+    naming:
+      summary: The figures of a session changed; the payload is its whole row.
+    fields:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: project, type: String}
+      - {name: title, type: Optional<String>}
+      - {name: names, type: String}
+      - {name: rank, type: Integer}
+      - {name: harness, type: sessionspec.session.Harness}
+      - {name: first_at, type: Timestamp}
+      - {name: last_at, type: Timestamp}
+      - {name: agents, type: Integer}
+      - {name: cost_usd, type: Binary64}
+      - {name: output_tokens, type: Integer}
+      - {name: context_max, type: Integer}
+      - {name: cache_hit_share, type: Binary64}
+      - {name: busts, type: Integer}
+      - {name: human_prompts, type: Integer}
+      - {name: tool_calls, type: Integer}
+      - {name: refused_tool_calls, type: Integer}
+      - {name: exposures, type: Integer}
+      - {name: working_seconds, type: Integer}
+      - {name: waiting_on_human_seconds, type: Integer}
+      - {name: waiting_share, type: Binary64}
+
+  - name: sessionspec.view.AgentUpdated
+    naming:
+      summary: An agent started or its figures changed; the payload is its whole row.
+    fields:
+      - {name: agent_id, type: sessionspec.session.AgentId}
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: parent, type: Optional<sessionspec.session.AgentId>}
+      - {name: role, type: sessionspec.session.AgentRole}
+      - {name: model, type: Optional<String>}
+      - {name: started_at, type: Timestamp}
+      - {name: turns, type: Integer}
+      - {name: context_tokens, type: Integer}
+      - {name: context_max, type: Integer}
+      - {name: output_tokens, type: Integer}
+      - {name: cost_usd, type: Binary64}
+      - {name: tool_calls, type: Integer}
+      - {name: busts, type: Integer}
+
+  - name: sessionspec.view.EventAppended
+    naming:
+      summary: One event of a running session; the payload is its row.
+    fields:
+      - {name: event_id, type: sessionspec.view.EventId}
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: seq, type: Integer}
+      - {name: at, type: Timestamp}
+      - {name: agent, type: sessionspec.session.AgentId}
+      - {name: kind, type: sessionspec.view.EventKind}
+      - {name: label, type: String}
+      - {name: detail, type: Optional<String>}
+      - {name: call, type: Optional<String>}
+      - {name: ok, type: Optional<Boolean>}
+      - {name: context_tokens, type: Optional<Integer>}
+      - {name: output_tokens, type: Optional<Integer>}
+      - {name: cache_read_tokens, type: Optional<Integer>}
+      - {name: cache_write_tokens, type: Optional<Integer>}
+      - {name: cost_microdollars, type: Optional<Integer>}
+      - {name: bytes, type: Optional<Integer>}
+      - {name: agent_cost_usd, type: Binary64}
+      - {name: session_cost_usd, type: Binary64}
+
+views:
+  - name: sessionspec.view.SessionList
+    source: sessionspec.view.SessionListing
+    consistency: eventual
+    naming:
+      wire: session-list
+      display: Sessions
+      summary: >-
+        The sessions with a record at or after `since`, newest `last_at` first, at most `limit`
+        of them, narrowed by `search`: text found in `names`.
+    # UNMAPPED: ESS has no case-insensitive `contains`. `names` is lower case and the local
+    # server lowers `search` before it compares, so a search ignores case; the filter below
+    # states the case-sensitive comparison of what it receives.
+    params:
+      - {name: since, type: Optional<Timestamp>}
+      - {name: search, type: Optional<String>}
+      - {name: limit, type: Optional<Integer>}
+    filter:
+      all:
+        - any: ["not defined(param.since)", "last_at >= param.since"]
+        - any:
+            - "not defined(param.search)"
+            - {names: {contains: {param: search}}}
+        - any: ["not defined(param.limit)", "rank <= param.limit"]
+    fields:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: project, type: String}
+      - {name: title, type: Optional<String>}
+      - {name: names, type: String}
+      - {name: rank, type: Integer}
+      - {name: harness, type: sessionspec.session.Harness}
+      - {name: first_at, type: Timestamp}
+      - {name: last_at, type: Timestamp}
+      - {name: agents, type: Integer}
+      - {name: cost_usd, type: Binary64}
+      - {name: output_tokens, type: Integer}
+      - {name: context_max, type: Integer}
+      - {name: cache_hit_share, type: Binary64}
+      - {name: busts, type: Integer}
+      - {name: human_prompts, type: Integer}
+      - {name: tool_calls, type: Integer}
+      - {name: refused_tool_calls, type: Integer}
+      - {name: exposures, type: Integer}
+      - {name: working_seconds, type: Integer}
+      - {name: waiting_on_human_seconds, type: Integer}
+      - {name: waiting_share, type: Binary64}
+
+  - name: sessionspec.view.SessionById
+    source: sessionspec.view.SessionListing
+    consistency: eventual
+    params: [{name: session_id, type: sessionspec.session.SessionId}]
+    filter: session_id == param.session_id
+    fields:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: project, type: String}
+      - {name: title, type: Optional<String>}
+      - {name: harness, type: sessionspec.session.Harness}
+      - {name: first_at, type: Timestamp}
+      - {name: last_at, type: Timestamp}
+      - {name: agents, type: Integer}
+      - {name: cost_usd, type: Binary64}
+      - {name: output_tokens, type: Integer}
+      - {name: context_max, type: Integer}
+      - {name: cache_hit_share, type: Binary64}
+      - {name: busts, type: Integer}
+      - {name: human_prompts, type: Integer}
+      - {name: tool_calls, type: Integer}
+      - {name: refused_tool_calls, type: Integer}
+      - {name: exposures, type: Integer}
+      - {name: working_seconds, type: Integer}
+      - {name: waiting_on_human_seconds, type: Integer}
+      - {name: waiting_share, type: Binary64}
+      - {name: kpis, type: sessionspec.cli.KpiReport}
+    naming:
+      wire: session
+      display: Session
+
+  - name: sessionspec.view.SessionAgents
+    source: sessionspec.view.AgentListing
+    consistency: eventual
+    params: [{name: session_id, type: sessionspec.session.SessionId}]
+    filter: session_id == param.session_id
+    fields:
+      - {name: agent_id, type: sessionspec.session.AgentId}
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: parent, type: Optional<sessionspec.session.AgentId>}
+      - {name: role, type: sessionspec.session.AgentRole}
+      - {name: model, type: Optional<String>}
+      - {name: started_at, type: Timestamp}
+      - {name: turns, type: Integer}
+      - {name: context_tokens, type: Integer}
+      - {name: context_max, type: Integer}
+      - {name: output_tokens, type: Integer}
+      - {name: cost_usd, type: Binary64}
+      - {name: tool_calls, type: Integer}
+      - {name: busts, type: Integer}
+    naming:
+      wire: session-agents
+      display: Agents of a session
+
+  - name: sessionspec.view.SessionEvents
+    source: sessionspec.view.EventRow
+    consistency: eventual
+    params: [{name: session_id, type: sessionspec.session.SessionId}]
+    filter: session_id == param.session_id
+    fields: &event_row_fields
+      - {name: event_id, type: sessionspec.view.EventId}
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: seq, type: Integer}
+      - {name: at, type: Timestamp}
+      - {name: agent, type: sessionspec.session.AgentId}
+      - {name: kind, type: sessionspec.view.EventKind}
+      - {name: label, type: String}
+      - {name: detail, type: Optional<String>}
+      - {name: call, type: Optional<String>}
+      - {name: ok, type: Optional<Boolean>}
+      - {name: context_tokens, type: Optional<Integer>}
+      - {name: output_tokens, type: Optional<Integer>}
+      - {name: cache_read_tokens, type: Optional<Integer>}
+      - {name: cache_write_tokens, type: Optional<Integer>}
+      - {name: cost_microdollars, type: Optional<Integer>}
+      - {name: bytes, type: Optional<Integer>}
+      - {name: agent_cost_usd, type: Binary64}
+      - {name: session_cost_usd, type: Binary64}
+    naming:
+      wire: session-events
+      display: Events of a session
+
+  - name: sessionspec.view.SessionTurns
+    source: sessionspec.view.EventRow
+    consistency: eventual
+    params: [{name: session_id, type: sessionspec.session.SessionId}]
+    filter: {all: ["session_id == param.session_id", "kind == model_turn"]}
+    fields: *event_row_fields
+    naming:
+      wire: session-turns
+      display: Model turns of a session
+
+  - name: sessionspec.view.AgentTurns
+    source: sessionspec.view.EventRow
+    consistency: eventual
+    params:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: agent, type: sessionspec.session.AgentId}
+    filter: {all: ["session_id == param.session_id", "agent == param.agent", "kind == model_turn"]}
+    fields: *event_row_fields
+    naming:
+      wire: agent-turns
+      display: Model turns of an agent
+
+  - name: sessionspec.view.SessionChecks
+    source: sessionspec.view.SessionCheck
+    consistency: eventual
+    params: [{name: session_id, type: sessionspec.session.SessionId}]
+    filter: session_id == param.session_id
+    fields:
+      - {name: check_id, type: sessionspec.view.CheckId}
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: check, type: String}
+      - {name: about, type: String}
+      - {name: severity, type: String}
+      - {name: verdict, type: sessionspec.session.Verdict}
+      - {name: rows, type: Integer}
+      - {name: possible, type: Integer}
+    naming:
+      wire: session-checks
+      display: Checks of a session

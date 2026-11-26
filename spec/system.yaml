@@ -1,0 +1,8 @@
+format: ess/37
+system: sessionspec
+version: v1
+
+domains:
+  - sessionspec.session
+  - sessionspec.cli
+  - sessionspec.view

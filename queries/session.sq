@@ -1,0 +1,70 @@
+// Checks over the session IR. Run: sessionspec query queries/session.sq
+// Relations: docs/query-design.md § 4.1; durations are milliseconds (5m = 300000).
+
+// 1. The first model turn after an idle gap longer than the cache TTL writes the context again.
+idle_bust(A, Gap, Written) :-
+    interval{agent: A, state: "Idle", to: T, dur: Gap, open: false}, Gap > 5m,
+    prompt{node: P, agent: A}, at(P, T),
+    seq(P, B, scope: agent), turn{node: B, agent: A},
+    bust{node: B, cause: "TtlExpired", written: Written}.
+
+check cache-bust-after-idle {
+  about "a turn after an idle gap over 5 minutes wrote the whole context again"
+  severity low
+  expect none
+  find idle_bust
+}
+
+// 2. A hook refused a tool call and the agent asked for the same call again.
+retried(C1, C2, Reason) :-
+    call{node: C1, id: I, digest: D},
+    decided{call: I, decision: "Refuse", decider: "Hook", reason: Reason},
+    seq(C1, C2, scope: agent, within: 10m), call{node: C2, digest: D}.
+
+check refused-then-retried {
+  about "a call a hook refused was asked for again unchanged"
+  severity medium
+  expect none
+  find retried
+}
+
+// 3. Three or more sub-agents spawned in one turn, and the parent took no model turn after a
+//    child's last record: its result was not read.
+spawns(P, C) :- call{node: C, category: "Spawn"}, turn_of(C, P).
+fanout(P, N) :- prompt{node: P}, N = count{ spawns(P, _) }, N >= 3.
+child_end(C, Child, A, E) :-
+    spawns(_, C), call{node: C, agent: A}, spawned(C, Child), agent{id: Child, ended_at: E}.
+read_after(C, Child) :- child_end(C, Child, A, E), turn{node: M, agent: A}, at(M, T), T > E.
+fanout_unread(P, C, Child) :-
+    fanout(P, _), spawns(P, C), child_end(C, Child, _, _), !read_after(C, Child).
+
+check fanout-unread {
+  about "a sub-agent of a fan-out ended after the parent's last turn"
+  severity low
+  expect none
+  find fanout_unread
+}
+
+// 5. The human corrects the agent shortly after an edit or a command.
+correction(P) :- prompt{node: P, author: "Human", class: "Correction"}.
+after_change(P, X) :-
+    correction(P), seq(X, P, scope: agent, within: 2m), call{node: X, category: ~"^(Edit|Execute)$"}.
+
+check human-correction {
+  about "the human corrected the agent within 2 minutes of an edit or a command"
+  severity info
+  expect none
+  find after_change
+}
+
+// 6. The main agent sat idle on the human for more than 30 minutes.
+waiting_on_human(A, From, D) :-
+    agent{id: A, role: "Main"},
+    interval{agent: A, state: "Idle", on: "human", from: From, dur: D}, D > 30m.
+
+check waiting-on-human {
+  about "the main agent waited more than 30 minutes for the human"
+  severity info
+  expect none
+  find waiting_on_human
+}

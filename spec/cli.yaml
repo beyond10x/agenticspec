@@ -1,0 +1,141 @@
+format: ess-cli/2
+binary: sessionspec
+about: Lift agent sessions into one IR and evaluate KPIs over them
+globals:
+  config: config
+  state: state-dir
+  output: output
+callables:
+  lift:
+    target: {kind: local, owner: sessionspec.cli, action: lift}
+    input: sessionspec.cli.LiftInput
+    result: sessionspec.cli.LiftResult
+    errors:
+      transcript_unreadable: sessionspec.cli.Refusal
+  kpi:
+    target: {kind: local, owner: sessionspec.cli, action: kpi}
+    input: sessionspec.cli.KpiInput
+    result: sessionspec.cli.KpiReport
+    errors:
+      root_unreadable: sessionspec.cli.Refusal
+      store_unavailable: sessionspec.cli.Refusal
+  analyze:
+    target: {kind: local, owner: sessionspec.cli, action: analyze}
+    input: sessionspec.cli.AnalyzeInput
+    result: sessionspec.cli.AnalyzeResult
+    errors:
+      root_unreadable: sessionspec.cli.Refusal
+      store_unavailable: sessionspec.cli.Refusal
+      out_unwritable: sessionspec.cli.Refusal
+  query:
+    target: {kind: local, owner: sessionspec.cli, action: query}
+    input: sessionspec.cli.QueryInput
+    result: sessionspec.cli.QueryReport
+    errors:
+      module_invalid: sessionspec.cli.Refusal
+      root_unreadable: sessionspec.cli.Refusal
+      store_unavailable: sessionspec.cli.Refusal
+  mine:
+    target: {kind: local, owner: sessionspec.cli, action: mine}
+    input: sessionspec.cli.MineInput
+    result: sessionspec.cli.MineReport
+    errors:
+      root_unreadable: sessionspec.cli.Refusal
+      store_unavailable: sessionspec.cli.Refusal
+  procedure:
+    target: {kind: local, owner: sessionspec.cli, action: procedure}
+    input: sessionspec.cli.ProcedureInput
+    result: sessionspec.cli.Procedure
+    errors:
+      root_unreadable: sessionspec.cli.Refusal
+      store_unavailable: sessionspec.cli.Refusal
+      no_match: sessionspec.cli.Refusal
+      out_unwritable: sessionspec.cli.Refusal
+  export:
+    target: {kind: local, owner: sessionspec.cli, action: export}
+    input: sessionspec.cli.ExportInput
+    result: sessionspec.cli.ExportResult
+    errors:
+      procedure_invalid: sessionspec.cli.Refusal
+      out_unwritable: sessionspec.cli.Refusal
+  sync:
+    target: {kind: local, owner: sessionspec.cli, action: sync}
+    input: sessionspec.cli.SyncInput
+    result: sessionspec.cli.SyncResult
+    errors:
+      root_unreadable: sessionspec.cli.Refusal
+      store_unavailable: sessionspec.cli.Refusal
+  serve:
+    target: {kind: local, owner: sessionspec.cli, action: serve}
+    input: sessionspec.cli.ServeInput
+    result: sessionspec.cli.ServeResult
+    errors:
+      root_unreadable: sessionspec.cli.Refusal
+      store_unavailable: sessionspec.cli.Refusal
+      port_unavailable: sessionspec.cli.Refusal
+commands:
+  - path: [lift]
+    callable: lift
+    about: Lift one Claude Code session and its sub-agents into session IR commands and replay them
+    arguments:
+      - {field: transcript, source: {kind: positional, index: 1}}
+  - path: [kpi]
+    callable: kpi
+    about: Evaluate the KPIs over every Claude Code session in a time window
+    arguments:
+      - {field: root, source: {kind: option, long: root}}
+      - {field: since_hours, source: {kind: option, long: since-hours}}
+  - path: [analyze]
+    callable: analyze
+    about: Find the Claude Code sessions on this machine, evaluate each, and write a dashboard file
+    arguments:
+      - {field: root, source: {kind: option, long: root}}
+      - {field: since_hours, source: {kind: option, long: since-hours}}
+      - {field: out, source: {kind: option, long: out}}
+  - path: [query]
+    callable: query
+    about: Run an sq module of rules, queries and checks over one session or the sessions of a window
+    arguments:
+      - {field: module, source: {kind: positional, index: 1}}
+      - {field: text, source: {kind: option, long: text}}
+      - {field: transcript, source: {kind: option, long: transcript}}
+      - {field: root, source: {kind: option, long: root}}
+      - {field: since_hours, source: {kind: option, long: since-hours}}
+  - path: [mine]
+    callable: mine
+    about: Find runs of tool calls that recur in agent turns across sessions
+    arguments:
+      - {field: root, source: {kind: option, long: root}}
+      - {field: since_hours, source: {kind: option, long: since-hours}}
+      - {field: level, source: {kind: option, long: level}}
+      - {field: min_sessions, source: {kind: option, long: min-sessions}}
+      - {field: min_projects, source: {kind: option, long: min-projects}}
+      - {field: top, source: {kind: option, long: top}}
+  - path: [procedure]
+    callable: procedure
+    about: Lift a mined pattern into a procedure over its matches
+    arguments:
+      - {field: pattern, source: {kind: positional, index: 1}}
+      - {field: root, source: {kind: option, long: root}}
+      - {field: since_hours, source: {kind: option, long: since-hours}}
+      - {field: level, source: {kind: option, long: level}}
+      - {field: out, source: {kind: option, long: out}}
+  - path: [export]
+    callable: export
+    about: Export a procedure as a canon protocol and loom bindings
+    arguments:
+      - {field: procedure, source: {kind: positional, index: 1}}
+      - {field: out, source: {kind: option, long: out}}
+  - path: [sync]
+    callable: sync
+    about: Lift the new and changed sessions of a window into the local store
+    arguments:
+      - {field: root, source: {kind: option, long: root}}
+      - {field: since_hours, source: {kind: option, long: since-hours}}
+  - path: [serve]
+    callable: serve
+    about: Serve the UI and its views from the local store on 127.0.0.1, synced every 5 seconds
+    arguments:
+      - {field: root, source: {kind: option, long: root}}
+      - {field: since_hours, source: {kind: option, long: since-hours}}
+      - {field: port, source: {kind: option, long: port}}

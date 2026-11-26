@@ -1,0 +1,25 @@
+[workspace]
+resolver = "3"
+members = ["crates/sessionspec", "crates/sessionspec-records"]
+exclude = ["generated", "crates/sessionspec-cli-contract"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[workspace.dependencies]
+sessionspec-types = { path = "generated/crates/sessionspec-types" }
+session-ir = { path = "generated/crates/session-ir" }
+session-view = { path = "generated/crates/session-view" }
+sessionspec-system = { path = "generated/crates/sessionspec-system" }
+sessionspec-server = { path = "generated/crates/sessionspec-server" }
+sessionspec-cli-contract = { path = "crates/sessionspec-cli-contract" }
+sessionspec-records = { path = "crates/sessionspec-records" }
+serde_json = "1"
+sha2 = "0.10"
+regex = "1"
+rayon = "1"
+rusqlite = { version = "0.41", features = ["bundled"] }
+zstd = "0.13"

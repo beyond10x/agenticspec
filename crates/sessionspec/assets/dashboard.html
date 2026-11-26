@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sessionspec — sessions</title>
+<style>
+  :root {
+    --bg: #ffffff; --panel: #f6f8fa; --text: #1f2328; --muted: #59636e; --grid: #d1d9e0;
+    --main: #0072b2; --sub: #8c959f; --human: #e69f00; --delegate: #cc79a7; --peer: #56b4e9;
+    --harness: #b6bec6; --compaction: #009e73; --bust: #d55e00; --refusal: #1f2328;
+    --hover: #eef3f8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --panel: #161b22; --text: #e6edf3; --muted: #9198a1; --grid: #30363d;
+      --main: #4ea3e0; --sub: #6e7681; --human: #f0b232; --delegate: #e08fc0; --peer: #79c8f0;
+      --harness: #484f58; --compaction: #2fbf8f; --bust: #f07a3a; --refusal: #e6edf3;
+      --hover: #1c2430;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  header { padding: 16px 24px 8px; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header p { margin: 4px 0 0; color: var(--muted); }
+  main { padding: 8px 24px 32px; }
+  a { color: var(--main); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 12px 0 20px; }
+  .tile { background: var(--panel); border-radius: 6px; padding: 10px 12px; }
+  .tile .v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile .k { color: var(--muted); font-size: 12px; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--bg); color: var(--muted); font-weight: 500; cursor: pointer; user-select: none; }
+  th.l, td.l { text-align: left; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--hover); }
+  td.title { max-width: 360px; overflow: hidden; text-overflow: ellipsis; }
+  .id { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
+  h2 { font-size: 15px; margin: 24px 0 8px; font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 24px; }
+  .grid2 > div, .wide { overflow-x: auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 12px; margin: 6px 0; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  svg text { fill: var(--muted); font-size: 11px; }
+  .bar { height: 8px; background: var(--main); border-radius: 2px; }
+  .note { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="h">sessionspec</h1>
+  <p id="sub"></p>
+</header>
+<main id="app"></main>
+<script id="data" type="application/json">__SESSIONSPEC_DASHBOARD__</script>
+<script>
+"use strict";
+const D = JSON.parse(document.getElementById("data").textContent);
+const $ = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const num = (n) => {
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n / 1e9).toFixed(2) + " B";
+  if (a >= 1e6) return (n / 1e6).toFixed(1) + " M";
+  if (a >= 1e4) return (n / 1e3).toFixed(0) + " k";
+  return String(n);
+};
+const hours = (s) => (s / 3600).toFixed(1) + " h";
+const when = (t) => new Date(t).toLocaleString(undefined, { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+const usd = (d) => d >= 100 ? Math.round(d).toLocaleString() : d.toFixed(2);
+const sum = (xs, f) => xs.reduce((a, x) => a + f(x), 0);
+
+function figures(k) {
+  const a = k.autonomy;
+  const human = sum(a.prompts.filter((p) => p.author === "Human"), (p) => p.count);
+  const known = sum(a.prompts.filter((p) => p.author === "Human" && p.attribution === "Known"), (p) => p.count);
+  const dialogs = sum(a.decisions.filter((d) => d.decider === "Human"), (d) => d.count);
+  const busy = a.working_seconds + a.waiting_on_human_seconds;
+  return {
+    output: sum(k.models, (m) => m.output_tokens),
+    cost: k.cost_microdollars / 1e6,
+    unpriced: k.unpriced_messages,
+    messages: sum(k.models, (m) => m.messages),
+    write: sum(k.cache, (c) => c.write_tokens),
+    read: sum(k.cache, (c) => c.read_tokens),
+    context: Math.max(0, ...k.models.map((m) => m.context_max)),
+    busts: sum(k.busts, (b) => b.count),
+    bustTokens: sum(k.busts, (b) => b.tokens_written_again),
+    human, known, dialogs,
+    working: a.working_seconds, waiting: a.waiting_on_human_seconds, away: a.away_seconds,
+    autonomy: busy > 0 ? a.working_seconds / busy : null,
+    secrets: sum(k.exposures.filter((e) => e.class === "Secret" && e.verdict !== "Ok"), (e) => e.count),
+    models: [...new Set(k.models.map((m) => m.model.replace(/^claude-/, "")))].join(", "),
+  };
+}
+
+function tiles(f, extra) {
+  const rows = [
+    ["$" + usd(f.cost) + (f.unpriced ? " (+" + f.unpriced + " unpriced)" : ""), "at API list price"],
+    [num(f.output), "output tokens"],
+    [num(f.write), "cache write tokens"],
+    [num(f.context), "largest context"],
+    [f.busts + " · " + num(f.bustTokens), "cache busts · tokens again"],
+    [f.human + " (" + f.known + " known)", "human prompts"],
+    [hours(f.waiting), "waiting on human (≤ 1 h gaps)"],
+    [hours(f.working), "agent working"],
+    [f.autonomy == null ? "–" : Math.round(f.autonomy * 100) + " %", "working ÷ (working + waiting)"],
+    [String(f.dialogs), "permission dialogs answered"],
+    [String(f.secrets), "secret matches, not confirmed"],
+    ...(extra || []),
+  ];
+  return `<div class="tiles">${rows.map(([v, k]) => `<div class="tile"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`).join("")}</div>`;
+}
+
+const COLS = [
+  ["session", "l", (s) => s.title || s.session_id],
+  ["project", "l", (s) => s.project],
+  ["last active", "", (s) => s.last_at],
+  ["span", "", (s) => Date.parse(s.last_at) - Date.parse(s.first_at)],
+  ["sub-agents", "", (s) => s.kpis.sub_agents],
+  ["output tokens", "", (s) => s._f.output],
+  ["cache write", "", (s) => s._f.write],
+  ["max context", "", (s) => s._f.context],
+  ["busts", "", (s) => s._f.busts],
+  ["human prompts", "", (s) => s._f.human],
+  ["waiting", "", (s) => s._f.waiting],
+  ["working", "", (s) => s._f.working],
+  ["autonomy", "", (s) => s._f.autonomy ?? -1],
+  ["tool calls", "", (s) => sum(s.tools, (t) => t.calls)],
+  ["refused", "", (s) => sum(s.tools, (t) => t.refused)],
+  ["cost \$", "", (s) => s._f.cost],
+];
+let sortBy = 2, sortDesc = true;
+
+function cell(i, s) {
+  const f = s._f;
+  switch (i) {
+    case 0: return `<td class="l title" title="${esc(s.session_id)}">${esc(s.title || "")}<div class="id">${esc(s.session_id)}</div></td>`;
+    case 1: return `<td class="l">${esc(s.project.replace(/^-home-[^-]+-/, "~/").replace(/-/g, "/"))}</td>`;
+    case 2: return `<td>${when(s.last_at)}</td>`;
+    case 3: return `<td>${hours((Date.parse(s.last_at) - Date.parse(s.first_at)) / 1000)}</td>`;
+    case 4: return `<td>${s.kpis.sub_agents}</td>`;
+    case 5: return `<td>${num(f.output)}</td>`;
+    case 6: return `<td>${num(f.write)}</td>`;
+    case 7: return `<td>${num(f.context)}</td>`;
+    case 8: return `<td>${f.busts}</td>`;
+    case 9: return `<td>${f.human}</td>`;
+    case 10: return `<td>${hours(f.waiting)}</td>`;
+    case 11: return `<td>${hours(f.working)}</td>`;
+    case 12: return `<td>${f.autonomy == null ? "–" : Math.round(f.autonomy * 100) + " %"}</td>`;
+    case 13: return `<td>${sum(s.tools, (t) => t.calls)}</td>`;
+    case 14: return `<td>${sum(s.tools, (t) => t.refused)}</td>`;
+    case 15: return `<td>${usd(f.cost)}</td>`;
+  }
+}
+
+function overview() {
+  const o = D.overall;
+  const f = figures(o);
+  const conc = o.concurrency.map((c) => [`${c.p50} / ${c.p90} / ${c.max}`, `${c.scope} agents at once p50/p90/max`]);
+  const list = [...D.sessions].sort((a, b) => {
+    const x = COLS[sortBy][2](a), y = COLS[sortBy][2](b);
+    return (x < y ? -1 : x > y ? 1 : 0) * (sortDesc ? -1 : 1);
+  });
+  const head = COLS.map(([n, c], i) => `<th class="${c}" data-i="${i}">${esc(n)}${i === sortBy ? (sortDesc ? " ▾" : " ▴") : ""}</th>`).join("");
+  const body = list.map((s) => `<tr data-id="${esc(s.session_id)}">${COLS.map((_, i) => cell(i, s)).join("")}</tr>`).join("");
+  const app = document.getElementById("app");
+  app.innerHTML = `${tiles(f, [[String(o.sessions), "sessions"], [String(o.sub_agents), "sub-agents"], ...conc])}
+    <div class="wide"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    <p class="note">Working: at least one agent of the session was working. Waiting: no agent was working, from the main agent's turn end to the next prompt from the human or a session acting for them; over 1 h it counts as away (${hours(f.away)} overall). Human prompts with a text-only mark are inferred.</p>`;
+  app.querySelectorAll("th").forEach((th) => th.onclick = () => {
+    const i = +th.dataset.i;
+    sortDesc = i === sortBy ? !sortDesc : true;
+    sortBy = i;
+    overview();
+  });
+  app.querySelectorAll("tbody tr").forEach((tr) => tr.onclick = () => location.hash = encodeURIComponent(tr.dataset.id));
+}
+
+const LANES = [
+  ["human_prompt", "--human", "human prompt"],
+  ["delegate_prompt", "--delegate", "delegate prompt"],
+  ["peer_prompt", "--peer", "peer session"],
+  ["harness_prompt", "--harness", "harness notification"],
+  ["compaction", "--compaction", "compaction"],
+  ["cache_bust", "--bust", "cache bust"],
+  ["refusal", "--refusal", "refused tool call"],
+];
+
+function timeline(s) {
+  const W = 1200, H = 240, L = 150, R = 12, T = 10, laneH = 14;
+  const lanesTop = T + H + 24, total = lanesTop + LANES.length * laneH + 22;
+  const t0 = Date.parse(s.first_at), t1 = Math.max(Date.parse(s.last_at), t0 + 60000);
+  const turns = s.timeline.filter((m) => m.kind === "turn");
+  const ymax = Math.max(1, ...turns.map((m) => m.value));
+  const x = (t) => L + ((Date.parse(t) - t0) / (t1 - t0)) * (W - L - R);
+  const y = (v) => T + H - (v / ymax) * H;
+  const step = ymax > 600e3 ? 200e3 : ymax > 200e3 ? 100e3 : ymax > 50e3 ? 25e3 : 10e3;
+  let g = "";
+  for (let v = 0; v <= ymax; v += step) {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${num(v)}</text>`;
+  }
+  for (let i = 0; i <= 6; i++) {
+    const t = t0 + ((t1 - t0) * i) / 6;
+    const px = L + ((W - L - R) * i) / 6;
+    g += `<text x="${px}" y="${T + H + 16}" text-anchor="middle">${when(new Date(t).toISOString())}</text>`;
+  }
+  const subs = turns.filter((m) => m.scope === "sub").map((m) => `<circle cx="${x(m.at).toFixed(1)}" cy="${y(m.value).toFixed(1)}" r="1.6" fill="var(--sub)" opacity="0.6"/>`).join("");
+  const mains = turns.filter((m) => m.scope === "main");
+  const line = mains.length ? `<polyline fill="none" stroke="var(--main)" stroke-width="1.5" points="${mains.map((m) => `${x(m.at).toFixed(1)},${y(m.value).toFixed(1)}`).join(" ")}"/>` : "";
+  let lanes = "";
+  LANES.forEach(([kind, color, label], i) => {
+    const ly = lanesTop + i * laneH;
+    lanes += `<text x="${L - 6}" y="${ly + 10}" text-anchor="end">${label}</text><line x1="${L}" x2="${W - R}" y1="${ly + 6}" y2="${ly + 6}" stroke="var(--grid)" stroke-dasharray="2 3"/>`;
+    lanes += s.timeline.filter((m) => m.kind === kind).map((m) =>
+      `<rect x="${(x(m.at) - 1).toFixed(1)}" y="${ly}" width="2.5" height="12" fill="var(${color})"><title>${esc(label)} ${when(m.at)}${m.value ? " · " + num(m.value) + " tokens" : ""} (${m.scope})</title></rect>`).join("");
+  });
+  return `<svg viewBox="0 0 ${W} ${total}" width="100%" role="img" aria-label="context size over time and events">
+    ${g}${subs}${line}<text x="${L}" y="${T - 1}">context tokens</text>${lanes}</svg>
+    <div class="legend"><span><i style="background:var(--main)"></i>main agent context per model turn</span><span><i style="background:var(--sub)"></i>sub-agent turns</span></div>`;
+}
+
+function rows(head, data) {
+  return `<table><thead><tr>${head.map((h, i) => `<th class="${i ? "" : "l"}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${data.map((r) => `<tr>${r.map((c, i) => `<td class="${i ? "" : "l"}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
+function detail(id) {
+  const s = D.sessions.find((x) => x.session_id === id);
+  const app = document.getElementById("app");
+  if (!s) { app.innerHTML = `<p><a href="#">← all sessions</a></p><p>No session ${esc(id)} in this window.</p>`; return; }
+  const k = s.kpis, f = s._f;
+  const maxCalls = Math.max(1, ...s.tools.map((t) => t.calls));
+  app.innerHTML = `<p><a href="#">← all sessions</a></p>
+    <h2>${esc(s.title || s.session_id)}</h2>
+    <p class="id">${esc(s.session_id)} · ${esc(s.project)} · ${when(s.first_at)} – ${when(s.last_at)} · ${k.sub_agents} sub-agents · ${esc(f.models)}</p>
+    ${tiles(f, [[String(sum(s.tools, (t) => t.calls)), "tool calls"]])}
+    ${timeline(s)}
+    <div class="grid2">
+      <div><h2>Models</h2>${rows(["model", "scope", "messages", "output", "context p50", "p90", "max", "$ list price"], k.models.map((m) => [esc(m.model), m.scope, m.messages, num(m.output_tokens), num(m.context_p50), num(m.context_p90), num(m.context_max), usd(m.cost_microdollars / 1e6)]))}</div>
+      <div><h2>Tool calls by category</h2>${rows(["category", "calls", "", "refused", "failed"], s.tools.map((t) => [esc(t.category), t.calls, `<div class="bar" style="width:${Math.round((t.calls / maxCalls) * 160)}px"></div>`, t.refused, t.failed]))}</div>
+      <div><h2>Prompts to the main agent</h2>${rows(["author", "attribution", "count"], k.autonomy.prompts.map((p) => [esc(p.author), esc(p.attribution), p.count]))}</div>
+      <div><h2>Permission decisions of the main agent</h2>${rows(["decided by", "decision", "count"], k.autonomy.decisions.map((d) => [esc(d.decider), esc(d.decision), d.count]))}</div>
+      <div><h2>Cache busts</h2>${rows(["cause", "scope", "count", "tokens again"], k.busts.map((b) => [esc(b.cause), b.scope, b.count, num(b.tokens_written_again)]))}</div>
+      <div><h2>Secrets and personal data</h2>${rows(["kind", "channel", "verdict", "count"], k.exposures.map((e) => [esc(e.kind), esc(e.channel), esc(e.verdict), e.count]))}<p class="note">Values are never stored; Ok is a known fixture or an address nobody owns, Unk is not confirmed.</p></div>
+    </div>`;
+  window.scrollTo(0, 0);
+}
+
+D.sessions.forEach((s) => s._f = figures(s.kpis));
+document.getElementById("sub").textContent =
+  `${D.sessions.length} sessions with activity from ${when(D.overall.window_from)} to ${when(D.overall.window_to)} · generated ${when(D.generated_at)}`;
+const route = () => { const id = decodeURIComponent(location.hash.slice(1)); id ? detail(id) : overview(); };
+window.onhashchange = route;
+route();
+</script>
+</body>
+</html>

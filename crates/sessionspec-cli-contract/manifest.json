@@ -1,0 +1,27 @@
+{
+  "binary": "sessionspec",
+  "files": [
+    "Cargo.toml",
+    "README.md",
+    "binding.json",
+    "completions/sessionspec.bash",
+    "help.txt",
+    "src/lib.rs",
+    "src/main.rs",
+    "src/runtime.rs",
+    "src/wire.rs"
+  ],
+  "format": "ess-cli-artifacts/1",
+  "obligations": [
+    "handler:analyze: implement the owner-qualified callable and its declared result/error contract",
+    "handler:export: implement the owner-qualified callable and its declared result/error contract",
+    "handler:kpi: implement the owner-qualified callable and its declared result/error contract",
+    "handler:lift: implement the owner-qualified callable and its declared result/error contract",
+    "handler:mine: implement the owner-qualified callable and its declared result/error contract",
+    "handler:procedure: implement the owner-qualified callable and its declared result/error contract",
+    "handler:query: implement the owner-qualified callable and its declared result/error contract",
+    "handler:serve: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sync: implement the owner-qualified callable and its declared result/error contract"
+  ],
+  "package": "sessionspec-cli-contract"
+}

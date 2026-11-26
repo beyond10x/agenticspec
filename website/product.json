@@ -1,0 +1,92 @@
+{
+  "format": "b10x-product-landing/1",
+  "product": {
+    "name": "sessionspec",
+    "mark": "S",
+    "eyebrow": "Agent sessions · no release yet",
+    "promise": [
+      "Agent sessions as typed records",
+      "you can measure and query."
+    ],
+    "lede": "sessionspec lifts the transcripts of an agent harness into one specified IR of actors, commands, decisions and events, redacts it, stores it in a local SQLite file, and evaluates KPIs, sq queries and mined patterns on that store. It reads Claude Code transcripts today; an LLM gateway appends the same records from the wire. There is no release yet: build it from source.",
+    "description": "Lift agent sessions into one specified IR, store them in SQLite, and evaluate KPIs, queries and mined patterns over them. Reads Claude Code transcripts; no release yet.",
+    "actions": [
+      {
+        "label": "Design",
+        "href": "/docs/",
+        "kind": "primary"
+      },
+      {
+        "label": "Queries and mining",
+        "href": "/docs/query-design"
+      },
+      {
+        "label": "Interaction records",
+        "href": "/docs/interaction-records"
+      },
+      {
+        "label": "Baseline",
+        "href": "/docs/research/baseline"
+      }
+    ],
+    "meta": "No release yet · Claude Code transcripts · Apache-2.0"
+  },
+  "sections": [
+    {
+      "kind": "flow",
+      "eyebrow": "The pipeline",
+      "title": "From a transcript to a number.",
+      "lede": "KPIs read the events the generated component published, never a vendor transcript.",
+      "steps": [
+        {
+          "label": "lift",
+          "title": "Transcript to commands",
+          "description": "An adapter turns each record into IR commands with an actor and an attribution: Known, Inferred or NotRecorded."
+        },
+        {
+          "label": "redact",
+          "title": "Classes and counts",
+          "description": "Secrets and personal data become aliases; a finding names its class and count, never the value."
+        },
+        {
+          "label": "store",
+          "title": "One SQLite file",
+          "description": "sessionspec sync lifts new and changed sessions into a local store, incrementally."
+        },
+        {
+          "label": "evaluate",
+          "title": "KPIs, queries, patterns",
+          "description": "KPIs, sq checks and mined patterns run over the store, not over the transcript files."
+        }
+      ]
+    },
+    {
+      "kind": "features",
+      "eyebrow": "Built",
+      "title": "What the repository holds.",
+      "lede": "Each item links to the page that describes it.",
+      "items": [
+        {
+          "title": "Session IR",
+          "description": "An ESS specification of actors, commands, decisions, events and views, with generated types and components.",
+          "href": "/docs/"
+        },
+        {
+          "title": "sq",
+          "description": "A typed Datalog over the IR with sequence, aggregates and certainty, and checks in queries/session.sq.",
+          "href": "/docs/query-design"
+        },
+        {
+          "title": "Dashboard",
+          "description": "sessionspec serve: a local UI on 127.0.0.1 with global KPIs, a time window, the recent sessions and search.",
+          "href": "/docs/ui"
+        },
+        {
+          "title": "Records library",
+          "description": "sessionspec-records: the store, the wire lift of a gateway call and a non-blocking appender.",
+          "href": "/docs/interaction-records"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "view": "sessionspec.view.SessionChecks",
+  "rows": [
+    {"check_id": "ses-demo-0001.cache-bust-after-idle", "session_id": "ses-demo-0001", "check": "cache-bust-after-idle", "about": "a turn after an idle gap over 5 minutes wrote the whole context again", "severity": "low", "verdict": "Gap", "rows": 1, "possible": 0},
+    {"check_id": "ses-demo-0001.human-correction", "session_id": "ses-demo-0001", "check": "human-correction", "about": "the human corrected the agent within 2 minutes of an edit or a command", "severity": "info", "verdict": "Unk", "rows": 1, "possible": 1},
+    {"check_id": "ses-demo-0001.refused-then-retried", "session_id": "ses-demo-0001", "check": "refused-then-retried", "about": "a call a hook refused was asked for again unchanged", "severity": "medium", "verdict": "Ok", "rows": 0, "possible": 0},
+    {"check_id": "ses-demo-0002.cache-bust-after-idle", "session_id": "ses-demo-0002", "check": "cache-bust-after-idle", "about": "a turn after an idle gap over 5 minutes wrote the whole context again", "severity": "low", "verdict": "Ok", "rows": 0, "possible": 0},
+    {"check_id": "ses-demo-0002.refused-then-retried", "session_id": "ses-demo-0002", "check": "refused-then-retried", "about": "a call a hook refused was asked for again unchanged", "severity": "medium", "verdict": "Ok", "rows": 0, "possible": 0},
+    {"check_id": "ses-demo-0003.waiting-on-human", "session_id": "ses-demo-0003", "check": "waiting-on-human", "about": "the main agent waited more than 30 minutes for the human", "severity": "info", "verdict": "Ok", "rows": 0, "possible": 0}
+  ]
+}

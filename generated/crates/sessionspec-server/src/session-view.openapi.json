@@ -1,0 +1,2577 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "session-view",
+    "summary": "Serves the read models of the UI (`ui/sessionspec.ui.yaml`) over HTTP: the session list, one session, its agents and its events, and publishes their changes for a live page.",
+    "description": "The HTTP surface of `session-view`, one of the components of `sessionspec` v1.\n\nEvery path here is one semantic command, so the method is always POST and the path is the command's wire name under its domain's: a command is not a resource, and this document does not invent one. A status code is the outcome the specification declares — 202 for a branch that was taken, 422 for a refusal the input decides, 502 for a refusal decided outside the request — and the `outcome` property of every response body names the branch. This component publishes `AgentUpdated`, `EventAppended` and `SessionUpdated` to consumers through the event transport; an event a branch emits that is not among them stays inside the component. The `published` property of every response body lists every event its branch emitted, in the order it emits them, published or not.\n\nThe specification declares who may invoke what (`x-ess-may-invoke` on each operation), so every command is sent as a declared actor. How a request proves which actor it is belongs to the realization, which authenticates it and hands the surface the caller; nothing in the request itself names one. The grant is checked before the command runs, and a request authenticated as no actor, or as one without the grant, is answered 403 with one standard refusal, the same for every command: `{\"refused\": \"not granted\", \"actor\": <name or null>}`. A 403 a declared branch answers carries `outcome` and the declared `error` instead, so a client tells the two apart by the members present. A command no declared actor may invoke is refused to every caller. A view an actor's grant names is read-checked the same way (`x-ess-may-read` on its operation): a request authenticated as no actor, or as one the grant does not name, is answered 403 with the same standard refusal before the view is read. A view no grant names is open, and any caller may read what it publishes.\n\nThis component declares `reached_by: network`, so its callers are not deployed with it and this contract is the surface they reach it through. That declaration is also why the views its domains declare have paths here: a GET under `views` per projection, answering every row it holds. There is no page size, no cursor, no ordering and no filter parameter, because the specification states none — a view's filter is part of the projection, not of the request. A view that declares `params:` is the exception: each is a query parameter, described on its operation, and a view that declares `paging:` takes its page and size there.",
+    "version": "v1",
+    "x-ess-provenance": {
+      "system": "sessionspec",
+      "specification_version": "v1",
+      "contract_digest": "slice-sha256/2:6dc300399ea73a9585671d41f4489db8be48b099d5a7af803a86cdeb0e2b2c50"
+    },
+    "x-ess-reached-by": "network"
+  },
+  "paths": {
+    "/view/views/agent-turns": {
+      "get": {
+        "operationId": "sessionspec.view.AgentTurns",
+        "summary": "Model turns of an agent",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.session_id`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.SessionId"
+            }
+          },
+          {
+            "name": "agent",
+            "in": "query",
+            "description": "Read by the view's filter as `param.agent`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.AgentId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.AgentTurns`, a projection of `sessionspec.view.EventRow`. Contains the instances where `(session_id == param.session_id and agent == param.agent and kind == model_turn)` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.AgentTurns.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/session": {
+      "get": {
+        "operationId": "sessionspec.view.SessionById",
+        "summary": "Session",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.session_id`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.SessionId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.SessionById`, a projection of `sessionspec.view.SessionListing`. Contains the instances where `session_id == param.session_id` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.SessionById.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/session-agents": {
+      "get": {
+        "operationId": "sessionspec.view.SessionAgents",
+        "summary": "Agents of a session",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.session_id`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.SessionId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.SessionAgents`, a projection of `sessionspec.view.AgentListing`. Contains the instances where `session_id == param.session_id` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.SessionAgents.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/session-checks": {
+      "get": {
+        "operationId": "sessionspec.view.SessionChecks",
+        "summary": "Checks of a session",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.session_id`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.SessionId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.SessionChecks`, a projection of `sessionspec.view.SessionCheck`. Contains the instances where `session_id == param.session_id` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.SessionChecks.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/session-events": {
+      "get": {
+        "operationId": "sessionspec.view.SessionEvents",
+        "summary": "Events of a session",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.session_id`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.SessionId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.SessionEvents`, a projection of `sessionspec.view.EventRow`. Contains the instances where `session_id == param.session_id` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.SessionEvents.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/session-list": {
+      "get": {
+        "operationId": "sessionspec.view.SessionList",
+        "summary": "Sessions",
+        "description": "The sessions with a record at or after `since`, newest `last_at` first, at most `limit` of them, narrowed by `search`: text found in `names`.",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Read by the view's filter as `param.since`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Read by the view's filter as `param.search`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Read by the view's filter as `param.limit`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.SessionList`, a projection of `sessionspec.view.SessionListing`. Contains the instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit))` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.SessionList.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/session-turns": {
+      "get": {
+        "operationId": "sessionspec.view.SessionTurns",
+        "summary": "Model turns of a session",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.session_id`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.SessionId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.SessionTurns`, a projection of `sessionspec.view.EventRow`. Contains the instances where `(session_id == param.session_id and kind == model_turn)` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.SessionTurns.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "sessionspec.cli.AgentScope": {
+        "title": "AgentScope",
+        "x-ess-name": "sessionspec.cli.AgentScope",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "main",
+          "sub"
+        ]
+      },
+      "sessionspec.cli.AutonomyFigures": {
+        "title": "AutonomyFigures",
+        "description": "Prompts and decisions of main agents. Working is time in which at least one agent of the session was Working (gaps up to 10 minutes). Waiting on the human is time in which no agent was Working, from a main agent's turn end to its next Human or Delegate prompt; over one hour it counts as away.",
+        "x-ess-name": "sessionspec.cli.AutonomyFigures",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "working_seconds": {
+            "type": "integer"
+          },
+          "waiting_on_human_seconds": {
+            "type": "integer"
+          },
+          "away_seconds": {
+            "type": "integer"
+          },
+          "prompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.cli.PromptFigures"
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.cli.DecisionFigures"
+            }
+          }
+        },
+        "required": [
+          "working_seconds",
+          "waiting_on_human_seconds",
+          "away_seconds",
+          "prompts",
+          "decisions"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.cli.BustCause": {
+        "title": "BustCause",
+        "x-ess-name": "sessionspec.cli.BustCause",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "ttl_expired",
+          "model_changed",
+          "compacted",
+          "unexplained"
+        ]
+      },
+      "sessionspec.cli.BustFigures": {
+        "title": "BustFigures",
+        "x-ess-name": "sessionspec.cli.BustFigures",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/sessionspec.cli.AgentScope"
+          },
+          "cause": {
+            "$ref": "#/components/schemas/sessionspec.cli.BustCause"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "tokens_written_again": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "cause",
+          "count",
+          "tokens_written_again"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.cli.CacheFigures": {
+        "title": "CacheFigures",
+        "x-ess-name": "sessionspec.cli.CacheFigures",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/sessionspec.cli.AgentScope"
+          },
+          "read_tokens": {
+            "type": "integer"
+          },
+          "write_tokens": {
+            "type": "integer"
+          },
+          "uncached_tokens": {
+            "type": "integer"
+          },
+          "hit_permille": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "read_tokens",
+          "write_tokens",
+          "uncached_tokens",
+          "hit_permille"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.cli.ConcurrencyFigures": {
+        "title": "ConcurrencyFigures",
+        "description": "Agents active in the same minute; active means two of its records at most 5 minutes apart around the minute.",
+        "x-ess-name": "sessionspec.cli.ConcurrencyFigures",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/sessionspec.cli.AgentScope"
+          },
+          "p50": {
+            "type": "integer"
+          },
+          "p90": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "p50",
+          "p90",
+          "max"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.cli.DecisionFigures": {
+        "title": "DecisionFigures",
+        "x-ess-name": "sessionspec.cli.DecisionFigures",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "decider": {
+            "$ref": "#/components/schemas/sessionspec.session.Decider"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/sessionspec.session.Decision"
+          },
+          "count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decider",
+          "decision",
+          "count"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.cli.ExposureFigures": {
+        "title": "ExposureFigures",
+        "x-ess-name": "sessionspec.cli.ExposureFigures",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/sessionspec.session.ExposureChannel"
+          },
+          "class": {
+            "$ref": "#/components/schemas/sessionspec.session.ExposureClass"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/sessionspec.session.Verdict"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "sessions": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "channel",
+          "class",
+          "kind",
+          "verdict",
+          "count",
+          "sessions"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.cli.KpiReport": {
+        "title": "KpiReport",
+        "x-ess-name": "sessionspec.cli.KpiReport",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "window_from": {
+            "type": "string"
+          },
+          "window_to": {
+            "type": "string"
+          },
+          "transcripts": {
+            "type": "integer"
+          },
+          "sessions": {
+            "type": "integer"
+          },
+          "sub_agents": {
+            "type": "integer"
+          },
+          "refused_commands": {
+            "type": "integer"
+          },
+          "cost_microdollars": {
+            "description": "The sum of the model figures, at API list price; a subscription bills otherwise.",
+            "type": "integer"
+          },
+          "unpriced_messages": {
+            "description": "Model messages of a model with no price in src/pricing.rs, not in the cost.",
+            "type": "integer"
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.cli.ModelFigures"
+            }
+          },
+          "cache": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.cli.CacheFigures"
+            }
+          },
+          "busts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.cli.BustFigures"
+            }
+          },
+          "concurrency": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.cli.ConcurrencyFigures"
+            }
+          },
+          "autonomy": {
+            "$ref": "#/components/schemas/sessionspec.cli.AutonomyFigures"
+          },
+          "exposures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.cli.ExposureFigures"
+            }
+          }
+        },
+        "required": [
+          "window_from",
+          "window_to",
+          "transcripts",
+          "sessions",
+          "sub_agents",
+          "refused_commands",
+          "cost_microdollars",
+          "unpriced_messages",
+          "models",
+          "cache",
+          "busts",
+          "concurrency",
+          "autonomy",
+          "exposures"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.cli.ModelFigures": {
+        "title": "ModelFigures",
+        "x-ess-name": "sessionspec.cli.ModelFigures",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/sessionspec.cli.AgentScope"
+          },
+          "model": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "integer"
+          },
+          "output_tokens": {
+            "type": "integer"
+          },
+          "context_p50": {
+            "type": "integer"
+          },
+          "context_p90": {
+            "type": "integer"
+          },
+          "context_max": {
+            "type": "integer"
+          },
+          "cost_microdollars": {
+            "description": "The tokens of these messages at the API list price of the model (src/pricing.rs), in millionths of a dollar; 0 for a model with no price.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "model",
+          "messages",
+          "output_tokens",
+          "context_p50",
+          "context_p90",
+          "context_max",
+          "cost_microdollars"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.cli.PromptFigures": {
+        "title": "PromptFigures",
+        "x-ess-name": "sessionspec.cli.PromptFigures",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/sessionspec.session.PromptAuthor"
+          },
+          "attribution": {
+            "$ref": "#/components/schemas/sessionspec.session.Attribution"
+          },
+          "count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "author",
+          "attribution",
+          "count"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.session.AgentId": {
+        "title": "AgentId",
+        "description": "One agent loop in a session; the main loop or a sub-agent.",
+        "x-ess-name": "sessionspec.session.AgentId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "sessionspec.session.AgentRole": {
+        "title": "AgentRole",
+        "description": "SideCall is a model call of the harness outside every agent's conversation (a title, a summary, a quota probe): the wire tells it by a call with no tools and no history.",
+        "x-ess-name": "sessionspec.session.AgentRole",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Main",
+          "SubAgent",
+          "SideCall"
+        ]
+      },
+      "sessionspec.session.Attribution": {
+        "title": "Attribution",
+        "description": "How the author was established. Known from a structured field of the transcript, Inferred from a text prefix, Unknown otherwise.",
+        "x-ess-name": "sessionspec.session.Attribution",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Known",
+          "Inferred",
+          "Unknown"
+        ]
+      },
+      "sessionspec.session.Decider": {
+        "title": "Decider",
+        "description": "What decided a tool call. NotRecorded where the transcript carries no decision.",
+        "x-ess-name": "sessionspec.session.Decider",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "PermissionMode",
+          "Classifier",
+          "Hook",
+          "Human",
+          "SafetyCheck",
+          "Rule",
+          "NotRecorded"
+        ]
+      },
+      "sessionspec.session.Decision": {
+        "title": "Decision",
+        "x-ess-name": "sessionspec.session.Decision",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Accept",
+          "Refuse"
+        ]
+      },
+      "sessionspec.session.ExposureChannel": {
+        "title": "ExposureChannel",
+        "description": "Where a secret or a personal datum appeared. ToolInput is the severe one when the tool's category is Network, Message or Execute: the value left the session.",
+        "x-ess-name": "sessionspec.session.ExposureChannel",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Prompt",
+          "ToolInput",
+          "ToolOutput",
+          "AgentText"
+        ]
+      },
+      "sessionspec.session.ExposureClass": {
+        "title": "ExposureClass",
+        "x-ess-name": "sessionspec.session.ExposureClass",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Secret",
+          "PersonalData"
+        ]
+      },
+      "sessionspec.session.Harness": {
+        "title": "Harness",
+        "x-ess-name": "sessionspec.session.Harness",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "ClaudeCode",
+          "Codex",
+          "Other"
+        ]
+      },
+      "sessionspec.session.PromptAuthor": {
+        "title": "PromptAuthor",
+        "description": "Who wrote a prompt. Delegate is a session acting for the human; Harness covers task notifications, compaction summaries and auto-continuation.",
+        "x-ess-name": "sessionspec.session.PromptAuthor",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Human",
+          "Delegate",
+          "PeerSession",
+          "ParentAgent",
+          "Harness",
+          "Hook"
+        ]
+      },
+      "sessionspec.session.SessionId": {
+        "title": "SessionId",
+        "description": "The harness's own session identifier.",
+        "x-ess-name": "sessionspec.session.SessionId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "sessionspec.session.Verdict": {
+        "title": "Verdict",
+        "description": "Ok is a known fixture or allowed value, Gap a confirmed exposure, Unk a match nobody confirmed.",
+        "x-ess-name": "sessionspec.session.Verdict",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Ok",
+          "Gap",
+          "Unk"
+        ]
+      },
+      "sessionspec.view.AgentTurns.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.AgentTurns`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.AgentTurns.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.AgentTurns.Row": {
+        "title": "Model turns of an agent row",
+        "x-ess-name": "sessionspec.view.AgentTurns",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "$ref": "#/components/schemas/sessionspec.view.EventId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "seq": {
+            "type": "integer"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "agent": {
+            "$ref": "#/components/schemas/sessionspec.session.AgentId"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/sessionspec.view.EventKind"
+          },
+          "label": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "call": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "context_tokens": {
+            "type": "integer"
+          },
+          "output_tokens": {
+            "type": "integer"
+          },
+          "cache_read_tokens": {
+            "type": "integer"
+          },
+          "cache_write_tokens": {
+            "type": "integer"
+          },
+          "cost_microdollars": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "agent_cost_usd": {
+            "type": "number"
+          },
+          "session_cost_usd": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "event_id",
+          "session_id",
+          "seq",
+          "at",
+          "agent",
+          "kind",
+          "label",
+          "agent_cost_usd",
+          "session_cost_usd"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.view.CheckId": {
+        "title": "CheckId",
+        "description": "One check of one session, `<session_id>.<check>`.",
+        "x-ess-name": "sessionspec.view.CheckId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "sessionspec.view.EventId": {
+        "title": "EventId",
+        "description": "One view event of one session, `<session_id>.<seq>`; a dot, since a row key is one segment of an ess-ui node path, which `/` separates.",
+        "x-ess-name": "sessionspec.view.EventId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "sessionspec.view.EventKind": {
+        "title": "EventKind",
+        "x-ess-name": "sessionspec.view.EventKind",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "agent_started",
+          "prompt",
+          "model_turn",
+          "tool_call",
+          "decision",
+          "tool_result",
+          "turn_end",
+          "compaction",
+          "exposure",
+          "cache_bust"
+        ]
+      },
+      "sessionspec.view.SessionAgents.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.SessionAgents`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.SessionAgents.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.SessionAgents.Row": {
+        "title": "Agents of a session row",
+        "x-ess-name": "sessionspec.view.SessionAgents",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/sessionspec.session.AgentId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "parent": {
+            "$ref": "#/components/schemas/sessionspec.session.AgentId"
+          },
+          "role": {
+            "$ref": "#/components/schemas/sessionspec.session.AgentRole"
+          },
+          "model": {
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "turns": {
+            "type": "integer"
+          },
+          "context_tokens": {
+            "type": "integer"
+          },
+          "context_max": {
+            "type": "integer"
+          },
+          "output_tokens": {
+            "type": "integer"
+          },
+          "cost_usd": {
+            "type": "number"
+          },
+          "tool_calls": {
+            "type": "integer"
+          },
+          "busts": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "agent_id",
+          "session_id",
+          "role",
+          "started_at",
+          "turns",
+          "context_tokens",
+          "context_max",
+          "output_tokens",
+          "cost_usd",
+          "tool_calls",
+          "busts"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.view.SessionById.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.SessionById`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.SessionById.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.SessionById.Row": {
+        "title": "Session row",
+        "x-ess-name": "sessionspec.view.SessionById",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "project": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "harness": {
+            "$ref": "#/components/schemas/sessionspec.session.Harness"
+          },
+          "first_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "agents": {
+            "type": "integer"
+          },
+          "cost_usd": {
+            "type": "number"
+          },
+          "output_tokens": {
+            "type": "integer"
+          },
+          "context_max": {
+            "type": "integer"
+          },
+          "cache_hit_share": {
+            "type": "number"
+          },
+          "busts": {
+            "type": "integer"
+          },
+          "human_prompts": {
+            "type": "integer"
+          },
+          "tool_calls": {
+            "type": "integer"
+          },
+          "refused_tool_calls": {
+            "type": "integer"
+          },
+          "exposures": {
+            "type": "integer"
+          },
+          "working_seconds": {
+            "type": "integer"
+          },
+          "waiting_on_human_seconds": {
+            "type": "integer"
+          },
+          "waiting_share": {
+            "type": "number"
+          },
+          "kpis": {
+            "$ref": "#/components/schemas/sessionspec.cli.KpiReport"
+          }
+        },
+        "required": [
+          "session_id",
+          "project",
+          "harness",
+          "first_at",
+          "last_at",
+          "agents",
+          "cost_usd",
+          "output_tokens",
+          "context_max",
+          "cache_hit_share",
+          "busts",
+          "human_prompts",
+          "tool_calls",
+          "refused_tool_calls",
+          "exposures",
+          "working_seconds",
+          "waiting_on_human_seconds",
+          "waiting_share",
+          "kpis"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.view.SessionChecks.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.SessionChecks`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.SessionChecks.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.SessionChecks.Row": {
+        "title": "Checks of a session row",
+        "x-ess-name": "sessionspec.view.SessionChecks",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "check_id": {
+            "$ref": "#/components/schemas/sessionspec.view.CheckId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "check": {
+            "type": "string"
+          },
+          "about": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/sessionspec.session.Verdict"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "possible": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "check_id",
+          "session_id",
+          "check",
+          "about",
+          "severity",
+          "verdict",
+          "rows",
+          "possible"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.view.SessionEvents.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.SessionEvents`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.SessionEvents.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.SessionEvents.Row": {
+        "title": "Events of a session row",
+        "x-ess-name": "sessionspec.view.SessionEvents",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "$ref": "#/components/schemas/sessionspec.view.EventId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "seq": {
+            "type": "integer"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "agent": {
+            "$ref": "#/components/schemas/sessionspec.session.AgentId"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/sessionspec.view.EventKind"
+          },
+          "label": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "call": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "context_tokens": {
+            "type": "integer"
+          },
+          "output_tokens": {
+            "type": "integer"
+          },
+          "cache_read_tokens": {
+            "type": "integer"
+          },
+          "cache_write_tokens": {
+            "type": "integer"
+          },
+          "cost_microdollars": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "agent_cost_usd": {
+            "type": "number"
+          },
+          "session_cost_usd": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "event_id",
+          "session_id",
+          "seq",
+          "at",
+          "agent",
+          "kind",
+          "label",
+          "agent_cost_usd",
+          "session_cost_usd"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.view.SessionList.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.SessionList`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.SessionList.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.SessionList.Row": {
+        "title": "Sessions row",
+        "description": "The sessions with a record at or after `since`, newest `last_at` first, at most `limit` of them, narrowed by `search`: text found in `names`.",
+        "x-ess-name": "sessionspec.view.SessionList",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "project": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "names": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "integer"
+          },
+          "harness": {
+            "$ref": "#/components/schemas/sessionspec.session.Harness"
+          },
+          "first_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "agents": {
+            "type": "integer"
+          },
+          "cost_usd": {
+            "type": "number"
+          },
+          "output_tokens": {
+            "type": "integer"
+          },
+          "context_max": {
+            "type": "integer"
+          },
+          "cache_hit_share": {
+            "type": "number"
+          },
+          "busts": {
+            "type": "integer"
+          },
+          "human_prompts": {
+            "type": "integer"
+          },
+          "tool_calls": {
+            "type": "integer"
+          },
+          "refused_tool_calls": {
+            "type": "integer"
+          },
+          "exposures": {
+            "type": "integer"
+          },
+          "working_seconds": {
+            "type": "integer"
+          },
+          "waiting_on_human_seconds": {
+            "type": "integer"
+          },
+          "waiting_share": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "session_id",
+          "project",
+          "names",
+          "rank",
+          "harness",
+          "first_at",
+          "last_at",
+          "agents",
+          "cost_usd",
+          "output_tokens",
+          "context_max",
+          "cache_hit_share",
+          "busts",
+          "human_prompts",
+          "tool_calls",
+          "refused_tool_calls",
+          "exposures",
+          "working_seconds",
+          "waiting_on_human_seconds",
+          "waiting_share"
+        ],
+        "additionalProperties": false
+      },
+      "sessionspec.view.SessionTurns.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.SessionTurns`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.SessionTurns.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.SessionTurns.Row": {
+        "title": "Model turns of a session row",
+        "x-ess-name": "sessionspec.view.SessionTurns",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "$ref": "#/components/schemas/sessionspec.view.EventId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "seq": {
+            "type": "integer"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "agent": {
+            "$ref": "#/components/schemas/sessionspec.session.AgentId"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/sessionspec.view.EventKind"
+          },
+          "label": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "call": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "context_tokens": {
+            "type": "integer"
+          },
+          "output_tokens": {
+            "type": "integer"
+          },
+          "cache_read_tokens": {
+            "type": "integer"
+          },
+          "cache_write_tokens": {
+            "type": "integer"
+          },
+          "cost_microdollars": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "agent_cost_usd": {
+            "type": "number"
+          },
+          "session_cost_usd": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "event_id",
+          "session_id",
+          "seq",
+          "at",
+          "agent",
+          "kind",
+          "label",
+          "agent_cost_usd",
+          "session_cost_usd"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "x-ess-entities": {
+    "sessionspec.cli.AgentScope": {
+      "title": "AgentScope",
+      "x-ess-name": "sessionspec.cli.AgentScope",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "main",
+        "sub"
+      ]
+    },
+    "sessionspec.cli.AutonomyFigures": {
+      "title": "AutonomyFigures",
+      "description": "Prompts and decisions of main agents. Working is time in which at least one agent of the session was Working (gaps up to 10 minutes). Waiting on the human is time in which no agent was Working, from a main agent's turn end to its next Human or Delegate prompt; over one hour it counts as away.",
+      "x-ess-name": "sessionspec.cli.AutonomyFigures",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "working_seconds": {
+          "type": "integer"
+        },
+        "waiting_on_human_seconds": {
+          "type": "integer"
+        },
+        "away_seconds": {
+          "type": "integer"
+        },
+        "prompts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/x-ess-entities/sessionspec.cli.PromptFigures"
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/x-ess-entities/sessionspec.cli.DecisionFigures"
+          }
+        }
+      },
+      "required": [
+        "working_seconds",
+        "waiting_on_human_seconds",
+        "away_seconds",
+        "prompts",
+        "decisions"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.cli.BustCause": {
+      "title": "BustCause",
+      "x-ess-name": "sessionspec.cli.BustCause",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "ttl_expired",
+        "model_changed",
+        "compacted",
+        "unexplained"
+      ]
+    },
+    "sessionspec.cli.BustFigures": {
+      "title": "BustFigures",
+      "x-ess-name": "sessionspec.cli.BustFigures",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "scope": {
+          "$ref": "#/x-ess-entities/sessionspec.cli.AgentScope"
+        },
+        "cause": {
+          "$ref": "#/x-ess-entities/sessionspec.cli.BustCause"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "tokens_written_again": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "cause",
+        "count",
+        "tokens_written_again"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.cli.CacheFigures": {
+      "title": "CacheFigures",
+      "x-ess-name": "sessionspec.cli.CacheFigures",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "scope": {
+          "$ref": "#/x-ess-entities/sessionspec.cli.AgentScope"
+        },
+        "read_tokens": {
+          "type": "integer"
+        },
+        "write_tokens": {
+          "type": "integer"
+        },
+        "uncached_tokens": {
+          "type": "integer"
+        },
+        "hit_permille": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "read_tokens",
+        "write_tokens",
+        "uncached_tokens",
+        "hit_permille"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.cli.ConcurrencyFigures": {
+      "title": "ConcurrencyFigures",
+      "description": "Agents active in the same minute; active means two of its records at most 5 minutes apart around the minute.",
+      "x-ess-name": "sessionspec.cli.ConcurrencyFigures",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "scope": {
+          "$ref": "#/x-ess-entities/sessionspec.cli.AgentScope"
+        },
+        "p50": {
+          "type": "integer"
+        },
+        "p90": {
+          "type": "integer"
+        },
+        "max": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "p50",
+        "p90",
+        "max"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.cli.DecisionFigures": {
+      "title": "DecisionFigures",
+      "x-ess-name": "sessionspec.cli.DecisionFigures",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "decider": {
+          "$ref": "#/x-ess-entities/sessionspec.session.Decider"
+        },
+        "decision": {
+          "$ref": "#/x-ess-entities/sessionspec.session.Decision"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "decider",
+        "decision",
+        "count"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.cli.ExposureFigures": {
+      "title": "ExposureFigures",
+      "x-ess-name": "sessionspec.cli.ExposureFigures",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "channel": {
+          "$ref": "#/x-ess-entities/sessionspec.session.ExposureChannel"
+        },
+        "class": {
+          "$ref": "#/x-ess-entities/sessionspec.session.ExposureClass"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "verdict": {
+          "$ref": "#/x-ess-entities/sessionspec.session.Verdict"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "sessions": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "channel",
+        "class",
+        "kind",
+        "verdict",
+        "count",
+        "sessions"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.cli.KpiReport": {
+      "title": "KpiReport",
+      "x-ess-name": "sessionspec.cli.KpiReport",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "window_from": {
+          "type": "string"
+        },
+        "window_to": {
+          "type": "string"
+        },
+        "transcripts": {
+          "type": "integer"
+        },
+        "sessions": {
+          "type": "integer"
+        },
+        "sub_agents": {
+          "type": "integer"
+        },
+        "refused_commands": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "description": "The sum of the model figures, at API list price; a subscription bills otherwise.",
+          "type": "integer"
+        },
+        "unpriced_messages": {
+          "description": "Model messages of a model with no price in src/pricing.rs, not in the cost.",
+          "type": "integer"
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "$ref": "#/x-ess-entities/sessionspec.cli.ModelFigures"
+          }
+        },
+        "cache": {
+          "type": "array",
+          "items": {
+            "$ref": "#/x-ess-entities/sessionspec.cli.CacheFigures"
+          }
+        },
+        "busts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/x-ess-entities/sessionspec.cli.BustFigures"
+          }
+        },
+        "concurrency": {
+          "type": "array",
+          "items": {
+            "$ref": "#/x-ess-entities/sessionspec.cli.ConcurrencyFigures"
+          }
+        },
+        "autonomy": {
+          "$ref": "#/x-ess-entities/sessionspec.cli.AutonomyFigures"
+        },
+        "exposures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/x-ess-entities/sessionspec.cli.ExposureFigures"
+          }
+        }
+      },
+      "required": [
+        "window_from",
+        "window_to",
+        "transcripts",
+        "sessions",
+        "sub_agents",
+        "refused_commands",
+        "cost_microdollars",
+        "unpriced_messages",
+        "models",
+        "cache",
+        "busts",
+        "concurrency",
+        "autonomy",
+        "exposures"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.cli.ModelFigures": {
+      "title": "ModelFigures",
+      "x-ess-name": "sessionspec.cli.ModelFigures",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "scope": {
+          "$ref": "#/x-ess-entities/sessionspec.cli.AgentScope"
+        },
+        "model": {
+          "type": "string"
+        },
+        "messages": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "context_p50": {
+          "type": "integer"
+        },
+        "context_p90": {
+          "type": "integer"
+        },
+        "context_max": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "description": "The tokens of these messages at the API list price of the model (src/pricing.rs), in millionths of a dollar; 0 for a model with no price.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "model",
+        "messages",
+        "output_tokens",
+        "context_p50",
+        "context_p90",
+        "context_max",
+        "cost_microdollars"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.cli.PromptFigures": {
+      "title": "PromptFigures",
+      "x-ess-name": "sessionspec.cli.PromptFigures",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "author": {
+          "$ref": "#/x-ess-entities/sessionspec.session.PromptAuthor"
+        },
+        "attribution": {
+          "$ref": "#/x-ess-entities/sessionspec.session.Attribution"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "author",
+        "attribution",
+        "count"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.session.AgentId": {
+      "title": "AgentId",
+      "description": "One agent loop in a session; the main loop or a sub-agent.",
+      "x-ess-name": "sessionspec.session.AgentId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "sessionspec.session.AgentRole": {
+      "title": "AgentRole",
+      "description": "SideCall is a model call of the harness outside every agent's conversation (a title, a summary, a quota probe): the wire tells it by a call with no tools and no history.",
+      "x-ess-name": "sessionspec.session.AgentRole",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Main",
+        "SubAgent",
+        "SideCall"
+      ]
+    },
+    "sessionspec.session.Attribution": {
+      "title": "Attribution",
+      "description": "How the author was established. Known from a structured field of the transcript, Inferred from a text prefix, Unknown otherwise.",
+      "x-ess-name": "sessionspec.session.Attribution",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Known",
+        "Inferred",
+        "Unknown"
+      ]
+    },
+    "sessionspec.session.Decider": {
+      "title": "Decider",
+      "description": "What decided a tool call. NotRecorded where the transcript carries no decision.",
+      "x-ess-name": "sessionspec.session.Decider",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "PermissionMode",
+        "Classifier",
+        "Hook",
+        "Human",
+        "SafetyCheck",
+        "Rule",
+        "NotRecorded"
+      ]
+    },
+    "sessionspec.session.Decision": {
+      "title": "Decision",
+      "x-ess-name": "sessionspec.session.Decision",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Accept",
+        "Refuse"
+      ]
+    },
+    "sessionspec.session.ExposureChannel": {
+      "title": "ExposureChannel",
+      "description": "Where a secret or a personal datum appeared. ToolInput is the severe one when the tool's category is Network, Message or Execute: the value left the session.",
+      "x-ess-name": "sessionspec.session.ExposureChannel",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Prompt",
+        "ToolInput",
+        "ToolOutput",
+        "AgentText"
+      ]
+    },
+    "sessionspec.session.ExposureClass": {
+      "title": "ExposureClass",
+      "x-ess-name": "sessionspec.session.ExposureClass",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Secret",
+        "PersonalData"
+      ]
+    },
+    "sessionspec.session.Harness": {
+      "title": "Harness",
+      "x-ess-name": "sessionspec.session.Harness",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "ClaudeCode",
+        "Codex",
+        "Other"
+      ]
+    },
+    "sessionspec.session.PromptAuthor": {
+      "title": "PromptAuthor",
+      "description": "Who wrote a prompt. Delegate is a session acting for the human; Harness covers task notifications, compaction summaries and auto-continuation.",
+      "x-ess-name": "sessionspec.session.PromptAuthor",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Human",
+        "Delegate",
+        "PeerSession",
+        "ParentAgent",
+        "Harness",
+        "Hook"
+      ]
+    },
+    "sessionspec.session.SessionId": {
+      "title": "SessionId",
+      "description": "The harness's own session identifier.",
+      "x-ess-name": "sessionspec.session.SessionId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "sessionspec.session.Verdict": {
+      "title": "Verdict",
+      "description": "Ok is a known fixture or allowed value, Gap a confirmed exposure, Unk a match nobody confirmed.",
+      "x-ess-name": "sessionspec.session.Verdict",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Ok",
+        "Gap",
+        "Unk"
+      ]
+    },
+    "sessionspec.view.AgentListing": {
+      "title": "AgentListing",
+      "description": "One agent of a session with its own figures, as `sessionspec.view.Agent` and more.",
+      "x-ess-name": "sessionspec.view.AgentListing",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "agent_id": {
+          "$ref": "#/x-ess-entities/sessionspec.session.AgentId"
+        },
+        "session_id": {
+          "$ref": "#/x-ess-entities/sessionspec.session.SessionId",
+          "x-ess-relation": {
+            "name": "agents_of",
+            "kind": "owns",
+            "source": "sessionspec.view.SessionListing",
+            "target": "sessionspec.view.AgentListing",
+            "cardinality": "many",
+            "via": "session_id",
+            "$ref": "#/x-ess-entities/sessionspec.view.SessionListing"
+          }
+        },
+        "parent": {
+          "$ref": "#/x-ess-entities/sessionspec.session.AgentId",
+          "x-ess-relation": {
+            "name": "parent_agent",
+            "kind": "references",
+            "source": "sessionspec.view.AgentListing",
+            "target": "sessionspec.view.AgentListing",
+            "cardinality": "one",
+            "via": "parent",
+            "$ref": "#/x-ess-entities/sessionspec.view.AgentListing"
+          }
+        },
+        "role": {
+          "$ref": "#/x-ess-entities/sessionspec.session.AgentRole"
+        },
+        "model": {
+          "description": "The model of the agent's last turn.",
+          "type": "string"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "turns": {
+          "type": "integer"
+        },
+        "context_tokens": {
+          "description": "The context of the agent's last turn.",
+          "type": "integer"
+        },
+        "context_max": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "busts": {
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/sessionspec.view.AgentListing.State"
+        }
+      },
+      "required": [
+        "agent_id",
+        "session_id",
+        "role",
+        "started_at",
+        "turns",
+        "context_tokens",
+        "context_max",
+        "output_tokens",
+        "cost_usd",
+        "tool_calls",
+        "busts",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.view.AgentListing.State": {
+      "title": "State",
+      "x-ess-name": "sessionspec.view.AgentListing.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Listed"
+      ]
+    },
+    "sessionspec.view.CheckId": {
+      "title": "CheckId",
+      "description": "One check of one session, `<session_id>.<check>`.",
+      "x-ess-name": "sessionspec.view.CheckId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "sessionspec.view.EventId": {
+      "title": "EventId",
+      "description": "One view event of one session, `<session_id>.<seq>`; a dot, since a row key is one segment of an ess-ui node path, which `/` separates.",
+      "x-ess-name": "sessionspec.view.EventId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "sessionspec.view.EventKind": {
+      "title": "EventKind",
+      "x-ess-name": "sessionspec.view.EventKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "agent_started",
+        "prompt",
+        "model_turn",
+        "tool_call",
+        "decision",
+        "tool_result",
+        "turn_end",
+        "compaction",
+        "exposure",
+        "cache_bust"
+      ]
+    },
+    "sessionspec.view.EventRow": {
+      "title": "EventRow",
+      "description": "One `sessionspec.view.Event` of a session as a row: the same fields, its time as a `Timestamp`, and the running cost of its agent and of its session.",
+      "x-ess-name": "sessionspec.view.EventRow",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "$ref": "#/x-ess-entities/sessionspec.view.EventId"
+        },
+        "session_id": {
+          "$ref": "#/x-ess-entities/sessionspec.session.SessionId",
+          "x-ess-relation": {
+            "name": "events_of",
+            "kind": "owns",
+            "source": "sessionspec.view.SessionListing",
+            "target": "sessionspec.view.EventRow",
+            "cardinality": "many",
+            "via": "session_id",
+            "$ref": "#/x-ess-entities/sessionspec.view.SessionListing"
+          }
+        },
+        "seq": {
+          "type": "integer"
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "agent": {
+          "$ref": "#/x-ess-entities/sessionspec.session.AgentId",
+          "x-ess-relation": {
+            "name": "of_agent",
+            "kind": "references",
+            "source": "sessionspec.view.EventRow",
+            "target": "sessionspec.view.AgentListing",
+            "cardinality": "one",
+            "via": "agent",
+            "$ref": "#/x-ess-entities/sessionspec.view.AgentListing"
+          }
+        },
+        "kind": {
+          "$ref": "#/x-ess-entities/sessionspec.view.EventKind"
+        },
+        "label": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "call": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "cache_read_tokens": {
+          "type": "integer"
+        },
+        "cache_write_tokens": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "type": "integer"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "agent_cost_usd": {
+          "description": "The cost of this event's agent up to and including this event.",
+          "type": "number"
+        },
+        "session_cost_usd": {
+          "description": "The cost of the session up to and including this event.",
+          "type": "number"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/sessionspec.view.EventRow.State"
+        }
+      },
+      "required": [
+        "event_id",
+        "session_id",
+        "seq",
+        "at",
+        "agent",
+        "kind",
+        "label",
+        "agent_cost_usd",
+        "session_cost_usd",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.view.EventRow.State": {
+      "title": "State",
+      "x-ess-name": "sessionspec.view.EventRow.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Logged"
+      ]
+    },
+    "sessionspec.view.SessionCheck": {
+      "title": "SessionCheck",
+      "description": "The verdict of one check of `queries/session.sq` on one session, as `sessionspec query` reports it: the rows the check found, definite and possible.",
+      "x-ess-name": "sessionspec.view.SessionCheck",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "check_id": {
+          "$ref": "#/x-ess-entities/sessionspec.view.CheckId"
+        },
+        "session_id": {
+          "$ref": "#/x-ess-entities/sessionspec.session.SessionId"
+        },
+        "check": {
+          "type": "string"
+        },
+        "about": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "verdict": {
+          "$ref": "#/x-ess-entities/sessionspec.session.Verdict"
+        },
+        "rows": {
+          "description": "Rows the check's rule found, definite and possible.",
+          "type": "integer"
+        },
+        "possible": {
+          "description": "Rows that hold only under an unknown (an inferred author, a decision not recorded).",
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/sessionspec.view.SessionCheck.State"
+        }
+      },
+      "required": [
+        "check_id",
+        "session_id",
+        "check",
+        "about",
+        "severity",
+        "verdict",
+        "rows",
+        "possible",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.view.SessionCheck.State": {
+      "title": "State",
+      "x-ess-name": "sessionspec.view.SessionCheck.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Judged"
+      ]
+    },
+    "sessionspec.view.SessionListing": {
+      "title": "SessionListing",
+      "description": "One session with the figures the overview lists and the session page heads with. The flat figures are derived from `kpis`, so a table can sort and sum them.",
+      "x-ess-name": "sessionspec.view.SessionListing",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "$ref": "#/x-ess-entities/sessionspec.session.SessionId"
+        },
+        "project": {
+          "description": "The working directory of the session's first record, relative to the home directory (`~/src/ess`); the projects directory name when no record names one. The owner, 2026-11-26: the project shows the home-relative working directory.",
+          "type": "string"
+        },
+        "title": {
+          "description": "The harness's title of the session, which it derives from prompt text. The owner, 2026-11-26: a host-local UI may show it; it is written only to the host's local store, never to this repository.",
+          "type": "string"
+        },
+        "names": {
+          "description": "The project, the title, the model names and the tool names of the session, lower case and space-separated: the text `search` is found in.",
+          "type": "string"
+        },
+        "rank": {
+          "description": "The session's place by `last_at` among the sessions the store holds, newest 1.",
+          "type": "integer"
+        },
+        "harness": {
+          "$ref": "#/x-ess-entities/sessionspec.session.Harness"
+        },
+        "first_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "agents": {
+          "description": "Agents of the session, the main agent included.",
+          "type": "integer"
+        },
+        "cost_usd": {
+          "description": "`kpis.cost_microdollars` in dollars: the tokens at API list price.",
+          "type": "number"
+        },
+        "output_tokens": {
+          "description": "The sum of `kpis.models[].output_tokens`.",
+          "type": "integer"
+        },
+        "context_max": {
+          "description": "The largest context of any agent, in tokens.",
+          "type": "integer"
+        },
+        "cache_hit_share": {
+          "description": "Cache read tokens over all input tokens, 0 to 1.",
+          "type": "number"
+        },
+        "busts": {
+          "description": "The sum of `kpis.busts[].count`.",
+          "type": "integer"
+        },
+        "human_prompts": {
+          "description": "The sum of `kpis.autonomy.prompts[].count` with author `Human`.",
+          "type": "integer"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "refused_tool_calls": {
+          "type": "integer"
+        },
+        "exposures": {
+          "description": "The sum of `kpis.exposures[].count`.",
+          "type": "integer"
+        },
+        "working_seconds": {
+          "description": "`kpis.autonomy.working_seconds`.",
+          "type": "integer"
+        },
+        "waiting_on_human_seconds": {
+          "description": "`kpis.autonomy.waiting_on_human_seconds`.",
+          "type": "integer"
+        },
+        "waiting_share": {
+          "description": "The autonomy KPI: `waiting_on_human_seconds` over the session's wall time (`last_at - first_at`), 0 to 1.",
+          "type": "number"
+        },
+        "kpis": {
+          "$ref": "#/x-ess-entities/sessionspec.cli.KpiReport",
+          "description": "The session's own KPI report, as `sessionspec.cli.SessionSummary.kpis`."
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/sessionspec.view.SessionListing.State"
+        }
+      },
+      "required": [
+        "session_id",
+        "project",
+        "names",
+        "rank",
+        "harness",
+        "first_at",
+        "last_at",
+        "agents",
+        "cost_usd",
+        "output_tokens",
+        "context_max",
+        "cache_hit_share",
+        "busts",
+        "human_prompts",
+        "tool_calls",
+        "refused_tool_calls",
+        "exposures",
+        "working_seconds",
+        "waiting_on_human_seconds",
+        "waiting_share",
+        "kpis",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.view.SessionListing.State": {
+      "title": "State",
+      "x-ess-name": "sessionspec.view.SessionListing.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Listed"
+      ]
+    }
+  }
+}

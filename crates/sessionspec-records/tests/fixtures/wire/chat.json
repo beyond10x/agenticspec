@@ -1,0 +1,49 @@
+{
+  "about": "Synthetic, written by hand. One agent on the chat wire: a streamed tool call, then its result and a final answer.",
+  "session": "fixture-session-c",
+  "calls": [
+    {
+      "wire": "chat",
+      "path": "/v1/chat/completions",
+      "started_ms": 1795600200000,
+      "finished_ms": 1795600201000,
+      "request": {
+        "model": "local-model",
+        "tools": [{"type": "function", "function": {"name": "read_file"}}],
+        "messages": [
+          {"role": "system", "content": "You are a coding agent."},
+          {"role": "user", "content": "Read the readme"}
+        ]
+      },
+      "events": [
+        {"id": "chatcmpl-1", "model": "local-model", "choices": [{"index": 0, "delta": {"role": "assistant", "tool_calls": [{"index": 0, "id": "call_1", "type": "function", "function": {"name": "read_file", "arguments": "{\"path\":"}}]}}]},
+        {"id": "chatcmpl-1", "model": "local-model", "choices": [{"index": 0, "delta": {"tool_calls": [{"index": 0, "function": {"arguments": "\"README.md\"}"}}]}}]},
+        {"id": "chatcmpl-1", "model": "local-model", "choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls"}]},
+        {"id": "chatcmpl-1", "model": "local-model", "choices": [], "usage": {"prompt_tokens": 20, "completion_tokens": 7, "prompt_tokens_details": {"cached_tokens": 0}}}
+      ],
+      "facts": {"call_id": "h1", "route": "local", "upstream": "ollama", "attempts": 1}
+    },
+    {
+      "wire": "chat",
+      "path": "/v1/chat/completions",
+      "started_ms": 1795600202000,
+      "finished_ms": 1795600203000,
+      "request": {
+        "model": "local-model",
+        "tools": [{"type": "function", "function": {"name": "read_file"}}],
+        "messages": [
+          {"role": "system", "content": "You are a coding agent."},
+          {"role": "user", "content": "Read the readme"},
+          {"role": "assistant", "content": null, "tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "read_file", "arguments": "{\"path\":\"README.md\"}"}}]},
+          {"role": "tool", "tool_call_id": "call_1", "content": "# Title"}
+        ]
+      },
+      "body": {
+        "id": "chatcmpl-2", "model": "local-model",
+        "choices": [{"index": 0, "message": {"role": "assistant", "content": "It has a title."}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 35, "completion_tokens": 5, "prompt_tokens_details": {"cached_tokens": 20}}
+      },
+      "facts": {"call_id": "h2", "route": "local", "upstream": "ollama", "attempts": 1}
+    }
+  ]
+}

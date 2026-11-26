@@ -1,0 +1,7 @@
+# generated from sessionspec v1
+# contract digest 48f7fe6c6e083e2c80c599aa79f7267068cfeadcc7eaa3ddca0e8128040b6cfd
+# do not edit: regenerate with `ess synthesize`
+
+[workspace]
+resolver = "2"
+members = ["crates/session-ir", "crates/session-view", "crates/sessionspec-server", "crates/sessionspec-system", "crates/sessionspec-types"]
