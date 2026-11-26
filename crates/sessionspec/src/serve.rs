@@ -35,8 +35,61 @@ use crate::time::epoch_ms;
 
 /// How often the server syncs the window; `SESSIONSPEC_SYNC_MS` sets it in milliseconds.
 pub const SYNC_EVERY: Duration = Duration::from_secs(5);
-/// The lifts the server's sync runs at a time.
+/// The lifts a sync child runs at a time (`RAYON_NUM_THREADS` of the child).
 pub const SYNC_THREADS: usize = 2;
+
+/// How the server keeps the store current: it runs `sessionspec sync` as a child process, one at
+/// a time, and reads what the child wrote from the store. The server never lifts a transcript
+/// itself, so a lift's memory belongs to the child and goes back to the system when it exits;
+/// the server holds only the page it answers.
+#[derive(Clone, Debug)]
+pub struct Syncer {
+    /// The `sessionspec` binary the child runs, normally `std::env::current_exe()`.
+    pub exe: PathBuf,
+    /// The child's `--state-dir`: the directory of the server's store.
+    pub state_dir: PathBuf,
+    /// The child's `--root`.
+    pub root: PathBuf,
+    /// The child's `--since-hours`.
+    pub since_hours: i64,
+}
+
+impl Syncer {
+    /// The child's command line: `sync --state-dir <dir> --root <root> --since-hours <h>`, with
+    /// [`SYNC_THREADS`] lifts at a time, standard input and output closed, errors on the
+    /// server's standard error.
+    pub fn command(&self) -> std::process::Command {
+        let mut c = std::process::Command::new(&self.exe);
+        c.arg("sync")
+            .arg("--state-dir")
+            .arg(&self.state_dir)
+            .arg("--root")
+            .arg(&self.root)
+            .arg("--since-hours")
+            .arg(self.since_hours.to_string())
+            .env("RAYON_NUM_THREADS", SYNC_THREADS.to_string())
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::inherit());
+        c
+    }
+
+    /// Runs one sync child to its end. A child that cannot start or fails is one line on
+    /// standard error; the server keeps answering from what the store holds.
+    pub fn sync_once(&self) -> bool {
+        match self.command().status() {
+            Ok(s) if s.success() => true,
+            Ok(s) => {
+                eprintln!("sessionspec: sync child ended with {s}");
+                false
+            }
+            Err(e) => {
+                eprintln!("sessionspec: sync child {}: {e}", self.exe.display());
+                false
+            }
+        }
+    }
+}
 /// The default port.
 pub const PORT: u16 = 7420;
 
@@ -637,34 +690,22 @@ pub fn bind(port: u16) -> io::Result<TcpListener> {
     TcpListener::bind(("127.0.0.1", port))
 }
 
-/// Serves until the process ends: one thread per connection, and one that syncs `root` every
-/// [`SYNC_EVERY`] and publishes what changed.
-pub fn run(listener: TcpListener, shared: Arc<Shared>, root: PathBuf, since_hours: i64) {
-    let syncer = Arc::clone(&shared);
+/// Serves until the process ends: one thread per connection, and one that runs a [`Syncer`]
+/// child every [`SYNC_EVERY`] (after the previous child ended) and publishes what changed.
+pub fn run(listener: TcpListener, shared: Arc<Shared>, syncer: Syncer) {
+    let publisher = Arc::clone(&shared);
     let every = std::env::var("SESSIONSPEC_SYNC_MS")
         .ok()
         .and_then(|v| v.parse().ok())
         .map_or(SYNC_EVERY, Duration::from_millis);
     std::thread::spawn(move || {
-        let mut seen = Seen::of(&syncer.store);
-        // A live session is re-lifted on every change; two lifts at a time bound what a sync
-        // holds while the server runs.
-        let pool = rayon::ThreadPoolBuilder::new()
-            .num_threads(SYNC_THREADS)
-            .build()
-            .ok();
+        let mut seen = Seen::of(&publisher.store);
         loop {
             std::thread::sleep(every);
-            let now = crate::time::now_ms();
-            let from = now - since_hours * 3_600_000;
-            let synced = match &pool {
-                Some(p) => p.install(|| syncer.store.sync(&root, from)),
-                None => syncer.store.sync(&root, from),
-            };
-            let _ = synced;
-            // Rows another writer (the appender) wrote are published too: the change number
-            // covers every write to the store.
-            publish_changes(&syncer, &mut seen);
+            syncer.sync_once();
+            // Rows any writer wrote (the sync child, an appender) are published: the change
+            // number covers every write to the store.
+            publish_changes(&publisher, &mut seen);
         }
     });
     for conn in listener.incoming() {

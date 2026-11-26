@@ -331,7 +331,7 @@ impl Handler for Commands {
                 }
             }
             "serve" => {
-                let (root, from, _) = window(&inv.input);
+                let (root, _, _) = window(&inv.input);
                 let hours = inv
                     .input
                     .get("since_hours")
@@ -343,7 +343,20 @@ impl Handler for Commands {
                     .and_then(Value::as_i64)
                     .and_then(|p| u16::try_from(p).ok())
                     .unwrap_or(sessionspec::serve::PORT);
-                let store = match synced(&inv.context, &root, from) {
+                let path = sessionspec::store::path_in(inv.context.state_dir.as_deref());
+                let syncer = sessionspec::serve::Syncer {
+                    exe: std::env::current_exe().unwrap_or_else(|_| "sessionspec".into()),
+                    state_dir: path
+                        .parent()
+                        .map(std::path::Path::to_path_buf)
+                        .unwrap_or_default(),
+                    root,
+                    since_hours: hours,
+                };
+                // The first sync runs in a child too, before the server opens the store: an
+                // upgrade or a first fill lifts every session, and that memory is the child's.
+                syncer.sync_once();
+                let store = match open_store(&inv.context) {
                     Ok(s) => std::sync::Arc::new(s),
                     Err(r) => return r,
                 };
@@ -377,7 +390,7 @@ impl Handler for Commands {
                     store,
                     ui,
                 });
-                sessionspec::serve::run(listener, shared, root, hours);
+                sessionspec::serve::run(listener, shared, syncer);
                 HandlerReply::Success(json!({ "url": url }))
             }
             _ => HandlerReply::Unavailable,
