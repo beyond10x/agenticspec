@@ -1,0 +1,1702 @@
+{
+  "$defs": {
+    "sessionspec.cli.AgentScope": {
+      "enum": [
+        "main",
+        "sub"
+      ],
+      "title": "AgentScope",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.cli.AgentScope"
+    },
+    "sessionspec.cli.AutonomyFigures": {
+      "additionalProperties": false,
+      "description": "Prompts and decisions of main agents. Working is time in which at least one agent of the session was Working (gaps up to 10 minutes). Waiting on the human is time in which no agent was Working, from a main agent's turn end to its next Human or Delegate prompt; over one hour it counts as away.",
+      "properties": {
+        "away_seconds": {
+          "type": "integer"
+        },
+        "decisions": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.cli.DecisionFigures"
+          },
+          "type": "array"
+        },
+        "prompts": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.cli.PromptFigures"
+          },
+          "type": "array"
+        },
+        "waiting_on_human_seconds": {
+          "type": "integer"
+        },
+        "working_seconds": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "working_seconds",
+        "waiting_on_human_seconds",
+        "away_seconds",
+        "prompts",
+        "decisions"
+      ],
+      "title": "AutonomyFigures",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.AutonomyFigures"
+    },
+    "sessionspec.cli.BustCause": {
+      "enum": [
+        "ttl_expired",
+        "model_changed",
+        "compacted",
+        "unexplained"
+      ],
+      "title": "BustCause",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.cli.BustCause"
+    },
+    "sessionspec.cli.BustFigures": {
+      "additionalProperties": false,
+      "properties": {
+        "cause": {
+          "$ref": "#/$defs/sessionspec.cli.BustCause"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "scope": {
+          "$ref": "#/$defs/sessionspec.cli.AgentScope"
+        },
+        "tokens_written_again": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "cause",
+        "count",
+        "tokens_written_again"
+      ],
+      "title": "BustFigures",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.BustFigures"
+    },
+    "sessionspec.cli.CacheFigures": {
+      "additionalProperties": false,
+      "properties": {
+        "hit_permille": {
+          "type": "integer"
+        },
+        "read_tokens": {
+          "type": "integer"
+        },
+        "scope": {
+          "$ref": "#/$defs/sessionspec.cli.AgentScope"
+        },
+        "uncached_tokens": {
+          "type": "integer"
+        },
+        "write_tokens": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "read_tokens",
+        "write_tokens",
+        "uncached_tokens",
+        "hit_permille"
+      ],
+      "title": "CacheFigures",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.CacheFigures"
+    },
+    "sessionspec.cli.ConcurrencyFigures": {
+      "additionalProperties": false,
+      "description": "Agents active in the same minute; active means two of its records at most 5 minutes apart around the minute.",
+      "properties": {
+        "max": {
+          "type": "integer"
+        },
+        "p50": {
+          "type": "integer"
+        },
+        "p90": {
+          "type": "integer"
+        },
+        "scope": {
+          "$ref": "#/$defs/sessionspec.cli.AgentScope"
+        }
+      },
+      "required": [
+        "scope",
+        "p50",
+        "p90",
+        "max"
+      ],
+      "title": "ConcurrencyFigures",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.ConcurrencyFigures"
+    },
+    "sessionspec.cli.DecisionFigures": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "decider": {
+          "$ref": "#/$defs/sessionspec.session.Decider"
+        },
+        "decision": {
+          "$ref": "#/$defs/sessionspec.session.Decision"
+        }
+      },
+      "required": [
+        "decider",
+        "decision",
+        "count"
+      ],
+      "title": "DecisionFigures",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.DecisionFigures"
+    },
+    "sessionspec.cli.ExposureFigures": {
+      "additionalProperties": false,
+      "properties": {
+        "channel": {
+          "$ref": "#/$defs/sessionspec.session.ExposureChannel"
+        },
+        "class": {
+          "$ref": "#/$defs/sessionspec.session.ExposureClass"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "sessions": {
+          "type": "integer"
+        },
+        "verdict": {
+          "$ref": "#/$defs/sessionspec.session.Verdict"
+        }
+      },
+      "required": [
+        "channel",
+        "class",
+        "kind",
+        "verdict",
+        "count",
+        "sessions"
+      ],
+      "title": "ExposureFigures",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.ExposureFigures"
+    },
+    "sessionspec.cli.KpiReport": {
+      "additionalProperties": false,
+      "properties": {
+        "autonomy": {
+          "$ref": "#/$defs/sessionspec.cli.AutonomyFigures"
+        },
+        "busts": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.cli.BustFigures"
+          },
+          "type": "array"
+        },
+        "cache": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.cli.CacheFigures"
+          },
+          "type": "array"
+        },
+        "concurrency": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.cli.ConcurrencyFigures"
+          },
+          "type": "array"
+        },
+        "cost_microdollars": {
+          "description": "The sum of the model figures, at API list price; a subscription bills otherwise.",
+          "type": "integer"
+        },
+        "exposures": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.cli.ExposureFigures"
+          },
+          "type": "array"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.cli.ModelFigures"
+          },
+          "type": "array"
+        },
+        "refused_commands": {
+          "type": "integer"
+        },
+        "sessions": {
+          "type": "integer"
+        },
+        "sub_agents": {
+          "type": "integer"
+        },
+        "transcripts": {
+          "type": "integer"
+        },
+        "unpriced_messages": {
+          "description": "Model messages of a model with no price in src/pricing.rs, not in the cost.",
+          "type": "integer"
+        },
+        "window_from": {
+          "type": "string"
+        },
+        "window_to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "window_from",
+        "window_to",
+        "transcripts",
+        "sessions",
+        "sub_agents",
+        "refused_commands",
+        "cost_microdollars",
+        "unpriced_messages",
+        "models",
+        "cache",
+        "busts",
+        "concurrency",
+        "autonomy",
+        "exposures"
+      ],
+      "title": "KpiReport",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.KpiReport"
+    },
+    "sessionspec.cli.ModelFigures": {
+      "additionalProperties": false,
+      "properties": {
+        "context_max": {
+          "type": "integer"
+        },
+        "context_p50": {
+          "type": "integer"
+        },
+        "context_p90": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "description": "The tokens of these messages at the API list price of the model (src/pricing.rs), in millionths of a dollar; 0 for a model with no price.",
+          "type": "integer"
+        },
+        "messages": {
+          "type": "integer"
+        },
+        "model": {
+          "type": "string"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "scope": {
+          "$ref": "#/$defs/sessionspec.cli.AgentScope"
+        }
+      },
+      "required": [
+        "scope",
+        "model",
+        "messages",
+        "output_tokens",
+        "context_p50",
+        "context_p90",
+        "context_max",
+        "cost_microdollars"
+      ],
+      "title": "ModelFigures",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.ModelFigures"
+    },
+    "sessionspec.cli.PromptFigures": {
+      "additionalProperties": false,
+      "properties": {
+        "attribution": {
+          "$ref": "#/$defs/sessionspec.session.Attribution"
+        },
+        "author": {
+          "$ref": "#/$defs/sessionspec.session.PromptAuthor"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "author",
+        "attribution",
+        "count"
+      ],
+      "title": "PromptFigures",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.cli.PromptFigures"
+    },
+    "sessionspec.session.AgentId": {
+      "description": "One agent loop in a session; the main loop or a sub-agent.",
+      "title": "AgentId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "sessionspec.session.AgentId"
+    },
+    "sessionspec.session.AgentRole": {
+      "description": "SideCall is a model call of the harness outside every agent's conversation (a title, a summary, a quota probe): the wire tells it by a call with no tools and no history.",
+      "enum": [
+        "Main",
+        "SubAgent",
+        "SideCall"
+      ],
+      "title": "AgentRole",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.AgentRole"
+    },
+    "sessionspec.session.Attribution": {
+      "description": "How the author was established. Known from a structured field of the transcript, Inferred from a text prefix, Unknown otherwise.",
+      "enum": [
+        "Known",
+        "Inferred",
+        "Unknown"
+      ],
+      "title": "Attribution",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.Attribution"
+    },
+    "sessionspec.session.Decider": {
+      "description": "What decided a tool call. NotRecorded where the transcript carries no decision.",
+      "enum": [
+        "PermissionMode",
+        "Classifier",
+        "Hook",
+        "Human",
+        "SafetyCheck",
+        "Rule",
+        "NotRecorded"
+      ],
+      "title": "Decider",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.Decider"
+    },
+    "sessionspec.session.Decision": {
+      "enum": [
+        "Accept",
+        "Refuse"
+      ],
+      "title": "Decision",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.Decision"
+    },
+    "sessionspec.session.ExposureChannel": {
+      "description": "Where a secret or a personal datum appeared. ToolInput is the severe one when the tool's category is Network, Message or Execute: the value left the session.",
+      "enum": [
+        "Prompt",
+        "ToolInput",
+        "ToolOutput",
+        "AgentText"
+      ],
+      "title": "ExposureChannel",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.ExposureChannel"
+    },
+    "sessionspec.session.ExposureClass": {
+      "enum": [
+        "Secret",
+        "PersonalData"
+      ],
+      "title": "ExposureClass",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.ExposureClass"
+    },
+    "sessionspec.session.Harness": {
+      "enum": [
+        "ClaudeCode",
+        "Codex",
+        "Other"
+      ],
+      "title": "Harness",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.Harness"
+    },
+    "sessionspec.session.PromptAuthor": {
+      "description": "Who wrote a prompt. Delegate is a session acting for the human; Harness covers task notifications, compaction summaries and auto-continuation.",
+      "enum": [
+        "Human",
+        "Delegate",
+        "PeerSession",
+        "ParentAgent",
+        "Harness",
+        "Hook"
+      ],
+      "title": "PromptAuthor",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.PromptAuthor"
+    },
+    "sessionspec.session.SessionId": {
+      "description": "The harness's own session identifier.",
+      "title": "SessionId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "sessionspec.session.SessionId"
+    },
+    "sessionspec.session.Verdict": {
+      "description": "Ok is a known fixture or allowed value, Gap a confirmed exposure, Unk a match nobody confirmed.",
+      "enum": [
+        "Ok",
+        "Gap",
+        "Unk"
+      ],
+      "title": "Verdict",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.session.Verdict"
+    },
+    "sessionspec.view.Agent": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "spawned_by": {
+          "type": "string"
+        },
+        "started_at": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "started_at"
+      ],
+      "title": "Agent",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.view.Agent"
+    },
+    "sessionspec.view.AgentTurns.row": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "agent_cost_usd": {
+          "type": "number"
+        },
+        "at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "cache_read_tokens": {
+          "type": "integer"
+        },
+        "cache_write_tokens": {
+          "type": "integer"
+        },
+        "call": {
+          "type": "string"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "type": "integer"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "event_id": {
+          "$ref": "#/$defs/sessionspec.view.EventId"
+        },
+        "kind": {
+          "$ref": "#/$defs/sessionspec.view.EventKind"
+        },
+        "label": {
+          "type": "string"
+        },
+        "notable": {
+          "type": "boolean"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "ord": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "seq": {
+          "type": "integer"
+        },
+        "session_cost_usd": {
+          "type": "number"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        }
+      },
+      "required": [
+        "event_id",
+        "session_id",
+        "seq",
+        "ord",
+        "at",
+        "agent",
+        "kind",
+        "notable",
+        "label",
+        "agent_cost_usd",
+        "session_cost_usd"
+      ],
+      "title": "Model turns of an agent row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.AgentTurns"
+    },
+    "sessionspec.view.AgentUpdated": {
+      "additionalProperties": false,
+      "description": "An agent started or its figures changed; the payload is its whole row.",
+      "properties": {
+        "agent_id": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "busts": {
+          "type": "integer"
+        },
+        "context_max": {
+          "type": "integer"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "model": {
+          "type": "string"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "parent": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "role": {
+          "$ref": "#/$defs/sessionspec.session.AgentRole"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        },
+        "started_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "turns": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agent_id",
+        "session_id",
+        "role",
+        "started_at",
+        "turns",
+        "context_tokens",
+        "context_max",
+        "output_tokens",
+        "cost_usd",
+        "tool_calls",
+        "busts"
+      ],
+      "title": "AgentUpdated",
+      "type": "object",
+      "x-ess-kind": "event-payload",
+      "x-ess-name": "sessionspec.view.AgentUpdated"
+    },
+    "sessionspec.view.BucketId": {
+      "description": "One time bucket of the overview, its start in milliseconds since the epoch.",
+      "title": "BucketId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "sessionspec.view.BucketId"
+    },
+    "sessionspec.view.CheckId": {
+      "description": "One check of one session, `<session_id>.<check>`.",
+      "title": "CheckId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "sessionspec.view.CheckId"
+    },
+    "sessionspec.view.CountId": {
+      "description": "The count of one event kind in one session, `<session_id>.<agent or *>.<kind>`.",
+      "title": "CountId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "sessionspec.view.CountId"
+    },
+    "sessionspec.view.Document": {
+      "additionalProperties": false,
+      "description": "One session for a renderer, format `sessionspec-view/1`.",
+      "properties": {
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.view.Agent"
+          },
+          "type": "array"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.view.Event"
+          },
+          "type": "array"
+        },
+        "format": {
+          "type": "string"
+        },
+        "harness": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "format",
+        "session_id",
+        "project",
+        "harness",
+        "agents",
+        "events"
+      ],
+      "title": "Document",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.view.Document"
+    },
+    "sessionspec.view.Event": {
+      "additionalProperties": false,
+      "description": "One thing that happened, at an instant in milliseconds since the epoch. `label` names it: the tool, the prompt author, the model, the decider, the exposure kind, the bust cause. Numbers that do not apply are absent.",
+      "properties": {
+        "agent": {
+          "type": "string"
+        },
+        "at": {
+          "type": "integer"
+        },
+        "bytes": {
+          "description": "The length of the prompt, the tool input or the tool output.",
+          "type": "integer"
+        },
+        "cache_read_tokens": {
+          "type": "integer"
+        },
+        "cache_write_tokens": {
+          "type": "integer"
+        },
+        "call": {
+          "type": "string"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "description": "At API list price.",
+          "type": "integer"
+        },
+        "detail": {
+          "description": "A second name, by kind - a tool category, a prompt class and attribution, a decision, a channel.",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/sessionspec.view.EventKind"
+        },
+        "label": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "seq": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "seq",
+        "at",
+        "agent",
+        "kind",
+        "label"
+      ],
+      "title": "Event",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.view.Event"
+    },
+    "sessionspec.view.EventAppended": {
+      "additionalProperties": false,
+      "description": "One event of a running session; the payload is its row.",
+      "properties": {
+        "agent": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "agent_cost_usd": {
+          "type": "number"
+        },
+        "at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "cache_read_tokens": {
+          "type": "integer"
+        },
+        "cache_write_tokens": {
+          "type": "integer"
+        },
+        "call": {
+          "type": "string"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "type": "integer"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "event_id": {
+          "$ref": "#/$defs/sessionspec.view.EventId"
+        },
+        "kind": {
+          "$ref": "#/$defs/sessionspec.view.EventKind"
+        },
+        "label": {
+          "type": "string"
+        },
+        "notable": {
+          "type": "boolean"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "ord": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "seq": {
+          "type": "integer"
+        },
+        "session_cost_usd": {
+          "type": "number"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        }
+      },
+      "required": [
+        "event_id",
+        "session_id",
+        "seq",
+        "ord",
+        "at",
+        "agent",
+        "kind",
+        "notable",
+        "label",
+        "agent_cost_usd",
+        "session_cost_usd"
+      ],
+      "title": "EventAppended",
+      "type": "object",
+      "x-ess-kind": "event-payload",
+      "x-ess-name": "sessionspec.view.EventAppended"
+    },
+    "sessionspec.view.EventId": {
+      "description": "One view event of one session, `<session_id>.<seq>`; a dot, since a row key is one segment of an ess-ui node path, which `/` separates.",
+      "title": "EventId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "sessionspec.view.EventId"
+    },
+    "sessionspec.view.EventKind": {
+      "enum": [
+        "agent_started",
+        "prompt",
+        "model_turn",
+        "tool_call",
+        "decision",
+        "tool_result",
+        "turn_end",
+        "compaction",
+        "exposure",
+        "cache_bust"
+      ],
+      "title": "EventKind",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "sessionspec.view.EventKind"
+    },
+    "sessionspec.view.OverviewFigures.row": {
+      "additionalProperties": false,
+      "description": "The overview's figures summed per time bucket of `bucket_seconds` from `since` on, oldest first; buckets without a session are absent.",
+      "properties": {
+        "bucket_id": {
+          "$ref": "#/$defs/sessionspec.view.BucketId"
+        },
+        "bucket_seconds": {
+          "type": "integer"
+        },
+        "cache_hit_share": {
+          "type": "number"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "refused_tool_calls": {
+          "type": "integer"
+        },
+        "sessions": {
+          "type": "integer"
+        },
+        "start": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "waiting_share": {
+          "type": "number"
+        },
+        "working_seconds": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "bucket_id",
+        "start",
+        "bucket_seconds",
+        "sessions",
+        "cost_usd",
+        "working_seconds",
+        "waiting_share",
+        "cache_hit_share",
+        "tool_calls",
+        "refused_tool_calls"
+      ],
+      "title": "Overview figures row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.OverviewFigures"
+    },
+    "sessionspec.view.SessionAgents.row": {
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "busts": {
+          "type": "integer"
+        },
+        "context_max": {
+          "type": "integer"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "model": {
+          "type": "string"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "parent": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "role": {
+          "$ref": "#/$defs/sessionspec.session.AgentRole"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        },
+        "started_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "turns": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agent_id",
+        "session_id",
+        "role",
+        "started_at",
+        "turns",
+        "context_tokens",
+        "context_max",
+        "output_tokens",
+        "cost_usd",
+        "tool_calls",
+        "busts"
+      ],
+      "title": "Agents of a session row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.SessionAgents"
+    },
+    "sessionspec.view.SessionById.row": {
+      "additionalProperties": false,
+      "properties": {
+        "agents": {
+          "type": "integer"
+        },
+        "busts": {
+          "type": "integer"
+        },
+        "cache_hit_share": {
+          "type": "number"
+        },
+        "context_max": {
+          "type": "integer"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "exposures": {
+          "type": "integer"
+        },
+        "first_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "harness": {
+          "$ref": "#/$defs/sessionspec.session.Harness"
+        },
+        "human_prompts": {
+          "type": "integer"
+        },
+        "kpis": {
+          "$ref": "#/$defs/sessionspec.cli.KpiReport"
+        },
+        "last_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "project": {
+          "type": "string"
+        },
+        "refused_tool_calls": {
+          "type": "integer"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        },
+        "title": {
+          "type": "string"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "waiting_on_human_seconds": {
+          "type": "integer"
+        },
+        "waiting_share": {
+          "type": "number"
+        },
+        "working_seconds": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "session_id",
+        "project",
+        "harness",
+        "first_at",
+        "last_at",
+        "agents",
+        "cost_usd",
+        "output_tokens",
+        "context_max",
+        "cache_hit_share",
+        "busts",
+        "human_prompts",
+        "tool_calls",
+        "refused_tool_calls",
+        "exposures",
+        "working_seconds",
+        "waiting_on_human_seconds",
+        "waiting_share",
+        "kpis"
+      ],
+      "title": "Session row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.SessionById"
+    },
+    "sessionspec.view.SessionChecks.row": {
+      "additionalProperties": false,
+      "properties": {
+        "about": {
+          "type": "string"
+        },
+        "check": {
+          "type": "string"
+        },
+        "check_id": {
+          "$ref": "#/$defs/sessionspec.view.CheckId"
+        },
+        "possible": {
+          "type": "integer"
+        },
+        "rows": {
+          "type": "integer"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "verdict": {
+          "$ref": "#/$defs/sessionspec.session.Verdict"
+        }
+      },
+      "required": [
+        "check_id",
+        "session_id",
+        "check",
+        "about",
+        "severity",
+        "verdict",
+        "rows",
+        "possible"
+      ],
+      "title": "Checks of a session row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.SessionChecks"
+    },
+    "sessionspec.view.SessionEventCounts.row": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "count_id": {
+          "$ref": "#/$defs/sessionspec.view.CountId"
+        },
+        "kind": {
+          "$ref": "#/$defs/sessionspec.view.EventKind"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        }
+      },
+      "required": [
+        "count_id",
+        "session_id",
+        "kind",
+        "count"
+      ],
+      "title": "Event counts of a session row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.SessionEventCounts"
+    },
+    "sessionspec.view.SessionEvents.row": {
+      "additionalProperties": false,
+      "description": "The events of a session, of one agent when `agent` is given, of one kind when `kind` is given, only the notable ones when `notable` is true, and before the place `before` in the session's order. Newest first, at most 500 rows: the next page is `before` set to the last row's `ord`.",
+      "properties": {
+        "agent": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "agent_cost_usd": {
+          "type": "number"
+        },
+        "at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "cache_read_tokens": {
+          "type": "integer"
+        },
+        "cache_write_tokens": {
+          "type": "integer"
+        },
+        "call": {
+          "type": "string"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "type": "integer"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "event_id": {
+          "$ref": "#/$defs/sessionspec.view.EventId"
+        },
+        "kind": {
+          "$ref": "#/$defs/sessionspec.view.EventKind"
+        },
+        "label": {
+          "type": "string"
+        },
+        "notable": {
+          "type": "boolean"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "ord": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "seq": {
+          "type": "integer"
+        },
+        "session_cost_usd": {
+          "type": "number"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        }
+      },
+      "required": [
+        "event_id",
+        "session_id",
+        "seq",
+        "ord",
+        "at",
+        "agent",
+        "kind",
+        "notable",
+        "label",
+        "agent_cost_usd",
+        "session_cost_usd"
+      ],
+      "title": "Events of a session row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.SessionEvents"
+    },
+    "sessionspec.view.SessionList.row": {
+      "additionalProperties": false,
+      "description": "The sessions with a record at or after `since`, newest `last_at` first, ranked after `offset` and at most `limit`, narrowed by `search`: text found in `names`. A page of the list is `offset` n and `limit` n + page size.",
+      "properties": {
+        "agents": {
+          "type": "integer"
+        },
+        "busts": {
+          "type": "integer"
+        },
+        "cache_hit_share": {
+          "type": "number"
+        },
+        "context_max": {
+          "type": "integer"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "exposures": {
+          "type": "integer"
+        },
+        "first_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "harness": {
+          "$ref": "#/$defs/sessionspec.session.Harness"
+        },
+        "human_prompts": {
+          "type": "integer"
+        },
+        "last_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "names": {
+          "type": "string"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "project": {
+          "type": "string"
+        },
+        "rank": {
+          "type": "integer"
+        },
+        "refused_tool_calls": {
+          "type": "integer"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        },
+        "title": {
+          "type": "string"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "waiting_on_human_seconds": {
+          "type": "integer"
+        },
+        "waiting_share": {
+          "type": "number"
+        },
+        "working_seconds": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "session_id",
+        "project",
+        "names",
+        "rank",
+        "harness",
+        "first_at",
+        "last_at",
+        "agents",
+        "cost_usd",
+        "output_tokens",
+        "context_max",
+        "cache_hit_share",
+        "busts",
+        "human_prompts",
+        "tool_calls",
+        "refused_tool_calls",
+        "exposures",
+        "working_seconds",
+        "waiting_on_human_seconds",
+        "waiting_share"
+      ],
+      "title": "Sessions row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.SessionList"
+    },
+    "sessionspec.view.SessionTimeline.row": {
+      "additionalProperties": false,
+      "description": "The slots of a session's agents with at least one event, oldest first. A slot is `slot_seconds` long, counted from the epoch.",
+      "properties": {
+        "agent": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "agent_cost_usd": {
+          "type": "number"
+        },
+        "busts": {
+          "type": "integer"
+        },
+        "compactions": {
+          "type": "integer"
+        },
+        "context_max": {
+          "type": "integer"
+        },
+        "edit_calls": {
+          "type": "integer"
+        },
+        "end": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "events": {
+          "type": "integer"
+        },
+        "execute_calls": {
+          "type": "integer"
+        },
+        "human_prompts": {
+          "type": "integer"
+        },
+        "message_calls": {
+          "type": "integer"
+        },
+        "network_calls": {
+          "type": "integer"
+        },
+        "other_calls": {
+          "type": "integer"
+        },
+        "plan_calls": {
+          "type": "integer"
+        },
+        "read_calls": {
+          "type": "integer"
+        },
+        "refusals": {
+          "type": "integer"
+        },
+        "relayed_prompts": {
+          "type": "integer"
+        },
+        "search_calls": {
+          "type": "integer"
+        },
+        "session_cost_usd": {
+          "type": "number"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        },
+        "slot_id": {
+          "$ref": "#/$defs/sessionspec.view.SlotId"
+        },
+        "slot_seconds": {
+          "type": "integer"
+        },
+        "spawn_calls": {
+          "type": "integer"
+        },
+        "start": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "slot_id",
+        "session_id",
+        "agent",
+        "slot_seconds",
+        "start",
+        "end",
+        "events",
+        "read_calls",
+        "search_calls",
+        "edit_calls",
+        "execute_calls",
+        "network_calls",
+        "spawn_calls",
+        "message_calls",
+        "plan_calls",
+        "other_calls",
+        "human_prompts",
+        "relayed_prompts",
+        "refusals",
+        "busts",
+        "compactions",
+        "agent_cost_usd",
+        "session_cost_usd"
+      ],
+      "title": "Timeline of a session row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.SessionTimeline"
+    },
+    "sessionspec.view.SessionTurns.row": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "$ref": "#/$defs/sessionspec.session.AgentId"
+        },
+        "agent_cost_usd": {
+          "type": "number"
+        },
+        "at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "cache_read_tokens": {
+          "type": "integer"
+        },
+        "cache_write_tokens": {
+          "type": "integer"
+        },
+        "call": {
+          "type": "string"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "cost_microdollars": {
+          "type": "integer"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "event_id": {
+          "$ref": "#/$defs/sessionspec.view.EventId"
+        },
+        "kind": {
+          "$ref": "#/$defs/sessionspec.view.EventKind"
+        },
+        "label": {
+          "type": "string"
+        },
+        "notable": {
+          "type": "boolean"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "ord": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "seq": {
+          "type": "integer"
+        },
+        "session_cost_usd": {
+          "type": "number"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        }
+      },
+      "required": [
+        "event_id",
+        "session_id",
+        "seq",
+        "ord",
+        "at",
+        "agent",
+        "kind",
+        "notable",
+        "label",
+        "agent_cost_usd",
+        "session_cost_usd"
+      ],
+      "title": "Model turns of a session row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "sessionspec.view.SessionTurns"
+    },
+    "sessionspec.view.SessionUpdated": {
+      "additionalProperties": false,
+      "description": "The figures of a session changed; the payload is its whole row.",
+      "properties": {
+        "agents": {
+          "type": "integer"
+        },
+        "busts": {
+          "type": "integer"
+        },
+        "cache_hit_share": {
+          "type": "number"
+        },
+        "context_max": {
+          "type": "integer"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "exposures": {
+          "type": "integer"
+        },
+        "first_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "harness": {
+          "$ref": "#/$defs/sessionspec.session.Harness"
+        },
+        "human_prompts": {
+          "type": "integer"
+        },
+        "last_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "names": {
+          "type": "string"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "project": {
+          "type": "string"
+        },
+        "rank": {
+          "type": "integer"
+        },
+        "refused_tool_calls": {
+          "type": "integer"
+        },
+        "session_id": {
+          "$ref": "#/$defs/sessionspec.session.SessionId"
+        },
+        "title": {
+          "type": "string"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "waiting_on_human_seconds": {
+          "type": "integer"
+        },
+        "waiting_share": {
+          "type": "number"
+        },
+        "working_seconds": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "session_id",
+        "project",
+        "names",
+        "rank",
+        "harness",
+        "first_at",
+        "last_at",
+        "agents",
+        "cost_usd",
+        "output_tokens",
+        "context_max",
+        "cache_hit_share",
+        "busts",
+        "human_prompts",
+        "tool_calls",
+        "refused_tool_calls",
+        "exposures",
+        "working_seconds",
+        "waiting_on_human_seconds",
+        "waiting_share"
+      ],
+      "title": "SessionUpdated",
+      "type": "object",
+      "x-ess-kind": "event-payload",
+      "x-ess-name": "sessionspec.view.SessionUpdated"
+    },
+    "sessionspec.view.SlotId": {
+      "description": "One time slot of one agent of one session, `<session_id>.<agent>.<start in ms>`.",
+      "title": "SlotId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "sessionspec.view.SlotId"
+    },
+    "sessionspec.view.Update": {
+      "additionalProperties": false,
+      "description": "What a live source sends after the first document: the agents so far and the events from `from_seq` on. With `reset` the renderer drops what it holds first, because the session's earlier events changed.",
+      "properties": {
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.view.Agent"
+          },
+          "type": "array"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/sessionspec.view.Event"
+          },
+          "type": "array"
+        },
+        "format": {
+          "type": "string"
+        },
+        "from_seq": {
+          "type": "integer"
+        },
+        "reset": {
+          "type": "boolean"
+        },
+        "session_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "format",
+        "session_id",
+        "reset",
+        "from_seq",
+        "agents",
+        "events"
+      ],
+      "title": "Update",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "sessionspec.view.Update"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-ess-provenance": {
+    "contract_digest": "slice-sha256/2:e586e121cc08fb818aa07e79c42c904698847f5624d45307fee84af7538367ac",
+    "source_digest": "d8e9a44696a3a3a589a0ee741e8aca7b6117f4ae8f49fd843bec3089b4eaaee5",
+    "specification_version": "v1",
+    "system": "sessionspec"
+  }
+}

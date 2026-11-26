@@ -8,7 +8,7 @@
     "x-ess-provenance": {
       "system": "sessionspec",
       "specification_version": "v1",
-      "contract_digest": "slice-sha256/2:c7f259dad431f8e47b3b767965afd6bd6371afa291329980284dd03669bef505"
+      "contract_digest": "slice-sha256/2:f878fbda7eebdf5ea57a3bcc8de873502517b9dd5491aefdfb29f3f56c108f2f"
     },
     "x-ess-reached-by": "network"
   },
@@ -51,6 +51,84 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/sessionspec.view.AgentTurns.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/figures": {
+      "get": {
+        "operationId": "sessionspec.view.OverviewFigures",
+        "summary": "Overview figures",
+        "description": "The overview's figures summed per time bucket of `bucket_seconds` from `since` on, oldest first; buckets without a session are absent.",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Read by the view's filter as `param.since`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "bucket_seconds",
+            "in": "query",
+            "description": "Read by the view's filter as `param.bucket_seconds`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.OverviewFigures`, a projection of `sessionspec.view.FigureBucket`. Contains the instances where `(start >= param.since as timestamp and bucket_seconds == param.bucket_seconds)` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.OverviewFigures.Response"
                 }
               }
             }
@@ -290,10 +368,10 @@
         }
       }
     },
-    "/view/views/session-events": {
+    "/view/views/session-event-counts": {
       "get": {
-        "operationId": "sessionspec.view.SessionEvents",
-        "summary": "Events of a session",
+        "operationId": "sessionspec.view.SessionEventCounts",
+        "summary": "Event counts of a session",
         "tags": [
           "view"
         ],
@@ -310,11 +388,124 @@
             "schema": {
               "$ref": "#/components/schemas/sessionspec.session.SessionId"
             }
+          },
+          {
+            "name": "agent",
+            "in": "query",
+            "description": "Read by the view's filter as `param.agent`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.AgentId"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Every row of `sessionspec.view.SessionEvents`, a projection of `sessionspec.view.EventRow`. Contains the instances where `session_id == param.session_id` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "description": "Every row of `sessionspec.view.SessionEventCounts`, a projection of `sessionspec.view.EventCount`. Contains the instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent))` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.SessionEventCounts.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/session-events": {
+      "get": {
+        "operationId": "sessionspec.view.SessionEvents",
+        "summary": "Events of a session",
+        "description": "The events of a session, of one agent when `agent` is given, of one kind when `kind` is given, only the notable ones when `notable` is true, and before the place `before` in the session's order. Newest first, at most 500 rows: the next page is `before` set to the last row's `ord`.",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.session_id`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.SessionId"
+            }
+          },
+          {
+            "name": "agent",
+            "in": "query",
+            "description": "Read by the view's filter as `param.agent`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.AgentId"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "description": "Read by the view's filter as `param.kind`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.view.EventKind"
+            }
+          },
+          {
+            "name": "notable",
+            "in": "query",
+            "description": "Read by the view's filter as `param.notable`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Read by the view's filter as `param.before`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.SessionEvents`, a projection of `sessionspec.view.EventRow`. Contains the instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent) and (not (defined(param.kind)) or kind == param.kind) and (not (defined(param.notable)) or notable == param.notable) and (not (defined(param.before)) or ord < param.before))` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
             "content": {
               "application/json": {
                 "schema": {
@@ -361,7 +552,7 @@
       "get": {
         "operationId": "sessionspec.view.SessionList",
         "summary": "Sessions",
-        "description": "The sessions with a record at or after `since`, newest `last_at` first, at most `limit` of them, narrowed by `search`: text found in `names`.",
+        "description": "The sessions with a record at or after `since`, newest `last_at` first, ranked after `offset` and at most `limit`, narrowed by `search`: text found in `names`. A page of the list is `offset` n and `limit` n + page size.",
         "tags": [
           "view"
         ],
@@ -397,15 +588,101 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Read by the view's filter as `param.offset`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Every row of `sessionspec.view.SessionList`, a projection of `sessionspec.view.SessionListing`. Contains the instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit))` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "description": "Every row of `sessionspec.view.SessionList`, a projection of `sessionspec.view.SessionListing`. Contains the instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit) and (not (defined(param.offset)) or rank > param.offset))` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/sessionspec.view.SessionList.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/view/views/session-timeline": {
+      "get": {
+        "operationId": "sessionspec.view.SessionTimeline",
+        "summary": "Timeline of a session",
+        "description": "The slots of a session's agents with at least one event, oldest first. A slot is `slot_seconds` long, counted from the epoch.",
+        "tags": [
+          "view"
+        ],
+        "x-ess-may-read": [
+          "sessionspec.view.Viewer"
+        ],
+        "x-ess-consistency": "eventual",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.session_id`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/sessionspec.session.SessionId"
+            }
+          },
+          {
+            "name": "slot_seconds",
+            "in": "query",
+            "description": "Read by the view's filter as `param.slot_seconds`; it selects which rows the view holds.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every row of `sessionspec.view.SessionTimeline`, a projection of `sessionspec.view.TimelineSlot`. Contains the instances where `(session_id == param.session_id and slot_seconds == param.slot_seconds)` holds. Eventually consistent: a row may not yet reflect a command that has already returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sessionspec.view.SessionTimeline.Response"
                 }
               }
             }
@@ -1026,6 +1303,9 @@
           "seq": {
             "type": "integer"
           },
+          "ord": {
+            "type": "integer"
+          },
           "at": {
             "type": "string",
             "format": "date-time"
@@ -1035,6 +1315,9 @@
           },
           "kind": {
             "$ref": "#/components/schemas/sessionspec.view.EventKind"
+          },
+          "notable": {
+            "type": "boolean"
           },
           "label": {
             "type": "string"
@@ -1077,19 +1360,35 @@
           "event_id",
           "session_id",
           "seq",
+          "ord",
           "at",
           "agent",
           "kind",
+          "notable",
           "label",
           "agent_cost_usd",
           "session_cost_usd"
         ],
         "additionalProperties": false
       },
+      "sessionspec.view.BucketId": {
+        "title": "BucketId",
+        "description": "One time bucket of the overview, its start in milliseconds since the epoch.",
+        "x-ess-name": "sessionspec.view.BucketId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
       "sessionspec.view.CheckId": {
         "title": "CheckId",
         "description": "One check of one session, `<session_id>.<check>`.",
         "x-ess-name": "sessionspec.view.CheckId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "sessionspec.view.CountId": {
+        "title": "CountId",
+        "description": "The count of one event kind in one session, `<session_id>.<agent or *>.<kind>`.",
+        "x-ess-name": "sessionspec.view.CountId",
         "x-ess-kind": "newtype",
         "type": "string"
       },
@@ -1117,6 +1416,76 @@
           "exposure",
           "cache_bust"
         ]
+      },
+      "sessionspec.view.OverviewFigures.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.OverviewFigures`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.OverviewFigures.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.OverviewFigures.Row": {
+        "title": "Overview figures row",
+        "description": "The overview's figures summed per time bucket of `bucket_seconds` from `since` on, oldest first; buckets without a session are absent.",
+        "x-ess-name": "sessionspec.view.OverviewFigures",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "bucket_id": {
+            "$ref": "#/components/schemas/sessionspec.view.BucketId"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bucket_seconds": {
+            "type": "integer"
+          },
+          "sessions": {
+            "type": "integer"
+          },
+          "cost_usd": {
+            "type": "number"
+          },
+          "working_seconds": {
+            "type": "integer"
+          },
+          "waiting_share": {
+            "type": "number"
+          },
+          "cache_hit_share": {
+            "type": "number"
+          },
+          "tool_calls": {
+            "type": "integer"
+          },
+          "refused_tool_calls": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bucket_id",
+          "start",
+          "bucket_seconds",
+          "sessions",
+          "cost_usd",
+          "working_seconds",
+          "waiting_share",
+          "cache_hit_share",
+          "tool_calls",
+          "refused_tool_calls"
+        ],
+        "additionalProperties": false
       },
       "sessionspec.view.SessionAgents.Response": {
         "additionalProperties": false,
@@ -1366,6 +1735,53 @@
         ],
         "additionalProperties": false
       },
+      "sessionspec.view.SessionEventCounts.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.SessionEventCounts`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.SessionEventCounts.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.SessionEventCounts.Row": {
+        "title": "Event counts of a session row",
+        "x-ess-name": "sessionspec.view.SessionEventCounts",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "count_id": {
+            "$ref": "#/components/schemas/sessionspec.view.CountId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "agent": {
+            "$ref": "#/components/schemas/sessionspec.session.AgentId"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/sessionspec.view.EventKind"
+          },
+          "count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count_id",
+          "session_id",
+          "kind",
+          "count"
+        ],
+        "additionalProperties": false
+      },
       "sessionspec.view.SessionEvents.Response": {
         "additionalProperties": false,
         "description": "The rows of `sessionspec.view.SessionEvents`.",
@@ -1385,6 +1801,7 @@
       },
       "sessionspec.view.SessionEvents.Row": {
         "title": "Events of a session row",
+        "description": "The events of a session, of one agent when `agent` is given, of one kind when `kind` is given, only the notable ones when `notable` is true, and before the place `before` in the session's order. Newest first, at most 500 rows: the next page is `before` set to the last row's `ord`.",
         "x-ess-name": "sessionspec.view.SessionEvents",
         "x-ess-kind": "view-row",
         "type": "object",
@@ -1398,6 +1815,9 @@
           "seq": {
             "type": "integer"
           },
+          "ord": {
+            "type": "integer"
+          },
           "at": {
             "type": "string",
             "format": "date-time"
@@ -1407,6 +1827,9 @@
           },
           "kind": {
             "$ref": "#/components/schemas/sessionspec.view.EventKind"
+          },
+          "notable": {
+            "type": "boolean"
           },
           "label": {
             "type": "string"
@@ -1449,9 +1872,11 @@
           "event_id",
           "session_id",
           "seq",
+          "ord",
           "at",
           "agent",
           "kind",
+          "notable",
           "label",
           "agent_cost_usd",
           "session_cost_usd"
@@ -1477,7 +1902,7 @@
       },
       "sessionspec.view.SessionList.Row": {
         "title": "Sessions row",
-        "description": "The sessions with a record at or after `since`, newest `last_at` first, at most `limit` of them, narrowed by `search`: text found in `names`.",
+        "description": "The sessions with a record at or after `since`, newest `last_at` first, ranked after `offset` and at most `limit`, narrowed by `search`: text found in `names`. A page of the list is `offset` n and `limit` n + page size.",
         "x-ess-name": "sessionspec.view.SessionList",
         "x-ess-kind": "view-row",
         "type": "object",
@@ -1572,6 +1997,132 @@
         ],
         "additionalProperties": false
       },
+      "sessionspec.view.SessionTimeline.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `sessionspec.view.SessionTimeline`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/sessionspec.view.SessionTimeline.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "sessionspec.view.SessionTimeline.Row": {
+        "title": "Timeline of a session row",
+        "description": "The slots of a session's agents with at least one event, oldest first. A slot is `slot_seconds` long, counted from the epoch.",
+        "x-ess-name": "sessionspec.view.SessionTimeline",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "slot_id": {
+            "$ref": "#/components/schemas/sessionspec.view.SlotId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/sessionspec.session.SessionId"
+          },
+          "agent": {
+            "$ref": "#/components/schemas/sessionspec.session.AgentId"
+          },
+          "slot_seconds": {
+            "type": "integer"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "events": {
+            "type": "integer"
+          },
+          "read_calls": {
+            "type": "integer"
+          },
+          "search_calls": {
+            "type": "integer"
+          },
+          "edit_calls": {
+            "type": "integer"
+          },
+          "execute_calls": {
+            "type": "integer"
+          },
+          "network_calls": {
+            "type": "integer"
+          },
+          "spawn_calls": {
+            "type": "integer"
+          },
+          "message_calls": {
+            "type": "integer"
+          },
+          "plan_calls": {
+            "type": "integer"
+          },
+          "other_calls": {
+            "type": "integer"
+          },
+          "human_prompts": {
+            "type": "integer"
+          },
+          "relayed_prompts": {
+            "type": "integer"
+          },
+          "refusals": {
+            "type": "integer"
+          },
+          "busts": {
+            "type": "integer"
+          },
+          "compactions": {
+            "type": "integer"
+          },
+          "context_max": {
+            "type": "integer"
+          },
+          "agent_cost_usd": {
+            "type": "number"
+          },
+          "session_cost_usd": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "slot_id",
+          "session_id",
+          "agent",
+          "slot_seconds",
+          "start",
+          "end",
+          "events",
+          "read_calls",
+          "search_calls",
+          "edit_calls",
+          "execute_calls",
+          "network_calls",
+          "spawn_calls",
+          "message_calls",
+          "plan_calls",
+          "other_calls",
+          "human_prompts",
+          "relayed_prompts",
+          "refusals",
+          "busts",
+          "compactions",
+          "agent_cost_usd",
+          "session_cost_usd"
+        ],
+        "additionalProperties": false
+      },
       "sessionspec.view.SessionTurns.Response": {
         "additionalProperties": false,
         "description": "The rows of `sessionspec.view.SessionTurns`.",
@@ -1604,6 +2155,9 @@
           "seq": {
             "type": "integer"
           },
+          "ord": {
+            "type": "integer"
+          },
           "at": {
             "type": "string",
             "format": "date-time"
@@ -1613,6 +2167,9 @@
           },
           "kind": {
             "$ref": "#/components/schemas/sessionspec.view.EventKind"
+          },
+          "notable": {
+            "type": "boolean"
           },
           "label": {
             "type": "string"
@@ -1655,14 +2212,23 @@
           "event_id",
           "session_id",
           "seq",
+          "ord",
           "at",
           "agent",
           "kind",
+          "notable",
           "label",
           "agent_cost_usd",
           "session_cost_usd"
         ],
         "additionalProperties": false
+      },
+      "sessionspec.view.SlotId": {
+        "title": "SlotId",
+        "description": "One time slot of one agent of one session, `<session_id>.<agent>.<start in ms>`.",
+        "x-ess-name": "sessionspec.view.SlotId",
+        "x-ess-kind": "newtype",
+        "type": "string"
       }
     }
   },
@@ -2243,12 +2809,71 @@
         "Listed"
       ]
     },
+    "sessionspec.view.BucketId": {
+      "title": "BucketId",
+      "description": "One time bucket of the overview, its start in milliseconds since the epoch.",
+      "x-ess-name": "sessionspec.view.BucketId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
     "sessionspec.view.CheckId": {
       "title": "CheckId",
       "description": "One check of one session, `<session_id>.<check>`.",
       "x-ess-name": "sessionspec.view.CheckId",
       "x-ess-kind": "newtype",
       "type": "string"
+    },
+    "sessionspec.view.CountId": {
+      "title": "CountId",
+      "description": "The count of one event kind in one session, `<session_id>.<agent or *>.<kind>`.",
+      "x-ess-name": "sessionspec.view.CountId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "sessionspec.view.EventCount": {
+      "title": "EventCount",
+      "description": "How many events of one kind a session holds, of one agent or of all of them: the counts the event log's kind filters show.",
+      "x-ess-name": "sessionspec.view.EventCount",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "count_id": {
+          "$ref": "#/x-ess-entities/sessionspec.view.CountId"
+        },
+        "session_id": {
+          "$ref": "#/x-ess-entities/sessionspec.session.SessionId"
+        },
+        "agent": {
+          "$ref": "#/x-ess-entities/sessionspec.session.AgentId",
+          "description": "The agent counted; absent for every agent of the session."
+        },
+        "kind": {
+          "$ref": "#/x-ess-entities/sessionspec.view.EventKind"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/sessionspec.view.EventCount.State"
+        }
+      },
+      "required": [
+        "count_id",
+        "session_id",
+        "kind",
+        "count",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.view.EventCount.State": {
+      "title": "State",
+      "x-ess-name": "sessionspec.view.EventCount.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Counted"
+      ]
     },
     "sessionspec.view.EventId": {
       "title": "EventId",
@@ -2300,6 +2925,10 @@
         "seq": {
           "type": "integer"
         },
+        "ord": {
+          "description": "The event's place in its session ordered by `at`, then `seq`, from 0.",
+          "type": "integer"
+        },
         "at": {
           "type": "string",
           "format": "date-time"
@@ -2318,6 +2947,10 @@
         },
         "kind": {
           "$ref": "#/x-ess-entities/sessionspec.view.EventKind"
+        },
+        "notable": {
+          "description": "A prompt, an agent start, a refusal, a failed tool result, a cache bust or a compaction, which the event log shows first.",
+          "type": "boolean"
         },
         "label": {
           "type": "string"
@@ -2365,9 +2998,11 @@
         "event_id",
         "session_id",
         "seq",
+        "ord",
         "at",
         "agent",
         "kind",
+        "notable",
         "label",
         "agent_cost_usd",
         "session_cost_usd",
@@ -2382,6 +3017,74 @@
       "type": "string",
       "enum": [
         "Logged"
+      ]
+    },
+    "sessionspec.view.FigureBucket": {
+      "title": "FigureBucket",
+      "description": "The sums of the overview's figures over the sessions whose last record falls in one time bucket: a client divides a sum by `sessions` for an average.",
+      "x-ess-name": "sessionspec.view.FigureBucket",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "bucket_id": {
+          "$ref": "#/x-ess-entities/sessionspec.view.BucketId"
+        },
+        "start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "bucket_seconds": {
+          "type": "integer"
+        },
+        "sessions": {
+          "type": "integer"
+        },
+        "cost_usd": {
+          "type": "number"
+        },
+        "working_seconds": {
+          "type": "integer"
+        },
+        "waiting_share": {
+          "description": "The sum of the sessions' `waiting_share`.",
+          "type": "number"
+        },
+        "cache_hit_share": {
+          "description": "The sum of the sessions' `cache_hit_share`.",
+          "type": "number"
+        },
+        "tool_calls": {
+          "type": "integer"
+        },
+        "refused_tool_calls": {
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/sessionspec.view.FigureBucket.State"
+        }
+      },
+      "required": [
+        "bucket_id",
+        "start",
+        "bucket_seconds",
+        "sessions",
+        "cost_usd",
+        "working_seconds",
+        "waiting_share",
+        "cache_hit_share",
+        "tool_calls",
+        "refused_tool_calls",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.view.FigureBucket.State": {
+      "title": "State",
+      "x-ess-name": "sessionspec.view.FigureBucket.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Counted"
       ]
     },
     "sessionspec.view.SessionCheck": {
@@ -2571,6 +3274,140 @@
       "type": "string",
       "enum": [
         "Listed"
+      ]
+    },
+    "sessionspec.view.SlotId": {
+      "title": "SlotId",
+      "description": "One time slot of one agent of one session, `<session_id>.<agent>.<start in ms>`.",
+      "x-ess-name": "sessionspec.view.SlotId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "sessionspec.view.TimelineSlot": {
+      "title": "TimelineSlot",
+      "description": "The events of one agent within one time slot of a session, counted by what the timeline draws: tool calls by category, prompts by author, refusals, cache busts and compactions, with the largest context and the running costs at the slot's last event.",
+      "x-ess-name": "sessionspec.view.TimelineSlot",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "slot_id": {
+          "$ref": "#/x-ess-entities/sessionspec.view.SlotId"
+        },
+        "session_id": {
+          "$ref": "#/x-ess-entities/sessionspec.session.SessionId"
+        },
+        "agent": {
+          "$ref": "#/x-ess-entities/sessionspec.session.AgentId"
+        },
+        "slot_seconds": {
+          "description": "The length of the slot; slots start at a multiple of it from the epoch.",
+          "type": "integer"
+        },
+        "start": {
+          "description": "The instant of the slot's first event.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "end": {
+          "description": "The instant of the slot's last event.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "events": {
+          "type": "integer"
+        },
+        "read_calls": {
+          "type": "integer"
+        },
+        "search_calls": {
+          "type": "integer"
+        },
+        "edit_calls": {
+          "type": "integer"
+        },
+        "execute_calls": {
+          "type": "integer"
+        },
+        "network_calls": {
+          "type": "integer"
+        },
+        "spawn_calls": {
+          "type": "integer"
+        },
+        "message_calls": {
+          "type": "integer"
+        },
+        "plan_calls": {
+          "type": "integer"
+        },
+        "other_calls": {
+          "type": "integer"
+        },
+        "human_prompts": {
+          "type": "integer"
+        },
+        "relayed_prompts": {
+          "description": "Prompts written by a delegate or a peer session.",
+          "type": "integer"
+        },
+        "refusals": {
+          "type": "integer"
+        },
+        "busts": {
+          "type": "integer"
+        },
+        "compactions": {
+          "type": "integer"
+        },
+        "context_max": {
+          "description": "The largest context of a model turn in the slot.",
+          "type": "integer"
+        },
+        "agent_cost_usd": {
+          "type": "number"
+        },
+        "session_cost_usd": {
+          "type": "number"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/sessionspec.view.TimelineSlot.State"
+        }
+      },
+      "required": [
+        "slot_id",
+        "session_id",
+        "agent",
+        "slot_seconds",
+        "start",
+        "end",
+        "events",
+        "read_calls",
+        "search_calls",
+        "edit_calls",
+        "execute_calls",
+        "network_calls",
+        "spawn_calls",
+        "message_calls",
+        "plan_calls",
+        "other_calls",
+        "human_prompts",
+        "relayed_prompts",
+        "refusals",
+        "busts",
+        "compactions",
+        "agent_cost_usd",
+        "session_cost_usd",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "sessionspec.view.TimelineSlot.State": {
+      "title": "State",
+      "x-ess-name": "sessionspec.view.TimelineSlot.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Counted"
       ]
     }
   }

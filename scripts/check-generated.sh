@@ -29,6 +29,7 @@ lines() {
   cat << 'LINES'
 generated|ess generate synthesize --path spec --target rust --out {out}
 crates/sessionspec-cli-contract|ess generate cli --path spec --binding spec/cli.yaml --out {out}
+ui/app/src/generated|ess generate types --path spec --target typescript --names short --declared-field-order --root sessionspec.view.SessionList.row --root sessionspec.view.SessionById.row --root sessionspec.view.SessionAgents.row --root sessionspec.view.SessionEvents.row --root sessionspec.view.SessionTurns.row --root sessionspec.view.AgentTurns.row --root sessionspec.view.SessionChecks.row --root sessionspec.view.SessionEventCounts.row --root sessionspec.view.SessionTimeline.row --root sessionspec.view.OverviewFigures.row --root sessionspec.view.SessionUpdated --root sessionspec.view.AgentUpdated --root sessionspec.view.EventAppended --root sessionspec.view.Document --root sessionspec.view.Update --out {out}
 LINES
 }
 

@@ -1,0 +1,390 @@
+{
+  "about": "Lower is better. Written by UX_RATCHET=write from target/ux/metrics (ui/app/e2e/ratchet.spec.ts); one scenario per gating viewport, light theme.",
+  "tolerances": {
+    "counts": "exact (0), for actions, looks, steers and glances",
+    "steps": "5 % of the value, for time to act in steps and reading load in words",
+    "layout_shift": "0.01"
+  },
+  "scenarios": {
+    "find-session-by-search@1440x900": {
+      "screen_only.actions": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "reading_load.median": {
+        "value": 120.5,
+        "tolerance": 6.03
+      },
+      "layout_shift.score": {
+        "value": 0.0047,
+        "tolerance": 0.01
+      }
+    },
+    "find-session-by-search@1280x720": {
+      "screen_only.actions": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "reading_load.median": {
+        "value": 120.5,
+        "tolerance": 6.03
+      },
+      "layout_shift.score": {
+        "value": 0.0074,
+        "tolerance": 0.01
+      }
+    },
+    "slice-kpi-averages@1440x900": {
+      "screen_only.actions": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "reading_load.median": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "layout_shift.score": {
+        "value": 0.0001,
+        "tolerance": 0.01
+      }
+    },
+    "slice-kpi-averages@1280x720": {
+      "screen_only.actions": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "reading_load.median": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "layout_shift.score": {
+        "value": 0.0002,
+        "tolerance": 0.01
+      }
+    },
+    "failing-check@1440x900": {
+      "screen_only.actions": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 193,
+        "tolerance": 9.65
+      },
+      "reading_load.median": {
+        "value": 166,
+        "tolerance": 8.3
+      },
+      "layout_shift.score": {
+        "value": 0.0001,
+        "tolerance": 0.01
+      }
+    },
+    "failing-check@1280x720": {
+      "screen_only.actions": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 155,
+        "tolerance": 7.75
+      },
+      "reading_load.median": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "layout_shift.score": {
+        "value": 0.0002,
+        "tolerance": 0.01
+      }
+    },
+    "agent-lane@1440x900": {
+      "screen_only.actions": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 194,
+        "tolerance": 9.7
+      },
+      "reading_load.median": {
+        "value": 193,
+        "tolerance": 9.65
+      },
+      "layout_shift.score": {
+        "value": 0.0001,
+        "tolerance": 0.01
+      }
+    },
+    "agent-lane@1280x720": {
+      "screen_only.actions": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "reading_load.median": {
+        "value": 139,
+        "tolerance": 6.95
+      },
+      "layout_shift.score": {
+        "value": 0.0002,
+        "tolerance": 0.01
+      }
+    },
+    "embed-session@1440x900": {
+      "screen_only.actions": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 210,
+        "tolerance": 10.5
+      },
+      "reading_load.median": {
+        "value": 210,
+        "tolerance": 10.5
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "embed-session@1280x720": {
+      "screen_only.actions": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 187,
+        "tolerance": 9.35
+      },
+      "reading_load.median": {
+        "value": 187,
+        "tolerance": 9.35
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    }
+  }
+}

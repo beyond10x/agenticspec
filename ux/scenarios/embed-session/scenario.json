@@ -1,0 +1,11 @@
+{
+  "name": "embed-session",
+  "card": {
+    "persona": "A host page that shows one session in a frame.",
+    "task": "Open the embed page of the session that ported the store and read its timeline."
+  },
+  "start": "/embed/session/ses-demo-0001",
+  "input": {},
+  "truth": { "timeline": "Timeline of 2 agents", "cost": "$0.55" },
+  "expectations": ["no top bar in the frame", "the timeline is in view without scrolling"]
+}

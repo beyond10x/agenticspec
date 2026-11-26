@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- A new live UI, written by hand in Vue over types generated from the specification, with a light and a dark theme: an overview with figures per time slice and a searchable session table, a session page with a timeline per agent, agents, checks, cost and prompt breakdowns and a paged event log, and embed pages; built by `task ui:build` (Node.js 22)
+- Views `figures`, `session-timeline` and `session-event-counts`; `session-list` pages by `offset`, `session-events` pages newest first by `before` and filters by `agent`, `kind` and `notable`
+- `task check:app`: the app's unit tests and browser tests of layout, accessibility, keyboard use and a screen-only user on the fixtures, with a ratchet in `ux/baseline.json`; `task ux:round` measures a review round into `ux/rounds/`
+
+### Changed
+
+- `sessionspec serve` reads every view from tables of the store with one query per request and keeps no rows in memory; on a store of 116 sessions its resident memory measured 84 to 164 MB, where it grew past 1.9 GB before
+- `sync` lifts transcripts in chunks bounded by size and returns freed memory after a sync
+- The store is version 5; opening a store of an older version fills its derived tables again and keeps its wire rows
+- `sessionspec analyze` without `--out` writes `sessionspec-dashboard.html` beside the store instead of the working directory
+
 ## [0.1.1] - 2026-11-26
 
 ### Changed

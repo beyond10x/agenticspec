@@ -6,6 +6,7 @@ tasks:
     cmds:
       - task: check:spec
       - task: check:ui
+      - task: check:app
       - task: check:generated
       - task: check:scripts
       - task: check:rust
@@ -44,6 +45,16 @@ tasks:
       - ess ui check --path ui/sessionspec.ui.yaml --model spec
       - ess ui test --path ui/sessionspec.ui.yaml ui/tests/session.yaml
 
+  check:app:
+    desc: Types, unit tests and a build of the app in ui/app, then its layout, accessibility, keyboard and screen-only-user gates on the fixtures and the ratchet against ux/baseline.json. The lines are in scripts/check-app.sh.
+    cmds:
+      - sh scripts/check-app.sh
+
+  ux:round:
+    desc: Measure a round of the ui-iteration-loop into ux/rounds/R-nn (task ux:round -- R-nn). The lines are in ux/round.sh.
+    cmds:
+      - sh ux/round.sh {{.CLI_ARGS}}
+
   check:generated:
     desc: Compare each generated directory, byte for byte, with a fresh generation. The lines are in scripts/check-generated.sh.
     cmds:
@@ -66,7 +77,7 @@ tasks:
       - cargo nextest run --workspace --locked
 
   ui:build:
-    desc: Generate the React app from ui/sessionspec.ui.yaml and build it into target/ui/www, which `sessionspec serve` serves. The lines are in scripts/ui-build.sh.
+    desc: Build the hand-written app of ui/app into target/ui/www, which `sessionspec serve` serves. The lines are in scripts/ui-build.sh.
     cmds:
       - sh scripts/ui-build.sh
 

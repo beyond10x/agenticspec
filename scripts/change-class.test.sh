@@ -24,6 +24,9 @@ case_ planning design/design.md
 case_ planning design/query-design.md research/2026-11-26-kpi-72h.json
 case_ planning research/2026-11-26-baseline.md
 case_ code ui/README.md
+# ux/findings records and round reports are read by the app gate (ratchet, findings rule).
+case_ code ux/findings/UXF-001.md
+case_ code ux/rounds/R-01/report.md
 case_ docs-site docs/queries.md design/design.md
 case_ docs-site website/product.json README.md
 case_ code crates/sessionspec/src/main.rs

@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
 // do not edit: regenerate with `ess synthesize`
 
 //! session-view — the `session-view` component of `sessionspec` v1.
@@ -55,11 +55,16 @@ impl<B> SessionView<B> {
 
 impl<B> SessionView<B>
 where
-    B: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    B: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     /// Serves `sessionspec.view.AgentTurns` at `eventual` consistency, from the owed projection.
     pub fn agent_turns(&self, session_id: sessionspec_types::session::SessionId, agent: sessionspec_types::session::AgentId) -> Result<Vec<sessionspec_types::view::AgentTurns>, sessionspec_types::obligation::UnmetObligation> {
         self.behaviors.agent_turns(session_id, agent)
+    }
+
+    /// Serves `sessionspec.view.OverviewFigures` at `eventual` consistency, from the owed projection.
+    pub fn overview_figures(&self, since: sessionspec_types::primitives::Timestamp, bucket_seconds: i64) -> Result<Vec<sessionspec_types::view::OverviewFigures>, sessionspec_types::obligation::UnmetObligation> {
+        self.behaviors.overview_figures(since, bucket_seconds)
     }
 
     /// Serves `sessionspec.view.SessionAgents` at `eventual` consistency, from the owed projection.
@@ -77,14 +82,24 @@ where
         self.behaviors.session_checks(session_id)
     }
 
+    /// Serves `sessionspec.view.SessionEventCounts` at `eventual` consistency, from the owed projection.
+    pub fn session_event_counts(&self, session_id: sessionspec_types::session::SessionId, agent: Option<sessionspec_types::session::AgentId>) -> Result<Vec<sessionspec_types::view::SessionEventCounts>, sessionspec_types::obligation::UnmetObligation> {
+        self.behaviors.session_event_counts(session_id, agent)
+    }
+
     /// Serves `sessionspec.view.SessionEvents` at `eventual` consistency, from the owed projection.
-    pub fn session_events(&self, session_id: sessionspec_types::session::SessionId) -> Result<Vec<sessionspec_types::view::SessionEvents>, sessionspec_types::obligation::UnmetObligation> {
-        self.behaviors.session_events(session_id)
+    pub fn session_events(&self, session_id: sessionspec_types::session::SessionId, agent: Option<sessionspec_types::session::AgentId>, kind: Option<sessionspec_types::view::EventKind>, notable: Option<bool>, before: Option<i64>) -> Result<Vec<sessionspec_types::view::SessionEvents>, sessionspec_types::obligation::UnmetObligation> {
+        self.behaviors.session_events(session_id, agent, kind, notable, before)
     }
 
     /// Serves `sessionspec.view.SessionList` at `eventual` consistency, from the owed projection.
-    pub fn session_list(&self, since: Option<sessionspec_types::primitives::Timestamp>, search: Option<String>, limit: Option<i64>) -> Result<Vec<sessionspec_types::view::SessionList>, sessionspec_types::obligation::UnmetObligation> {
-        self.behaviors.session_list(since, search, limit)
+    pub fn session_list(&self, since: Option<sessionspec_types::primitives::Timestamp>, search: Option<String>, limit: Option<i64>, offset: Option<i64>) -> Result<Vec<sessionspec_types::view::SessionList>, sessionspec_types::obligation::UnmetObligation> {
+        self.behaviors.session_list(since, search, limit, offset)
+    }
+
+    /// Serves `sessionspec.view.SessionTimeline` at `eventual` consistency, from the owed projection.
+    pub fn session_timeline(&self, session_id: sessionspec_types::session::SessionId, slot_seconds: i64) -> Result<Vec<sessionspec_types::view::SessionTimeline>, sessionspec_types::obligation::UnmetObligation> {
+        self.behaviors.session_timeline(session_id, slot_seconds)
     }
 
     /// Serves `sessionspec.view.SessionTurns` at `eventual` consistency, from the owed projection.

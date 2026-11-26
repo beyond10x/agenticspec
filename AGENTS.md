@@ -68,9 +68,42 @@ change.
 | `sessionspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `sessionspec analyze` writes |
 | `sessionspec` | `main.rs` | handler behind the generated CLI |
 
-Beside the crate: `ui/` holds the UI (`sessionspec.ui.yaml`), its synthetic fixtures, its
-`ess-ui-test/1` tests and the host components (`ui/host/`); renderers are generated from it
-(`ess generate ui`), never written here. `task ui:build` builds the React app into `target/ui/www`.
+Beside the crates, `ui/` holds:
+
+- `sessionspec.ui.yaml`, the UI as an `ess-ui/1` document, with its `ess-ui-test/1` tests, checked by
+  `task check:ui`. No UI is generated from it.
+- `fixtures/`, the synthetic view rows every UI test reads, one row per line.
+- `app/`, the live UI, written by hand: Vue 3, Vite and TypeScript. Its types are
+  `app/src/generated/`, from `ess generate types` (held by `task check:generated`). Its client reads
+  the views page by page and the SSE channels (`app/src/client.ts`).
+- `app/src/testing/fixtures.ts`, which answers every view from `fixtures/` the way `serve`'s queries
+  do. vitest uses it and so does Playwright (`app/e2e/harness.ts`), so no test starts a server.
+
+`task ui:build` builds the app into `target/ui/www`. Outside `task check:app`, vitest runs as
+`slot --local npx vitest run --maxWorkers=2` from `ui/app`.
+
+## UI changes (ui-iteration-loop)
+
+- `ux/adapter.json` is the adapter of the loop, and `ux/scenarios/*/scenario.json` holds the five
+  scenario cards and their truths.
+- The fast loop runs in `task check:app` (`scripts/check-app.sh`): every scenario at the gating
+  viewports 1440x900 and 1280x720 in both themes.
+  - The screen-only user (`app/e2e/bot.ts`) plays each scenario.
+  - The layout contract and axe-core run at every state (`app/e2e/layout.ts`).
+  - Every scenario is done once more by keyboard alone.
+  - One test per finding is in `app/e2e/findings.spec.ts`.
+  - The ratchet compares with `ux/baseline.json` (`app/e2e/ratchet.spec.ts`). An improved metric
+    is taken into the baseline in the same change with
+    `UX_RATCHET=write npx playwright test --project=ratchet`. A worse one needs a decision id
+    beside the value.
+- A round is measured by `task ux:round -- R-nn` into `ux/rounds/R-nn/` (report.md, round.json,
+  shots/, `ux/rounds/trend.md`), with the measured-only viewports too. Then:
+  - two fresh review agents write `review-heuristics.md` and `review-report.md`;
+  - `triage.md` picks at most 5 changes;
+  - each change is built test first, with its `ux/findings/UXF-nnn.md` and the test that is its
+    regression asset.
+- Round screenshots come from the fixtures only, never from a real store.
+- A closed S1 or S2 finding without an existing regression asset fails the ratchet project.
 
 ## Repository files
 
@@ -79,6 +112,8 @@ Beside the crate: `ui/` holds the UI (`sessionspec.ui.yaml`), its synthetic fixt
 | `README.md`, `LICENSE`, `CHANGELOG.md` | for humans; Apache-2.0; the changelog in the Keep a Changelog 1.1.0 form, `## [Unreleased]` first. A change a user of the repository notices writes its line there |
 | `scripts/check-generated.sh` | one line per generated directory, the drift check and the regeneration |
 | `scripts/ui-build.sh` | `task ui:build` |
+| `scripts/check-app.sh` | `task check:app`: types, vitest, the build, and the Playwright gates and ratchet of `ux/` |
+| `ux/` | the ui-iteration-loop: adapter, scenarios, `baseline.json`, `round.sh`, rounds and findings |
 | `scripts/change-class.sh`, `change-class.test.sh` | the change classifier of `pages.yml` (planning, docs-site, code) and its cases, run by `task check:scripts`. `design/` and `research/` are planning; `website/` and `docs/` are the site. A new site source goes into its path list with a case |
 | `website/` | the public documentation site at `https://beyond10x.github.io/sessionspec/` (Docusaurus on `@beyond10x/docs-system`, pinned by commit in `package.json`). Its pages are `docs/*.md`, the user documentation, read in place; `docusaurus.config.ts` gives each its route, title and header (`pages`). `product.json` is the landing page. A new page needs an entry in `pages` and in `sidebars.ts`. A Markdown link to a file the site does not publish fails the build, so link such files by GitHub URL. `task site` builds it |
 | `.github/workflows/pages.yml` | `Documentation validation`: classifies the changed files with `scripts/change-class.sh`, builds the site, refuses a machine path in it, and on `main` uploads the artifact `b10x-project-site`. Its job `gate` runs `task check` for the class `code`, with `task`, `cargo-nextest` and `ess` downloaded at a pinned version and refused unless their SHA-256 is the one in the step |
@@ -97,7 +132,9 @@ Beside the crate: `ui/` holds the UI (`sessionspec.ui.yaml`), its synthetic fixt
   `query --transcript` reads the file.
 - The store is `$XDG_DATA_HOME/sessionspec/sessions.db` (or `--state-dir`), never inside this
   repository: it holds the harness's session titles. `SCHEMA_VERSION` in `store.rs` rises when
-  what it holds changes meaning; a store of another version is emptied and filled again.
+  the derived tables change meaning; a store of another version drops and fills them again and
+  keeps its `wire_steps`. `WIRE_FORMAT` rises when a wire row's encoding changes; a store of
+  another wire format is refused and left unchanged.
 - `sessionspec serve` binds 127.0.0.1 only and answers as the one local `Viewer` (`ui/README.md`).
 
 ## Rules

@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
 // do not edit: regenerate with `ess synthesize`
 
 //! Ephemeral stores for the generated network entry points; no durability.
@@ -88,9 +88,9 @@ fn list(&self) -> Vec<sessionspec_types::view::AgentListingSnapshot> { sessionsp
 #[derive(Clone, Default)]
 pub struct MemoryEventRowStorage(std::rc::Rc<std::cell::RefCell<Vec<sessionspec_types::view::EventRowSnapshot>>>);
 impl sessionspec_types::behaviour::EventRowStorage for MemoryEventRowStorage {
-fn get(&self, identity: &sessionspec_types::view::EventId) -> Option<sessionspec_types::view::EventRowSnapshot> { let key = memory_key_71(identity); self.0.borrow().iter().find(|row| memory_key_71(&row.data.event_id) == key).cloned() }
-fn put(&mut self, snapshot: sessionspec_types::view::EventRowSnapshot) { self.delete(&snapshot.data.event_id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_71(&row.data.event_id).cmp(&memory_key_71(&other.data.event_id))); }
-fn delete(&mut self, identity: &sessionspec_types::view::EventId) { let key = memory_key_71(identity); self.0.borrow_mut().retain(|row| memory_key_71(&row.data.event_id) != key); }
+fn get(&self, identity: &sessionspec_types::view::EventId) -> Option<sessionspec_types::view::EventRowSnapshot> { let key = memory_key_74(identity); self.0.borrow().iter().find(|row| memory_key_74(&row.data.event_id) == key).cloned() }
+fn put(&mut self, snapshot: sessionspec_types::view::EventRowSnapshot) { self.delete(&snapshot.data.event_id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_74(&row.data.event_id).cmp(&memory_key_74(&other.data.event_id))); }
+fn delete(&mut self, identity: &sessionspec_types::view::EventId) { let key = memory_key_74(identity); self.0.borrow_mut().retain(|row| memory_key_74(&row.data.event_id) != key); }
 fn list(&self) -> Vec<sessionspec_types::view::EventRowSnapshot> { self.0.borrow().clone() }
 }
 impl sessionspec_types::behaviour::EventRowStorage for MemoryPorts {
@@ -100,13 +100,29 @@ fn delete(&mut self, identity: &sessionspec_types::view::EventId) { sessionspec_
 fn list(&self) -> Vec<sessionspec_types::view::EventRowSnapshot> { sessionspec_types::behaviour::EventRowStorage::list(&self.event_row_storage) }
 }
 
+/// Ephemeral storage of `sessionspec.view.FigureBucket`, shared by clones.
+#[derive(Clone, Default)]
+pub struct MemoryFigureBucketStorage(std::rc::Rc<std::cell::RefCell<Vec<sessionspec_types::view::FigureBucketSnapshot>>>);
+impl sessionspec_types::behaviour::FigureBucketStorage for MemoryFigureBucketStorage {
+fn get(&self, identity: &sessionspec_types::view::BucketId) -> Option<sessionspec_types::view::FigureBucketSnapshot> { let key = memory_key_68(identity); self.0.borrow().iter().find(|row| memory_key_68(&row.data.bucket_id) == key).cloned() }
+fn put(&mut self, snapshot: sessionspec_types::view::FigureBucketSnapshot) { self.delete(&snapshot.data.bucket_id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_68(&row.data.bucket_id).cmp(&memory_key_68(&other.data.bucket_id))); }
+fn delete(&mut self, identity: &sessionspec_types::view::BucketId) { let key = memory_key_68(identity); self.0.borrow_mut().retain(|row| memory_key_68(&row.data.bucket_id) != key); }
+fn list(&self) -> Vec<sessionspec_types::view::FigureBucketSnapshot> { self.0.borrow().clone() }
+}
+impl sessionspec_types::behaviour::FigureBucketStorage for MemoryPorts {
+fn get(&self, identity: &sessionspec_types::view::BucketId) -> Option<sessionspec_types::view::FigureBucketSnapshot> { sessionspec_types::behaviour::FigureBucketStorage::get(&self.figure_bucket_storage, identity) }
+fn put(&mut self, snapshot: sessionspec_types::view::FigureBucketSnapshot) { sessionspec_types::behaviour::FigureBucketStorage::put(&mut self.figure_bucket_storage, snapshot); }
+fn delete(&mut self, identity: &sessionspec_types::view::BucketId) { sessionspec_types::behaviour::FigureBucketStorage::delete(&mut self.figure_bucket_storage, identity); }
+fn list(&self) -> Vec<sessionspec_types::view::FigureBucketSnapshot> { sessionspec_types::behaviour::FigureBucketStorage::list(&self.figure_bucket_storage) }
+}
+
 /// Ephemeral storage of `sessionspec.view.SessionCheck`, shared by clones.
 #[derive(Clone, Default)]
 pub struct MemorySessionCheckStorage(std::rc::Rc<std::cell::RefCell<Vec<sessionspec_types::view::SessionCheckSnapshot>>>);
 impl sessionspec_types::behaviour::SessionCheckStorage for MemorySessionCheckStorage {
-fn get(&self, identity: &sessionspec_types::view::CheckId) -> Option<sessionspec_types::view::SessionCheckSnapshot> { let key = memory_key_68(identity); self.0.borrow().iter().find(|row| memory_key_68(&row.data.check_id) == key).cloned() }
-fn put(&mut self, snapshot: sessionspec_types::view::SessionCheckSnapshot) { self.delete(&snapshot.data.check_id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_68(&row.data.check_id).cmp(&memory_key_68(&other.data.check_id))); }
-fn delete(&mut self, identity: &sessionspec_types::view::CheckId) { let key = memory_key_68(identity); self.0.borrow_mut().retain(|row| memory_key_68(&row.data.check_id) != key); }
+fn get(&self, identity: &sessionspec_types::view::CheckId) -> Option<sessionspec_types::view::SessionCheckSnapshot> { let key = memory_key_69(identity); self.0.borrow().iter().find(|row| memory_key_69(&row.data.check_id) == key).cloned() }
+fn put(&mut self, snapshot: sessionspec_types::view::SessionCheckSnapshot) { self.delete(&snapshot.data.check_id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_69(&row.data.check_id).cmp(&memory_key_69(&other.data.check_id))); }
+fn delete(&mut self, identity: &sessionspec_types::view::CheckId) { let key = memory_key_69(identity); self.0.borrow_mut().retain(|row| memory_key_69(&row.data.check_id) != key); }
 fn list(&self) -> Vec<sessionspec_types::view::SessionCheckSnapshot> { self.0.borrow().clone() }
 }
 impl sessionspec_types::behaviour::SessionCheckStorage for MemoryPorts {
@@ -132,6 +148,22 @@ fn delete(&mut self, identity: &sessionspec_types::session::SessionId) { session
 fn list(&self) -> Vec<sessionspec_types::view::SessionListingSnapshot> { sessionspec_types::behaviour::SessionListingStorage::list(&self.session_listing_storage) }
 }
 
+/// Ephemeral storage of `sessionspec.view.TimelineSlot`, shared by clones.
+#[derive(Clone, Default)]
+pub struct MemoryTimelineSlotStorage(std::rc::Rc<std::cell::RefCell<Vec<sessionspec_types::view::TimelineSlotSnapshot>>>);
+impl sessionspec_types::behaviour::TimelineSlotStorage for MemoryTimelineSlotStorage {
+fn get(&self, identity: &sessionspec_types::view::SlotId) -> Option<sessionspec_types::view::TimelineSlotSnapshot> { let key = memory_key_80(identity); self.0.borrow().iter().find(|row| memory_key_80(&row.data.slot_id) == key).cloned() }
+fn put(&mut self, snapshot: sessionspec_types::view::TimelineSlotSnapshot) { self.delete(&snapshot.data.slot_id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_80(&row.data.slot_id).cmp(&memory_key_80(&other.data.slot_id))); }
+fn delete(&mut self, identity: &sessionspec_types::view::SlotId) { let key = memory_key_80(identity); self.0.borrow_mut().retain(|row| memory_key_80(&row.data.slot_id) != key); }
+fn list(&self) -> Vec<sessionspec_types::view::TimelineSlotSnapshot> { self.0.borrow().clone() }
+}
+impl sessionspec_types::behaviour::TimelineSlotStorage for MemoryPorts {
+fn get(&self, identity: &sessionspec_types::view::SlotId) -> Option<sessionspec_types::view::TimelineSlotSnapshot> { sessionspec_types::behaviour::TimelineSlotStorage::get(&self.timeline_slot_storage, identity) }
+fn put(&mut self, snapshot: sessionspec_types::view::TimelineSlotSnapshot) { sessionspec_types::behaviour::TimelineSlotStorage::put(&mut self.timeline_slot_storage, snapshot); }
+fn delete(&mut self, identity: &sessionspec_types::view::SlotId) { sessionspec_types::behaviour::TimelineSlotStorage::delete(&mut self.timeline_slot_storage, identity); }
+fn list(&self) -> Vec<sessionspec_types::view::TimelineSlotSnapshot> { sessionspec_types::behaviour::TimelineSlotStorage::list(&self.timeline_slot_storage) }
+}
+
 /// Ports shared by generated components. Values disappear when the process exits.
 #[derive(Clone, Default)]
 pub struct MemoryPorts {
@@ -147,10 +179,14 @@ pub tool_call_storage: MemoryToolCallStorage,
 pub agent_listing_storage: MemoryAgentListingStorage,
 /// Storage of `sessionspec.view.EventRow`.
 pub event_row_storage: MemoryEventRowStorage,
+/// Storage of `sessionspec.view.FigureBucket`.
+pub figure_bucket_storage: MemoryFigureBucketStorage,
 /// Storage of `sessionspec.view.SessionCheck`.
 pub session_check_storage: MemorySessionCheckStorage,
 /// Storage of `sessionspec.view.SessionListing`.
 pub session_listing_storage: MemorySessionListingStorage,
+/// Storage of `sessionspec.view.TimelineSlot`.
+pub timeline_slot_storage: MemoryTimelineSlotStorage,
 }
 
 fn memory_key_44(value: &sessionspec_types::session::AgentId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
@@ -161,9 +197,13 @@ fn memory_key_59(value: &sessionspec_types::session::SessionId) -> MemoryKey { l
 
 fn memory_key_62(value: &sessionspec_types::session::ToolCallId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
 
-fn memory_key_68(value: &sessionspec_types::view::CheckId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
+fn memory_key_68(value: &sessionspec_types::view::BucketId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
 
-fn memory_key_71(value: &sessionspec_types::view::EventId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
+fn memory_key_69(value: &sessionspec_types::view::CheckId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
+
+fn memory_key_74(value: &sessionspec_types::view::EventId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
+
+fn memory_key_80(value: &sessionspec_types::view::SlotId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
 
 // A common structural order; individual specifications use only a subset of the variants.
 #[allow(dead_code)]
@@ -180,6 +220,12 @@ enum MemoryKey {
     Optional(Option<Box<MemoryKey>>),
 }
 
+impl sessionspec_types::view::obligations::SessionEventCountsQuery for MemoryPorts {
+fn session_event_counts(&self, session_id: sessionspec_types::session::SessionId, agent: Option<sessionspec_types::session::AgentId>) -> Result<Vec<sessionspec_types::view::SessionEventCounts>, sessionspec_types::obligation::UnmetObligation> { sessionspec_types::view::obligations::SessionEventCountsQuery::session_event_counts(&sessionspec_types::view::obligations::Unimplemented, session_id, agent) }
+}
+impl sessionspec_types::view::obligations::SessionEventsQuery for MemoryPorts {
+fn session_events(&self, session_id: sessionspec_types::session::SessionId, agent: Option<sessionspec_types::session::AgentId>, kind: Option<sessionspec_types::view::EventKind>, notable: Option<bool>, before: Option<i64>) -> Result<Vec<sessionspec_types::view::SessionEvents>, sessionspec_types::obligation::UnmetObligation> { sessionspec_types::view::obligations::SessionEventsQuery::session_events(&sessionspec_types::view::obligations::Unimplemented, session_id, agent, kind, notable, before) }
+}
 impl sessionspec_types::view::obligations::SessionListQuery for MemoryPorts {
-fn session_list(&self, since: Option<sessionspec_types::primitives::Timestamp>, search: Option<String>, limit: Option<i64>) -> Result<Vec<sessionspec_types::view::SessionList>, sessionspec_types::obligation::UnmetObligation> { sessionspec_types::view::obligations::SessionListQuery::session_list(&sessionspec_types::view::obligations::Unimplemented, since, search, limit) }
+fn session_list(&self, since: Option<sessionspec_types::primitives::Timestamp>, search: Option<String>, limit: Option<i64>, offset: Option<i64>) -> Result<Vec<sessionspec_types::view::SessionList>, sessionspec_types::obligation::UnmetObligation> { sessionspec_types::view::obligations::SessionListQuery::session_list(&sessionspec_types::view::obligations::Unimplemented, since, search, limit, offset) }
 }

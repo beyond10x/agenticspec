@@ -6,8 +6,9 @@ summary: >-
   (`ui/sessionspec.ui.yaml`): sessions, agents, events and check verdicts. It holds no content,
   only names, counts and times, except the harness's session title, which stays in the host's
   local store. A renderer takes a whole document or an update that appends events; the UI reads
-  the views and takes their changes live. Renderers are generated from the UI document
-  (`ess generate ui`); a gateway UI reuses the document's `embed.*` pages.
+  the views and takes their changes live. The UI is written by hand (`ui/app/`) over TypeScript
+  types generated from this domain (`ess generate types`); a gateway UI reuses its embed pages
+  and components.
 
 types:
   - name: sessionspec.view.EventKind
@@ -95,6 +96,24 @@ types:
     of: String
     naming:
       summary: One check of one session, `<session_id>.<check>`.
+
+  - name: sessionspec.view.CountId
+    kind: newtype
+    of: String
+    naming:
+      summary: The count of one event kind in one session, `<session_id>.<agent or *>.<kind>`.
+
+  - name: sessionspec.view.SlotId
+    kind: newtype
+    of: String
+    naming:
+      summary: One time slot of one agent of one session, `<session_id>.<agent>.<start in ms>`.
+
+  - name: sessionspec.view.BucketId
+    kind: newtype
+    of: String
+    naming:
+      summary: One time bucket of the overview, its start in milliseconds since the epoch.
 
 # Read models of the UI (`ui/sessionspec.ui.yaml`), served by the `session-view` component. Rows
 # hold names, counts, times and digests, never content: no prompt text, no command, no path.
@@ -244,9 +263,15 @@ entities:
     fields:
       - {name: session_id, type: sessionspec.session.SessionId}
       - {name: seq, type: Integer}
+      - name: ord
+        type: Integer
+        summary: The event's place in its session ordered by `at`, then `seq`, from 0.
       - {name: at, type: Timestamp}
       - {name: agent, type: sessionspec.session.AgentId}
       - {name: kind, type: sessionspec.view.EventKind}
+      - name: notable
+        type: Boolean
+        summary: A prompt, an agent start, a refusal, a failed tool result, a cache bust or a compaction, which the event log shows first.
       - {name: label, type: String}
       - {name: detail, type: Optional<String>}
       - {name: call, type: Optional<String>}
@@ -299,6 +324,101 @@ entities:
       states: [Judged]
       terminal: [Judged]
 
+  - name: sessionspec.view.EventCount
+    naming:
+      summary: >-
+        How many events of one kind a session holds, of one agent or of all of them: the counts the
+        event log's kind filters show.
+    identity:
+      name: count_id
+      type: sessionspec.view.CountId
+    fields:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - name: agent
+        type: Optional<sessionspec.session.AgentId>
+        summary: The agent counted; absent for every agent of the session.
+      - {name: kind, type: sessionspec.view.EventKind}
+      - {name: count, type: Integer}
+    lifecycle:
+      initial: Counted
+      states: [Counted]
+      terminal: [Counted]
+
+  - name: sessionspec.view.TimelineSlot
+    naming:
+      summary: >-
+        The events of one agent within one time slot of a session, counted by what the timeline
+        draws: tool calls by category, prompts by author, refusals, cache busts and compactions,
+        with the largest context and the running costs at the slot's last event.
+    identity:
+      name: slot_id
+      type: sessionspec.view.SlotId
+    fields:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: agent, type: sessionspec.session.AgentId}
+      - name: slot_seconds
+        type: Integer
+        summary: The length of the slot; slots start at a multiple of it from the epoch.
+      - name: start
+        type: Timestamp
+        summary: The instant of the slot's first event.
+      - name: end
+        type: Timestamp
+        summary: The instant of the slot's last event.
+      - {name: events, type: Integer}
+      - {name: read_calls, type: Integer}
+      - {name: search_calls, type: Integer}
+      - {name: edit_calls, type: Integer}
+      - {name: execute_calls, type: Integer}
+      - {name: network_calls, type: Integer}
+      - {name: spawn_calls, type: Integer}
+      - {name: message_calls, type: Integer}
+      - {name: plan_calls, type: Integer}
+      - {name: other_calls, type: Integer}
+      - {name: human_prompts, type: Integer}
+      - name: relayed_prompts
+        type: Integer
+        summary: Prompts written by a delegate or a peer session.
+      - {name: refusals, type: Integer}
+      - {name: busts, type: Integer}
+      - {name: compactions, type: Integer}
+      - name: context_max
+        type: Optional<Integer>
+        summary: The largest context of a model turn in the slot.
+      - {name: agent_cost_usd, type: Binary64}
+      - {name: session_cost_usd, type: Binary64}
+    lifecycle:
+      initial: Counted
+      states: [Counted]
+      terminal: [Counted]
+
+  - name: sessionspec.view.FigureBucket
+    naming:
+      summary: >-
+        The sums of the overview's figures over the sessions whose last record falls in one time
+        bucket: a client divides a sum by `sessions` for an average.
+    identity:
+      name: bucket_id
+      type: sessionspec.view.BucketId
+    fields:
+      - {name: start, type: Timestamp}
+      - {name: bucket_seconds, type: Integer}
+      - {name: sessions, type: Integer}
+      - {name: cost_usd, type: Binary64}
+      - {name: working_seconds, type: Integer}
+      - name: waiting_share
+        type: Binary64
+        summary: The sum of the sessions' `waiting_share`.
+      - name: cache_hit_share
+        type: Binary64
+        summary: The sum of the sessions' `cache_hit_share`.
+      - {name: tool_calls, type: Integer}
+      - {name: refused_tool_calls, type: Integer}
+    lifecycle:
+      initial: Counted
+      states: [Counted]
+      terminal: [Counted]
+
 actors:
   - name: sessionspec.view.Viewer
     naming:
@@ -312,6 +432,9 @@ actors:
       - sessionspec.view.SessionTurns
       - sessionspec.view.AgentTurns
       - sessionspec.view.SessionChecks
+      - sessionspec.view.SessionEventCounts
+      - sessionspec.view.SessionTimeline
+      - sessionspec.view.OverviewFigures
 
 events:
   - name: sessionspec.view.SessionUpdated
@@ -365,9 +488,11 @@ events:
       - {name: event_id, type: sessionspec.view.EventId}
       - {name: session_id, type: sessionspec.session.SessionId}
       - {name: seq, type: Integer}
+      - {name: ord, type: Integer}
       - {name: at, type: Timestamp}
       - {name: agent, type: sessionspec.session.AgentId}
       - {name: kind, type: sessionspec.view.EventKind}
+      - {name: notable, type: Boolean}
       - {name: label, type: String}
       - {name: detail, type: Optional<String>}
       - {name: call, type: Optional<String>}
@@ -389,8 +514,9 @@ views:
       wire: session-list
       display: Sessions
       summary: >-
-        The sessions with a record at or after `since`, newest `last_at` first, at most `limit`
-        of them, narrowed by `search`: text found in `names`.
+        The sessions with a record at or after `since`, newest `last_at` first, ranked after
+        `offset` and at most `limit`, narrowed by `search`: text found in `names`. A page of the
+        list is `offset` n and `limit` n + page size.
     # UNMAPPED: ESS has no case-insensitive `contains`. `names` is lower case and the local
     # server lowers `search` before it compares, so a search ignores case; the filter below
     # states the case-sensitive comparison of what it receives.
@@ -398,6 +524,7 @@ views:
       - {name: since, type: Optional<Timestamp>}
       - {name: search, type: Optional<String>}
       - {name: limit, type: Optional<Integer>}
+      - {name: offset, type: Optional<Integer>}
     filter:
       all:
         - any: ["not defined(param.since)", "last_at >= param.since"]
@@ -405,6 +532,7 @@ views:
             - "not defined(param.search)"
             - {names: {contains: {param: search}}}
         - any: ["not defined(param.limit)", "rank <= param.limit"]
+        - any: ["not defined(param.offset)", "rank > param.offset"]
     fields:
       - {name: session_id, type: sessionspec.session.SessionId}
       - {name: project, type: String}
@@ -484,15 +612,38 @@ views:
   - name: sessionspec.view.SessionEvents
     source: sessionspec.view.EventRow
     consistency: eventual
-    params: [{name: session_id, type: sessionspec.session.SessionId}]
-    filter: session_id == param.session_id
+    naming:
+      wire: session-events
+      display: Events of a session
+      summary: >-
+        The events of a session, of one agent when `agent` is given, of one kind when `kind` is
+        given, only the notable ones when `notable` is true, and before the place `before` in the
+        session's order. Newest first, at most 500 rows: the next page is `before` set to the last
+        row's `ord`.
+    # UNMAPPED: ESS views neither order nor page. The local server answers each page with one
+    # indexed query of its store, newest `ord` first, and stops at 500 rows.
+    params:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: agent, type: Optional<sessionspec.session.AgentId>}
+      - {name: kind, type: Optional<sessionspec.view.EventKind>}
+      - {name: notable, type: Optional<Boolean>}
+      - {name: before, type: Optional<Integer>}
+    filter:
+      all:
+        - session_id == param.session_id
+        - any: ["not defined(param.agent)", "agent == param.agent"]
+        - any: ["not defined(param.kind)", "kind == param.kind"]
+        - any: ["not defined(param.notable)", "notable == param.notable"]
+        - any: ["not defined(param.before)", "ord < param.before"]
     fields: &event_row_fields
       - {name: event_id, type: sessionspec.view.EventId}
       - {name: session_id, type: sessionspec.session.SessionId}
       - {name: seq, type: Integer}
+      - {name: ord, type: Integer}
       - {name: at, type: Timestamp}
       - {name: agent, type: sessionspec.session.AgentId}
       - {name: kind, type: sessionspec.view.EventKind}
+      - {name: notable, type: Boolean}
       - {name: label, type: String}
       - {name: detail, type: Optional<String>}
       - {name: call, type: Optional<String>}
@@ -505,9 +656,6 @@ views:
       - {name: bytes, type: Optional<Integer>}
       - {name: agent_cost_usd, type: Binary64}
       - {name: session_cost_usd, type: Binary64}
-    naming:
-      wire: session-events
-      display: Events of a session
 
   - name: sessionspec.view.SessionTurns
     source: sessionspec.view.EventRow
@@ -548,3 +696,91 @@ views:
     naming:
       wire: session-checks
       display: Checks of a session
+
+  - name: sessionspec.view.SessionEventCounts
+    source: sessionspec.view.EventCount
+    consistency: eventual
+    params:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: agent, type: Optional<sessionspec.session.AgentId>}
+    filter:
+      all:
+        - session_id == param.session_id
+        - any: ["not defined(param.agent)", "agent == param.agent"]
+    fields:
+      - {name: count_id, type: sessionspec.view.CountId}
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: agent, type: Optional<sessionspec.session.AgentId>}
+      - {name: kind, type: sessionspec.view.EventKind}
+      - {name: count, type: Integer}
+    naming:
+      wire: session-event-counts
+      display: Event counts of a session
+
+  - name: sessionspec.view.SessionTimeline
+    source: sessionspec.view.TimelineSlot
+    consistency: eventual
+    naming:
+      wire: session-timeline
+      display: Timeline of a session
+      summary: >-
+        The slots of a session's agents with at least one event, oldest first. A slot is
+        `slot_seconds` long, counted from the epoch.
+    # UNMAPPED: ESS views do not aggregate. The local server counts the events of each slot
+    # with one grouped query over its store's indexed events.
+    params:
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: slot_seconds, type: Integer}
+    filter: {all: ["session_id == param.session_id", "slot_seconds == param.slot_seconds"]}
+    fields:
+      - {name: slot_id, type: sessionspec.view.SlotId}
+      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: agent, type: sessionspec.session.AgentId}
+      - {name: slot_seconds, type: Integer}
+      - {name: start, type: Timestamp}
+      - {name: end, type: Timestamp}
+      - {name: events, type: Integer}
+      - {name: read_calls, type: Integer}
+      - {name: search_calls, type: Integer}
+      - {name: edit_calls, type: Integer}
+      - {name: execute_calls, type: Integer}
+      - {name: network_calls, type: Integer}
+      - {name: spawn_calls, type: Integer}
+      - {name: message_calls, type: Integer}
+      - {name: plan_calls, type: Integer}
+      - {name: other_calls, type: Integer}
+      - {name: human_prompts, type: Integer}
+      - {name: relayed_prompts, type: Integer}
+      - {name: refusals, type: Integer}
+      - {name: busts, type: Integer}
+      - {name: compactions, type: Integer}
+      - {name: context_max, type: Optional<Integer>}
+      - {name: agent_cost_usd, type: Binary64}
+      - {name: session_cost_usd, type: Binary64}
+
+  - name: sessionspec.view.OverviewFigures
+    source: sessionspec.view.FigureBucket
+    consistency: eventual
+    naming:
+      wire: figures
+      display: Overview figures
+      summary: >-
+        The overview's figures summed per time bucket of `bucket_seconds` from `since` on, oldest
+        first; buckets without a session are absent.
+    # UNMAPPED: ESS views do not aggregate. The store keeps the sums per hour in a table it
+    # rewrites on each sync; the local server adds the hours of each bucket in one query.
+    params:
+      - {name: since, type: Timestamp}
+      - {name: bucket_seconds, type: Integer}
+    filter: {all: ["start >= param.since", "bucket_seconds == param.bucket_seconds"]}
+    fields:
+      - {name: bucket_id, type: sessionspec.view.BucketId}
+      - {name: start, type: Timestamp}
+      - {name: bucket_seconds, type: Integer}
+      - {name: sessions, type: Integer}
+      - {name: cost_usd, type: Binary64}
+      - {name: working_seconds, type: Integer}
+      - {name: waiting_share, type: Binary64}
+      - {name: cache_hit_share, type: Binary64}
+      - {name: tool_calls, type: Integer}
+      - {name: refused_tool_calls, type: Integer}

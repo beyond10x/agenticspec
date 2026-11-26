@@ -133,11 +133,13 @@ impl Handler for Commands {
             }
             "analyze" => {
                 let (root, from, now) = window(&inv.input);
-                let out = PathBuf::from(
-                    inv.input
-                        .get("out")
-                        .and_then(Value::as_str)
-                        .unwrap_or("sessionspec-dashboard.html"),
+                // Without --out the file goes beside the store, out of any checkout.
+                let out = inv.input.get("out").and_then(Value::as_str).map_or_else(
+                    || {
+                        sessionspec::store::path_in(inv.context.state_dir.as_deref())
+                            .with_file_name("sessionspec-dashboard.html")
+                    },
+                    PathBuf::from,
                 );
                 let store = match synced(&inv.context, &root, from) {
                     Ok(s) => s,

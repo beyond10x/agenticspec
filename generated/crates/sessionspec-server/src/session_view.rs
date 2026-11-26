@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
 // do not edit: regenerate with `ess synthesize`
 
 //! The `session-view` component of `sessionspec` v1, on the wire.
@@ -30,11 +30,14 @@ pub const ROUTES: &[(&str, &str)] = &[
     ("GET", "/docs"),
     ("GET", "/openapi.json"),
     ("GET", "/view/views/agent-turns"),
+    ("GET", "/view/views/figures"),
     ("GET", "/view/views/session"),
     ("GET", "/view/views/session-agents"),
     ("GET", "/view/views/session-checks"),
+    ("GET", "/view/views/session-event-counts"),
     ("GET", "/view/views/session-events"),
     ("GET", "/view/views/session-list"),
+    ("GET", "/view/views/session-timeline"),
     ("GET", "/view/views/session-turns"),
 ];
 
@@ -46,8 +49,8 @@ pub const ROUTES: &[(&str, &str)] = &[
 /// Everything outside `runtime` is the same in every language this plan is emitted into, and
 /// `cargo xtask synth --check` starts both and compares them.
 pub const STARTUP: &[&str] = &[
-    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"sessionspec\",\"version\":\"v1\",\"model_digest\":\"a6b5aa202a7d1fb3ccc3518877db74e637ca2945581ff9e745b414a3d1fe997e\",\"contract_digest\":\"5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627\",\"components\":[\"session-ir\",\"session-view\"],\"capabilities\":{\"generated\":162,\"obligations\":1,\"refused\":0}",
-    "{\"log\":\"ess/1\",\"event\":\"surface.serving\",\"component\":\"session-view\",\"reached_by\":\"network\",\"transport\":\"http/1.1\",\"routes\":9,\"paths\":[{\"method\":\"GET\",\"path\":\"/docs\",\"serves\":\"documentation\",\"name\":\"docs\"},{\"method\":\"GET\",\"path\":\"/openapi.json\",\"serves\":\"contract\",\"name\":\"openapi\"},{\"method\":\"GET\",\"path\":\"/view/views/agent-turns\",\"serves\":\"view\",\"name\":\"sessionspec.view.AgentTurns\"},{\"method\":\"GET\",\"path\":\"/view/views/session\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionById\"},{\"method\":\"GET\",\"path\":\"/view/views/session-agents\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionAgents\"},{\"method\":\"GET\",\"path\":\"/view/views/session-checks\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionChecks\"},{\"method\":\"GET\",\"path\":\"/view/views/session-events\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionEvents\"},{\"method\":\"GET\",\"path\":\"/view/views/session-list\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionList\"},{\"method\":\"GET\",\"path\":\"/view/views/session-turns\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionTurns\"}]",
+    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"sessionspec\",\"version\":\"v1\",\"model_digest\":\"d8e9a44696a3a3a589a0ee741e8aca7b6117f4ae8f49fd843bec3089b4eaaee5\",\"contract_digest\":\"7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40\",\"components\":[\"session-ir\",\"session-view\"],\"capabilities\":{\"generated\":175,\"obligations\":3,\"refused\":0}",
+    "{\"log\":\"ess/1\",\"event\":\"surface.serving\",\"component\":\"session-view\",\"reached_by\":\"network\",\"transport\":\"http/1.1\",\"routes\":12,\"paths\":[{\"method\":\"GET\",\"path\":\"/docs\",\"serves\":\"documentation\",\"name\":\"docs\"},{\"method\":\"GET\",\"path\":\"/openapi.json\",\"serves\":\"contract\",\"name\":\"openapi\"},{\"method\":\"GET\",\"path\":\"/view/views/agent-turns\",\"serves\":\"view\",\"name\":\"sessionspec.view.AgentTurns\"},{\"method\":\"GET\",\"path\":\"/view/views/figures\",\"serves\":\"view\",\"name\":\"sessionspec.view.OverviewFigures\"},{\"method\":\"GET\",\"path\":\"/view/views/session\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionById\"},{\"method\":\"GET\",\"path\":\"/view/views/session-agents\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionAgents\"},{\"method\":\"GET\",\"path\":\"/view/views/session-checks\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionChecks\"},{\"method\":\"GET\",\"path\":\"/view/views/session-event-counts\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionEventCounts\"},{\"method\":\"GET\",\"path\":\"/view/views/session-events\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionEvents\"},{\"method\":\"GET\",\"path\":\"/view/views/session-list\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionList\"},{\"method\":\"GET\",\"path\":\"/view/views/session-timeline\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionTimeline\"},{\"method\":\"GET\",\"path\":\"/view/views/session-turns\",\"serves\":\"view\",\"name\":\"sessionspec.view.SessionTurns\"}]",
     "{\"log\":\"ess/1\",\"event\":\"system.ready\",\"system\":\"sessionspec\",\"surfaces\":2",
 ];
 
@@ -87,7 +90,7 @@ fn announce(address: &std::net::SocketAddr) {
 pub fn serve<SessionIrBehaviors, SessionViewBehaviors>(system: &mut sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, address: &str, authenticate: impl Fn(&http::Request) -> Option<sessionspec_types::actor::Caller>) -> std::io::Result<()>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 { serve_with_static(system, address, authenticate, None) }
 
 /// Serves the declared surface, with files only for paths outside its route table.
@@ -97,7 +100,7 @@ where
 pub fn serve_with_static<SessionIrBehaviors, SessionViewBehaviors>(system: &mut sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, address: &str, authenticate: impl Fn(&http::Request) -> Option<sessionspec_types::actor::Caller>, static_root: Option<&std::path::Path>) -> std::io::Result<()>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     let static_root = static_root.map(std::fs::canonicalize).transpose()?;
     if static_root.as_ref().is_some_and(|root| !root.is_dir()) { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "static root is not a directory")); }
@@ -152,7 +155,7 @@ where
 pub fn dispatch<SessionIrBehaviors, SessionViewBehaviors>(system: &mut sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&sessionspec_types::actor::Caller>, request: &http::Request) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     dispatch_with_events(system, caller, request).0
 }
@@ -169,7 +172,7 @@ where
 pub fn dispatch_with_events<SessionIrBehaviors, SessionViewBehaviors>(system: &mut sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&sessionspec_types::actor::Caller>, request: &http::Request) -> (http::Response, Vec<sessionspec_system::SystemEvent>)
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     let mut taken = Vec::new();
     let answer = route_request(system, caller, request, &mut taken);
@@ -181,7 +184,7 @@ where
 fn route_request<SessionIrBehaviors, SessionViewBehaviors>(system: &mut sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&sessionspec_types::actor::Caller>, request: &http::Request, _taken: &mut Vec<sessionspec_system::SystemEvent>) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     match request.path.as_str() {
         "/docs" => {
@@ -204,6 +207,15 @@ where
                 return not_granted(actor);
             }
             serve_sessionspec_view_agent_turns(system, &request.query)
+        }
+        "/view/views/figures" => {
+            if request.method != "GET" {
+                return http::method_not_allowed("GET");
+            }
+            if let Err(actor) = admit_read(caller, "sessionspec.view.OverviewFigures") {
+                return not_granted(actor);
+            }
+            serve_sessionspec_view_overview_figures(system, &request.query)
         }
         "/view/views/session" => {
             if request.method != "GET" {
@@ -232,6 +244,15 @@ where
             }
             serve_sessionspec_view_session_checks(system, &request.query)
         }
+        "/view/views/session-event-counts" => {
+            if request.method != "GET" {
+                return http::method_not_allowed("GET");
+            }
+            if let Err(actor) = admit_read(caller, "sessionspec.view.SessionEventCounts") {
+                return not_granted(actor);
+            }
+            serve_sessionspec_view_session_event_counts(system, &request.query)
+        }
         "/view/views/session-events" => {
             if request.method != "GET" {
                 return http::method_not_allowed("GET");
@@ -249,6 +270,15 @@ where
                 return not_granted(actor);
             }
             serve_sessionspec_view_session_list(system, &request.query)
+        }
+        "/view/views/session-timeline" => {
+            if request.method != "GET" {
+                return http::method_not_allowed("GET");
+            }
+            if let Err(actor) = admit_read(caller, "sessionspec.view.SessionTimeline") {
+                return not_granted(actor);
+            }
+            serve_sessionspec_view_session_timeline(system, &request.query)
         }
         "/view/views/session-turns" => {
             if request.method != "GET" {
@@ -295,7 +325,7 @@ where
 pub fn handle<SessionIrBehaviors, SessionViewBehaviors>(system: &mut sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&sessionspec_types::actor::Caller>, name: &str, input: json::Value) -> Result<json::Value, entry::Refused>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     handle_with_events(system, caller, name, input).0
 }
@@ -312,7 +342,7 @@ where
 pub fn handle_with_events<SessionIrBehaviors, SessionViewBehaviors>(system: &mut sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&sessionspec_types::actor::Caller>, name: &str, input: json::Value) -> (Result<json::Value, entry::Refused>, Vec<sessionspec_system::SystemEvent>)
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     let taken = Vec::new();
     let checked = |input: &json::Value| {
@@ -323,6 +353,10 @@ where
     let answered = match name {
         "sessionspec.view.AgentTurns" => match admit_read(caller, "sessionspec.view.AgentTurns") {
             Ok(()) => checked(&input).and_then(|()| run_sessionspec_view_agent_turns(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "sessionspec.view.OverviewFigures" => match admit_read(caller, "sessionspec.view.OverviewFigures") {
+            Ok(()) => checked(&input).and_then(|()| run_sessionspec_view_overview_figures(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "sessionspec.view.SessionAgents" => match admit_read(caller, "sessionspec.view.SessionAgents") {
@@ -337,12 +371,20 @@ where
             Ok(()) => checked(&input).and_then(|()| run_sessionspec_view_session_checks(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
+        "sessionspec.view.SessionEventCounts" => match admit_read(caller, "sessionspec.view.SessionEventCounts") {
+            Ok(()) => checked(&input).and_then(|()| run_sessionspec_view_session_event_counts(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
         "sessionspec.view.SessionEvents" => match admit_read(caller, "sessionspec.view.SessionEvents") {
             Ok(()) => checked(&input).and_then(|()| run_sessionspec_view_session_events(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "sessionspec.view.SessionList" => match admit_read(caller, "sessionspec.view.SessionList") {
             Ok(()) => checked(&input).and_then(|()| run_sessionspec_view_session_list(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "sessionspec.view.SessionTimeline" => match admit_read(caller, "sessionspec.view.SessionTimeline") {
+            Ok(()) => checked(&input).and_then(|()| run_sessionspec_view_session_timeline(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "sessionspec.view.SessionTurns" => match admit_read(caller, "sessionspec.view.SessionTurns") {
@@ -410,7 +452,7 @@ pub fn admit_read(caller: Option<&sessionspec_types::actor::Caller>, view: &str)
 fn serve_sessionspec_view_agent_turns<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text), ("agent", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_sessionspec_view_agent_turns(system, &value)),
@@ -426,7 +468,7 @@ where
 fn run_sessionspec_view_agent_turns<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0, param1) = match wire::decode_params_sessionspec_view_agent_turns(value, "query") {
         Ok(params) => params,
@@ -451,12 +493,58 @@ where
     }
 }
 
+/// `GET` `sessionspec.view.OverviewFigures`: reads the declared parameters from the query string by their wire names, runs the
+/// port, answers its rows. A key the view does not declare is ignored.
+fn serve_sessionspec_view_overview_figures<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
+where
+    SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+{
+    match http::query_object(query, &[("since", http::Scalar::Text), ("bucket_seconds", http::Scalar::Integer)], "query") {
+        Ok(value) => http::answer(run_sessionspec_view_overview_figures(system, &value)),
+        Err(refused) => http::Response::refusal(400, &refused),
+    }
+}
+
+/// `GET` `sessionspec.view.OverviewFigures` at `eventual` consistency: every row the owed projection holds for the declared
+/// parameters, read from `value`, an object keyed by their wire names.
+///
+/// The one path the `GET` route and [`handle`] share. A decoding failure is located under
+/// `query`, as the route reports it.
+fn run_sessionspec_view_overview_figures<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+where
+    SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+{
+    let (param0, param1) = match wire::decode_params_sessionspec_view_overview_figures(value, "query") {
+        Ok(params) => params,
+        Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
+    };
+    match system.session_view.overview_figures(param0, param1) {
+        Ok(rows) => {
+            let mut body = String::from("{");
+            json::member(&mut body, "rows");
+            body.push('[');
+            for (position, row) in rows.iter().enumerate() {
+                if position > 0 {
+                    body.push(',');
+                }
+                wire::encode_view_sessionspec_view_overview_figures(row, &mut body);
+            }
+            body.push(']');
+            body.push('}');
+            Ok((200, body))
+        }
+        Err(unmet) => Err(entry::Refused::Unmet(format!("{unmet}"))),
+    }
+}
+
 /// `GET` `sessionspec.view.SessionById`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
 fn serve_sessionspec_view_session_by_id<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_sessionspec_view_session_by_id(system, &value)),
@@ -472,7 +560,7 @@ where
 fn run_sessionspec_view_session_by_id<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0,) = match wire::decode_params_sessionspec_view_session_by_id(value, "query") {
         Ok(params) => params,
@@ -502,7 +590,7 @@ where
 fn serve_sessionspec_view_session_agents<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_sessionspec_view_session_agents(system, &value)),
@@ -518,7 +606,7 @@ where
 fn run_sessionspec_view_session_agents<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0,) = match wire::decode_params_sessionspec_view_session_agents(value, "query") {
         Ok(params) => params,
@@ -548,7 +636,7 @@ where
 fn serve_sessionspec_view_session_checks<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_sessionspec_view_session_checks(system, &value)),
@@ -564,7 +652,7 @@ where
 fn run_sessionspec_view_session_checks<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0,) = match wire::decode_params_sessionspec_view_session_checks(value, "query") {
         Ok(params) => params,
@@ -589,14 +677,60 @@ where
     }
 }
 
+/// `GET` `sessionspec.view.SessionEventCounts`: reads the declared parameters from the query string by their wire names, runs the
+/// port, answers its rows. A key the view does not declare is ignored.
+fn serve_sessionspec_view_session_event_counts<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
+where
+    SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+{
+    match http::query_object(query, &[("session_id", http::Scalar::Text), ("agent", http::Scalar::Text)], "query") {
+        Ok(value) => http::answer(run_sessionspec_view_session_event_counts(system, &value)),
+        Err(refused) => http::Response::refusal(400, &refused),
+    }
+}
+
+/// `GET` `sessionspec.view.SessionEventCounts` at `eventual` consistency: every row the owed projection holds for the declared
+/// parameters, read from `value`, an object keyed by their wire names.
+///
+/// The one path the `GET` route and [`handle`] share. A decoding failure is located under
+/// `query`, as the route reports it.
+fn run_sessionspec_view_session_event_counts<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+where
+    SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+{
+    let (param0, param1) = match wire::decode_params_sessionspec_view_session_event_counts(value, "query") {
+        Ok(params) => params,
+        Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
+    };
+    match system.session_view.session_event_counts(param0, param1) {
+        Ok(rows) => {
+            let mut body = String::from("{");
+            json::member(&mut body, "rows");
+            body.push('[');
+            for (position, row) in rows.iter().enumerate() {
+                if position > 0 {
+                    body.push(',');
+                }
+                wire::encode_view_sessionspec_view_session_event_counts(row, &mut body);
+            }
+            body.push(']');
+            body.push('}');
+            Ok((200, body))
+        }
+        Err(unmet) => Err(entry::Refused::Unmet(format!("{unmet}"))),
+    }
+}
+
 /// `GET` `sessionspec.view.SessionEvents`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
 fn serve_sessionspec_view_session_events<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
-    match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
+    match http::query_object(query, &[("session_id", http::Scalar::Text), ("agent", http::Scalar::Text), ("kind", http::Scalar::Text), ("notable", http::Scalar::Boolean), ("before", http::Scalar::Integer)], "query") {
         Ok(value) => http::answer(run_sessionspec_view_session_events(system, &value)),
         Err(refused) => http::Response::refusal(400, &refused),
     }
@@ -610,13 +744,13 @@ where
 fn run_sessionspec_view_session_events<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
-    let (param0,) = match wire::decode_params_sessionspec_view_session_events(value, "query") {
+    let (param0, param1, param2, param3, param4) = match wire::decode_params_sessionspec_view_session_events(value, "query") {
         Ok(params) => params,
         Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
     };
-    match system.session_view.session_events(param0) {
+    match system.session_view.session_events(param0, param1, param2, param3, param4) {
         Ok(rows) => {
             let mut body = String::from("{");
             json::member(&mut body, "rows");
@@ -640,9 +774,9 @@ where
 fn serve_sessionspec_view_session_list<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
-    match http::query_object(query, &[("since", http::Scalar::Text), ("search", http::Scalar::Text), ("limit", http::Scalar::Integer)], "query") {
+    match http::query_object(query, &[("since", http::Scalar::Text), ("search", http::Scalar::Text), ("limit", http::Scalar::Integer), ("offset", http::Scalar::Integer)], "query") {
         Ok(value) => http::answer(run_sessionspec_view_session_list(system, &value)),
         Err(refused) => http::Response::refusal(400, &refused),
     }
@@ -656,13 +790,13 @@ where
 fn run_sessionspec_view_session_list<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
-    let (param0, param1, param2) = match wire::decode_params_sessionspec_view_session_list(value, "query") {
+    let (param0, param1, param2, param3) = match wire::decode_params_sessionspec_view_session_list(value, "query") {
         Ok(params) => params,
         Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
     };
-    match system.session_view.session_list(param0, param1, param2) {
+    match system.session_view.session_list(param0, param1, param2, param3) {
         Ok(rows) => {
             let mut body = String::from("{");
             json::member(&mut body, "rows");
@@ -681,12 +815,58 @@ where
     }
 }
 
+/// `GET` `sessionspec.view.SessionTimeline`: reads the declared parameters from the query string by their wire names, runs the
+/// port, answers its rows. A key the view does not declare is ignored.
+fn serve_sessionspec_view_session_timeline<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
+where
+    SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+{
+    match http::query_object(query, &[("session_id", http::Scalar::Text), ("slot_seconds", http::Scalar::Integer)], "query") {
+        Ok(value) => http::answer(run_sessionspec_view_session_timeline(system, &value)),
+        Err(refused) => http::Response::refusal(400, &refused),
+    }
+}
+
+/// `GET` `sessionspec.view.SessionTimeline` at `eventual` consistency: every row the owed projection holds for the declared
+/// parameters, read from `value`, an object keyed by their wire names.
+///
+/// The one path the `GET` route and [`handle`] share. A decoding failure is located under
+/// `query`, as the route reports it.
+fn run_sessionspec_view_session_timeline<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+where
+    SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+{
+    let (param0, param1) = match wire::decode_params_sessionspec_view_session_timeline(value, "query") {
+        Ok(params) => params,
+        Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
+    };
+    match system.session_view.session_timeline(param0, param1) {
+        Ok(rows) => {
+            let mut body = String::from("{");
+            json::member(&mut body, "rows");
+            body.push('[');
+            for (position, row) in rows.iter().enumerate() {
+                if position > 0 {
+                    body.push(',');
+                }
+                wire::encode_view_sessionspec_view_session_timeline(row, &mut body);
+            }
+            body.push(']');
+            body.push('}');
+            Ok((200, body))
+        }
+        Err(unmet) => Err(entry::Refused::Unmet(format!("{unmet}"))),
+    }
+}
+
 /// `GET` `sessionspec.view.SessionTurns`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
 fn serve_sessionspec_view_session_turns<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_sessionspec_view_session_turns(system, &value)),
@@ -702,7 +882,7 @@ where
 fn run_sessionspec_view_session_turns<SessionIrBehaviors, SessionViewBehaviors>(system: &sessionspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0,) = match wire::decode_params_sessionspec_view_session_turns(value, "query") {
         Ok(params) => params,

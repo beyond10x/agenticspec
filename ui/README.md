@@ -2,13 +2,13 @@
 
 `sessionspec.ui.yaml` is the UI as an `ess-ui/1` document. It reads the views of
 `sessionspec.view` (`spec/domains/view.yaml`), which the `session-view` component serves, and takes
-live events on two channels. Renderers are generated from it, never written here:
+live events on two channels. It is checked against the specification and tested headless; the live
+UI is not generated from it but written by hand in `app/` (see below):
 
 ```console
 ess ui check --path ui/sessionspec.ui.yaml --model spec
 ess ui test --path ui/sessionspec.ui.yaml ui/tests/session.yaml
 ess ui run --tui --path ui/sessionspec.ui.yaml
-ess generate ui --target react --path ui/sessionspec.ui.yaml --out <dir>
 ```
 
 ## Pages
@@ -24,20 +24,24 @@ ess generate ui --target react --path ui/sessionspec.ui.yaml --out <dir>
 Every session page takes the path parameter `session_id`; each of its reads and its channel are
 narrowed by it. A host that shows one session (the LLM gateway UI) opens an `embed.*` page.
 
+## The app
+
+`app/` is the live UI: Vue 3, Vite and TypeScript, written by hand over the types of
+`app/src/generated/` (`ess generate types`). `app/src/testing/fixtures.ts` answers its views from
+`fixtures/` for the unit tests and the browser tests of `app/e2e/` (`task check:app`).
+
 ## Served from the local store
 
 ```console
-task ui:build          # generate the React app with --model spec, build it into target/ui/www
+task ui:build          # build the app of ui/app into target/ui/www
 sessionspec serve      # http://127.0.0.1:7420/, the store synced every 5 seconds
 ```
 
-`sessionspec serve` answers the views of `session-view` (`GET /view/views/<view>`, the paths
-`ess generate ui --model` binds to) from `<state-dir>/sessions.db`, serves `target/ui/www` (or
-`$SESSIONSPEC_UI_DIR`) for every other path, and streams the two channels as server-sent events:
+`sessionspec serve` answers the views of `session-view` (`GET /view/views/<view>`) from
+`<state-dir>/sessions.db`, serves `target/ui/www` (or `$SESSIONSPEC_UI_DIR`) for every other path, and streams the two channels as server-sent events:
 `GET /view/channels/sessions` and `GET /view/channels/session_events?session_id=<id>`, one message
 per event (`event:` its qualified name, `data:` its wire JSON, `id:` the `seq` of an
-`EventAppended`; a reconnect with `Last-Event-ID` gets what followed). The React runtime does not
-open a channel against a served surface yet: its live sections read again every 5 seconds.
+`EventAppended`; a reconnect with `Last-Event-ID` gets what followed).
 
 Sign-in: the pages say `actor: from_session`, and the views grant `sessionspec.view.Viewer`. The
 local server listens on 127.0.0.1 only and answers every request as that one `Viewer`; it reads no

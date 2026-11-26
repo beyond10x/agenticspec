@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
 // do not edit: regenerate with `ess synthesize`
 
 //! What the specification fully determines, generated: the behaviour of every command the plan
@@ -127,6 +127,24 @@ pub trait EventRowStorage {
     fn list(&self) -> Vec<crate::view::EventRowSnapshot>;
 }
 
+/// Where `sessionspec.view.FigureBucket` is stored — a port the implementor provides.
+///
+/// Keyed by the identity `bucket_id`. Generated network entries supply an ephemeral implementation; durable storage remains a port.
+pub trait FigureBucketStorage {
+    /// The instance with this identity, or `None` where none is stored.
+    fn get(&self, identity: &crate::view::BucketId) -> Option<crate::view::FigureBucketSnapshot>;
+
+    /// Stores this instance under its identity, replacing what was held.
+    fn put(&mut self, snapshot: crate::view::FigureBucketSnapshot);
+
+    /// Removes the instance with this identity.
+    fn delete(&mut self, identity: &crate::view::BucketId);
+
+    /// Every stored instance, in the order the store keeps them: the order a generated query
+    /// answers an unordered view in.
+    fn list(&self) -> Vec<crate::view::FigureBucketSnapshot>;
+}
+
 /// Where `sessionspec.view.SessionCheck` is stored — a port the implementor provides.
 ///
 /// Keyed by the identity `check_id`. Generated network entries supply an ephemeral implementation; durable storage remains a port.
@@ -161,6 +179,24 @@ pub trait SessionListingStorage {
     /// Every stored instance, in the order the store keeps them: the order a generated query
     /// answers an unordered view in.
     fn list(&self) -> Vec<crate::view::SessionListingSnapshot>;
+}
+
+/// Where `sessionspec.view.TimelineSlot` is stored — a port the implementor provides.
+///
+/// Keyed by the identity `slot_id`. Generated network entries supply an ephemeral implementation; durable storage remains a port.
+pub trait TimelineSlotStorage {
+    /// The instance with this identity, or `None` where none is stored.
+    fn get(&self, identity: &crate::view::SlotId) -> Option<crate::view::TimelineSlotSnapshot>;
+
+    /// Stores this instance under its identity, replacing what was held.
+    fn put(&mut self, snapshot: crate::view::TimelineSlotSnapshot);
+
+    /// Removes the instance with this identity.
+    fn delete(&mut self, identity: &crate::view::SlotId);
+
+    /// Every stored instance, in the order the store keeps them: the order a generated query
+    /// answers an unordered view in.
+    fn list(&self) -> Vec<crate::view::TimelineSlotSnapshot>;
 }
 
 /// Every generated behaviour of this workspace, over the ports `P` supplies.
@@ -593,9 +629,11 @@ where
                 event_id: held.data.event_id,
                 session_id: held.data.session_id,
                 seq: held.data.seq,
+                ord: held.data.ord,
                 at: held.data.at,
                 agent: held.data.agent,
                 kind: held.data.kind,
+                notable: held.data.notable,
                 label: held.data.label,
                 detail: held.data.detail,
                 call: held.data.call,
@@ -608,6 +646,33 @@ where
                 bytes: held.data.bytes,
                 agent_cost_usd: held.data.agent_cost_usd,
                 session_cost_usd: held.data.session_cost_usd,
+            })
+            .collect())
+    }
+}
+
+/// `sessionspec.view.OverviewFigures`, generated: every row is one the specification fully determines from the stored `sessionspec.view.FigureBucket`s.
+impl<P> crate::view::obligations::OverviewFiguresQuery for Generated<P>
+where
+    P: FigureBucketStorage,
+{
+    fn overview_figures(&self, param_0: crate::primitives::Timestamp, param_1: i64) -> Result<Vec<crate::view::OverviewFigures>, UnmetObligation> {
+        let mut admitted = FigureBucketStorage::list(&self.ports);
+        // `filter:` shows a row where it holds; false or unknown hides it.
+        admitted.retain(|held| all(&[compare_instants(Some(&held.data.start).map(|value| value.0.clone()), Some(&param_0).map(|value| value.0.clone()), core::cmp::Ordering::is_ge), compare_numbers(Some(&held.data.bucket_seconds).map(|value| value.to_string()), Some(&param_1).map(|value| value.to_string()), core::cmp::Ordering::is_eq)]) == Some(true));
+        Ok(admitted
+            .into_iter()
+            .map(|held| crate::view::OverviewFigures {
+                bucket_id: held.data.bucket_id,
+                start: held.data.start,
+                bucket_seconds: held.data.bucket_seconds,
+                sessions: held.data.sessions,
+                cost_usd: held.data.cost_usd,
+                working_seconds: held.data.working_seconds,
+                waiting_share: held.data.waiting_share,
+                cache_hit_share: held.data.cache_hit_share,
+                tool_calls: held.data.tool_calls,
+                refused_tool_calls: held.data.refused_tool_calls,
             })
             .collect())
     }
@@ -705,44 +770,62 @@ where
     }
 }
 
-/// `sessionspec.view.SessionEvents`, generated: every row is one the specification fully determines from the stored `sessionspec.view.EventRow`s.
-impl<P> crate::view::obligations::SessionEventsQuery for Generated<P>
-where
-    P: EventRowStorage,
-{
-    fn session_events(&self, param_0: crate::session::SessionId) -> Result<Vec<crate::view::SessionEvents>, UnmetObligation> {
-        let mut admitted = EventRowStorage::list(&self.ports);
-        // `filter:` shows a row where it holds; false or unknown hides it.
-        admitted.retain(|held| equal(Some(&held.data.session_id).map(|value| &value.0).map(|value| value.clone()), Some(&param_0).map(|value| &value.0).map(|value| value.clone())) == Some(true));
-        Ok(admitted
-            .into_iter()
-            .map(|held| crate::view::SessionEvents {
-                event_id: held.data.event_id,
-                session_id: held.data.session_id,
-                seq: held.data.seq,
-                at: held.data.at,
-                agent: held.data.agent,
-                kind: held.data.kind,
-                label: held.data.label,
-                detail: held.data.detail,
-                call: held.data.call,
-                ok: held.data.ok,
-                context_tokens: held.data.context_tokens,
-                output_tokens: held.data.output_tokens,
-                cache_read_tokens: held.data.cache_read_tokens,
-                cache_write_tokens: held.data.cache_write_tokens,
-                cost_microdollars: held.data.cost_microdollars,
-                bytes: held.data.bytes,
-                agent_cost_usd: held.data.agent_cost_usd,
-                session_cost_usd: held.data.session_cost_usd,
-            })
-            .collect())
+impl<P: crate::view::obligations::SessionEventCountsQuery> crate::view::obligations::SessionEventCountsQuery for Generated<P> {
+    fn session_event_counts(&self, session_id: crate::session::SessionId, agent: Option<crate::session::AgentId>) -> Result<Vec<crate::view::SessionEventCounts>, UnmetObligation> {
+        crate::view::obligations::SessionEventCountsQuery::session_event_counts(&self.ports, session_id, agent)
+    }
+}
+
+impl<P: crate::view::obligations::SessionEventsQuery> crate::view::obligations::SessionEventsQuery for Generated<P> {
+    fn session_events(&self, session_id: crate::session::SessionId, agent: Option<crate::session::AgentId>, kind: Option<crate::view::EventKind>, notable: Option<bool>, before: Option<i64>) -> Result<Vec<crate::view::SessionEvents>, UnmetObligation> {
+        crate::view::obligations::SessionEventsQuery::session_events(&self.ports, session_id, agent, kind, notable, before)
     }
 }
 
 impl<P: crate::view::obligations::SessionListQuery> crate::view::obligations::SessionListQuery for Generated<P> {
-    fn session_list(&self, since: Option<crate::primitives::Timestamp>, search: Option<String>, limit: Option<i64>) -> Result<Vec<crate::view::SessionList>, UnmetObligation> {
-        crate::view::obligations::SessionListQuery::session_list(&self.ports, since, search, limit)
+    fn session_list(&self, since: Option<crate::primitives::Timestamp>, search: Option<String>, limit: Option<i64>, offset: Option<i64>) -> Result<Vec<crate::view::SessionList>, UnmetObligation> {
+        crate::view::obligations::SessionListQuery::session_list(&self.ports, since, search, limit, offset)
+    }
+}
+
+/// `sessionspec.view.SessionTimeline`, generated: every row is one the specification fully determines from the stored `sessionspec.view.TimelineSlot`s.
+impl<P> crate::view::obligations::SessionTimelineQuery for Generated<P>
+where
+    P: TimelineSlotStorage,
+{
+    fn session_timeline(&self, param_0: crate::session::SessionId, param_1: i64) -> Result<Vec<crate::view::SessionTimeline>, UnmetObligation> {
+        let mut admitted = TimelineSlotStorage::list(&self.ports);
+        // `filter:` shows a row where it holds; false or unknown hides it.
+        admitted.retain(|held| all(&[equal(Some(&held.data.session_id).map(|value| &value.0).map(|value| value.clone()), Some(&param_0).map(|value| &value.0).map(|value| value.clone())), compare_numbers(Some(&held.data.slot_seconds).map(|value| value.to_string()), Some(&param_1).map(|value| value.to_string()), core::cmp::Ordering::is_eq)]) == Some(true));
+        Ok(admitted
+            .into_iter()
+            .map(|held| crate::view::SessionTimeline {
+                slot_id: held.data.slot_id,
+                session_id: held.data.session_id,
+                agent: held.data.agent,
+                slot_seconds: held.data.slot_seconds,
+                start: held.data.start,
+                end: held.data.end,
+                events: held.data.events,
+                read_calls: held.data.read_calls,
+                search_calls: held.data.search_calls,
+                edit_calls: held.data.edit_calls,
+                execute_calls: held.data.execute_calls,
+                network_calls: held.data.network_calls,
+                spawn_calls: held.data.spawn_calls,
+                message_calls: held.data.message_calls,
+                plan_calls: held.data.plan_calls,
+                other_calls: held.data.other_calls,
+                human_prompts: held.data.human_prompts,
+                relayed_prompts: held.data.relayed_prompts,
+                refusals: held.data.refusals,
+                busts: held.data.busts,
+                compactions: held.data.compactions,
+                context_max: held.data.context_max,
+                agent_cost_usd: held.data.agent_cost_usd,
+                session_cost_usd: held.data.session_cost_usd,
+            })
+            .collect())
     }
 }
 
@@ -761,9 +844,11 @@ where
                 event_id: held.data.event_id,
                 session_id: held.data.session_id,
                 seq: held.data.seq,
+                ord: held.data.ord,
                 at: held.data.at,
                 agent: held.data.agent,
                 kind: held.data.kind,
+                notable: held.data.notable,
                 label: held.data.label,
                 detail: held.data.detail,
                 call: held.data.call,
@@ -806,4 +891,121 @@ fn all(truths: &[Option<bool>]) -> Option<bool> {
 /// Equality of two read values; an unread one is Unknown.
 fn equal<T: PartialEq>(left: Option<T>, right: Option<T>) -> Option<bool> {
     Some(left? == right?)
+}
+
+/// A decimal rendering as its sign, its whole digits and its fraction digits, without the zeros
+/// that do not change its value; `None` where it is not a plain decimal.
+fn number_parts(text: &str) -> Option<(bool, String, String)> {
+    let (negative, digits) = match text.strip_prefix('-') {
+        Some(rest) => (true, rest),
+        None => (false, text.strip_prefix('+').unwrap_or(text)),
+    };
+    let (whole, fraction) = digits.split_once('.').unwrap_or((digits, ""));
+    if whole.is_empty() && fraction.is_empty() {
+        return None;
+    }
+    if !whole.bytes().chain(fraction.bytes()).all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    let whole = whole.trim_start_matches('0').to_owned();
+    let fraction = fraction.trim_end_matches('0').to_owned();
+    let zero = whole.is_empty() && fraction.is_empty();
+    Some((negative && !zero, whole, fraction))
+}
+
+/// Compares two decimal renderings exactly; an unread or unparsable one is Unknown.
+fn compare_numbers(
+    left: Option<String>,
+    right: Option<String>,
+    accepts: fn(core::cmp::Ordering) -> bool,
+) -> Option<bool> {
+    let (left, right) = (number_parts(&left?)?, number_parts(&right?)?);
+    let magnitude = left
+        .1
+        .len()
+        .cmp(&right.1.len())
+        .then_with(|| left.1.cmp(&right.1))
+        .then_with(|| left.2.cmp(&right.2));
+    let ordering = match (left.0, right.0) {
+        (false, false) => magnitude,
+        (true, true) => magnitude.reverse(),
+        (true, false) => core::cmp::Ordering::Less,
+        (false, true) => core::cmp::Ordering::Greater,
+    };
+    Some(accepts(ordering))
+}
+
+/// Compares two RFC 3339 renderings by the instant each names; an unread one, or one that names
+/// no instant, is Unknown — never ordered by its spelling.
+fn compare_instants(
+    left: Option<String>,
+    right: Option<String>,
+    accepts: fn(core::cmp::Ordering) -> bool,
+) -> Option<bool> {
+    Some(accepts(instant_of(&left?)?.cmp(&instant_of(&right?)?)))
+}
+
+/// The instant an RFC 3339 `date-time` names, as seconds from the epoch and nanoseconds.
+fn instant_of(text: &str) -> Option<(i64, u32)> {
+    let bytes = text.as_bytes();
+    let digits = |from: usize, to: usize| -> Option<u32> {
+        let slice = bytes.get(from..to)?;
+        if slice.is_empty() || !slice.iter().all(u8::is_ascii_digit) {
+            return None;
+        }
+        slice
+            .iter()
+            .try_fold(0u32, |total, digit| Some(total * 10 + u32::from(digit - b'0')))
+    };
+    let at = |index: usize, expected: &[u8]| bytes.get(index).is_some_and(|b| expected.contains(b));
+    if !(at(4, b"-") && at(7, b"-") && at(10, b"Tt") && at(13, b":") && at(16, b":")) {
+        return None;
+    }
+    let (year, month, day) = (i64::from(digits(0, 4)?), digits(5, 7)?, digits(8, 10)?);
+    let leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+    let length = match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 if leap => 29,
+        2 => 28,
+        _ => return None,
+    };
+    let (hour, minute, second) = (digits(11, 13)?, digits(14, 16)?, digits(17, 19)?);
+    if day < 1 || day > length || hour > 23 || minute > 59 || second > 59 {
+        return None;
+    }
+    let mut position = 19;
+    let mut nanos = 0u32;
+    if at(position, b".") {
+        let mut end = position + 1;
+        while bytes.get(end).is_some_and(u8::is_ascii_digit) {
+            end += 1;
+        }
+        let width = end - position - 1;
+        if width == 0 || width > 9 {
+            return None;
+        }
+        nanos = digits(position + 1, end)? * 10u32.pow(u32::try_from(9 - width).ok()?);
+        position = end;
+    }
+    let offset = match bytes.get(position..)? {
+        b"Z" | b"z" => 0i64,
+        [sign @ (b'+' | b'-'), _, _, b':', _, _] => {
+            let (hours, minutes) = (digits(position + 1, position + 3)?, digits(position + 4, position + 6)?);
+            if hours > 23 || minutes > 59 {
+                return None;
+            }
+            let magnitude = i64::from(hours * 3600 + minutes * 60);
+            if *sign == b'-' { -magnitude } else { magnitude }
+        }
+        _ => return None,
+    };
+    let shifted = if month <= 2 { year - 1 } else { year };
+    let era = shifted.div_euclid(400);
+    let of_era = shifted - era * 400;
+    let march = i64::from(if month > 2 { month - 3 } else { month + 9 });
+    let of_year = (153 * march + 2) / 5 + i64::from(day) - 1;
+    let of_cycle = of_era * 365 + of_era / 4 - of_era / 100 + of_year;
+    let days = era * 146_097 + of_cycle - 719_468;
+    Some((days * 86_400 + i64::from(hour * 3600 + minute * 60 + second) - offset, nanos))
 }

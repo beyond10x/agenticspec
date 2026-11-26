@@ -1,0 +1,11 @@
+{
+  "name": "find-session-by-search",
+  "card": {
+    "persona": "An engineer who remembers one word of a session's title.",
+    "task": "Find the session about the planner by searching for it."
+  },
+  "start": "/",
+  "input": { "search": "planner" },
+  "truth": { "rows": ["Fix the planner"] },
+  "expectations": ["the matching row is the only row", "the search box and the time slice stay in view"]
+}
