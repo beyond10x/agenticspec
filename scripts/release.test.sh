@@ -107,4 +107,20 @@ pins() {
   || fail "workflows: release.yml and pages.yml pin different tools"
 n=$((n + 1))
 
+# Both gates set up the same Node and the same browser for the app gate of `task check`.
+app() {
+  grep -E 'actions/setup-node@|node-version: |npm ci |npx playwright install ' "$1" \
+    | sed -e 's/^ *//' -e 's/^- //' | LC_ALL=C sort -u
+}
+release_app=$(app "$root/.github/workflows/release.yml")
+[ "$(printf '%s\n' "$release_app" | wc -l)" -eq 4 ] \
+  || fail "workflows: release.yml's Gate does not set up Node and the browser"
+[ "$release_app" = "$(app "$root/.github/workflows/pages.yml")" ] \
+  || fail "workflows: release.yml and pages.yml set up Node or the browser differently"
+n=$((n + 1))
+sed 's/node-version: "22"/node-version: "20"/' "$root/.github/workflows/release.yml" > "$work/release.yml"
+[ "$(app "$work/release.yml")" != "$(app "$root/.github/workflows/pages.yml")" ] \
+  || fail "workflows: another Node version in release.yml is not seen"
+n=$((n + 1))
+
 echo "release.test: $n cases passed"

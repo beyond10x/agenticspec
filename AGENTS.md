@@ -132,7 +132,9 @@ Beside the crates, `ui/` holds:
   `query --transcript` reads the file.
 - The store is `$XDG_DATA_HOME/sessionspec/sessions.db` (or `--state-dir`), never inside this
   repository: it holds the harness's session titles. `SCHEMA_VERSION` in `store.rs` rises when
-  what it holds changes meaning; a store of another version is emptied and filled again.
+  the derived tables change meaning; a store of another version drops and fills them again and
+  keeps its `wire_steps`. `WIRE_FORMAT` rises when a wire row's encoding changes; a store of
+  another wire format is refused and left unchanged.
 - `sessionspec serve` binds 127.0.0.1 only and answers as the one local `Viewer` (`ui/README.md`).
 
 ## Rules
