@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-26
+
 ### Added
 
 - A new live UI, written by hand in Vue over types generated from the specification, with a light and a dark theme: an overview with figures per time slice and a searchable session table, a session page with a timeline per agent, agents, checks, cost and prompt breakdowns and a paged event log, and embed pages; built by `task ui:build` (Node.js 22)
