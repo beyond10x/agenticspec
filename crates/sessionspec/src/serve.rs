@@ -30,11 +30,13 @@ use sessionspec_types::session as s;
 use sessionspec_types::view as v;
 use sessionspec_types::view::obligations as o;
 
-use crate::store::Store;
+use crate::store::{EventFilter, Page, Store};
 use crate::time::epoch_ms;
 
-/// How often the server syncs the window.
+/// How often the server syncs the window; `SESSIONSPEC_SYNC_MS` sets it in milliseconds.
 pub const SYNC_EVERY: Duration = Duration::from_secs(5);
+/// The lifts the server's sync runs at a time.
+pub const SYNC_THREADS: usize = 2;
 /// The default port.
 pub const PORT: u16 = 7420;
 
@@ -68,9 +70,11 @@ macro_rules! event_row {
             event_id: e.event_id,
             session_id: e.session_id,
             seq: e.seq,
+            ord: e.ord,
             at: e.at,
             agent: e.agent,
             kind: e.kind,
+            notable: e.notable,
             label: e.label,
             detail: e.detail,
             call: e.call,
@@ -87,69 +91,10 @@ macro_rules! event_row {
     }};
 }
 
-impl o::SessionListQuery for StoreView {
-    fn session_list(
-        &self,
-        since: Option<Timestamp>,
-        search: Option<String>,
-        limit: Option<i64>,
-    ) -> Result<Vec<v::SessionList>, UnmetObligation> {
-        let since = since.and_then(|t| instant(&t.0));
-        // `names` is lower case; the search is lowered here (spec/domains/view.yaml, UNMAPPED).
-        let search = search.map(|t| t.to_lowercase()).filter(|t| !t.is_empty());
-        Ok(self
-            .store
-            .sessions()
-            .map_err(unmet)?
-            .into_iter()
-            .filter(|r| since.is_none_or(|t| instant(&r.last_at.0).is_some_and(|l| l >= t)))
-            .filter(|r| search.as_deref().is_none_or(|q| r.names.contains(q)))
-            .filter(|r| limit.is_none_or(|n| r.rank <= n))
-            .map(|r| v::SessionList {
-                session_id: r.session_id,
-                project: r.project,
-                title: r.title,
-                names: r.names,
-                rank: r.rank,
-                harness: r.harness,
-                first_at: r.first_at,
-                last_at: r.last_at,
-                agents: r.agents,
-                cost_usd: r.cost_usd,
-                output_tokens: r.output_tokens,
-                context_max: r.context_max,
-                cache_hit_share: r.cache_hit_share,
-                busts: r.busts,
-                human_prompts: r.human_prompts,
-                tool_calls: r.tool_calls,
-                refused_tool_calls: r.refused_tool_calls,
-                exposures: r.exposures,
-                working_seconds: r.working_seconds,
-                waiting_on_human_seconds: r.waiting_on_human_seconds,
-                waiting_share: r.waiting_share,
-            })
-            .collect())
-    }
-}
-
-impl o::SessionByIdQuery for StoreView {
-    fn session_by_id(
-        &self,
-        session_id: s::SessionId,
-    ) -> Result<Vec<v::SessionById>, UnmetObligation> {
-        let Some(r) = self
-            .store
-            .sessions()
-            .map_err(unmet)?
-            .into_iter()
-            .find(|r| r.session_id == session_id)
-        else {
-            return Ok(Vec::new());
-        };
-        let Some(kpis) = self.store.session_kpis(&session_id.0).map_err(unmet)? else {
-            return Ok(Vec::new());
-        };
-        Ok(vec![v::SessionById {
+macro_rules! session_row {
+    ($ty:ident, $r:expr, { $($extra:tt)* }) => {{
+        let r = $r;
+        v::$ty {
             session_id: r.session_id,
             project: r.project,
             title: r.title,
@@ -169,8 +114,50 @@ impl o::SessionByIdQuery for StoreView {
             working_seconds: r.working_seconds,
             waiting_on_human_seconds: r.waiting_on_human_seconds,
             waiting_share: r.waiting_share,
-            kpis,
-        }])
+            $($extra)*
+        }
+    }};
+}
+
+impl o::SessionListQuery for StoreView {
+    fn session_list(
+        &self,
+        since: Option<Timestamp>,
+        search: Option<String>,
+        limit: Option<i64>,
+        offset: Option<i64>,
+    ) -> Result<Vec<v::SessionList>, UnmetObligation> {
+        let page = Page {
+            since_ms: since.and_then(|t| instant(&t.0)),
+            search,
+            limit,
+            offset,
+        };
+        Ok(self
+            .store
+            .session_page(&page)
+            .map_err(unmet)?
+            .into_iter()
+            .map(|r| {
+                let (names, rank) = (r.names.clone(), r.rank);
+                session_row!(SessionList, r, { names, rank })
+            })
+            .collect())
+    }
+}
+
+impl o::SessionByIdQuery for StoreView {
+    fn session_by_id(
+        &self,
+        session_id: s::SessionId,
+    ) -> Result<Vec<v::SessionById>, UnmetObligation> {
+        let Some(r) = self.store.session(&session_id.0).map_err(unmet)? else {
+            return Ok(Vec::new());
+        };
+        let Some(kpis) = self.store.session_kpis(&session_id.0).map_err(unmet)? else {
+            return Ok(Vec::new());
+        };
+        Ok(vec![session_row!(SessionById, r, { kpis })])
     }
 }
 
@@ -207,10 +194,20 @@ impl o::SessionEventsQuery for StoreView {
     fn session_events(
         &self,
         session_id: s::SessionId,
+        agent: Option<s::AgentId>,
+        kind: Option<v::EventKind>,
+        notable: Option<bool>,
+        before: Option<i64>,
     ) -> Result<Vec<v::SessionEvents>, UnmetObligation> {
+        let filter = EventFilter {
+            agent: agent.map(|a| a.0),
+            kind,
+            notable,
+            before,
+        };
         Ok(self
             .store
-            .events(&session_id.0, 0, None, None)
+            .event_page(&session_id.0, &filter)
             .map_err(unmet)?
             .into_iter()
             .map(|e| event_row!(SessionEvents, e))
@@ -263,6 +260,59 @@ impl o::SessionChecksQuery for StoreView {
     }
 }
 
+impl o::SessionEventCountsQuery for StoreView {
+    fn session_event_counts(
+        &self,
+        session_id: s::SessionId,
+        agent: Option<s::AgentId>,
+    ) -> Result<Vec<v::SessionEventCounts>, UnmetObligation> {
+        let counts = self
+            .store
+            .event_kind_counts(&session_id.0, agent.as_ref().map(|a| a.0.as_str()))
+            .map_err(unmet)?;
+        let who = agent.as_ref().map_or("*", |a| a.0.as_str()).to_owned();
+        Ok(counts
+            .into_iter()
+            .map(|(kind, count)| v::SessionEventCounts {
+                count_id: v::CountId(format!(
+                    "{}.{who}.{}",
+                    session_id.0,
+                    crate::store::kind_name(kind)
+                )),
+                session_id: session_id.clone(),
+                agent: agent.clone(),
+                kind,
+                count,
+            })
+            .collect())
+    }
+}
+
+impl o::SessionTimelineQuery for StoreView {
+    fn session_timeline(
+        &self,
+        session_id: s::SessionId,
+        slot_seconds: i64,
+    ) -> Result<Vec<v::SessionTimeline>, UnmetObligation> {
+        self.store
+            .timeline(&session_id.0, slot_seconds)
+            .map_err(unmet)
+    }
+}
+
+impl o::OverviewFiguresQuery for StoreView {
+    fn overview_figures(
+        &self,
+        since: Timestamp,
+        bucket_seconds: i64,
+    ) -> Result<Vec<v::OverviewFigures>, UnmetObligation> {
+        let Some(since) = instant(&since.0) else {
+            return Ok(Vec::new());
+        };
+        self.store.figures(since, bucket_seconds).map_err(unmet)
+    }
+}
+
 type Sys = System<Generated<crate::replay::Ports>, StoreView>;
 
 /// The system the server dispatches into: an idle `session-ir` and `session-view` over the store.
@@ -311,6 +361,15 @@ impl Hub {
         subs.retain(|(c, tx)| c != channel || tx.send(text.to_owned()).is_ok());
     }
 
+    /// Whether anyone listens to `channel`.
+    fn listens(&self, channel: &Channel) -> bool {
+        self.subs
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .iter()
+            .any(|(c, _)| c == channel)
+    }
+
     fn subscribe(&self, channel: Channel) -> mpsc::Receiver<String> {
         let (tx, rx) = mpsc::channel();
         self.subs
@@ -321,81 +380,71 @@ impl Hub {
     }
 }
 
-/// What the server last published per session: its row, its agents' rows, its last event.
+/// What the server last published: the store's change number and each session's last event.
 #[derive(Default)]
 pub struct Seen {
-    sessions: HashMap<String, String>,
-    agents: HashMap<(String, String), String>,
+    change: i64,
     last_seq: HashMap<String, i64>,
 }
 
 impl Seen {
     /// Takes what the store holds now as published.
     pub fn of(store: &Store) -> Self {
-        let mut seen = Seen::default();
-        for row in store.sessions().unwrap_or_default() {
-            let id = row.session_id.0.clone();
-            let mut text = String::new();
-            wire::encode_event_sessionspec_view_session_updated(&row, &mut text);
-            seen.sessions.insert(id.clone(), text);
-            for a in store.agents(&id).unwrap_or_default() {
-                let mut text = String::new();
-                wire::encode_event_sessionspec_view_agent_updated(&a, &mut text);
-                seen.agents.insert((id.clone(), a.agent_id.0.clone()), text);
-            }
+        Seen {
+            change: store.last_change().unwrap_or(0),
+            last_seq: store.last_seqs(0).unwrap_or_default(),
         }
-        for (id, n) in store.event_counts().unwrap_or_default() {
-            seen.last_seq.insert(id, n - 1);
-        }
-        seen
     }
 }
 
-/// The messages that bring a subscriber from `seen` to what the store holds, for the sessions in
-/// `only` (every session when `None`), and `seen` moved forward.
-fn diff(store: &Store, seen: &mut Seen, only: Option<&[String]>) -> Vec<(Channel, String)> {
-    let mut out = Vec::new();
-    let Ok(rows) = store.sessions() else {
-        return out;
+/// Sends `send` the messages that bring a subscriber from `seen` to what the store holds, read by
+/// change number, and moves `seen` forward. A session's new events are read only when someone
+/// listens to its channel. Returns how many messages it sent.
+fn diff(store: &Store, hub: &Hub, seen: &mut Seen, send: &mut dyn FnMut(&Channel, &str)) -> usize {
+    let Ok((sessions, agents, last)) = store.sessions_changed(seen.change) else {
+        return 0;
     };
-    for row in rows {
+    let mut n = 0;
+    for row in &sessions {
         let id = row.session_id.0.clone();
-        if only.is_some_and(|o| !o.contains(&id)) {
-            continue;
-        }
         let mut text = String::new();
-        wire::encode_event_sessionspec_view_session_updated(&row, &mut text);
-        if seen.sessions.get(&id) != Some(&text) {
-            let m = message("sessionspec.view.SessionUpdated", None, &text);
-            out.push((Channel::Sessions, m.clone()));
-            out.push((Channel::SessionEvents(id.clone()), m));
-            seen.sessions.insert(id.clone(), text);
-        }
-        for a in store.agents(&id).unwrap_or_default() {
-            let mut text = String::new();
-            wire::encode_event_sessionspec_view_agent_updated(&a, &mut text);
-            let key = (id.clone(), a.agent_id.0.clone());
-            if seen.agents.get(&key) != Some(&text) {
-                out.push((
-                    Channel::SessionEvents(id.clone()),
-                    message("sessionspec.view.AgentUpdated", None, &text),
-                ));
-                seen.agents.insert(key, text);
+        wire::encode_event_sessionspec_view_session_updated(row, &mut text);
+        let m = message("sessionspec.view.SessionUpdated", None, &text);
+        send(&Channel::Sessions, &m);
+        send(&Channel::SessionEvents(id), &m);
+        n += 2;
+    }
+    for a in &agents {
+        let mut text = String::new();
+        wire::encode_event_sessionspec_view_agent_updated(a, &mut text);
+        send(
+            &Channel::SessionEvents(a.session_id.0.clone()),
+            &message("sessionspec.view.AgentUpdated", None, &text),
+        );
+        n += 1;
+    }
+    let tops = store.last_seqs(seen.change).unwrap_or_default();
+    for row in &sessions {
+        let id = &row.session_id.0;
+        let channel = Channel::SessionEvents(id.clone());
+        let from = seen.last_seq.get(id).map_or(0, |s| s + 1);
+        if hub.listens(&channel) {
+            for e in store.events(id, from, None, None).unwrap_or_default() {
+                let mut text = String::new();
+                wire::encode_event_sessionspec_view_event_appended(&e, &mut text);
+                send(
+                    &channel,
+                    &message("sessionspec.view.EventAppended", Some(e.seq), &text),
+                );
+                n += 1;
             }
         }
-        let from = seen.last_seq.get(&id).map_or(0, |s| s + 1);
-        for e in store.events(&id, from, None, None).unwrap_or_default() {
-            let mut text = String::new();
-            let seq = e.seq;
-            wire::encode_event_sessionspec_view_event_appended(&e, &mut text);
-            out.push((
-                Channel::SessionEvents(id.clone()),
-                message("sessionspec.view.EventAppended", Some(seq), &text),
-            ));
-            seen.last_seq.insert(id.clone(), seq);
+        if let Some(top) = tops.get(id) {
+            seen.last_seq.insert(id.clone(), *top);
         }
     }
-    out
+    seen.change = last;
+    n
 }
 
 /// The built UI: `$SESSIONSPEC_UI_DIR`, else `target/ui/www` beside the binary's `target/`, else
@@ -592,20 +641,30 @@ pub fn bind(port: u16) -> io::Result<TcpListener> {
 /// [`SYNC_EVERY`] and publishes what changed.
 pub fn run(listener: TcpListener, shared: Arc<Shared>, root: PathBuf, since_hours: i64) {
     let syncer = Arc::clone(&shared);
+    let every = std::env::var("SESSIONSPEC_SYNC_MS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .map_or(SYNC_EVERY, Duration::from_millis);
     std::thread::spawn(move || {
         let mut seen = Seen::of(&syncer.store);
+        // A live session is re-lifted on every change; two lifts at a time bound what a sync
+        // holds while the server runs.
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(SYNC_THREADS)
+            .build()
+            .ok();
         loop {
-            std::thread::sleep(SYNC_EVERY);
+            std::thread::sleep(every);
             let now = crate::time::now_ms();
-            let Ok(done) = syncer.store.sync(&root, now - since_hours * 3_600_000) else {
-                continue;
+            let from = now - since_hours * 3_600_000;
+            let synced = match &pool {
+                Some(p) => p.install(|| syncer.store.sync(&root, from)),
+                None => syncer.store.sync(&root, from),
             };
-            if done.changed.is_empty() {
-                continue;
-            }
-            for (channel, text) in diff(&syncer.store, &mut seen, Some(&done.changed)) {
-                syncer.hub.publish(&channel, &text);
-            }
+            let _ = synced;
+            // Rows another writer (the appender) wrote are published too: the change number
+            // covers every write to the store.
+            publish_changes(&syncer, &mut seen);
         }
     });
     for conn in listener.incoming() {
@@ -618,13 +677,10 @@ pub fn run(listener: TcpListener, shared: Arc<Shared>, root: PathBuf, since_hour
     }
 }
 
-/// Publishes what changed in the store for `changed` sessions; for tests and callers that sync
-/// themselves.
-pub fn publish_changes(shared: &Shared, seen: &mut Seen, changed: &[String]) -> usize {
-    let messages = diff(&shared.store, seen, Some(changed));
-    let n = messages.len();
-    for (channel, text) in messages {
-        shared.hub.publish(&channel, &text);
-    }
-    n
+/// Publishes what the store holds beyond `seen`; for tests and callers that sync themselves.
+/// Returns how many messages it sent.
+pub fn publish_changes(shared: &Shared, seen: &mut Seen) -> usize {
+    diff(&shared.store, &shared.hub, seen, &mut |c, t| {
+        shared.hub.publish(c, t)
+    })
 }

@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
 // do not edit: regenerate with `ess synthesize`
 
 //! The `sessionspec` system, v1: its components assembled, its bindings wired, and its one transport.
@@ -149,7 +149,7 @@ impl<SessionIrBehaviors, SessionViewBehaviors> System<SessionIrBehaviors, Sessio
 impl<SessionIrBehaviors, SessionViewBehaviors> System<SessionIrBehaviors, SessionViewBehaviors>
 where
     SessionIrBehaviors: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
+    SessionViewBehaviors: sessionspec_types::view::obligations::AgentTurnsQuery + sessionspec_types::view::obligations::OverviewFiguresQuery + sessionspec_types::view::obligations::SessionAgentsQuery + sessionspec_types::view::obligations::SessionByIdQuery + sessionspec_types::view::obligations::SessionChecksQuery + sessionspec_types::view::obligations::SessionEventCountsQuery + sessionspec_types::view::obligations::SessionEventsQuery + sessionspec_types::view::obligations::SessionListQuery + sessionspec_types::view::obligations::SessionTimelineQuery + sessionspec_types::view::obligations::SessionTurnsQuery,
 {
     /// Delivers until quiescent: collects every component's outbox onto the log. No binding
     /// reacts to anything this specification publishes, so collecting is the whole delivery.

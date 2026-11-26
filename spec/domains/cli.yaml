@@ -184,7 +184,7 @@ types:
         summary: The window ends now and starts this many hours before; 72 by default.
       - name: out
         type: Optional<String>
-        summary: The dashboard file to write; `sessionspec-dashboard.html` in the working directory by default.
+        summary: The dashboard file to write; `sessionspec-dashboard.html` beside the store (in the state directory) by default.
 
   - name: sessionspec.cli.AnalyzeResult
     kind: struct

@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
 // do not edit: regenerate with `ess synthesize`
 
 //! Every actor the specification declares, and the commands each may invoke — as data.
@@ -136,11 +136,14 @@ pub fn may_read(actor: Actor) -> &'static [&'static str] {
         Actor::ToolProvider => &[],
         Actor::Viewer => &[
             "sessionspec.view.AgentTurns",
+            "sessionspec.view.OverviewFigures",
             "sessionspec.view.SessionAgents",
             "sessionspec.view.SessionById",
             "sessionspec.view.SessionChecks",
+            "sessionspec.view.SessionEventCounts",
             "sessionspec.view.SessionEvents",
             "sessionspec.view.SessionList",
+            "sessionspec.view.SessionTimeline",
             "sessionspec.view.SessionTurns",
         ],
     }

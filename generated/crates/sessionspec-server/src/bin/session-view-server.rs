@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
 // do not edit: regenerate with `ess synthesize`
 
 //! Ephemeral generated server. Durable storage and production authentication remain ports.
@@ -18,6 +18,6 @@ static_root: Option<std::path::PathBuf>,
 fn main() -> std::process::ExitCode {
 let options = Options::parse();
 let _ = options;
-eprintln!("unmet startup obligations:\nview query: sessionspec.view.SessionList");
+eprintln!("unmet startup obligations:\nview query: sessionspec.view.SessionEventCounts\nview query: sessionspec.view.SessionEvents\nview query: sessionspec.view.SessionList");
 std::process::ExitCode::FAILURE
 }

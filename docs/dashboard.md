@@ -52,7 +52,9 @@ curl 'http://127.0.0.1:7420/view/views/session-list?search=refactor&limit=20'
 sessionspec analyze --out sessions.html
 ```
 
-The file opens offline in any browser. It holds the KPIs of the window and, per session:
+Without `--out`, the file is `sessionspec-dashboard.html` beside the store, in the same directory
+as `sessions.db`. The file opens offline in any browser. It holds the KPIs of the window and, per
+session:
 
 - models with messages, output tokens, context size and cost
 - cache busts by cause

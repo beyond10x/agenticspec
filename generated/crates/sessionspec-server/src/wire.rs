@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -3149,6 +3149,20 @@ pub fn decode_sessionspec_view_agent_listing_state(value: &json::Value, at: &str
     })
 }
 
+/// Writes `sessionspec.view.BucketId` as JSON.
+pub fn encode_sessionspec_view_bucket_id(value: &sessionspec_types::view::BucketId, out: &mut String) {
+    json::push_text(out, &value.0);
+}
+
+/// Reads `sessionspec.view.BucketId` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_sessionspec_view_bucket_id(value: &json::Value, at: &str) -> Result<sessionspec_types::view::BucketId, json::DecodeError> {
+    Ok(sessionspec_types::view::BucketId(json::text_at(value, at, "a string")?.to_owned()))
+}
+
 /// Writes `sessionspec.view.CheckId` as JSON.
 pub fn encode_sessionspec_view_check_id(value: &sessionspec_types::view::CheckId, out: &mut String) {
     json::push_text(out, &value.0);
@@ -3161,6 +3175,20 @@ pub fn encode_sessionspec_view_check_id(value: &sessionspec_types::view::CheckId
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_sessionspec_view_check_id(value: &json::Value, at: &str) -> Result<sessionspec_types::view::CheckId, json::DecodeError> {
     Ok(sessionspec_types::view::CheckId(json::text_at(value, at, "a string")?.to_owned()))
+}
+
+/// Writes `sessionspec.view.CountId` as JSON.
+pub fn encode_sessionspec_view_count_id(value: &sessionspec_types::view::CountId, out: &mut String) {
+    json::push_text(out, &value.0);
+}
+
+/// Reads `sessionspec.view.CountId` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_sessionspec_view_count_id(value: &json::Value, at: &str) -> Result<sessionspec_types::view::CountId, json::DecodeError> {
+    Ok(sessionspec_types::view::CountId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `sessionspec.view.Document` as JSON.
@@ -3412,6 +3440,25 @@ pub fn decode_sessionspec_view_event(value: &json::Value, at: &str) -> Result<se
     })
 }
 
+/// Writes `sessionspec.view.EventCount.State` as JSON.
+pub fn encode_sessionspec_view_event_count_state(value: &sessionspec_types::view::EventCountState, out: &mut String) {
+    match value {
+        sessionspec_types::view::EventCountState::Counted => json::push_text(out, "Counted"),
+    }
+}
+
+/// Reads `sessionspec.view.EventCount.State` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_sessionspec_view_event_count_state(value: &json::Value, at: &str) -> Result<sessionspec_types::view::EventCountState, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Counted`")? {
+        "Counted" => sessionspec_types::view::EventCountState::Counted,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Counted`".to_owned(), found: format!("`{other}`") }),
+    })
+}
+
 /// Writes `sessionspec.view.EventId` as JSON.
 pub fn encode_sessionspec_view_event_id(value: &sessionspec_types::view::EventId, out: &mut String) {
     json::push_text(out, &value.0);
@@ -3482,6 +3529,25 @@ pub fn decode_sessionspec_view_event_row_state(value: &json::Value, at: &str) ->
     })
 }
 
+/// Writes `sessionspec.view.FigureBucket.State` as JSON.
+pub fn encode_sessionspec_view_figure_bucket_state(value: &sessionspec_types::view::FigureBucketState, out: &mut String) {
+    match value {
+        sessionspec_types::view::FigureBucketState::Counted => json::push_text(out, "Counted"),
+    }
+}
+
+/// Reads `sessionspec.view.FigureBucket.State` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_sessionspec_view_figure_bucket_state(value: &json::Value, at: &str) -> Result<sessionspec_types::view::FigureBucketState, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Counted`")? {
+        "Counted" => sessionspec_types::view::FigureBucketState::Counted,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Counted`".to_owned(), found: format!("`{other}`") }),
+    })
+}
+
 /// Writes `sessionspec.view.SessionCheck.State` as JSON.
 pub fn encode_sessionspec_view_session_check_state(value: &sessionspec_types::view::SessionCheckState, out: &mut String) {
     match value {
@@ -3517,6 +3583,39 @@ pub fn decode_sessionspec_view_session_listing_state(value: &json::Value, at: &s
     Ok(match json::text_at(value, at, "one of `Listed`")? {
         "Listed" => sessionspec_types::view::SessionListingState::Listed,
         other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Listed`".to_owned(), found: format!("`{other}`") }),
+    })
+}
+
+/// Writes `sessionspec.view.SlotId` as JSON.
+pub fn encode_sessionspec_view_slot_id(value: &sessionspec_types::view::SlotId, out: &mut String) {
+    json::push_text(out, &value.0);
+}
+
+/// Reads `sessionspec.view.SlotId` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_sessionspec_view_slot_id(value: &json::Value, at: &str) -> Result<sessionspec_types::view::SlotId, json::DecodeError> {
+    Ok(sessionspec_types::view::SlotId(json::text_at(value, at, "a string")?.to_owned()))
+}
+
+/// Writes `sessionspec.view.TimelineSlot.State` as JSON.
+pub fn encode_sessionspec_view_timeline_slot_state(value: &sessionspec_types::view::TimelineSlotState, out: &mut String) {
+    match value {
+        sessionspec_types::view::TimelineSlotState::Counted => json::push_text(out, "Counted"),
+    }
+}
+
+/// Reads `sessionspec.view.TimelineSlot.State` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_sessionspec_view_timeline_slot_state(value: &json::Value, at: &str) -> Result<sessionspec_types::view::TimelineSlotState, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Counted`")? {
+        "Counted" => sessionspec_types::view::TimelineSlotState::Counted,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Counted`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
@@ -4449,12 +4548,16 @@ pub fn encode_event_sessionspec_view_event_appended(value: &sessionspec_types::v
     encode_sessionspec_session_session_id(&value.session_id, out);
     json::member(out, "seq");
     json::push_integer(out, value.seq);
+    json::member(out, "ord");
+    json::push_integer(out, value.ord);
     json::member(out, "at");
     json::push_text(out, &value.at.0);
     json::member(out, "agent");
     encode_sessionspec_session_agent_id(&value.agent, out);
     json::member(out, "kind");
     encode_sessionspec_view_event_kind(&value.kind, out);
+    json::member(out, "notable");
+    json::push_bool(out, value.notable);
     json::member(out, "label");
     json::push_text(out, &value.label);
     if let Some(held0) = &value.detail {
@@ -4522,98 +4625,108 @@ pub fn decode_event_sessionspec_view_event_appended(value: &json::Value, at: &st
             let member2 = json::member_at(value, at, "seq")?;
             json::integer_at(member2, &at2, "an integer")?
         },
+        ord: {
+            let at3 = json::nested(at, "ord");
+            let member3 = json::member_at(value, at, "ord")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
         at: {
-            let at3 = json::nested(at, "at");
-            let member3 = json::member_at(value, at, "at")?;
-            sessionspec_types::primitives::Timestamp(json::timestamp_at(member3, &at3, "an RFC 3339 instant")?.to_owned())
+            let at4 = json::nested(at, "at");
+            let member4 = json::member_at(value, at, "at")?;
+            sessionspec_types::primitives::Timestamp(json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned())
         },
         agent: {
-            let at4 = json::nested(at, "agent");
-            let member4 = json::member_at(value, at, "agent")?;
-            decode_sessionspec_session_agent_id(member4, &at4)?
+            let at5 = json::nested(at, "agent");
+            let member5 = json::member_at(value, at, "agent")?;
+            decode_sessionspec_session_agent_id(member5, &at5)?
         },
         kind: {
-            let at5 = json::nested(at, "kind");
-            let member5 = json::member_at(value, at, "kind")?;
-            decode_sessionspec_view_event_kind(member5, &at5)?
+            let at6 = json::nested(at, "kind");
+            let member6 = json::member_at(value, at, "kind")?;
+            decode_sessionspec_view_event_kind(member6, &at6)?
+        },
+        notable: {
+            let at7 = json::nested(at, "notable");
+            let member7 = json::member_at(value, at, "notable")?;
+            json::bool_at(member7, &at7, "a boolean")?
         },
         label: {
-            let at6 = json::nested(at, "label");
-            let member6 = json::member_at(value, at, "label")?;
-            json::text_at(member6, &at6, "a string")?.to_owned()
+            let at8 = json::nested(at, "label");
+            let member8 = json::member_at(value, at, "label")?;
+            json::text_at(member8, &at8, "a string")?.to_owned()
         },
         detail: match value.member("detail") {
             None | Some(json::Value::Null) => None,
-            Some(member7) => {
-                let at7 = json::nested(at, "detail");
-                Some(json::text_at(member7, &at7, "a string")?.to_owned())
+            Some(member9) => {
+                let at9 = json::nested(at, "detail");
+                Some(json::text_at(member9, &at9, "a string")?.to_owned())
             }
         },
         call: match value.member("call") {
             None | Some(json::Value::Null) => None,
-            Some(member8) => {
-                let at8 = json::nested(at, "call");
-                Some(json::text_at(member8, &at8, "a string")?.to_owned())
+            Some(member10) => {
+                let at10 = json::nested(at, "call");
+                Some(json::text_at(member10, &at10, "a string")?.to_owned())
             }
         },
         ok: match value.member("ok") {
             None | Some(json::Value::Null) => None,
-            Some(member9) => {
-                let at9 = json::nested(at, "ok");
-                Some(json::bool_at(member9, &at9, "a boolean")?)
+            Some(member11) => {
+                let at11 = json::nested(at, "ok");
+                Some(json::bool_at(member11, &at11, "a boolean")?)
             }
         },
         context_tokens: match value.member("context_tokens") {
             None | Some(json::Value::Null) => None,
-            Some(member10) => {
-                let at10 = json::nested(at, "context_tokens");
-                Some(json::integer_at(member10, &at10, "an integer")?)
+            Some(member12) => {
+                let at12 = json::nested(at, "context_tokens");
+                Some(json::integer_at(member12, &at12, "an integer")?)
             }
         },
         output_tokens: match value.member("output_tokens") {
             None | Some(json::Value::Null) => None,
-            Some(member11) => {
-                let at11 = json::nested(at, "output_tokens");
-                Some(json::integer_at(member11, &at11, "an integer")?)
+            Some(member13) => {
+                let at13 = json::nested(at, "output_tokens");
+                Some(json::integer_at(member13, &at13, "an integer")?)
             }
         },
         cache_read_tokens: match value.member("cache_read_tokens") {
             None | Some(json::Value::Null) => None,
-            Some(member12) => {
-                let at12 = json::nested(at, "cache_read_tokens");
-                Some(json::integer_at(member12, &at12, "an integer")?)
+            Some(member14) => {
+                let at14 = json::nested(at, "cache_read_tokens");
+                Some(json::integer_at(member14, &at14, "an integer")?)
             }
         },
         cache_write_tokens: match value.member("cache_write_tokens") {
             None | Some(json::Value::Null) => None,
-            Some(member13) => {
-                let at13 = json::nested(at, "cache_write_tokens");
-                Some(json::integer_at(member13, &at13, "an integer")?)
+            Some(member15) => {
+                let at15 = json::nested(at, "cache_write_tokens");
+                Some(json::integer_at(member15, &at15, "an integer")?)
             }
         },
         cost_microdollars: match value.member("cost_microdollars") {
             None | Some(json::Value::Null) => None,
-            Some(member14) => {
-                let at14 = json::nested(at, "cost_microdollars");
-                Some(json::integer_at(member14, &at14, "an integer")?)
+            Some(member16) => {
+                let at16 = json::nested(at, "cost_microdollars");
+                Some(json::integer_at(member16, &at16, "an integer")?)
             }
         },
         bytes: match value.member("bytes") {
             None | Some(json::Value::Null) => None,
-            Some(member15) => {
-                let at15 = json::nested(at, "bytes");
-                Some(json::integer_at(member15, &at15, "an integer")?)
+            Some(member17) => {
+                let at17 = json::nested(at, "bytes");
+                Some(json::integer_at(member17, &at17, "an integer")?)
             }
         },
         agent_cost_usd: {
-            let at16 = json::nested(at, "agent_cost_usd");
-            let member16 = json::member_at(value, at, "agent_cost_usd")?;
-            binary64_at(member16, &at16)?
+            let at18 = json::nested(at, "agent_cost_usd");
+            let member18 = json::member_at(value, at, "agent_cost_usd")?;
+            binary64_at(member18, &at18)?
         },
         session_cost_usd: {
-            let at17 = json::nested(at, "session_cost_usd");
-            let member17 = json::member_at(value, at, "session_cost_usd")?;
-            binary64_at(member17, &at17)?
+            let at19 = json::nested(at, "session_cost_usd");
+            let member19 = json::member_at(value, at, "session_cost_usd")?;
+            binary64_at(member19, &at19)?
         },
     })
 }
@@ -4900,12 +5013,16 @@ pub fn encode_view_sessionspec_view_agent_turns(value: &sessionspec_types::view:
     encode_sessionspec_session_session_id(&value.session_id, out);
     json::member(out, "seq");
     json::push_integer(out, value.seq);
+    json::member(out, "ord");
+    json::push_integer(out, value.ord);
     json::member(out, "at");
     json::push_text(out, &value.at.0);
     json::member(out, "agent");
     encode_sessionspec_session_agent_id(&value.agent, out);
     json::member(out, "kind");
     encode_sessionspec_view_event_kind(&value.kind, out);
+    json::member(out, "notable");
+    json::push_bool(out, value.notable);
     json::member(out, "label");
     json::push_text(out, &value.label);
     if let Some(held0) = &value.detail {
@@ -4967,6 +5084,52 @@ pub fn decode_params_sessionspec_view_agent_turns(value: &json::Value, at: &str)
             let at1 = json::nested(at, "agent");
             let member1 = json::member_at(value, at, "agent")?;
             decode_sessionspec_session_agent_id(member1, &at1)?
+        },
+    ))
+}
+
+/// Writes one row of the view `sessionspec.view.OverviewFigures` as JSON.
+pub fn encode_view_sessionspec_view_overview_figures(value: &sessionspec_types::view::OverviewFigures, out: &mut String) {
+    out.push('{');
+    json::member(out, "bucket_id");
+    encode_sessionspec_view_bucket_id(&value.bucket_id, out);
+    json::member(out, "start");
+    json::push_text(out, &value.start.0);
+    json::member(out, "bucket_seconds");
+    json::push_integer(out, value.bucket_seconds);
+    json::member(out, "sessions");
+    json::push_integer(out, value.sessions);
+    json::member(out, "cost_usd");
+    out.push_str(&value.cost_usd.token());
+    json::member(out, "working_seconds");
+    json::push_integer(out, value.working_seconds);
+    json::member(out, "waiting_share");
+    out.push_str(&value.waiting_share.token());
+    json::member(out, "cache_hit_share");
+    out.push_str(&value.cache_hit_share.token());
+    json::member(out, "tool_calls");
+    json::push_integer(out, value.tool_calls);
+    json::member(out, "refused_tool_calls");
+    json::push_integer(out, value.refused_tool_calls);
+    out.push('}');
+}
+
+/// Reads the parameters of `sessionspec.view.OverviewFigures` from an object keyed by their wire names.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
+pub fn decode_params_sessionspec_view_overview_figures(value: &json::Value, at: &str) -> Result<(sessionspec_types::primitives::Timestamp, i64,), json::DecodeError> {
+    Ok((
+        {
+            let at0 = json::nested(at, "since");
+            let member0 = json::member_at(value, at, "since")?;
+            sessionspec_types::primitives::Timestamp(json::timestamp_at(member0, &at0, "an RFC 3339 instant")?.to_owned())
+        },
+        {
+            let at1 = json::nested(at, "bucket_seconds");
+            let member1 = json::member_at(value, at, "bucket_seconds")?;
+            json::integer_at(member1, &at1, "an integer")?
         },
     ))
 }
@@ -5122,6 +5285,46 @@ pub fn decode_params_sessionspec_view_session_checks(value: &json::Value, at: &s
     ))
 }
 
+/// Writes one row of the view `sessionspec.view.SessionEventCounts` as JSON.
+pub fn encode_view_sessionspec_view_session_event_counts(value: &sessionspec_types::view::SessionEventCounts, out: &mut String) {
+    out.push('{');
+    json::member(out, "count_id");
+    encode_sessionspec_view_count_id(&value.count_id, out);
+    json::member(out, "session_id");
+    encode_sessionspec_session_session_id(&value.session_id, out);
+    if let Some(held0) = &value.agent {
+        json::member(out, "agent");
+        encode_sessionspec_session_agent_id(&*held0, out);
+    }
+    json::member(out, "kind");
+    encode_sessionspec_view_event_kind(&value.kind, out);
+    json::member(out, "count");
+    json::push_integer(out, value.count);
+    out.push('}');
+}
+
+/// Reads the parameters of `sessionspec.view.SessionEventCounts` from an object keyed by their wire names.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
+pub fn decode_params_sessionspec_view_session_event_counts(value: &json::Value, at: &str) -> Result<(sessionspec_types::session::SessionId, Option<sessionspec_types::session::AgentId>,), json::DecodeError> {
+    Ok((
+        {
+            let at0 = json::nested(at, "session_id");
+            let member0 = json::member_at(value, at, "session_id")?;
+            decode_sessionspec_session_session_id(member0, &at0)?
+        },
+        match value.member("agent") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "agent");
+                Some(decode_sessionspec_session_agent_id(member1, &at1)?)
+            }
+        },
+    ))
+}
+
 /// Writes one row of the view `sessionspec.view.SessionEvents` as JSON.
 pub fn encode_view_sessionspec_view_session_events(value: &sessionspec_types::view::SessionEvents, out: &mut String) {
     out.push('{');
@@ -5131,12 +5334,16 @@ pub fn encode_view_sessionspec_view_session_events(value: &sessionspec_types::vi
     encode_sessionspec_session_session_id(&value.session_id, out);
     json::member(out, "seq");
     json::push_integer(out, value.seq);
+    json::member(out, "ord");
+    json::push_integer(out, value.ord);
     json::member(out, "at");
     json::push_text(out, &value.at.0);
     json::member(out, "agent");
     encode_sessionspec_session_agent_id(&value.agent, out);
     json::member(out, "kind");
     encode_sessionspec_view_event_kind(&value.kind, out);
+    json::member(out, "notable");
+    json::push_bool(out, value.notable);
     json::member(out, "label");
     json::push_text(out, &value.label);
     if let Some(held0) = &value.detail {
@@ -5187,12 +5394,40 @@ pub fn encode_view_sessionspec_view_session_events(value: &sessionspec_types::vi
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_sessionspec_view_session_events(value: &json::Value, at: &str) -> Result<(sessionspec_types::session::SessionId,), json::DecodeError> {
+pub fn decode_params_sessionspec_view_session_events(value: &json::Value, at: &str) -> Result<(sessionspec_types::session::SessionId, Option<sessionspec_types::session::AgentId>, Option<sessionspec_types::view::EventKind>, Option<bool>, Option<i64>,), json::DecodeError> {
     Ok((
         {
             let at0 = json::nested(at, "session_id");
             let member0 = json::member_at(value, at, "session_id")?;
             decode_sessionspec_session_session_id(member0, &at0)?
+        },
+        match value.member("agent") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "agent");
+                Some(decode_sessionspec_session_agent_id(member1, &at1)?)
+            }
+        },
+        match value.member("kind") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "kind");
+                Some(decode_sessionspec_view_event_kind(member2, &at2)?)
+            }
+        },
+        match value.member("notable") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "notable");
+                Some(json::bool_at(member3, &at3, "a boolean")?)
+            }
+        },
+        match value.member("before") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "before");
+                Some(json::integer_at(member4, &at4, "an integer")?)
+            }
         },
     ))
 }
@@ -5252,7 +5487,7 @@ pub fn encode_view_sessionspec_view_session_list(value: &sessionspec_types::view
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_sessionspec_view_session_list(value: &json::Value, at: &str) -> Result<(Option<sessionspec_types::primitives::Timestamp>, Option<String>, Option<i64>,), json::DecodeError> {
+pub fn decode_params_sessionspec_view_session_list(value: &json::Value, at: &str) -> Result<(Option<sessionspec_types::primitives::Timestamp>, Option<String>, Option<i64>, Option<i64>,), json::DecodeError> {
     Ok((
         match value.member("since") {
             None | Some(json::Value::Null) => None,
@@ -5275,6 +5510,89 @@ pub fn decode_params_sessionspec_view_session_list(value: &json::Value, at: &str
                 Some(json::integer_at(member2, &at2, "an integer")?)
             }
         },
+        match value.member("offset") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "offset");
+                Some(json::integer_at(member3, &at3, "an integer")?)
+            }
+        },
+    ))
+}
+
+/// Writes one row of the view `sessionspec.view.SessionTimeline` as JSON.
+pub fn encode_view_sessionspec_view_session_timeline(value: &sessionspec_types::view::SessionTimeline, out: &mut String) {
+    out.push('{');
+    json::member(out, "slot_id");
+    encode_sessionspec_view_slot_id(&value.slot_id, out);
+    json::member(out, "session_id");
+    encode_sessionspec_session_session_id(&value.session_id, out);
+    json::member(out, "agent");
+    encode_sessionspec_session_agent_id(&value.agent, out);
+    json::member(out, "slot_seconds");
+    json::push_integer(out, value.slot_seconds);
+    json::member(out, "start");
+    json::push_text(out, &value.start.0);
+    json::member(out, "end");
+    json::push_text(out, &value.end.0);
+    json::member(out, "events");
+    json::push_integer(out, value.events);
+    json::member(out, "read_calls");
+    json::push_integer(out, value.read_calls);
+    json::member(out, "search_calls");
+    json::push_integer(out, value.search_calls);
+    json::member(out, "edit_calls");
+    json::push_integer(out, value.edit_calls);
+    json::member(out, "execute_calls");
+    json::push_integer(out, value.execute_calls);
+    json::member(out, "network_calls");
+    json::push_integer(out, value.network_calls);
+    json::member(out, "spawn_calls");
+    json::push_integer(out, value.spawn_calls);
+    json::member(out, "message_calls");
+    json::push_integer(out, value.message_calls);
+    json::member(out, "plan_calls");
+    json::push_integer(out, value.plan_calls);
+    json::member(out, "other_calls");
+    json::push_integer(out, value.other_calls);
+    json::member(out, "human_prompts");
+    json::push_integer(out, value.human_prompts);
+    json::member(out, "relayed_prompts");
+    json::push_integer(out, value.relayed_prompts);
+    json::member(out, "refusals");
+    json::push_integer(out, value.refusals);
+    json::member(out, "busts");
+    json::push_integer(out, value.busts);
+    json::member(out, "compactions");
+    json::push_integer(out, value.compactions);
+    if let Some(held0) = &value.context_max {
+        json::member(out, "context_max");
+        json::push_integer(out, *held0);
+    }
+    json::member(out, "agent_cost_usd");
+    out.push_str(&value.agent_cost_usd.token());
+    json::member(out, "session_cost_usd");
+    out.push_str(&value.session_cost_usd.token());
+    out.push('}');
+}
+
+/// Reads the parameters of `sessionspec.view.SessionTimeline` from an object keyed by their wire names.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
+pub fn decode_params_sessionspec_view_session_timeline(value: &json::Value, at: &str) -> Result<(sessionspec_types::session::SessionId, i64,), json::DecodeError> {
+    Ok((
+        {
+            let at0 = json::nested(at, "session_id");
+            let member0 = json::member_at(value, at, "session_id")?;
+            decode_sessionspec_session_session_id(member0, &at0)?
+        },
+        {
+            let at1 = json::nested(at, "slot_seconds");
+            let member1 = json::member_at(value, at, "slot_seconds")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
     ))
 }
 
@@ -5287,12 +5605,16 @@ pub fn encode_view_sessionspec_view_session_turns(value: &sessionspec_types::vie
     encode_sessionspec_session_session_id(&value.session_id, out);
     json::member(out, "seq");
     json::push_integer(out, value.seq);
+    json::member(out, "ord");
+    json::push_integer(out, value.ord);
     json::member(out, "at");
     json::push_text(out, &value.at.0);
     json::member(out, "agent");
     encode_sessionspec_session_agent_id(&value.agent, out);
     json::member(out, "kind");
     encode_sessionspec_view_event_kind(&value.kind, out);
+    json::member(out, "notable");
+    json::push_bool(out, value.notable);
     json::member(out, "label");
     json::push_text(out, &value.label);
     if let Some(held0) = &value.detail {

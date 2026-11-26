@@ -1,13 +1,13 @@
 <!--
   generated from sessionspec v1
-  contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
+  contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — sessionspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-163 capabilities: **162 generated**, **1 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+178 capabilities: **175 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -81,23 +81,32 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `sessionspec.session.Verdict` |
 | domain type | `sessionspec.view.Agent` |
 | domain type | `sessionspec.view.AgentListing.State` |
+| domain type | `sessionspec.view.BucketId` |
 | domain type | `sessionspec.view.CheckId` |
+| domain type | `sessionspec.view.CountId` |
 | domain type | `sessionspec.view.Document` |
 | domain type | `sessionspec.view.Event` |
+| domain type | `sessionspec.view.EventCount.State` |
 | domain type | `sessionspec.view.EventId` |
 | domain type | `sessionspec.view.EventKind` |
 | domain type | `sessionspec.view.EventRow.State` |
+| domain type | `sessionspec.view.FigureBucket.State` |
 | domain type | `sessionspec.view.SessionCheck.State` |
 | domain type | `sessionspec.view.SessionListing.State` |
+| domain type | `sessionspec.view.SlotId` |
+| domain type | `sessionspec.view.TimelineSlot.State` |
 | domain type | `sessionspec.view.Update` |
 | entity lifecycle | `sessionspec.session.Agent` |
 | entity lifecycle | `sessionspec.session.Exposure` |
 | entity lifecycle | `sessionspec.session.Session` |
 | entity lifecycle | `sessionspec.session.ToolCall` |
 | entity lifecycle | `sessionspec.view.AgentListing` |
+| entity lifecycle | `sessionspec.view.EventCount` |
 | entity lifecycle | `sessionspec.view.EventRow` |
+| entity lifecycle | `sessionspec.view.FigureBucket` |
 | entity lifecycle | `sessionspec.view.SessionCheck` |
 | entity lifecycle | `sessionspec.view.SessionListing` |
+| entity lifecycle | `sessionspec.view.TimelineSlot` |
 | command contract | `sessionspec.session.CompactContext` |
 | command behaviour | `sessionspec.session.CompactContext` |
 | command contract | `sessionspec.session.CompleteToolCall` |
@@ -151,15 +160,19 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | view query | `sessionspec.session.ToolCalls` |
 | view type | `sessionspec.view.AgentTurns` |
 | view query | `sessionspec.view.AgentTurns` |
+| view type | `sessionspec.view.OverviewFigures` |
+| view query | `sessionspec.view.OverviewFigures` |
 | view type | `sessionspec.view.SessionAgents` |
 | view query | `sessionspec.view.SessionAgents` |
 | view type | `sessionspec.view.SessionById` |
 | view query | `sessionspec.view.SessionById` |
 | view type | `sessionspec.view.SessionChecks` |
 | view query | `sessionspec.view.SessionChecks` |
+| view type | `sessionspec.view.SessionEventCounts` |
 | view type | `sessionspec.view.SessionEvents` |
-| view query | `sessionspec.view.SessionEvents` |
 | view type | `sessionspec.view.SessionList` |
+| view type | `sessionspec.view.SessionTimeline` |
+| view query | `sessionspec.view.SessionTimeline` |
 | view type | `sessionspec.view.SessionTurns` |
 | view query | `sessionspec.view.SessionTurns` |
 | actor grants | `sessionspec.session.AgentLoop` |
@@ -189,7 +202,9 @@ What the specification fully determines is generated; what it cannot determine i
 
 | capability | source | why not generated | contract |
 | --- | --- | --- | --- |
-| view query | `sessionspec.view.SessionList` | kept an obligation by a comparison with the optional view parameter `since`, which the interpreted target refuses a read that leaves out, where a generated query would hide rows, in `filter:` | a query answering `sessionspec.view.SessionList` with rows projected from `sessionspec.view.SessionListing` at `eventual` consistency, containing instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit))` |
+| view query | `sessionspec.view.SessionEventCounts` | kept an obligation by a comparison with the optional view parameter `agent`, which the interpreted target refuses a read that leaves out, where a generated query would hide rows, in `filter:` | a query answering `sessionspec.view.SessionEventCounts` with rows projected from `sessionspec.view.EventCount` at `eventual` consistency, containing instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent))` |
+| view query | `sessionspec.view.SessionEvents` | kept an obligation by a comparison with the optional view parameter `agent`, which the interpreted target refuses a read that leaves out, where a generated query would hide rows, in `filter:` | a query answering `sessionspec.view.SessionEvents` with rows projected from `sessionspec.view.EventRow` at `eventual` consistency, containing instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent) and (not (defined(param.kind)) or kind == param.kind) and (not (defined(param.notable)) or notable == param.notable) and (not (defined(param.before)) or ord < param.before))` |
+| view query | `sessionspec.view.SessionList` | kept an obligation by a comparison with the optional view parameter `since`, which the interpreted target refuses a read that leaves out, where a generated query would hide rows, in `filter:` | a query answering `sessionspec.view.SessionList` with rows projected from `sessionspec.view.SessionListing` at `eventual` consistency, containing instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit) and (not (defined(param.offset)) or rank > param.offset))` |
 
 ## Refused — not represented by this synthesis
 

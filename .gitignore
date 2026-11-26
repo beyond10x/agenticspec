@@ -3,3 +3,7 @@
 /website/build/
 /website/node_modules/
 /website/.docusaurus/
+/ui/app/node_modules/
+/ui/app/test-results/
+/ui/app/playwright-report/
+sessionspec-dashboard.html

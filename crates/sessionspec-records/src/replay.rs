@@ -8,8 +8,9 @@ use session_ir::SessionIr;
 use session_view::SessionView;
 use sessionspec_system::{System, SystemEvent};
 use sessionspec_types::behaviour::{
-    AgentListingStorage, AgentStorage, EventRowStorage, ExposureStorage, Generated,
-    SessionCheckStorage, SessionListingStorage, SessionStorage, ToolCallStorage,
+    AgentListingStorage, AgentStorage, EventRowStorage, ExposureStorage, FigureBucketStorage,
+    Generated, SessionCheckStorage, SessionListingStorage, SessionStorage, TimelineSlotStorage,
+    ToolCallStorage,
 };
 use sessionspec_types::session as s;
 use sessionspec_types::view as v;
@@ -27,6 +28,8 @@ pub struct Ports {
     event_rows: BTreeMap<String, v::EventRowSnapshot>,
     session_listings: BTreeMap<String, v::SessionListingSnapshot>,
     session_checks: BTreeMap<String, v::SessionCheckSnapshot>,
+    figure_buckets: BTreeMap<String, v::FigureBucketSnapshot>,
+    timeline_slots: BTreeMap<String, v::TimelineSlotSnapshot>,
 }
 
 macro_rules! storage {
@@ -98,6 +101,20 @@ storage!(
     v::SessionCheckSnapshot,
     check_id
 );
+storage!(
+    FigureBucketStorage,
+    figure_buckets,
+    v::BucketId,
+    v::FigureBucketSnapshot,
+    bucket_id
+);
+storage!(
+    TimelineSlotStorage,
+    timeline_slots,
+    v::SlotId,
+    v::TimelineSlotSnapshot,
+    slot_id
+);
 
 /// Replay serves no view of `session-view`: its listing query answers nothing.
 impl v::obligations::SessionListQuery for Ports {
@@ -106,7 +123,31 @@ impl v::obligations::SessionListQuery for Ports {
         _since: Option<sessionspec_types::primitives::Timestamp>,
         _search: Option<String>,
         _limit: Option<i64>,
+        _offset: Option<i64>,
     ) -> Result<Vec<v::SessionList>, sessionspec_types::obligation::UnmetObligation> {
+        Ok(Vec::new())
+    }
+}
+
+impl v::obligations::SessionEventsQuery for Ports {
+    fn session_events(
+        &self,
+        _session_id: s::SessionId,
+        _agent: Option<s::AgentId>,
+        _kind: Option<v::EventKind>,
+        _notable: Option<bool>,
+        _before: Option<i64>,
+    ) -> Result<Vec<v::SessionEvents>, sessionspec_types::obligation::UnmetObligation> {
+        Ok(Vec::new())
+    }
+}
+
+impl v::obligations::SessionEventCountsQuery for Ports {
+    fn session_event_counts(
+        &self,
+        _session_id: s::SessionId,
+        _agent: Option<s::AgentId>,
+    ) -> Result<Vec<v::SessionEventCounts>, sessionspec_types::obligation::UnmetObligation> {
         Ok(Vec::new())
     }
 }

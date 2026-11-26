@@ -22,26 +22,32 @@ use sessionspec_types::view as v;
 use crate::claude::{Actor, Cmd, Lifted, Step};
 
 /// Raised when what the derived tables hold changes meaning. A store of another version drops its
-/// derived tables (sources, sessions, agents, event chunks, checks) and fills them again: the next
-/// sync refills transcript sessions, and `open` projects every wire session again from its
-/// `wire_steps`, which no sync can refill and which are never dropped.
-pub const SCHEMA_VERSION: i64 = 4;
+/// derived tables (sources, sessions, agents, events, the hourly sums, the search index, checks)
+/// and fills them again: the next sync refills transcript sessions, and `open` projects every wire
+/// session again from its `wire_steps`, which no sync can refill and which are never dropped.
+pub const SCHEMA_VERSION: i64 = 5;
 
 /// Raised when the encoding of a `wire_steps` row changes. A store whose wire rows this build
 /// cannot read is refused by [`Store::open`], and nothing in it is dropped.
 pub const WIRE_FORMAT: i64 = 1;
 
 /// The tables a sync or a wire re-projection fills again; `open` drops them on a schema change.
+/// `event_chunks` is the events table of schema 4.
 const DERIVED: &[&str] = &[
     "sources",
     "sessions",
     "agents",
     "events",
+    "hourly",
+    "session_names",
     "checks",
     "event_chunks",
 ];
 
-/// The zstd level of the `steps` and `events` blobs.
+/// The most rows one page of a session's events holds.
+pub const EVENT_PAGE: i64 = 500;
+
+/// The zstd level of the `steps` blob.
 const LEVEL: i32 = 3;
 
 fn pack(text: &str) -> Vec<u8> {
@@ -56,20 +62,42 @@ fn unpack(blob: &[u8]) -> io::Result<String> {
 /// The checks every synced session is judged by (`sessionspec.view.SessionChecks`).
 pub const CHECKS: &str = include_str!("../../../queries/session.sq");
 
+// Every view the UI reads is a table here, kept by `sync` and the appender, so `serve` answers a
+// request with one indexed query and holds no row beyond its answer. `change` numbers each write
+// (`meta.change`); a live channel reads the rows written after the last number it sent.
 const SCHEMA: &str = "
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS sources (
   path TEXT PRIMARY KEY, session_id TEXT NOT NULL, fingerprint TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS sessions (
-  session_id TEXT PRIMARY KEY, path TEXT NOT NULL, title TEXT, agents INTEGER NOT NULL,
-  files TEXT NOT NULL, steps BLOB NOT NULL, events_count INTEGER NOT NULL,
-  last_ms INTEGER NOT NULL, row TEXT NOT NULL, kpis TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS event_chunks (
-  session_id TEXT NOT NULL, chunk INTEGER NOT NULL, events BLOB NOT NULL,
-  PRIMARY KEY (session_id, chunk));
+  sk INTEGER PRIMARY KEY, session_id TEXT NOT NULL UNIQUE, path TEXT NOT NULL, title TEXT,
+  agents INTEGER NOT NULL, files TEXT NOT NULL, steps BLOB NOT NULL,
+  events_count INTEGER NOT NULL, last_ms INTEGER NOT NULL, names TEXT NOT NULL,
+  row TEXT NOT NULL, kpis TEXT NOT NULL, change INTEGER NOT NULL,
+  cost_micro INTEGER NOT NULL, working_s INTEGER NOT NULL, waiting_share REAL NOT NULL,
+  cache_share REAL NOT NULL, tool_calls INTEGER NOT NULL, refused INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS sessions_last ON sessions (last_ms DESC, session_id);
+CREATE INDEX IF NOT EXISTS sessions_change ON sessions (change);
+CREATE VIRTUAL TABLE IF NOT EXISTS session_names USING fts5 (names, tokenize = 'trigram');
+CREATE TABLE IF NOT EXISTS events (
+  sk INTEGER NOT NULL, seq INTEGER NOT NULL, ord INTEGER NOT NULL, at_ms INTEGER NOT NULL,
+  agent TEXT NOT NULL, kind TEXT NOT NULL, notable INTEGER NOT NULL, label TEXT NOT NULL,
+  detail TEXT, call TEXT, ok INTEGER, context_tokens INTEGER, output_tokens INTEGER,
+  cache_read_tokens INTEGER, cache_write_tokens INTEGER, cost_micro INTEGER, bytes INTEGER,
+  agent_cost_micro INTEGER NOT NULL, session_cost_micro INTEGER NOT NULL,
+  PRIMARY KEY (sk, seq)) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS events_ord ON events (sk, ord);
+CREATE INDEX IF NOT EXISTS events_agent ON events (sk, agent, ord);
+CREATE INDEX IF NOT EXISTS events_kind ON events (sk, kind, ord);
+CREATE INDEX IF NOT EXISTS events_notable ON events (sk, ord) WHERE notable;
+CREATE TABLE IF NOT EXISTS hourly (
+  hour INTEGER PRIMARY KEY, sessions INTEGER NOT NULL, cost_micro INTEGER NOT NULL,
+  working_s INTEGER NOT NULL, waiting_share REAL NOT NULL, cache_share REAL NOT NULL,
+  tool_calls INTEGER NOT NULL, refused INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS agents (
   session_id TEXT NOT NULL, agent_id TEXT NOT NULL, started_ms INTEGER NOT NULL,
-  row TEXT NOT NULL, PRIMARY KEY (session_id, agent_id));
+  row TEXT NOT NULL, change INTEGER NOT NULL, PRIMARY KEY (session_id, agent_id));
+CREATE INDEX IF NOT EXISTS agents_change ON agents (change);
 CREATE TABLE IF NOT EXISTS checks (
   session_id TEXT NOT NULL, name TEXT NOT NULL, about TEXT NOT NULL, severity TEXT NOT NULL,
   verdict TEXT NOT NULL, rows INTEGER NOT NULL, possible INTEGER NOT NULL,
@@ -77,7 +105,6 @@ CREATE TABLE IF NOT EXISTS checks (
 CREATE TABLE IF NOT EXISTS wire_steps (
   session_id TEXT NOT NULL, seq INTEGER NOT NULL, harness TEXT NOT NULL, step TEXT NOT NULL,
   PRIMARY KEY (session_id, seq));
-CREATE INDEX IF NOT EXISTS sessions_last ON sessions (last_ms);
 ";
 
 /// `$XDG_DATA_HOME/sessionspec`, else `~/.local/share/sessionspec`.
@@ -292,22 +319,48 @@ impl Store {
             .filter(|(p, f)| known.get(&p.display().to_string()) != Some(f))
             .collect();
         let program = crate::sq::compile(CHECKS)?;
-        let records: Vec<Result<Record, String>> = todo
-            .par_iter()
-            .map(|(p, f)| record(p, f, &program))
-            .collect();
         let mut conn = conn;
         let (mut lifted, mut failed) = (0i64, 0i64);
         let mut changed = Vec::new();
-        for r in records {
-            match r {
-                Ok(rec) => {
-                    write(&mut conn, &rec).map_err(sql)?;
-                    changed.push(rec.session_id.clone());
-                    lifted += 1;
+        // Lifts run in chunks, each written and dropped before the next starts. A lift holds
+        // several times its transcript in memory, so a chunk holds at most `LIFT_BUDGET` bytes of
+        // transcript (a larger one alone) and one transcript per thread.
+        let mut sized: Vec<(u64, &(PathBuf, String))> =
+            todo.iter().map(|t| (transcript_bytes(&t.0), t)).collect();
+        sized.sort_by_key(|a| std::cmp::Reverse(a.0));
+        let threads = rayon::current_num_threads().max(1);
+        let mut chunks: Vec<Vec<&(PathBuf, String)>> = Vec::new();
+        let mut held = 0u64;
+        for (bytes, t) in sized {
+            match chunks.last_mut() {
+                Some(c) if c.len() < threads && held + bytes <= LIFT_BUDGET => {
+                    c.push(t);
+                    held += bytes;
                 }
-                Err(_) => failed += 1,
+                _ => {
+                    chunks.push(vec![t]);
+                    held = bytes;
+                }
             }
+        }
+        for part in chunks {
+            let records: Vec<Result<Record, String>> = part
+                .par_iter()
+                .map(|(p, f)| record(p, f, &program))
+                .collect();
+            for r in records {
+                match r {
+                    Ok(rec) => {
+                        write(&mut conn, &rec).map_err(sql)?;
+                        changed.push(rec.session_id.clone());
+                        lifted += 1;
+                    }
+                    Err(_) => failed += 1,
+                }
+            }
+        }
+        if lifted > 0 {
+            release_freed_memory();
         }
         let sessions: i64 = conn
             .query_row("SELECT count(*) FROM sessions", [], |r| r.get(0))
@@ -360,20 +413,120 @@ impl Store {
 
     /// Every session row, newest `last_at` first, with its rank.
     pub fn sessions(&self) -> rusqlite::Result<Vec<v::SessionUpdated>> {
+        self.session_page(&Page::default())
+    }
+
+    /// One page of the session list (`sessionspec.view.SessionList`), in one query: the rank is
+    /// the place among every session by `last_at`; `search` matches the trigram index of `names`
+    /// (a substring, any case), or `names` itself for fewer than three characters.
+    pub fn session_page(&self, page: &Page) -> rusqlite::Result<Vec<v::SessionUpdated>> {
         let conn = self.read()?;
-        let mut st = conn.prepare("SELECT row FROM sessions ORDER BY last_ms DESC, session_id")?;
-        let rows: Vec<String> = st
-            .query_map([], |r| r.get(0))?
-            .collect::<rusqlite::Result<_>>()?;
-        Ok(rows
-            .iter()
-            .enumerate()
-            .filter_map(|(i, t)| {
-                let mut row = decode(t, wire::decode_event_sessionspec_view_session_updated)?;
-                row.rank = i as i64 + 1;
-                Some(row)
-            })
-            .collect())
+        let search = page
+            .search
+            .as_deref()
+            .map(str::to_lowercase)
+            .filter(|q| !q.is_empty());
+        let fts = search.as_deref().is_some_and(|q| q.chars().count() >= 3);
+        let matcher = match (&search, fts) {
+            (None, _) => "1",
+            (Some(_), true) => "sk IN (SELECT rowid FROM session_names WHERE names MATCH ?2)",
+            (Some(_), false) => "instr(names, ?2) > 0",
+        };
+        let text = format!(
+            "SELECT row, rank FROM (
+               SELECT sk, row, last_ms, names,
+                      row_number() OVER (ORDER BY last_ms DESC, session_id) AS rank
+               FROM sessions)
+             WHERE last_ms >= ?1 AND {matcher} AND rank > ?3 AND rank <= ?4
+             ORDER BY rank"
+        );
+        let mut st = conn.prepare(&text)?;
+        // A trigram query is a phrase, so a quote in the search is doubled.
+        let q = match (&search, fts) {
+            (Some(q), true) => format!("\"{}\"", q.replace('"', "\"\"")),
+            (Some(q), false) => q.clone(),
+            (None, _) => String::new(),
+        };
+        let rows = st.query_map(
+            params![
+                page.since_ms.unwrap_or(i64::MIN),
+                q,
+                page.offset.unwrap_or(0),
+                page.limit.unwrap_or(i64::MAX)
+            ],
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)),
+        )?;
+        let mut out = Vec::new();
+        for row in rows {
+            let (text, rank) = row?;
+            if let Some(mut s) = decode(&text, wire::decode_event_sessionspec_view_session_updated)
+            {
+                s.rank = rank;
+                out.push(s);
+            }
+        }
+        Ok(out)
+    }
+
+    /// One session row by its id, with its rank.
+    pub fn session(&self, session_id: &str) -> rusqlite::Result<Option<v::SessionUpdated>> {
+        let conn = self.read()?;
+        let row: Option<(String, i64)> = conn
+            .query_row(
+                "SELECT row, (SELECT count(*) FROM sessions o
+                              WHERE o.last_ms > s.last_ms
+                                 OR (o.last_ms = s.last_ms AND o.session_id <= s.session_id))
+                 FROM sessions s WHERE session_id = ?1",
+                params![session_id],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()?;
+        Ok(row.and_then(|(text, rank)| {
+            let mut s = decode(&text, wire::decode_event_sessionspec_view_session_updated)?;
+            s.rank = rank;
+            Some(s)
+        }))
+    }
+
+    /// The session rows written after change `after`, with their rank, and the last change.
+    pub fn sessions_changed(
+        &self,
+        after: i64,
+    ) -> rusqlite::Result<(Vec<v::SessionUpdated>, Vec<v::AgentUpdated>, i64)> {
+        let conn = self.read()?;
+        let last = last_change(&conn)?;
+        let mut st = conn.prepare(
+            "SELECT row, rank FROM (
+               SELECT row, change, row_number() OVER (ORDER BY last_ms DESC, session_id) AS rank
+               FROM sessions)
+             WHERE change > ?1 AND change <= ?2 ORDER BY change",
+        )?;
+        let mut sessions = Vec::new();
+        for row in st.query_map(params![after, last], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?))
+        })? {
+            let (text, rank) = row?;
+            if let Some(mut s) = decode(&text, wire::decode_event_sessionspec_view_session_updated)
+            {
+                s.rank = rank;
+                sessions.push(s);
+            }
+        }
+        let mut st = conn.prepare(
+            "SELECT row FROM agents WHERE change > ?1 AND change <= ?2 ORDER BY change, agent_id",
+        )?;
+        let mut agents = Vec::new();
+        for row in st.query_map(params![after, last], |r| r.get::<_, String>(0))? {
+            if let Some(a) = decode(&row?, wire::decode_event_sessionspec_view_agent_updated) {
+                agents.push(a);
+            }
+        }
+        Ok((sessions, agents, last))
+    }
+
+    /// The number of the last write.
+    pub fn last_change(&self) -> rusqlite::Result<i64> {
+        last_change(&self.read()?)
     }
 
     pub fn session_kpis(&self, session_id: &str) -> rusqlite::Result<Option<c::KpiReport>> {
@@ -402,7 +555,7 @@ impl Store {
             .collect())
     }
 
-    /// The events of a session from `from_seq` on, of one kind and agent when given.
+    /// The events of a session from `from_seq` on, of one kind and agent when given, by `seq`.
     pub fn events(
         &self,
         session_id: &str,
@@ -411,34 +564,187 @@ impl Store {
         agent: Option<&str>,
     ) -> rusqlite::Result<Vec<v::EventAppended>> {
         let conn = self.read()?;
-        let text = self.event_text(&conn, session_id)?;
-        let kind = kind.map(|k| format!("{k:?}"));
-        Ok(text
-            .lines()
-            .filter_map(|line| {
-                let mut parts = line.splitn(4, '\t');
-                let seq: i64 = parts.next()?.parse().ok()?;
-                let k = parts.next()?;
-                let a = parts.next()?;
-                if seq < from_seq
-                    || kind.as_deref().is_some_and(|x| x != k)
-                    || agent.is_some_and(|x| x != a)
-                {
-                    return None;
-                }
-                decode(
-                    parts.next()?,
-                    wire::decode_event_sessionspec_view_event_appended,
-                )
-            })
-            .collect())
+        let mut st = conn.prepare(&format!(
+            "SELECT {EVENT_COLUMNS} FROM events
+             WHERE sk = (SELECT sk FROM sessions WHERE session_id = ?1) AND seq >= ?2
+               AND (?3 IS NULL OR kind = ?3) AND (?4 IS NULL OR agent = ?4)
+             ORDER BY seq"
+        ))?;
+        st.query_map(
+            params![session_id, from_seq, kind.map(kind_name), agent],
+            |r| event_of(session_id, r),
+        )?
+        .collect()
     }
 
-    /// How many events each session holds, by session.
-    pub fn event_counts(&self) -> rusqlite::Result<HashMap<String, i64>> {
+    /// One page of a session's events (`sessionspec.view.SessionEvents`), newest `ord` first, at
+    /// most [`EVENT_PAGE`] rows, in one indexed query.
+    pub fn event_page(
+        &self,
+        session_id: &str,
+        filter: &EventFilter,
+    ) -> rusqlite::Result<Vec<v::EventAppended>> {
         let conn = self.read()?;
-        let mut st = conn.prepare("SELECT session_id, events_count FROM sessions")?;
-        st.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?.collect()
+        let mut st = conn.prepare(&format!(
+            "SELECT {EVENT_COLUMNS} FROM events
+             WHERE sk = (SELECT sk FROM sessions WHERE session_id = ?1)
+               AND (?2 IS NULL OR agent = ?2) AND (?3 IS NULL OR kind = ?3)
+               AND (?4 IS NULL OR notable = ?4) AND ord < ?5
+             ORDER BY ord DESC LIMIT ?6"
+        ))?;
+        st.query_map(
+            params![
+                session_id,
+                filter.agent,
+                filter.kind.map(kind_name),
+                filter.notable,
+                filter.before.unwrap_or(i64::MAX),
+                EVENT_PAGE
+            ],
+            |r| event_of(session_id, r),
+        )?
+        .collect()
+    }
+
+    /// How many events of each kind a session holds, of one agent when given.
+    pub fn event_kind_counts(
+        &self,
+        session_id: &str,
+        agent: Option<&str>,
+    ) -> rusqlite::Result<Vec<(v::EventKind, i64)>> {
+        let conn = self.read()?;
+        let mut st = conn.prepare(
+            "SELECT kind, count(*) FROM events
+             WHERE sk = (SELECT sk FROM sessions WHERE session_id = ?1)
+               AND (?2 IS NULL OR agent = ?2)
+             GROUP BY kind ORDER BY kind",
+        )?;
+        let rows = st.query_map(params![session_id, agent], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?))
+        })?;
+        let mut out = Vec::new();
+        for row in rows {
+            let (k, n) = row?;
+            if let Some(k) = kind_of(&k) {
+                out.push((k, n));
+            }
+        }
+        Ok(out)
+    }
+
+    /// The timeline slots of a session (`sessionspec.view.SessionTimeline`): its events grouped
+    /// by agent and by `slot_seconds` from the epoch, oldest first, in one grouped query.
+    pub fn timeline(
+        &self,
+        session_id: &str,
+        slot_seconds: i64,
+    ) -> rusqlite::Result<Vec<v::SessionTimeline>> {
+        let conn = self.read()?;
+        let width = slot_seconds.max(1) * 1000;
+        let mut st = conn.prepare(
+            "SELECT agent, at_ms / ?2 AS slot, min(at_ms), max(at_ms), count(*),
+               sum(kind = 'tool_call' AND detail = 'Read'),
+               sum(kind = 'tool_call' AND detail = 'Search'),
+               sum(kind = 'tool_call' AND detail = 'Edit'),
+               sum(kind = 'tool_call' AND detail = 'Execute'),
+               sum(kind = 'tool_call' AND detail = 'Network'),
+               sum(kind = 'tool_call' AND detail = 'Spawn'),
+               sum(kind = 'tool_call' AND detail = 'Message'),
+               sum(kind = 'tool_call' AND detail = 'Plan'),
+               sum(kind = 'tool_call' AND coalesce(detail, '') NOT IN
+                   ('Read', 'Search', 'Edit', 'Execute', 'Network', 'Spawn', 'Message', 'Plan')),
+               sum(kind = 'prompt' AND label = 'Human'),
+               sum(kind = 'prompt' AND label IN ('Delegate', 'PeerSession')),
+               sum(kind = 'decision' AND ok = 0),
+               sum(kind = 'cache_bust'),
+               sum(kind = 'compaction'),
+               max(CASE WHEN kind = 'model_turn' THEN context_tokens END),
+               max(agent_cost_micro), max(session_cost_micro)
+             FROM events
+             WHERE sk = (SELECT sk FROM sessions WHERE session_id = ?1) AND kind != 'agent_started'
+             GROUP BY agent, slot ORDER BY min(at_ms), agent",
+        )?;
+        st.query_map(params![session_id, width], |r| {
+            let agent: String = r.get(0)?;
+            let slot: i64 = r.get(1)?;
+            Ok(v::SessionTimeline {
+                slot_id: v::SlotId(format!("{session_id}.{agent}.{}", slot * width)),
+                session_id: s::SessionId(session_id.to_owned()),
+                agent: s::AgentId(agent),
+                slot_seconds: slot_seconds.max(1),
+                start: ts(r.get(2)?),
+                end: ts(r.get(3)?),
+                events: r.get(4)?,
+                read_calls: r.get(5)?,
+                search_calls: r.get(6)?,
+                edit_calls: r.get(7)?,
+                execute_calls: r.get(8)?,
+                network_calls: r.get(9)?,
+                spawn_calls: r.get(10)?,
+                message_calls: r.get(11)?,
+                plan_calls: r.get(12)?,
+                other_calls: r.get(13)?,
+                human_prompts: r.get(14)?,
+                relayed_prompts: r.get(15)?,
+                refusals: r.get(16)?,
+                busts: r.get(17)?,
+                compactions: r.get(18)?,
+                context_max: r.get(19)?,
+                agent_cost_usd: usd(r.get(20)?),
+                session_cost_usd: usd(r.get(21)?),
+            })
+        })?
+        .collect()
+    }
+
+    /// The overview's figures (`sessionspec.view.OverviewFigures`): the hourly sums from
+    /// `since_ms` on, added per bucket of `bucket_seconds`, in one grouped query.
+    pub fn figures(
+        &self,
+        since_ms: i64,
+        bucket_seconds: i64,
+    ) -> rusqlite::Result<Vec<v::OverviewFigures>> {
+        let conn = self.read()?;
+        let width = bucket_seconds.max(1) * 1000;
+        let mut st = conn.prepare(
+            "SELECT (hour * 3600000 - ?1) / ?2 AS b, sum(sessions), sum(cost_micro),
+               sum(working_s), sum(waiting_share), sum(cache_share), sum(tool_calls), sum(refused)
+             FROM hourly WHERE hour * 3600000 >= ?1 GROUP BY b ORDER BY b",
+        )?;
+        st.query_map(params![since_ms, width], |r| {
+            let start = since_ms + r.get::<_, i64>(0)? * width;
+            Ok(v::OverviewFigures {
+                bucket_id: v::BucketId(start.to_string()),
+                start: ts(start),
+                bucket_seconds: bucket_seconds.max(1),
+                sessions: r.get(1)?,
+                cost_usd: usd(r.get(2)?),
+                working_seconds: r.get(3)?,
+                waiting_share: share(r.get(4)?),
+                cache_hit_share: share(r.get(5)?),
+                tool_calls: r.get(6)?,
+                refused_tool_calls: r.get(7)?,
+            })
+        })?
+        .collect()
+    }
+
+    /// The last `seq` of each session written after change `after`.
+    pub fn last_seqs(&self, after: i64) -> rusqlite::Result<HashMap<String, i64>> {
+        let conn = self.read()?;
+        let mut st = conn.prepare(
+            "SELECT s.session_id, (SELECT max(seq) FROM events e WHERE e.sk = s.sk)
+             FROM sessions s WHERE s.change > ?1",
+        )?;
+        let rows = st.query_map(params![after], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, Option<i64>>(1)?))
+        })?;
+        let mut out = HashMap::new();
+        for row in rows {
+            let (id, seq) = row?;
+            out.insert(id, seq.unwrap_or(-1));
+        }
+        Ok(out)
     }
 
     pub fn checks(&self, session_id: &str) -> rusqlite::Result<Vec<v::SessionChecks>> {
@@ -599,7 +905,11 @@ impl Store {
         for (id, started, row) in rows {
             let _ = writeln!(out, "{id} {started} {row}");
         }
-        out.push_str(&self.event_text(&conn, session_id).map_err(sql)?);
+        for e in self.events(session_id, 0, None, None).map_err(sql)? {
+            let _ = write!(out, "{}\t{:?}\t{}\t", e.seq, e.kind, e.agent.0);
+            wire::encode_event_sessionspec_view_event_appended(&e, &mut out);
+            out.push('\n');
+        }
         for ch in self.checks(session_id).map_err(sql)? {
             let _ = writeln!(
                 out,
@@ -608,22 +918,6 @@ impl Store {
             );
         }
         Ok(out)
-    }
-
-    /// The event lines of a session, its chunks in order.
-    fn event_text(&self, conn: &Connection, session_id: &str) -> rusqlite::Result<String> {
-        let mut st =
-            conn.prepare("SELECT events FROM event_chunks WHERE session_id = ?1 ORDER BY chunk")?;
-        let blobs: Vec<Vec<u8>> = st
-            .query_map(params![session_id], |r| r.get(0))?
-            .collect::<rusqlite::Result<_>>()?;
-        let mut text = String::new();
-        for b in blobs {
-            text.push_str(
-                &unpack(&b).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
-            );
-        }
-        Ok(text)
     }
 
     /// The steps the wire appended for a session, in order.
@@ -654,12 +948,152 @@ fn decode<T>(text: &str, f: fn(&json::Value, &str) -> Result<T, json::DecodeErro
     f(&value, "$").ok()
 }
 
+/// What one page of the session list asks for (`sessionspec.view.SessionList`).
+#[derive(Debug, Clone, Default)]
+pub struct Page {
+    pub since_ms: Option<i64>,
+    pub search: Option<String>,
+    /// The last rank of the page.
+    pub limit: Option<i64>,
+    /// The rank the page starts after.
+    pub offset: Option<i64>,
+}
+
+/// What one page of a session's events asks for (`sessionspec.view.SessionEvents`).
+#[derive(Debug, Clone, Default)]
+pub struct EventFilter {
+    pub agent: Option<String>,
+    pub kind: Option<v::EventKind>,
+    pub notable: Option<bool>,
+    /// The page holds events with an `ord` below this.
+    pub before: Option<i64>,
+}
+
+const EVENT_COLUMNS: &str = "seq, ord, at_ms, agent, kind, notable, label, detail, call, ok,
+  context_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost_micro, bytes,
+  agent_cost_micro, session_cost_micro";
+
+fn event_of(session_id: &str, r: &rusqlite::Row<'_>) -> rusqlite::Result<v::EventAppended> {
+    let seq: i64 = r.get(0)?;
+    let kind: String = r.get(4)?;
+    Ok(v::EventAppended {
+        event_id: v::EventId(format!("{session_id}.{seq}")),
+        session_id: s::SessionId(session_id.to_owned()),
+        seq,
+        ord: r.get(1)?,
+        at: ts(r.get(2)?),
+        agent: s::AgentId(r.get(3)?),
+        kind: kind_of(&kind).unwrap_or(v::EventKind::TurnEnd),
+        notable: r.get(5)?,
+        label: r.get(6)?,
+        detail: r.get(7)?,
+        call: r.get(8)?,
+        ok: r.get(9)?,
+        context_tokens: r.get(10)?,
+        output_tokens: r.get(11)?,
+        cache_read_tokens: r.get(12)?,
+        cache_write_tokens: r.get(13)?,
+        cost_microdollars: r.get(14)?,
+        bytes: r.get(15)?,
+        agent_cost_usd: usd(r.get(16)?),
+        session_cost_usd: usd(r.get(17)?),
+    })
+}
+
+const KINDS: [(v::EventKind, &str); 10] = [
+    (v::EventKind::AgentStarted, "agent_started"),
+    (v::EventKind::Prompt, "prompt"),
+    (v::EventKind::ModelTurn, "model_turn"),
+    (v::EventKind::ToolCall, "tool_call"),
+    (v::EventKind::Decision, "decision"),
+    (v::EventKind::ToolResult, "tool_result"),
+    (v::EventKind::TurnEnd, "turn_end"),
+    (v::EventKind::Compaction, "compaction"),
+    (v::EventKind::Exposure, "exposure"),
+    (v::EventKind::CacheBust, "cache_bust"),
+];
+
+/// The wire name of an event kind, as the `events.kind` column holds it.
+pub fn kind_name(k: v::EventKind) -> &'static str {
+    KINDS
+        .iter()
+        .find(|(x, _)| *x == k)
+        .map_or("turn_end", |(_, n)| n)
+}
+
+fn kind_of(name: &str) -> Option<v::EventKind> {
+    KINDS.iter().find(|(_, n)| *n == name).map(|(k, _)| *k)
+}
+
+/// The events the log shows first: prompts, model turns, tool calls, refusals, cache busts and
+/// compactions.
+fn notable(kind: v::EventKind, ok: Option<bool>) -> bool {
+    match kind {
+        v::EventKind::Prompt
+        | v::EventKind::AgentStarted
+        | v::EventKind::CacheBust
+        | v::EventKind::Compaction => true,
+        v::EventKind::Decision | v::EventKind::ToolResult => ok == Some(false),
+        _ => false,
+    }
+}
+
+fn last_change(conn: &Connection) -> rusqlite::Result<i64> {
+    Ok(conn
+        .query_row("SELECT value FROM meta WHERE key = 'change'", [], |r| {
+            r.get::<_, String>(0)
+        })
+        .optional()?
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(0))
+}
+
+/// Takes the next change number in `tx`.
+fn next_change(tx: &rusqlite::Transaction<'_>) -> rusqlite::Result<i64> {
+    let n = last_change(tx)? + 1;
+    tx.execute(
+        "INSERT OR REPLACE INTO meta (key, value) VALUES ('change', ?1)",
+        params![n.to_string()],
+    )?;
+    Ok(n)
+}
+
 fn mtime_ns(p: &Path) -> u128 {
     fs::metadata(p)
         .and_then(|m| m.modified())
         .ok()
         .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
         .map_or(0, |d| d.as_nanos())
+}
+
+/// The transcript bytes one chunk of a sync lifts at once.
+pub const LIFT_BUDGET: u64 = 192 << 20;
+
+/// The bytes of a main transcript and of its sub-agent files.
+fn transcript_bytes(main: &Path) -> u64 {
+    let size = |p: &Path| fs::metadata(p).map(|m| m.len()).unwrap_or(0);
+    size(main)
+        + crate::claude::sub_agent_files(main)
+            .iter()
+            .map(|s| size(&s.path))
+            .sum::<u64>()
+}
+
+/// Gives the pages the allocator holds free back to the system. A lift allocates hundreds of
+/// megabytes for a large transcript on each worker thread; glibc keeps them in the thread's arena
+/// after they are freed, so a server that re-lifts a live session every few seconds grew to
+/// gigabytes of resident memory that nothing used.
+pub fn release_freed_memory() {
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    {
+        unsafe extern "C" {
+            fn malloc_trim(pad: usize) -> i32;
+        }
+        // SAFETY: `malloc_trim` takes no pointer and only returns free pages of glibc's arenas.
+        unsafe {
+            malloc_trim(0);
+        }
+    }
 }
 
 /// The size and modification time of a main transcript and of each of its sub-agent files.
@@ -689,13 +1123,34 @@ struct Record {
     agents_count: i64,
     files: String,
     steps: Vec<u8>,
-    events: Vec<u8>,
+    events: Vec<EventOut>,
     events_count: i64,
     last_ms: i64,
+    names: String,
+    figures: Figures,
     row: String,
     kpis: String,
     agents: Vec<(String, i64, String)>,
     checks: Vec<crate::sq::SessionCheck>,
+}
+
+/// One event row as projected, with the numbers its columns hold as integers.
+struct EventOut {
+    at_ms: i64,
+    agent_cost: i64,
+    session_cost: i64,
+    row: v::EventAppended,
+}
+
+/// The figures of a session row the overview sums per hour.
+#[derive(Debug, Clone, Copy, Default)]
+struct Figures {
+    cost_micro: i64,
+    working_s: i64,
+    waiting_share: f64,
+    cache_share: f64,
+    tool_calls: i64,
+    refused: i64,
 }
 
 /// The working directory the first records of a transcript name, relative to the home
@@ -818,8 +1273,8 @@ pub struct Projection {
     refused_calls: i64,
     tool_names: Vec<String>,
     models: Vec<String>,
-    /// Event lines projected since the last write: `seq \t kind \t agent \t EventAppended`.
-    fresh: String,
+    /// Event rows projected since the last write.
+    fresh: Vec<EventOut>,
     events_count: i64,
     /// The check verdicts are older than the steps.
     checks_dirty: bool,
@@ -835,9 +1290,11 @@ struct Delta {
     path: String,
     fingerprint: String,
     agents_count: i64,
-    lines: String,
+    events: Vec<EventOut>,
     events_count: i64,
     last_ms: i64,
+    names: String,
+    figures: Figures,
     row: String,
     kpis: String,
     agents: Vec<(String, i64, String)>,
@@ -866,7 +1323,7 @@ impl Projection {
             refused_calls: 0,
             tool_names: Vec::new(),
             models: Vec::new(),
-            fresh: String::new(),
+            fresh: Vec::new(),
             events_count: 0,
             checks_dirty: true,
             dirty_since: None,
@@ -962,9 +1419,11 @@ impl Projection {
             event_id: v::EventId(format!("{session_id}.{}", e.seq)),
             session_id: s::SessionId(session_id.to_owned()),
             seq: e.seq,
+            ord: 0,
             at: ts(e.at),
             agent: s::AgentId(e.agent.clone()),
             kind: e.kind,
+            notable: notable(e.kind, e.ok),
             label: e.label.clone(),
             detail: e.detail.clone(),
             call: e.call.clone(),
@@ -978,9 +1437,12 @@ impl Projection {
             agent_cost_usd: usd(t.cost),
             session_cost_usd: usd(self.session_cost),
         };
-        let _ = write!(self.fresh, "{}\t{:?}\t{}\t", e.seq, e.kind, e.agent);
-        wire::encode_event_sessionspec_view_event_appended(&row, &mut self.fresh);
-        self.fresh.push('\n');
+        self.fresh.push(EventOut {
+            at_ms: e.at,
+            agent_cost: t.cost,
+            session_cost: self.session_cost,
+            row,
+        });
     }
 
     /// The rows as they stand, and the event lines since the last call. Check verdicts when
@@ -1081,6 +1543,20 @@ impl Projection {
         let mut kpis_text = String::new();
         wire::encode_sessionspec_cli_kpi_report(&kpis, &mut kpis_text);
         let checks = checks.then(|| self.checks(program));
+        let figures = Figures {
+            cost_micro: self.session_cost,
+            working_s: row.working_seconds,
+            waiting_share: row.waiting_share.get(),
+            cache_share: row.cache_hit_share.get(),
+            tool_calls: row.tool_calls,
+            refused: row.refused_tool_calls,
+        };
+        // New events take the places after the ones written before, in the order they came.
+        let mut events = std::mem::take(&mut self.fresh);
+        let base = self.events_count - events.len() as i64;
+        for (i, e) in events.iter_mut().enumerate() {
+            e.row.ord = base + i as i64;
+        }
         Delta {
             session_id: sid,
             path: self.origin.path.clone(),
@@ -1090,9 +1566,11 @@ impl Projection {
                 self.origin.fingerprint.clone()
             },
             agents_count: self.lifted.agents as i64,
-            lines: std::mem::take(&mut self.fresh),
+            events,
             events_count: self.events_count,
             last_ms: last,
+            names: row.names.clone(),
+            figures,
             row: row_text,
             kpis: kpis_text,
             agents,
@@ -1111,7 +1589,12 @@ impl Projection {
 
     /// The whole session as one record: every row, every event line, the verdicts.
     fn full_record(&mut self, program: &crate::sq::Program) -> Record {
-        let d = self.delta(program, true);
+        let mut d = self.delta(program, true);
+        // A whole session is placed by time.
+        d.events.sort_by_key(|e| (e.at_ms, e.row.seq));
+        for (i, e) in d.events.iter_mut().enumerate() {
+            e.row.ord = i as i64;
+        }
         let wire_source = self.origin.path.starts_with("wire:");
         Record {
             path: d.path,
@@ -1132,9 +1615,11 @@ impl Projection {
             } else {
                 pack(&encode_steps(&self.lifted.steps))
             },
-            events: pack(&d.lines),
+            events: d.events,
             events_count: d.events_count,
             last_ms: d.last_ms,
+            names: d.names,
+            figures: d.figures,
             row: d.row,
             kpis: d.kpis,
             agents: d.agents,
@@ -1192,6 +1677,7 @@ fn set_meta(conn: &Connection, key: &str, value: &str) -> Result<(), String> {
 
 fn write(conn: &mut Connection, r: &Record) -> rusqlite::Result<()> {
     let tx = conn.transaction()?;
+    let change = next_change(&tx)?;
     let old: Option<String> = tx
         .query_row(
             "SELECT session_id FROM sources WHERE path = ?1",
@@ -1200,22 +1686,33 @@ fn write(conn: &mut Connection, r: &Record) -> rusqlite::Result<()> {
         )
         .optional()?;
     for id in old.iter().chain(std::iter::once(&r.session_id)) {
+        let sk: Option<i64> = tx
+            .query_row(
+                "SELECT sk FROM sessions WHERE session_id = ?1",
+                params![id],
+                |row| row.get(0),
+            )
+            .optional()?;
+        if let Some(sk) = sk {
+            tx.execute("DELETE FROM events WHERE sk = ?1", params![sk])?;
+            tx.execute("DELETE FROM session_names WHERE rowid = ?1", params![sk])?;
+        }
         tx.execute("DELETE FROM sessions WHERE session_id = ?1", params![id])?;
-        tx.execute("DELETE FROM agents WHERE session_id = ?1", params![id])?;
         tx.execute("DELETE FROM checks WHERE session_id = ?1", params![id])?;
-        tx.execute(
-            "DELETE FROM event_chunks WHERE session_id = ?1",
-            params![id],
-        )?;
+        if id != &r.session_id {
+            tx.execute("DELETE FROM agents WHERE session_id = ?1", params![id])?;
+        }
     }
     tx.execute(
         "INSERT OR REPLACE INTO sources (path, session_id, fingerprint) VALUES (?1, ?2, ?3)",
         params![r.path, r.session_id, r.fingerprint],
     )?;
+    let f = r.figures;
     tx.execute(
         "INSERT INTO sessions (session_id, path, title, agents, files, steps, events_count,
-           last_ms, row, kpis)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+           last_ms, names, row, kpis, change, cost_micro, working_s, waiting_share, cache_share,
+           tool_calls, refused)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
         params![
             r.session_id,
             r.path,
@@ -1225,25 +1722,40 @@ fn write(conn: &mut Connection, r: &Record) -> rusqlite::Result<()> {
             r.steps,
             r.events_count,
             r.last_ms,
+            r.names,
             r.row,
-            r.kpis
+            r.kpis,
+            change,
+            f.cost_micro,
+            f.working_s,
+            f.waiting_share,
+            f.cache_share,
+            f.tool_calls,
+            f.refused
         ],
     )?;
+    let sk = tx.last_insert_rowid();
     tx.execute(
-        "INSERT INTO event_chunks (session_id, chunk, events) VALUES (?1, 0, ?2)",
-        params![r.session_id, r.events],
+        "INSERT INTO session_names (rowid, names) VALUES (?1, ?2)",
+        params![sk, r.names],
     )?;
-    put_agents(&tx, &r.session_id, &r.agents)?;
+    put_events(&tx, sk, &r.events)?;
+    put_agents(&tx, &r.session_id, &r.agents, change, true)?;
     put_checks(&tx, &r.session_id, &r.checks)?;
+    put_hourly(&tx)?;
     tx.commit()
 }
 
-/// Writes what one append changed: the session row, a chunk of new event lines, every agent row,
-/// and the verdicts when they were judged again.
+/// Writes what one append changed: the session row, the new event rows, every agent row that
+/// changed, and the verdicts when they were judged again.
 fn write_delta(conn: &mut Connection, d: &Delta) -> rusqlite::Result<()> {
     let tx = conn.transaction()?;
+    let change = next_change(&tx)?;
+    let f = d.figures;
     tx.execute(
-        "UPDATE sessions SET agents = ?2, events_count = ?3, last_ms = ?4, row = ?5, kpis = ?6
+        "UPDATE sessions SET agents = ?2, events_count = ?3, last_ms = ?4, row = ?5, kpis = ?6,
+           names = ?7, change = ?8, cost_micro = ?9, working_s = ?10, waiting_share = ?11,
+           cache_share = ?12, tool_calls = ?13, refused = ?14
          WHERE session_id = ?1",
         params![
             d.session_id,
@@ -1251,21 +1763,32 @@ fn write_delta(conn: &mut Connection, d: &Delta) -> rusqlite::Result<()> {
             d.events_count,
             d.last_ms,
             d.row,
-            d.kpis
+            d.kpis,
+            d.names,
+            change,
+            f.cost_micro,
+            f.working_s,
+            f.waiting_share,
+            f.cache_share,
+            f.tool_calls,
+            f.refused
         ],
     )?;
     tx.execute(
         "UPDATE sources SET fingerprint = ?2 WHERE path = ?1",
         params![d.path, d.fingerprint],
     )?;
-    if !d.lines.is_empty() {
-        tx.execute(
-            "INSERT INTO event_chunks (session_id, chunk, events)
-             VALUES (?1, (SELECT coalesce(max(chunk) + 1, 0) FROM event_chunks WHERE session_id = ?1), ?2)",
-            params![d.session_id, pack(&d.lines)],
-        )?;
-    }
-    put_agents(&tx, &d.session_id, &d.agents)?;
+    let sk: i64 = tx.query_row(
+        "SELECT sk FROM sessions WHERE session_id = ?1",
+        params![d.session_id],
+        |row| row.get(0),
+    )?;
+    tx.execute(
+        "UPDATE session_names SET names = ?2 WHERE rowid = ?1",
+        params![sk, d.names],
+    )?;
+    put_events(&tx, sk, &d.events)?;
+    put_agents(&tx, &d.session_id, &d.agents, change, false)?;
     if let Some(checks) = &d.checks {
         tx.execute(
             "DELETE FROM checks WHERE session_id = ?1",
@@ -1273,7 +1796,59 @@ fn write_delta(conn: &mut Connection, d: &Delta) -> rusqlite::Result<()> {
         )?;
         put_checks(&tx, &d.session_id, checks)?;
     }
+    put_hourly(&tx)?;
     tx.commit()
+}
+
+fn put_events(
+    tx: &rusqlite::Transaction<'_>,
+    sk: i64,
+    events: &[EventOut],
+) -> rusqlite::Result<()> {
+    let mut st = tx.prepare(
+        "INSERT OR REPLACE INTO events (sk, seq, ord, at_ms, agent, kind, notable, label, detail,
+           call, ok, context_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
+           cost_micro, bytes, agent_cost_micro, session_cost_micro)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18,
+           ?19)",
+    )?;
+    for e in events {
+        let r = &e.row;
+        st.execute(params![
+            sk,
+            r.seq,
+            r.ord,
+            e.at_ms,
+            r.agent.0,
+            kind_name(r.kind),
+            r.notable,
+            r.label,
+            r.detail,
+            r.call,
+            r.ok,
+            r.context_tokens,
+            r.output_tokens,
+            r.cache_read_tokens,
+            r.cache_write_tokens,
+            r.cost_microdollars,
+            r.bytes,
+            e.agent_cost,
+            e.session_cost
+        ])?;
+    }
+    Ok(())
+}
+
+/// The sums of the session figures per hour of `last_ms`, written again from the session rows.
+fn put_hourly(tx: &rusqlite::Transaction<'_>) -> rusqlite::Result<()> {
+    tx.execute_batch(
+        "DELETE FROM hourly;
+         INSERT INTO hourly (hour, sessions, cost_micro, working_s, waiting_share, cache_share,
+           tool_calls, refused)
+         SELECT last_ms / 3600000, count(*), sum(cost_micro), sum(working_s), sum(waiting_share),
+           sum(cache_share), sum(tool_calls), sum(refused)
+         FROM sessions GROUP BY last_ms / 3600000;",
+    )
 }
 
 fn write_checks(
@@ -1294,13 +1869,37 @@ fn put_agents(
     tx: &rusqlite::Transaction<'_>,
     session_id: &str,
     agents: &[(String, i64, String)],
+    change: i64,
+    whole: bool,
 ) -> rusqlite::Result<()> {
+    // A row keeps its change number while its text stays the same, so a live channel sends
+    // only the agents that changed.
     let mut st = tx.prepare(
-        "INSERT OR REPLACE INTO agents (session_id, agent_id, started_ms, row)
-         VALUES (?1, ?2, ?3, ?4)",
+        "INSERT INTO agents (session_id, agent_id, started_ms, row, change)
+         VALUES (?1, ?2, ?3, ?4, ?5)
+         ON CONFLICT (session_id, agent_id) DO UPDATE
+           SET started_ms = excluded.started_ms, row = excluded.row, change = excluded.change
+           WHERE agents.row != excluded.row",
     )?;
     for (id, started, row) in agents {
-        st.execute(params![session_id, id, started, row])?;
+        st.execute(params![session_id, id, started, row, change])?;
+    }
+    if whole {
+        // The agents of a whole session are all of them: drop the ones it no longer has.
+        let keep: Vec<&str> = agents.iter().map(|(id, _, _)| id.as_str()).collect();
+        let mut have = tx.prepare("SELECT agent_id FROM agents WHERE session_id = ?1")?;
+        let gone: Vec<String> = have
+            .query_map(params![session_id], |r| r.get(0))?
+            .collect::<rusqlite::Result<Vec<String>>>()?
+            .into_iter()
+            .filter(|a| !keep.contains(&a.as_str()))
+            .collect();
+        for a in gone {
+            tx.execute(
+                "DELETE FROM agents WHERE session_id = ?1 AND agent_id = ?2",
+                params![session_id, a],
+            )?;
+        }
     }
     Ok(())
 }

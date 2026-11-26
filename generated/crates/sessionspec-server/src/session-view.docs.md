@@ -1,12 +1,12 @@
 <!--
 generated from sessionspec v1
-contract digest slice-sha256/2:ba5de783da2e03ae53aa40cff3072c316b18d59b1afe70b4cf67e100b99b0bf7
+contract digest slice-sha256/2:aceaae6f98a22688118e7aeb955d7d0fc1723020c7f1eecbede15204becbc389
 do not edit: regenerate with `ess generate`
 -->
 
 # view
 
-What a session renderer reads: one session as agents and a flat, ordered list of view events derived from the session IR's published events, and the read models of the UI (`ui/sessionspec.ui.yaml`): sessions, agents, events and check verdicts. It holds no content, only names, counts and times, except the harness's session title, which stays in the host's local store. A renderer takes a whole document or an update that appends events; the UI reads the views and takes their changes live. Renderers are generated from the UI document (`ess generate ui`); a gateway UI reuses the document's `embed.*` pages.
+What a session renderer reads: one session as agents and a flat, ordered list of view events derived from the session IR's published events, and the read models of the UI (`ui/sessionspec.ui.yaml`): sessions, agents, events and check verdicts. It holds no content, only names, counts and times, except the harness's session title, which stays in the host's local store. A renderer takes a whole document or an update that appends events; the UI reads the views and takes their changes live. The UI is written by hand (`ui/app/`) over TypeScript types generated from this domain (`ess generate types`); a gateway UI reuses its embed pages and components.
 
 `sessionspec.view` is one of sessionspec's bounded contexts. [Back to the index](../index.md).
 
@@ -22,9 +22,17 @@ What a session renderer reads: one session as agents and a flat, ordered list of
 - `spawned_by` — `Optional<String>`, which may be absent
 - `started_at` — `Integer`
 
+### `BucketId`
+
+`sessionspec.view.BucketId` wraps `String` and is not interchangeable with one: the whole value of naming it separately is the crossings the model then refuses.
+
 ### `CheckId`
 
 `sessionspec.view.CheckId` wraps `String` and is not interchangeable with one: the whole value of naming it separately is the crossings the model then refuses.
+
+### `CountId`
+
+`sessionspec.view.CountId` wraps `String` and is not interchangeable with one: the whole value of naming it separately is the crossings the model then refuses.
 
 ### `Document`
 
@@ -64,6 +72,10 @@ What a session renderer reads: one session as agents and a flat, ordered list of
 ### `EventKind`
 
 `sessionspec.view.EventKind` is one of `agent_started`, `prompt`, `model_turn`, `tool_call`, `decision`, `tool_result`, `turn_end`, `compaction`, `exposure` and `cache_bust`.
+
+### `SlotId`
+
+`sessionspec.view.SlotId` wraps `String` and is not interchangeable with one: the whole value of naming it separately is the crossings the model then refuses.
 
 ### `Update`
 
@@ -123,6 +135,39 @@ It has one state, so there is no move to permit or to forbid.
 
 One view projects it: [`SessionAgents`](#sessionagents).
 
+### `EventCount`
+
+`sessionspec.view.EventCount`.
+
+An instance is identified by `count_id`, a `sessionspec.view.CountId`. The name is part of the model and not a convention: a view projects the identity under that name, so a projection inventing its own would disagree with the view.
+
+It holds:
+
+- `session_id` — `sessionspec.session.SessionId`
+- `agent` — `Optional<sessionspec.session.AgentId>`, which may be absent
+- `kind` — `sessionspec.view.EventKind`
+- `count` — `Integer`
+
+It declares no relation to another entity, and no other entity names it.
+
+No invariant is declared, so nothing here constrains an instance at rest.
+
+Its state is a `sessionspec.view.EventCount.State`, one of `Counted`. That enum is synthesised from the lifecycle rather than declared beside it, so the states a view's filter compares and the states drawn below cannot disagree.
+
+An instance is created in `Counted`. `Counted` is terminal, so an instance may rest there forever. That is declared rather than inferred from having no way out: an entity that cannot leave a state is either finished or stuck, and only its author knows which.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Counted
+    Counted --> [*]
+```
+
+It declares no moves, so nothing changes its state once it exists.
+
+It has one state, so there is no move to permit or to forbid.
+
+One view projects it: [`SessionEventCounts`](#sessioneventcounts).
+
 ### `EventRow`
 
 `sessionspec.view.EventRow`.
@@ -133,9 +178,11 @@ It holds:
 
 - `session_id` — `sessionspec.session.SessionId`
 - `seq` — `Integer`
+- `ord` — `Integer`
 - `at` — `Timestamp`
 - `agent` — `sessionspec.session.AgentId`
 - `kind` — `sessionspec.view.EventKind`
+- `notable` — `Boolean`
 - `label` — `String`
 - `detail` — `Optional<String>`, which may be absent
 - `call` — `Optional<String>`, which may be absent
@@ -168,6 +215,44 @@ It declares no moves, so nothing changes its state once it exists.
 It has one state, so there is no move to permit or to forbid.
 
 Three views project it: [`AgentTurns`](#agentturns), [`SessionEvents`](#sessionevents) and [`SessionTurns`](#sessionturns).
+
+### `FigureBucket`
+
+`sessionspec.view.FigureBucket`.
+
+An instance is identified by `bucket_id`, a `sessionspec.view.BucketId`. The name is part of the model and not a convention: a view projects the identity under that name, so a projection inventing its own would disagree with the view.
+
+It holds:
+
+- `start` — `Timestamp`
+- `bucket_seconds` — `Integer`
+- `sessions` — `Integer`
+- `cost_usd` — `Binary64`
+- `working_seconds` — `Integer`
+- `waiting_share` — `Binary64`
+- `cache_hit_share` — `Binary64`
+- `tool_calls` — `Integer`
+- `refused_tool_calls` — `Integer`
+
+It declares no relation to another entity, and no other entity names it.
+
+No invariant is declared, so nothing here constrains an instance at rest.
+
+Its state is a `sessionspec.view.FigureBucket.State`, one of `Counted`. That enum is synthesised from the lifecycle rather than declared beside it, so the states a view's filter compares and the states drawn below cannot disagree.
+
+An instance is created in `Counted`. `Counted` is terminal, so an instance may rest there forever. That is declared rather than inferred from having no way out: an entity that cannot leave a state is either finished or stuck, and only its author knows which.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Counted
+    Counted --> [*]
+```
+
+It declares no moves, so nothing changes its state once it exists.
+
+It has one state, so there is no move to permit or to forbid.
+
+One view projects it: [`OverviewFigures`](#overviewfigures).
 
 ### `SessionCheck`
 
@@ -255,6 +340,58 @@ It has one state, so there is no move to permit or to forbid.
 
 Two views project it: [`SessionById`](#sessionbyid) and [`SessionList`](#sessionlist).
 
+### `TimelineSlot`
+
+`sessionspec.view.TimelineSlot`.
+
+An instance is identified by `slot_id`, a `sessionspec.view.SlotId`. The name is part of the model and not a convention: a view projects the identity under that name, so a projection inventing its own would disagree with the view.
+
+It holds:
+
+- `session_id` — `sessionspec.session.SessionId`
+- `agent` — `sessionspec.session.AgentId`
+- `slot_seconds` — `Integer`
+- `start` — `Timestamp`
+- `end` — `Timestamp`
+- `events` — `Integer`
+- `read_calls` — `Integer`
+- `search_calls` — `Integer`
+- `edit_calls` — `Integer`
+- `execute_calls` — `Integer`
+- `network_calls` — `Integer`
+- `spawn_calls` — `Integer`
+- `message_calls` — `Integer`
+- `plan_calls` — `Integer`
+- `other_calls` — `Integer`
+- `human_prompts` — `Integer`
+- `relayed_prompts` — `Integer`
+- `refusals` — `Integer`
+- `busts` — `Integer`
+- `compactions` — `Integer`
+- `context_max` — `Optional<Integer>`, which may be absent
+- `agent_cost_usd` — `Binary64`
+- `session_cost_usd` — `Binary64`
+
+It declares no relation to another entity, and no other entity names it.
+
+No invariant is declared, so nothing here constrains an instance at rest.
+
+Its state is a `sessionspec.view.TimelineSlot.State`, one of `Counted`. That enum is synthesised from the lifecycle rather than declared beside it, so the states a view's filter compares and the states drawn below cannot disagree.
+
+An instance is created in `Counted`. `Counted` is terminal, so an instance may rest there forever. That is declared rather than inferred from having no way out: an entity that cannot leave a state is either finished or stuck, and only its author knows which.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Counted
+    Counted --> [*]
+```
+
+It declares no moves, so nothing changes its state once it exists.
+
+It has one state, so there is no move to permit or to forbid.
+
+One view projects it: [`SessionTimeline`](#sessiontimeline).
+
 ## Views
 
 A view is what the outside world is promised it can observe. Each one says which instances it contains and how soon it reflects a command that has already returned, because "you can read this" without "how soon" is the promise every flaky suite is built on.
@@ -272,9 +409,11 @@ It exposes:
 - `event_id` — `sessionspec.view.EventId`
 - `session_id` — `sessionspec.session.SessionId`
 - `seq` — `Integer`
+- `ord` — `Integer`
 - `at` — `Timestamp`
 - `agent` — `sessionspec.session.AgentId`
 - `kind` — `sessionspec.view.EventKind`
+- `notable` — `Boolean`
 - `label` — `String`
 - `detail` — `Optional<String>`, which may be absent
 - `call` — `Optional<String>`, which may be absent
@@ -287,6 +426,33 @@ It exposes:
 - `bytes` — `Optional<Integer>`, which may be absent
 - `agent_cost_usd` — `Binary64`
 - `session_cost_usd` — `Binary64`
+
+It declares no order, so the rows come back in whatever order the implementation has, and two reads may disagree.
+
+**Eventual**: it catches up some time after the command returns, so a caller that reads it immediately may legitimately not see its own write yet. Nothing here says how long that takes, so nothing here lets a caller wait a fixed time and call it correct.
+
+A generated scenario therefore retries the assertion until the projection catches up, rather than asserting once and racing it. The repair everyone reaches for instead is a sleep, which turns the suite into a test of the machine it runs on.
+
+### `OverviewFigures`
+
+`sessionspec.view.OverviewFigures`, shown to a person as "Overview figures" and called `figures` on the wire.
+
+It reads [`FigureBucket`](#figurebucket).
+
+It contains the instances where `(start >= param.since as timestamp and bucket_seconds == param.bucket_seconds)` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
+
+It exposes:
+
+- `bucket_id` — `sessionspec.view.BucketId`
+- `start` — `Timestamp`
+- `bucket_seconds` — `Integer`
+- `sessions` — `Integer`
+- `cost_usd` — `Binary64`
+- `working_seconds` — `Integer`
+- `waiting_share` — `Binary64`
+- `cache_hit_share` — `Binary64`
+- `tool_calls` — `Integer`
+- `refused_tool_calls` — `Integer`
 
 It declares no order, so the rows come back in whatever order the implementation has, and two reads may disagree.
 
@@ -386,22 +552,46 @@ It declares no order, so the rows come back in whatever order the implementation
 
 A generated scenario therefore retries the assertion until the projection catches up, rather than asserting once and racing it. The repair everyone reaches for instead is a sleep, which turns the suite into a test of the machine it runs on.
 
+### `SessionEventCounts`
+
+`sessionspec.view.SessionEventCounts`, shown to a person as "Event counts of a session" and called `session-event-counts` on the wire.
+
+It reads [`EventCount`](#eventcount).
+
+It contains the instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent))` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
+
+It exposes:
+
+- `count_id` — `sessionspec.view.CountId`
+- `session_id` — `sessionspec.session.SessionId`
+- `agent` — `Optional<sessionspec.session.AgentId>`, which may be absent
+- `kind` — `sessionspec.view.EventKind`
+- `count` — `Integer`
+
+It declares no order, so the rows come back in whatever order the implementation has, and two reads may disagree.
+
+**Eventual**: it catches up some time after the command returns, so a caller that reads it immediately may legitimately not see its own write yet. Nothing here says how long that takes, so nothing here lets a caller wait a fixed time and call it correct.
+
+A generated scenario therefore retries the assertion until the projection catches up, rather than asserting once and racing it. The repair everyone reaches for instead is a sleep, which turns the suite into a test of the machine it runs on.
+
 ### `SessionEvents`
 
 `sessionspec.view.SessionEvents`, shown to a person as "Events of a session" and called `session-events` on the wire.
 
 It reads [`EventRow`](#eventrow).
 
-It contains the instances where `session_id == param.session_id` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
+It contains the instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent) and (not (defined(param.kind)) or kind == param.kind) and (not (defined(param.notable)) or notable == param.notable) and (not (defined(param.before)) or ord < param.before))` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
 
 It exposes:
 
 - `event_id` — `sessionspec.view.EventId`
 - `session_id` — `sessionspec.session.SessionId`
 - `seq` — `Integer`
+- `ord` — `Integer`
 - `at` — `Timestamp`
 - `agent` — `sessionspec.session.AgentId`
 - `kind` — `sessionspec.view.EventKind`
+- `notable` — `Boolean`
 - `label` — `String`
 - `detail` — `Optional<String>`, which may be absent
 - `call` — `Optional<String>`, which may be absent
@@ -427,7 +617,7 @@ A generated scenario therefore retries the assertion until the projection catche
 
 It reads [`SessionListing`](#sessionlisting).
 
-It contains the instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit))` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
+It contains the instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit) and (not (defined(param.offset)) or rank > param.offset))` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
 
 It exposes:
 
@@ -459,6 +649,47 @@ It declares no order, so the rows come back in whatever order the implementation
 
 A generated scenario therefore retries the assertion until the projection catches up, rather than asserting once and racing it. The repair everyone reaches for instead is a sleep, which turns the suite into a test of the machine it runs on.
 
+### `SessionTimeline`
+
+`sessionspec.view.SessionTimeline`, shown to a person as "Timeline of a session" and called `session-timeline` on the wire.
+
+It reads [`TimelineSlot`](#timelineslot).
+
+It contains the instances where `(session_id == param.session_id and slot_seconds == param.slot_seconds)` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
+
+It exposes:
+
+- `slot_id` — `sessionspec.view.SlotId`
+- `session_id` — `sessionspec.session.SessionId`
+- `agent` — `sessionspec.session.AgentId`
+- `slot_seconds` — `Integer`
+- `start` — `Timestamp`
+- `end` — `Timestamp`
+- `events` — `Integer`
+- `read_calls` — `Integer`
+- `search_calls` — `Integer`
+- `edit_calls` — `Integer`
+- `execute_calls` — `Integer`
+- `network_calls` — `Integer`
+- `spawn_calls` — `Integer`
+- `message_calls` — `Integer`
+- `plan_calls` — `Integer`
+- `other_calls` — `Integer`
+- `human_prompts` — `Integer`
+- `relayed_prompts` — `Integer`
+- `refusals` — `Integer`
+- `busts` — `Integer`
+- `compactions` — `Integer`
+- `context_max` — `Optional<Integer>`, which may be absent
+- `agent_cost_usd` — `Binary64`
+- `session_cost_usd` — `Binary64`
+
+It declares no order, so the rows come back in whatever order the implementation has, and two reads may disagree.
+
+**Eventual**: it catches up some time after the command returns, so a caller that reads it immediately may legitimately not see its own write yet. Nothing here says how long that takes, so nothing here lets a caller wait a fixed time and call it correct.
+
+A generated scenario therefore retries the assertion until the projection catches up, rather than asserting once and racing it. The repair everyone reaches for instead is a sleep, which turns the suite into a test of the machine it runs on.
+
 ### `SessionTurns`
 
 `sessionspec.view.SessionTurns`, shown to a person as "Model turns of a session" and called `session-turns` on the wire.
@@ -472,9 +703,11 @@ It exposes:
 - `event_id` — `sessionspec.view.EventId`
 - `session_id` — `sessionspec.session.SessionId`
 - `seq` — `Integer`
+- `ord` — `Integer`
 - `at` — `Timestamp`
 - `agent` — `sessionspec.session.AgentId`
 - `kind` — `sessionspec.view.EventKind`
+- `notable` — `Boolean`
 - `label` — `String`
 - `detail` — `Optional<String>`, which may be absent
 - `call` — `Optional<String>`, which may be absent
@@ -529,9 +762,11 @@ It carries:
 - `event_id` — `sessionspec.view.EventId`
 - `session_id` — `sessionspec.session.SessionId`
 - `seq` — `Integer`
+- `ord` — `Integer`
 - `at` — `Timestamp`
 - `agent` — `sessionspec.session.AgentId`
 - `kind` — `sessionspec.view.EventKind`
+- `notable` — `Boolean`
 - `label` — `String`
 - `detail` — `Optional<String>`, which may be absent
 - `call` — `Optional<String>`, which may be absent
@@ -591,9 +826,9 @@ An actor is who may ask this context for something. Every grant below points at 
 
 It may invoke nothing: it observes. "Who is in this picture" is part of what a specification describes, so an actor with no grant is a statement rather than an unfinished line.
 
-It may read [`AgentTurns`](#agentturns), [`SessionAgents`](#sessionagents), [`SessionById`](#sessionbyid), [`SessionChecks`](#sessionchecks), [`SessionEvents`](#sessionevents), [`SessionList`](#sessionlist) and [`SessionTurns`](#sessionturns), which an actor whose grant does not name it may not read.
+It may read [`AgentTurns`](#agentturns), [`OverviewFigures`](#overviewfigures), [`SessionAgents`](#sessionagents), [`SessionById`](#sessionbyid), [`SessionChecks`](#sessionchecks), [`SessionEventCounts`](#sessioneventcounts), [`SessionEvents`](#sessionevents), [`SessionList`](#sessionlist), [`SessionTimeline`](#sessiontimeline) and [`SessionTurns`](#sessionturns), which an actor whose grant does not name it may not read.
 
 
 ---
 
-Generated from sessionspec v1 · contract digest `slice-sha256/2:ba5de783da2e03ae53aa40cff3072c316b18d59b1afe70b4cf67e100b99b0bf7`. Do not edit this file; change the specification and regenerate it with `ess generate`.
+Generated from sessionspec v1 · contract digest `slice-sha256/2:aceaae6f98a22688118e7aeb955d7d0fc1723020c7f1eecbede15204becbc389`. Do not edit this file; change the specification and regenerate it with `ess generate`.
