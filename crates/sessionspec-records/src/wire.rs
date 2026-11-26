@@ -12,7 +12,7 @@
 //! refused by a hook), and a sub-agent's parent is found by digest, so its attribution is
 //! `Inferred`.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use serde_json::Value;
 use sessionspec_types::primitives::Timestamp;
@@ -97,12 +97,14 @@ pub struct WireSession {
     side: Option<String>,
     /// Agent by the digest of its conversation's first user message.
     by_first: HashMap<String, AgentState>,
-    /// Chain key (first-message digest) by response id, for `previous_response_id`.
-    by_response: HashMap<String, String>,
-    /// Chain key by `conversation` id.
-    by_conversation: HashMap<String, String>,
-    /// A spawn call's string inputs by digest: (agent, tool call).
-    spawns: HashMap<String, (String, String)>,
+    /// Chain key (first-message digest) by response id, for `previous_response_id`. Holds the
+    /// [`LINKS_HELD`] most recent responses.
+    by_response: Links<String>,
+    /// Chain key by `conversation` id. Holds the [`LINKS_HELD`] most recent conversations.
+    by_conversation: Links<String>,
+    /// A spawn call's string inputs by digest: (agent, tool call). Holds the [`LINKS_HELD`] most
+    /// recent inputs.
+    spawns: Links<(String, String)>,
     /// Calls lifted, calls skipped (`count_tokens`, an unreadable request).
     pub lifted: u64,
     pub skipped: u64,
@@ -111,6 +113,59 @@ pub struct WireSession {
 impl WireSession {
     pub fn new() -> WireSession {
         WireSession::default()
+    }
+
+    /// How many links the session holds now: response ids, conversation ids, spawn inputs. Each
+    /// is at most [`LINKS_HELD`], however long the session runs.
+    pub fn links_held(&self) -> (usize, usize, usize) {
+        (
+            self.by_response.len(),
+            self.by_conversation.len(),
+            self.spawns.len(),
+        )
+    }
+}
+
+/// How many links of each kind a [`WireSession`] keeps: the most recent response ids,
+/// conversation ids and spawn inputs. An older link is evicted. A later call that names an
+/// evicted response or carries an evicted spawn input is not attached to the agent it belonged
+/// to: it starts an agent of its own without a parent, the same as a chain the session never saw,
+/// so a lost link shows as an unknown parent and never as a wrong one.
+pub const LINKS_HELD: usize = 4096;
+
+/// A map that keeps the [`LINKS_HELD`] most recently inserted keys.
+#[derive(Debug, Default)]
+struct Links<V> {
+    map: HashMap<String, V>,
+    order: VecDeque<String>,
+}
+
+impl<V> Links<V> {
+    fn get(&self, key: &str) -> Option<&V> {
+        self.map.get(key)
+    }
+
+    /// Inserts or replaces `key`; a new key evicts the oldest when the map is full.
+    fn insert(&mut self, key: String, value: V) {
+        if self.map.insert(key.clone(), value).is_none() {
+            self.order.push_back(key);
+            while self.order.len() > LINKS_HELD {
+                if let Some(old) = self.order.pop_front() {
+                    self.map.remove(&old);
+                }
+            }
+        }
+    }
+
+    /// Inserts `key` only when it is not held.
+    fn insert_new(&mut self, key: &str, value: impl FnOnce() -> V) {
+        if !self.map.contains_key(key) {
+            self.insert(key.to_owned(), value());
+        }
+    }
+
+    fn len(&self) -> usize {
+        self.map.len()
     }
 }
 
@@ -717,8 +772,7 @@ pub fn lift_call(state: &mut WireSession, call: &WireCall) -> Vec<Step> {
     if let Some(conv) = &req.conversation {
         out.session
             .by_conversation
-            .entry(conv.clone())
-            .or_insert_with(|| chain.clone());
+            .insert_new(conv, || chain.clone());
     }
     let known = out.session.by_first.contains_key(&chain);
     if !known {

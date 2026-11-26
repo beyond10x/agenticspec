@@ -21,9 +21,25 @@ use sessionspec_types::view as v;
 
 use crate::claude::{Actor, Cmd, Lifted, Step};
 
-/// Raised when what the store holds changes meaning; a store of another version is emptied and
-/// filled again by the next sync.
+/// Raised when what the derived tables hold changes meaning. A store of another version drops its
+/// derived tables (sources, sessions, agents, event chunks, checks) and fills them again: the next
+/// sync refills transcript sessions, and `open` projects every wire session again from its
+/// `wire_steps`, which no sync can refill and which are never dropped.
 pub const SCHEMA_VERSION: i64 = 4;
+
+/// Raised when the encoding of a `wire_steps` row changes. A store whose wire rows this build
+/// cannot read is refused by [`Store::open`], and nothing in it is dropped.
+pub const WIRE_FORMAT: i64 = 1;
+
+/// The tables a sync or a wire re-projection fills again; `open` drops them on a schema change.
+const DERIVED: &[&str] = &[
+    "sources",
+    "sessions",
+    "agents",
+    "events",
+    "checks",
+    "event_chunks",
+];
 
 /// The zstd level of the `steps` and `events` blobs.
 const LEVEL: i32 = 3;
@@ -99,8 +115,12 @@ fn sql(e: rusqlite::Error) -> String {
 }
 
 impl Store {
-    /// Opens the store at `path`, creating it and its directory; a store of another schema
-    /// version is emptied.
+    /// Opens the store at `path`, creating it and its directory.
+    ///
+    /// A store of another schema version drops its derived tables and fills them again; its
+    /// `wire_steps` are kept and every wire session is projected again from them. A store whose
+    /// `wire_steps` are in a wire format this build cannot read is refused with an error naming
+    /// both versions, and nothing in it changes.
     pub fn open(path: &Path) -> Result<Store, String> {
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
@@ -108,34 +128,125 @@ impl Store {
         let store = Store {
             path: path.to_path_buf(),
         };
-        let conn = store.conn().map_err(sql)?;
+        let mut conn = store.conn().map_err(sql)?;
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
         )
         .map_err(sql)?;
-        let version: Option<String> = conn
-            .query_row("SELECT value FROM meta WHERE key = 'schema'", [], |r| {
+        let meta = |key: &str| -> Result<Option<String>, String> {
+            conn.query_row("SELECT value FROM meta WHERE key = ?1", params![key], |r| {
                 r.get(0)
             })
             .optional()
-            .map_err(sql)?;
-        if version.as_deref() != Some(&SCHEMA_VERSION.to_string()) {
-            conn.execute_batch(
-                "DROP TABLE IF EXISTS sources; DROP TABLE IF EXISTS sessions;
-                 DROP TABLE IF EXISTS agents; DROP TABLE IF EXISTS events;
-                 DROP TABLE IF EXISTS checks;
-                 DROP TABLE IF EXISTS wire_steps; DROP TABLE IF EXISTS event_chunks;",
+            .map_err(sql)
+        };
+        let version = meta("schema")?;
+        // A store written before the wire format was recorded holds format 1.
+        let wire_format = meta("wire_format")?;
+        let wire_rows: i64 = conn
+            .query_row(
+                "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'wire_steps'",
+                [],
+                |r| r.get(0),
             )
             .map_err(sql)?;
-            conn.execute_batch(SCHEMA).map_err(sql)?;
-            conn.execute_batch("VACUUM;").map_err(sql)?;
-            conn.execute(
-                "INSERT OR REPLACE INTO meta (key, value) VALUES ('schema', ?1)",
-                params![SCHEMA_VERSION.to_string()],
-            )
-            .map_err(sql)?;
+        let wire_rows = if wire_rows > 0 {
+            conn.query_row("SELECT count(*) FROM wire_steps", [], |r| {
+                r.get::<_, i64>(0)
+            })
+            .map_err(sql)?
+        } else {
+            0
+        };
+        let stored_format = wire_format.as_deref().unwrap_or("1");
+        if wire_rows > 0 && stored_format != WIRE_FORMAT.to_string() {
+            return Err(format!(
+                "{}: its {wire_rows} wire rows are in wire format {stored_format} (schema {}); \
+                 this build reads wire format {WIRE_FORMAT} (schema {SCHEMA_VERSION}); \
+                 nothing was changed",
+                path.display(),
+                version.as_deref().unwrap_or("none"),
+            ));
+        }
+        if version.as_deref() == Some(&SCHEMA_VERSION.to_string()) {
+            if wire_format.is_none() {
+                set_meta(&conn, "wire_format", &WIRE_FORMAT.to_string())?;
+            }
+            return Ok(store);
+        }
+        let drop: String = DERIVED
+            .iter()
+            .map(|t| format!("DROP TABLE IF EXISTS {t};"))
+            .collect();
+        conn.execute_batch(&drop).map_err(sql)?;
+        conn.execute_batch(SCHEMA).map_err(sql)?;
+        conn.execute_batch("VACUUM;").map_err(sql)?;
+        set_meta(&conn, "schema", &SCHEMA_VERSION.to_string())?;
+        set_meta(&conn, "wire_format", &WIRE_FORMAT.to_string())?;
+        if wire_rows > 0 {
+            store.reproject_wire(&mut conn)?;
         }
         Ok(store)
+    }
+
+    /// Projects every wire session again from its `wire_steps` into the derived tables.
+    fn reproject_wire(&self, conn: &mut Connection) -> Result<(), String> {
+        let sessions: Vec<(String, String)> = {
+            let mut st = conn
+                .prepare(
+                    "SELECT session_id, min(harness) FROM wire_steps GROUP BY session_id
+                     ORDER BY session_id",
+                )
+                .map_err(sql)?;
+            st.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+                .map_err(sql)?
+                .collect::<rusqlite::Result<_>>()
+                .map_err(sql)?
+        };
+        let program = crate::sq::compile(CHECKS)?;
+        for (hash, harness) in sessions {
+            let harness = match harness.as_str() {
+                "ClaudeCode" => s::Harness::ClaudeCode,
+                "Codex" => s::Harness::Codex,
+                _ => s::Harness::Other,
+            };
+            self.project_wire(conn, &hash, harness, &program)?;
+        }
+        Ok(())
+    }
+
+    /// Projects one wire session from every stored step and writes its rows.
+    fn project_wire(
+        &self,
+        conn: &mut Connection,
+        session_hash: &str,
+        harness: s::Harness,
+        program: &crate::sq::Program,
+    ) -> Result<Projection, String> {
+        let all = self.wire_steps(session_hash)?;
+        let lifted = Lifted {
+            session_id: session_hash.to_owned(),
+            title: None,
+            agents: all
+                .iter()
+                .filter(|st| matches!(st.cmd, Cmd::StartAgent(_)))
+                .count(),
+            files: Vec::new(),
+            steps: all,
+        };
+        let mut p = Projection::new(
+            lifted,
+            Origin {
+                path: format!("wire:{session_hash}"),
+                fingerprint: String::new(),
+                project: String::new(),
+                project_dir: String::new(),
+                harness,
+            },
+        );
+        let rec = p.full_record(program);
+        write(conn, &rec).map_err(sql)?;
+        Ok(p)
     }
 
     pub fn path(&self) -> &Path {
@@ -421,29 +532,7 @@ impl Store {
         }
 
         // Not open, or the fold cannot continue: the whole stream from the store.
-        let all = self.wire_steps(session_hash)?;
-        let lifted = Lifted {
-            session_id: session_hash.to_owned(),
-            title: None,
-            agents: all
-                .iter()
-                .filter(|st| matches!(st.cmd, Cmd::StartAgent(_)))
-                .count(),
-            files: Vec::new(),
-            steps: all,
-        };
-        let mut p = Projection::new(
-            lifted,
-            Origin {
-                path: format!("wire:{session_hash}"),
-                fingerprint: String::new(),
-                project: String::new(),
-                project_dir: String::new(),
-                harness,
-            },
-        );
-        let rec = p.full_record(program);
-        write(&mut conn, &rec).map_err(sql)?;
+        let p = self.project_wire(&mut conn, session_hash, harness, program)?;
         if open.open.len() >= open.capacity
             && let Some(oldest) = open
                 .open
@@ -1090,6 +1179,15 @@ fn project_dir(main: &Path) -> String {
         .and_then(|n| n.to_str())
         .unwrap_or("")
         .to_owned()
+}
+
+fn set_meta(conn: &Connection, key: &str, value: &str) -> Result<(), String> {
+    conn.execute(
+        "INSERT OR REPLACE INTO meta (key, value) VALUES (?1, ?2)",
+        params![key, value],
+    )
+    .map(|_| ())
+    .map_err(sql)
 }
 
 fn write(conn: &mut Connection, r: &Record) -> rusqlite::Result<()> {

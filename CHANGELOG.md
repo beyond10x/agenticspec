@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - The documentation site holds user documentation: getting started, dashboard, KPIs, queries, patterns and procedures, privacy and the records library; the design notes moved to `design/` and are no longer published
 
+### Fixed
+
+- Opening a store of another schema version no longer drops its wire rows: only the derived tables are rebuilt, every wire session is projected again from its `wire_steps`, and a store whose wire rows are in a format this build cannot read is refused with an error and left unchanged
+- A long wire session no longer grows without bound: a `WireSession` keeps the 4,096 most recent response ids, conversation ids and spawn inputs (`LINKS_HELD`); a call whose link was evicted starts an agent without a parent
+- `AppenderHandle::append` documents that an empty batch returns true and queues nothing
+
 ## [0.1.0] - 2026-11-26
 
 ### Added
