@@ -19,3 +19,4 @@ No version is released yet.
 - The UI as an `ess-ui/1` document with synthetic fixtures and headless tests
 - `sessionspec-records`, the library an LLM gateway links: the wire lift of one finished call, the session hash, the join with a transcript by message id, and a non-blocking appender
 - `SESSIONSPEC_DELEGATES` names the sessions whose messages count as a delegate's prompt
+- Releases: the `sessionspec` binary for x86_64 and aarch64 Linux as archives with `SHA256SUMS`, built by the tag workflow

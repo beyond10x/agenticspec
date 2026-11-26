@@ -76,6 +76,8 @@ Beside the crate: `ui/` holds the UI (`sessionspec.ui.yaml`), its synthetic fixt
 | `.github/workflows/pages.yml` | `Documentation validation`: classifies the changed files with `scripts/change-class.sh`, builds the site, refuses a machine path in it, and on `main` uploads the artifact `b10x-project-site`. Its job `gate` runs `task check` for the class `code`, with `task`, `cargo-nextest` and `ess` downloaded at a pinned version and refused unless their SHA-256 is the one in the step |
 | `.github/workflows/b10x-docs-site.yml` | publishes that artifact to GitHub Pages through `beyond10x/website`'s `project-site.yml`, pinned by commit, for bot-authored pushes to `main` |
 | `.github/workflows/shared-gates.yml` | the organization's shared source gates (`beyond10x/gates`, pinned by commit) |
+| `.github/workflows/release.yml` | `Release`, on a tag `<major>.<minor>.<patch>`, with `contents: read`: `release-check.sh` and `task check`, then the archives of both Linux targets, `SHA256SUMS` and `notes.md` as the artifact `sessionspec-<version>-release`. It creates no release and reads no token (§ "Release"). Its job `Gate` installs the tools of the job `gate` of `pages.yml` at the same versions and digests; `release.test.sh` fails when they differ |
+| `scripts/release-check.sh`, `release-package.sh`, `release-verify.sh`, `release.test.sh` | the scripts of a release: the tag, the workspace version and the changelog section agree; targets, archives, `SHA256SUMS` and notes; a published release is what § "Release" makes. `release.test.sh` holds their cases |
 
 ## Local store
 
@@ -114,3 +116,32 @@ Every commit and push is `b10x-bot[bot]`'s through `b10x-gates bot --repository
 beyond10x/sessionspec -- <git command>`; every other GitHub write goes through `b10x-gates api`,
 with the gates policy file of the primary checkout. Every commit has a body. A tag and a release are
 publications and wait for the owner's order.
+
+## Release
+
+A release is the workspace version at a bare tag (`0.1.0`): two Linux archives of the
+`sessionspec` binary (`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`), each with
+`LICENSE` and `README.md`, `SHA256SUMS`, and notes cut from `CHANGELOG.md`. The tag workflow
+builds and the bot publishes. Consumers of `sessionspec-records` pin a released tag.
+
+Steps; `<version>` is greater than the newest tag on `origin/main`, and every git command of the
+bot is `b10x-gates bot --repository beyond10x/sessionspec -- <git command>`:
+
+1. Branch `release/<version>` from `main`, with one commit `release: sessionspec <version>`: the
+   `version` of `[workspace.package]`, `Cargo.lock` as `cargo build` rewrites it, and in
+   `CHANGELOG.md` the line `## [<version>] - <YYYY-MM-DD>` directly below `## [Unreleased]`.
+   `sh scripts/release-check.sh <version>` passes and `slot task check` is green on it.
+2. A bot pull request to `main`, merged by the bot with a merge commit when its checks are green.
+3. An annotated tag on that merge commit: `tag -a <version> -m "sessionspec <version>" <commit>`,
+   then `push origin refs/tags/<version>`.
+4. The tag starts `Release`. Wait for it in the background; read a red run with
+   `gh run view <run> --repo beyond10x/sessionspec --log-failed`. A runner fault is re-run once
+   (`b10x-gates gh --repository beyond10x/sessionspec -- run rerun <run>`); a fault of the tree
+   leaves the tag as it is, without a release, and the next patch version is cut after the fix.
+   A green run: `gh run download <run> --repo beyond10x/sessionspec -n
+   sessionspec-<version>-release -D target/release-assets`, then `sha256sum -c SHA256SUMS` there.
+5. `b10x-gates gh --repository beyond10x/sessionspec -- release create <version> --verify-tag
+   --title "sessionspec <version>" --notes-file target/release-assets/notes.md` with the two
+   archives and `SHA256SUMS` of `target/release-assets/`.
+6. `sh scripts/release-verify.sh <version>` exits 0; only then is the release reported as
+   released.
