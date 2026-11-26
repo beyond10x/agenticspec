@@ -18,10 +18,10 @@
 # 3. the assets of the description are the names of `release-package.sh assets <version>`,
 #    each uploaded, and no other; each is a file of the directory;
 # 4. SHA256SUMS names each archive once, and `sha256sum -c SHA256SUMS` passes there;
-# 5. each archive holds one directory with `sessionspec`, `LICENSE` and `README.md`, nothing else
+# 5. each archive holds one directory with `agentspec`, `LICENSE` and `README.md`, nothing else
 #    and no path outside it, and each of the three is a regular file: no link, no directory;
-# 6. `sessionspec --version` of each x86_64 archive (gnu and the static musl one) prints
-#    `sessionspec <version>`, that line and no other, and exits 0. No file of an archive is run
+# 6. `agentspec --version` of each x86_64 archive (gnu and the static musl one) prints
+#    `agentspec <version>`, that line and no other, and exits 0. No file of an archive is run
 #    before check 5 passed.
 #
 # Exit 0: every check passed, one line each. Exit 1: one line on standard error names the
@@ -154,29 +154,29 @@ echo "release-verify: sha256sum -c SHA256SUMS passes"
 # and `-`, a regular file, for the three. A link (`l`, `h`) is none.
 for archive in $archives; do
   name=${archive%.tar.gz}
-  printf '%s\n' "$name/" "$name/LICENSE" "$name/README.md" "$name/sessionspec" > "$work/wanted"
+  printf '%s\n' "$name/" "$name/LICENSE" "$name/README.md" "$name/agentspec" > "$work/wanted"
   tar -tzf "$directory/$archive" 2> /dev/null | LC_ALL=C sort > "$work/members"
   cmp -s "$work/members" "$work/wanted" \
-    || refuse "$archive does not hold sessionspec, LICENSE and README.md in $name, and nothing else"
+    || refuse "$archive does not hold agentspec, LICENSE and README.md in $name, and nothing else"
   tar -tvzf "$directory/$archive" 2> /dev/null | awk '
     { kinds[substr($0, 1, 1)]++ }
     END { exit (NR == 4 && kinds["d"] == 1 && kinds["-"] == 3) ? 0 : 1 }' \
     || refuse "$archive holds a member that is no regular file"
 done
-echo "release-verify: each archive holds sessionspec, LICENSE and README.md"
+echo "release-verify: each archive holds agentspec, LICENSE and README.md"
 
 # 6. The binaries of the archives this check can run.
 mkdir "$work/unpacked"
 for run_target in $run_targets; do
-  name=sessionspec-$version-$run_target
+  name=agentspec-$version-$run_target
   tar -xzf "$directory/$name.tar.gz" -C "$work/unpacked" 2> /dev/null || refuse "$name.tar.gz does not unpack"
-  binary=$work/unpacked/$name/sessionspec
+  binary=$work/unpacked/$name/agentspec
   [ -f "$binary" ] && [ ! -L "$binary" ] && [ -x "$binary" ] \
-    || refuse "the sessionspec of the $run_target archive is no regular file that can be run"
+    || refuse "the agentspec of the $run_target archive is no regular file that can be run"
   status=0
   printed=$("$binary" --version 2> /dev/null) || status=$?
-  [ "$status" = 0 ] || refuse "\`sessionspec --version\` of the $run_target archive exits $status"
-  [ "$printed" = "sessionspec $version" ] \
-    || refuse "the sessionspec of the $run_target archive prints \"$(printf '%s\n' "$printed" | sed -n 1p)\", not \"sessionspec $version\""
-  echo "release-verify: the sessionspec of the $run_target archive prints \"sessionspec $version\" and exits 0"
+  [ "$status" = 0 ] || refuse "\`agentspec --version\` of the $run_target archive exits $status"
+  [ "$printed" = "agentspec $version" ] \
+    || refuse "the agentspec of the $run_target archive prints \"$(printf '%s\n' "$printed" | sed -n 1p)\", not \"agentspec $version\""
+  echo "release-verify: the agentspec of the $run_target archive prints \"agentspec $version\" and exits 0"
 done

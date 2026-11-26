@@ -1,0 +1,25 @@
+[package]
+name = "agentspec"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "agentspec"
+path = "src/main.rs"
+
+[dependencies]
+agentspec-types.workspace = true
+session-ir.workspace = true
+session-view.workspace = true
+agentspec-system.workspace = true
+agentspec-server.workspace = true
+agentspec-cli-contract.workspace = true
+agentspec-records.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+regex.workspace = true
+rayon.workspace = true
+rusqlite.workspace = true
+zstd.workspace = true

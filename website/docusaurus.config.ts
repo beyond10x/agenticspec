@@ -26,14 +26,14 @@ interface Page {
 const pages: Record<string, Page> = {
   'docs/index.md': {
     slug: '/',
-    title: 'What sessionspec is',
+    title: 'What agentspec is',
     sidebar_label: 'Overview',
     lede: 'Numbers about your coding-agent sessions, computed on your machine from their transcripts.',
   },
   'docs/getting-started.md': {
     slug: '/getting-started',
     title: 'Getting started',
-    lede: 'Install sessionspec, fill the store and open the dashboard.',
+    lede: 'Install agentspec, fill the store and open the dashboard.',
   },
   'docs/dashboard.md': {
     slug: '/dashboard',
@@ -68,14 +68,14 @@ const pages: Record<string, Page> = {
 };
 
 const config: Config = {
-  title: 'sessionspec',
+  title: 'agentspec',
   tagline: 'Agent sessions as typed records you can measure and query.',
 
   future: {v4: true},
   url: 'https://beyond10x.github.io',
   baseUrl: '/agentspec/',
   organizationName: 'beyond10x',
-  projectName: 'sessionspec',
+  projectName: 'agentspec',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
   onBrokenLinks: 'throw',
@@ -120,7 +120,7 @@ const config: Config = {
 
   themeConfig: {
     navbar: {
-      title: 'sessionspec',
+      title: 'agentspec',
       items: [
         {to: '/docs/getting-started', label: 'Getting started', position: 'left'},
         {to: '/docs/kpis', label: 'KPIs', position: 'left'},

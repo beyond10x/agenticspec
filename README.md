@@ -1,9 +1,9 @@
-# sessionspec
+# agentspec
 
-sessionspec lifts the transcripts of an agent harness into one specified IR of actors, commands,
+agentspec lifts the transcripts of an agent harness into one specified IR of actors, commands,
 decisions and events, redacts it, stores it in a local SQLite file, and evaluates KPIs, queries and
 mined patterns over that store. It reads Claude Code transcripts today. An LLM gateway can append
-the same records from the wire through the `sessionspec-records` library.
+the same records from the wire through the `agentspec-records` library.
 
 Documentation: <https://beyond10x.github.io/agentspec/>, from the pages in `docs/`:
 [getting started](docs/getting-started.md), [dashboard](docs/dashboard.md), [KPIs](docs/kpis.md),
@@ -15,32 +15,32 @@ Field names and formats may still change between 0.x releases.
 ## Install
 
 Each release on GitHub carries a static Linux binary that runs on any x86_64 Linux,
-`sessionspec-<version>-x86_64-unknown-linux-musl.tar.gz`, beside builds for glibc on x86_64 and
+`agentspec-<version>-x86_64-unknown-linux-musl.tar.gz`, beside builds for glibc on x86_64 and
 aarch64. Or build from source with the Rust toolchain pinned in `rust-toolchain.toml`:
 
 ```console
-cargo install --locked --path crates/sessionspec
+cargo install --locked --path crates/agentspec
 ```
 
 ## Use
 
 ```console
-sessionspec sync                   # lift new and changed sessions of the last 72 hours into the store
-sessionspec serve                  # the dashboard on http://127.0.0.1:7420/, synced every 5 seconds
-sessionspec analyze                # write a self-contained dashboard file beside the store
-sessionspec kpi --output json      # the KPIs over the window
-sessionspec query --text '<sq>'    # an sq module over the sessions of the window
-sessionspec mine                   # recurring runs of tool calls across sessions
+agentspec sync                   # lift new and changed sessions of the last 72 hours into the store
+agentspec serve                  # the dashboard on http://127.0.0.1:7420/, synced every 5 seconds
+agentspec analyze                # write a self-contained dashboard file beside the store
+agentspec kpi --output json      # the KPIs over the window
+agentspec query --text '<sq>'    # an sq module over the sessions of the window
+agentspec mine                   # recurring runs of tool calls across sessions
 ```
 
 The commands above read `~/.claude/projects` unless `--root` names another directory, and covers the
 last 72 hours unless `--since-hours` says otherwise. The store is
-`$XDG_DATA_HOME/sessionspec/sessions.db` (`~/.local/share/sessionspec/sessions.db`), or the
-`--state-dir` you give. `sessionspec serve` needs the UI built once with `task ui:build` (Node.js 22).
+`$XDG_DATA_HOME/agentspec/sessions.db` (`~/.local/share/agentspec/sessions.db`), or the
+`--state-dir` you give. `agentspec serve` needs the UI built once with `task ui:build` (Node.js 22).
 The UI has a light and a dark theme and pages for the overview, a session and embedding a session
 in another page: see the dashboard page of the documentation.
 
-`SESSIONSPEC_DELEGATES` names, comma-separated, the sessions that act for you; a message from one
+`AGENTSPEC_DELEGATES` names, comma-separated, the sessions that act for you; a message from one
 of them counts as a delegate's prompt, not a peer's.
 
 ## What stays on your machine

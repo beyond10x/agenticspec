@@ -1,11 +1,11 @@
 # Dashboard
 
-sessionspec shows your sessions in two ways: a live web UI and a single HTML file.
+agentspec shows your sessions in two ways: a live web UI and a single HTML file.
 
 ## Live UI
 
 ```console
-sessionspec serve
+agentspec serve
 ```
 
 Open http://127.0.0.1:7420/. The button at the top right switches between the light and the dark
@@ -87,10 +87,10 @@ curl 'http://127.0.0.1:7420/view/views/session-list?search=refactor&limit=20'
 ## Dashboard file
 
 ```console
-sessionspec analyze --out sessions.html
+agentspec analyze --out sessions.html
 ```
 
-Without `--out`, the file is `sessionspec-dashboard.html` beside the store, in the same directory
+Without `--out`, the file is `agentspec-dashboard.html` beside the store, in the same directory
 as `sessions.db`. The file opens offline in any browser. It holds the KPIs of the window and, per
 session:
 

@@ -1,5 +1,5 @@
 format: ess-cli/2
-binary: sessionspec
+binary: agentspec
 about: Lift agent sessions into one IR and evaluate KPIs over them
 globals:
   config: config
@@ -7,72 +7,72 @@ globals:
   output: output
 callables:
   lift:
-    target: {kind: local, owner: sessionspec.cli, action: lift}
-    input: sessionspec.cli.LiftInput
-    result: sessionspec.cli.LiftResult
+    target: {kind: local, owner: agentspec.cli, action: lift}
+    input: agentspec.cli.LiftInput
+    result: agentspec.cli.LiftResult
     errors:
-      transcript_unreadable: sessionspec.cli.Refusal
+      transcript_unreadable: agentspec.cli.Refusal
   kpi:
-    target: {kind: local, owner: sessionspec.cli, action: kpi}
-    input: sessionspec.cli.KpiInput
-    result: sessionspec.cli.KpiReport
+    target: {kind: local, owner: agentspec.cli, action: kpi}
+    input: agentspec.cli.KpiInput
+    result: agentspec.cli.KpiReport
     errors:
-      root_unreadable: sessionspec.cli.Refusal
-      store_unavailable: sessionspec.cli.Refusal
+      root_unreadable: agentspec.cli.Refusal
+      store_unavailable: agentspec.cli.Refusal
   analyze:
-    target: {kind: local, owner: sessionspec.cli, action: analyze}
-    input: sessionspec.cli.AnalyzeInput
-    result: sessionspec.cli.AnalyzeResult
+    target: {kind: local, owner: agentspec.cli, action: analyze}
+    input: agentspec.cli.AnalyzeInput
+    result: agentspec.cli.AnalyzeResult
     errors:
-      root_unreadable: sessionspec.cli.Refusal
-      store_unavailable: sessionspec.cli.Refusal
-      out_unwritable: sessionspec.cli.Refusal
+      root_unreadable: agentspec.cli.Refusal
+      store_unavailable: agentspec.cli.Refusal
+      out_unwritable: agentspec.cli.Refusal
   query:
-    target: {kind: local, owner: sessionspec.cli, action: query}
-    input: sessionspec.cli.QueryInput
-    result: sessionspec.cli.QueryReport
+    target: {kind: local, owner: agentspec.cli, action: query}
+    input: agentspec.cli.QueryInput
+    result: agentspec.cli.QueryReport
     errors:
-      module_invalid: sessionspec.cli.Refusal
-      root_unreadable: sessionspec.cli.Refusal
-      store_unavailable: sessionspec.cli.Refusal
+      module_invalid: agentspec.cli.Refusal
+      root_unreadable: agentspec.cli.Refusal
+      store_unavailable: agentspec.cli.Refusal
   mine:
-    target: {kind: local, owner: sessionspec.cli, action: mine}
-    input: sessionspec.cli.MineInput
-    result: sessionspec.cli.MineReport
+    target: {kind: local, owner: agentspec.cli, action: mine}
+    input: agentspec.cli.MineInput
+    result: agentspec.cli.MineReport
     errors:
-      root_unreadable: sessionspec.cli.Refusal
-      store_unavailable: sessionspec.cli.Refusal
+      root_unreadable: agentspec.cli.Refusal
+      store_unavailable: agentspec.cli.Refusal
   procedure:
-    target: {kind: local, owner: sessionspec.cli, action: procedure}
-    input: sessionspec.cli.ProcedureInput
-    result: sessionspec.cli.Procedure
+    target: {kind: local, owner: agentspec.cli, action: procedure}
+    input: agentspec.cli.ProcedureInput
+    result: agentspec.cli.Procedure
     errors:
-      root_unreadable: sessionspec.cli.Refusal
-      store_unavailable: sessionspec.cli.Refusal
-      no_match: sessionspec.cli.Refusal
-      out_unwritable: sessionspec.cli.Refusal
+      root_unreadable: agentspec.cli.Refusal
+      store_unavailable: agentspec.cli.Refusal
+      no_match: agentspec.cli.Refusal
+      out_unwritable: agentspec.cli.Refusal
   export:
-    target: {kind: local, owner: sessionspec.cli, action: export}
-    input: sessionspec.cli.ExportInput
-    result: sessionspec.cli.ExportResult
+    target: {kind: local, owner: agentspec.cli, action: export}
+    input: agentspec.cli.ExportInput
+    result: agentspec.cli.ExportResult
     errors:
-      procedure_invalid: sessionspec.cli.Refusal
-      out_unwritable: sessionspec.cli.Refusal
+      procedure_invalid: agentspec.cli.Refusal
+      out_unwritable: agentspec.cli.Refusal
   sync:
-    target: {kind: local, owner: sessionspec.cli, action: sync}
-    input: sessionspec.cli.SyncInput
-    result: sessionspec.cli.SyncResult
+    target: {kind: local, owner: agentspec.cli, action: sync}
+    input: agentspec.cli.SyncInput
+    result: agentspec.cli.SyncResult
     errors:
-      root_unreadable: sessionspec.cli.Refusal
-      store_unavailable: sessionspec.cli.Refusal
+      root_unreadable: agentspec.cli.Refusal
+      store_unavailable: agentspec.cli.Refusal
   serve:
-    target: {kind: local, owner: sessionspec.cli, action: serve}
-    input: sessionspec.cli.ServeInput
-    result: sessionspec.cli.ServeResult
+    target: {kind: local, owner: agentspec.cli, action: serve}
+    input: agentspec.cli.ServeInput
+    result: agentspec.cli.ServeResult
     errors:
-      root_unreadable: sessionspec.cli.Refusal
-      store_unavailable: sessionspec.cli.Refusal
-      port_unavailable: sessionspec.cli.Refusal
+      root_unreadable: agentspec.cli.Refusal
+      store_unavailable: agentspec.cli.Refusal
+      port_unavailable: agentspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift

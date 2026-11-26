@@ -1,7 +1,7 @@
 # KPIs
 
 ```console
-sessionspec kpi --since-hours 24
+agentspec kpi --since-hours 24
 ```
 
 `kpi` prints one JSON report over every session with activity in the window. The dashboard shows
@@ -18,7 +18,7 @@ In pair work, frequent prompts are normal.
 | `sessions` | sessions with activity in the window |
 | `transcripts` | transcript files read |
 | `sub_agents` | sub-agents started in those sessions |
-| `refused_commands` | records sessionspec could not replay. Figures over those agents may be incomplete |
+| `refused_commands` | records agentspec could not replay. Figures over those agents may be incomplete |
 
 ## Cost and models
 
@@ -43,7 +43,7 @@ Use it to compare sessions with each other.
 
 A cache bust is a model turn that read less than half of the previous turn's context from the cache
 and wrote more than half of it again. Contexts of 20,000 tokens or fewer are not counted.
-sessionspec gives each bust one cause:
+agentspec gives each bust one cause:
 
 | cause | meaning |
 |---|---|
@@ -76,7 +76,7 @@ Prompt authors:
 | author | who wrote the prompt |
 |---|---|
 | `Human` | you |
-| `Delegate` | a session acting for you, see `SESSIONSPEC_DELEGATES` in [Getting started](getting-started.md) |
+| `Delegate` | a session acting for you, see `AGENTSPEC_DELEGATES` in [Getting started](getting-started.md) |
 | `PeerSession` | another agent session |
 | `ParentAgent` | the agent that started this sub-agent |
 | `Harness` | the tool itself: task notifications, compaction summaries, auto-continue |

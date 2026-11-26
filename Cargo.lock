@@ -600,18 +600,18 @@ dependencies = [
 name = "session-ir"
 version = "1.0.0"
 dependencies = [
- "sessionspec-types",
+ "agentspec-types",
 ]
 
 [[package]]
 name = "session-view"
 version = "1.0.0"
 dependencies = [
- "sessionspec-types",
+ "agentspec-types",
 ]
 
 [[package]]
-name = "sessionspec"
+name = "agentspec"
 version = "0.1.1"
 dependencies = [
  "rayon",
@@ -620,17 +620,17 @@ dependencies = [
  "serde_json",
  "session-ir",
  "session-view",
- "sessionspec-cli-contract",
- "sessionspec-records",
- "sessionspec-server",
- "sessionspec-system",
- "sessionspec-types",
+ "agentspec-cli-contract",
+ "agentspec-records",
+ "agentspec-server",
+ "agentspec-system",
+ "agentspec-types",
  "sha2",
  "zstd",
 ]
 
 [[package]]
-name = "sessionspec-cli-contract"
+name = "agentspec-cli-contract"
 version = "0.0.0"
 dependencies = [
  "clap",
@@ -642,7 +642,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sessionspec-records"
+name = "agentspec-records"
 version = "0.1.1"
 dependencies = [
  "rayon",
@@ -651,37 +651,37 @@ dependencies = [
  "serde_json",
  "session-ir",
  "session-view",
- "sessionspec-server",
- "sessionspec-system",
- "sessionspec-types",
+ "agentspec-server",
+ "agentspec-system",
+ "agentspec-types",
  "sha2",
  "zstd",
 ]
 
 [[package]]
-name = "sessionspec-server"
+name = "agentspec-server"
 version = "1.0.0"
 dependencies = [
  "clap",
  "session-ir",
  "session-view",
- "sessionspec-system",
- "sessionspec-types",
+ "agentspec-system",
+ "agentspec-types",
  "time",
  "uuid",
 ]
 
 [[package]]
-name = "sessionspec-system"
+name = "agentspec-system"
 version = "1.0.0"
 dependencies = [
  "session-ir",
  "session-view",
- "sessionspec-types",
+ "agentspec-types",
 ]
 
 [[package]]
-name = "sessionspec-types"
+name = "agentspec-types"
 version = "1.0.0"
 
 [[package]]

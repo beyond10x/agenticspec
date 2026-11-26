@@ -1,7 +1,7 @@
-domain: sessionspec.cli
+domain: agentspec.cli
 
 summary: >-
-  The typed inputs, results and refusals of the `sessionspec` command line, presented by the
+  The typed inputs, results and refusals of the `agentspec` command line, presented by the
   ess-cli/2 binding in `spec/cli.yaml`. It declares no entity. The KPI report is typed here, so
   every figure the report carries is a declared field.
 
@@ -9,20 +9,20 @@ summary: >-
 # in results only. A ratio is an Integer in permille; a time is RFC 3339 text.
 
 types:
-  - name: sessionspec.cli.Refusal
+  - name: agentspec.cli.Refusal
     kind: struct
     fields:
       - name: detail
         type: String
 
-  - name: sessionspec.cli.LiftInput
+  - name: agentspec.cli.LiftInput
     kind: struct
     fields:
       - name: transcript
         type: String
         summary: The main transcript file of one Claude Code session, `<session>.jsonl`; its sub-agents are read from `<session>/subagents/`.
 
-  - name: sessionspec.cli.LiftedCommand
+  - name: agentspec.cli.LiftedCommand
     kind: struct
     naming:
       summary: One command of the lifted session, as replayed, with the outcome the session IR answered.
@@ -40,7 +40,7 @@ types:
       - name: input
         type: Json
 
-  - name: sessionspec.cli.LiftResult
+  - name: agentspec.cli.LiftResult
     kind: struct
     fields:
       - name: session_id
@@ -48,12 +48,12 @@ types:
       - name: agents
         type: Integer
       - name: commands
-        type: List<sessionspec.cli.LiftedCommand>
+        type: List<agentspec.cli.LiftedCommand>
       - name: refused
         type: Integer
         summary: Commands the session IR answered with a declared refusal (a wrong state, an unknown agent).
 
-  - name: sessionspec.cli.KpiInput
+  - name: agentspec.cli.KpiInput
     kind: struct
     fields:
       - name: root
@@ -63,18 +63,18 @@ types:
         type: Optional<Integer>
         summary: The window ends now and starts this many hours before; 72 by default.
 
-  - name: sessionspec.cli.AgentScope
+  - name: agentspec.cli.AgentScope
     kind: enum
     variants: [main, sub]
 
-  - name: sessionspec.cli.BustCause
+  - name: agentspec.cli.BustCause
     kind: enum
     variants: [ttl_expired, model_changed, compacted, unexplained]
 
-  - name: sessionspec.cli.ModelFigures
+  - name: agentspec.cli.ModelFigures
     kind: struct
     fields:
-      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: scope, type: agentspec.cli.AgentScope}
       - {name: model, type: String}
       - {name: messages, type: Integer}
       - {name: output_tokens, type: Integer}
@@ -85,48 +85,48 @@ types:
         type: Integer
         summary: The tokens of these messages at the API list price of the model (src/pricing.rs), in millionths of a dollar; 0 for a model with no price.
 
-  - name: sessionspec.cli.CacheFigures
+  - name: agentspec.cli.CacheFigures
     kind: struct
     fields:
-      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: scope, type: agentspec.cli.AgentScope}
       - {name: read_tokens, type: Integer}
       - {name: write_tokens, type: Integer}
       - {name: uncached_tokens, type: Integer}
       - {name: hit_permille, type: Integer}
 
-  - name: sessionspec.cli.BustFigures
+  - name: agentspec.cli.BustFigures
     kind: struct
     fields:
-      - {name: scope, type: sessionspec.cli.AgentScope}
-      - {name: cause, type: sessionspec.cli.BustCause}
+      - {name: scope, type: agentspec.cli.AgentScope}
+      - {name: cause, type: agentspec.cli.BustCause}
       - {name: count, type: Integer}
       - {name: tokens_written_again, type: Integer}
 
-  - name: sessionspec.cli.ConcurrencyFigures
+  - name: agentspec.cli.ConcurrencyFigures
     kind: struct
     naming:
       summary: Agents active in the same minute; active means two of its records at most 5 minutes apart around the minute.
     fields:
-      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: scope, type: agentspec.cli.AgentScope}
       - {name: p50, type: Integer}
       - {name: p90, type: Integer}
       - {name: max, type: Integer}
 
-  - name: sessionspec.cli.PromptFigures
+  - name: agentspec.cli.PromptFigures
     kind: struct
     fields:
-      - {name: author, type: sessionspec.session.PromptAuthor}
-      - {name: attribution, type: sessionspec.session.Attribution}
+      - {name: author, type: agentspec.session.PromptAuthor}
+      - {name: attribution, type: agentspec.session.Attribution}
       - {name: count, type: Integer}
 
-  - name: sessionspec.cli.DecisionFigures
+  - name: agentspec.cli.DecisionFigures
     kind: struct
     fields:
-      - {name: decider, type: sessionspec.session.Decider}
-      - {name: decision, type: sessionspec.session.Decision}
+      - {name: decider, type: agentspec.session.Decider}
+      - {name: decision, type: agentspec.session.Decision}
       - {name: count, type: Integer}
 
-  - name: sessionspec.cli.AutonomyFigures
+  - name: agentspec.cli.AutonomyFigures
     kind: struct
     naming:
       summary: >-
@@ -138,20 +138,20 @@ types:
       - {name: working_seconds, type: Integer}
       - {name: waiting_on_human_seconds, type: Integer}
       - {name: away_seconds, type: Integer}
-      - {name: prompts, type: List<sessionspec.cli.PromptFigures>}
-      - {name: decisions, type: List<sessionspec.cli.DecisionFigures>}
+      - {name: prompts, type: List<agentspec.cli.PromptFigures>}
+      - {name: decisions, type: List<agentspec.cli.DecisionFigures>}
 
-  - name: sessionspec.cli.ExposureFigures
+  - name: agentspec.cli.ExposureFigures
     kind: struct
     fields:
-      - {name: channel, type: sessionspec.session.ExposureChannel}
-      - {name: class, type: sessionspec.session.ExposureClass}
+      - {name: channel, type: agentspec.session.ExposureChannel}
+      - {name: class, type: agentspec.session.ExposureClass}
       - {name: kind, type: String}
-      - {name: verdict, type: sessionspec.session.Verdict}
+      - {name: verdict, type: agentspec.session.Verdict}
       - {name: count, type: Integer}
       - {name: sessions, type: Integer}
 
-  - name: sessionspec.cli.KpiReport
+  - name: agentspec.cli.KpiReport
     kind: struct
     fields:
       - {name: window_from, type: String}
@@ -166,14 +166,14 @@ types:
       - name: unpriced_messages
         type: Integer
         summary: Model messages of a model with no price in src/pricing.rs, not in the cost.
-      - {name: models, type: List<sessionspec.cli.ModelFigures>}
-      - {name: cache, type: List<sessionspec.cli.CacheFigures>}
-      - {name: busts, type: List<sessionspec.cli.BustFigures>}
-      - {name: concurrency, type: List<sessionspec.cli.ConcurrencyFigures>}
-      - {name: autonomy, type: sessionspec.cli.AutonomyFigures}
-      - {name: exposures, type: List<sessionspec.cli.ExposureFigures>}
+      - {name: models, type: List<agentspec.cli.ModelFigures>}
+      - {name: cache, type: List<agentspec.cli.CacheFigures>}
+      - {name: busts, type: List<agentspec.cli.BustFigures>}
+      - {name: concurrency, type: List<agentspec.cli.ConcurrencyFigures>}
+      - {name: autonomy, type: agentspec.cli.AutonomyFigures}
+      - {name: exposures, type: List<agentspec.cli.ExposureFigures>}
 
-  - name: sessionspec.cli.AnalyzeInput
+  - name: agentspec.cli.AnalyzeInput
     kind: struct
     fields:
       - name: root
@@ -184,37 +184,37 @@ types:
         summary: The window ends now and starts this many hours before; 72 by default.
       - name: out
         type: Optional<String>
-        summary: The dashboard file to write; `sessionspec-dashboard.html` beside the store (in the state directory) by default.
+        summary: The dashboard file to write; `agentspec-dashboard.html` beside the store (in the state directory) by default.
 
-  - name: sessionspec.cli.AnalyzeResult
+  - name: agentspec.cli.AnalyzeResult
     kind: struct
     fields:
       - {name: path, type: String}
       - {name: sessions, type: Integer}
 
-  - name: sessionspec.cli.ToolFigures
+  - name: agentspec.cli.ToolFigures
     kind: struct
     fields:
-      - {name: category, type: sessionspec.session.ToolCategory}
+      - {name: category, type: agentspec.session.ToolCategory}
       - {name: calls, type: Integer}
       - {name: refused, type: Integer}
       - {name: failed, type: Integer}
 
-  - name: sessionspec.cli.MarkKind
+  - name: agentspec.cli.MarkKind
     kind: enum
     variants: [turn, human_prompt, delegate_prompt, peer_prompt, harness_prompt, compaction, cache_bust, refusal]
 
-  - name: sessionspec.cli.TimelineMark
+  - name: agentspec.cli.TimelineMark
     kind: struct
     naming:
       summary: One point of a session's timeline. For a turn the value is the context size, for a cache bust the tokens written again, otherwise 0.
     fields:
       - {name: at, type: String}
-      - {name: kind, type: sessionspec.cli.MarkKind}
-      - {name: scope, type: sessionspec.cli.AgentScope}
+      - {name: kind, type: agentspec.cli.MarkKind}
+      - {name: scope, type: agentspec.cli.AgentScope}
       - {name: value, type: Integer}
 
-  - name: sessionspec.cli.SessionSummary
+  - name: agentspec.cli.SessionSummary
     kind: struct
     naming:
       summary: One session with its own KPI report. The title is the harness's title of the session and is shown only on the host that holds the transcript.
@@ -224,11 +224,11 @@ types:
       - {name: title, type: Optional<String>}
       - {name: first_at, type: String}
       - {name: last_at, type: String}
-      - {name: kpis, type: sessionspec.cli.KpiReport}
-      - {name: tools, type: List<sessionspec.cli.ToolFigures>}
-      - {name: timeline, type: List<sessionspec.cli.TimelineMark>}
+      - {name: kpis, type: agentspec.cli.KpiReport}
+      - {name: tools, type: List<agentspec.cli.ToolFigures>}
+      - {name: timeline, type: List<agentspec.cli.TimelineMark>}
 
-  - name: sessionspec.cli.QueryInput
+  - name: agentspec.cli.QueryInput
     kind: struct
     naming:
       summary: An sq module, from a file or inline text, run over one session or over the sessions of a window.
@@ -249,11 +249,11 @@ types:
         type: Optional<Integer>
         summary: The window ends now and starts this many hours before; 72 by default.
 
-  - name: sessionspec.cli.Certainty
+  - name: agentspec.cli.Certainty
     kind: enum
     variants: [definite, possible]
 
-  - name: sessionspec.cli.QueryRow
+  - name: agentspec.cli.QueryRow
     kind: struct
     naming:
       summary: One answer of a query. Possible when it rests on an inferred or missing fact; unknown names each such fact.
@@ -261,18 +261,18 @@ types:
       - {name: query, type: Integer}
       - {name: session_id, type: String}
       - {name: values, type: List<String>}
-      - {name: certainty, type: sessionspec.cli.Certainty}
+      - {name: certainty, type: agentspec.cli.Certainty}
       - {name: unknown, type: List<String>}
 
-  - name: sessionspec.cli.CheckVerdict
+  - name: agentspec.cli.CheckVerdict
     kind: struct
     fields:
       - {name: check, type: String}
       - {name: session_id, type: String}
-      - {name: verdict, type: sessionspec.session.Verdict}
+      - {name: verdict, type: agentspec.session.Verdict}
       - {name: rows, type: Integer}
 
-  - name: sessionspec.cli.CheckFigures
+  - name: agentspec.cli.CheckFigures
     kind: struct
     fields:
       - {name: check, type: String}
@@ -282,19 +282,19 @@ types:
       - {name: gap, type: Integer}
       - {name: unk, type: Integer}
 
-  - name: sessionspec.cli.QueryReport
+  - name: agentspec.cli.QueryReport
     kind: struct
     naming:
-      summary: The report of `sessionspec query`, format `sessionspec-query-report/1`.
+      summary: The report of `agentspec query`, format `agentspec-query-report/1`.
     fields:
       - {name: format, type: String}
       - {name: sessions, type: Integer}
       - {name: queries, type: List<String>}
-      - {name: rows, type: List<sessionspec.cli.QueryRow>}
-      - {name: checks, type: List<sessionspec.cli.CheckFigures>}
-      - {name: verdicts, type: List<sessionspec.cli.CheckVerdict>}
+      - {name: rows, type: List<agentspec.cli.QueryRow>}
+      - {name: checks, type: List<agentspec.cli.CheckFigures>}
+      - {name: verdicts, type: List<agentspec.cli.CheckVerdict>}
 
-  - name: sessionspec.cli.MineInput
+  - name: agentspec.cli.MineInput
     kind: struct
     fields:
       - name: root
@@ -316,7 +316,7 @@ types:
         type: Optional<Integer>
         summary: The number of patterns reported, by support; 50 by default.
 
-  - name: sessionspec.cli.Pattern
+  - name: agentspec.cli.Pattern
     kind: struct
     naming:
       summary: >-
@@ -331,23 +331,23 @@ types:
       - {name: ok_permille, type: Integer}
       - {name: query, type: String}
 
-  - name: sessionspec.cli.MineReport
+  - name: agentspec.cli.MineReport
     kind: struct
     naming:
-      summary: The report of `sessionspec mine`, format `sessionspec-patterns/1`.
+      summary: The report of `agentspec mine`, format `agentspec-patterns/1`.
     fields:
       - {name: format, type: String}
       - {name: level, type: String}
       - {name: sessions, type: Integer}
       - {name: turns, type: Integer}
-      - {name: patterns, type: List<sessionspec.cli.Pattern>}
+      - {name: patterns, type: List<agentspec.cli.Pattern>}
 
-  - name: sessionspec.cli.ProcedureInput
+  - name: agentspec.cli.ProcedureInput
     kind: struct
     fields:
       - name: pattern
         type: String
-        summary: The tokens of a mined pattern, space-separated, or its id from a report of `sessionspec mine`.
+        summary: The tokens of a mined pattern, space-separated, or its id from a report of `agentspec mine`.
       - name: root
         type: Optional<String>
       - name: since_hours
@@ -358,11 +358,11 @@ types:
         type: Optional<String>
         summary: The file the procedure is written to; printed only by default.
 
-  - name: sessionspec.cli.StepKind
+  - name: agentspec.cli.StepKind
     kind: enum
     variants: [program, judgement, person, child]
 
-  - name: sessionspec.cli.ProcedureParameter
+  - name: agentspec.cli.ProcedureParameter
     kind: struct
     naming:
       summary: A value that varies across the matches of a pattern. Values are kept only when they are not content (a tool name, a category, a count), never a path or a command.
@@ -372,11 +372,11 @@ types:
       - {name: kind, type: String}
       - {name: values, type: List<String>}
 
-  - name: sessionspec.cli.ProcedureStep
+  - name: agentspec.cli.ProcedureStep
     kind: struct
     fields:
       - {name: id, type: String}
-      - {name: kind, type: sessionspec.cli.StepKind}
+      - {name: kind, type: agentspec.cli.StepKind}
       - {name: token, type: String}
       - {name: tool, type: String}
       - {name: category, type: String}
@@ -395,11 +395,11 @@ types:
         summary: The longest observed duration of the step, rounded up to a minute.
       - {name: ok_permille, type: Integer}
 
-  - name: sessionspec.cli.Procedure
+  - name: agentspec.cli.Procedure
     kind: struct
     naming:
       summary: >-
-        A mined pattern lifted into a procedure, format `sessionspec-procedure/1`: steps, the
+        A mined pattern lifted into a procedure, format `agentspec-procedure/1`: steps, the
         parameters that vary across matches, and the sessions it came from. A draft until a person
         promotes it.
     fields:
@@ -409,21 +409,21 @@ types:
       - {name: pattern, type: List<String>}
       - {name: matches, type: Integer}
       - {name: sessions, type: List<String>}
-      - {name: parameters, type: List<sessionspec.cli.ProcedureParameter>}
-      - {name: steps, type: List<sessionspec.cli.ProcedureStep>}
+      - {name: parameters, type: List<agentspec.cli.ProcedureParameter>}
+      - {name: steps, type: List<agentspec.cli.ProcedureStep>}
       - {name: query, type: String}
 
-  - name: sessionspec.cli.ExportInput
+  - name: agentspec.cli.ExportInput
     kind: struct
     fields:
       - name: procedure
         type: String
-        summary: A `sessionspec-procedure/1` file.
+        summary: A `agentspec-procedure/1` file.
       - name: out
         type: String
         summary: The directory the protocol and the bindings are written to.
 
-  - name: sessionspec.cli.ExportResult
+  - name: agentspec.cli.ExportResult
     kind: struct
     fields:
       - {name: protocol, type: String}
@@ -433,16 +433,16 @@ types:
         summary: canon accepted the protocol; false when canon refused it or is not installed.
       - {name: detail, type: String}
 
-  - name: sessionspec.cli.Dashboard
+  - name: agentspec.cli.Dashboard
     kind: struct
     naming:
       summary: What the dashboard file embeds.
     fields:
       - {name: generated_at, type: String}
-      - {name: overall, type: sessionspec.cli.KpiReport}
-      - {name: sessions, type: List<sessionspec.cli.SessionSummary>}
+      - {name: overall, type: agentspec.cli.KpiReport}
+      - {name: sessions, type: List<agentspec.cli.SessionSummary>}
 
-  - name: sessionspec.cli.SyncInput
+  - name: agentspec.cli.SyncInput
     kind: struct
     fields:
       - name: root
@@ -452,7 +452,7 @@ types:
         type: Optional<Integer>
         summary: Main transcripts with a file modified in this many hours before now; 72 by default.
 
-  - name: sessionspec.cli.SyncResult
+  - name: agentspec.cli.SyncResult
     kind: struct
     naming:
       summary: >-
@@ -472,7 +472,7 @@ types:
         summary: Sessions the store holds after the pass, of every window.
       - {name: ms, type: Integer}
 
-  - name: sessionspec.cli.ServeInput
+  - name: agentspec.cli.ServeInput
     kind: struct
     fields:
       - name: root
@@ -484,7 +484,7 @@ types:
         type: Optional<Integer>
         summary: The local port; 7420 by default. The server listens on 127.0.0.1 only.
 
-  - name: sessionspec.cli.ServeResult
+  - name: agentspec.cli.ServeResult
     kind: struct
     fields:
       - {name: url, type: String}

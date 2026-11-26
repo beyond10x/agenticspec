@@ -1,0 +1,355 @@
+# The UI of agentspec in ess-ui/1: an overview of sessions and one session's view. The session
+# view is the page kind `session_view`; `session` shows it in the app frame, `embed.*` in a frame
+# with nothing but the page, for a host (the LLM gateway UI) that shows one session. Reads are the
+# views of `agentspec.view` (spec/domains/view.yaml), served by the `session-view` component.
+# Rows hold names, counts, times and digests, never content. Fixtures: ui/fixtures/, format in
+# ui/README.md.
+
+format: ess-ui/1
+app: agentspec
+title: Sessions
+model: agentspec
+actor: from_session
+placement_profile: fat
+fixtures: {dir: fixtures, index: fixtures/index.yaml}
+
+types:
+  TimeWindow: {record: {from: timestamp, to: timestamp}}
+
+tone_maps:
+  event_kind:
+    agent_started: info
+    prompt: info
+    model_turn: neutral
+    tool_call: neutral
+    decision: warning
+    tool_result: success
+    turn_end: neutral
+    compaction: warning
+    exposure: danger
+    cache_bust: danger
+  waiting_share:
+    bands: [{from: 0, tone: success}, {from: 0.25, tone: warning}, {from: 0.5, tone: danger}]
+  verdict:
+    Ok: success
+    Gap: danger
+    Unk: warning
+
+shells:
+  app:
+    regions:
+      nav: {kind: navigation}
+      main: {kind: page_outlet}
+  embed:
+    regions:
+      main: {kind: page_outlet}
+
+navigation:
+  home: overview
+  sections:
+    - {name: sessions, label: Sessions, pages: [overview]}
+  hidden: [session, embed.session, embed.timeline, embed.events]
+
+channels:
+  sessions:
+    carries: {events: [agentspec.view.SessionUpdated]}
+    direction: server_to_client
+    delivery: every_event
+    resume: refetch
+    scope: account
+    lifecycle: [connecting, live, reconnecting, stale, closed]
+    stale_after: 60s
+  session_events:
+    carries:
+      events: [agentspec.view.EventAppended, agentspec.view.AgentUpdated, agentspec.view.SessionUpdated]
+    direction: server_to_client
+    delivery: every_event
+    resume: from_last_seen
+    scope: param
+    session: {per: session_id}
+    lifecycle: [connecting, live, reconnecting, stale, closed]
+    reconnect: {backoff: {from: 1s, to: 30s}}
+    stale_after: 60s
+
+page_kinds:
+  plain_page:
+    purpose: sections the page declares, nothing inherited
+
+  session_view:
+    purpose: >-
+      One session: headline metrics, cost over time, context and cost over time per agent, and its events as a log
+      and in lanes by kind. Every read is narrowed by the page parameter `session_id`, so a host
+      shows it for one session alone; it takes the session's new events live.
+    layout:
+      areas:
+        grid:
+          - [metrics, metrics]
+          - [checks, checks]
+          - [cost, cost]
+          - [agents, agents]
+          - [lanes, log]
+        place:
+          metrics: [metrics]
+          checks: [checks]
+          cost: [cost]
+          agents: [agents]
+          lanes: [lanes]
+          log: [log]
+    header:
+      title: Session
+      title_from: {section: metrics, field: project}
+      live: [session_events]
+    sections:
+      - name: metrics
+        component: record
+        reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}, key: session_id}
+        live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}
+        fields:
+          - {field: harness, as: badge, label: Harness}
+          - {field: first_at, as: timestamp, label: Started}
+          - {field: last_at, as: timestamp, label: Last record}
+          - {field: agents, as: number, label: Agents}
+        item:
+          - {name: cost, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: cost_usd, label: Cost (USD at list price), live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+          - {name: output, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: output_tokens, label: Output tokens, live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+          - {name: context, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: context_max, label: Largest context, live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+          - {name: cache, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: cache_hit_share, format: percent, label: Cache hit, live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+          - {name: busts, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: busts, label: Cache busts, live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+          - {name: human_prompts, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: human_prompts, label: Human prompts, live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+          - {name: waiting, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: waiting_on_human_seconds, format: duration, unit: s, label: Waiting on the human, live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+          - {name: working, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: working_seconds, format: duration, unit: s, label: Working, live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+          - {name: autonomy, component: metric, reads: {view: agentspec.view.SessionById, params: {session_id: params.session_id}}, aggregate: max, field: waiting_share, format: percent, label: Share of wall time waiting on the human, live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: patch_row, match: session_id}}
+        states: {loading: skeleton, empty: {message: No such session}, stale: {mark: badge}}
+
+      # The verdicts of `queries/session.sq`, judged by `agentspec sync` on every stored
+      # session.
+      - name: checks
+        title: Checks
+        component: collection
+        style: table
+        reads: {view: agentspec.view.SessionChecks, params: {session_id: params.session_id}, key: check_id}
+        live: {channel: session_events, on: [agentspec.view.SessionUpdated], effect: refetch, only_if: matches(params), coalesce: 1s}
+        sort: {by: check, dir: asc, mode: client}
+        columns:
+          - {field: check, label: Check}
+          - {field: verdict, as: badge, tone_by: verdict, label: Verdict}
+          - {field: rows, as: number, label: Rows}
+          - {field: possible, as: number, label: Possible}
+          - {field: severity, as: badge, label: Severity}
+          - {field: about, label: What it finds}
+        states: {empty: {message: No check has run on this session}}
+
+      # A chart has no sort and no series split by a field: the session's cost is one cumulative
+      # line, re-read on each pushed event so the server's order holds; the context of each agent
+      # is drawn in the agent's card below, since the contexts of several agents on one line
+      # would zigzag between them.
+      # UNMAPPED: one chart with one line per agent (a series per value of `agent`) is not
+      # expressible in ess-ui/1; the per-agent cards stand in for it.
+      - name: cost
+        title: Cost over time (USD at list price)
+        component: chart
+        chart: line
+        reads: {view: agentspec.view.SessionTurns, params: {session_id: params.session_id}, key: event_id}
+        live: {channel: session_events, on: [agentspec.view.EventAppended], effect: refetch, only_if: matches(params), coalesce: 1s}
+        x: at
+        series: [session_cost_usd]
+        degrades: {no_charts: table}
+
+      - name: agents
+        title: Agents
+        component: collection
+        style: cards
+        reads: {view: agentspec.view.SessionAgents, params: {session_id: params.session_id}, key: agent_id}
+        live: {channel: session_events, on: [agentspec.view.AgentUpdated], effect: insert_or_patch, match: agent_id, only_if: matches(params)}
+        columns:
+          - {field: agent_id, label: Agent}
+          - {field: role, as: badge, label: Role}
+          - {field: parent, label: Parent}
+          - {field: model, label: Model}
+          - {field: turns, as: number, label: Turns}
+          - {field: context_max, as: number, label: Largest context}
+          - {field: output_tokens, as: number, label: Output tokens}
+          - {field: cost_usd, as: number, label: Cost (USD)}
+          - {field: tool_calls, as: number, label: Tool calls}
+          - {field: busts, as: number, label: Cache busts}
+        sort: {by: started_at, dir: asc, mode: client}
+        item:
+          - name: context
+            component: chart
+            chart: line
+            reads: {view: agentspec.view.AgentTurns, params: {session_id: params.session_id, agent: row.agent_id}, key: event_id}
+            x: at
+            series: [context_tokens]
+            degrades: {no_charts: table}
+          - name: cost
+            component: chart
+            chart: line
+            reads: {view: agentspec.view.AgentTurns, params: {session_id: params.session_id, agent: row.agent_id}, key: event_id}
+            x: at
+            series: [agent_cost_usd]
+            degrades: {no_charts: table}
+        states: {empty: {message: No agent yet}}
+
+      - name: lanes
+        title: Lanes
+        component: collection
+        style: table
+        reads:
+          view: agentspec.view.SessionEvents
+          params: {session_id: params.session_id}
+          key: event_id
+          filter: row.kind in [prompt, tool_call, decision, compaction, exposure, cache_bust]
+        live: {channel: session_events, on: [agentspec.view.EventAppended], effect: insert_top, match: event_id, only_if: matches(params)}
+        group_by: kind
+        group_order: [prompt, tool_call, decision, compaction, exposure, cache_bust]
+        sort: {by: seq, dir: desc, mode: client}
+        show_empty_groups: true
+        columns:
+          - {field: at, as: time}
+          - {field: agent, label: Agent}
+          - {field: label, label: What}
+          - {field: detail, label: Detail}
+        states: {empty: {message: "No prompt, tool call, decision or bust yet"}}
+
+      - name: log
+        title: Event log
+        component: collection
+        reads:
+          view: agentspec.view.SessionEvents
+          params: {session_id: params.session_id}
+          key: event_id
+          paging: client
+          pager: {sizes: [50, 200, 1000]}
+        live: {channel: session_events, on: [agentspec.view.EventAppended], effect: insert_top, match: event_id, only_if: matches(params), when_paged_away: count_new}
+        sort: {by: seq, dir: desc, mode: client}
+        columns:
+          - {field: seq, as: number, label: "#"}
+          - {field: at, as: time}
+          - {field: agent, label: Agent}
+          - {field: kind, as: badge, tone_by: event_kind}
+          - {field: label, label: What}
+          - {field: detail, label: Detail}
+          - {field: ok, as: badge, labels: {"true": ok, "false": failed}}
+          - {field: context_tokens, as: number, label: Context}
+          - {field: output_tokens, as: number, label: Output}
+          - {field: cost_microdollars, as: number, label: Cost (µ$)}
+          - {field: bytes, as: bytes, label: Size}
+        states: {empty: {message: No event yet}}
+
+pages:
+  overview:
+    kind: plain_page
+    title: Sessions
+    nav: {label: Sessions, synonyms: [overview, kpi]}
+    layout:
+      areas:
+        grid: [[filters], [kpis], [sessions]]
+        place: {filters: [filters], kpis: [kpis], sessions: [sessions]}
+    header: {live: [sessions], total: sessions, filters: filters}
+    # The slice the overview shows: a time window, the newest N sessions, a search over the
+    # project, the title, the model and the tool names. Every read below takes them, so the
+    # metrics are the figures of the sessions the table lists.
+    state:
+      window: {type: TimeWindow, class: page_state, store: url, pinned: true}
+      search: {type: string, class: page_state, store: url, pinned: true}
+      limit: {type: integer, class: page_state, store: url, pinned: true, default: 100}
+    sections:
+      - name: filters
+        component: filter_bar
+        binds: [state.window, state.search, state.limit]
+        window: {binds: state.window, time: true}
+        search: {binds: state.search, placeholder: "project, title, model or tool"}
+        choices:
+          - {name: limit, component: choice, binds: state.limit, style: segmented, options: [{value: 25, label: "newest 25"}, {value: 100, label: "newest 100"}, {value: 500, label: "newest 500"}]}
+        reset: true
+      - name: kpis
+        component: record
+        reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}, paging: none}
+        fields: []
+        item:
+          - {name: sessions, component: metric, reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}}, aggregate: count, label: Sessions}
+          - {name: cost, component: metric, reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}}, aggregate: sum, field: cost_usd, label: Cost (USD at list price)}
+          - {name: output, component: metric, reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}}, aggregate: sum, field: output_tokens, label: Output tokens}
+          - {name: busts, component: metric, reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}}, aggregate: sum, field: busts, label: Cache busts}
+          - {name: human_prompts, component: metric, reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}}, aggregate: sum, field: human_prompts, label: Human prompts}
+          - {name: waiting, component: metric, reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}}, aggregate: sum, field: waiting_on_human_seconds, format: duration, unit: s, label: Waiting on the human}
+          - {name: working, component: metric, reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}}, aggregate: sum, field: working_seconds, format: duration, unit: s, label: Working}
+          - {name: autonomy, component: metric, reads: {view: agentspec.view.SessionList, params: {since: state.window.from, search: state.search, limit: state.limit}}, aggregate: avg, field: waiting_share, format: percent, label: Mean share waiting on the human}
+        states: {loading: skeleton}
+      - name: sessions
+        title: Sessions
+        component: collection
+        reads:
+          view: agentspec.view.SessionList
+          params: {since: state.window.from, search: state.search, limit: state.limit}
+          key: session_id
+          paging: client
+          pager: {sizes: [25, 100, 500]}
+        live: {channel: sessions, on: [agentspec.view.SessionUpdated], effect: insert_or_patch, match: session_id}
+        sort: {by: last_at, dir: desc, allowed: [last_at, cost_usd, output_tokens, waiting_share, busts, human_prompts, waiting_on_human_seconds, working_seconds], mode: client}
+        columns:
+          - {field: project, label: Project, sortable: true}
+          - {field: title, label: Title}
+          - {field: last_at, as: timestamp, label: Last record, sortable: true}
+          - {field: agents, as: number, label: Agents}
+          - {field: cost_usd, as: number, label: Cost (USD), sortable: true}
+          - {field: output_tokens, as: number, label: Output tokens, sortable: true}
+          - {field: waiting_share, as: percent, label: Waiting share, tone_by: waiting_share, sortable: true}
+          - {field: busts, as: number, label: Cache busts, sortable: true}
+          - {field: human_prompts, as: number, label: Human prompts, sortable: true}
+          - {field: waiting_on_human_seconds, as: duration, unit: s, label: Waiting, sortable: true}
+          - {field: working_seconds, as: duration, unit: s, label: Working, sortable: true}
+        row_actions:
+          - {name: open, navigate: {to: session, params: {session_id: row.session_id}}, label: Open}
+        states: {empty: {message: No session in this window}}
+
+  session:
+    kind: session_view
+    title: Session
+    params: {session_id: SessionId}
+
+  embed.session:
+    kind: session_view
+    shell: embed
+    title: Session
+    params: {session_id: SessionId}
+    layout:
+      areas:
+        grid: [[metrics, metrics], [checks, checks], [cost, cost], [agents, agents], [drawing, drawing], [lanes, log]]
+        place: {metrics: [metrics], checks: [checks], cost: [cost], agents: [agents], drawing: [drawing], lanes: [lanes], log: [log]}
+    sections:
+      - name: drawing
+        host: SessionLanes
+        reason: >-
+          draws the session's events on one time axis, one lane per agent, with sub-agents under
+          their parent; ess-ui has no composite that places rows on a time axis
+        stands_in_for: collection
+        reads: {view: agentspec.view.SessionEvents, params: {session_id: params.session_id}}
+
+  embed.timeline:
+    kind: session_view
+    shell: embed
+    title: Session timeline
+    params: {session_id: SessionId}
+    layout:
+      areas:
+        grid: [[metrics, metrics], [cost, cost], [agents, agents]]
+        place: {metrics: [metrics], cost: [cost], agents: [agents]}
+    sections:
+      - {name: checks, remove: true}
+      - {name: lanes, remove: true}
+      - {name: log, remove: true}
+
+  embed.events:
+    kind: session_view
+    shell: embed
+    title: Session events
+    params: {session_id: SessionId}
+    layout:
+      areas:
+        grid: [[metrics, metrics], [lanes, log]]
+        place: {metrics: [metrics], lanes: [lanes], log: [log]}
+    sections:
+      - {name: checks, remove: true}
+      - {name: cost, remove: true}
+      - {name: agents, remove: true}

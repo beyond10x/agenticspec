@@ -2,8 +2,8 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
 
-// The build lands in target/ui/www, which `sessionspec serve` serves; `npm run dev` proxies the
-// views and channels to a running `sessionspec serve`.
+// The build lands in target/ui/www, which `agentspec serve` serves; `npm run dev` proxies the
+// views and channels to a running `agentspec serve`.
 const outDir = fileURLToPath(new URL('../../target/ui/www', import.meta.url));
 
 export default defineConfig({

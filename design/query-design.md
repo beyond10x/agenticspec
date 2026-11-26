@@ -1,7 +1,7 @@
 # sq: a query language over the session IR — design (draft, 2026-11-26)
 
 Status: proposed. Design only: no code, no stories. Inputs: the session IR
-(`spec/domains/session.yaml`), `design/design.md`, one session lifted with `sessionspec lift
+(`spec/domains/session.yaml`), `design/design.md`, one session lifted with `agentspec lift
 --output json` (shapes only), shellspec's design (`../shellspec/design/design.md`), cq of codespec
 and codesec, and the formats Runbook and Canon execute. Every claim about a sibling repository
 cites `file:line` relative to the directory that holds the organization's repositories side by
@@ -22,11 +22,11 @@ lifted sessions ──replay──▶ events ──facts──▶ fact base ─�
 ```
 
 codespec holds `cir/1`, the readers and the cq engine for code. Here the IR, the engine and the
-authored checks all stay in sessionspec.
+authored checks all stay in agentspec.
 
 ## 2. What the IR gives today
 
-One lifted session (`sessionspec lift <main transcript> --output json`) has this shape:
+One lifted session (`agentspec lift <main transcript> --output json`) has this shape:
 
 ```text
 { ok, result: { session_id, agents: <count>, refused: <count>,
@@ -37,7 +37,7 @@ One lifted session (`sessionspec lift <main transcript> --output json`) has this
 `Content` is `{digest, bytes}` (session.yaml:93-103), `Usage` the five token counts
 (session.yaml:105-119), a decision has `decision`, `decider` and a free-text `reason`
 (session.yaml:636-649). The lifted list carries the command and its outcome; the events come from
-replaying it through the generated component (`crates/sessionspec/src/replay.rs:100`). An event
+replaying it through the generated component (`crates/agentspec/src/replay.rs:100`). An event
 carries no `actor` and no `seq` (session.yaml:779-865), so the fact base joins each published event
 with the command that emitted it.
 
@@ -49,11 +49,11 @@ edits; another session owns `spec/`):
 
 | gap | needed by | proposal |
 |---|---|---|
-| no sub-commands of an `Execute` call | `cd-build-tail`, `red-green-loop`, `build-outside-slot` | `sub_commands: [Invocation]` from shellspec (shellspec/design/design.md:344-358); sessionspec/AGENTS.md already says it will |
-| no `cwd` on `RequestToolCall` | shellspec's `cwd` per invocation (shellspec/design/design.md:354) | additive `cwd`, path relative to the repository root as redaction writes it (sessionspec/design/design.md:101) |
+| no sub-commands of an `Execute` call | `cd-build-tail`, `red-green-loop`, `build-outside-slot` | `sub_commands: [Invocation]` from shellspec (shellspec/design/design.md:344-358); agentspec/AGENTS.md already says it will |
+| no `cwd` on `RequestToolCall` | shellspec's `cwd` per invocation (shellspec/design/design.md:354) | additive `cwd`, path relative to the repository root as redaction writes it (agentspec/design/design.md:101) |
 | no link from a `Spawn` call to the agent it started; `StartAgent` names the parent only (session.yaml:405-438, claude.rs:581-587) | `fanout-unread` | additive `spawned_by: Optional<ToolCallId>` on `StartAgent` |
 | no background flag on a tool call | `fanout-unread`, blocking waits | additive `background: Boolean` |
-| `Content` has no class, though the redaction design names one (sessionspec/design/design.md:97) | `human-correction` | `PromptClass` on `SubmitPrompt` (§ 9, Q4) |
+| `Content` has no class, though the redaction design names one (agentspec/design/design.md:97) | `human-correction` | `PromptClass` on `SubmitPrompt` (§ 9, Q4) |
 | `reason` is free text | grouping refusals by rule | a reason class next to the text |
 
 Until a field exists, the fact that rests on it is `unk` (§ 5.3), never guessed.
@@ -95,7 +95,7 @@ From the lifted commands and their published events:
 
 | relation | fields | from |
 |---|---|---|
-| `session` | `id, harness, opened_at, ended_at, profile` | `SessionOpened`, `SessionEnded`; `profile` from the corpus selection (sessionspec/design/design.md:131-134) |
+| `session` | `id, harness, opened_at, ended_at, profile` | `SessionOpened`, `SessionEnded`; `profile` from the corpus selection (agentspec/design/design.md:131-134) |
 | `agent` | `id, session, parent, role, depth, started_at, ended_at` | `AgentStarted`, `AgentEnded`; `depth` derived |
 | `cmd` | `node, session, agent, seq, at, actor, kind, outcome` | every command: `kind` is the command name, `outcome` its outcome |
 | `prompt` | `node, agent, author, attribution, class, bytes, digest, mid_turn` | `PromptSubmitted`; `mid_turn` true when the agent was `Working` (session.yaml:469-471) |
@@ -113,10 +113,10 @@ Derived by the engine:
 | relation | meaning |
 |---|---|
 | `at(N, T)` | the instant of node `N` |
-| `next(A, B)` | `B` is the next command of `A`'s agent, in that agent's record order (sessionspec/design/design.md:13-14) |
+| `next(A, B)` | `B` is the next command of `A`'s agent, in that agent's record order (agentspec/design/design.md:13-14) |
 | `before(A, B)` | `A` precedes `B`: by `seq` within one agent, by `at` across agents; equal instants across agents are possible both ways |
 | `turn_of(N, P)` | node `N` belongs to the turn the prompt `P` started |
-| `interval` | `agent, state, on, from, to, dur, open`: the Agent lifecycle (`Idle`, `Working`) as a step function, with `on` the waiting-on value of sessionspec/design/design.md:86 (`human`, `tool`, `sub_agent`, `peer`, `rate_limit`, `build_queue`); `open` when the transcript ends inside it |
+| `interval` | `agent, state, on, from, to, dur, open`: the Agent lifecycle (`Idle`, `Working`) as a step function, with `on` the waiting-on value of agentspec/design/design.md:86 (`human`, `tool`, `sub_agent`, `peer`, `rate_limit`, `build_queue`); `open` when the transcript ends inside it |
 | `bust` | `node, agent, cause, written`: the cache-bust rule of `kpi.rs:460-485` as a relation, causes `TtlExpired`, `ModelChanged`, `Compacted`, `Unexplained` |
 | `spawned(C, Child)` | the `Spawn` call `C` started agent `Child`: from `spawned_by` when the IR has it, else the nearest `StartAgent` of a child of the caller after `C` (possible, § 5.3) |
 
@@ -282,9 +282,9 @@ check build-outside-slot {
 
 - Input is the redacted IR of one or more sessions, replayed through the generated component; the
   fact base reads the published events and the command list, never a transcript
-  (sessionspec/AGENTS.md, rule "KPIs read the events the generated component published").
+  (agentspec/AGENTS.md, rule "KPIs read the events the generated component published").
 - Within one agent, order is the agent's record order (`seq`), which replay keeps even where
-  timestamps are out of order (sessionspec/design/design.md:13-14). Across agents, order is by `at`.
+  timestamps are out of order (agentspec/design/design.md:13-14). Across agents, order is by `at`.
 - Durations come from `at` only. No clock, network or model call: same input and query, same bytes.
 
 ### 5.2 Rows
@@ -300,7 +300,7 @@ carries:
 | `certainty` | `definite`, or `possible` with the unknown sites it rests on |
 | `unknown` | `[{node, reason}]`: why it is possible |
 
-Report format `sessionspec-query-report/1`, the shape of `codespec-query-report/1`
+Report format `agentspec-query-report/1`, the shape of `codespec-query-report/1`
 (codespec/crates/query/src/lib.rs:202, 546-579) plus `session`, `agent` and `span`. Text output:
 one line per row, values tab-separated, then `possible: <node> (<reason>)`.
 
@@ -343,14 +343,14 @@ with rows or without.
 ### 5.5 Cost
 
 - The fact base is built once per redacted session and cached on disk keyed by the digest of the
-  redacted IR, the sessionspec version and the shellspec ruleset digest, as cq caches
-  (codespec/docs/query-language.md:80-85): `$XDG_CACHE_HOME/sessionspec/facts/<digest>.facts`.
+  redacted IR, the agentspec version and the shellspec ruleset digest, as cq caches
+  (codespec/docs/query-language.md:80-85): `$XDG_CACHE_HOME/agentspec/facts/<digest>.facts`.
 - Tests build their fixture fact bases once per run into `target/` and read them; fixtures are
-  synthetic (sessionspec/AGENTS.md). Each test stays under 60 s and the test step under 120 s
+  synthetic (agentspec/AGENTS.md). Each test stays under 60 s and the test step under 120 s
   (workspace `AGENTS.md` § Tests stay fast).
 - A corpus query is a loop over per-session fact bases; only aggregates and mining join across
-  sessions. Not measured; `sessionspec kpi` over 3,309 transcripts runs in 12 s
-  (sessionspec/design/design.md:6-8), the scale the corpus query aims at (inference).
+  sessions. Not measured; `agentspec kpi` over 3,309 transcripts runs in 12 s
+  (agentspec/design/design.md:6-8), the scale the corpus query aims at (inference).
 
 ## 6. Pattern mining
 
@@ -380,7 +380,7 @@ Each node becomes a token at a chosen level of abstraction. The token never hold
 5. **Score.** Support (sessions, repositories), tokens and wall time spent inside matches, share of
    matches that end with `ok` results, refusals inside. Ties sort by token string.
 
-Output: `sessionspec-patterns/1`, one entry per pattern with its tokens, gaps, support, score, the
+Output: `agentspec-patterns/1`, one entry per pattern with its tokens, gaps, support, score, the
 sq query it compiles to and the digest of that query. Matches are listed by node, never by text.
 
 ### 6.3 Lifting a pattern into a procedure
@@ -398,7 +398,7 @@ Over the matches of one pattern, field by field (anti-unification):
 - **Durations**: the largest observed `dur` of a step, as its timeout (inference: a bound from the
   data, to be reviewed).
 
-The result is a procedure, `sessionspec-procedure/1`: parameters, steps (kind `program`,
+The result is a procedure, `agentspec-procedure/1`: parameters, steps (kind `program`,
 `judgement`, `person` or `child`; argv template from the shape; category; effect; result table;
 retry and bound; timeout; the steps it waits on), outcomes, and provenance (pattern id, query
 digest, the session ids it came from). A mined procedure is a draft; a person or the operator
@@ -455,7 +455,7 @@ last edit before the record (inference, Q8).
 
 ### 7.3 Path of an export
 
-`sessionspec export <procedure> --out <dir>` writes `<id>.protocol.yaml` and `<id>.yaml` into a
+`agentspec export <procedure> --out <dir>` writes `<id>.protocol.yaml` and `<id>.yaml` into a
 directory given by the caller, never into a sibling repository. They become a runbook by
 runbook's own steps: `runbook canon validate` and `runbook canon check` on the draft
 (runbook/plugin/skills/record/SKILL.md:87-99), then the move into `protocol/` and `bindings/` and
@@ -464,7 +464,7 @@ fails on a refusal.
 
 ## 8. ESS first: the nouns
 
-Declared in a new domain `sessionspec.query` before code uses them (sessionspec/AGENTS.md,
+Declared in a new domain `agentspec.query` before code uses them (agentspec/AGENTS.md,
 "Specification first"). Listed, not written:
 
 | noun | kind | holds |
@@ -474,13 +474,13 @@ Declared in a new domain `sessionspec.query` before code uses them (sessionspec/
 | `NamesList` | value | name and entries; replaceable by a file |
 | `Expectation` | enum | `None`, `Some`, `Count` |
 | `Corpus` | entity | a selection of sessions: window, projects, profiles, the digest of the redacted IR set |
-| `FactBase` | entity | digest, session, sessionspec version, shellspec ruleset digest; lifecycle Built, Stale |
+| `FactBase` | entity | digest, session, agentspec version, shellspec ruleset digest; lifecycle Built, Stale |
 | `Relation` | value | name and field schema, printed by `--schema` |
 | `Row` | value | values, session, agent, span, certainty, unknown sites |
 | `Certainty` | enum | `Definite`, `Possible` |
 | `UnknownSite` | value | node and reason (closed list of § 5.3) |
-| `CheckResult` | value | check, session, `Verdict` (reuse `sessionspec.session.Verdict`), cited rows |
-| `QueryReport` | value | `sessionspec-query-report/1` |
+| `CheckResult` | value | check, session, `Verdict` (reuse `agentspec.session.Verdict`), cited rows |
+| `QueryReport` | value | `agentspec-query-report/1` |
 | `Token`, `AlphabetLevel` | value, enum | § 6.1 |
 | `Pattern` | entity | tokens, gaps, within, support, score, compiled query digest; lifecycle Mined, Promoted, Rejected |
 | `Match` | entity | pattern or check, session, span, bindings by node |
@@ -493,18 +493,18 @@ Declared in a new domain `sessionspec.query` before code uses them (sessionspec/
 
 Commands: `CompileModule`, `BuildFactBase`, `RunQuery`, `RunCheck`, `MinePatterns`,
 `PromotePattern`, `RejectPattern`, `LiftProcedure`, `ExportProcedure`. CLI (an `ess-cli/2` binding,
-as `spec/cli.yaml` is): `sessionspec query`, `sessionspec check`, `sessionspec mine`,
-`sessionspec export`.
+as `spec/cli.yaml` is): `agentspec query`, `agentspec check`, `agentspec mine`,
+`agentspec export`.
 
 ## 9. Open, with the default taken
 
 - Q1. Language. A: a cq dialect (§ 3). B: a sequence-regex language (`MATCH_RECOGNIZE` style).
   Default A: one language across the workspace, and `seq` covers the regex case.
 - Q2. Engine. A: depend on codespec's `crates/query` by git revision once it takes a fact base
-  from outside, a story filed in codespec. B: a copy in sessionspec. Default A; no copy. Until the
+  from outside, a story filed in codespec. B: a copy in agentspec. Default A; no copy. Until the
   seam exists, sq is a design.
 - Q3. Raw or redacted. Default: redacted IR only. No sq predicate reads text; shapes, digests,
-  lengths and classes are all a query sees. Raw transcripts stay on the host (sessionspec/AGENTS.md).
+  lengths and classes are all a query sees. Raw transcripts stay on the host (agentspec/AGENTS.md).
 - Q4. Prompt class. Default A: a rule-based classifier run by the redaction pass on the host, no
   model call, tri-valued; `Unknown` when no rule matches. B: a model call, refused by the test rule
   (no model call in the test step).
@@ -517,6 +517,6 @@ as `spec/cli.yaml` is): `sessionspec query`, `sessionspec check`, `sessionspec m
 - Q8. Revisions for the third target. Default: `<session>#<seq>` of the last edit before the
   record, labelled inferred in the export; a real tree digest when the IR gets one.
 - Q9. Export destination. Default: a directory the caller names; nothing written into `runbook/` or
-  `canon/` by sessionspec. Landing there is runbook's `record` steps 5 and 6.
+  `canon/` by agentspec. Landing there is runbook's `record` steps 5 and 6.
 - Q10. Cross-agent ties. Default: equal instants across agents order both ways, possible; no
   tie-break by agent id.

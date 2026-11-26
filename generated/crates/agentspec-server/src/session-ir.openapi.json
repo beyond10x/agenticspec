@@ -1,0 +1,3824 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "session-ir",
+    "summary": "Replays the commands an adapter lifted from a transcript and holds the resulting session state.",
+    "description": "The HTTP surface of `session-ir`, one of the components of `agentspec` v1.\n\nEvery path here is one semantic command, so the method is always POST and the path is the command's wire name under its domain's: a command is not a resource, and this document does not invent one. A status code is the outcome the specification declares — 202 for a branch that was taken, 422 for a refusal the input decides, 502 for a refusal decided outside the request — and the `outcome` property of every response body names the branch. This component publishes `AgentEnded`, `AgentStarted`, `ContextCompacted`, `ExposureDetected`, `ModelTurnRecorded`, `PromptSubmitted`, `SessionEnded`, `SessionOpened`, `ToolCallCompleted`, `ToolCallDecided`, `ToolCallRequested` and `TurnEnded` to consumers through the event transport; an event a branch emits that is not among them stays inside the component. The `published` property of every response body lists every event its branch emitted, in the order it emits them, published or not.\n\nThe specification declares who may invoke what (`x-ess-may-invoke` on each operation), so every command is sent as a declared actor. How a request proves which actor it is belongs to the realization, which authenticates it and hands the surface the caller; nothing in the request itself names one. The grant is checked before the command runs, and a request authenticated as no actor, or as one without the grant, is answered 403 with one standard refusal, the same for every command: `{\"refused\": \"not granted\", \"actor\": <name or null>}`. A 403 a declared branch answers carries `outcome` and the declared `error` instead, so a client tells the two apart by the members present. A command no declared actor may invoke is refused to every caller. A view an actor's grant names is read-checked the same way (`x-ess-may-read` on its operation): a request authenticated as no actor, or as one the grant does not name, is answered 403 with the same standard refusal before the view is read. A view no grant names is open, and any caller may read what it publishes.\n\nThis component declares `reached_by: network`, so its callers are not deployed with it and this contract is the surface they reach it through. That declaration is also why the views its domains declare have paths here: a GET under `views` per projection, answering every row it holds. There is no page size, no cursor, no ordering and no filter parameter, because the specification states none — a view's filter is part of the projection, not of the request. A view that declares `params:` is the exception: each is a query parameter, described on its operation, and a view that declares `paging:` takes its page and size there.",
+    "version": "v1",
+    "x-ess-provenance": {
+      "system": "agentspec",
+      "specification_version": "v1",
+      "contract_digest": "slice-sha256/2:64bd968efb861e4de35e7bccfef5f1ef606272c2022b33fd8fd18f9f046188fa"
+    },
+    "x-ess-reached-by": "network"
+  },
+  "tags": [
+    {
+      "name": "session",
+      "description": "An agent session of any harness, as actors issuing commands. An adapter lifts a vendor transcript into these commands; replaying them yields the events and the state the KPIs read. Content is never held: a prompt, a tool input or a tool output is a digest and a length."
+    }
+  ],
+  "paths": {
+    "/session/commands/compact-context": {
+      "post": {
+        "operationId": "agentspec.session.CompactContext",
+        "summary": "Compact the context",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.HarnessRuntime"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.CompactContext` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.CompactContext.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `compacted`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.CompactContext.compacted.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Outcome `no-such-agent`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.CompactContext.no-such-agent.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/complete-tool-call": {
+      "post": {
+        "operationId": "agentspec.session.CompleteToolCall",
+        "summary": "Complete a tool call",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.ToolProvider"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.CompleteToolCall` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.CompleteToolCall.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcomes `succeeded` and `failed`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "failed": "#/components/schemas/agentspec.session.CompleteToolCall.failed.Response",
+                      "succeeded": "#/components/schemas/agentspec.session.CompleteToolCall.succeeded.Response"
+                    },
+                    "propertyName": "outcome"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/agentspec.session.CompleteToolCall.succeeded.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/agentspec.session.CompleteToolCall.failed.Response"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Outcome `wrong-state`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.CompleteToolCall.wrong-state.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/decide-tool-call": {
+      "post": {
+        "operationId": "agentspec.session.DecideToolCall",
+        "summary": "Decide a tool call",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.Human",
+          "agentspec.session.PermissionAuthority"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.DecideToolCall` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.DecideToolCall.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcomes `accepted` and `refused`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "accepted": "#/components/schemas/agentspec.session.DecideToolCall.accepted.Response",
+                      "refused": "#/components/schemas/agentspec.session.DecideToolCall.refused.Response"
+                    },
+                    "propertyName": "outcome"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/agentspec.session.DecideToolCall.accepted.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/agentspec.session.DecideToolCall.refused.Response"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Outcome `wrong-state`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.DecideToolCall.wrong-state.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/end-agent": {
+      "post": {
+        "operationId": "agentspec.session.EndAgent",
+        "summary": "End an agent",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.HarnessRuntime"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.EndAgent` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.EndAgent.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `ended`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.EndAgent.ended.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Outcome `wrong-state`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.EndAgent.wrong-state.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/end-session": {
+      "post": {
+        "operationId": "agentspec.session.EndSession",
+        "summary": "End a session",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.HarnessRuntime"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.EndSession` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.EndSession.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `ended`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.EndSession.ended.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Outcome `wrong-state`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.EndSession.wrong-state.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/end-turn": {
+      "post": {
+        "operationId": "agentspec.session.EndTurn",
+        "summary": "End a turn",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.AgentLoop"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.EndTurn` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.EndTurn.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `ended`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.EndTurn.ended.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Outcome `wrong-state`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.EndTurn.wrong-state.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/open-session": {
+      "post": {
+        "operationId": "agentspec.session.OpenSession",
+        "summary": "Open a session",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.HarnessRuntime"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.OpenSession` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.OpenSession.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `opened`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.OpenSession.opened.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/record-exposure": {
+      "post": {
+        "operationId": "agentspec.session.RecordExposure",
+        "summary": "Record an exposure",
+        "description": "The redaction pass found a secret or a personal datum and replaced it.",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.Redactor"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.RecordExposure` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.RecordExposure.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `recorded`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.RecordExposure.recorded.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/record-model-turn": {
+      "post": {
+        "operationId": "agentspec.session.RecordModelTurn",
+        "summary": "Record a model turn",
+        "description": "One model message of the agent, with the model that wrote it and its token usage.",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.AgentLoop"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.RecordModelTurn` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.RecordModelTurn.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `recorded`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.RecordModelTurn.recorded.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Outcome `no-such-agent`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.RecordModelTurn.no-such-agent.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/request-tool-call": {
+      "post": {
+        "operationId": "agentspec.session.RequestToolCall",
+        "summary": "Request a tool call",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.AgentLoop"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.RequestToolCall` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.RequestToolCall.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `requested`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.RequestToolCall.requested.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/start-agent": {
+      "post": {
+        "operationId": "agentspec.session.StartAgent",
+        "summary": "Start an agent",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.HarnessRuntime"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.StartAgent` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.StartAgent.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `started`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.StartAgent.started.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/commands/submit-prompt": {
+      "post": {
+        "operationId": "agentspec.session.SubmitPrompt",
+        "summary": "Submit a prompt",
+        "description": "A prompt reaches an agent. From Idle it starts a turn; while Working it is queued into the running turn, as Claude Code does with a message typed mid-turn.",
+        "tags": [
+          "session"
+        ],
+        "x-ess-may-invoke": [
+          "agentspec.session.AgentLoop",
+          "agentspec.session.Delegate",
+          "agentspec.session.HarnessRuntime",
+          "agentspec.session.Human",
+          "agentspec.session.PeerSession"
+        ],
+        "requestBody": {
+          "description": "The input `agentspec.session.SubmitPrompt` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentspec.session.SubmitPrompt.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `submitted`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.SubmitPrompt.submitted.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Outcome `wrong-state`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.SubmitPrompt.wrong-state.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/views/agents": {
+      "get": {
+        "operationId": "agentspec.session.Agents",
+        "summary": "Agents",
+        "tags": [
+          "session"
+        ],
+        "x-ess-consistency": "read_your_writes",
+        "responses": {
+          "200": {
+            "description": "Every row of `agentspec.session.Agents`, a projection of `agentspec.session.Agent`. Contains every instance. Read-your-writes: a caller that has just issued a command sees its effect here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.Agents.Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/views/exposures": {
+      "get": {
+        "operationId": "agentspec.session.Exposures",
+        "summary": "Exposures",
+        "tags": [
+          "session"
+        ],
+        "x-ess-consistency": "read_your_writes",
+        "responses": {
+          "200": {
+            "description": "Every row of `agentspec.session.Exposures`, a projection of `agentspec.session.Exposure`. Contains every instance. Read-your-writes: a caller that has just issued a command sees its effect here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.Exposures.Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/views/sessions": {
+      "get": {
+        "operationId": "agentspec.session.Sessions",
+        "summary": "Sessions",
+        "tags": [
+          "session"
+        ],
+        "x-ess-consistency": "read_your_writes",
+        "responses": {
+          "200": {
+            "description": "Every row of `agentspec.session.Sessions`, a projection of `agentspec.session.Session`. Contains every instance. Read-your-writes: a caller that has just issued a command sees its effect here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.Sessions.Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/views/tool-calls": {
+      "get": {
+        "operationId": "agentspec.session.ToolCalls",
+        "summary": "Tool calls",
+        "tags": [
+          "session"
+        ],
+        "x-ess-consistency": "read_your_writes",
+        "responses": {
+          "200": {
+            "description": "Every row of `agentspec.session.ToolCalls`, a projection of `agentspec.session.ToolCall`. Contains every instance. Read-your-writes: a caller that has just issued a command sees its effect here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentspec.session.ToolCalls.Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "agentspec.session.Agent.State": {
+        "title": "State",
+        "x-ess-name": "agentspec.session.Agent.State",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Ended",
+          "Idle",
+          "Working"
+        ]
+      },
+      "agentspec.session.AgentEnded.Event": {
+        "title": "AgentEnded payload",
+        "x-ess-name": "agentspec.session.AgentEnded",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.AgentId": {
+        "title": "AgentId",
+        "description": "One agent loop in a session; the main loop or a sub-agent.",
+        "x-ess-name": "agentspec.session.AgentId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "agentspec.session.AgentRole": {
+        "title": "AgentRole",
+        "description": "SideCall is a model call of the harness outside every agent's conversation (a title, a summary, a quota probe): the wire tells it by a call with no tools and no history.",
+        "x-ess-name": "agentspec.session.AgentRole",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Main",
+          "SubAgent",
+          "SideCall"
+        ]
+      },
+      "agentspec.session.AgentStarted.Event": {
+        "title": "AgentStarted payload",
+        "x-ess-name": "agentspec.session.AgentStarted",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/agentspec.session.SessionId"
+          },
+          "parent_agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "role": {
+            "$ref": "#/components/schemas/agentspec.session.AgentRole"
+          },
+          "spawned_by": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "session_id",
+          "role",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.AgentStateConflict.Error": {
+        "title": "AgentStateConflict payload",
+        "description": "The agent is not in a state this command acts from.",
+        "x-ess-name": "agentspec.session.AgentStateConflict",
+        "x-ess-kind": "error-payload",
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/agentspec.session.Agent.State"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.Agents.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `agentspec.session.Agents`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/agentspec.session.Agents.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.Agents.Row": {
+        "title": "Agents row",
+        "x-ess-name": "agentspec.session.Agents",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/agentspec.session.SessionId"
+          },
+          "parent_agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "role": {
+            "$ref": "#/components/schemas/agentspec.session.AgentRole"
+          },
+          "model": {
+            "type": "string"
+          },
+          "context_tokens": {
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/agentspec.session.Agent.State"
+          }
+        },
+        "required": [
+          "agent_id",
+          "session_id",
+          "role",
+          "context_tokens",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.Attribution": {
+        "title": "Attribution",
+        "description": "How the author was established. Known from a structured field of the transcript, Inferred from a text prefix, Unknown otherwise.",
+        "x-ess-name": "agentspec.session.Attribution",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Known",
+          "Inferred",
+          "Unknown"
+        ]
+      },
+      "agentspec.session.CompactContext.Input": {
+        "title": "Compact the context input",
+        "x-ess-name": "agentspec.session.CompactContext",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "context_tokens_before": {
+            "type": "integer"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "context_tokens_before",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.CompactContext.compacted.Response": {
+        "additionalProperties": false,
+        "description": "The context was replaced by a summary; the next model turn writes the cache again. Taken when no other outcome's condition matched. A `agentspec.session.Agent` has changed, and its state is unchanged. The instance is the one `agent_id` names. Emits `ContextCompacted`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "compacted",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.ContextCompacted",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.ContextCompacted.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.CompactContext.no-such-agent.Response": {
+        "additionalProperties": false,
+        "description": "Taken when the request names an identity no record carries.",
+        "properties": {
+          "error": {
+            "const": "agentspec.session.UnknownAgent",
+            "description": "No agent of this identity was started; the adapter lost a StartAgent.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "no-such-agent",
+            "description": "Which declared outcome the command took."
+          },
+          "payload": {
+            "$ref": "#/components/schemas/agentspec.session.UnknownAgent.Error"
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error",
+          "payload"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.CompleteToolCall.Input": {
+        "title": "Complete a tool call input",
+        "x-ess-name": "agentspec.session.CompleteToolCall",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "output": {
+            "$ref": "#/components/schemas/agentspec.session.Content"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "ok",
+          "output",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.CompleteToolCall.failed.Response": {
+        "additionalProperties": false,
+        "description": "The tool returned an error. Taken when no other outcome's condition matched. A `agentspec.session.ToolCall` has moved to `Failed`, along `fail`. The instance is the one `tool_call_id` names. Emits `ToolCallCompleted`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "failed",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.ToolCallCompleted",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.ToolCallCompleted.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.CompleteToolCall.succeeded.Response": {
+        "additionalProperties": false,
+        "description": "The tool returned a result. Taken when `ok == true` holds of the input. A `agentspec.session.ToolCall` has moved to `Succeeded`, along `succeed`. The instance is the one `tool_call_id` names. Emits `ToolCallCompleted`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "succeeded",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.ToolCallCompleted",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.ToolCallCompleted.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.CompleteToolCall.wrong-state.Response": {
+        "additionalProperties": false,
+        "description": "The tool call was not running. Taken when the subject is in a state none of this command's declared moves start from. Which states those are is the lifecycle's answer, not this command's. For an instance no record carries, `payload` is absent, because an instance that does not exist has nothing for the error to describe.",
+        "properties": {
+          "error": {
+            "const": "agentspec.session.ToolCallStateConflict",
+            "description": "The tool call is not in a state this command acts from.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "wrong-state",
+            "description": "Which declared outcome the command took."
+          },
+          "payload": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallStateConflict.Error"
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.Content": {
+        "title": "Content",
+        "description": "Content without the content.",
+        "x-ess-name": "agentspec.session.Content",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "digest": {
+            "description": "sha256 of the content bytes, lower-case hex.",
+            "type": "string"
+          },
+          "bytes": {
+            "description": "Length of the content in bytes.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "digest",
+          "bytes"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.ContextCompacted.Event": {
+        "title": "ContextCompacted payload",
+        "x-ess-name": "agentspec.session.ContextCompacted",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "context_tokens_before": {
+            "type": "integer"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "context_tokens_before",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.DecideToolCall.Input": {
+        "title": "Decide a tool call input",
+        "x-ess-name": "agentspec.session.DecideToolCall",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/agentspec.session.Decision"
+          },
+          "decider": {
+            "$ref": "#/components/schemas/agentspec.session.Decider"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "decision",
+          "decider",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.DecideToolCall.accepted.Response": {
+        "additionalProperties": false,
+        "description": "The tool runs. Taken when `decision == Accept` holds of the input. A `agentspec.session.ToolCall` has moved to `Accepted`, along `accept`. The instance is the one `tool_call_id` names. Emits `ToolCallDecided`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "accepted",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.ToolCallDecided",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.ToolCallDecided.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.DecideToolCall.refused.Response": {
+        "additionalProperties": false,
+        "description": "The tool does not run; the agent gets the refusal as its result. Taken when no other outcome's condition matched. A `agentspec.session.ToolCall` has moved to `Refused`, along `refuse`. The instance is the one `tool_call_id` names. Emits `ToolCallDecided`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "refused",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.ToolCallDecided",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.ToolCallDecided.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.DecideToolCall.wrong-state.Response": {
+        "additionalProperties": false,
+        "description": "The tool call was already decided. Taken when the subject is in a state none of this command's declared moves start from. Which states those are is the lifecycle's answer, not this command's. For an instance no record carries, `payload` is absent, because an instance that does not exist has nothing for the error to describe.",
+        "properties": {
+          "error": {
+            "const": "agentspec.session.ToolCallStateConflict",
+            "description": "The tool call is not in a state this command acts from.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "wrong-state",
+            "description": "Which declared outcome the command took."
+          },
+          "payload": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallStateConflict.Error"
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.Decider": {
+        "title": "Decider",
+        "description": "What decided a tool call. NotRecorded where the transcript carries no decision.",
+        "x-ess-name": "agentspec.session.Decider",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "PermissionMode",
+          "Classifier",
+          "Hook",
+          "Human",
+          "SafetyCheck",
+          "Rule",
+          "NotRecorded"
+        ]
+      },
+      "agentspec.session.Decision": {
+        "title": "Decision",
+        "x-ess-name": "agentspec.session.Decision",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Accept",
+          "Refuse"
+        ]
+      },
+      "agentspec.session.EndAgent.Input": {
+        "title": "End an agent input",
+        "x-ess-name": "agentspec.session.EndAgent",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.EndAgent.ended.Response": {
+        "additionalProperties": false,
+        "description": "The agent will take no further prompt. Taken when no other outcome's condition matched. A `agentspec.session.Agent` has moved to `Ended`, along `end`. The instance is the one `agent_id` names. Emits `AgentEnded`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "ended",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.AgentEnded",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.AgentEnded.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.EndAgent.wrong-state.Response": {
+        "additionalProperties": false,
+        "description": "The agent had already ended. Taken when the subject is in a state none of this command's declared moves start from. Which states those are is the lifecycle's answer, not this command's. For an instance no record carries, `payload` is absent, because an instance that does not exist has nothing for the error to describe.",
+        "properties": {
+          "error": {
+            "const": "agentspec.session.AgentStateConflict",
+            "description": "The agent is not in a state this command acts from.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "wrong-state",
+            "description": "Which declared outcome the command took."
+          },
+          "payload": {
+            "$ref": "#/components/schemas/agentspec.session.AgentStateConflict.Error"
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.EndSession.Input": {
+        "title": "End a session input",
+        "x-ess-name": "agentspec.session.EndSession",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "$ref": "#/components/schemas/agentspec.session.SessionId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "session_id",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.EndSession.ended.Response": {
+        "additionalProperties": false,
+        "description": "The session has ended; the transcript holds no later record. Taken when no other outcome's condition matched. A `agentspec.session.Session` has moved to `Ended`, along `end`. The instance is the one `session_id` names. Emits `SessionEnded`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "ended",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.SessionEnded",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.SessionEnded.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.EndSession.wrong-state.Response": {
+        "additionalProperties": false,
+        "description": "The session had already ended. Taken when the subject is in a state none of this command's declared moves start from. Which states those are is the lifecycle's answer, not this command's. For an instance no record carries, `payload` is absent, because an instance that does not exist has nothing for the error to describe.",
+        "properties": {
+          "error": {
+            "const": "agentspec.session.SessionStateConflict",
+            "description": "The session is not in a state this command acts from.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "wrong-state",
+            "description": "Which declared outcome the command took."
+          },
+          "payload": {
+            "$ref": "#/components/schemas/agentspec.session.SessionStateConflict.Error"
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.EndTurn.Input": {
+        "title": "End a turn input",
+        "x-ess-name": "agentspec.session.EndTurn",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.EndTurn.ended.Response": {
+        "additionalProperties": false,
+        "description": "The agent is Idle and waits for its next prompt. Taken when no other outcome's condition matched. A `agentspec.session.Agent` has moved to `Idle`, along `end_turn`. The instance is the one `agent_id` names. Emits `TurnEnded`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "ended",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.TurnEnded",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.TurnEnded.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.EndTurn.wrong-state.Response": {
+        "additionalProperties": false,
+        "description": "The agent was not Working. Taken when the subject is in a state none of this command's declared moves start from. Which states those are is the lifecycle's answer, not this command's. For an instance no record carries, `payload` is absent, because an instance that does not exist has nothing for the error to describe.",
+        "properties": {
+          "error": {
+            "const": "agentspec.session.AgentStateConflict",
+            "description": "The agent is not in a state this command acts from.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "wrong-state",
+            "description": "Which declared outcome the command took."
+          },
+          "payload": {
+            "$ref": "#/components/schemas/agentspec.session.AgentStateConflict.Error"
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.Exposure.State": {
+        "title": "State",
+        "x-ess-name": "agentspec.session.Exposure.State",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Recorded"
+        ]
+      },
+      "agentspec.session.ExposureChannel": {
+        "title": "ExposureChannel",
+        "description": "Where a secret or a personal datum appeared. ToolInput is the severe one when the tool's category is Network, Message or Execute: the value left the session.",
+        "x-ess-name": "agentspec.session.ExposureChannel",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Prompt",
+          "ToolInput",
+          "ToolOutput",
+          "AgentText"
+        ]
+      },
+      "agentspec.session.ExposureClass": {
+        "title": "ExposureClass",
+        "x-ess-name": "agentspec.session.ExposureClass",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Secret",
+          "PersonalData"
+        ]
+      },
+      "agentspec.session.ExposureDetected.Event": {
+        "title": "ExposureDetected payload",
+        "x-ess-name": "agentspec.session.ExposureDetected",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "exposure_id": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureId"
+          },
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureChannel"
+          },
+          "class": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureClass"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/agentspec.session.Verdict"
+          },
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "exposure_id",
+          "agent_id",
+          "channel",
+          "class",
+          "kind",
+          "alias",
+          "verdict",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.ExposureId": {
+        "title": "ExposureId",
+        "description": "One finding of the redaction pass; the adapter mints it from the record and the match position.",
+        "x-ess-name": "agentspec.session.ExposureId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "agentspec.session.Exposures.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `agentspec.session.Exposures`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/agentspec.session.Exposures.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.Exposures.Row": {
+        "title": "Exposures row",
+        "x-ess-name": "agentspec.session.Exposures",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "exposure_id": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureId"
+          },
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureChannel"
+          },
+          "class": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureClass"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/agentspec.session.Verdict"
+          },
+          "state": {
+            "$ref": "#/components/schemas/agentspec.session.Exposure.State"
+          }
+        },
+        "required": [
+          "exposure_id",
+          "agent_id",
+          "channel",
+          "class",
+          "kind",
+          "verdict",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.Harness": {
+        "title": "Harness",
+        "x-ess-name": "agentspec.session.Harness",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "ClaudeCode",
+          "Codex",
+          "Other"
+        ]
+      },
+      "agentspec.session.IncompleteReason": {
+        "title": "IncompleteReason",
+        "description": "Why a model turn on the wire ended before its answer was whole.",
+        "x-ess-name": "agentspec.session.IncompleteReason",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "client_disconnected",
+          "upstream_cut",
+          "wire_error",
+          "refused"
+        ]
+      },
+      "agentspec.session.ModelTurnRecorded.Event": {
+        "title": "ModelTurnRecorded payload",
+        "x-ess-name": "agentspec.session.ModelTurnRecorded",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "model": {
+            "type": "string"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/agentspec.session.Usage"
+          },
+          "context_tokens": {
+            "type": "integer"
+          },
+          "message_id": {
+            "type": "string"
+          },
+          "call_id": {
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          },
+          "upstream": {
+            "type": "string"
+          },
+          "attempts": {
+            "type": "integer"
+          },
+          "queue_wait_ms": {
+            "type": "integer"
+          },
+          "ttft_ms": {
+            "type": "integer"
+          },
+          "declared_cost_microdollars": {
+            "type": "integer"
+          },
+          "incomplete": {
+            "$ref": "#/components/schemas/agentspec.session.IncompleteReason"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "model",
+          "usage",
+          "context_tokens",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.OpenSession.Input": {
+        "title": "Open a session input",
+        "x-ess-name": "agentspec.session.OpenSession",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "$ref": "#/components/schemas/agentspec.session.SessionId"
+          },
+          "harness": {
+            "$ref": "#/components/schemas/agentspec.session.Harness"
+          },
+          "source": {
+            "$ref": "#/components/schemas/agentspec.session.Source"
+          },
+          "session_hash": {
+            "description": "The gateway's name of the session: SHA-256 of `llm-gateway.session/1\\0<source>\\0<header value>`, its first 6 bytes as 12 hex digits. Both sources compute it, so they join.",
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "session_id",
+          "harness",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.OpenSession.opened.Response": {
+        "additionalProperties": false,
+        "description": "The session exists and holds no agent yet. Taken when no other outcome's condition matched. A `agentspec.session.Session` now exists, in `Open`. Its identity is published as `session_id` on `agentspec.session.SessionOpened`. Emits `SessionOpened`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "opened",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.SessionOpened",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.SessionOpened.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.PromptAuthor": {
+        "title": "PromptAuthor",
+        "description": "Who wrote a prompt. Delegate is a session acting for the human; Harness covers task notifications, compaction summaries and auto-continuation.",
+        "x-ess-name": "agentspec.session.PromptAuthor",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Human",
+          "Delegate",
+          "PeerSession",
+          "ParentAgent",
+          "Harness",
+          "Hook"
+        ]
+      },
+      "agentspec.session.PromptClass": {
+        "title": "PromptClass",
+        "description": "What a prompt asks, from rules over its text run on the host before redaction; Unknown when no rule matched or the author is the harness or a hook.",
+        "x-ess-name": "agentspec.session.PromptClass",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Task",
+          "Correction",
+          "Approval",
+          "Question",
+          "Continue",
+          "Unknown"
+        ]
+      },
+      "agentspec.session.PromptSubmitted.Event": {
+        "title": "PromptSubmitted payload",
+        "x-ess-name": "agentspec.session.PromptSubmitted",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "author": {
+            "$ref": "#/components/schemas/agentspec.session.PromptAuthor"
+          },
+          "attribution": {
+            "$ref": "#/components/schemas/agentspec.session.Attribution"
+          },
+          "class": {
+            "$ref": "#/components/schemas/agentspec.session.PromptClass"
+          },
+          "content": {
+            "$ref": "#/components/schemas/agentspec.session.Content"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "author",
+          "attribution",
+          "class",
+          "content",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.RecordExposure.Input": {
+        "title": "Record an exposure input",
+        "description": "The redaction pass found a secret or a personal datum and replaced it.",
+        "x-ess-name": "agentspec.session.RecordExposure",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "exposure_id": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureId"
+          },
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureChannel"
+          },
+          "class": {
+            "$ref": "#/components/schemas/agentspec.session.ExposureClass"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/agentspec.session.Verdict"
+          },
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "exposure_id",
+          "agent_id",
+          "channel",
+          "class",
+          "kind",
+          "alias",
+          "verdict",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.RecordExposure.recorded.Response": {
+        "additionalProperties": false,
+        "description": "The exposure is on record under its alias; the value is not. Taken when no other outcome's condition matched. A `agentspec.session.Exposure` now exists, in `Recorded`. Its identity is published as `exposure_id` on `agentspec.session.ExposureDetected`. Emits `ExposureDetected`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "recorded",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.ExposureDetected",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.ExposureDetected.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.RecordModelTurn.Input": {
+        "title": "Record a model turn input",
+        "description": "One model message of the agent, with the model that wrote it and its token usage.",
+        "x-ess-name": "agentspec.session.RecordModelTurn",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "model": {
+            "type": "string"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/agentspec.session.Usage"
+          },
+          "context_tokens": {
+            "type": "integer"
+          },
+          "message_id": {
+            "description": "The id the provider gave the answer (`msg_…`, `chatcmpl-…`, `resp_…`); both sources hold it, so they join on it.",
+            "type": "string"
+          },
+          "call_id": {
+            "description": "The gateway's call id (`x-llm-gateway-call`), the pointer to its call record. Wire only.",
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          },
+          "upstream": {
+            "type": "string"
+          },
+          "attempts": {
+            "type": "integer"
+          },
+          "queue_wait_ms": {
+            "type": "integer"
+          },
+          "ttft_ms": {
+            "description": "Milliseconds from the request to the first answer byte.",
+            "type": "integer"
+          },
+          "declared_cost_microdollars": {
+            "description": "Token counts times the price the gateway's operator declares for the route; absent on a route without one. Not a provider's bill.",
+            "type": "integer"
+          },
+          "incomplete": {
+            "$ref": "#/components/schemas/agentspec.session.IncompleteReason"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "model",
+          "usage",
+          "context_tokens",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.RecordModelTurn.no-such-agent.Response": {
+        "additionalProperties": false,
+        "description": "Taken when the request names an identity no record carries.",
+        "properties": {
+          "error": {
+            "const": "agentspec.session.UnknownAgent",
+            "description": "No agent of this identity was started; the adapter lost a StartAgent.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "no-such-agent",
+            "description": "Which declared outcome the command took."
+          },
+          "payload": {
+            "$ref": "#/components/schemas/agentspec.session.UnknownAgent.Error"
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error",
+          "payload"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.RecordModelTurn.recorded.Response": {
+        "additionalProperties": false,
+        "description": "The agent's model and context size are those of this message. Taken when no other outcome's condition matched. A `agentspec.session.Agent` has changed, and its state is unchanged. The instance is the one `agent_id` names. Emits `ModelTurnRecorded`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "recorded",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.ModelTurnRecorded",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.ModelTurnRecorded.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.RequestToolCall.Input": {
+        "title": "Request a tool call input",
+        "x-ess-name": "agentspec.session.RequestToolCall",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCategory"
+          },
+          "input": {
+            "$ref": "#/components/schemas/agentspec.session.Content"
+          },
+          "cwd": {
+            "description": "The working directory of the call, relative to the home directory as `~/…`.",
+            "type": "string"
+          },
+          "background": {
+            "description": "The agent asked for the call to run in the background and went on.",
+            "type": "boolean"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "agent_id",
+          "tool",
+          "category",
+          "input",
+          "background",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.RequestToolCall.requested.Response": {
+        "additionalProperties": false,
+        "description": "The tool call waits for a decision. Taken when no other outcome's condition matched. A `agentspec.session.ToolCall` now exists, in `Requested`. Its identity is published as `tool_call_id` on `agentspec.session.ToolCallRequested`. Emits `ToolCallRequested`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "requested",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.ToolCallRequested",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.ToolCallRequested.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.Session.State": {
+        "title": "State",
+        "x-ess-name": "agentspec.session.Session.State",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Ended",
+          "Open"
+        ]
+      },
+      "agentspec.session.SessionEnded.Event": {
+        "title": "SessionEnded payload",
+        "x-ess-name": "agentspec.session.SessionEnded",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "$ref": "#/components/schemas/agentspec.session.SessionId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "session_id",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.SessionId": {
+        "title": "SessionId",
+        "description": "The harness's own session identifier.",
+        "x-ess-name": "agentspec.session.SessionId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "agentspec.session.SessionOpened.Event": {
+        "title": "SessionOpened payload",
+        "x-ess-name": "agentspec.session.SessionOpened",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "$ref": "#/components/schemas/agentspec.session.SessionId"
+          },
+          "harness": {
+            "$ref": "#/components/schemas/agentspec.session.Harness"
+          },
+          "source": {
+            "$ref": "#/components/schemas/agentspec.session.Source"
+          },
+          "session_hash": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "session_id",
+          "harness",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.SessionStateConflict.Error": {
+        "title": "SessionStateConflict payload",
+        "description": "The session is not in a state this command acts from.",
+        "x-ess-name": "agentspec.session.SessionStateConflict",
+        "x-ess-kind": "error-payload",
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/agentspec.session.Session.State"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.Sessions.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `agentspec.session.Sessions`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/agentspec.session.Sessions.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.Sessions.Row": {
+        "title": "Sessions row",
+        "x-ess-name": "agentspec.session.Sessions",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "$ref": "#/components/schemas/agentspec.session.SessionId"
+          },
+          "harness": {
+            "$ref": "#/components/schemas/agentspec.session.Harness"
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "$ref": "#/components/schemas/agentspec.session.Session.State"
+          }
+        },
+        "required": [
+          "session_id",
+          "harness",
+          "opened_at",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.Source": {
+        "title": "Source",
+        "description": "Where a record was observed: a harness transcript on disk, or a model call on a gateway's wire (`design/interaction-records.md`).",
+        "x-ess-name": "agentspec.session.Source",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Disk",
+          "Wire"
+        ]
+      },
+      "agentspec.session.StartAgent.Input": {
+        "title": "Start an agent input",
+        "x-ess-name": "agentspec.session.StartAgent",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/agentspec.session.SessionId"
+          },
+          "parent_agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "role": {
+            "$ref": "#/components/schemas/agentspec.session.AgentRole"
+          },
+          "spawned_by": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId",
+            "description": "The tool call of the parent that started this agent, when the harness records it."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "session_id",
+          "role",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.StartAgent.started.Response": {
+        "additionalProperties": false,
+        "description": "The agent exists and is Idle until its first prompt. Taken when no other outcome's condition matched. A `agentspec.session.Agent` now exists, in `Idle`. Its identity is published as `agent_id` on `agentspec.session.AgentStarted`. Emits `AgentStarted`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "started",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.AgentStarted",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.AgentStarted.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.SubmitPrompt.Input": {
+        "title": "Submit a prompt input",
+        "description": "A prompt reaches an agent. From Idle it starts a turn; while Working it is queued into the running turn, as Claude Code does with a message typed mid-turn.",
+        "x-ess-name": "agentspec.session.SubmitPrompt",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "author": {
+            "$ref": "#/components/schemas/agentspec.session.PromptAuthor"
+          },
+          "attribution": {
+            "$ref": "#/components/schemas/agentspec.session.Attribution"
+          },
+          "class": {
+            "$ref": "#/components/schemas/agentspec.session.PromptClass"
+          },
+          "content": {
+            "$ref": "#/components/schemas/agentspec.session.Content"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "author",
+          "attribution",
+          "class",
+          "content",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.SubmitPrompt.submitted.Response": {
+        "additionalProperties": false,
+        "description": "The agent is Working on the prompt. Taken when no other outcome's condition matched. A `agentspec.session.Agent` has moved to `Working`, along `resume`. The instance is the one `agent_id` names. Emits `PromptSubmitted`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "submitted",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "agentspec.session.PromptSubmitted",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/agentspec.session.PromptSubmitted.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.SubmitPrompt.wrong-state.Response": {
+        "additionalProperties": false,
+        "description": "The agent had ended, so the prompt reached nobody. Taken when the subject is in a state none of this command's declared moves start from. Which states those are is the lifecycle's answer, not this command's. For an instance no record carries, `payload` is absent, because an instance that does not exist has nothing for the error to describe.",
+        "properties": {
+          "error": {
+            "const": "agentspec.session.AgentStateConflict",
+            "description": "The agent is not in a state this command acts from.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "wrong-state",
+            "description": "Which declared outcome the command took."
+          },
+          "payload": {
+            "$ref": "#/components/schemas/agentspec.session.AgentStateConflict.Error"
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.ToolCall.State": {
+        "title": "State",
+        "x-ess-name": "agentspec.session.ToolCall.State",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Accepted",
+          "Failed",
+          "Refused",
+          "Requested",
+          "Succeeded"
+        ]
+      },
+      "agentspec.session.ToolCallCompleted.Event": {
+        "title": "ToolCallCompleted payload",
+        "x-ess-name": "agentspec.session.ToolCallCompleted",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "output": {
+            "$ref": "#/components/schemas/agentspec.session.Content"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "ok",
+          "output",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.ToolCallDecided.Event": {
+        "title": "ToolCallDecided payload",
+        "x-ess-name": "agentspec.session.ToolCallDecided",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/agentspec.session.Decision"
+          },
+          "decider": {
+            "$ref": "#/components/schemas/agentspec.session.Decider"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "decision",
+          "decider",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.ToolCallId": {
+        "title": "ToolCallId",
+        "description": "The harness's identifier of one tool call.",
+        "x-ess-name": "agentspec.session.ToolCallId",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
+      "agentspec.session.ToolCallRequested.Event": {
+        "title": "ToolCallRequested payload",
+        "x-ess-name": "agentspec.session.ToolCallRequested",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCategory"
+          },
+          "input": {
+            "$ref": "#/components/schemas/agentspec.session.Content"
+          },
+          "cwd": {
+            "type": "string"
+          },
+          "background": {
+            "type": "boolean"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "agent_id",
+          "tool",
+          "category",
+          "input",
+          "background",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.ToolCallStateConflict.Error": {
+        "title": "ToolCallStateConflict payload",
+        "description": "The tool call is not in a state this command acts from.",
+        "x-ess-name": "agentspec.session.ToolCallStateConflict",
+        "x-ess-kind": "error-payload",
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCall.State"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.ToolCalls.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `agentspec.session.ToolCalls`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/agentspec.session.ToolCalls.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "agentspec.session.ToolCalls.Row": {
+        "title": "Tool calls row",
+        "x-ess-name": "agentspec.session.ToolCalls",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "tool_call_id": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCallId"
+          },
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCategory"
+          },
+          "state": {
+            "$ref": "#/components/schemas/agentspec.session.ToolCall.State"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "agent_id",
+          "tool",
+          "category",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.ToolCategory": {
+        "title": "ToolCategory",
+        "x-ess-name": "agentspec.session.ToolCategory",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Read",
+          "Search",
+          "Edit",
+          "Execute",
+          "Network",
+          "Spawn",
+          "Message",
+          "Plan",
+          "Other"
+        ]
+      },
+      "agentspec.session.TurnEnded.Event": {
+        "title": "TurnEnded payload",
+        "x-ess-name": "agentspec.session.TurnEnded",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "agent_id",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.UnknownAgent.Error": {
+        "title": "UnknownAgent payload",
+        "description": "No agent of this identity was started; the adapter lost a StartAgent.",
+        "x-ess-name": "agentspec.session.UnknownAgent",
+        "x-ess-kind": "error-payload",
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "$ref": "#/components/schemas/agentspec.session.AgentId"
+          }
+        },
+        "required": [
+          "agent_id"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.Usage": {
+        "title": "Usage",
+        "description": "Token usage of one model message, as the harness reports it.",
+        "x-ess-name": "agentspec.session.Usage",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "uncached_input": {
+            "type": "integer"
+          },
+          "cache_read": {
+            "type": "integer"
+          },
+          "cache_write_5m": {
+            "type": "integer"
+          },
+          "cache_write_1h": {
+            "type": "integer"
+          },
+          "output": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uncached_input",
+          "cache_read",
+          "cache_write_5m",
+          "cache_write_1h",
+          "output"
+        ],
+        "additionalProperties": false
+      },
+      "agentspec.session.Verdict": {
+        "title": "Verdict",
+        "description": "Ok is a known fixture or allowed value, Gap a confirmed exposure, Unk a match nobody confirmed.",
+        "x-ess-name": "agentspec.session.Verdict",
+        "x-ess-kind": "enum",
+        "type": "string",
+        "enum": [
+          "Ok",
+          "Gap",
+          "Unk"
+        ]
+      }
+    }
+  },
+  "x-ess-entities": {
+    "agentspec.session.Agent": {
+      "title": "Agent",
+      "description": "One agent loop. Working while its turn runs, Idle once the turn ended and until the next prompt. Idle time before a human prompt is time the session waited on the human.",
+      "x-ess-name": "agentspec.session.Agent",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "agent_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.AgentId"
+        },
+        "session_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.SessionId",
+          "x-ess-relation": {
+            "name": "agents",
+            "kind": "owns",
+            "source": "agentspec.session.Session",
+            "target": "agentspec.session.Agent",
+            "cardinality": "many",
+            "via": "session_id",
+            "$ref": "#/x-ess-entities/agentspec.session.Session"
+          }
+        },
+        "parent_agent_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.AgentId",
+          "x-ess-relation": {
+            "name": "parent",
+            "kind": "references",
+            "source": "agentspec.session.Agent",
+            "target": "agentspec.session.Agent",
+            "cardinality": "one",
+            "via": "parent_agent_id",
+            "$ref": "#/x-ess-entities/agentspec.session.Agent"
+          }
+        },
+        "role": {
+          "$ref": "#/x-ess-entities/agentspec.session.AgentRole"
+        },
+        "model": {
+          "type": "string"
+        },
+        "context_tokens": {
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/agentspec.session.Agent.State"
+        }
+      },
+      "required": [
+        "agent_id",
+        "session_id",
+        "role",
+        "context_tokens",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "agentspec.session.Agent.State": {
+      "title": "State",
+      "x-ess-name": "agentspec.session.Agent.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Ended",
+        "Idle",
+        "Working"
+      ]
+    },
+    "agentspec.session.AgentId": {
+      "title": "AgentId",
+      "description": "One agent loop in a session; the main loop or a sub-agent.",
+      "x-ess-name": "agentspec.session.AgentId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "agentspec.session.AgentRole": {
+      "title": "AgentRole",
+      "description": "SideCall is a model call of the harness outside every agent's conversation (a title, a summary, a quota probe): the wire tells it by a call with no tools and no history.",
+      "x-ess-name": "agentspec.session.AgentRole",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Main",
+        "SubAgent",
+        "SideCall"
+      ]
+    },
+    "agentspec.session.Exposure": {
+      "title": "Exposure",
+      "description": "A secret or a personal datum the redaction pass found in one channel of one agent. Holds the class, the detector kind and a per-session alias; never the value.",
+      "x-ess-name": "agentspec.session.Exposure",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "exposure_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.ExposureId"
+        },
+        "agent_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.AgentId",
+          "x-ess-relation": {
+            "name": "exposures",
+            "kind": "owns",
+            "source": "agentspec.session.Agent",
+            "target": "agentspec.session.Exposure",
+            "cardinality": "many",
+            "via": "agent_id",
+            "$ref": "#/x-ess-entities/agentspec.session.Agent"
+          }
+        },
+        "channel": {
+          "$ref": "#/x-ess-entities/agentspec.session.ExposureChannel"
+        },
+        "class": {
+          "$ref": "#/x-ess-entities/agentspec.session.ExposureClass"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "verdict": {
+          "$ref": "#/x-ess-entities/agentspec.session.Verdict"
+        },
+        "tool_call_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.ToolCallId",
+          "x-ess-relation": {
+            "name": "tool_call",
+            "kind": "references",
+            "source": "agentspec.session.Exposure",
+            "target": "agentspec.session.ToolCall",
+            "cardinality": "one",
+            "via": "tool_call_id",
+            "$ref": "#/x-ess-entities/agentspec.session.ToolCall"
+          }
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/agentspec.session.Exposure.State"
+        }
+      },
+      "required": [
+        "exposure_id",
+        "agent_id",
+        "channel",
+        "class",
+        "kind",
+        "alias",
+        "verdict",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "agentspec.session.Exposure.State": {
+      "title": "State",
+      "x-ess-name": "agentspec.session.Exposure.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Recorded"
+      ]
+    },
+    "agentspec.session.ExposureChannel": {
+      "title": "ExposureChannel",
+      "description": "Where a secret or a personal datum appeared. ToolInput is the severe one when the tool's category is Network, Message or Execute: the value left the session.",
+      "x-ess-name": "agentspec.session.ExposureChannel",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Prompt",
+        "ToolInput",
+        "ToolOutput",
+        "AgentText"
+      ]
+    },
+    "agentspec.session.ExposureClass": {
+      "title": "ExposureClass",
+      "x-ess-name": "agentspec.session.ExposureClass",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Secret",
+        "PersonalData"
+      ]
+    },
+    "agentspec.session.ExposureId": {
+      "title": "ExposureId",
+      "description": "One finding of the redaction pass; the adapter mints it from the record and the match position.",
+      "x-ess-name": "agentspec.session.ExposureId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "agentspec.session.Harness": {
+      "title": "Harness",
+      "x-ess-name": "agentspec.session.Harness",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "ClaudeCode",
+        "Codex",
+        "Other"
+      ]
+    },
+    "agentspec.session.Session": {
+      "title": "Session",
+      "description": "One harness session, from its first record to its last.",
+      "x-ess-name": "agentspec.session.Session",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.SessionId"
+        },
+        "harness": {
+          "$ref": "#/x-ess-entities/agentspec.session.Harness"
+        },
+        "opened_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/agentspec.session.Session.State"
+        }
+      },
+      "required": [
+        "session_id",
+        "harness",
+        "opened_at",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "agentspec.session.Session.State": {
+      "title": "State",
+      "x-ess-name": "agentspec.session.Session.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Ended",
+        "Open"
+      ]
+    },
+    "agentspec.session.SessionId": {
+      "title": "SessionId",
+      "description": "The harness's own session identifier.",
+      "x-ess-name": "agentspec.session.SessionId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "agentspec.session.ToolCall": {
+      "title": "ToolCall",
+      "description": "One tool call an agent requested, the decision on it and its result.",
+      "x-ess-name": "agentspec.session.ToolCall",
+      "x-ess-kind": "entity",
+      "type": "object",
+      "properties": {
+        "tool_call_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.ToolCallId"
+        },
+        "agent_id": {
+          "$ref": "#/x-ess-entities/agentspec.session.AgentId",
+          "x-ess-relation": {
+            "name": "tool_calls",
+            "kind": "owns",
+            "source": "agentspec.session.Agent",
+            "target": "agentspec.session.ToolCall",
+            "cardinality": "many",
+            "via": "agent_id",
+            "$ref": "#/x-ess-entities/agentspec.session.Agent"
+          }
+        },
+        "tool": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/x-ess-entities/agentspec.session.ToolCategory"
+        },
+        "state": {
+          "$ref": "#/x-ess-entities/agentspec.session.ToolCall.State"
+        }
+      },
+      "required": [
+        "tool_call_id",
+        "agent_id",
+        "tool",
+        "category",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "agentspec.session.ToolCall.State": {
+      "title": "State",
+      "x-ess-name": "agentspec.session.ToolCall.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Accepted",
+        "Failed",
+        "Refused",
+        "Requested",
+        "Succeeded"
+      ]
+    },
+    "agentspec.session.ToolCallId": {
+      "title": "ToolCallId",
+      "description": "The harness's identifier of one tool call.",
+      "x-ess-name": "agentspec.session.ToolCallId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "agentspec.session.ToolCategory": {
+      "title": "ToolCategory",
+      "x-ess-name": "agentspec.session.ToolCategory",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Read",
+        "Search",
+        "Edit",
+        "Execute",
+        "Network",
+        "Spawn",
+        "Message",
+        "Plan",
+        "Other"
+      ]
+    },
+    "agentspec.session.Verdict": {
+      "title": "Verdict",
+      "description": "Ok is a known fixture or allowed value, Gap a confirmed exposure, Unk a match nobody confirmed.",
+      "x-ess-name": "agentspec.session.Verdict",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Ok",
+        "Gap",
+        "Unk"
+      ]
+    }
+  }
+}

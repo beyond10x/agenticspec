@@ -4,7 +4,7 @@ import { ref, watch } from 'vue';
 
 export type Theme = 'system' | 'light' | 'dark';
 
-const KEY = 'sessionspec.theme';
+const KEY = 'agentspec.theme';
 
 function initial(): Theme {
   if (typeof window === 'undefined') return 'system';

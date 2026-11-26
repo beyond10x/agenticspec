@@ -64,7 +64,7 @@ describe('overview', () => {
     await flushPromises();
     const ch = sources.find((s) => s.url === '/view/channels/sessions')!;
     const changed = { ...sessions.rows[0], title: 'Renamed live', last_at: new Date(Date.now()).toISOString() };
-    ch.emit('sessionspec.view.SessionUpdated', changed);
+    ch.emit('agentspec.view.SessionUpdated', changed);
     await flushPromises();
     expect(w.text()).toContain('Renamed live');
     expect(w.findAll('tbody tr')).toHaveLength(sessions.rows.length);
@@ -90,7 +90,7 @@ describe('session page', () => {
     const before = w.findAll('.log tbody tr').length;
     const ch = sources.find((s) => s.url.startsWith('/view/channels/session_events'))!;
     const main = agents.rows.find((a) => a.session_id === id && a.role === 'Main')!;
-    ch.emit('sessionspec.view.EventAppended', {
+    ch.emit('agentspec.view.EventAppended', {
       event_id: `${id}.900`,
       session_id: id,
       seq: 900,

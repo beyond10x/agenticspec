@@ -1,12 +1,12 @@
-# AGENTS.md — sessionspec
+# AGENTS.md — agentspec
 
-sessionspec lifts agent sessions of any harness into one IR (actors, commands, decisions, events,
+agentspec lifts agent sessions of any harness into one IR (actors, commands, decisions, events,
 state over time), redacts it into a persistable form, and evaluates KPIs on it. User
 documentation: `docs/`. Internal design notes: `design/` (`design/design.md` first). Baseline
 numbers: `research/`.
 
 Organization-wide rules live in the workspace `AGENTS.md` (in the directory that holds the
-organization's repositories side by side); this file adds what is specific to sessionspec.
+organization's repositories side by side); this file adds what is specific to agentspec.
 
 This repository is public. No person's name, e-mail address, host path, private repository,
 session name, employer or customer goes into a tracked file, a commit message or a fixture.
@@ -42,35 +42,35 @@ change.
 - Generated, never edited by hand, checked byte for byte by `task check:generated`:
   - `generated/`: `ess generate synthesize --target rust` (IR types, command behaviours, system,
     wire codecs). Its own workspace, excluded from the root one.
-  - `crates/sessionspec-cli-contract/`: `ess generate cli`.
+  - `crates/agentspec-cli-contract/`: `ess generate cli`.
 - After a change of `spec/`: `task generate`, then fix what the compiler names.
-- `ui/sessionspec.ui.yaml` is the UI as an `ess-ui/1` document over the views of
-  `sessionspec.view`, which the `session-view` component serves; `task check:ui` checks it against
+- `ui/agentspec.ui.yaml` is the UI as an `ess-ui/1` document over the views of
+  `agentspec.view`, which the `session-view` component serves; `task check:ui` checks it against
   `spec/` and runs `ui/tests/` on the fixtures in `ui/fixtures/` (format: `ui/README.md`).
 
 ## Layout of the hand-written crates
 
-`crates/sessionspec-records` is the library the gateway links (`design/interaction-records.md`);
-`crates/sessionspec` is the command line over it and re-exports its modules.
+`crates/agentspec-records` is the library the gateway links (`design/interaction-records.md`);
+`crates/agentspec` is the command line over it and re-exports its modules.
 
 | crate | module | what |
 |---|---|---|
-| `sessionspec-records` | `claude.rs` | Claude Code adapter: transcript files to IR commands, with actor and attribution |
-| `sessionspec-records` | `redact.rs` | secret and personal-data detection; aliases, never values |
-| `sessionspec-records` | `replay.rs` | storage ports and the replay loop through the generated component |
-| `sessionspec-records` | `kpi.rs` | KPIs over published events only |
-| `sessionspec-records` | `store.rs` | the local store `<state-dir>/sessions.db` (SQLite): `sync`, stored commands, view rows |
-| `sessionspec-records` | `wire.rs` | the wire source: one finished gateway call to IR commands (`lift_call`), the session hash, `join` on the message id |
-| `sessionspec-records` | `append.rs` | the non-blocking writer a gateway appends through (`Appender::spawn`, a bounded queue, drops counted) |
-| `sessionspec-records` | `view.rs`, `sq/`, `pricing.rs`, `time.rs` | view projection, the sq engine, API list prices, time helpers |
-| `sessionspec` | `mine.rs`, `export.rs` | pattern mining, procedure export to canon |
-| `sessionspec` | `serve.rs` | `sessionspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `sessionspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
-| `sessionspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `sessionspec analyze` writes |
-| `sessionspec` | `main.rs` | handler behind the generated CLI |
+| `agentspec-records` | `claude.rs` | Claude Code adapter: transcript files to IR commands, with actor and attribution |
+| `agentspec-records` | `redact.rs` | secret and personal-data detection; aliases, never values |
+| `agentspec-records` | `replay.rs` | storage ports and the replay loop through the generated component |
+| `agentspec-records` | `kpi.rs` | KPIs over published events only |
+| `agentspec-records` | `store.rs` | the local store `<state-dir>/sessions.db` (SQLite): `sync`, stored commands, view rows |
+| `agentspec-records` | `wire.rs` | the wire source: one finished gateway call to IR commands (`lift_call`), the session hash, `join` on the message id |
+| `agentspec-records` | `append.rs` | the non-blocking writer a gateway appends through (`Appender::spawn`, a bounded queue, drops counted) |
+| `agentspec-records` | `view.rs`, `sq/`, `pricing.rs`, `time.rs` | view projection, the sq engine, API list prices, time helpers |
+| `agentspec` | `mine.rs`, `export.rs` | pattern mining, procedure export to canon |
+| `agentspec` | `serve.rs` | `agentspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `agentspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
+| `agentspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agentspec analyze` writes |
+| `agentspec` | `main.rs` | handler behind the generated CLI |
 
 Beside the crates, `ui/` holds:
 
-- `sessionspec.ui.yaml`, the UI as an `ess-ui/1` document, with its `ess-ui-test/1` tests, checked by
+- `agentspec.ui.yaml`, the UI as an `ess-ui/1` document, with its `ess-ui-test/1` tests, checked by
   `task check:ui`. No UI is generated from it.
 - `fixtures/`, the synthetic view rows every UI test reads, one row per line.
 - `app/`, the live UI, written by hand: Vue 3, Vite and TypeScript. Its types are
@@ -119,23 +119,23 @@ Beside the crates, `ui/` holds:
 | `.github/workflows/pages.yml` | `Documentation validation`: classifies the changed files with `scripts/change-class.sh`, builds the site, refuses a machine path in it, and on `main` uploads the artifact `b10x-project-site`. Its job `gate` runs `task check` for the class `code`, with `task`, `cargo-nextest` and `ess` downloaded at a pinned version and refused unless their SHA-256 is the one in the step |
 | `.github/workflows/b10x-docs-site.yml` | publishes that artifact to GitHub Pages through `beyond10x/website`'s `project-site.yml`, pinned by commit, for bot-authored pushes to `main` |
 | `.github/workflows/shared-gates.yml` | the organization's shared source gates (`beyond10x/gates`, pinned by commit) |
-| `.github/workflows/release.yml` | `Release`, on a tag `<major>.<minor>.<patch>`, with `contents: read`: `release-check.sh` and `task check`, then the archives of the three Linux targets (the musl one static and run in Alpine), `SHA256SUMS` and `notes.md` as the artifact `sessionspec-<version>-release`. It creates no release and reads no token (§ "Release"). Its job `Gate` installs the tools of the job `gate` of `pages.yml` at the same versions and digests; `release.test.sh` fails when they differ |
+| `.github/workflows/release.yml` | `Release`, on a tag `<major>.<minor>.<patch>`, with `contents: read`: `release-check.sh` and `task check`, then the archives of the three Linux targets (the musl one static and run in Alpine), `SHA256SUMS` and `notes.md` as the artifact `agentspec-<version>-release`. It creates no release and reads no token (§ "Release"). Its job `Gate` installs the tools of the job `gate` of `pages.yml` at the same versions and digests; `release.test.sh` fails when they differ |
 | `scripts/release-check.sh`, `release-package.sh`, `release-verify.sh`, `release.test.sh` | the scripts of a release: the tag, the workspace version and the changelog section agree; targets, archives, `SHA256SUMS` and notes; a published release is what § "Release" makes. `release.test.sh` holds their cases |
 
 ## Local store
 
-- `sessionspec sync` lifts each main transcript of the window whose files changed (size and
+- `agentspec sync` lifts each main transcript of the window whose files changed (size and
   modification time of the transcript and its `subagents/` files) and writes, in one
-  transaction per session: the redacted commands (zstd), the `sessionspec.view` rows (events
+  transaction per session: the redacted commands (zstd), the `agentspec.view` rows (events
   zstd), the session's KPIs and its check verdicts (`queries/session.sq`).
 - `query`, `mine`, `procedure`, `kpi` and `analyze` sync first and replay the stored commands;
   `query --transcript` reads the file.
-- The store is `$XDG_DATA_HOME/sessionspec/sessions.db` (or `--state-dir`), never inside this
+- The store is `$XDG_DATA_HOME/agentspec/sessions.db` (or `--state-dir`), never inside this
   repository: it holds the harness's session titles. `SCHEMA_VERSION` in `store.rs` rises when
   the derived tables change meaning; a store of another version drops and fills them again and
   keeps its `wire_steps`. `WIRE_FORMAT` rises when a wire row's encoding changes; a store of
   another wire format is refused and left unchanged.
-- `sessionspec serve` binds 127.0.0.1 only and answers as the one local `Viewer` (`ui/README.md`).
+- `agentspec serve` binds 127.0.0.1 only and answers as the one local `Viewer` (`ui/README.md`).
 
 ## Rules
 
@@ -149,7 +149,7 @@ Beside the crates, `ui/` holds:
   `Appender::spawn` and `AppenderHandle::append` are a contract with llm-gateway (its
   interaction-records epic). Change a name or a signature only after telling the gateway's
   maintainers, and with a new tag.
-- The sessions that act for the owner are named at run time (`SESSIONSPEC_DELEGATES`), never in
+- The sessions that act for the owner are named at run time (`AGENTSPEC_DELEGATES`), never in
   code or fixtures; a fixture uses a neutral name such as `operator`.
 - `shellspec` (the sibling repository) will lift the input of an `Execute` tool call into its
   sub-commands.
@@ -164,31 +164,31 @@ publications and wait for the owner's order.
 ## Release
 
 A release is the workspace version at a bare tag (`0.1.0`): three Linux archives of the
-`sessionspec` binary (`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu` and the static
+`agentspec` binary (`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu` and the static
 `x86_64-unknown-linux-musl`), each with `LICENSE` and `README.md`, `SHA256SUMS`, and notes cut
 from `CHANGELOG.md`. The tag workflow builds and the bot publishes. The musl archive needs no
 glibc of the host; a consumer of the binary pins it (organization rule for every Rust tool). The
 workflow refuses a musl binary that is not static or whose `--version` is wrong in a plain
-Alpine container. Consumers of `sessionspec-records` pin a released tag.
+Alpine container. Consumers of `agentspec-records` pin a released tag.
 
 Steps; `<version>` is greater than the newest tag on `origin/main`, and every git command of the
 bot is `b10x-gates bot --repository beyond10x/agentspec -- <git command>`:
 
-1. Branch `release/<version>` from `main`, with one commit `release: sessionspec <version>`: the
+1. Branch `release/<version>` from `main`, with one commit `release: agentspec <version>`: the
    `version` of `[workspace.package]`, `Cargo.lock` as `cargo build` rewrites it, and in
    `CHANGELOG.md` the line `## [<version>] - <YYYY-MM-DD>` directly below `## [Unreleased]`.
    `sh scripts/release-check.sh <version>` passes and `slot task check` is green on it.
 2. A bot pull request to `main`, merged by the bot with a merge commit when its checks are green.
-3. An annotated tag on that merge commit: `tag -a <version> -m "sessionspec <version>" <commit>`,
+3. An annotated tag on that merge commit: `tag -a <version> -m "agentspec <version>" <commit>`,
    then `push origin refs/tags/<version>`.
 4. The tag starts `Release`. Wait for it in the background; read a red run with
    `gh run view <run> --repo beyond10x/agentspec --log-failed`. A runner fault is re-run once
    (`b10x-gates gh --repository beyond10x/agentspec -- run rerun <run>`); a fault of the tree
    leaves the tag as it is, without a release, and the next patch version is cut after the fix.
    A green run: `gh run download <run> --repo beyond10x/agentspec -n
-   sessionspec-<version>-release -D target/release-assets`, then `sha256sum -c SHA256SUMS` there.
+   agentspec-<version>-release -D target/release-assets`, then `sha256sum -c SHA256SUMS` there.
 5. `b10x-gates gh --repository beyond10x/agentspec -- release create <version> --verify-tag
-   --title "sessionspec <version>" --notes-file target/release-assets/notes.md` with the three
+   --title "agentspec <version>" --notes-file target/release-assets/notes.md` with the three
    archives and `SHA256SUMS` of `target/release-assets/`.
 6. `sh scripts/release-verify.sh <version>` exits 0; only then is the release reported as
    released.
