@@ -14,7 +14,9 @@ Field names and formats may still change between 0.x releases.
 
 ## Install
 
-Build from source with the Rust toolchain pinned in `rust-toolchain.toml`:
+Each release on GitHub carries a static Linux binary that runs on any x86_64 Linux,
+`sessionspec-<version>-x86_64-unknown-linux-musl.tar.gz`, beside builds for glibc on x86_64 and
+aarch64. Or build from source with the Rust toolchain pinned in `rust-toolchain.toml`:
 
 ```console
 cargo install --locked --path crates/sessionspec

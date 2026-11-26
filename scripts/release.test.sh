@@ -57,7 +57,8 @@ expect 1 "check: the manifest is behind the tag" sh "$check" --manifest "$work/C
 
 # release-package.sh
 expect 0 "package: targets" sh "$package" targets
-[ "$(sh "$package" targets | wc -l)" = 2 ] || fail "package: two targets"
+[ "$(sh "$package" targets | wc -l)" = 3 ] || fail "package: three targets"
+sh "$package" targets | grep -qx x86_64-unknown-linux-musl || fail "package: the static musl target"
 [ "$(sh "$package" assets 0.1.0 | tail -n 1)" = SHA256SUMS ] || fail "package: SHA256SUMS is the last asset"
 mkdir "$work/bin"
 printf '#!/bin/sh\necho "sessionspec 0.1.0"\n' > "$work/bin/sessionspec"
@@ -83,6 +84,7 @@ describe() {
      assets: ([
        "sessionspec-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
        "sessionspec-0.1.0-aarch64-unknown-linux-gnu.tar.gz",
+       "sessionspec-0.1.0-x86_64-unknown-linux-musl.tar.gz",
        "SHA256SUMS"] + (if $extra == "" then [] else [$extra] end)
        | map({name: ., state: "uploaded"}))}' > "$work/description.json"
 }
@@ -95,8 +97,25 @@ expect 1 "verify: a draft" sh "$verify" 0.1.0 --description "$work/description.j
 describe 0.1.0 'b10x-bot[bot]' false 'notes.md'
 expect 1 "verify: an asset that is none of the release" sh "$verify" 0.1.0 --description "$work/description.json" --assets "$work/dist"
 describe 0.1.0 'b10x-bot[bot]' false ''
+cp "$work/dist/sessionspec-0.1.0-x86_64-unknown-linux-musl.tar.gz" "$work/musl.tar.gz"
+mkdir "$work/musl"
+tar -xzf "$work/musl.tar.gz" -C "$work/musl"
+printf '#!/bin/sh\necho "sessionspec 0.0.1"\n' > "$work/musl/sessionspec-0.1.0-x86_64-unknown-linux-musl/sessionspec"
+tar -C "$work/musl" --owner=0 --group=0 --numeric-owner -czf "$work/dist/sessionspec-0.1.0-x86_64-unknown-linux-musl.tar.gz" sessionspec-0.1.0-x86_64-unknown-linux-musl
+(cd "$work/dist" && sha256sum sessionspec-0.1.0-*.tar.gz > SHA256SUMS)
+expect 1 "verify: a musl binary of another version" sh "$verify" 0.1.0 --description "$work/description.json" --assets "$work/dist"
+cp "$work/musl.tar.gz" "$work/dist/sessionspec-0.1.0-x86_64-unknown-linux-musl.tar.gz"
+(cd "$work/dist" && sha256sum sessionspec-0.1.0-*.tar.gz > SHA256SUMS)
+expect 0 "verify: the musl archive restored" sh "$verify" 0.1.0 --description "$work/description.json" --assets "$work/dist"
 printf 'changed\n' >> "$work/dist/sessionspec-0.1.0-aarch64-unknown-linux-gnu.tar.gz"
 expect 1 "verify: an archive its checksum does not match" sh "$verify" 0.1.0 --description "$work/description.json" --assets "$work/dist"
+
+# release.yml builds the musl target statically and runs it in a plain Alpine container.
+grep -q 'target: x86_64-unknown-linux-musl' "$root/.github/workflows/release.yml" \
+  || fail "workflows: release.yml builds no x86_64-unknown-linux-musl archive"
+grep -q 'docker run --rm .*alpine@sha256:' "$root/.github/workflows/release.yml" \
+  || fail "workflows: release.yml does not run the musl binary in a pinned Alpine container"
+n=$((n + 1))
 
 # The job Gate of release.yml installs the tools of the job gate of pages.yml, at the same
 # versions and digests.

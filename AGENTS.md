@@ -119,7 +119,7 @@ Beside the crates, `ui/` holds:
 | `.github/workflows/pages.yml` | `Documentation validation`: classifies the changed files with `scripts/change-class.sh`, builds the site, refuses a machine path in it, and on `main` uploads the artifact `b10x-project-site`. Its job `gate` runs `task check` for the class `code`, with `task`, `cargo-nextest` and `ess` downloaded at a pinned version and refused unless their SHA-256 is the one in the step |
 | `.github/workflows/b10x-docs-site.yml` | publishes that artifact to GitHub Pages through `beyond10x/website`'s `project-site.yml`, pinned by commit, for bot-authored pushes to `main` |
 | `.github/workflows/shared-gates.yml` | the organization's shared source gates (`beyond10x/gates`, pinned by commit) |
-| `.github/workflows/release.yml` | `Release`, on a tag `<major>.<minor>.<patch>`, with `contents: read`: `release-check.sh` and `task check`, then the archives of both Linux targets, `SHA256SUMS` and `notes.md` as the artifact `sessionspec-<version>-release`. It creates no release and reads no token (§ "Release"). Its job `Gate` installs the tools of the job `gate` of `pages.yml` at the same versions and digests; `release.test.sh` fails when they differ |
+| `.github/workflows/release.yml` | `Release`, on a tag `<major>.<minor>.<patch>`, with `contents: read`: `release-check.sh` and `task check`, then the archives of the three Linux targets (the musl one static and run in Alpine), `SHA256SUMS` and `notes.md` as the artifact `sessionspec-<version>-release`. It creates no release and reads no token (§ "Release"). Its job `Gate` installs the tools of the job `gate` of `pages.yml` at the same versions and digests; `release.test.sh` fails when they differ |
 | `scripts/release-check.sh`, `release-package.sh`, `release-verify.sh`, `release.test.sh` | the scripts of a release: the tag, the workspace version and the changelog section agree; targets, archives, `SHA256SUMS` and notes; a published release is what § "Release" makes. `release.test.sh` holds their cases |
 
 ## Local store
@@ -163,10 +163,13 @@ publications and wait for the owner's order.
 
 ## Release
 
-A release is the workspace version at a bare tag (`0.1.0`): two Linux archives of the
-`sessionspec` binary (`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`), each with
-`LICENSE` and `README.md`, `SHA256SUMS`, and notes cut from `CHANGELOG.md`. The tag workflow
-builds and the bot publishes. Consumers of `sessionspec-records` pin a released tag.
+A release is the workspace version at a bare tag (`0.1.0`): three Linux archives of the
+`sessionspec` binary (`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu` and the static
+`x86_64-unknown-linux-musl`), each with `LICENSE` and `README.md`, `SHA256SUMS`, and notes cut
+from `CHANGELOG.md`. The tag workflow builds and the bot publishes. The musl archive needs no
+glibc of the host; a consumer of the binary pins it (organization rule for every Rust tool). The
+workflow refuses a musl binary that is not static or whose `--version` is wrong in a plain
+Alpine container. Consumers of `sessionspec-records` pin a released tag.
 
 Steps; `<version>` is greater than the newest tag on `origin/main`, and every git command of the
 bot is `b10x-gates bot --repository beyond10x/sessionspec -- <git command>`:
@@ -185,7 +188,7 @@ bot is `b10x-gates bot --repository beyond10x/sessionspec -- <git command>`:
    A green run: `gh run download <run> --repo beyond10x/sessionspec -n
    sessionspec-<version>-release -D target/release-assets`, then `sha256sum -c SHA256SUMS` there.
 5. `b10x-gates gh --repository beyond10x/sessionspec -- release create <version> --verify-tag
-   --title "sessionspec <version>" --notes-file target/release-assets/notes.md` with the two
+   --title "sessionspec <version>" --notes-file target/release-assets/notes.md` with the three
    archives and `SHA256SUMS` of `target/release-assets/`.
 6. `sh scripts/release-verify.sh <version>` exits 0; only then is the release reported as
    released.
