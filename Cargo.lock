@@ -612,7 +612,7 @@ dependencies = [
 
 [[package]]
 name = "sessionspec"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "rayon",
  "regex",
@@ -643,7 +643,7 @@ dependencies = [
 
 [[package]]
 name = "sessionspec-records"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "rayon",
  "regex",
