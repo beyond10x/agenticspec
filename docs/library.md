@@ -6,8 +6,8 @@ an LLM gateway, uses it to write the same records into a store that `sessionspec
 
 ```toml
 [dependencies]
-sessionspec-records = { git = "https://github.com/beyond10x/sessionspec", tag = "<version>" }
-sessionspec-types = { git = "https://github.com/beyond10x/sessionspec", tag = "<version>" }
+sessionspec-records = { git = "https://github.com/beyond10x/agentspec", tag = "<version>" }
+sessionspec-types = { git = "https://github.com/beyond10x/agentspec", tag = "<version>" }
 ```
 
 ## Record gateway traffic

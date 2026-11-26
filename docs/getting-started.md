@@ -5,7 +5,7 @@
 You need a Rust toolchain. Install the binary from the repository:
 
 ```console
-cargo install --locked --git https://github.com/beyond10x/sessionspec sessionspec
+cargo install --locked --git https://github.com/beyond10x/agentspec sessionspec
 ```
 
 ## Fill the store

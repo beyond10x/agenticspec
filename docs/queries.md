@@ -100,7 +100,7 @@ one. Each session gets one verdict per check:
 The report counts the verdicts of each check under `ok`, `gap` and `unk`.
 
 The checks that ship with sessionspec are in
-[`queries/session.sq`](https://github.com/beyond10x/sessionspec/blob/main/queries/session.sq).
+[`queries/session.sq`](https://github.com/beyond10x/agentspec/blob/main/queries/session.sq).
 `sync` evaluates them for every session, and the dashboard shows the results.
 
 | check | finds |

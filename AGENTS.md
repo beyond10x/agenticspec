@@ -115,7 +115,7 @@ Beside the crates, `ui/` holds:
 | `scripts/check-app.sh` | `task check:app`: types, vitest, the build, and the Playwright gates and ratchet of `ux/` |
 | `ux/` | the ui-iteration-loop: adapter, scenarios, `baseline.json`, `round.sh`, rounds and findings |
 | `scripts/change-class.sh`, `change-class.test.sh` | the change classifier of `pages.yml` (planning, docs-site, code) and its cases, run by `task check:scripts`. `design/` and `research/` are planning; `website/` and `docs/` are the site. A new site source goes into its path list with a case |
-| `website/` | the public documentation site at `https://beyond10x.github.io/sessionspec/` (Docusaurus on `@beyond10x/docs-system`, pinned by commit in `package.json`). Its pages are `docs/*.md`, the user documentation, read in place; `docusaurus.config.ts` gives each its route, title and header (`pages`). `product.json` is the landing page. A new page needs an entry in `pages` and in `sidebars.ts`. A Markdown link to a file the site does not publish fails the build, so link such files by GitHub URL. `task site` builds it |
+| `website/` | the public documentation site at `https://beyond10x.github.io/agentspec/` (Docusaurus on `@beyond10x/docs-system`, pinned by commit in `package.json`). Its pages are `docs/*.md`, the user documentation, read in place; `docusaurus.config.ts` gives each its route, title and header (`pages`). `product.json` is the landing page. A new page needs an entry in `pages` and in `sidebars.ts`. A Markdown link to a file the site does not publish fails the build, so link such files by GitHub URL. `task site` builds it |
 | `.github/workflows/pages.yml` | `Documentation validation`: classifies the changed files with `scripts/change-class.sh`, builds the site, refuses a machine path in it, and on `main` uploads the artifact `b10x-project-site`. Its job `gate` runs `task check` for the class `code`, with `task`, `cargo-nextest` and `ess` downloaded at a pinned version and refused unless their SHA-256 is the one in the step |
 | `.github/workflows/b10x-docs-site.yml` | publishes that artifact to GitHub Pages through `beyond10x/website`'s `project-site.yml`, pinned by commit, for bot-authored pushes to `main` |
 | `.github/workflows/shared-gates.yml` | the organization's shared source gates (`beyond10x/gates`, pinned by commit) |
@@ -157,7 +157,7 @@ Beside the crates, `ui/` holds:
 ## Commits
 
 Every commit and push is `b10x-bot[bot]`'s through `b10x-gates bot --repository
-beyond10x/sessionspec -- <git command>`; every other GitHub write goes through `b10x-gates api`,
+beyond10x/agentspec -- <git command>`; every other GitHub write goes through `b10x-gates api`,
 with the gates policy file of the primary checkout. Every commit has a body. A tag and a release are
 publications and wait for the owner's order.
 
@@ -172,7 +172,7 @@ workflow refuses a musl binary that is not static or whose `--version` is wrong 
 Alpine container. Consumers of `sessionspec-records` pin a released tag.
 
 Steps; `<version>` is greater than the newest tag on `origin/main`, and every git command of the
-bot is `b10x-gates bot --repository beyond10x/sessionspec -- <git command>`:
+bot is `b10x-gates bot --repository beyond10x/agentspec -- <git command>`:
 
 1. Branch `release/<version>` from `main`, with one commit `release: sessionspec <version>`: the
    `version` of `[workspace.package]`, `Cargo.lock` as `cargo build` rewrites it, and in
@@ -182,12 +182,12 @@ bot is `b10x-gates bot --repository beyond10x/sessionspec -- <git command>`:
 3. An annotated tag on that merge commit: `tag -a <version> -m "sessionspec <version>" <commit>`,
    then `push origin refs/tags/<version>`.
 4. The tag starts `Release`. Wait for it in the background; read a red run with
-   `gh run view <run> --repo beyond10x/sessionspec --log-failed`. A runner fault is re-run once
-   (`b10x-gates gh --repository beyond10x/sessionspec -- run rerun <run>`); a fault of the tree
+   `gh run view <run> --repo beyond10x/agentspec --log-failed`. A runner fault is re-run once
+   (`b10x-gates gh --repository beyond10x/agentspec -- run rerun <run>`); a fault of the tree
    leaves the tag as it is, without a release, and the next patch version is cut after the fix.
-   A green run: `gh run download <run> --repo beyond10x/sessionspec -n
+   A green run: `gh run download <run> --repo beyond10x/agentspec -n
    sessionspec-<version>-release -D target/release-assets`, then `sha256sum -c SHA256SUMS` there.
-5. `b10x-gates gh --repository beyond10x/sessionspec -- release create <version> --verify-tag
+5. `b10x-gates gh --repository beyond10x/agentspec -- release create <version> --verify-tag
    --title "sessionspec <version>" --notes-file target/release-assets/notes.md` with the three
    archives and `SHA256SUMS` of `target/release-assets/`.
 6. `sh scripts/release-verify.sh <version>` exits 0; only then is the release reported as
