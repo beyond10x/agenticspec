@@ -1,14 +1,14 @@
 {
   "format": "b10x-product-landing/1",
   "product": {
-    "name": "agentspec",
+    "name": "agenticspec",
     "mark": "S",
     "eyebrow": "Coding-agent sessions · local",
     "promise": [
       "See how your agent sessions",
       "actually went."
     ],
-    "lede": "agentspec reads the transcripts of your Claude Code sessions and turns them into numbers you can compare: cost, cache use, time spent waiting on you, refused tool calls, secrets that reached the agent. It runs on your machine and sends nothing anywhere.",
+    "lede": "agenticspec reads the transcripts of your Claude Code sessions and turns them into numbers you can compare: cost, cache use, time spent waiting on you, refused tool calls, secrets that reached the agent. It runs on your machine and sends nothing anywhere.",
     "description": "Numbers about your coding-agent sessions, computed on your machine: cost, cache use, waiting time, refused calls, secrets. With a dashboard, a query language and pattern mining.",
     "actions": [
       {
@@ -51,7 +51,7 @@
         {
           "label": "store",
           "title": "One SQLite file",
-          "description": "agentspec sync adds new and changed sessions to a local store. Later runs take seconds."
+          "description": "agenticspec sync adds new and changed sessions to a local store. Later runs take seconds."
         },
         {
           "label": "measure",
@@ -68,7 +68,7 @@
       "items": [
         {
           "title": "Dashboard",
-          "description": "agentspec serve: averages over a time window, the recent sessions with search, and each session in detail, updated live.",
+          "description": "agenticspec serve: averages over a time window, the recent sessions with search, and each session in detail, updated live.",
           "href": "/docs/dashboard"
         },
         {

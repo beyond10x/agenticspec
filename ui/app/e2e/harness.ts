@@ -74,7 +74,7 @@ function streamStub() {
 export async function open(page: Page, path: string, theme: Theme): Promise<void> {
   await page.clock.setFixedTime(FIXTURE_NOW);
   await page.addInitScript(streamStub);
-  await page.addInitScript((t) => localStorage.setItem('agentspec.theme', t), theme);
+  await page.addInitScript((t) => localStorage.setItem('agenticspec.theme', t), theme);
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url());
     if (url.origin !== ORIGIN) return route.abort();

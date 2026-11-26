@@ -61,15 +61,15 @@ expect 0 "package: targets" sh "$package" targets
 sh "$package" targets | grep -qx x86_64-unknown-linux-musl || fail "package: the static musl target"
 [ "$(sh "$package" assets 0.1.0 | tail -n 1)" = SHA256SUMS ] || fail "package: SHA256SUMS is the last asset"
 mkdir "$work/bin"
-printf '#!/bin/sh\necho "agentspec 0.1.0"\n' > "$work/bin/agentspec"
-chmod 755 "$work/bin/agentspec"
-printf '#!/bin/sh\necho "agentspec 0.0.1"\n' > "$work/bin/old"
+printf '#!/bin/sh\necho "agenticspec 0.1.0"\n' > "$work/bin/agenticspec"
+chmod 755 "$work/bin/agenticspec"
+printf '#!/bin/sh\necho "agenticspec 0.0.1"\n' > "$work/bin/old"
 chmod 755 "$work/bin/old"
 expect 1 "package: a binary of another version" sh "$package" archive 0.1.0 x86_64-unknown-linux-gnu "$work/bin/old" "$work/dist"
-expect 1 "package: a target that is none of a release" sh "$package" archive 0.1.0 riscv64gc-unknown-linux-gnu "$work/bin/agentspec" "$work/dist"
+expect 1 "package: a target that is none of a release" sh "$package" archive 0.1.0 riscv64gc-unknown-linux-gnu "$work/bin/agenticspec" "$work/dist"
 expect 1 "package: sums without the archives" sh "$package" sums 0.1.0 "$work/dist"
 for target in $(sh "$package" targets); do
-  expect 0 "package: the archive of $target" sh "$package" archive 0.1.0 "$target" "$work/bin/agentspec" "$work/dist"
+  expect 0 "package: the archive of $target" sh "$package" archive 0.1.0 "$target" "$work/bin/agenticspec" "$work/dist"
 done
 expect 0 "package: sums" sh "$package" sums 0.1.0 "$work/dist"
 expect 0 "package: notes" sh "$package" notes 0.1.0 "$work/CHANGELOG.md"
@@ -82,9 +82,9 @@ describe() {
   jq -n --arg tag "$1" --arg login "$2" --argjson draft "$3" --arg extra "$4" '
     {tagName: $tag, isDraft: $draft, isPrerelease: false, author: {login: $login},
      assets: ([
-       "agentspec-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
-       "agentspec-0.1.0-aarch64-unknown-linux-gnu.tar.gz",
-       "agentspec-0.1.0-x86_64-unknown-linux-musl.tar.gz",
+       "agenticspec-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
+       "agenticspec-0.1.0-aarch64-unknown-linux-gnu.tar.gz",
+       "agenticspec-0.1.0-x86_64-unknown-linux-musl.tar.gz",
        "SHA256SUMS"] + (if $extra == "" then [] else [$extra] end)
        | map({name: ., state: "uploaded"}))}' > "$work/description.json"
 }
@@ -97,17 +97,17 @@ expect 1 "verify: a draft" sh "$verify" 0.1.0 --description "$work/description.j
 describe 0.1.0 'b10x-bot[bot]' false 'notes.md'
 expect 1 "verify: an asset that is none of the release" sh "$verify" 0.1.0 --description "$work/description.json" --assets "$work/dist"
 describe 0.1.0 'b10x-bot[bot]' false ''
-cp "$work/dist/agentspec-0.1.0-x86_64-unknown-linux-musl.tar.gz" "$work/musl.tar.gz"
+cp "$work/dist/agenticspec-0.1.0-x86_64-unknown-linux-musl.tar.gz" "$work/musl.tar.gz"
 mkdir "$work/musl"
 tar -xzf "$work/musl.tar.gz" -C "$work/musl"
-printf '#!/bin/sh\necho "agentspec 0.0.1"\n' > "$work/musl/agentspec-0.1.0-x86_64-unknown-linux-musl/agentspec"
-tar -C "$work/musl" --owner=0 --group=0 --numeric-owner -czf "$work/dist/agentspec-0.1.0-x86_64-unknown-linux-musl.tar.gz" agentspec-0.1.0-x86_64-unknown-linux-musl
-(cd "$work/dist" && sha256sum agentspec-0.1.0-*.tar.gz > SHA256SUMS)
+printf '#!/bin/sh\necho "agenticspec 0.0.1"\n' > "$work/musl/agenticspec-0.1.0-x86_64-unknown-linux-musl/agenticspec"
+tar -C "$work/musl" --owner=0 --group=0 --numeric-owner -czf "$work/dist/agenticspec-0.1.0-x86_64-unknown-linux-musl.tar.gz" agenticspec-0.1.0-x86_64-unknown-linux-musl
+(cd "$work/dist" && sha256sum agenticspec-0.1.0-*.tar.gz > SHA256SUMS)
 expect 1 "verify: a musl binary of another version" sh "$verify" 0.1.0 --description "$work/description.json" --assets "$work/dist"
-cp "$work/musl.tar.gz" "$work/dist/agentspec-0.1.0-x86_64-unknown-linux-musl.tar.gz"
-(cd "$work/dist" && sha256sum agentspec-0.1.0-*.tar.gz > SHA256SUMS)
+cp "$work/musl.tar.gz" "$work/dist/agenticspec-0.1.0-x86_64-unknown-linux-musl.tar.gz"
+(cd "$work/dist" && sha256sum agenticspec-0.1.0-*.tar.gz > SHA256SUMS)
 expect 0 "verify: the musl archive restored" sh "$verify" 0.1.0 --description "$work/description.json" --assets "$work/dist"
-printf 'changed\n' >> "$work/dist/agentspec-0.1.0-aarch64-unknown-linux-gnu.tar.gz"
+printf 'changed\n' >> "$work/dist/agenticspec-0.1.0-aarch64-unknown-linux-gnu.tar.gz"
 expect 1 "verify: an archive its checksum does not match" sh "$verify" 0.1.0 --description "$work/description.json" --assets "$work/dist"
 
 # release.yml builds the musl target statically and runs it in a plain Alpine container.

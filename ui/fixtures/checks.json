@@ -1,5 +1,5 @@
 {
-  "view": "agentspec.view.SessionChecks",
+  "view": "agenticspec.view.SessionChecks",
   "rows": [
     {"check_id": "ses-demo-0001.cache-bust-after-idle", "session_id": "ses-demo-0001", "check": "cache-bust-after-idle", "about": "a turn after an idle gap over 5 minutes wrote the whole context again", "severity": "low", "verdict": "Gap", "rows": 1, "possible": 0},
     {"check_id": "ses-demo-0001.human-correction", "session_id": "ses-demo-0001", "check": "human-correction", "about": "the human corrected the agent within 2 minutes of an edit or a command", "severity": "info", "verdict": "Unk", "rows": 1, "possible": 1},

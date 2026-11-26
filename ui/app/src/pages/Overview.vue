@@ -99,7 +99,7 @@ onMounted(() => {
     'sessions',
     {},
     {
-      'agentspec.view.SessionUpdated': (p) => {
+      'agenticspec.view.SessionUpdated': (p) => {
         now.value = Date.now();
         const q = search.value.trim().toLowerCase();
         if (!q || p.names.includes(q)) rows.value = upsert(rows.value, p as SessionListRow, 'session_id');

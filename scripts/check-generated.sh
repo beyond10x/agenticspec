@@ -28,8 +28,8 @@ cd "$root"
 lines() {
   cat << 'LINES'
 generated|ess generate synthesize --path spec --target rust --out {out}
-crates/agentspec-cli-contract|ess generate cli --path spec --binding spec/cli.yaml --out {out}
-ui/app/src/generated|ess generate types --path spec --target typescript --names short --declared-field-order --root agentspec.view.SessionList.row --root agentspec.view.SessionById.row --root agentspec.view.SessionAgents.row --root agentspec.view.SessionEvents.row --root agentspec.view.SessionTurns.row --root agentspec.view.AgentTurns.row --root agentspec.view.SessionChecks.row --root agentspec.view.SessionEventCounts.row --root agentspec.view.SessionTimeline.row --root agentspec.view.OverviewFigures.row --root agentspec.view.SessionUpdated --root agentspec.view.AgentUpdated --root agentspec.view.EventAppended --root agentspec.view.Document --root agentspec.view.Update --out {out}
+crates/agenticspec-cli-contract|ess generate cli --path spec --binding spec/cli.yaml --out {out}
+ui/app/src/generated|ess generate types --path spec --target typescript --names short --declared-field-order --root agenticspec.view.SessionList.row --root agenticspec.view.SessionById.row --root agenticspec.view.SessionAgents.row --root agenticspec.view.SessionEvents.row --root agenticspec.view.SessionTurns.row --root agenticspec.view.AgentTurns.row --root agenticspec.view.SessionChecks.row --root agenticspec.view.SessionEventCounts.row --root agenticspec.view.SessionTimeline.row --root agenticspec.view.OverviewFigures.row --root agenticspec.view.SessionUpdated --root agenticspec.view.AgentUpdated --root agenticspec.view.EventAppended --root agenticspec.view.Document --root agenticspec.view.Update --out {out}
 LINES
 }
 

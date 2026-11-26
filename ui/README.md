@@ -1,14 +1,14 @@
-# agentspec UI
+# agenticspec UI
 
-`agentspec.ui.yaml` is the UI as an `ess-ui/1` document. It reads the views of
-`agentspec.view` (`spec/domains/view.yaml`), which the `session-view` component serves, and takes
+`agenticspec.ui.yaml` is the UI as an `ess-ui/1` document. It reads the views of
+`agenticspec.view` (`spec/domains/view.yaml`), which the `session-view` component serves, and takes
 live events on two channels. It is checked against the specification and tested headless; the live
 UI is not generated from it but written by hand in `app/` (see below):
 
 ```console
-ess ui check --path ui/agentspec.ui.yaml --model spec
-ess ui test --path ui/agentspec.ui.yaml ui/tests/session.yaml
-ess ui run --tui --path ui/agentspec.ui.yaml
+ess ui check --path ui/agenticspec.ui.yaml --model spec
+ess ui test --path ui/agenticspec.ui.yaml ui/tests/session.yaml
+ess ui run --tui --path ui/agenticspec.ui.yaml
 ```
 
 ## Pages
@@ -34,16 +34,16 @@ narrowed by it. A host that shows one session (the LLM gateway UI) opens an `emb
 
 ```console
 task ui:build          # build the app of ui/app into target/ui/www
-agentspec serve      # http://127.0.0.1:7420/, the store synced every 5 seconds
+agenticspec serve      # http://127.0.0.1:7420/, the store synced every 5 seconds
 ```
 
-`agentspec serve` answers the views of `session-view` (`GET /view/views/<view>`) from
-`<state-dir>/sessions.db`, serves `target/ui/www` (or `$AGENTSPEC_UI_DIR`) for every other path, and streams the two channels as server-sent events:
+`agenticspec serve` answers the views of `session-view` (`GET /view/views/<view>`) from
+`<state-dir>/sessions.db`, serves `target/ui/www` (or `$AGENTICSPEC_UI_DIR`) for every other path, and streams the two channels as server-sent events:
 `GET /view/channels/sessions` and `GET /view/channels/session_events?session_id=<id>`, one message
 per event (`event:` its qualified name, `data:` its wire JSON, `id:` the `seq` of an
 `EventAppended`; a reconnect with `Last-Event-ID` gets what followed).
 
-Sign-in: the pages say `actor: from_session`, and the views grant `agentspec.view.Viewer`. The
+Sign-in: the pages say `actor: from_session`, and the views grant `agenticspec.view.Viewer`. The
 local server listens on 127.0.0.1 only and answers every request as that one `Viewer`; it reads no
 `Authorization` header. A host that serves the views to more than its own user authenticates the
 caller before `dispatch` instead.
@@ -55,16 +55,16 @@ reads them). Synthetic data only: no session of `~/.claude`, no content.
 
 | file | view | rows |
 |---|---|---|
-| `sessions.json` | `agentspec.view.SessionList` | one per session; `SessionById` is answered from it |
-| `agents.json` | `agentspec.view.SessionAgents` | one per agent of every session |
-| `events.json` | `agentspec.view.SessionEvents` | one per view event of every session |
-| `turns.json` | `agentspec.view.SessionTurns` | the rows of `events.json` with `kind` `model_turn`; `AgentTurns` is answered from it |
-| `checks.json` | `agentspec.view.SessionChecks` | one per check of every session |
+| `sessions.json` | `agenticspec.view.SessionList` | one per session; `SessionById` is answered from it |
+| `agents.json` | `agenticspec.view.SessionAgents` | one per agent of every session |
+| `events.json` | `agenticspec.view.SessionEvents` | one per view event of every session |
+| `turns.json` | `agenticspec.view.SessionTurns` | the rows of `events.json` with `kind` `model_turn`; `AgentTurns` is answered from it |
+| `checks.json` | `agenticspec.view.SessionChecks` | one per check of every session |
 
 A view file is
 
 ```json
-{"view": "agentspec.view.SessionList", "rows": [{"session_id": "...", "project": "...", "...": 0}]}
+{"view": "agenticspec.view.SessionList", "rows": [{"session_id": "...", "project": "...", "...": 0}]}
 ```
 
 and a row holds the fields of the view as `spec/domains/view.yaml` declares them, by their names:
@@ -83,7 +83,7 @@ A script is
 
 ```json
 {"channel": "session_events", "session": {"session_id": "..."}, "loop": true,
- "events": [{"at": "2s", "event": "agentspec.view.EventAppended", "payload": {"event_id": "...", "...": 0}},
+ "events": [{"at": "2s", "event": "agenticspec.view.EventAppended", "payload": {"event_id": "...", "...": 0}},
             {"at": "10s", "lifecycle": "reconnecting"}]}
 ```
 

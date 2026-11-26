@@ -1,13 +1,13 @@
 # Records library
 
-The Rust crate `agentspec-records` holds what the `agentspec` command uses: the transcript
+The Rust crate `agenticspec-records` holds what the `agenticspec` command uses: the transcript
 reader, redaction, the store, the KPIs and the queries. A program that sees model traffic, such as
-an LLM gateway, uses it to write the same records into a store that `agentspec` reads.
+an LLM gateway, uses it to write the same records into a store that `agenticspec` reads.
 
 ```toml
 [dependencies]
-agentspec-records = { git = "https://github.com/beyond10x/agentspec", tag = "<version>" }
-agentspec-types = { git = "https://github.com/beyond10x/agentspec", tag = "<version>" }
+agenticspec-records = { git = "https://github.com/beyond10x/agenticspec", tag = "<version>" }
+agenticspec-types = { git = "https://github.com/beyond10x/agenticspec", tag = "<version>" }
 ```
 
 ## Record gateway traffic
@@ -16,9 +16,9 @@ Per finished model call, lift the call into steps and hand them to the appender:
 
 ```rust
 use std::path::Path;
-use agentspec_records::append::Appender;
-use agentspec_records::wire::{self, Answer, GatewayFacts, Wire, WireCall, WireSession};
-use agentspec_types::session::Harness;
+use agenticspec_records::append::Appender;
+use agenticspec_records::wire::{self, Answer, GatewayFacts, Wire, WireCall, WireSession};
+use agenticspec_types::session::Harness;
 
 let (appender, writer) = Appender::spawn(Path::new("sessions.db"), 1024)?;
 let mut session = WireSession::new(); // keep one per gateway session
@@ -45,7 +45,7 @@ appender.append(&call.facts.session_hash, Harness::ClaudeCode, steps);
 | `AppenderHandle::append` | queues one call's steps. It never blocks: when the queue is full it returns `false` and counts a drop |
 | `AppenderHandle::stats` | counts of batches queued, dropped, written and failed |
 
-The writer extends each session's views as steps arrive, so `agentspec serve` on the same store
+The writer extends each session's views as steps arrive, so `agenticspec serve` on the same store
 shows gateway sessions live. The writer thread ends when every handle is dropped and the queue is
 drained. Join it with the returned handle.
 

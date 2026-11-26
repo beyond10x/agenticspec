@@ -22,7 +22,7 @@ const themeLabel = computed(() => (theme.value === 'dark' ? 'Use light theme' : 
             <rect x="1" y="7.5" width="10" height="3" rx="1.5" class="b2" />
             <rect x="5" y="12" width="9" height="3" rx="1.5" class="b3" />
           </svg>
-          <span>agentspec</span>
+          <span>agenticspec</span>
         </a>
         <div class="right">
           <span class="live" :class="live" :title="`Updates: ${liveText}`">

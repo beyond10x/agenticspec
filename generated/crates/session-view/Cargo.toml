@@ -1,12 +1,12 @@
-# generated from agentspec v1
-# contract digest 0c0727aa4de388310699c24fed8ce0f18713c396101cd870029ee370ff1fdebf
+# generated from agenticspec v1
+# contract digest f055d5e2e3c34626a341be77dc04f1863969498b5a228872e28a799be540eb5f
 # do not edit: regenerate with `ess synthesize`
 
 [package]
 name = "session-view"
-description = "The `session-view` component of the `agentspec` specification, v1: its port, generated."
+description = "The `session-view` component of the `agenticspec` specification, v1: its port, generated."
 version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-agentspec-types = { path = "../agentspec-types" }
+agenticspec-types = { path = "../agenticspec-types" }

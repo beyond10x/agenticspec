@@ -1,5 +1,5 @@
 format: ess-cli/2
-binary: agentspec
+binary: agenticspec
 about: Lift agent sessions into one IR and evaluate KPIs over them
 globals:
   config: config
@@ -7,72 +7,72 @@ globals:
   output: output
 callables:
   lift:
-    target: {kind: local, owner: agentspec.cli, action: lift}
-    input: agentspec.cli.LiftInput
-    result: agentspec.cli.LiftResult
+    target: {kind: local, owner: agenticspec.cli, action: lift}
+    input: agenticspec.cli.LiftInput
+    result: agenticspec.cli.LiftResult
     errors:
-      transcript_unreadable: agentspec.cli.Refusal
+      transcript_unreadable: agenticspec.cli.Refusal
   kpi:
-    target: {kind: local, owner: agentspec.cli, action: kpi}
-    input: agentspec.cli.KpiInput
-    result: agentspec.cli.KpiReport
+    target: {kind: local, owner: agenticspec.cli, action: kpi}
+    input: agenticspec.cli.KpiInput
+    result: agenticspec.cli.KpiReport
     errors:
-      root_unreadable: agentspec.cli.Refusal
-      store_unavailable: agentspec.cli.Refusal
+      root_unreadable: agenticspec.cli.Refusal
+      store_unavailable: agenticspec.cli.Refusal
   analyze:
-    target: {kind: local, owner: agentspec.cli, action: analyze}
-    input: agentspec.cli.AnalyzeInput
-    result: agentspec.cli.AnalyzeResult
+    target: {kind: local, owner: agenticspec.cli, action: analyze}
+    input: agenticspec.cli.AnalyzeInput
+    result: agenticspec.cli.AnalyzeResult
     errors:
-      root_unreadable: agentspec.cli.Refusal
-      store_unavailable: agentspec.cli.Refusal
-      out_unwritable: agentspec.cli.Refusal
+      root_unreadable: agenticspec.cli.Refusal
+      store_unavailable: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
   query:
-    target: {kind: local, owner: agentspec.cli, action: query}
-    input: agentspec.cli.QueryInput
-    result: agentspec.cli.QueryReport
+    target: {kind: local, owner: agenticspec.cli, action: query}
+    input: agenticspec.cli.QueryInput
+    result: agenticspec.cli.QueryReport
     errors:
-      module_invalid: agentspec.cli.Refusal
-      root_unreadable: agentspec.cli.Refusal
-      store_unavailable: agentspec.cli.Refusal
+      module_invalid: agenticspec.cli.Refusal
+      root_unreadable: agenticspec.cli.Refusal
+      store_unavailable: agenticspec.cli.Refusal
   mine:
-    target: {kind: local, owner: agentspec.cli, action: mine}
-    input: agentspec.cli.MineInput
-    result: agentspec.cli.MineReport
+    target: {kind: local, owner: agenticspec.cli, action: mine}
+    input: agenticspec.cli.MineInput
+    result: agenticspec.cli.MineReport
     errors:
-      root_unreadable: agentspec.cli.Refusal
-      store_unavailable: agentspec.cli.Refusal
+      root_unreadable: agenticspec.cli.Refusal
+      store_unavailable: agenticspec.cli.Refusal
   procedure:
-    target: {kind: local, owner: agentspec.cli, action: procedure}
-    input: agentspec.cli.ProcedureInput
-    result: agentspec.cli.Procedure
+    target: {kind: local, owner: agenticspec.cli, action: procedure}
+    input: agenticspec.cli.ProcedureInput
+    result: agenticspec.cli.Procedure
     errors:
-      root_unreadable: agentspec.cli.Refusal
-      store_unavailable: agentspec.cli.Refusal
-      no_match: agentspec.cli.Refusal
-      out_unwritable: agentspec.cli.Refusal
+      root_unreadable: agenticspec.cli.Refusal
+      store_unavailable: agenticspec.cli.Refusal
+      no_match: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
   export:
-    target: {kind: local, owner: agentspec.cli, action: export}
-    input: agentspec.cli.ExportInput
-    result: agentspec.cli.ExportResult
+    target: {kind: local, owner: agenticspec.cli, action: export}
+    input: agenticspec.cli.ExportInput
+    result: agenticspec.cli.ExportResult
     errors:
-      procedure_invalid: agentspec.cli.Refusal
-      out_unwritable: agentspec.cli.Refusal
+      procedure_invalid: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
   sync:
-    target: {kind: local, owner: agentspec.cli, action: sync}
-    input: agentspec.cli.SyncInput
-    result: agentspec.cli.SyncResult
+    target: {kind: local, owner: agenticspec.cli, action: sync}
+    input: agenticspec.cli.SyncInput
+    result: agenticspec.cli.SyncResult
     errors:
-      root_unreadable: agentspec.cli.Refusal
-      store_unavailable: agentspec.cli.Refusal
+      root_unreadable: agenticspec.cli.Refusal
+      store_unavailable: agenticspec.cli.Refusal
   serve:
-    target: {kind: local, owner: agentspec.cli, action: serve}
-    input: agentspec.cli.ServeInput
-    result: agentspec.cli.ServeResult
+    target: {kind: local, owner: agenticspec.cli, action: serve}
+    input: agenticspec.cli.ServeInput
+    result: agenticspec.cli.ServeResult
     errors:
-      root_unreadable: agentspec.cli.Refusal
-      store_unavailable: agentspec.cli.Refusal
-      port_unavailable: agentspec.cli.Refusal
+      root_unreadable: agenticspec.cli.Refusal
+      store_unavailable: agenticspec.cli.Refusal
+      port_unavailable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift

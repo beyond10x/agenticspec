@@ -54,8 +54,8 @@ describe('client', () => {
       'session_events',
       { session_id: 'ses-demo-0001' },
       {
-        'agentspec.view.EventAppended': (p) => got.push(`${p.kind}:${p.seq}`),
-        'agentspec.view.AgentUpdated': (p) => got.push(`agent:${p.agent_id}`),
+        'agenticspec.view.EventAppended': (p) => got.push(`${p.kind}:${p.seq}`),
+        'agenticspec.view.AgentUpdated': (p) => got.push(`agent:${p.agent_id}`),
       },
       (s) => states.push(s),
       (url) => (src = new FakeSource(url)),
@@ -63,10 +63,10 @@ describe('client', () => {
     const s = src as unknown as FakeSource;
     expect(s.url).toBe('/view/channels/session_events?session_id=ses-demo-0001');
     s.onopen?.();
-    s.emit('agentspec.view.EventAppended', { seq: 26, kind: 'prompt' });
-    s.emit('agentspec.view.AgentUpdated', { agent_id: 'a1' });
-    s.emit('agentspec.view.EventAppended', 'not json');
-    s.emit('agentspec.view.SessionUpdated', { session_id: 'ignored, no handler' });
+    s.emit('agenticspec.view.EventAppended', { seq: 26, kind: 'prompt' });
+    s.emit('agenticspec.view.AgentUpdated', { agent_id: 'a1' });
+    s.emit('agenticspec.view.EventAppended', 'not json');
+    s.emit('agenticspec.view.SessionUpdated', { session_id: 'ignored, no handler' });
     expect(got).toEqual(['prompt:26', 'agent:a1']);
     expect(states).toEqual(['connecting', 'live']);
     close();

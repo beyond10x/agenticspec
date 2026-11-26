@@ -1,4 +1,4 @@
-// The pages of ui/agentspec.ui.yaml as paths. `agentspec serve` answers index.html for every
+// The pages of ui/agenticspec.ui.yaml as paths. `agenticspec serve` answers index.html for every
 // path that is no file, so the paths are real URLs a host can open in a frame.
 
 import { ref } from 'vue';

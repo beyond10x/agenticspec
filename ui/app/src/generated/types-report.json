@@ -1,12 +1,12 @@
 {
   "format": "ess-types-report/3",
-  "source_digest": "b58498f76c66bf34feedfd497c347623570294e74dcc799908b0368854f2fce6",
+  "source_digest": "be0c091ab1b4b8465abee3c5f2c9a482782a4740ff2773829ff8d1279ba0dd6a",
   "input": {
     "kind": "model",
-    "system": "agentspec",
+    "system": "agenticspec",
     "specification_version": "v1",
-    "contract_digest": "slice-sha256/2:83871df89cf21eddaffebadff064fb2847857f2620308cf4cb6650d34710a239",
-    "projection_digest": "d75d411b9eb2943928cc94e7c831655a8aae59e4ea73cea9c522f990378915b8"
+    "contract_digest": "slice-sha256/2:82569a179dd713b1212bbeaa2f2b49e29cb89c298af2b80dc357814eb2f48809",
+    "projection_digest": "03bda7647f5de2b5dab6951ecb235541072aa80f8be5320c954d5206fdabbd58"
   },
   "generator_version": "0.99.2",
   "target": "typescript",
@@ -15,972 +15,972 @@
     "declared_field_order": true
   },
   "roots": [
-    "agentspec.view.AgentTurns.row",
-    "agentspec.view.AgentUpdated",
-    "agentspec.view.Document",
-    "agentspec.view.EventAppended",
-    "agentspec.view.OverviewFigures.row",
-    "agentspec.view.SessionAgents.row",
-    "agentspec.view.SessionById.row",
-    "agentspec.view.SessionChecks.row",
-    "agentspec.view.SessionEventCounts.row",
-    "agentspec.view.SessionEvents.row",
-    "agentspec.view.SessionList.row",
-    "agentspec.view.SessionTimeline.row",
-    "agentspec.view.SessionTurns.row",
-    "agentspec.view.SessionUpdated",
-    "agentspec.view.Update"
+    "agenticspec.view.AgentTurns.row",
+    "agenticspec.view.AgentUpdated",
+    "agenticspec.view.Document",
+    "agenticspec.view.EventAppended",
+    "agenticspec.view.OverviewFigures.row",
+    "agenticspec.view.SessionAgents.row",
+    "agenticspec.view.SessionById.row",
+    "agenticspec.view.SessionChecks.row",
+    "agenticspec.view.SessionEventCounts.row",
+    "agenticspec.view.SessionEvents.row",
+    "agenticspec.view.SessionList.row",
+    "agenticspec.view.SessionTimeline.row",
+    "agenticspec.view.SessionTurns.row",
+    "agenticspec.view.SessionUpdated",
+    "agenticspec.view.Update"
   ],
   "declarations": {
-    "agentspec.cli.AgentScope": "AgentScope",
-    "agentspec.cli.AutonomyFigures": "AutonomyFigures",
-    "agentspec.cli.BustCause": "BustCause",
-    "agentspec.cli.BustFigures": "BustFigures",
-    "agentspec.cli.CacheFigures": "CacheFigures",
-    "agentspec.cli.ConcurrencyFigures": "ConcurrencyFigures",
-    "agentspec.cli.DecisionFigures": "DecisionFigures",
-    "agentspec.cli.ExposureFigures": "ExposureFigures",
-    "agentspec.cli.KpiReport": "KpiReport",
-    "agentspec.cli.ModelFigures": "ModelFigures",
-    "agentspec.cli.PromptFigures": "PromptFigures",
-    "agentspec.session.AgentId": "AgentId",
-    "agentspec.session.AgentRole": "AgentRole",
-    "agentspec.session.Attribution": "Attribution",
-    "agentspec.session.Decider": "Decider",
-    "agentspec.session.Decision": "Decision",
-    "agentspec.session.ExposureChannel": "ExposureChannel",
-    "agentspec.session.ExposureClass": "ExposureClass",
-    "agentspec.session.Harness": "Harness",
-    "agentspec.session.PromptAuthor": "PromptAuthor",
-    "agentspec.session.SessionId": "SessionId",
-    "agentspec.session.Verdict": "Verdict",
-    "agentspec.view.Agent": "Agent",
-    "agentspec.view.AgentTurns.row": "AgentTurnsRow",
-    "agentspec.view.AgentUpdated": "AgentUpdated",
-    "agentspec.view.BucketId": "BucketId",
-    "agentspec.view.CheckId": "CheckId",
-    "agentspec.view.CountId": "CountId",
-    "agentspec.view.Document": "Document",
-    "agentspec.view.Event": "Event",
-    "agentspec.view.EventAppended": "EventAppended",
-    "agentspec.view.EventId": "EventId",
-    "agentspec.view.EventKind": "EventKind",
-    "agentspec.view.OverviewFigures.row": "OverviewFiguresRow",
-    "agentspec.view.SessionAgents.row": "SessionAgentsRow",
-    "agentspec.view.SessionById.row": "SessionByIdRow",
-    "agentspec.view.SessionChecks.row": "SessionChecksRow",
-    "agentspec.view.SessionEventCounts.row": "SessionEventCountsRow",
-    "agentspec.view.SessionEvents.row": "SessionEventsRow",
-    "agentspec.view.SessionList.row": "SessionListRow",
-    "agentspec.view.SessionTimeline.row": "SessionTimelineRow",
-    "agentspec.view.SessionTurns.row": "SessionTurnsRow",
-    "agentspec.view.SessionUpdated": "SessionUpdated",
-    "agentspec.view.SlotId": "SlotId",
-    "agentspec.view.Update": "Update"
+    "agenticspec.cli.AgentScope": "AgentScope",
+    "agenticspec.cli.AutonomyFigures": "AutonomyFigures",
+    "agenticspec.cli.BustCause": "BustCause",
+    "agenticspec.cli.BustFigures": "BustFigures",
+    "agenticspec.cli.CacheFigures": "CacheFigures",
+    "agenticspec.cli.ConcurrencyFigures": "ConcurrencyFigures",
+    "agenticspec.cli.DecisionFigures": "DecisionFigures",
+    "agenticspec.cli.ExposureFigures": "ExposureFigures",
+    "agenticspec.cli.KpiReport": "KpiReport",
+    "agenticspec.cli.ModelFigures": "ModelFigures",
+    "agenticspec.cli.PromptFigures": "PromptFigures",
+    "agenticspec.session.AgentId": "AgentId",
+    "agenticspec.session.AgentRole": "AgentRole",
+    "agenticspec.session.Attribution": "Attribution",
+    "agenticspec.session.Decider": "Decider",
+    "agenticspec.session.Decision": "Decision",
+    "agenticspec.session.ExposureChannel": "ExposureChannel",
+    "agenticspec.session.ExposureClass": "ExposureClass",
+    "agenticspec.session.Harness": "Harness",
+    "agenticspec.session.PromptAuthor": "PromptAuthor",
+    "agenticspec.session.SessionId": "SessionId",
+    "agenticspec.session.Verdict": "Verdict",
+    "agenticspec.view.Agent": "Agent",
+    "agenticspec.view.AgentTurns.row": "AgentTurnsRow",
+    "agenticspec.view.AgentUpdated": "AgentUpdated",
+    "agenticspec.view.BucketId": "BucketId",
+    "agenticspec.view.CheckId": "CheckId",
+    "agenticspec.view.CountId": "CountId",
+    "agenticspec.view.Document": "Document",
+    "agenticspec.view.Event": "Event",
+    "agenticspec.view.EventAppended": "EventAppended",
+    "agenticspec.view.EventId": "EventId",
+    "agenticspec.view.EventKind": "EventKind",
+    "agenticspec.view.OverviewFigures.row": "OverviewFiguresRow",
+    "agenticspec.view.SessionAgents.row": "SessionAgentsRow",
+    "agenticspec.view.SessionById.row": "SessionByIdRow",
+    "agenticspec.view.SessionChecks.row": "SessionChecksRow",
+    "agenticspec.view.SessionEventCounts.row": "SessionEventCountsRow",
+    "agenticspec.view.SessionEvents.row": "SessionEventsRow",
+    "agenticspec.view.SessionList.row": "SessionListRow",
+    "agenticspec.view.SessionTimeline.row": "SessionTimelineRow",
+    "agenticspec.view.SessionTurns.row": "SessionTurnsRow",
+    "agenticspec.view.SessionUpdated": "SessionUpdated",
+    "agenticspec.view.SlotId": "SlotId",
+    "agenticspec.view.Update": "Update"
   },
   "annotations": [
     {
-      "pointer": "/$defs/agentspec.cli.AgentScope/title",
+      "pointer": "/$defs/agenticspec.cli.AgentScope/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AgentScope/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.AgentScope/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AgentScope/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.AgentScope/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/description",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/title",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustCause/title",
+      "pointer": "/$defs/agenticspec.cli.BustCause/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustCause/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.BustCause/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustCause/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.BustCause/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustFigures/title",
+      "pointer": "/$defs/agenticspec.cli.BustFigures/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustFigures/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.BustFigures/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustFigures/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.BustFigures/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/title",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/description",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/title",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.DecisionFigures/title",
+      "pointer": "/$defs/agenticspec.cli.DecisionFigures/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.DecisionFigures/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.DecisionFigures/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.DecisionFigures/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.DecisionFigures/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ExposureFigures/title",
+      "pointer": "/$defs/agenticspec.cli.ExposureFigures/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ExposureFigures/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.ExposureFigures/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ExposureFigures/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.ExposureFigures/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/cost_microdollars/description",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/cost_microdollars/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/unpriced_messages/description",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/unpriced_messages/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/title",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/cost_microdollars/description",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/cost_microdollars/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/title",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.PromptFigures/title",
+      "pointer": "/$defs/agenticspec.cli.PromptFigures/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.cli.PromptFigures/x-ess-kind",
+      "pointer": "/$defs/agenticspec.cli.PromptFigures/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.cli.PromptFigures/x-ess-name",
+      "pointer": "/$defs/agenticspec.cli.PromptFigures/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentId/description",
+      "pointer": "/$defs/agenticspec.session.AgentId/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentId/title",
+      "pointer": "/$defs/agenticspec.session.AgentId/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentId/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.AgentId/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentId/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.AgentId/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentRole/description",
+      "pointer": "/$defs/agenticspec.session.AgentRole/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentRole/title",
+      "pointer": "/$defs/agenticspec.session.AgentRole/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentRole/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.AgentRole/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentRole/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.AgentRole/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Attribution/description",
+      "pointer": "/$defs/agenticspec.session.Attribution/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.Attribution/title",
+      "pointer": "/$defs/agenticspec.session.Attribution/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.Attribution/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.Attribution/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Attribution/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.Attribution/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Decider/description",
+      "pointer": "/$defs/agenticspec.session.Decider/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.Decider/title",
+      "pointer": "/$defs/agenticspec.session.Decider/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.Decider/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.Decider/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Decider/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.Decider/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Decision/title",
+      "pointer": "/$defs/agenticspec.session.Decision/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.Decision/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.Decision/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Decision/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.Decision/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.ExposureChannel/description",
+      "pointer": "/$defs/agenticspec.session.ExposureChannel/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.ExposureChannel/title",
+      "pointer": "/$defs/agenticspec.session.ExposureChannel/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.ExposureChannel/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.ExposureChannel/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.ExposureChannel/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.ExposureChannel/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.ExposureClass/title",
+      "pointer": "/$defs/agenticspec.session.ExposureClass/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.ExposureClass/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.ExposureClass/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.ExposureClass/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.ExposureClass/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Harness/title",
+      "pointer": "/$defs/agenticspec.session.Harness/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.Harness/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.Harness/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Harness/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.Harness/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.PromptAuthor/description",
+      "pointer": "/$defs/agenticspec.session.PromptAuthor/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.PromptAuthor/title",
+      "pointer": "/$defs/agenticspec.session.PromptAuthor/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.PromptAuthor/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.PromptAuthor/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.PromptAuthor/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.PromptAuthor/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.SessionId/description",
+      "pointer": "/$defs/agenticspec.session.SessionId/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.SessionId/title",
+      "pointer": "/$defs/agenticspec.session.SessionId/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.SessionId/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.SessionId/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.SessionId/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.SessionId/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Verdict/description",
+      "pointer": "/$defs/agenticspec.session.Verdict/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.Verdict/title",
+      "pointer": "/$defs/agenticspec.session.Verdict/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.session.Verdict/x-ess-kind",
+      "pointer": "/$defs/agenticspec.session.Verdict/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.session.Verdict/x-ess-name",
+      "pointer": "/$defs/agenticspec.session.Verdict/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.Agent/title",
+      "pointer": "/$defs/agenticspec.view.Agent/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Agent/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.Agent/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.Agent/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.Agent/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/at/format",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/title",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/description",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/started_at/format",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/started_at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/title",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.BucketId/description",
+      "pointer": "/$defs/agenticspec.view.BucketId/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.BucketId/title",
+      "pointer": "/$defs/agenticspec.view.BucketId/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.BucketId/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.BucketId/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.BucketId/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.BucketId/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.CheckId/description",
+      "pointer": "/$defs/agenticspec.view.CheckId/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.CheckId/title",
+      "pointer": "/$defs/agenticspec.view.CheckId/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.CheckId/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.CheckId/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.CheckId/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.CheckId/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.CountId/description",
+      "pointer": "/$defs/agenticspec.view.CountId/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.CountId/title",
+      "pointer": "/$defs/agenticspec.view.CountId/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.CountId/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.CountId/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.CountId/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.CountId/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.Document/description",
+      "pointer": "/$defs/agenticspec.view.Document/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Document/title",
+      "pointer": "/$defs/agenticspec.view.Document/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Document/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.Document/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.Document/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.Document/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/description",
+      "pointer": "/$defs/agenticspec.view.Event/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/bytes/description",
+      "pointer": "/$defs/agenticspec.view.Event/properties/bytes/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/cost_microdollars/description",
+      "pointer": "/$defs/agenticspec.view.Event/properties/cost_microdollars/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/detail/description",
+      "pointer": "/$defs/agenticspec.view.Event/properties/detail/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/title",
+      "pointer": "/$defs/agenticspec.view.Event/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.Event/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.Event/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/description",
+      "pointer": "/$defs/agenticspec.view.EventAppended/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/at/format",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/title",
+      "pointer": "/$defs/agenticspec.view.EventAppended/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.EventAppended/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.EventAppended/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventId/description",
+      "pointer": "/$defs/agenticspec.view.EventId/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventId/title",
+      "pointer": "/$defs/agenticspec.view.EventId/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventId/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.EventId/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventId/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.EventId/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventKind/title",
+      "pointer": "/$defs/agenticspec.view.EventKind/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventKind/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.EventKind/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventKind/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.EventKind/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/description",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/start/format",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/start/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/title",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/started_at/format",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/started_at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/title",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/first_at/format",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/first_at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/last_at/format",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/last_at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/title",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionChecks.row/title",
+      "pointer": "/$defs/agenticspec.view.SessionChecks.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionChecks.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionChecks.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionChecks.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionChecks.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEventCounts.row/title",
+      "pointer": "/$defs/agenticspec.view.SessionEventCounts.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEventCounts.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionEventCounts.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEventCounts.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionEventCounts.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/description",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/at/format",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/title",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/description",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/first_at/format",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/first_at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/last_at/format",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/last_at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/title",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/description",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/end/format",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/end/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/start/format",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/start/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/title",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/at/format",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/title",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/description",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/first_at/format",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/first_at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/last_at/format",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/last_at/format",
       "rule": "format",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/title",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SlotId/description",
+      "pointer": "/$defs/agenticspec.view.SlotId/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SlotId/title",
+      "pointer": "/$defs/agenticspec.view.SlotId/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.SlotId/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.SlotId/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.SlotId/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.SlotId/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.Update/description",
+      "pointer": "/$defs/agenticspec.view.Update/description",
       "rule": "description",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Update/title",
+      "pointer": "/$defs/agenticspec.view.Update/title",
       "rule": "title",
       "detail": "retained in source.schema.json; no decoder behavior inferred"
     },
     {
-      "pointer": "/$defs/agentspec.view.Update/x-ess-kind",
+      "pointer": "/$defs/agenticspec.view.Update/x-ess-kind",
       "rule": "x-ess-kind",
       "detail": "model identity and wire mapping retained in source.schema.json"
     },
     {
-      "pointer": "/$defs/agentspec.view.Update/x-ess-name",
+      "pointer": "/$defs/agenticspec.view.Update/x-ess-name",
       "rule": "x-ess-name",
       "detail": "model identity and wire mapping retained in source.schema.json"
     }
@@ -992,1797 +992,1797 @@
       "detail": "use strict and exactOptionalPropertyTypes; these declarations do not validate runtime JSON"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/properties/away_seconds",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/properties/away_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/properties/away_seconds",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/properties/away_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/properties/waiting_on_human_seconds",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/properties/waiting_on_human_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/properties/waiting_on_human_seconds",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/properties/waiting_on_human_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/properties/working_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.AutonomyFigures/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.cli.AutonomyFigures/properties/working_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustFigures",
+      "pointer": "/$defs/agenticspec.cli.BustFigures",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustFigures/properties/count",
+      "pointer": "/$defs/agenticspec.cli.BustFigures/properties/count",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustFigures/properties/count",
+      "pointer": "/$defs/agenticspec.cli.BustFigures/properties/count",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustFigures/properties/tokens_written_again",
+      "pointer": "/$defs/agenticspec.cli.BustFigures/properties/tokens_written_again",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.BustFigures/properties/tokens_written_again",
+      "pointer": "/$defs/agenticspec.cli.BustFigures/properties/tokens_written_again",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/properties/hit_permille",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/properties/hit_permille",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/properties/hit_permille",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/properties/hit_permille",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/properties/read_tokens",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/properties/read_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/properties/read_tokens",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/properties/read_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/properties/uncached_tokens",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/properties/uncached_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/properties/uncached_tokens",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/properties/uncached_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/properties/write_tokens",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/properties/write_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.CacheFigures/properties/write_tokens",
+      "pointer": "/$defs/agenticspec.cli.CacheFigures/properties/write_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/properties/max",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/properties/max",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/properties/max",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/properties/max",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/properties/p50",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/properties/p50",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/properties/p50",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/properties/p50",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/properties/p90",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/properties/p90",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ConcurrencyFigures/properties/p90",
+      "pointer": "/$defs/agenticspec.cli.ConcurrencyFigures/properties/p90",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.DecisionFigures",
+      "pointer": "/$defs/agenticspec.cli.DecisionFigures",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.DecisionFigures/properties/count",
+      "pointer": "/$defs/agenticspec.cli.DecisionFigures/properties/count",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.DecisionFigures/properties/count",
+      "pointer": "/$defs/agenticspec.cli.DecisionFigures/properties/count",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ExposureFigures",
+      "pointer": "/$defs/agenticspec.cli.ExposureFigures",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ExposureFigures/properties/count",
+      "pointer": "/$defs/agenticspec.cli.ExposureFigures/properties/count",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ExposureFigures/properties/count",
+      "pointer": "/$defs/agenticspec.cli.ExposureFigures/properties/count",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ExposureFigures/properties/sessions",
+      "pointer": "/$defs/agenticspec.cli.ExposureFigures/properties/sessions",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ExposureFigures/properties/sessions",
+      "pointer": "/$defs/agenticspec.cli.ExposureFigures/properties/sessions",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport",
+      "pointer": "/$defs/agenticspec.cli.KpiReport",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/cost_microdollars",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/cost_microdollars",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/refused_commands",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/refused_commands",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/refused_commands",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/refused_commands",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/sessions",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/sessions",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/sessions",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/sessions",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/sub_agents",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/sub_agents",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/sub_agents",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/sub_agents",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/transcripts",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/transcripts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/transcripts",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/transcripts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/unpriced_messages",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/unpriced_messages",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.KpiReport/properties/unpriced_messages",
+      "pointer": "/$defs/agenticspec.cli.KpiReport/properties/unpriced_messages",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/context_max",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/context_max",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/context_max",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/context_max",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/context_p50",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/context_p50",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/context_p50",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/context_p50",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/context_p90",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/context_p90",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/context_p90",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/context_p90",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/cost_microdollars",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/cost_microdollars",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/messages",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/messages",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/messages",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/messages",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.ModelFigures/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.cli.ModelFigures/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.cli.PromptFigures",
+      "pointer": "/$defs/agenticspec.cli.PromptFigures",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.cli.PromptFigures/properties/count",
+      "pointer": "/$defs/agenticspec.cli.PromptFigures/properties/count",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.cli.PromptFigures/properties/count",
+      "pointer": "/$defs/agenticspec.cli.PromptFigures/properties/count",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.session.AgentId",
+      "pointer": "/$defs/agenticspec.session.AgentId",
       "rule": "typescript_nominal_identity",
       "detail": "structural TypeScript aliases do not enforce distinct model newtype identities"
     },
     {
-      "pointer": "/$defs/agentspec.session.SessionId",
+      "pointer": "/$defs/agenticspec.session.SessionId",
       "rule": "typescript_nominal_identity",
       "detail": "structural TypeScript aliases do not enforce distinct model newtype identities"
     },
     {
-      "pointer": "/$defs/agentspec.view.Agent",
+      "pointer": "/$defs/agenticspec.view.Agent",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.Agent/properties/started_at",
+      "pointer": "/$defs/agenticspec.view.Agent/properties/started_at",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Agent/properties/started_at",
+      "pointer": "/$defs/agenticspec.view.Agent/properties/started_at",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/agent_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/agent_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/bytes",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/bytes",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/cache_read_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/cache_read_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/cache_write_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/cache_write_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/context_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/context_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/cost_microdollars",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/cost_microdollars",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/ord",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/ord",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/ord",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/ord",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/seq",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/seq",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/seq",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/seq",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/session_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentTurns.row/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.AgentTurns.row/properties/session_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/busts",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/busts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/busts",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/busts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/context_max",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/context_max",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/context_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/context_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/turns",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/turns",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.AgentUpdated/properties/turns",
+      "pointer": "/$defs/agenticspec.view.AgentUpdated/properties/turns",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.BucketId",
+      "pointer": "/$defs/agenticspec.view.BucketId",
       "rule": "typescript_nominal_identity",
       "detail": "structural TypeScript aliases do not enforce distinct model newtype identities"
     },
     {
-      "pointer": "/$defs/agentspec.view.CheckId",
+      "pointer": "/$defs/agenticspec.view.CheckId",
       "rule": "typescript_nominal_identity",
       "detail": "structural TypeScript aliases do not enforce distinct model newtype identities"
     },
     {
-      "pointer": "/$defs/agentspec.view.CountId",
+      "pointer": "/$defs/agenticspec.view.CountId",
       "rule": "typescript_nominal_identity",
       "detail": "structural TypeScript aliases do not enforce distinct model newtype identities"
     },
     {
-      "pointer": "/$defs/agentspec.view.Document",
+      "pointer": "/$defs/agenticspec.view.Document",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event",
+      "pointer": "/$defs/agenticspec.view.Event",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/at",
+      "pointer": "/$defs/agenticspec.view.Event/properties/at",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/at",
+      "pointer": "/$defs/agenticspec.view.Event/properties/at",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.Event/properties/bytes",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.Event/properties/bytes",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.Event/properties/cache_read_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.Event/properties/cache_read_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.Event/properties/cache_write_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.Event/properties/cache_write_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.Event/properties/context_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.Event/properties/context_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.Event/properties/cost_microdollars",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.Event/properties/cost_microdollars",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.Event/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.Event/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/seq",
+      "pointer": "/$defs/agenticspec.view.Event/properties/seq",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Event/properties/seq",
+      "pointer": "/$defs/agenticspec.view.Event/properties/seq",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended",
+      "pointer": "/$defs/agenticspec.view.EventAppended",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/agent_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/agent_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/bytes",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/bytes",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/cache_read_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/cache_read_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/cache_write_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/cache_write_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/context_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/context_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/cost_microdollars",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/cost_microdollars",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/ord",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/ord",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/ord",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/ord",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/seq",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/seq",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/seq",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/seq",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/session_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventAppended/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.EventAppended/properties/session_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.EventId",
+      "pointer": "/$defs/agenticspec.view.EventId",
       "rule": "typescript_nominal_identity",
       "detail": "structural TypeScript aliases do not enforce distinct model newtype identities"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/bucket_seconds",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/bucket_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/bucket_seconds",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/bucket_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/cache_hit_share",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/cache_hit_share",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/cache_hit_share",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/cache_hit_share",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/refused_tool_calls",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/refused_tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/refused_tool_calls",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/refused_tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/sessions",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/sessions",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/sessions",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/sessions",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/waiting_share",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/waiting_share",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/waiting_share",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/waiting_share",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/working_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.OverviewFigures.row/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.view.OverviewFigures.row/properties/working_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/busts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/busts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/context_max",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/context_max",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/context_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/context_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/turns",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/turns",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionAgents.row/properties/turns",
+      "pointer": "/$defs/agenticspec.view.SessionAgents.row/properties/turns",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row",
+      "pointer": "/$defs/agenticspec.view.SessionById.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/agents",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/agents",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/agents",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/agents",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/busts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/busts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/cache_hit_share",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/cache_hit_share",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/cache_hit_share",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/cache_hit_share",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/context_max",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/context_max",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/exposures",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/exposures",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/exposures",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/exposures",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/human_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/human_prompts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/human_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/human_prompts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/refused_tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/refused_tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/refused_tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/refused_tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/waiting_on_human_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/waiting_on_human_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/waiting_on_human_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/waiting_on_human_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/waiting_share",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/waiting_share",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/waiting_share",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/waiting_share",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/working_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionById.row/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionById.row/properties/working_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionChecks.row",
+      "pointer": "/$defs/agenticspec.view.SessionChecks.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionChecks.row/properties/possible",
+      "pointer": "/$defs/agenticspec.view.SessionChecks.row/properties/possible",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionChecks.row/properties/possible",
+      "pointer": "/$defs/agenticspec.view.SessionChecks.row/properties/possible",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionChecks.row/properties/rows",
+      "pointer": "/$defs/agenticspec.view.SessionChecks.row/properties/rows",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionChecks.row/properties/rows",
+      "pointer": "/$defs/agenticspec.view.SessionChecks.row/properties/rows",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEventCounts.row",
+      "pointer": "/$defs/agenticspec.view.SessionEventCounts.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEventCounts.row/properties/count",
+      "pointer": "/$defs/agenticspec.view.SessionEventCounts.row/properties/count",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEventCounts.row/properties/count",
+      "pointer": "/$defs/agenticspec.view.SessionEventCounts.row/properties/count",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/agent_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/agent_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/bytes",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/bytes",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/cache_read_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/cache_read_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/cache_write_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/cache_write_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/context_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/context_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/cost_microdollars",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/cost_microdollars",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/ord",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/ord",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/ord",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/ord",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/seq",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/seq",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/seq",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/seq",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/session_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionEvents.row/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionEvents.row/properties/session_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row",
+      "pointer": "/$defs/agenticspec.view.SessionList.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/agents",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/agents",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/agents",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/agents",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/busts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/busts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/cache_hit_share",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/cache_hit_share",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/cache_hit_share",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/cache_hit_share",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/context_max",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/context_max",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/exposures",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/exposures",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/exposures",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/exposures",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/human_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/human_prompts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/human_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/human_prompts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/rank",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/rank",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/rank",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/rank",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/refused_tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/refused_tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/refused_tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/refused_tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/waiting_on_human_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/waiting_on_human_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/waiting_on_human_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/waiting_on_human_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/waiting_share",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/waiting_share",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/waiting_share",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/waiting_share",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/working_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionList.row/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionList.row/properties/working_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/agent_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/agent_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/busts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/busts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/compactions",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/compactions",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/compactions",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/compactions",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/context_max",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/context_max",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/edit_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/edit_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/edit_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/edit_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/events",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/events",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/events",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/events",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/execute_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/execute_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/execute_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/execute_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/human_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/human_prompts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/human_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/human_prompts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/message_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/message_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/message_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/message_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/network_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/network_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/network_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/network_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/other_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/other_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/other_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/other_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/plan_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/plan_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/plan_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/plan_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/read_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/read_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/read_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/read_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/refusals",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/refusals",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/refusals",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/refusals",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/relayed_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/relayed_prompts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/relayed_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/relayed_prompts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/search_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/search_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/search_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/search_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/session_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/session_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/slot_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/slot_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/slot_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/slot_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/spawn_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/spawn_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTimeline.row/properties/spawn_calls",
+      "pointer": "/$defs/agenticspec.view.SessionTimeline.row/properties/spawn_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/agent_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/agent_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/agent_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/bytes",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/bytes",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/bytes",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/cache_read_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/cache_read_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/cache_read_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/cache_write_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/cache_write_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/cache_write_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/context_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/context_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/context_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/cost_microdollars",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/cost_microdollars",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/cost_microdollars",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/ord",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/ord",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/ord",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/ord",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/seq",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/seq",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/seq",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/seq",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/session_cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionTurns.row/properties/session_cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionTurns.row/properties/session_cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/agents",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/agents",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/agents",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/agents",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/busts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/busts",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/busts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/cache_hit_share",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/cache_hit_share",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/cache_hit_share",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/cache_hit_share",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/context_max",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/context_max",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/context_max",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/cost_usd",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/cost_usd",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/cost_usd",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/exposures",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/exposures",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/exposures",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/exposures",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/human_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/human_prompts",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/human_prompts",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/human_prompts",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/output_tokens",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/output_tokens",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/output_tokens",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/rank",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/rank",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/rank",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/rank",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/refused_tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/refused_tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/refused_tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/refused_tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/tool_calls",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/tool_calls",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/tool_calls",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/waiting_on_human_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/waiting_on_human_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/waiting_on_human_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/waiting_on_human_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/waiting_share",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/waiting_share",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/waiting_share",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/waiting_share",
       "rule": "model_binary64",
       "detail": "finite IEEE-754 binary64 requires nearest-even token decoding, signed-zero preservation and finite round-tripping serialization; the structural number representation alone does not enforce this contract"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/working_seconds",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.SessionUpdated/properties/working_seconds",
+      "pointer": "/$defs/agenticspec.view.SessionUpdated/properties/working_seconds",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     },
     {
-      "pointer": "/$defs/agentspec.view.SlotId",
+      "pointer": "/$defs/agenticspec.view.SlotId",
       "rule": "typescript_nominal_identity",
       "detail": "structural TypeScript aliases do not enforce distinct model newtype identities"
     },
     {
-      "pointer": "/$defs/agentspec.view.Update",
+      "pointer": "/$defs/agenticspec.view.Update",
       "rule": "closed_object",
       "detail": "TypeScript structural assignability does not enforce exact object keys; validate additionalProperties at runtime"
     },
     {
-      "pointer": "/$defs/agentspec.view.Update/properties/from_seq",
+      "pointer": "/$defs/agenticspec.view.Update/properties/from_seq",
       "rule": "integer",
       "detail": "TypeScript number does not enforce integrality"
     },
     {
-      "pointer": "/$defs/agentspec.view.Update/properties/from_seq",
+      "pointer": "/$defs/agenticspec.view.Update/properties/from_seq",
       "rule": "json_number_precision",
       "detail": "TypeScript number cannot retain arbitrary JSON numeric precision; validate representability before decoding"
     }

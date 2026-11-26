@@ -13,7 +13,7 @@ import {withProductSite} from '@beyond10x/docs-system/product-site';
 
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(siteDir, '..');
-const sourceBase = 'https://github.com/beyond10x/agentspec/blob/main/';
+const sourceBase = 'https://github.com/beyond10x/agenticspec/blob/main/';
 
 interface Page {
   slug: string;
@@ -26,14 +26,14 @@ interface Page {
 const pages: Record<string, Page> = {
   'docs/index.md': {
     slug: '/',
-    title: 'What agentspec is',
+    title: 'What agenticspec is',
     sidebar_label: 'Overview',
     lede: 'Numbers about your coding-agent sessions, computed on your machine from their transcripts.',
   },
   'docs/getting-started.md': {
     slug: '/getting-started',
     title: 'Getting started',
-    lede: 'Install agentspec, fill the store and open the dashboard.',
+    lede: 'Install agenticspec, fill the store and open the dashboard.',
   },
   'docs/dashboard.md': {
     slug: '/dashboard',
@@ -68,14 +68,14 @@ const pages: Record<string, Page> = {
 };
 
 const config: Config = {
-  title: 'agentspec',
+  title: 'agenticspec',
   tagline: 'Agent sessions as typed records you can measure and query.',
 
   future: {v4: true},
   url: 'https://beyond10x.github.io',
-  baseUrl: '/agentspec/',
+  baseUrl: '/agenticspec/',
   organizationName: 'beyond10x',
-  projectName: 'agentspec',
+  projectName: 'agenticspec',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
   onBrokenLinks: 'throw',
@@ -111,7 +111,7 @@ const config: Config = {
           include: ['docs/*.md'],
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
-          editUrl: 'https://github.com/beyond10x/agentspec/tree/main/',
+          editUrl: 'https://github.com/beyond10x/agenticspec/tree/main/',
         },
         blog: false,
       } satisfies Preset.Options,
@@ -120,13 +120,13 @@ const config: Config = {
 
   themeConfig: {
     navbar: {
-      title: 'agentspec',
+      title: 'agenticspec',
       items: [
         {to: '/docs/getting-started', label: 'Getting started', position: 'left'},
         {to: '/docs/kpis', label: 'KPIs', position: 'left'},
         {to: '/docs/queries', label: 'Queries', position: 'left'},
         {to: '/docs/privacy', label: 'Privacy', position: 'left'},
-        {href: 'https://github.com/beyond10x/agentspec', label: 'GitHub', position: 'right'},
+        {href: 'https://github.com/beyond10x/agenticspec', label: 'GitHub', position: 'right'},
       ],
     },
     footer: {
@@ -147,8 +147,8 @@ const config: Config = {
         {
           title: 'Project',
           items: [
-            {label: 'Source', href: 'https://github.com/beyond10x/agentspec'},
-            {label: 'README', href: 'https://github.com/beyond10x/agentspec/blob/main/README.md'},
+            {label: 'Source', href: 'https://github.com/beyond10x/agenticspec'},
+            {label: 'README', href: 'https://github.com/beyond10x/agenticspec/blob/main/README.md'},
           ],
         },
       ],

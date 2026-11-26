@@ -1,5 +1,5 @@
 {
-  "view": "agentspec.view.SessionEvents",
+  "view": "agenticspec.view.SessionEvents",
   "rows": [
     {"event_id": "ses-demo-0001.1", "session_id": "ses-demo-0001", "seq": 1, "ord": 0, "at": "2026-11-20T09:00:00Z", "agent": "agt-demo-0001-main", "kind": "agent_started", "notable": true, "label": "Main", "agent_cost_usd": 0, "session_cost_usd": 0},
     {"event_id": "ses-demo-0001.2", "session_id": "ses-demo-0001", "seq": 2, "ord": 1, "at": "2026-11-20T09:00:05Z", "agent": "agt-demo-0001-main", "kind": "prompt", "notable": true, "label": "Human", "detail": "task Known", "bytes": 412, "agent_cost_usd": 0, "session_cost_usd": 0},
