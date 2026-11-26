@@ -7,7 +7,7 @@ const sidebars: SidebarsConfig = {
     'docs/getting-started',
     {
       type: 'category',
-      label: 'Using sessionspec',
+      label: 'Using agentspec',
       collapsed: false,
       items: ['docs/dashboard', 'docs/kpis', 'docs/queries', 'docs/patterns'],
     },

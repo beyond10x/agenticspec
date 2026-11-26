@@ -1,8 +1,8 @@
-// generated from sessionspec v1
-// contract digest 7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40
+// generated from agentspec v1
+// contract digest 0c0727aa4de388310699c24fed8ce0f18713c396101cd870029ee370ff1fdebf
 // do not edit: regenerate with `ess synthesize`
 
-//! session-ir — the `session-ir` component of `sessionspec` v1.
+//! session-ir — the `session-ir` component of `agentspec` v1.
 //!
 //! Replays the commands an adapter lifted from a transcript and holds the resulting session state.
 //!
@@ -17,30 +17,30 @@
 /// An event this component declares it publishes, on its way to the system's transport.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublishedEvent {
-    /// `sessionspec.session.AgentEnded`.
-    AgentEnded(sessionspec_types::session::AgentEnded),
-    /// `sessionspec.session.AgentStarted`.
-    AgentStarted(sessionspec_types::session::AgentStarted),
-    /// `sessionspec.session.ContextCompacted`.
-    ContextCompacted(sessionspec_types::session::ContextCompacted),
-    /// `sessionspec.session.ExposureDetected`.
-    ExposureDetected(sessionspec_types::session::ExposureDetected),
-    /// `sessionspec.session.ModelTurnRecorded`.
-    ModelTurnRecorded(sessionspec_types::session::ModelTurnRecorded),
-    /// `sessionspec.session.PromptSubmitted`.
-    PromptSubmitted(sessionspec_types::session::PromptSubmitted),
-    /// `sessionspec.session.SessionEnded`.
-    SessionEnded(sessionspec_types::session::SessionEnded),
-    /// `sessionspec.session.SessionOpened`.
-    SessionOpened(sessionspec_types::session::SessionOpened),
-    /// `sessionspec.session.ToolCallCompleted`.
-    ToolCallCompleted(sessionspec_types::session::ToolCallCompleted),
-    /// `sessionspec.session.ToolCallDecided`.
-    ToolCallDecided(sessionspec_types::session::ToolCallDecided),
-    /// `sessionspec.session.ToolCallRequested`.
-    ToolCallRequested(sessionspec_types::session::ToolCallRequested),
-    /// `sessionspec.session.TurnEnded`.
-    TurnEnded(sessionspec_types::session::TurnEnded),
+    /// `agentspec.session.AgentEnded`.
+    AgentEnded(agentspec_types::session::AgentEnded),
+    /// `agentspec.session.AgentStarted`.
+    AgentStarted(agentspec_types::session::AgentStarted),
+    /// `agentspec.session.ContextCompacted`.
+    ContextCompacted(agentspec_types::session::ContextCompacted),
+    /// `agentspec.session.ExposureDetected`.
+    ExposureDetected(agentspec_types::session::ExposureDetected),
+    /// `agentspec.session.ModelTurnRecorded`.
+    ModelTurnRecorded(agentspec_types::session::ModelTurnRecorded),
+    /// `agentspec.session.PromptSubmitted`.
+    PromptSubmitted(agentspec_types::session::PromptSubmitted),
+    /// `agentspec.session.SessionEnded`.
+    SessionEnded(agentspec_types::session::SessionEnded),
+    /// `agentspec.session.SessionOpened`.
+    SessionOpened(agentspec_types::session::SessionOpened),
+    /// `agentspec.session.ToolCallCompleted`.
+    ToolCallCompleted(agentspec_types::session::ToolCallCompleted),
+    /// `agentspec.session.ToolCallDecided`.
+    ToolCallDecided(agentspec_types::session::ToolCallDecided),
+    /// `agentspec.session.ToolCallRequested`.
+    ToolCallRequested(agentspec_types::session::ToolCallRequested),
+    /// `agentspec.session.TurnEnded`.
+    TurnEnded(agentspec_types::session::TurnEnded),
 }
 
 /// session-ir — the port over the component's obligations.
@@ -73,225 +73,225 @@ impl<B> SessionIr<B> {
 
 impl<B> SessionIr<B>
 where
-    B: sessionspec_types::session::obligations::CompactContextBehavior + sessionspec_types::session::obligations::CompleteToolCallBehavior + sessionspec_types::session::obligations::DecideToolCallBehavior + sessionspec_types::session::obligations::EndAgentBehavior + sessionspec_types::session::obligations::EndSessionBehavior + sessionspec_types::session::obligations::EndTurnBehavior + sessionspec_types::session::obligations::OpenSessionBehavior + sessionspec_types::session::obligations::RecordExposureBehavior + sessionspec_types::session::obligations::RecordModelTurnBehavior + sessionspec_types::session::obligations::RequestToolCallBehavior + sessionspec_types::session::obligations::StartAgentBehavior + sessionspec_types::session::obligations::SubmitPromptBehavior + sessionspec_types::session::obligations::AgentsQuery + sessionspec_types::session::obligations::ExposuresQuery + sessionspec_types::session::obligations::SessionsQuery + sessionspec_types::session::obligations::ToolCallsQuery,
+    B: agentspec_types::session::obligations::CompactContextBehavior + agentspec_types::session::obligations::CompleteToolCallBehavior + agentspec_types::session::obligations::DecideToolCallBehavior + agentspec_types::session::obligations::EndAgentBehavior + agentspec_types::session::obligations::EndSessionBehavior + agentspec_types::session::obligations::EndTurnBehavior + agentspec_types::session::obligations::OpenSessionBehavior + agentspec_types::session::obligations::RecordExposureBehavior + agentspec_types::session::obligations::RecordModelTurnBehavior + agentspec_types::session::obligations::RequestToolCallBehavior + agentspec_types::session::obligations::StartAgentBehavior + agentspec_types::session::obligations::SubmitPromptBehavior + agentspec_types::session::obligations::AgentsQuery + agentspec_types::session::obligations::ExposuresQuery + agentspec_types::session::obligations::SessionsQuery + agentspec_types::session::obligations::ToolCallsQuery,
 {
-    /// Accepts `sessionspec.session.CompactContext`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.CompactContext`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn compact_context(&mut self, input: sessionspec_types::session::CompactContext) -> Result<sessionspec_types::session::CompactContextOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn compact_context(&mut self, input: agentspec_types::session::CompactContext) -> Result<agentspec_types::session::CompactContextOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.compact_context(input)?;
         match &outcome {
-            sessionspec_types::session::CompactContextOutcome::Compacted { context_compacted, .. } => {
+            agentspec_types::session::CompactContextOutcome::Compacted { context_compacted, .. } => {
                 self.outbox.push(PublishedEvent::ContextCompacted(context_compacted.clone()));
             }
-            sessionspec_types::session::CompactContextOutcome::NoSuchAgent { .. } => {}
+            agentspec_types::session::CompactContextOutcome::NoSuchAgent { .. } => {}
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.CompleteToolCall`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.CompleteToolCall`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn complete_tool_call(&mut self, input: sessionspec_types::session::CompleteToolCall) -> Result<sessionspec_types::session::CompleteToolCallOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn complete_tool_call(&mut self, input: agentspec_types::session::CompleteToolCall) -> Result<agentspec_types::session::CompleteToolCallOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.complete_tool_call(input)?;
         match &outcome {
-            sessionspec_types::session::CompleteToolCallOutcome::Succeeded { tool_call_completed, .. } => {
+            agentspec_types::session::CompleteToolCallOutcome::Succeeded { tool_call_completed, .. } => {
                 self.outbox.push(PublishedEvent::ToolCallCompleted(tool_call_completed.clone()));
             }
-            sessionspec_types::session::CompleteToolCallOutcome::Failed { tool_call_completed, .. } => {
+            agentspec_types::session::CompleteToolCallOutcome::Failed { tool_call_completed, .. } => {
                 self.outbox.push(PublishedEvent::ToolCallCompleted(tool_call_completed.clone()));
             }
-            sessionspec_types::session::CompleteToolCallOutcome::WrongState { .. } => {}
-            sessionspec_types::session::CompleteToolCallOutcome::WrongStateUnknownInstance => {}
+            agentspec_types::session::CompleteToolCallOutcome::WrongState { .. } => {}
+            agentspec_types::session::CompleteToolCallOutcome::WrongStateUnknownInstance => {}
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.DecideToolCall`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.DecideToolCall`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn decide_tool_call(&mut self, input: sessionspec_types::session::DecideToolCall) -> Result<sessionspec_types::session::DecideToolCallOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn decide_tool_call(&mut self, input: agentspec_types::session::DecideToolCall) -> Result<agentspec_types::session::DecideToolCallOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.decide_tool_call(input)?;
         match &outcome {
-            sessionspec_types::session::DecideToolCallOutcome::Accepted { tool_call_decided, .. } => {
+            agentspec_types::session::DecideToolCallOutcome::Accepted { tool_call_decided, .. } => {
                 self.outbox.push(PublishedEvent::ToolCallDecided(tool_call_decided.clone()));
             }
-            sessionspec_types::session::DecideToolCallOutcome::Refused { tool_call_decided, .. } => {
+            agentspec_types::session::DecideToolCallOutcome::Refused { tool_call_decided, .. } => {
                 self.outbox.push(PublishedEvent::ToolCallDecided(tool_call_decided.clone()));
             }
-            sessionspec_types::session::DecideToolCallOutcome::WrongState { .. } => {}
-            sessionspec_types::session::DecideToolCallOutcome::WrongStateUnknownInstance => {}
+            agentspec_types::session::DecideToolCallOutcome::WrongState { .. } => {}
+            agentspec_types::session::DecideToolCallOutcome::WrongStateUnknownInstance => {}
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.EndAgent`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.EndAgent`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn end_agent(&mut self, input: sessionspec_types::session::EndAgent) -> Result<sessionspec_types::session::EndAgentOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn end_agent(&mut self, input: agentspec_types::session::EndAgent) -> Result<agentspec_types::session::EndAgentOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.end_agent(input)?;
         match &outcome {
-            sessionspec_types::session::EndAgentOutcome::Ended { agent_ended, .. } => {
+            agentspec_types::session::EndAgentOutcome::Ended { agent_ended, .. } => {
                 self.outbox.push(PublishedEvent::AgentEnded(agent_ended.clone()));
             }
-            sessionspec_types::session::EndAgentOutcome::WrongState { .. } => {}
-            sessionspec_types::session::EndAgentOutcome::WrongStateUnknownInstance => {}
+            agentspec_types::session::EndAgentOutcome::WrongState { .. } => {}
+            agentspec_types::session::EndAgentOutcome::WrongStateUnknownInstance => {}
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.EndSession`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.EndSession`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn end_session(&mut self, input: sessionspec_types::session::EndSession) -> Result<sessionspec_types::session::EndSessionOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn end_session(&mut self, input: agentspec_types::session::EndSession) -> Result<agentspec_types::session::EndSessionOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.end_session(input)?;
         match &outcome {
-            sessionspec_types::session::EndSessionOutcome::Ended { session_ended, .. } => {
+            agentspec_types::session::EndSessionOutcome::Ended { session_ended, .. } => {
                 self.outbox.push(PublishedEvent::SessionEnded(session_ended.clone()));
             }
-            sessionspec_types::session::EndSessionOutcome::WrongState { .. } => {}
-            sessionspec_types::session::EndSessionOutcome::WrongStateUnknownInstance => {}
+            agentspec_types::session::EndSessionOutcome::WrongState { .. } => {}
+            agentspec_types::session::EndSessionOutcome::WrongStateUnknownInstance => {}
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.EndTurn`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.EndTurn`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn end_turn(&mut self, input: sessionspec_types::session::EndTurn) -> Result<sessionspec_types::session::EndTurnOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn end_turn(&mut self, input: agentspec_types::session::EndTurn) -> Result<agentspec_types::session::EndTurnOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.end_turn(input)?;
         match &outcome {
-            sessionspec_types::session::EndTurnOutcome::Ended { turn_ended, .. } => {
+            agentspec_types::session::EndTurnOutcome::Ended { turn_ended, .. } => {
                 self.outbox.push(PublishedEvent::TurnEnded(turn_ended.clone()));
             }
-            sessionspec_types::session::EndTurnOutcome::WrongState { .. } => {}
-            sessionspec_types::session::EndTurnOutcome::WrongStateUnknownInstance => {}
+            agentspec_types::session::EndTurnOutcome::WrongState { .. } => {}
+            agentspec_types::session::EndTurnOutcome::WrongStateUnknownInstance => {}
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.OpenSession`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.OpenSession`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn open_session(&mut self, input: sessionspec_types::session::OpenSession) -> Result<sessionspec_types::session::OpenSessionOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn open_session(&mut self, input: agentspec_types::session::OpenSession) -> Result<agentspec_types::session::OpenSessionOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.open_session(input)?;
         match &outcome {
-            sessionspec_types::session::OpenSessionOutcome::Opened { session_opened, .. } => {
+            agentspec_types::session::OpenSessionOutcome::Opened { session_opened, .. } => {
                 self.outbox.push(PublishedEvent::SessionOpened(session_opened.clone()));
             }
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.RecordExposure`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.RecordExposure`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn record_exposure(&mut self, input: sessionspec_types::session::RecordExposure) -> Result<sessionspec_types::session::RecordExposureOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn record_exposure(&mut self, input: agentspec_types::session::RecordExposure) -> Result<agentspec_types::session::RecordExposureOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.record_exposure(input)?;
         match &outcome {
-            sessionspec_types::session::RecordExposureOutcome::Recorded { exposure_detected, .. } => {
+            agentspec_types::session::RecordExposureOutcome::Recorded { exposure_detected, .. } => {
                 self.outbox.push(PublishedEvent::ExposureDetected(exposure_detected.clone()));
             }
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.RecordModelTurn`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.RecordModelTurn`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn record_model_turn(&mut self, input: sessionspec_types::session::RecordModelTurn) -> Result<sessionspec_types::session::RecordModelTurnOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn record_model_turn(&mut self, input: agentspec_types::session::RecordModelTurn) -> Result<agentspec_types::session::RecordModelTurnOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.record_model_turn(input)?;
         match &outcome {
-            sessionspec_types::session::RecordModelTurnOutcome::Recorded { model_turn_recorded, .. } => {
+            agentspec_types::session::RecordModelTurnOutcome::Recorded { model_turn_recorded, .. } => {
                 self.outbox.push(PublishedEvent::ModelTurnRecorded(model_turn_recorded.clone()));
             }
-            sessionspec_types::session::RecordModelTurnOutcome::NoSuchAgent { .. } => {}
+            agentspec_types::session::RecordModelTurnOutcome::NoSuchAgent { .. } => {}
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.RequestToolCall`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.RequestToolCall`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn request_tool_call(&mut self, input: sessionspec_types::session::RequestToolCall) -> Result<sessionspec_types::session::RequestToolCallOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn request_tool_call(&mut self, input: agentspec_types::session::RequestToolCall) -> Result<agentspec_types::session::RequestToolCallOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.request_tool_call(input)?;
         match &outcome {
-            sessionspec_types::session::RequestToolCallOutcome::Requested { tool_call_requested, .. } => {
+            agentspec_types::session::RequestToolCallOutcome::Requested { tool_call_requested, .. } => {
                 self.outbox.push(PublishedEvent::ToolCallRequested(tool_call_requested.clone()));
             }
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.StartAgent`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.StartAgent`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn start_agent(&mut self, input: sessionspec_types::session::StartAgent) -> Result<sessionspec_types::session::StartAgentOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn start_agent(&mut self, input: agentspec_types::session::StartAgent) -> Result<agentspec_types::session::StartAgentOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.start_agent(input)?;
         match &outcome {
-            sessionspec_types::session::StartAgentOutcome::Started { agent_started, .. } => {
+            agentspec_types::session::StartAgentOutcome::Started { agent_started, .. } => {
                 self.outbox.push(PublishedEvent::AgentStarted(agent_started.clone()));
             }
         }
         Ok(outcome)
     }
 
-    /// Accepts `sessionspec.session.SubmitPrompt`: runs the behaviour obligation, then publishes the declared events
+    /// Accepts `agentspec.session.SubmitPrompt`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
     ///
     /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
     /// arrives as a variant of the outcome type, refusals included.
-    pub fn submit_prompt(&mut self, input: sessionspec_types::session::SubmitPrompt) -> Result<sessionspec_types::session::SubmitPromptOutcome, sessionspec_types::obligation::UnmetObligation> {
+    pub fn submit_prompt(&mut self, input: agentspec_types::session::SubmitPrompt) -> Result<agentspec_types::session::SubmitPromptOutcome, agentspec_types::obligation::UnmetObligation> {
         let outcome = self.behaviors.submit_prompt(input)?;
         match &outcome {
-            sessionspec_types::session::SubmitPromptOutcome::Submitted { prompt_submitted, .. } => {
+            agentspec_types::session::SubmitPromptOutcome::Submitted { prompt_submitted, .. } => {
                 self.outbox.push(PublishedEvent::PromptSubmitted(prompt_submitted.clone()));
             }
-            sessionspec_types::session::SubmitPromptOutcome::WrongState { .. } => {}
-            sessionspec_types::session::SubmitPromptOutcome::WrongStateUnknownInstance => {}
+            agentspec_types::session::SubmitPromptOutcome::WrongState { .. } => {}
+            agentspec_types::session::SubmitPromptOutcome::WrongStateUnknownInstance => {}
         }
         Ok(outcome)
     }
 
-    /// Serves `sessionspec.session.Agents` at `read_your_writes` consistency, from the owed projection.
-    pub fn agents(&self) -> Result<Vec<sessionspec_types::session::Agents>, sessionspec_types::obligation::UnmetObligation> {
+    /// Serves `agentspec.session.Agents` at `read_your_writes` consistency, from the owed projection.
+    pub fn agents(&self) -> Result<Vec<agentspec_types::session::Agents>, agentspec_types::obligation::UnmetObligation> {
         self.behaviors.agents()
     }
 
-    /// Serves `sessionspec.session.Exposures` at `read_your_writes` consistency, from the owed projection.
-    pub fn exposures(&self) -> Result<Vec<sessionspec_types::session::Exposures>, sessionspec_types::obligation::UnmetObligation> {
+    /// Serves `agentspec.session.Exposures` at `read_your_writes` consistency, from the owed projection.
+    pub fn exposures(&self) -> Result<Vec<agentspec_types::session::Exposures>, agentspec_types::obligation::UnmetObligation> {
         self.behaviors.exposures()
     }
 
-    /// Serves `sessionspec.session.Sessions` at `read_your_writes` consistency, from the owed projection.
-    pub fn sessions(&self) -> Result<Vec<sessionspec_types::session::Sessions>, sessionspec_types::obligation::UnmetObligation> {
+    /// Serves `agentspec.session.Sessions` at `read_your_writes` consistency, from the owed projection.
+    pub fn sessions(&self) -> Result<Vec<agentspec_types::session::Sessions>, agentspec_types::obligation::UnmetObligation> {
         self.behaviors.sessions()
     }
 
-    /// Serves `sessionspec.session.ToolCalls` at `read_your_writes` consistency, from the owed projection.
-    pub fn tool_calls(&self) -> Result<Vec<sessionspec_types::session::ToolCalls>, sessionspec_types::obligation::UnmetObligation> {
+    /// Serves `agentspec.session.ToolCalls` at `read_your_writes` consistency, from the owed projection.
+    pub fn tool_calls(&self) -> Result<Vec<agentspec_types::session::ToolCalls>, agentspec_types::obligation::UnmetObligation> {
         self.behaviors.tool_calls()
     }
 }

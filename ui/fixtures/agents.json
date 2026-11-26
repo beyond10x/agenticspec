@@ -1,5 +1,5 @@
 {
-  "view": "sessionspec.view.SessionAgents",
+  "view": "agentspec.view.SessionAgents",
   "rows": [
     {"agent_id": "agt-demo-0001-main", "session_id": "ses-demo-0001", "parent": null, "role": "Main", "model": "model-demo-large", "started_at": "2026-11-20T09:00:00Z", "turns": 5, "context_tokens": 31000, "context_max": 31000, "output_tokens": 4200, "cost_usd": 0.48, "tool_calls": 2, "busts": 1},
     {"agent_id": "agt-demo-0001-sub1", "session_id": "ses-demo-0001", "parent": "agt-demo-0001-main", "role": "SubAgent", "model": "model-demo-large", "started_at": "2026-11-20T09:00:22Z", "turns": 2, "context_tokens": 13000, "context_max": 13000, "output_tokens": 900, "cost_usd": 0.07, "tool_calls": 1, "busts": 0},

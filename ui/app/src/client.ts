@@ -1,6 +1,6 @@
-// The typed client over the `session-view` surface that `sessionspec serve` answers. The row and
+// The typed client over the `session-view` surface that `agentspec serve` answers. The row and
 // event types are generated from spec/domains/view.yaml (src/generated/types.ts, never edited);
-// the paths are the views' wire names and the two channels of ui/sessionspec.ui.yaml.
+// the paths are the views' wire names and the two channels of ui/agentspec.ui.yaml.
 
 import type {
   AgentUpdated,
@@ -68,9 +68,9 @@ export async function query<V extends keyof Views>(
 
 /** The events a channel carries, by qualified name. */
 export interface ChannelEvents {
-  'sessionspec.view.SessionUpdated': SessionUpdated;
-  'sessionspec.view.AgentUpdated': AgentUpdated;
-  'sessionspec.view.EventAppended': EventAppended;
+  'agentspec.view.SessionUpdated': SessionUpdated;
+  'agentspec.view.AgentUpdated': AgentUpdated;
+  'agentspec.view.EventAppended': EventAppended;
 }
 
 export type Handlers = { [K in keyof ChannelEvents]?: (payload: ChannelEvents[K]) => void };

@@ -1,12 +1,12 @@
 # Patterns and procedures
 
-`sessionspec mine` finds runs of tool calls that your agents repeat across sessions and projects.
+`agentspec mine` finds runs of tool calls that your agents repeat across sessions and projects.
 A repeated run can become a draft procedure, and the procedure can be exported for an executor.
 
 ## Mine patterns
 
 ```console
-sessionspec mine --since-hours 168
+agentspec mine --since-hours 168
 ```
 
 Each agent turn becomes a row of tokens, one per tool call. Several calls of the same tool in a
@@ -40,7 +40,7 @@ A pattern is left out when a pattern one token longer occurs in the same session
 ## Turn a pattern into a procedure
 
 ```console
-sessionspec procedure p-424c51455f --out procedure.json
+agentspec procedure p-424c51455f --out procedure.json
 ```
 
 Pass the pattern's id or its tokens, such as `"Bash+ Write Bash+"`. Without `--out` the procedure is
@@ -58,7 +58,7 @@ printed. The procedure is a draft built from every match of the pattern:
 ## Export a procedure
 
 ```console
-sessionspec export procedure.json --out exported/
+agentspec export procedure.json --out exported/
 ```
 
 This writes two files into `exported/`:

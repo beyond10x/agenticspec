@@ -6,4 +6,4 @@
 /ui/app/node_modules/
 /ui/app/test-results/
 /ui/app/playwright-report/
-sessionspec-dashboard.html
+agentspec-dashboard.html

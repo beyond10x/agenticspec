@@ -1,5 +1,5 @@
 format: ess-ui-test/1
-document: ../sessionspec.ui.yaml
+document: ../agentspec.ui.yaml
 tests:
   - name: the overview lists every session and opens one
     steps:
@@ -21,7 +21,7 @@ tests:
       - open: {page: session, params: {session_id: ses-demo-0001}}
       - expect: {at: pages/session/sections/log, rows: 25}
       # session_events.json plays events 26 to 29 by 6 s.
-      - play: {event: sessionspec.view.EventAppended, with: {event_id: ses-demo-0001.28}}
+      - play: {event: agentspec.view.EventAppended, with: {event_id: ses-demo-0001.28}}
       - advance: 100ms
       - expect: {at: pages/session/sections/log, rows: 29}
       - expect: {at: pages/session/sections/log/rows/ses-demo-0001.28, text: Grep}
@@ -29,7 +29,7 @@ tests:
   - name: a pushed event of another session stays out
     steps:
       - open: {page: session, params: {session_id: ses-demo-0002}}
-      - play: {event: sessionspec.view.EventAppended, with: {event_id: ses-demo-0001.28}}
+      - play: {event: agentspec.view.EventAppended, with: {event_id: ses-demo-0001.28}}
       - advance: 100ms
       - expect: {at: pages/session/sections/log, rows: 8}
 

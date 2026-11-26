@@ -1,23 +1,23 @@
 # Interaction records: one session model for transcripts and gateway traffic
 
-Status: proposal, 2026-11-26. Written by sessionspec with the gateway's dashboard maintainers and
+Status: proposal, 2026-11-26. Written by agentspec with the gateway's dashboard maintainers and
 the gateway's maintainers. No code is written for it until the owner accepts it.
 
 ## Problem
 
 Two programs describe the same agent sessions and today share nothing:
 
-- sessionspec reads harness transcripts on disk (Claude Code JSONL; Codex next) and lifts them
+- agentspec reads harness transcripts on disk (Claude Code JSONL; Codex next) and lifts them
   into a session IR: sessions, agents, prompts, model turns, tool calls, decisions, exposures.
 - llm-gateway sees every model call on the wire. It knows what a transcript cannot (route,
   upstream, attempts, declared-price cost, latency) and shows recent calls on its dashboard.
 
 The owner asked for one concept: the gateway turns requests and responses into the same records
-sessionspec lifts from transcripts, stores them the same way, and shows them in the same view.
+agentspec lifts from transcripts, stores them the same way, and shows them in the same view.
 
 ## 1. One domain, defined once
 
-The records are the domain `sessionspec.session` in sessionspec's ESS specification
+The records are the domain `agentspec.session` in agentspec's ESS specification
 (`spec/domains/session.yaml`). It is the agent-interaction model: it already holds the nouns the
 gateway needs (session, agent, model turn with usage, tool call, decision, compaction) and every
 actor and attribution rule.
@@ -25,12 +25,12 @@ actor and attribution rule.
 ESS has no import across systems: a domain is named inside its system, and llm-gateway already
 names llm's entities by `BOUNDARY:` comments for that reason. So "defined once" works this way:
 
-- sessionspec owns the domain and publishes it as three artifacts, each generated from the one
+- agentspec owns the domain and publishes it as three artifacts, each generated from the one
   specification:
   1. the JSON Schema of every command and event (`ess generate --kind schema`), the wire contract;
   2. a Rust crate of the types, codecs and the generated component that checks every record
-     (`sessionspec-types`, `session-ir`, today generated in `generated/`);
-  3. a Rust library crate `sessionspec-records`: the append API, the store, the lifts from each
+     (`agentspec-types`, `session-ir`, today generated in `generated/`);
+  3. a Rust library crate `agentspec-records`: the append API, the store, the lifts from each
      source and the view projection. The gateway links it by git tag, the way it links llm.
 - llm-gateway's specification names the records by a `BOUNDARY:` comment beside the field that
   carries them (one new field on its call record, section 6), and does not copy the domain.
@@ -110,7 +110,7 @@ works for Anthropic traffic (`msg_…`; Ollama's messages wire answers `msg_…`
 answers `chatcmpl-…` and responses `resp_…`; a harness transcript of those wires is joined on the
 same id where the transcript keeps it. The disk record keeps decisions, authors and sub-agent
 links; the wire record adds route, upstream and cost. Sessions join on the session id hash
-(section 5), which sessionspec computes from the transcript with the gateway's function.
+(section 5), which agentspec computes from the transcript with the gateway's function.
 
 ## 3. Store: an append-only stream per session
 
@@ -119,10 +119,10 @@ actor and the source that appended it. Events are what the generated component p
 stream is replayed; views are projections of the events. A record is never updated: a late fact
 (a tool result after a crash) is a new command.
 
-Two backends behind one trait in `sessionspec-records`:
+Two backends behind one trait in `agentspec-records`:
 
-- first: SQLite, one file. sessionspec writes `~/.local/share/sessionspec/sessions.db` today
-  (`sessionspec sync`, being built); a local gateway writes the same schema to a path in its TOML
+- first: SQLite, one file. agentspec writes `~/.local/share/agentspec/sessions.db` today
+  (`agentspec sync`, being built); a local gateway writes the same schema to a path in its TOML
   document. The append runs on a writer thread behind a bounded queue, never on the connection's
   thread.
 - later: an Eventlog stream per session, and an entity-runtime projection for the views. A gateway
@@ -130,14 +130,14 @@ Two backends behind one trait in `sessionspec-records`:
 
 ## 4. One view
 
-The UI is an ESS UI document, `ui/sessionspec.ui.yaml` (`ess-ui/1`), over the views of the domain
-`sessionspec.view`: a session list (recent and active sessions, filters by time, project, model,
+The UI is an ESS UI document, `ui/agentspec.ui.yaml` (`ess-ui/1`), over the views of the domain
+`agentspec.view`: a session list (recent and active sessions, filters by time, project, model,
 tool), one session (metrics, cost over time, one card per agent, event lanes, event log) and embed
 pages (`/embed/session/<id>`) that show only the session view.
 
-- sessionspec's static build and `sessionspec serve` render it from the local store.
+- agentspec's static build and `agentspec serve` render it from the local store.
 - The shared part is the view model, not the renderer. The gateway's dashboard writes its own Vue
-  components (session list, session view) over TypeScript types generated from `sessionspec.view`,
+  components (session list, session view) over TypeScript types generated from `agentspec.view`,
   the split it keeps today (generated `snapshot.ts`, hand-written `.vue`). The page stays one file embedded in the gateway, with no second
   bundle.
 - Session-level KPIs show in their own section beside the per-call KPIs; the page shows what the
@@ -149,10 +149,10 @@ pages (`/embed/session/<id>`) that show only the session view.
 ## 5. Content and identifiers
 
 - Default: no message text. Prompts, tool inputs and outputs are a digest and a byte count, as the
-  gateway's dashboard keeps them today and as sessionspec's redacted IR does. Storing text is a later
+  gateway's dashboard keeps them today and as agentspec's redacted IR does. Storing text is a later
   setting per store, off by default.
 - The session id leaves a source only as the gateway's hash: SHA-256 of
-  `llm-gateway.session/1\0<source>\0<header value>`, its first 6 bytes as 12 hex digits. sessionspec computes
+  `llm-gateway.session/1\0<source>\0<header value>`, its first 6 bytes as 12 hex digits. agentspec computes
   the same hash from a transcript to join, so no raw id is needed. The dashboard shows the hash.
 
 ## 6. Joining the gateway's existing domains
@@ -167,13 +167,13 @@ pages (`/embed/session/<id>`) that show only the session view.
   it by literal: the gateway's version takes a minor step and its CHANGELOG says so.
 - `llm-gateway.upstream` and the routes give the route and upstream names the record carries.
 - `RecordModelTurn` gains optional fields for call id, route, upstream, attempts, queue wait, time
-  to first token, declared-price cost and an incomplete flag (in sessionspec's specification;
+  to first token, declared-price cost and an incomplete flag (in agentspec's specification;
   absent from disk records).
 - KPIs: per call figures stay in the gateway's telemetry. Per session figures (autonomy, cache
-  busts, waiting on the human, cost per session) are computed once, by `sessionspec-records`, over
+  busts, waiting on the human, cost per session) are computed once, by `agentspec-records`, over
   records from either source; the gateway's dashboard shows them from that library.
 - The gateway crate `crates/llm-gateway` declares no dependency (its dependency-boundary test), so
-  `sessionspec-records` links into the binary crate `crates/llm-gateway-cli`, behind a port the
+  `agentspec-records` links into the binary crate `crates/llm-gateway-cli`, behind a port the
   gateway crate declares, as usage records and call pricing do (`metrics.rs`). The port is called
   on the connection's thread and returns at once.
 - The dashboard's only ratchet is its UI loop's baseline (layout, accessibility, keyboard, reading
@@ -181,9 +181,9 @@ pages (`/embed/session/<id>`) that show only the session view.
 
 ## Order of work, after acceptance
 
-1. sessionspec: the store and `sync` (in progress), then split `sessionspec-records` out of the
+1. agentspec: the store and `sync` (in progress), then split `agentspec-records` out of the
    binary crate.
-2. sessionspec: the wire lift as a pure function from (request bytes, answer events, gateway facts)
+2. agentspec: the wire lift as a pure function from (request bytes, answer events, gateway facts)
    to IR commands, tested on recorded, synthetic calls.
 3. llm-gateway, specification first and red tests first, in one wave: the finished-call value and
    the port in `telemetry.yaml`, the answer tap for message id and tool-use blocks, the adapter in
@@ -192,9 +192,9 @@ pages (`/embed/session/<id>`) that show only the session view.
 
 ## Built (steps 1 and 2)
 
-- The crate `crates/sessionspec-records` holds the sources, the store, replay, the view
-  projection, the KPIs and the sq engine; the `sessionspec` binary is the command line over it.
-- `sessionspec.session` gained: `Source` (Disk, Wire) and `session_hash` on `OpenSession`; the
+- The crate `crates/agentspec-records` holds the sources, the store, replay, the view
+  projection, the KPIs and the sq engine; the `agentspec` binary is the command line over it.
+- `agentspec.session` gained: `Source` (Disk, Wire) and `session_hash` on `OpenSession`; the
   agent role `SideCall`; on `RecordModelTurn` the optional `message_id`, `call_id`, `route`,
   `upstream`, `attempts`, `queue_wait_ms`, `ttft_ms`, `declared_cost_microdollars` and
   `incomplete` (`IncompleteReason`: client_disconnected, upstream_cut, wire_error, refused).
@@ -202,9 +202,9 @@ pages (`/embed/session/<id>`) that show only the session view.
 - The API a gateway adapter calls, per session hash and per finished call:
 
   ```rust
-  let mut session = sessionspec_records::wire::WireSession::new();          // one per session hash
-  let steps = sessionspec_records::wire::lift_call(&mut session, &call);    // call: WireCall
-  let (appender, writer) = sessionspec_records::append::Appender::spawn(&db_path, capacity)?;
+  let mut session = agentspec_records::wire::WireSession::new();          // one per session hash
+  let steps = agentspec_records::wire::lift_call(&mut session, &call);    // call: WireCall
+  let (appender, writer) = agentspec_records::append::Appender::spawn(&db_path, capacity)?;
   appender.append(&call.facts.session_hash, call.facts.harness, steps);     // never blocks
   ```
 
@@ -220,7 +220,7 @@ pages (`/embed/session/<id>`) that show only the session view.
   The check verdicts run over the whole session when the queue is empty for 500 ms, and on an
   append once they lag 30 s. A session not kept, or a batch earlier than the session's first
   instant, is projected again from every stored step. Either way the rows equal a projection of
-  the whole session (tests `long::*` in `crates/sessionspec-records/tests/main.rs`).
+  the whole session (tests `long::*` in `crates/agentspec-records/tests/main.rs`).
 
 Not built yet, from § 2: a compaction inferred from a chain that restarts with a summary (it
 starts a new agent instead); redaction findings on the wire (`RecordExposure`); two agents whose

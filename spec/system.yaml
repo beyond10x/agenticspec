@@ -1,8 +1,8 @@
 format: ess/37
-system: sessionspec
+system: agentspec
 version: v1
 
 domains:
-  - sessionspec.session
-  - sessionspec.cli
-  - sessionspec.view
+  - agentspec.session
+  - agentspec.cli
+  - agentspec.view

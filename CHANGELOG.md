@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - The repository is `https://github.com/beyond10x/agentspec` and the documentation `https://beyond10x.github.io/agentspec/`; the old repository URL redirects there. The command and the crates keep the name `sessionspec` for now
+- The tool is named agentspec: the command `agentspec`, the crates `agentspec-records` and `agentspec-types` (Rust paths `agentspec_records`, `agentspec_types`), the specification system `agentspec`, the release archives `agentspec-<version>-<target>.tar.gz`. Types, functions and their signatures are unchanged
+- The store is `~/.local/share/agentspec/sessions.db`; a store in `~/.local/share/sessionspec/` is moved there the first time it is opened. The environment variables are `AGENTSPEC_DELEGATES`, `AGENTSPEC_UI_DIR` and `AGENTSPEC_SYNC_MS`; `SESSIONSPEC_DELEGATES` is still read when `AGENTSPEC_DELEGATES` is not set
 - `sessionspec serve` reads every view from tables of the store with one query per request and keeps no rows in memory; on a store of 116 sessions its resident memory measured 84 to 164 MB, where it grew past 1.9 GB before
 - `sessionspec serve` runs each sync, the first included, as a `sessionspec sync` child process, one at a time, and never lifts a transcript itself, so the memory of a re-lift goes back to the system when the child ends
 - `sync` lifts transcripts in chunks bounded by size and returns freed memory after a sync

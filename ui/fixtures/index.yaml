@@ -1,12 +1,12 @@
 views:
-  sessionspec.view.SessionList: sessions.json
-  sessionspec.view.SessionAgents: agents.json
-  sessionspec.view.SessionEvents: events.json
-  sessionspec.view.SessionTurns: turns.json
-  sessionspec.view.SessionChecks: checks.json
+  agentspec.view.SessionList: sessions.json
+  agentspec.view.SessionAgents: agents.json
+  agentspec.view.SessionEvents: events.json
+  agentspec.view.SessionTurns: turns.json
+  agentspec.view.SessionChecks: checks.json
 derived:
-  sessionspec.view.SessionById: {by_id_from: sessionspec.view.SessionList, key: session_id}
-  sessionspec.view.AgentTurns: {same_as: sessionspec.view.SessionTurns}
+  agentspec.view.SessionById: {by_id_from: agentspec.view.SessionList, key: session_id}
+  agentspec.view.AgentTurns: {same_as: agentspec.view.SessionTurns}
 scripts:
   sessions: scripts/sessions.json
   session_events: scripts/session_events.json

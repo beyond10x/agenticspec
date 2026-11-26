@@ -1,4 +1,4 @@
-domain: sessionspec.session
+domain: agentspec.session
 
 summary: >-
   An agent session of any harness, as actors issuing commands. An adapter lifts a vendor transcript
@@ -10,35 +10,35 @@ naming:
   display: Session
 
 types:
-  - name: sessionspec.session.SessionId
+  - name: agentspec.session.SessionId
     kind: newtype
     of: String
     naming:
       summary: The harness's own session identifier.
 
-  - name: sessionspec.session.AgentId
+  - name: agentspec.session.AgentId
     kind: newtype
     of: String
     naming:
       summary: One agent loop in a session; the main loop or a sub-agent.
 
-  - name: sessionspec.session.ToolCallId
+  - name: agentspec.session.ToolCallId
     kind: newtype
     of: String
     naming:
       summary: The harness's identifier of one tool call.
 
-  - name: sessionspec.session.ExposureId
+  - name: agentspec.session.ExposureId
     kind: newtype
     of: String
     naming:
       summary: One finding of the redaction pass; the adapter mints it from the record and the match position.
 
-  - name: sessionspec.session.Harness
+  - name: agentspec.session.Harness
     kind: enum
     variants: [ClaudeCode, Codex, Other]
 
-  - name: sessionspec.session.AgentRole
+  - name: agentspec.session.AgentRole
     kind: enum
     variants: [Main, SubAgent, SideCall]
     naming:
@@ -46,7 +46,7 @@ types:
         SideCall is a model call of the harness outside every agent's conversation (a title, a
         summary, a quota probe): the wire tells it by a call with no tools and no history.
 
-  - name: sessionspec.session.Source
+  - name: agentspec.session.Source
     kind: enum
     variants: [Disk, Wire]
     naming:
@@ -54,13 +54,13 @@ types:
         Where a record was observed: a harness transcript on disk, or a model call on a gateway's
         wire (`design/interaction-records.md`).
 
-  - name: sessionspec.session.IncompleteReason
+  - name: agentspec.session.IncompleteReason
     kind: enum
     variants: [client_disconnected, upstream_cut, wire_error, refused]
     naming:
       summary: Why a model turn on the wire ended before its answer was whole.
 
-  - name: sessionspec.session.PromptAuthor
+  - name: agentspec.session.PromptAuthor
     kind: enum
     variants: [Human, Delegate, PeerSession, ParentAgent, Harness, Hook]
     naming:
@@ -68,7 +68,7 @@ types:
         Who wrote a prompt. Delegate is a session acting for the human; Harness covers task
         notifications, compaction summaries and auto-continuation.
 
-  - name: sessionspec.session.Attribution
+  - name: agentspec.session.Attribution
     kind: enum
     variants: [Known, Inferred, Unknown]
     naming:
@@ -76,7 +76,7 @@ types:
         How the author was established. Known from a structured field of the transcript, Inferred
         from a text prefix, Unknown otherwise.
 
-  - name: sessionspec.session.PromptClass
+  - name: agentspec.session.PromptClass
     kind: enum
     variants: [Task, Correction, Approval, Question, Continue, Unknown]
     naming:
@@ -84,21 +84,21 @@ types:
         What a prompt asks, from rules over its text run on the host before redaction; Unknown when
         no rule matched or the author is the harness or a hook.
 
-  - name: sessionspec.session.ToolCategory
+  - name: agentspec.session.ToolCategory
     kind: enum
     variants: [Read, Search, Edit, Execute, Network, Spawn, Message, Plan, Other]
 
-  - name: sessionspec.session.Decision
+  - name: agentspec.session.Decision
     kind: enum
     variants: [Accept, Refuse]
 
-  - name: sessionspec.session.Decider
+  - name: agentspec.session.Decider
     kind: enum
     variants: [PermissionMode, Classifier, Hook, Human, SafetyCheck, Rule, NotRecorded]
     naming:
       summary: What decided a tool call. NotRecorded where the transcript carries no decision.
 
-  - name: sessionspec.session.ExposureChannel
+  - name: agentspec.session.ExposureChannel
     kind: enum
     variants: [Prompt, ToolInput, ToolOutput, AgentText]
     naming:
@@ -106,17 +106,17 @@ types:
         Where a secret or a personal datum appeared. ToolInput is the severe one when the tool's
         category is Network, Message or Execute: the value left the session.
 
-  - name: sessionspec.session.ExposureClass
+  - name: agentspec.session.ExposureClass
     kind: enum
     variants: [Secret, PersonalData]
 
-  - name: sessionspec.session.Verdict
+  - name: agentspec.session.Verdict
     kind: enum
     variants: [Ok, Gap, Unk]
     naming:
       summary: Ok is a known fixture or allowed value, Gap a confirmed exposure, Unk a match nobody confirmed.
 
-  - name: sessionspec.session.Content
+  - name: agentspec.session.Content
     kind: struct
     naming:
       summary: Content without the content.
@@ -128,7 +128,7 @@ types:
         type: Integer
         summary: Length of the content in bytes.
 
-  - name: sessionspec.session.Usage
+  - name: agentspec.session.Usage
     kind: struct
     naming:
       summary: Token usage of one model message, as the harness reports it.
@@ -145,21 +145,21 @@ types:
         type: Integer
 
 entities:
-  - name: sessionspec.session.Session
+  - name: agentspec.session.Session
     naming:
       summary: One harness session, from its first record to its last.
     identity:
       name: session_id
-      type: sessionspec.session.SessionId
+      type: agentspec.session.SessionId
     fields:
       - name: harness
-        type: sessionspec.session.Harness
+        type: agentspec.session.Harness
       - name: opened_at
         type: Timestamp
     relations:
       - name: agents
         kind: owns
-        target: sessionspec.session.Agent
+        target: agentspec.session.Agent
         cardinality: many
         via: session_id
     lifecycle:
@@ -171,21 +171,21 @@ entities:
           from: [Open]
           to: Ended
 
-  - name: sessionspec.session.Agent
+  - name: agentspec.session.Agent
     naming:
       summary: >-
         One agent loop. Working while its turn runs, Idle once the turn ended and until the next
         prompt. Idle time before a human prompt is time the session waited on the human.
     identity:
       name: agent_id
-      type: sessionspec.session.AgentId
+      type: agentspec.session.AgentId
     fields:
       - name: session_id
-        type: sessionspec.session.SessionId
+        type: agentspec.session.SessionId
       - name: parent_agent_id
-        type: Optional<sessionspec.session.AgentId>
+        type: Optional<agentspec.session.AgentId>
       - name: role
-        type: sessionspec.session.AgentRole
+        type: agentspec.session.AgentRole
       - name: model
         type: Optional<String>
       - name: context_tokens
@@ -209,47 +209,47 @@ entities:
     relations:
       - name: tool_calls
         kind: owns
-        target: sessionspec.session.ToolCall
+        target: agentspec.session.ToolCall
         cardinality: many
         via: agent_id
       - name: parent
         kind: references
-        target: sessionspec.session.Agent
+        target: agentspec.session.Agent
         cardinality: one
         via: parent_agent_id
       - name: exposures
         kind: owns
-        target: sessionspec.session.Exposure
+        target: agentspec.session.Exposure
         cardinality: many
         via: agent_id
 
-  - name: sessionspec.session.Exposure
+  - name: agentspec.session.Exposure
     naming:
       summary: >-
         A secret or a personal datum the redaction pass found in one channel of one agent. Holds the
         class, the detector kind and a per-session alias; never the value.
     identity:
       name: exposure_id
-      type: sessionspec.session.ExposureId
+      type: agentspec.session.ExposureId
     fields:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: channel
-        type: sessionspec.session.ExposureChannel
+        type: agentspec.session.ExposureChannel
       - name: class
-        type: sessionspec.session.ExposureClass
+        type: agentspec.session.ExposureClass
       - name: kind
         type: String
       - name: alias
         type: String
       - name: verdict
-        type: sessionspec.session.Verdict
+        type: agentspec.session.Verdict
       - name: tool_call_id
-        type: Optional<sessionspec.session.ToolCallId>
+        type: Optional<agentspec.session.ToolCallId>
     relations:
       - name: tool_call
         kind: references
-        target: sessionspec.session.ToolCall
+        target: agentspec.session.ToolCall
         cardinality: one
         via: tool_call_id
     lifecycle:
@@ -257,19 +257,19 @@ entities:
       states: [Recorded]
       terminal: [Recorded]
 
-  - name: sessionspec.session.ToolCall
+  - name: agentspec.session.ToolCall
     naming:
       summary: One tool call an agent requested, the decision on it and its result.
     identity:
       name: tool_call_id
-      type: sessionspec.session.ToolCallId
+      type: agentspec.session.ToolCallId
     fields:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: tool
         type: String
       - name: category
-        type: sessionspec.session.ToolCategory
+        type: agentspec.session.ToolCategory
     lifecycle:
       initial: Requested
       states: [Requested, Accepted, Refused, Succeeded, Failed]
@@ -289,104 +289,104 @@ entities:
           to: Failed
 
 actors:
-  - name: sessionspec.session.HarnessRuntime
+  - name: agentspec.session.HarnessRuntime
     naming:
       display: Harness
       summary: The runtime around the model loop; opens and ends sessions and agents, compacts, notifies.
     may:
-      - sessionspec.session.OpenSession
-      - sessionspec.session.EndSession
-      - sessionspec.session.StartAgent
-      - sessionspec.session.EndAgent
-      - sessionspec.session.CompactContext
-      - sessionspec.session.SubmitPrompt
+      - agentspec.session.OpenSession
+      - agentspec.session.EndSession
+      - agentspec.session.StartAgent
+      - agentspec.session.EndAgent
+      - agentspec.session.CompactContext
+      - agentspec.session.SubmitPrompt
 
-  - name: sessionspec.session.Human
+  - name: agentspec.session.Human
     naming:
       display: Human
     may:
-      - sessionspec.session.SubmitPrompt
-      - sessionspec.session.DecideToolCall
+      - agentspec.session.SubmitPrompt
+      - agentspec.session.DecideToolCall
 
-  - name: sessionspec.session.Delegate
+  - name: agentspec.session.Delegate
     naming:
       display: Delegate
       summary: A session acting for the human, with the human's permissions.
     may:
-      - sessionspec.session.SubmitPrompt
+      - agentspec.session.SubmitPrompt
 
-  - name: sessionspec.session.PeerSession
+  - name: agentspec.session.PeerSession
     naming:
       display: Peer session
     may:
-      - sessionspec.session.SubmitPrompt
+      - agentspec.session.SubmitPrompt
 
-  - name: sessionspec.session.AgentLoop
+  - name: agentspec.session.AgentLoop
     naming:
       display: Agent
     may:
-      - sessionspec.session.RecordModelTurn
-      - sessionspec.session.RequestToolCall
-      - sessionspec.session.EndTurn
-      - sessionspec.session.SubmitPrompt
+      - agentspec.session.RecordModelTurn
+      - agentspec.session.RequestToolCall
+      - agentspec.session.EndTurn
+      - agentspec.session.SubmitPrompt
 
-  - name: sessionspec.session.PermissionAuthority
+  - name: agentspec.session.PermissionAuthority
     naming:
       display: Permission authority
       summary: Permission mode, classifier, hook or safety check deciding a tool call without the human.
     may:
-      - sessionspec.session.DecideToolCall
+      - agentspec.session.DecideToolCall
 
-  - name: sessionspec.session.ToolProvider
+  - name: agentspec.session.ToolProvider
     naming:
       display: Tool provider
     may:
-      - sessionspec.session.CompleteToolCall
+      - agentspec.session.CompleteToolCall
 
-  - name: sessionspec.session.Redactor
+  - name: agentspec.session.Redactor
     naming:
       display: Redactor
       summary: The redaction pass; reports what it found and replaced.
     may:
-      - sessionspec.session.RecordExposure
+      - agentspec.session.RecordExposure
 
 errors:
-  - name: sessionspec.session.UnknownAgent
+  - name: agentspec.session.UnknownAgent
     summary: No agent of this identity was started; the adapter lost a StartAgent.
     fields:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
 
-  - name: sessionspec.session.SessionStateConflict
+  - name: agentspec.session.SessionStateConflict
     summary: The session is not in a state this command acts from.
     fields:
       - name: state
-        type: sessionspec.session.Session.State
+        type: agentspec.session.Session.State
 
-  - name: sessionspec.session.AgentStateConflict
+  - name: agentspec.session.AgentStateConflict
     summary: The agent is not in a state this command acts from.
     fields:
       - name: state
-        type: sessionspec.session.Agent.State
+        type: agentspec.session.Agent.State
 
-  - name: sessionspec.session.ToolCallStateConflict
+  - name: agentspec.session.ToolCallStateConflict
     summary: The tool call is not in a state this command acts from.
     fields:
       - name: state
-        type: sessionspec.session.ToolCall.State
+        type: agentspec.session.ToolCall.State
 
 commands:
-  - name: sessionspec.session.OpenSession
+  - name: agentspec.session.OpenSession
     naming:
       wire: open-session
       display: Open a session
     input:
       - name: session_id
-        type: sessionspec.session.SessionId
+        type: agentspec.session.SessionId
       - name: harness
-        type: sessionspec.session.Harness
+        type: agentspec.session.Harness
       - name: source
-        type: Optional<sessionspec.session.Source>
+        type: Optional<agentspec.session.Source>
       - name: session_hash
         type: Optional<String>
         summary: >-
@@ -396,15 +396,15 @@ commands:
         type: Timestamp
     outcomes:
       - name: opened
-        creates: sessionspec.session.Session
+        creates: agentspec.session.Session
         instance: session_id
         sets:
           harness: input.harness
           opened_at: input.at
         emits:
-          - sessionspec.session.SessionOpened
+          - agentspec.session.SessionOpened
         payload:
-          sessionspec.session.SessionOpened:
+          agentspec.session.SessionOpened:
             session_id: input.session_id
             harness: input.harness
             source: input.source
@@ -412,52 +412,52 @@ commands:
             at: input.at
         summary: The session exists and holds no agent yet.
 
-  - name: sessionspec.session.EndSession
+  - name: agentspec.session.EndSession
     naming:
       wire: end-session
       display: End a session
     input:
       - name: session_id
-        type: sessionspec.session.SessionId
+        type: agentspec.session.SessionId
       - name: at
         type: Timestamp
     outcomes:
       - name: ended
-        moves: sessionspec.session.Session.end
+        moves: agentspec.session.Session.end
         instance: session_id
         emits:
-          - sessionspec.session.SessionEnded
+          - agentspec.session.SessionEnded
         payload:
-          sessionspec.session.SessionEnded:
+          agentspec.session.SessionEnded:
             session_id: input.session_id
             at: input.at
         summary: The session has ended; the transcript holds no later record.
       - name: wrong-state
         wrong_state: true
-        error: sessionspec.session.SessionStateConflict
+        error: agentspec.session.SessionStateConflict
         summary: The session had already ended.
 
-  - name: sessionspec.session.StartAgent
+  - name: agentspec.session.StartAgent
     naming:
       wire: start-agent
       display: Start an agent
     input:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: session_id
-        type: sessionspec.session.SessionId
+        type: agentspec.session.SessionId
       - name: parent_agent_id
-        type: Optional<sessionspec.session.AgentId>
+        type: Optional<agentspec.session.AgentId>
       - name: role
-        type: sessionspec.session.AgentRole
+        type: agentspec.session.AgentRole
       - name: spawned_by
-        type: Optional<sessionspec.session.ToolCallId>
+        type: Optional<agentspec.session.ToolCallId>
         summary: The tool call of the parent that started this agent, when the harness records it.
       - name: at
         type: Timestamp
     outcomes:
       - name: started
-        creates: sessionspec.session.Agent
+        creates: agentspec.session.Agent
         instance: agent_id
         sets:
           session_id: input.session_id
@@ -465,9 +465,9 @@ commands:
           role: input.role
           context_tokens: 0
         emits:
-          - sessionspec.session.AgentStarted
+          - agentspec.session.AgentStarted
         payload:
-          sessionspec.session.AgentStarted:
+          agentspec.session.AgentStarted:
             agent_id: input.agent_id
             session_id: input.session_id
             parent_agent_id: input.parent_agent_id
@@ -476,32 +476,32 @@ commands:
             at: input.at
         summary: The agent exists and is Idle until its first prompt.
 
-  - name: sessionspec.session.EndAgent
+  - name: agentspec.session.EndAgent
     naming:
       wire: end-agent
       display: End an agent
     input:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: at
         type: Timestamp
     outcomes:
       - name: ended
-        moves: sessionspec.session.Agent.end
+        moves: agentspec.session.Agent.end
         instance: agent_id
         emits:
-          - sessionspec.session.AgentEnded
+          - agentspec.session.AgentEnded
         payload:
-          sessionspec.session.AgentEnded:
+          agentspec.session.AgentEnded:
             agent_id: input.agent_id
             at: input.at
         summary: The agent will take no further prompt.
       - name: wrong-state
         wrong_state: true
-        error: sessionspec.session.AgentStateConflict
+        error: agentspec.session.AgentStateConflict
         summary: The agent had already ended.
 
-  - name: sessionspec.session.SubmitPrompt
+  - name: agentspec.session.SubmitPrompt
     naming:
       wire: submit-prompt
       display: Submit a prompt
@@ -510,25 +510,25 @@ commands:
         running turn, as Claude Code does with a message typed mid-turn.
     input:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: author
-        type: sessionspec.session.PromptAuthor
+        type: agentspec.session.PromptAuthor
       - name: attribution
-        type: sessionspec.session.Attribution
+        type: agentspec.session.Attribution
       - name: class
-        type: sessionspec.session.PromptClass
+        type: agentspec.session.PromptClass
       - name: content
-        type: sessionspec.session.Content
+        type: agentspec.session.Content
       - name: at
         type: Timestamp
     outcomes:
       - name: submitted
-        moves: sessionspec.session.Agent.resume
+        moves: agentspec.session.Agent.resume
         instance: agent_id
         emits:
-          - sessionspec.session.PromptSubmitted
+          - agentspec.session.PromptSubmitted
         payload:
-          sessionspec.session.PromptSubmitted:
+          agentspec.session.PromptSubmitted:
             agent_id: input.agent_id
             author: input.author
             attribution: input.attribution
@@ -538,46 +538,46 @@ commands:
         summary: The agent is Working on the prompt.
       - name: wrong-state
         wrong_state: true
-        error: sessionspec.session.AgentStateConflict
+        error: agentspec.session.AgentStateConflict
         summary: The agent had ended, so the prompt reached nobody.
 
-  - name: sessionspec.session.EndTurn
+  - name: agentspec.session.EndTurn
     naming:
       wire: end-turn
       display: End a turn
     input:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: at
         type: Timestamp
     outcomes:
       - name: ended
-        moves: sessionspec.session.Agent.end_turn
+        moves: agentspec.session.Agent.end_turn
         instance: agent_id
         emits:
-          - sessionspec.session.TurnEnded
+          - agentspec.session.TurnEnded
         payload:
-          sessionspec.session.TurnEnded:
+          agentspec.session.TurnEnded:
             agent_id: input.agent_id
             at: input.at
         summary: The agent is Idle and waits for its next prompt.
       - name: wrong-state
         wrong_state: true
-        error: sessionspec.session.AgentStateConflict
+        error: agentspec.session.AgentStateConflict
         summary: The agent was not Working.
 
-  - name: sessionspec.session.RecordModelTurn
+  - name: agentspec.session.RecordModelTurn
     naming:
       wire: record-model-turn
       display: Record a model turn
       summary: One model message of the agent, with the model that wrote it and its token usage.
     input:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: model
         type: String
       - name: usage
-        type: sessionspec.session.Usage
+        type: agentspec.session.Usage
       - name: context_tokens
         type: Integer
       - name: message_id
@@ -601,20 +601,20 @@ commands:
         type: Optional<Integer>
         summary: Token counts times the price the gateway's operator declares for the route; absent on a route without one. Not a provider's bill.
       - name: incomplete
-        type: Optional<sessionspec.session.IncompleteReason>
+        type: Optional<agentspec.session.IncompleteReason>
       - name: at
         type: Timestamp
     outcomes:
       - name: recorded
-        updates: sessionspec.session.Agent
+        updates: agentspec.session.Agent
         instance: agent_id
         sets:
           model: input.model
           context_tokens: input.context_tokens
         emits:
-          - sessionspec.session.ModelTurnRecorded
+          - agentspec.session.ModelTurnRecorded
         payload:
-          sessionspec.session.ModelTurnRecorded:
+          agentspec.session.ModelTurnRecorded:
             agent_id: input.agent_id
             model: input.model
             usage: input.usage
@@ -632,58 +632,58 @@ commands:
         summary: The agent's model and context size are those of this message.
       - name: no-such-agent
         unknown_instance: true
-        error: sessionspec.session.UnknownAgent
+        error: agentspec.session.UnknownAgent
         payload:
-          sessionspec.session.UnknownAgent:
+          agentspec.session.UnknownAgent:
             agent_id: input.agent_id
 
-  - name: sessionspec.session.CompactContext
+  - name: agentspec.session.CompactContext
     naming:
       wire: compact-context
       display: Compact the context
     input:
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: context_tokens_before
         type: Integer
       - name: at
         type: Timestamp
     outcomes:
       - name: compacted
-        updates: sessionspec.session.Agent
+        updates: agentspec.session.Agent
         instance: agent_id
         sets:
           context_tokens: 0
         emits:
-          - sessionspec.session.ContextCompacted
+          - agentspec.session.ContextCompacted
         payload:
-          sessionspec.session.ContextCompacted:
+          agentspec.session.ContextCompacted:
             agent_id: input.agent_id
             context_tokens_before: input.context_tokens_before
             at: input.at
         summary: The context was replaced by a summary; the next model turn writes the cache again.
       - name: no-such-agent
         unknown_instance: true
-        error: sessionspec.session.UnknownAgent
+        error: agentspec.session.UnknownAgent
         payload:
-          sessionspec.session.UnknownAgent:
+          agentspec.session.UnknownAgent:
             agent_id: input.agent_id
 
-  - name: sessionspec.session.RequestToolCall
+  - name: agentspec.session.RequestToolCall
     naming:
       wire: request-tool-call
       display: Request a tool call
     input:
       - name: tool_call_id
-        type: sessionspec.session.ToolCallId
+        type: agentspec.session.ToolCallId
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: tool
         type: String
       - name: category
-        type: sessionspec.session.ToolCategory
+        type: agentspec.session.ToolCategory
       - name: input
-        type: sessionspec.session.Content
+        type: agentspec.session.Content
       - name: cwd
         type: Optional<String>
         summary: The working directory of the call, relative to the home directory as `~/…`.
@@ -694,16 +694,16 @@ commands:
         type: Timestamp
     outcomes:
       - name: requested
-        creates: sessionspec.session.ToolCall
+        creates: agentspec.session.ToolCall
         instance: tool_call_id
         sets:
           agent_id: input.agent_id
           tool: input.tool
           category: input.category
         emits:
-          - sessionspec.session.ToolCallRequested
+          - agentspec.session.ToolCallRequested
         payload:
-          sessionspec.session.ToolCallRequested:
+          agentspec.session.ToolCallRequested:
             tool_call_id: input.tool_call_id
             agent_id: input.agent_id
             tool: input.tool
@@ -714,17 +714,17 @@ commands:
             at: input.at
         summary: The tool call waits for a decision.
 
-  - name: sessionspec.session.DecideToolCall
+  - name: agentspec.session.DecideToolCall
     naming:
       wire: decide-tool-call
       display: Decide a tool call
     input:
       - name: tool_call_id
-        type: sessionspec.session.ToolCallId
+        type: agentspec.session.ToolCallId
       - name: decision
-        type: sessionspec.session.Decision
+        type: agentspec.session.Decision
       - name: decider
-        type: sessionspec.session.Decider
+        type: agentspec.session.Decider
       - name: reason
         type: Optional<String>
       - name: at
@@ -732,12 +732,12 @@ commands:
     outcomes:
       - name: accepted
         when: decision == Accept
-        moves: sessionspec.session.ToolCall.accept
+        moves: agentspec.session.ToolCall.accept
         instance: tool_call_id
         emits:
-          - sessionspec.session.ToolCallDecided
+          - agentspec.session.ToolCallDecided
         payload:
-          sessionspec.session.ToolCallDecided:
+          agentspec.session.ToolCallDecided:
             tool_call_id: input.tool_call_id
             decision: input.decision
             decider: input.decider
@@ -745,12 +745,12 @@ commands:
             at: input.at
         summary: The tool runs.
       - name: refused
-        moves: sessionspec.session.ToolCall.refuse
+        moves: agentspec.session.ToolCall.refuse
         instance: tool_call_id
         emits:
-          - sessionspec.session.ToolCallDecided
+          - agentspec.session.ToolCallDecided
         payload:
-          sessionspec.session.ToolCallDecided:
+          agentspec.session.ToolCallDecided:
             tool_call_id: input.tool_call_id
             decision: input.decision
             decider: input.decider
@@ -759,43 +759,43 @@ commands:
         summary: The tool does not run; the agent gets the refusal as its result.
       - name: wrong-state
         wrong_state: true
-        error: sessionspec.session.ToolCallStateConflict
+        error: agentspec.session.ToolCallStateConflict
         summary: The tool call was already decided.
 
-  - name: sessionspec.session.CompleteToolCall
+  - name: agentspec.session.CompleteToolCall
     naming:
       wire: complete-tool-call
       display: Complete a tool call
     input:
       - name: tool_call_id
-        type: sessionspec.session.ToolCallId
+        type: agentspec.session.ToolCallId
       - name: ok
         type: Boolean
       - name: output
-        type: sessionspec.session.Content
+        type: agentspec.session.Content
       - name: at
         type: Timestamp
     outcomes:
       - name: succeeded
         when: ok == true
-        moves: sessionspec.session.ToolCall.succeed
+        moves: agentspec.session.ToolCall.succeed
         instance: tool_call_id
         emits:
-          - sessionspec.session.ToolCallCompleted
+          - agentspec.session.ToolCallCompleted
         payload:
-          sessionspec.session.ToolCallCompleted:
+          agentspec.session.ToolCallCompleted:
             tool_call_id: input.tool_call_id
             ok: input.ok
             output: input.output
             at: input.at
         summary: The tool returned a result.
       - name: failed
-        moves: sessionspec.session.ToolCall.fail
+        moves: agentspec.session.ToolCall.fail
         instance: tool_call_id
         emits:
-          - sessionspec.session.ToolCallCompleted
+          - agentspec.session.ToolCallCompleted
         payload:
-          sessionspec.session.ToolCallCompleted:
+          agentspec.session.ToolCallCompleted:
             tool_call_id: input.tool_call_id
             ok: input.ok
             output: input.output
@@ -803,36 +803,36 @@ commands:
         summary: The tool returned an error.
       - name: wrong-state
         wrong_state: true
-        error: sessionspec.session.ToolCallStateConflict
+        error: agentspec.session.ToolCallStateConflict
         summary: The tool call was not running.
 
-  - name: sessionspec.session.RecordExposure
+  - name: agentspec.session.RecordExposure
     naming:
       wire: record-exposure
       display: Record an exposure
       summary: The redaction pass found a secret or a personal datum and replaced it.
     input:
       - name: exposure_id
-        type: sessionspec.session.ExposureId
+        type: agentspec.session.ExposureId
       - name: agent_id
-        type: sessionspec.session.AgentId
+        type: agentspec.session.AgentId
       - name: channel
-        type: sessionspec.session.ExposureChannel
+        type: agentspec.session.ExposureChannel
       - name: class
-        type: sessionspec.session.ExposureClass
+        type: agentspec.session.ExposureClass
       - name: kind
         type: String
       - name: alias
         type: String
       - name: verdict
-        type: sessionspec.session.Verdict
+        type: agentspec.session.Verdict
       - name: tool_call_id
-        type: Optional<sessionspec.session.ToolCallId>
+        type: Optional<agentspec.session.ToolCallId>
       - name: at
         type: Timestamp
     outcomes:
       - name: recorded
-        creates: sessionspec.session.Exposure
+        creates: agentspec.session.Exposure
         instance: exposure_id
         sets:
           agent_id: input.agent_id
@@ -843,9 +843,9 @@ commands:
           verdict: input.verdict
           tool_call_id: input.tool_call_id
         emits:
-          - sessionspec.session.ExposureDetected
+          - agentspec.session.ExposureDetected
         payload:
-          sessionspec.session.ExposureDetected:
+          agentspec.session.ExposureDetected:
             exposure_id: input.exposure_id
             agent_id: input.agent_id
             channel: input.channel
@@ -858,52 +858,52 @@ commands:
         summary: The exposure is on record under its alias; the value is not.
 
 events:
-  - name: sessionspec.session.SessionOpened
+  - name: agentspec.session.SessionOpened
     fields:
-      - {name: session_id, type: sessionspec.session.SessionId}
-      - {name: harness, type: sessionspec.session.Harness}
-      - {name: source, type: Optional<sessionspec.session.Source>}
+      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: harness, type: agentspec.session.Harness}
+      - {name: source, type: Optional<agentspec.session.Source>}
       - {name: session_hash, type: Optional<String>}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.SessionEnded
+  - name: agentspec.session.SessionEnded
     fields:
-      - {name: session_id, type: sessionspec.session.SessionId}
+      - {name: session_id, type: agentspec.session.SessionId}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.AgentStarted
+  - name: agentspec.session.AgentStarted
     fields:
-      - {name: agent_id, type: sessionspec.session.AgentId}
-      - {name: session_id, type: sessionspec.session.SessionId}
-      - {name: parent_agent_id, type: Optional<sessionspec.session.AgentId>}
-      - {name: role, type: sessionspec.session.AgentRole}
-      - {name: spawned_by, type: Optional<sessionspec.session.ToolCallId>}
+      - {name: agent_id, type: agentspec.session.AgentId}
+      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: parent_agent_id, type: Optional<agentspec.session.AgentId>}
+      - {name: role, type: agentspec.session.AgentRole}
+      - {name: spawned_by, type: Optional<agentspec.session.ToolCallId>}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.AgentEnded
+  - name: agentspec.session.AgentEnded
     fields:
-      - {name: agent_id, type: sessionspec.session.AgentId}
+      - {name: agent_id, type: agentspec.session.AgentId}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.PromptSubmitted
+  - name: agentspec.session.PromptSubmitted
     fields:
-      - {name: agent_id, type: sessionspec.session.AgentId}
-      - {name: author, type: sessionspec.session.PromptAuthor}
-      - {name: attribution, type: sessionspec.session.Attribution}
-      - {name: class, type: sessionspec.session.PromptClass}
-      - {name: content, type: sessionspec.session.Content}
+      - {name: agent_id, type: agentspec.session.AgentId}
+      - {name: author, type: agentspec.session.PromptAuthor}
+      - {name: attribution, type: agentspec.session.Attribution}
+      - {name: class, type: agentspec.session.PromptClass}
+      - {name: content, type: agentspec.session.Content}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.TurnEnded
+  - name: agentspec.session.TurnEnded
     fields:
-      - {name: agent_id, type: sessionspec.session.AgentId}
+      - {name: agent_id, type: agentspec.session.AgentId}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.ModelTurnRecorded
+  - name: agentspec.session.ModelTurnRecorded
     fields:
-      - {name: agent_id, type: sessionspec.session.AgentId}
+      - {name: agent_id, type: agentspec.session.AgentId}
       - {name: model, type: String}
-      - {name: usage, type: sessionspec.session.Usage}
+      - {name: usage, type: agentspec.session.Usage}
       - {name: context_tokens, type: Integer}
       - {name: message_id, type: Optional<String>}
       - {name: call_id, type: Optional<String>}
@@ -913,105 +913,105 @@ events:
       - {name: queue_wait_ms, type: Optional<Integer>}
       - {name: ttft_ms, type: Optional<Integer>}
       - {name: declared_cost_microdollars, type: Optional<Integer>}
-      - {name: incomplete, type: Optional<sessionspec.session.IncompleteReason>}
+      - {name: incomplete, type: Optional<agentspec.session.IncompleteReason>}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.ContextCompacted
+  - name: agentspec.session.ContextCompacted
     fields:
-      - {name: agent_id, type: sessionspec.session.AgentId}
+      - {name: agent_id, type: agentspec.session.AgentId}
       - {name: context_tokens_before, type: Integer}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.ToolCallRequested
+  - name: agentspec.session.ToolCallRequested
     fields:
-      - {name: tool_call_id, type: sessionspec.session.ToolCallId}
-      - {name: agent_id, type: sessionspec.session.AgentId}
+      - {name: tool_call_id, type: agentspec.session.ToolCallId}
+      - {name: agent_id, type: agentspec.session.AgentId}
       - {name: tool, type: String}
-      - {name: category, type: sessionspec.session.ToolCategory}
-      - {name: input, type: sessionspec.session.Content}
+      - {name: category, type: agentspec.session.ToolCategory}
+      - {name: input, type: agentspec.session.Content}
       - {name: cwd, type: Optional<String>}
       - {name: background, type: Boolean}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.ToolCallDecided
+  - name: agentspec.session.ToolCallDecided
     fields:
-      - {name: tool_call_id, type: sessionspec.session.ToolCallId}
-      - {name: decision, type: sessionspec.session.Decision}
-      - {name: decider, type: sessionspec.session.Decider}
+      - {name: tool_call_id, type: agentspec.session.ToolCallId}
+      - {name: decision, type: agentspec.session.Decision}
+      - {name: decider, type: agentspec.session.Decider}
       - {name: reason, type: Optional<String>}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.ToolCallCompleted
+  - name: agentspec.session.ToolCallCompleted
     fields:
-      - {name: tool_call_id, type: sessionspec.session.ToolCallId}
+      - {name: tool_call_id, type: agentspec.session.ToolCallId}
       - {name: ok, type: Boolean}
-      - {name: output, type: sessionspec.session.Content}
+      - {name: output, type: agentspec.session.Content}
       - {name: at, type: Timestamp}
 
-  - name: sessionspec.session.ExposureDetected
+  - name: agentspec.session.ExposureDetected
     fields:
-      - {name: exposure_id, type: sessionspec.session.ExposureId}
-      - {name: agent_id, type: sessionspec.session.AgentId}
-      - {name: channel, type: sessionspec.session.ExposureChannel}
-      - {name: class, type: sessionspec.session.ExposureClass}
+      - {name: exposure_id, type: agentspec.session.ExposureId}
+      - {name: agent_id, type: agentspec.session.AgentId}
+      - {name: channel, type: agentspec.session.ExposureChannel}
+      - {name: class, type: agentspec.session.ExposureClass}
       - {name: kind, type: String}
       - {name: alias, type: String}
-      - {name: verdict, type: sessionspec.session.Verdict}
-      - {name: tool_call_id, type: Optional<sessionspec.session.ToolCallId>}
+      - {name: verdict, type: agentspec.session.Verdict}
+      - {name: tool_call_id, type: Optional<agentspec.session.ToolCallId>}
       - {name: at, type: Timestamp}
 
 views:
-  - name: sessionspec.session.Sessions
-    source: sessionspec.session.Session
+  - name: agentspec.session.Sessions
+    source: agentspec.session.Session
     consistency: read_your_writes
     fields:
-      - {name: session_id, type: sessionspec.session.SessionId}
-      - {name: harness, type: sessionspec.session.Harness}
+      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: harness, type: agentspec.session.Harness}
       - {name: opened_at, type: Timestamp}
-      - {name: state, type: sessionspec.session.Session.State}
+      - {name: state, type: agentspec.session.Session.State}
     naming:
       wire: sessions
       display: Sessions
 
-  - name: sessionspec.session.Agents
-    source: sessionspec.session.Agent
+  - name: agentspec.session.Agents
+    source: agentspec.session.Agent
     consistency: read_your_writes
     fields:
-      - {name: agent_id, type: sessionspec.session.AgentId}
-      - {name: session_id, type: sessionspec.session.SessionId}
-      - {name: parent_agent_id, type: Optional<sessionspec.session.AgentId>}
-      - {name: role, type: sessionspec.session.AgentRole}
+      - {name: agent_id, type: agentspec.session.AgentId}
+      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: parent_agent_id, type: Optional<agentspec.session.AgentId>}
+      - {name: role, type: agentspec.session.AgentRole}
       - {name: model, type: Optional<String>}
       - {name: context_tokens, type: Integer}
-      - {name: state, type: sessionspec.session.Agent.State}
+      - {name: state, type: agentspec.session.Agent.State}
     naming:
       wire: agents
       display: Agents
 
-  - name: sessionspec.session.ToolCalls
-    source: sessionspec.session.ToolCall
+  - name: agentspec.session.ToolCalls
+    source: agentspec.session.ToolCall
     consistency: read_your_writes
     fields:
-      - {name: tool_call_id, type: sessionspec.session.ToolCallId}
-      - {name: agent_id, type: sessionspec.session.AgentId}
+      - {name: tool_call_id, type: agentspec.session.ToolCallId}
+      - {name: agent_id, type: agentspec.session.AgentId}
       - {name: tool, type: String}
-      - {name: category, type: sessionspec.session.ToolCategory}
-      - {name: state, type: sessionspec.session.ToolCall.State}
+      - {name: category, type: agentspec.session.ToolCategory}
+      - {name: state, type: agentspec.session.ToolCall.State}
     naming:
       wire: tool-calls
       display: Tool calls
 
-  - name: sessionspec.session.Exposures
-    source: sessionspec.session.Exposure
+  - name: agentspec.session.Exposures
+    source: agentspec.session.Exposure
     consistency: read_your_writes
     fields:
-      - {name: exposure_id, type: sessionspec.session.ExposureId}
-      - {name: agent_id, type: sessionspec.session.AgentId}
-      - {name: channel, type: sessionspec.session.ExposureChannel}
-      - {name: class, type: sessionspec.session.ExposureClass}
+      - {name: exposure_id, type: agentspec.session.ExposureId}
+      - {name: agent_id, type: agentspec.session.AgentId}
+      - {name: channel, type: agentspec.session.ExposureChannel}
+      - {name: class, type: agentspec.session.ExposureClass}
       - {name: kind, type: String}
-      - {name: verdict, type: sessionspec.session.Verdict}
-      - {name: state, type: sessionspec.session.Exposure.State}
+      - {name: verdict, type: agentspec.session.Verdict}
+      - {name: state, type: agentspec.session.Exposure.State}
     naming:
       wire: exposures
       display: Exposures

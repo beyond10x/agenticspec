@@ -1,9 +1,9 @@
-# sessionspec design (draft, 2026-11-26)
+# agentspec design (draft, 2026-11-26)
 
 Status, 2026-11-26: first slice built. `spec/` declares the session IR (4 entities, 12 commands,
 12 events, 4 views) and the CLI (`lift`, `kpi`); synthesis generates 82 of 82 capabilities and a
-55-scenario conformance suite with 0 refusals. `crates/sessionspec` holds the Claude Code adapter,
-the redaction pass, the replay through the generated component, and the KPIs. `sessionspec kpi`
+55-scenario conformance suite with 0 refusals. `crates/agentspec` holds the Claude Code adapter,
+the redaction pass, the replay through the generated component, and the KPIs. `agentspec kpi`
 over this host's 72 hours (3,309 transcripts) runs in 12 s and replays every lifted command with
 0 refusals; the aggregate report is `research/2026-11-26-kpi-72h.json`. Field names stay proposals
 until a release.
@@ -19,7 +19,7 @@ Adapter facts the first run found:
 
 ## Why
 
-sessionspec measures the quality of agentic work with KPIs. A session of any harness (Claude Code, Codex, a metaharness run, a
+agentspec measures the quality of agentic work with KPIs. A session of any harness (Claude Code, Codex, a metaharness run, a
 chat) is lifted into one formal representation, and the KPIs are evaluated on that representation,
 never on a vendor transcript.
 

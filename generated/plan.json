@@ -1,9 +1,9 @@
 {
   "provenance": {
-    "system": "sessionspec",
+    "system": "agentspec",
     "specification_version": "v1",
-    "source_digest": "d8e9a44696a3a3a589a0ee741e8aca7b6117f4ae8f49fd843bec3089b4eaaee5",
-    "contract_digest": "7eaa4202b2be444349f069c24e3e8839a7d36b41fbc39fdf08c4042538b65d40"
+    "source_digest": "b58498f76c66bf34feedfd497c347623570294e74dcc799908b0368854f2fce6",
+    "contract_digest": "0c0727aa4de388310699c24fed8ce0f18713c396101cd870029ee370ff1fdebf"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -11,1233 +11,1233 @@
   "capabilities": [
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.AgentScope",
+      "source": "agentspec.cli.AgentScope",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.AnalyzeInput",
+      "source": "agentspec.cli.AnalyzeInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.AnalyzeResult",
+      "source": "agentspec.cli.AnalyzeResult",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.AutonomyFigures",
+      "source": "agentspec.cli.AutonomyFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.BustCause",
+      "source": "agentspec.cli.BustCause",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.BustFigures",
+      "source": "agentspec.cli.BustFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.CacheFigures",
+      "source": "agentspec.cli.CacheFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.Certainty",
+      "source": "agentspec.cli.Certainty",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.CheckFigures",
+      "source": "agentspec.cli.CheckFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.CheckVerdict",
+      "source": "agentspec.cli.CheckVerdict",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ConcurrencyFigures",
+      "source": "agentspec.cli.ConcurrencyFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.Dashboard",
+      "source": "agentspec.cli.Dashboard",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.DecisionFigures",
+      "source": "agentspec.cli.DecisionFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ExportInput",
+      "source": "agentspec.cli.ExportInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ExportResult",
+      "source": "agentspec.cli.ExportResult",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ExposureFigures",
+      "source": "agentspec.cli.ExposureFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.KpiInput",
+      "source": "agentspec.cli.KpiInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.KpiReport",
+      "source": "agentspec.cli.KpiReport",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.LiftInput",
+      "source": "agentspec.cli.LiftInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.LiftResult",
+      "source": "agentspec.cli.LiftResult",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.LiftedCommand",
+      "source": "agentspec.cli.LiftedCommand",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.MarkKind",
+      "source": "agentspec.cli.MarkKind",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.MineInput",
+      "source": "agentspec.cli.MineInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.MineReport",
+      "source": "agentspec.cli.MineReport",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ModelFigures",
+      "source": "agentspec.cli.ModelFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.Pattern",
+      "source": "agentspec.cli.Pattern",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.Procedure",
+      "source": "agentspec.cli.Procedure",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ProcedureInput",
+      "source": "agentspec.cli.ProcedureInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ProcedureParameter",
+      "source": "agentspec.cli.ProcedureParameter",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ProcedureStep",
+      "source": "agentspec.cli.ProcedureStep",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.PromptFigures",
+      "source": "agentspec.cli.PromptFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.QueryInput",
+      "source": "agentspec.cli.QueryInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.QueryReport",
+      "source": "agentspec.cli.QueryReport",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.QueryRow",
+      "source": "agentspec.cli.QueryRow",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.Refusal",
+      "source": "agentspec.cli.Refusal",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ServeInput",
+      "source": "agentspec.cli.ServeInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ServeResult",
+      "source": "agentspec.cli.ServeResult",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.SessionSummary",
+      "source": "agentspec.cli.SessionSummary",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.StepKind",
+      "source": "agentspec.cli.StepKind",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.SyncInput",
+      "source": "agentspec.cli.SyncInput",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.SyncResult",
+      "source": "agentspec.cli.SyncResult",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.TimelineMark",
+      "source": "agentspec.cli.TimelineMark",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.cli.ToolFigures",
+      "source": "agentspec.cli.ToolFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Agent.State",
+      "source": "agentspec.session.Agent.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.AgentId",
+      "source": "agentspec.session.AgentId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.AgentRole",
+      "source": "agentspec.session.AgentRole",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Attribution",
+      "source": "agentspec.session.Attribution",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Content",
+      "source": "agentspec.session.Content",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Decider",
+      "source": "agentspec.session.Decider",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Decision",
+      "source": "agentspec.session.Decision",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Exposure.State",
+      "source": "agentspec.session.Exposure.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.ExposureChannel",
+      "source": "agentspec.session.ExposureChannel",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.ExposureClass",
+      "source": "agentspec.session.ExposureClass",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.ExposureId",
+      "source": "agentspec.session.ExposureId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Harness",
+      "source": "agentspec.session.Harness",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.IncompleteReason",
+      "source": "agentspec.session.IncompleteReason",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.PromptAuthor",
+      "source": "agentspec.session.PromptAuthor",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.PromptClass",
+      "source": "agentspec.session.PromptClass",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Session.State",
+      "source": "agentspec.session.Session.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.SessionId",
+      "source": "agentspec.session.SessionId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Source",
+      "source": "agentspec.session.Source",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.ToolCall.State",
+      "source": "agentspec.session.ToolCall.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.ToolCallId",
+      "source": "agentspec.session.ToolCallId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.ToolCategory",
+      "source": "agentspec.session.ToolCategory",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Usage",
+      "source": "agentspec.session.Usage",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.session.Verdict",
+      "source": "agentspec.session.Verdict",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.Agent",
+      "source": "agentspec.view.Agent",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.AgentListing.State",
+      "source": "agentspec.view.AgentListing.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.BucketId",
+      "source": "agentspec.view.BucketId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.CheckId",
+      "source": "agentspec.view.CheckId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.CountId",
+      "source": "agentspec.view.CountId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.Document",
+      "source": "agentspec.view.Document",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.Event",
+      "source": "agentspec.view.Event",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.EventCount.State",
+      "source": "agentspec.view.EventCount.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.EventId",
+      "source": "agentspec.view.EventId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.EventKind",
+      "source": "agentspec.view.EventKind",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.EventRow.State",
+      "source": "agentspec.view.EventRow.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.FigureBucket.State",
+      "source": "agentspec.view.FigureBucket.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.SessionCheck.State",
+      "source": "agentspec.view.SessionCheck.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.SessionListing.State",
+      "source": "agentspec.view.SessionListing.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.SlotId",
+      "source": "agentspec.view.SlotId",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.TimelineSlot.State",
+      "source": "agentspec.view.TimelineSlot.State",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "domain_type",
-      "source": "sessionspec.view.Update",
+      "source": "agentspec.view.Update",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.session.Agent",
+      "source": "agentspec.session.Agent",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.session.Exposure",
+      "source": "agentspec.session.Exposure",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.session.Session",
+      "source": "agentspec.session.Session",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.session.ToolCall",
+      "source": "agentspec.session.ToolCall",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.view.AgentListing",
+      "source": "agentspec.view.AgentListing",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.view.EventCount",
+      "source": "agentspec.view.EventCount",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.view.EventRow",
+      "source": "agentspec.view.EventRow",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.view.FigureBucket",
+      "source": "agentspec.view.FigureBucket",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.view.SessionCheck",
+      "source": "agentspec.view.SessionCheck",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.view.SessionListing",
+      "source": "agentspec.view.SessionListing",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "entity_lifecycle",
-      "source": "sessionspec.view.TimelineSlot",
+      "source": "agentspec.view.TimelineSlot",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.CompactContext",
+      "source": "agentspec.session.CompactContext",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.CompactContext",
+      "source": "agentspec.session.CompactContext",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.CompleteToolCall",
+      "source": "agentspec.session.CompleteToolCall",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.CompleteToolCall",
+      "source": "agentspec.session.CompleteToolCall",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.DecideToolCall",
+      "source": "agentspec.session.DecideToolCall",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.DecideToolCall",
+      "source": "agentspec.session.DecideToolCall",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.EndAgent",
+      "source": "agentspec.session.EndAgent",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.EndAgent",
+      "source": "agentspec.session.EndAgent",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.EndSession",
+      "source": "agentspec.session.EndSession",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.EndSession",
+      "source": "agentspec.session.EndSession",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.EndTurn",
+      "source": "agentspec.session.EndTurn",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.EndTurn",
+      "source": "agentspec.session.EndTurn",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.OpenSession",
+      "source": "agentspec.session.OpenSession",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.OpenSession",
+      "source": "agentspec.session.OpenSession",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.RecordExposure",
+      "source": "agentspec.session.RecordExposure",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.RecordExposure",
+      "source": "agentspec.session.RecordExposure",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.RecordModelTurn",
+      "source": "agentspec.session.RecordModelTurn",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.RecordModelTurn",
+      "source": "agentspec.session.RecordModelTurn",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.RequestToolCall",
+      "source": "agentspec.session.RequestToolCall",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.RequestToolCall",
+      "source": "agentspec.session.RequestToolCall",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.StartAgent",
+      "source": "agentspec.session.StartAgent",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.StartAgent",
+      "source": "agentspec.session.StartAgent",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_contract",
-      "source": "sessionspec.session.SubmitPrompt",
+      "source": "agentspec.session.SubmitPrompt",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "command_behavior",
-      "source": "sessionspec.session.SubmitPrompt",
+      "source": "agentspec.session.SubmitPrompt",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.AgentEnded",
+      "source": "agentspec.session.AgentEnded",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.AgentStarted",
+      "source": "agentspec.session.AgentStarted",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.ContextCompacted",
+      "source": "agentspec.session.ContextCompacted",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.ExposureDetected",
+      "source": "agentspec.session.ExposureDetected",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.ModelTurnRecorded",
+      "source": "agentspec.session.ModelTurnRecorded",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.PromptSubmitted",
+      "source": "agentspec.session.PromptSubmitted",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.SessionEnded",
+      "source": "agentspec.session.SessionEnded",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.SessionOpened",
+      "source": "agentspec.session.SessionOpened",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.ToolCallCompleted",
+      "source": "agentspec.session.ToolCallCompleted",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.ToolCallDecided",
+      "source": "agentspec.session.ToolCallDecided",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.ToolCallRequested",
+      "source": "agentspec.session.ToolCallRequested",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.session.TurnEnded",
+      "source": "agentspec.session.TurnEnded",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.view.AgentUpdated",
+      "source": "agentspec.view.AgentUpdated",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.view.EventAppended",
+      "source": "agentspec.view.EventAppended",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "event_type",
-      "source": "sessionspec.view.SessionUpdated",
+      "source": "agentspec.view.SessionUpdated",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "error_type",
-      "source": "sessionspec.session.AgentStateConflict",
+      "source": "agentspec.session.AgentStateConflict",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "error_type",
-      "source": "sessionspec.session.SessionStateConflict",
+      "source": "agentspec.session.SessionStateConflict",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "error_type",
-      "source": "sessionspec.session.ToolCallStateConflict",
+      "source": "agentspec.session.ToolCallStateConflict",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "error_type",
-      "source": "sessionspec.session.UnknownAgent",
+      "source": "agentspec.session.UnknownAgent",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.session.Agents",
+      "source": "agentspec.session.Agents",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.session.Agents",
+      "source": "agentspec.session.Agents",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.session.Exposures",
+      "source": "agentspec.session.Exposures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.session.Exposures",
+      "source": "agentspec.session.Exposures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.session.Sessions",
+      "source": "agentspec.session.Sessions",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.session.Sessions",
+      "source": "agentspec.session.Sessions",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.session.ToolCalls",
+      "source": "agentspec.session.ToolCalls",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.session.ToolCalls",
+      "source": "agentspec.session.ToolCalls",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.AgentTurns",
+      "source": "agentspec.view.AgentTurns",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.AgentTurns",
+      "source": "agentspec.view.AgentTurns",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.OverviewFigures",
+      "source": "agentspec.view.OverviewFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.OverviewFigures",
+      "source": "agentspec.view.OverviewFigures",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.SessionAgents",
+      "source": "agentspec.view.SessionAgents",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.SessionAgents",
+      "source": "agentspec.view.SessionAgents",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.SessionById",
+      "source": "agentspec.view.SessionById",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.SessionById",
+      "source": "agentspec.view.SessionById",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.SessionChecks",
+      "source": "agentspec.view.SessionChecks",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.SessionChecks",
+      "source": "agentspec.view.SessionChecks",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.SessionEventCounts",
+      "source": "agentspec.view.SessionEventCounts",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.SessionEventCounts",
+      "source": "agentspec.view.SessionEventCounts",
       "disposition": {
         "disposition": "obligation",
         "reason": {
           "class": "undetermined",
           "construct": "a comparison with the optional view parameter `agent`, which the interpreted target refuses a read that leaves out, where a generated query would hide rows, in `filter:`"
         },
-        "contract": "a query answering `sessionspec.view.SessionEventCounts` with rows projected from `sessionspec.view.EventCount` at `eventual` consistency, containing instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent))`"
+        "contract": "a query answering `agentspec.view.SessionEventCounts` with rows projected from `agentspec.view.EventCount` at `eventual` consistency, containing instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent))`"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.SessionEvents",
+      "source": "agentspec.view.SessionEvents",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.SessionEvents",
+      "source": "agentspec.view.SessionEvents",
       "disposition": {
         "disposition": "obligation",
         "reason": {
           "class": "undetermined",
           "construct": "a comparison with the optional view parameter `agent`, which the interpreted target refuses a read that leaves out, where a generated query would hide rows, in `filter:`"
         },
-        "contract": "a query answering `sessionspec.view.SessionEvents` with rows projected from `sessionspec.view.EventRow` at `eventual` consistency, containing instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent) and (not (defined(param.kind)) or kind == param.kind) and (not (defined(param.notable)) or notable == param.notable) and (not (defined(param.before)) or ord < param.before))`"
+        "contract": "a query answering `agentspec.view.SessionEvents` with rows projected from `agentspec.view.EventRow` at `eventual` consistency, containing instances where `(session_id == param.session_id and (not (defined(param.agent)) or agent == param.agent) and (not (defined(param.kind)) or kind == param.kind) and (not (defined(param.notable)) or notable == param.notable) and (not (defined(param.before)) or ord < param.before))`"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.SessionList",
+      "source": "agentspec.view.SessionList",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.SessionList",
+      "source": "agentspec.view.SessionList",
       "disposition": {
         "disposition": "obligation",
         "reason": {
           "class": "undetermined",
           "construct": "a comparison with the optional view parameter `since`, which the interpreted target refuses a read that leaves out, where a generated query would hide rows, in `filter:`"
         },
-        "contract": "a query answering `sessionspec.view.SessionList` with rows projected from `sessionspec.view.SessionListing` at `eventual` consistency, containing instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit) and (not (defined(param.offset)) or rank > param.offset))`"
+        "contract": "a query answering `agentspec.view.SessionList` with rows projected from `agentspec.view.SessionListing` at `eventual` consistency, containing instances where `((not (defined(param.since)) or last_at >= param.since as timestamp) and (not (defined(param.search)) or names contains {param: search}) and (not (defined(param.limit)) or rank <= param.limit) and (not (defined(param.offset)) or rank > param.offset))`"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.SessionTimeline",
+      "source": "agentspec.view.SessionTimeline",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.SessionTimeline",
+      "source": "agentspec.view.SessionTimeline",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_type",
-      "source": "sessionspec.view.SessionTurns",
+      "source": "agentspec.view.SessionTurns",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "view_query",
-      "source": "sessionspec.view.SessionTurns",
+      "source": "agentspec.view.SessionTurns",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.session.AgentLoop",
+      "source": "agentspec.session.AgentLoop",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.session.Delegate",
+      "source": "agentspec.session.Delegate",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.session.HarnessRuntime",
+      "source": "agentspec.session.HarnessRuntime",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.session.Human",
+      "source": "agentspec.session.Human",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.session.PeerSession",
+      "source": "agentspec.session.PeerSession",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.session.PermissionAuthority",
+      "source": "agentspec.session.PermissionAuthority",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.session.Redactor",
+      "source": "agentspec.session.Redactor",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.session.ToolProvider",
+      "source": "agentspec.session.ToolProvider",
       "disposition": {
         "disposition": "generated"
       }
     },
     {
       "kind": "actor_grants",
-      "source": "sessionspec.view.Viewer",
+      "source": "agentspec.view.Viewer",
       "disposition": {
         "disposition": "generated"
       }
