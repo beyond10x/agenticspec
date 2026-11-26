@@ -21,7 +21,7 @@ function open(r: SessionListRow) {
           <th class="r hide-sm">Wall time</th>
           <th class="r hide-sm">Agents</th>
           <th class="r hide-sm">Tool calls</th>
-          <th class="r hide-sm">Cache hits</th>
+          <th class="r hide-sm">Cache hit share</th>
           <th class="r hide-sm">Waiting</th>
           <th class="r">Cost</th>
         </tr>
@@ -34,6 +34,7 @@ function open(r: SessionListRow) {
           tabindex="0"
           @click="open(r)"
           @keydown.enter="open(r)"
+          @keydown.space.prevent="open(r)"
         >
           <td class="session">
             <div class="title">{{ r.title || 'Untitled session' }}</div>

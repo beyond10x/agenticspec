@@ -2,8 +2,8 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { query, subscribe, upsert, type LiveState } from '../client.ts';
 import type { OverviewFiguresRow, SessionListRow } from '../generated/types.ts';
-import { change, figures, slice, SLICES, ms, window, type Figure, type Slice } from '../stats.ts';
-import { compact, duration, int, money, percent } from '../format.ts';
+import { bucketsOf, change, figures, slice, SLICES, ms, window, type Figure, type Slice } from '../stats.ts';
+import { compact, duration, int, money, percent, plural } from '../format.ts';
 import StatTile from '../components/StatTile.vue';
 import SessionTable from '../components/SessionTable.vue';
 
@@ -16,6 +16,7 @@ const SEARCH_LIMIT = 1000;
 
 const sliceId = ref<Slice>((new URLSearchParams(location.search).get('slice') as Slice) || '72h');
 const search = ref(new URLSearchParams(location.search).get('q') ?? '');
+const searching = computed(() => search.value.trim() !== '');
 const rows = shallowRef<SessionListRow[]>([]);
 const buckets = shallowRef<OverviewFiguresRow[]>([]);
 const loading = ref(true);
@@ -129,7 +130,10 @@ const current = computed(() => {
   return rows.value.filter((r) => ms(r.last_at) >= from).sort((a, b) => ms(b.last_at) - ms(a.last_at));
 });
 
-const tiles = computed(() => figures(buckets.value, sliceId.value, now.value));
+// While a search narrows the list, the figures are summed from the matching rows.
+const tiles = computed(() =>
+  figures(searching.value ? bucketsOf(current.value, sliceId.value, now.value) : buckets.value, sliceId.value, now.value),
+);
 
 function show(f: Figure): string {
   if (f.value === null) return '–';
@@ -163,8 +167,14 @@ const totals = computed(() => {
         <h1>Sessions</h1>
         <p class="secondary sub">
           <template v-if="!loading">
-            {{ int(totals.count) }} sessions in the last {{ slice(sliceId).label }} ·
-            {{ money(totals.cost) }} at list price
+            <template v-if="searching">
+              {{ plural(totals.count, 'session') }} matching in the last {{ slice(sliceId).label }} ·
+              {{ money(totals.cost) }} at API list price
+            </template>
+            <template v-else>
+              {{ plural(totals.count, 'session') }} in the last {{ slice(sliceId).label }} ·
+              {{ money(totals.cost) }} at API list price
+            </template>
           </template>
           <template v-else>Reading the store…</template>
         </p>
@@ -204,7 +214,7 @@ const totals = computed(() => {
     <div class="card section-gap" data-ux-region="sessions">
       <div class="card-head">
         <h2>Most recent</h2>
-        <span class="hint">{{ more ? `${int(current.length)} of ${int(totals.count)}` : `${int(current.length)} sessions` }}</span>
+        <span class="hint">{{ more ? `${int(current.length)} of ${int(totals.count)}` : plural(current.length, 'session') }}</span>
       </div>
       <SessionTable :rows="current" :now="now" :loading="loading" />
       <div v-if="more" class="more">

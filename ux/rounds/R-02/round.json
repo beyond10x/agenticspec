@@ -1,0 +1,1045 @@
+{
+  "round": "R-02",
+  "date": "2026-11-26",
+  "commit": "302e2fe+dirty",
+  "gating": {
+    "runs": 20,
+    "pass": 20
+  },
+  "measured": {
+    "runs": 30,
+    "pass": 24
+  },
+  "problems": {
+    "text cut off without its full value: td.what.bad \"Refuse · Classifier\"": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "text cut off without its full value: td.what \"by parent agent\"": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ]
+  },
+  "metrics": {
+    "agent-lane@1440x900": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 3,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 194,
+      "reading_load.median": 193,
+      "layout_shift.score": 0.0001
+    },
+    "agent-lane@1280x720": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 3,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 139,
+      "layout_shift.score": 0.0002
+    },
+    "embed-session@1440x900": {
+      "screen_only.actions": 0,
+      "screen_only.looks": 1,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 0,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 210,
+      "reading_load.median": 210,
+      "layout_shift.score": 0
+    },
+    "embed-session@1280x720": {
+      "screen_only.actions": 0,
+      "screen_only.looks": 1,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 0,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 187,
+      "reading_load.median": 187,
+      "layout_shift.score": 0
+    },
+    "failing-check@1440x900": {
+      "screen_only.actions": 1,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 193,
+      "reading_load.median": 166,
+      "layout_shift.score": 0.0001
+    },
+    "failing-check@1280x720": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 3,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 2,
+      "reading_load.max": 155,
+      "reading_load.median": 139,
+      "layout_shift.score": 0.0002
+    },
+    "find-session-by-search@1440x900": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 120.5,
+      "layout_shift.score": 0.0047
+    },
+    "find-session-by-search@1280x720": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 120.5,
+      "layout_shift.score": 0.0074
+    },
+    "slice-kpi-averages@1440x900": {
+      "screen_only.actions": 1,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 139,
+      "layout_shift.score": 0.0001
+    },
+    "slice-kpi-averages@1280x720": {
+      "screen_only.actions": 1,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 139,
+      "layout_shift.score": 0.0002
+    }
+  },
+  "runs": [
+    {
+      "scenario": "agent-lane",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": false,
+        "error": null
+      },
+      "problems": [
+        "after the row of Port the store: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the row of Port the store: text cut off without its full value: td.what \"by parent agent\"",
+        "scroll toward the lane of Sub-agent 1: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "scroll toward the lane of Sub-agent 1: text cut off without its full value: td.what \"by parent agent\"",
+        "after the lane of Sub-agent 1: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the lane of Sub-agent 1: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\""
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 2",
+        "scroll 46.046875",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": false,
+        "error": null
+      },
+      "problems": [
+        "after the row of Port the store: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the row of Port the store: text cut off without its full value: td.what \"by parent agent\"",
+        "scroll toward the lane of Sub-agent 1: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "scroll toward the lane of Sub-agent 1: text cut off without its full value: td.what \"by parent agent\"",
+        "after the lane of Sub-agent 1: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the lane of Sub-agent 1: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\""
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 2",
+        "scroll 46.046875",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "start: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\""
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "start: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\""
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 2",
+        "scroll 51.65625",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 2",
+        "scroll 51.65625",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 3",
+        "scroll 139.890625",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 3",
+        "scroll 139.890625",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "after the row of Port the store: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the row of Port the store: text cut off without its full value: td.what \"by parent agent\"",
+        "scroll toward the target: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "scroll toward the target: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\""
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 3",
+        "scroll 449.859375",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "after the row of Port the store: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the row of Port the store: text cut off without its full value: td.what \"by parent agent\"",
+        "scroll toward the target: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "scroll toward the target: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\""
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 3",
+        "scroll 449.859375",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    }
+  ]
+}

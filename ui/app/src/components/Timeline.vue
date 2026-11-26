@@ -31,7 +31,7 @@ onMounted(() => {
 onUnmounted(() => observer?.disconnect());
 
 const narrow = computed(() => width.value < 640);
-const labelW = computed(() => (narrow.value ? 86 : 176));
+const labelW = computed(() => (narrow.value ? 104 : 176));
 const plotW = computed(() => Math.max(120, width.value - labelW.value - 8));
 const laneH = 38;
 const costH = computed(() => (props.showCost ? 64 : 0));
@@ -323,9 +323,10 @@ function laneMeta(l: AgentLane): string {
           :aria-pressed="selected === g.lane.agent.agent_id"
           @click="emit('select', selected === g.lane.agent.agent_id ? null : g.lane.agent.agent_id)"
           @keydown.enter="emit('select', selected === g.lane.agent.agent_id ? null : g.lane.agent.agent_id)"
+          @keydown.space.prevent="emit('select', selected === g.lane.agent.agent_id ? null : g.lane.agent.agent_id)"
         />
-        <text :x="8" :y="g.y0 + (narrow ? 23 : 16)" class="lane-name">{{ g.lane.name }}</text>
-        <text v-if="!narrow" :x="8" :y="g.y0 + 30" class="lane-meta">{{ laneMeta(g.lane) }}</text>
+        <text :x="8" :y="g.y0 + 16" class="lane-name">{{ g.lane.name }}</text>
+        <text :x="8" :y="g.y0 + 30" class="lane-meta">{{ narrow ? money(g.lane.agent.cost_usd) : laneMeta(g.lane) }}</text>
       </g>
     </svg>
 
@@ -466,7 +467,7 @@ svg {
   pointer-events: none;
 }
 .lane-meta {
-  font-size: 11px;
+  font-size: 12px;
   fill: var(--muted);
   pointer-events: none;
   font-variant-numeric: tabular-nums;

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from 'vue';
+import { computed, nextTick, ref, toRef, watch } from 'vue';
 import { useSession } from '../session.ts';
 import type { LiveState } from '../client.ts';
-import { compact, dayClock, duration, int, money, modelName, percent, projectName, clock } from '../format.ts';
+import { compact, dayClock, duration, int, money, modelName, percent, plural, projectName, clock } from '../format.ts';
 import { go } from '../router.ts';
 import { AUTHOR } from '../legend.ts';
 import { ms, wallSeconds } from '../stats.ts';
@@ -26,6 +26,14 @@ watch(s.live, (v) => emit('live', v), { immediate: true });
 const selected = ref<string | null>(null);
 
 const row = computed(() => s.session.value);
+
+// Opened from the list, the keyboard goes on from the title, not from the top of the page.
+const title = ref<HTMLElement | null>(null);
+watch(row, async (r, before) => {
+  if (!r || before || props.embed) return;
+  await nextTick();
+  if (document.activeElement === document.body || !document.activeElement?.isConnected) title.value?.focus({ preventScroll: true });
+});
 const kpis = computed(() => row.value?.kpis);
 
 const models = computed(() => {
@@ -80,7 +88,7 @@ const gaps = computed(() => s.checks.value.filter((c) => c.verdict === 'Gap').le
     <template v-if="row">
       <header class="head">
         <div class="titles">
-          <h1 :class="{ small: embed }">{{ row.title || 'Untitled session' }}</h1>
+          <h1 ref="title" tabindex="-1" :class="{ small: embed }">{{ row.title || 'Untitled session' }}</h1>
           <div class="meta secondary">
             <span :title="row.project">{{ projectName(row.project) }}</span>
             <span class="sep">·</span>
@@ -112,7 +120,7 @@ const gaps = computed(() => s.checks.value.filter((c) => c.verdict === 'Gap').le
         <StatTile
           label="Human prompts"
           :value="int(row.human_prompts)"
-          :note="row.exposures ? `${int(row.exposures)} secret exposures` : 'no secret exposed'"
+          :note="row.exposures ? plural(row.exposures, 'secret exposure') : 'no secret exposed'"
         />
       </div>
 

@@ -116,6 +116,17 @@ async function showMore() {
   shown.value += props.pageSize;
 }
 
+const ROLE: Record<string, string> = { Main: 'Main agent', SubAgent: 'Sub-agent' };
+
+/** A raw name in words: `ttl_expired` and `TtlExpired` read "ttl expired". */
+function words(s: string): string {
+  return s
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
 function what(e: SessionEventsRow): string {
   switch (e.kind) {
     case 'tool_call':
@@ -128,10 +139,12 @@ function what(e: SessionEventsRow): string {
       return `${e.detail ?? ''} · ${e.label}`;
     case 'tool_result':
       return e.ok === false ? 'error' : 'ok';
+    case 'agent_started':
+      return ROLE[e.label] ?? words(e.label);
     case 'cache_bust':
-      return e.label.replace(/_/g, ' ');
+      return words(e.label);
     default:
-      return e.label;
+      return words(e.label);
   }
 }
 
@@ -190,7 +203,7 @@ function amount(e: SessionEventsRow): string {
               <i v-if="e.kind === 'tool_call'" class="dot" :style="{ background: toolColor(e.detail) }" />
               <span>{{ e.kind === 'tool_call' ? toolLabel(e.detail) : KIND_LABELS[e.kind] }}</span>
             </td>
-            <td class="what" :class="{ bad: (e.kind === 'decision' && e.ok === false) || (e.kind === 'tool_result' && e.ok === false) }">{{ what(e) }}</td>
+            <td class="what" :title="what(e)" :class="{ bad: (e.kind === 'decision' && e.ok === false) || (e.kind === 'tool_result' && e.ok === false) }">{{ what(e) }}</td>
             <td class="r hide-sm muted">{{ amount(e) }}</td>
             <td class="r">
               <span v-if="e.cost_microdollars">{{ money(e.cost_microdollars / 1e6) }}</span>
@@ -263,7 +276,9 @@ function amount(e: SessionEventsRow): string {
     display: none;
   }
   .what {
-    max-width: 120px;
+    max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 </style>

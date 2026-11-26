@@ -30,6 +30,7 @@ const maxCost = computed(() => Math.max(0.0001, ...props.lanes.map((l) => l.agen
         tabindex="0"
         @click="emit('select', selected === l.agent.agent_id ? null : l.agent.agent_id)"
         @keydown.enter="emit('select', selected === l.agent.agent_id ? null : l.agent.agent_id)"
+        @keydown.space.prevent="emit('select', selected === l.agent.agent_id ? null : l.agent.agent_id)"
       >
         <td>
           <div class="name">{{ l.name }}</div>

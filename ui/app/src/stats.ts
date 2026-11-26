@@ -82,11 +82,11 @@ export const METRICS: Metric[] = [
     kind: 'money',
     higherIsBetter: false,
     of: (s) => per(s, s.cost_usd),
-    note: (s) => (s.sessions ? `${money(s.cost_usd)} in total, at list price` : undefined),
+    note: (s) => (s.sessions ? `${money(s.cost_usd)} in total` : undefined),
   },
   {
     id: 'working',
-    label: 'Working time',
+    label: 'Agent working time',
     kind: 'duration',
     higherIsBetter: null,
     of: (s) => per(s, s.working_seconds),
@@ -94,7 +94,7 @@ export const METRICS: Metric[] = [
   },
   {
     id: 'waiting',
-    label: 'Waiting share',
+    label: 'Waiting on a human',
     kind: 'share',
     higherIsBetter: false,
     of: (s) => per(s, s.waiting_share),
@@ -102,7 +102,7 @@ export const METRICS: Metric[] = [
   },
   {
     id: 'cache',
-    label: 'Cache hits',
+    label: 'Cache hit share',
     kind: 'share',
     higherIsBetter: true,
     of: (s) => per(s, s.cache_hit_share),
@@ -163,4 +163,41 @@ export function figures(rows: OverviewFiguresRow[], id: Slice, now: number): Fig
 export function change(value: number | null, previous: number | null): number | null {
   if (value === null || previous === null || previous === 0) return null;
   return (value - previous) / Math.abs(previous);
+}
+
+/**
+ * The buckets `figures` reads, made from session rows instead of the `figures` view: the overview
+ * uses them while a search narrows the list, so the figures cover the matching sessions only. A
+ * row counts in the hour of its last activity, as the store's hourly sums count it.
+ */
+export function bucketsOf(rows: SessionListRow[], id: Slice, now: number): OverviewFiguresRow[] {
+  const w = window(id, now);
+  const width = w.bucketSeconds * 1000;
+  const by = new Map<number, OverviewFiguresRow>();
+  for (const r of rows) {
+    const hour = Math.floor(ms(r.last_at) / HOUR) * HOUR;
+    if (hour < w.since || hour >= w.end) continue;
+    const start = w.since + Math.floor((hour - w.since) / width) * width;
+    const b = by.get(start) ?? {
+      bucket_id: String(start),
+      start: new Date(start).toISOString(),
+      bucket_seconds: w.bucketSeconds,
+      sessions: 0,
+      cost_usd: 0,
+      working_seconds: 0,
+      waiting_share: 0,
+      cache_hit_share: 0,
+      tool_calls: 0,
+      refused_tool_calls: 0,
+    };
+    b.sessions += 1;
+    b.cost_usd += r.cost_usd;
+    b.working_seconds += r.working_seconds;
+    b.waiting_share += r.waiting_share;
+    b.cache_hit_share += r.cache_hit_share;
+    b.tool_calls += r.tool_calls;
+    b.refused_tool_calls += r.refused_tool_calls;
+    by.set(start, b);
+  }
+  return [...by.values()].sort((a, b) => ms(a.start) - ms(b.start));
 }

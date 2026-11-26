@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OverviewFiguresRow } from './generated/types.ts';
-import { change, figures, sum, window } from './stats.ts';
+import { bucketsOf, change, figures, sum, window } from './stats.ts';
 import { answer, fixtures, FIXTURE_NOW } from './testing/fixtures.ts';
 
 const rows = fixtures.sessions;
@@ -55,6 +55,15 @@ describe('overview figures', () => {
     const cost = f.find((x) => x.id === 'cost')!;
     expect(cost.previous).toBe(1);
     expect(change(cost.value, cost.previous)).toBeCloseTo((cost.value! - 1) / 1, 9);
+  });
+
+  it('sums the figures of matching rows the way the store sums its hours', () => {
+    const one = rows.filter((r) => r.title === 'Fix the planner');
+    const f = figures(bucketsOf(one, '72h', FIXTURE_NOW), '72h', FIXTURE_NOW);
+    const byId = Object.fromEntries(f.map((x) => [x.id, x]));
+    expect(byId.sessions.value).toBe(1);
+    expect(byId.cost.value).toBeCloseTo(one[0].cost_usd, 9);
+    expect(sum(bucketsOf(rows, '72h', FIXTURE_NOW))).toEqual(sum(buckets('72h', FIXTURE_NOW)));
   });
 
   it('sums every figure of the buckets', () => {

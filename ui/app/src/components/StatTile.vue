@@ -55,13 +55,11 @@ const hasTrend = computed(() => (props.trend ?? []).filter((v) => v !== null).le
 .label {
   font-size: 12.5px;
   color: var(--ink-2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
 }
 .top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   min-height: 18px;
