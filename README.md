@@ -5,7 +5,7 @@ decisions and events, redacts it, stores it in a local SQLite file, and evaluate
 mined patterns over that store. It reads Claude Code transcripts today. An LLM gateway can append
 the same records from the wire through the `sessionspec-records` library.
 
-Documentation: <https://beyond10x.github.io/sessionspec/>, from the pages in `docs/`:
+Documentation: <https://beyond10x.github.io/agentspec/>, from the pages in `docs/`:
 [getting started](docs/getting-started.md), [dashboard](docs/dashboard.md), [KPIs](docs/kpis.md),
 [queries](docs/queries.md), [patterns and procedures](docs/patterns.md), [privacy](docs/privacy.md),
 [records library](docs/library.md). Design notes for contributors are in `design/`.

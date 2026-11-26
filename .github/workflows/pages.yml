@@ -77,7 +77,7 @@ jobs:
           test -f website/build/index.html
           mkdir -p website/build/.well-known
           jq -n --arg commit "$COMMIT" \
-            '{schema: "b10x-project-site/v1", repository: "sessionspec", commit: $commit, baseUrl: "/sessionspec/"}' \
+            '{schema: "b10x-project-site/v1", repository: "agentspec", commit: $commit, baseUrl: "/agentspec/"}' \
             > website/build/.well-known/b10x-site.json
           cat website/build/.well-known/b10x-site.json
       - name: Upload the exact built site

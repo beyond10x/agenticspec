@@ -13,7 +13,7 @@ import {withProductSite} from '@beyond10x/docs-system/product-site';
 
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(siteDir, '..');
-const sourceBase = 'https://github.com/beyond10x/sessionspec/blob/main/';
+const sourceBase = 'https://github.com/beyond10x/agentspec/blob/main/';
 
 interface Page {
   slug: string;
@@ -73,7 +73,7 @@ const config: Config = {
 
   future: {v4: true},
   url: 'https://beyond10x.github.io',
-  baseUrl: '/sessionspec/',
+  baseUrl: '/agentspec/',
   organizationName: 'beyond10x',
   projectName: 'sessionspec',
   deploymentBranch: 'gh-pages',
@@ -111,7 +111,7 @@ const config: Config = {
           include: ['docs/*.md'],
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
-          editUrl: 'https://github.com/beyond10x/sessionspec/tree/main/',
+          editUrl: 'https://github.com/beyond10x/agentspec/tree/main/',
         },
         blog: false,
       } satisfies Preset.Options,
@@ -126,7 +126,7 @@ const config: Config = {
         {to: '/docs/kpis', label: 'KPIs', position: 'left'},
         {to: '/docs/queries', label: 'Queries', position: 'left'},
         {to: '/docs/privacy', label: 'Privacy', position: 'left'},
-        {href: 'https://github.com/beyond10x/sessionspec', label: 'GitHub', position: 'right'},
+        {href: 'https://github.com/beyond10x/agentspec', label: 'GitHub', position: 'right'},
       ],
     },
     footer: {
@@ -147,8 +147,8 @@ const config: Config = {
         {
           title: 'Project',
           items: [
-            {label: 'Source', href: 'https://github.com/beyond10x/sessionspec'},
-            {label: 'README', href: 'https://github.com/beyond10x/sessionspec/blob/main/README.md'},
+            {label: 'Source', href: 'https://github.com/beyond10x/agentspec'},
+            {label: 'README', href: 'https://github.com/beyond10x/agentspec/blob/main/README.md'},
           ],
         },
       ],
