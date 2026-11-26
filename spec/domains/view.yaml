@@ -1,9 +1,9 @@
-domain: agentspec.view
+domain: agenticspec.view
 
 summary: >-
   What a session renderer reads: one session as agents and a flat, ordered list of view events
   derived from the session IR's published events, and the read models of the UI
-  (`ui/agentspec.ui.yaml`): sessions, agents, events and check verdicts. It holds no content,
+  (`ui/agenticspec.ui.yaml`): sessions, agents, events and check verdicts. It holds no content,
   only names, counts and times, except the harness's session title, which stays in the host's
   local store. A renderer takes a whole document or an update that appends events; the UI reads
   the views and takes their changes live. The UI is written by hand (`ui/app/`) over TypeScript
@@ -11,11 +11,11 @@ summary: >-
   and components.
 
 types:
-  - name: agentspec.view.EventKind
+  - name: agenticspec.view.EventKind
     kind: enum
     variants: [agent_started, prompt, model_turn, tool_call, decision, tool_result, turn_end, compaction, exposure, cache_bust]
 
-  - name: agentspec.view.Agent
+  - name: agenticspec.view.Agent
     kind: struct
     fields:
       - {name: id, type: String}
@@ -24,7 +24,7 @@ types:
       - {name: spawned_by, type: Optional<String>}
       - {name: started_at, type: Integer}
 
-  - name: agentspec.view.Event
+  - name: agenticspec.view.Event
     kind: struct
     naming:
       summary: >-
@@ -35,7 +35,7 @@ types:
       - {name: seq, type: Integer}
       - {name: at, type: Integer}
       - {name: agent, type: String}
-      - {name: kind, type: agentspec.view.EventKind}
+      - {name: kind, type: agenticspec.view.EventKind}
       - {name: label, type: String}
       - name: detail
         type: Optional<String>
@@ -57,20 +57,20 @@ types:
         type: Optional<Integer>
         summary: The length of the prompt, the tool input or the tool output.
 
-  - name: agentspec.view.Document
+  - name: agenticspec.view.Document
     kind: struct
     naming:
-      summary: One session for a renderer, format `agentspec-view/1`.
+      summary: One session for a renderer, format `agenticspec-view/1`.
     fields:
       - {name: format, type: String}
       - {name: session_id, type: String}
       - {name: title, type: Optional<String>}
       - {name: project, type: String}
       - {name: harness, type: String}
-      - {name: agents, type: List<agentspec.view.Agent>}
-      - {name: events, type: List<agentspec.view.Event>}
+      - {name: agents, type: List<agenticspec.view.Agent>}
+      - {name: events, type: List<agenticspec.view.Event>}
 
-  - name: agentspec.view.Update
+  - name: agenticspec.view.Update
     kind: struct
     naming:
       summary: >-
@@ -82,50 +82,50 @@ types:
       - {name: session_id, type: String}
       - {name: reset, type: Boolean}
       - {name: from_seq, type: Integer}
-      - {name: agents, type: List<agentspec.view.Agent>}
-      - {name: events, type: List<agentspec.view.Event>}
+      - {name: agents, type: List<agenticspec.view.Agent>}
+      - {name: events, type: List<agenticspec.view.Event>}
 
-  - name: agentspec.view.EventId
+  - name: agenticspec.view.EventId
     kind: newtype
     of: String
     naming:
       summary: One view event of one session, `<session_id>.<seq>`; a dot, since a row key is one segment of an ess-ui node path, which `/` separates.
 
-  - name: agentspec.view.CheckId
+  - name: agenticspec.view.CheckId
     kind: newtype
     of: String
     naming:
       summary: One check of one session, `<session_id>.<check>`.
 
-  - name: agentspec.view.CountId
+  - name: agenticspec.view.CountId
     kind: newtype
     of: String
     naming:
       summary: The count of one event kind in one session, `<session_id>.<agent or *>.<kind>`.
 
-  - name: agentspec.view.SlotId
+  - name: agenticspec.view.SlotId
     kind: newtype
     of: String
     naming:
       summary: One time slot of one agent of one session, `<session_id>.<agent>.<start in ms>`.
 
-  - name: agentspec.view.BucketId
+  - name: agenticspec.view.BucketId
     kind: newtype
     of: String
     naming:
       summary: One time bucket of the overview, its start in milliseconds since the epoch.
 
-# Read models of the UI (`ui/agentspec.ui.yaml`), served by the `session-view` component. Rows
+# Read models of the UI (`ui/agenticspec.ui.yaml`), served by the `session-view` component. Rows
 # hold names, counts, times and digests, never content: no prompt text, no command, no path.
 entities:
-  - name: agentspec.view.SessionListing
+  - name: agenticspec.view.SessionListing
     naming:
       summary: >-
         One session with the figures the overview lists and the session page heads with. The flat
         figures are derived from `kpis`, so a table can sort and sum them.
     identity:
       name: session_id
-      type: agentspec.session.SessionId
+      type: agenticspec.session.SessionId
     fields:
       - name: project
         type: String
@@ -145,7 +145,7 @@ entities:
         type: Integer
         summary: The session's place by `last_at` among the sessions the store holds, newest 1.
       - name: harness
-        type: agentspec.session.Harness
+        type: agenticspec.session.Harness
       - name: first_at
         type: Timestamp
       - name: last_at
@@ -190,17 +190,17 @@ entities:
           The autonomy KPI: `waiting_on_human_seconds` over the session's wall time
           (`last_at - first_at`), 0 to 1.
       - name: kpis
-        type: agentspec.cli.KpiReport
-        summary: The session's own KPI report, as `agentspec.cli.SessionSummary.kpis`.
+        type: agenticspec.cli.KpiReport
+        summary: The session's own KPI report, as `agenticspec.cli.SessionSummary.kpis`.
     relations:
       - name: agents_of
         kind: owns
-        target: agentspec.view.AgentListing
+        target: agenticspec.view.AgentListing
         cardinality: many
         via: session_id
       - name: events_of
         kind: owns
-        target: agentspec.view.EventRow
+        target: agenticspec.view.EventRow
         cardinality: many
         via: session_id
     lifecycle:
@@ -208,19 +208,19 @@ entities:
       states: [Listed]
       terminal: [Listed]
 
-  - name: agentspec.view.AgentListing
+  - name: agenticspec.view.AgentListing
     naming:
-      summary: One agent of a session with its own figures, as `agentspec.view.Agent` and more.
+      summary: One agent of a session with its own figures, as `agenticspec.view.Agent` and more.
     identity:
       name: agent_id
-      type: agentspec.session.AgentId
+      type: agenticspec.session.AgentId
     fields:
       - name: session_id
-        type: agentspec.session.SessionId
+        type: agenticspec.session.SessionId
       - name: parent
-        type: Optional<agentspec.session.AgentId>
+        type: Optional<agenticspec.session.AgentId>
       - name: role
-        type: agentspec.session.AgentRole
+        type: agenticspec.session.AgentRole
       - name: model
         type: Optional<String>
         summary: The model of the agent's last turn.
@@ -244,7 +244,7 @@ entities:
     relations:
       - name: parent_agent
         kind: references
-        target: agentspec.view.AgentListing
+        target: agenticspec.view.AgentListing
         cardinality: one
         via: parent
     lifecycle:
@@ -252,23 +252,23 @@ entities:
       states: [Listed]
       terminal: [Listed]
 
-  - name: agentspec.view.EventRow
+  - name: agenticspec.view.EventRow
     naming:
       summary: >-
-        One `agentspec.view.Event` of a session as a row: the same fields, its time as a
+        One `agenticspec.view.Event` of a session as a row: the same fields, its time as a
         `Timestamp`, and the running cost of its agent and of its session.
     identity:
       name: event_id
-      type: agentspec.view.EventId
+      type: agenticspec.view.EventId
     fields:
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: seq, type: Integer}
       - name: ord
         type: Integer
         summary: The event's place in its session ordered by `at`, then `seq`, from 0.
       - {name: at, type: Timestamp}
-      - {name: agent, type: agentspec.session.AgentId}
-      - {name: kind, type: agentspec.view.EventKind}
+      - {name: agent, type: agenticspec.session.AgentId}
+      - {name: kind, type: agenticspec.view.EventKind}
       - name: notable
         type: Boolean
         summary: A prompt, an agent start, a refusal, a failed tool result, a cache bust or a compaction, which the event log shows first.
@@ -291,7 +291,7 @@ entities:
     relations:
       - name: of_agent
         kind: references
-        target: agentspec.view.AgentListing
+        target: agenticspec.view.AgentListing
         cardinality: one
         via: agent
     lifecycle:
@@ -299,20 +299,20 @@ entities:
       states: [Logged]
       terminal: [Logged]
 
-  - name: agentspec.view.SessionCheck
+  - name: agenticspec.view.SessionCheck
     naming:
       summary: >-
-        The verdict of one check of `queries/session.sq` on one session, as `agentspec query`
+        The verdict of one check of `queries/session.sq` on one session, as `agenticspec query`
         reports it: the rows the check found, definite and possible.
     identity:
       name: check_id
-      type: agentspec.view.CheckId
+      type: agenticspec.view.CheckId
     fields:
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: check, type: String}
       - {name: about, type: String}
       - {name: severity, type: String}
-      - {name: verdict, type: agentspec.session.Verdict}
+      - {name: verdict, type: agenticspec.session.Verdict}
       - name: rows
         type: Integer
         summary: Rows the check's rule found, definite and possible.
@@ -324,27 +324,27 @@ entities:
       states: [Judged]
       terminal: [Judged]
 
-  - name: agentspec.view.EventCount
+  - name: agenticspec.view.EventCount
     naming:
       summary: >-
         How many events of one kind a session holds, of one agent or of all of them: the counts the
         event log's kind filters show.
     identity:
       name: count_id
-      type: agentspec.view.CountId
+      type: agenticspec.view.CountId
     fields:
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - name: agent
-        type: Optional<agentspec.session.AgentId>
+        type: Optional<agenticspec.session.AgentId>
         summary: The agent counted; absent for every agent of the session.
-      - {name: kind, type: agentspec.view.EventKind}
+      - {name: kind, type: agenticspec.view.EventKind}
       - {name: count, type: Integer}
     lifecycle:
       initial: Counted
       states: [Counted]
       terminal: [Counted]
 
-  - name: agentspec.view.TimelineSlot
+  - name: agenticspec.view.TimelineSlot
     naming:
       summary: >-
         The events of one agent within one time slot of a session, counted by what the timeline
@@ -352,10 +352,10 @@ entities:
         with the largest context and the running costs at the slot's last event.
     identity:
       name: slot_id
-      type: agentspec.view.SlotId
+      type: agenticspec.view.SlotId
     fields:
-      - {name: session_id, type: agentspec.session.SessionId}
-      - {name: agent, type: agentspec.session.AgentId}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: agent, type: agenticspec.session.AgentId}
       - name: slot_seconds
         type: Integer
         summary: The length of the slot; slots start at a multiple of it from the epoch.
@@ -392,14 +392,14 @@ entities:
       states: [Counted]
       terminal: [Counted]
 
-  - name: agentspec.view.FigureBucket
+  - name: agenticspec.view.FigureBucket
     naming:
       summary: >-
         The sums of the overview's figures over the sessions whose last record falls in one time
         bucket: a client divides a sum by `sessions` for an average.
     identity:
       name: bucket_id
-      type: agentspec.view.BucketId
+      type: agenticspec.view.BucketId
     fields:
       - {name: start, type: Timestamp}
       - {name: bucket_seconds, type: Integer}
@@ -420,33 +420,33 @@ entities:
       terminal: [Counted]
 
 actors:
-  - name: agentspec.view.Viewer
+  - name: agenticspec.view.Viewer
     naming:
       display: Viewer
       summary: Whoever looks at sessions; the host's user, or a gateway UI showing a running session.
     may:
-      - agentspec.view.SessionList
-      - agentspec.view.SessionById
-      - agentspec.view.SessionAgents
-      - agentspec.view.SessionEvents
-      - agentspec.view.SessionTurns
-      - agentspec.view.AgentTurns
-      - agentspec.view.SessionChecks
-      - agentspec.view.SessionEventCounts
-      - agentspec.view.SessionTimeline
-      - agentspec.view.OverviewFigures
+      - agenticspec.view.SessionList
+      - agenticspec.view.SessionById
+      - agenticspec.view.SessionAgents
+      - agenticspec.view.SessionEvents
+      - agenticspec.view.SessionTurns
+      - agenticspec.view.AgentTurns
+      - agenticspec.view.SessionChecks
+      - agenticspec.view.SessionEventCounts
+      - agenticspec.view.SessionTimeline
+      - agenticspec.view.OverviewFigures
 
 events:
-  - name: agentspec.view.SessionUpdated
+  - name: agenticspec.view.SessionUpdated
     naming:
       summary: The figures of a session changed; the payload is its whole row.
     fields:
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: project, type: String}
       - {name: title, type: Optional<String>}
       - {name: names, type: String}
       - {name: rank, type: Integer}
-      - {name: harness, type: agentspec.session.Harness}
+      - {name: harness, type: agenticspec.session.Harness}
       - {name: first_at, type: Timestamp}
       - {name: last_at, type: Timestamp}
       - {name: agents, type: Integer}
@@ -463,14 +463,14 @@ events:
       - {name: waiting_on_human_seconds, type: Integer}
       - {name: waiting_share, type: Binary64}
 
-  - name: agentspec.view.AgentUpdated
+  - name: agenticspec.view.AgentUpdated
     naming:
       summary: An agent started or its figures changed; the payload is its whole row.
     fields:
-      - {name: agent_id, type: agentspec.session.AgentId}
-      - {name: session_id, type: agentspec.session.SessionId}
-      - {name: parent, type: Optional<agentspec.session.AgentId>}
-      - {name: role, type: agentspec.session.AgentRole}
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: parent, type: Optional<agenticspec.session.AgentId>}
+      - {name: role, type: agenticspec.session.AgentRole}
       - {name: model, type: Optional<String>}
       - {name: started_at, type: Timestamp}
       - {name: turns, type: Integer}
@@ -481,17 +481,17 @@ events:
       - {name: tool_calls, type: Integer}
       - {name: busts, type: Integer}
 
-  - name: agentspec.view.EventAppended
+  - name: agenticspec.view.EventAppended
     naming:
       summary: One event of a running session; the payload is its row.
     fields:
-      - {name: event_id, type: agentspec.view.EventId}
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: event_id, type: agenticspec.view.EventId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: seq, type: Integer}
       - {name: ord, type: Integer}
       - {name: at, type: Timestamp}
-      - {name: agent, type: agentspec.session.AgentId}
-      - {name: kind, type: agentspec.view.EventKind}
+      - {name: agent, type: agenticspec.session.AgentId}
+      - {name: kind, type: agenticspec.view.EventKind}
       - {name: notable, type: Boolean}
       - {name: label, type: String}
       - {name: detail, type: Optional<String>}
@@ -507,8 +507,8 @@ events:
       - {name: session_cost_usd, type: Binary64}
 
 views:
-  - name: agentspec.view.SessionList
-    source: agentspec.view.SessionListing
+  - name: agenticspec.view.SessionList
+    source: agenticspec.view.SessionListing
     consistency: eventual
     naming:
       wire: session-list
@@ -534,12 +534,12 @@ views:
         - any: ["not defined(param.limit)", "rank <= param.limit"]
         - any: ["not defined(param.offset)", "rank > param.offset"]
     fields:
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: project, type: String}
       - {name: title, type: Optional<String>}
       - {name: names, type: String}
       - {name: rank, type: Integer}
-      - {name: harness, type: agentspec.session.Harness}
+      - {name: harness, type: agenticspec.session.Harness}
       - {name: first_at, type: Timestamp}
       - {name: last_at, type: Timestamp}
       - {name: agents, type: Integer}
@@ -556,16 +556,16 @@ views:
       - {name: waiting_on_human_seconds, type: Integer}
       - {name: waiting_share, type: Binary64}
 
-  - name: agentspec.view.SessionById
-    source: agentspec.view.SessionListing
+  - name: agenticspec.view.SessionById
+    source: agenticspec.view.SessionListing
     consistency: eventual
-    params: [{name: session_id, type: agentspec.session.SessionId}]
+    params: [{name: session_id, type: agenticspec.session.SessionId}]
     filter: session_id == param.session_id
     fields:
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: project, type: String}
       - {name: title, type: Optional<String>}
-      - {name: harness, type: agentspec.session.Harness}
+      - {name: harness, type: agenticspec.session.Harness}
       - {name: first_at, type: Timestamp}
       - {name: last_at, type: Timestamp}
       - {name: agents, type: Integer}
@@ -581,21 +581,21 @@ views:
       - {name: working_seconds, type: Integer}
       - {name: waiting_on_human_seconds, type: Integer}
       - {name: waiting_share, type: Binary64}
-      - {name: kpis, type: agentspec.cli.KpiReport}
+      - {name: kpis, type: agenticspec.cli.KpiReport}
     naming:
       wire: session
       display: Session
 
-  - name: agentspec.view.SessionAgents
-    source: agentspec.view.AgentListing
+  - name: agenticspec.view.SessionAgents
+    source: agenticspec.view.AgentListing
     consistency: eventual
-    params: [{name: session_id, type: agentspec.session.SessionId}]
+    params: [{name: session_id, type: agenticspec.session.SessionId}]
     filter: session_id == param.session_id
     fields:
-      - {name: agent_id, type: agentspec.session.AgentId}
-      - {name: session_id, type: agentspec.session.SessionId}
-      - {name: parent, type: Optional<agentspec.session.AgentId>}
-      - {name: role, type: agentspec.session.AgentRole}
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: parent, type: Optional<agenticspec.session.AgentId>}
+      - {name: role, type: agenticspec.session.AgentRole}
       - {name: model, type: Optional<String>}
       - {name: started_at, type: Timestamp}
       - {name: turns, type: Integer}
@@ -609,8 +609,8 @@ views:
       wire: session-agents
       display: Agents of a session
 
-  - name: agentspec.view.SessionEvents
-    source: agentspec.view.EventRow
+  - name: agenticspec.view.SessionEvents
+    source: agenticspec.view.EventRow
     consistency: eventual
     naming:
       wire: session-events
@@ -623,9 +623,9 @@ views:
     # UNMAPPED: ESS views neither order nor page. The local server answers each page with one
     # indexed query of its store, newest `ord` first, and stops at 500 rows.
     params:
-      - {name: session_id, type: agentspec.session.SessionId}
-      - {name: agent, type: Optional<agentspec.session.AgentId>}
-      - {name: kind, type: Optional<agentspec.view.EventKind>}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: agent, type: Optional<agenticspec.session.AgentId>}
+      - {name: kind, type: Optional<agenticspec.view.EventKind>}
       - {name: notable, type: Optional<Boolean>}
       - {name: before, type: Optional<Integer>}
     filter:
@@ -636,13 +636,13 @@ views:
         - any: ["not defined(param.notable)", "notable == param.notable"]
         - any: ["not defined(param.before)", "ord < param.before"]
     fields: &event_row_fields
-      - {name: event_id, type: agentspec.view.EventId}
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: event_id, type: agenticspec.view.EventId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: seq, type: Integer}
       - {name: ord, type: Integer}
       - {name: at, type: Timestamp}
-      - {name: agent, type: agentspec.session.AgentId}
-      - {name: kind, type: agentspec.view.EventKind}
+      - {name: agent, type: agenticspec.session.AgentId}
+      - {name: kind, type: agenticspec.view.EventKind}
       - {name: notable, type: Boolean}
       - {name: label, type: String}
       - {name: detail, type: Optional<String>}
@@ -657,68 +657,68 @@ views:
       - {name: agent_cost_usd, type: Binary64}
       - {name: session_cost_usd, type: Binary64}
 
-  - name: agentspec.view.SessionTurns
-    source: agentspec.view.EventRow
+  - name: agenticspec.view.SessionTurns
+    source: agenticspec.view.EventRow
     consistency: eventual
-    params: [{name: session_id, type: agentspec.session.SessionId}]
+    params: [{name: session_id, type: agenticspec.session.SessionId}]
     filter: {all: ["session_id == param.session_id", "kind == model_turn"]}
     fields: *event_row_fields
     naming:
       wire: session-turns
       display: Model turns of a session
 
-  - name: agentspec.view.AgentTurns
-    source: agentspec.view.EventRow
+  - name: agenticspec.view.AgentTurns
+    source: agenticspec.view.EventRow
     consistency: eventual
     params:
-      - {name: session_id, type: agentspec.session.SessionId}
-      - {name: agent, type: agentspec.session.AgentId}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: agent, type: agenticspec.session.AgentId}
     filter: {all: ["session_id == param.session_id", "agent == param.agent", "kind == model_turn"]}
     fields: *event_row_fields
     naming:
       wire: agent-turns
       display: Model turns of an agent
 
-  - name: agentspec.view.SessionChecks
-    source: agentspec.view.SessionCheck
+  - name: agenticspec.view.SessionChecks
+    source: agenticspec.view.SessionCheck
     consistency: eventual
-    params: [{name: session_id, type: agentspec.session.SessionId}]
+    params: [{name: session_id, type: agenticspec.session.SessionId}]
     filter: session_id == param.session_id
     fields:
-      - {name: check_id, type: agentspec.view.CheckId}
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: check_id, type: agenticspec.view.CheckId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: check, type: String}
       - {name: about, type: String}
       - {name: severity, type: String}
-      - {name: verdict, type: agentspec.session.Verdict}
+      - {name: verdict, type: agenticspec.session.Verdict}
       - {name: rows, type: Integer}
       - {name: possible, type: Integer}
     naming:
       wire: session-checks
       display: Checks of a session
 
-  - name: agentspec.view.SessionEventCounts
-    source: agentspec.view.EventCount
+  - name: agenticspec.view.SessionEventCounts
+    source: agenticspec.view.EventCount
     consistency: eventual
     params:
-      - {name: session_id, type: agentspec.session.SessionId}
-      - {name: agent, type: Optional<agentspec.session.AgentId>}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: agent, type: Optional<agenticspec.session.AgentId>}
     filter:
       all:
         - session_id == param.session_id
         - any: ["not defined(param.agent)", "agent == param.agent"]
     fields:
-      - {name: count_id, type: agentspec.view.CountId}
-      - {name: session_id, type: agentspec.session.SessionId}
-      - {name: agent, type: Optional<agentspec.session.AgentId>}
-      - {name: kind, type: agentspec.view.EventKind}
+      - {name: count_id, type: agenticspec.view.CountId}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: agent, type: Optional<agenticspec.session.AgentId>}
+      - {name: kind, type: agenticspec.view.EventKind}
       - {name: count, type: Integer}
     naming:
       wire: session-event-counts
       display: Event counts of a session
 
-  - name: agentspec.view.SessionTimeline
-    source: agentspec.view.TimelineSlot
+  - name: agenticspec.view.SessionTimeline
+    source: agenticspec.view.TimelineSlot
     consistency: eventual
     naming:
       wire: session-timeline
@@ -729,13 +729,13 @@ views:
     # UNMAPPED: ESS views do not aggregate. The local server counts the events of each slot
     # with one grouped query over its store's indexed events.
     params:
-      - {name: session_id, type: agentspec.session.SessionId}
+      - {name: session_id, type: agenticspec.session.SessionId}
       - {name: slot_seconds, type: Integer}
     filter: {all: ["session_id == param.session_id", "slot_seconds == param.slot_seconds"]}
     fields:
-      - {name: slot_id, type: agentspec.view.SlotId}
-      - {name: session_id, type: agentspec.session.SessionId}
-      - {name: agent, type: agentspec.session.AgentId}
+      - {name: slot_id, type: agenticspec.view.SlotId}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: agent, type: agenticspec.session.AgentId}
       - {name: slot_seconds, type: Integer}
       - {name: start, type: Timestamp}
       - {name: end, type: Timestamp}
@@ -758,8 +758,8 @@ views:
       - {name: agent_cost_usd, type: Binary64}
       - {name: session_cost_usd, type: Binary64}
 
-  - name: agentspec.view.OverviewFigures
-    source: agentspec.view.FigureBucket
+  - name: agenticspec.view.OverviewFigures
+    source: agenticspec.view.FigureBucket
     consistency: eventual
     naming:
       wire: figures
@@ -774,7 +774,7 @@ views:
       - {name: bucket_seconds, type: Integer}
     filter: {all: ["start >= param.since", "bucket_seconds == param.bucket_seconds"]}
     fields:
-      - {name: bucket_id, type: agentspec.view.BucketId}
+      - {name: bucket_id, type: agenticspec.view.BucketId}
       - {name: start, type: Timestamp}
       - {name: bucket_seconds, type: Integer}
       - {name: sessions, type: Integer}

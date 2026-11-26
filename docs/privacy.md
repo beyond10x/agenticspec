@@ -1,6 +1,6 @@
 # Privacy
 
-agentspec runs on your machine. It reads transcripts, writes one SQLite file and makes no network
+agenticspec runs on your machine. It reads transcripts, writes one SQLite file and makes no network
 request. `serve` listens on 127.0.0.1 only.
 
 ## What the store holds
@@ -19,7 +19,7 @@ your work.
 
 ## Secrets and personal data
 
-Before a step is stored, agentspec scans prompts, tool inputs, tool outputs and agent text for
+Before a step is stored, agenticspec scans prompts, tool inputs, tool outputs and agent text for
 these kinds:
 
 | kind | class |
@@ -46,6 +46,6 @@ someone confirms it. See [KPIs](kpis.md) for where these figures show up.
 
 ## Removing data
 
-Delete the store to forget everything: `~/.local/share/agentspec/sessions.db`, or the
+Delete the store to forget everything: `~/.local/share/agenticspec/sessions.db`, or the
 `sessions.db` in the directory you passed as `--state-dir`. The next `sync` fills it again from the
 transcripts in the window.

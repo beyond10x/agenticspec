@@ -1,0 +1,18 @@
+# generated from agenticspec v1
+# contract digest f055d5e2e3c34626a341be77dc04f1863969498b5a228872e28a799be540eb5f
+# do not edit: regenerate with `ess synthesize`
+
+[package]
+name = "agenticspec-server"
+description = "The HTTP surface of the `agenticspec` specification, v1: the routes its components' declarations determine, generated."
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+agenticspec-system = { path = "../agenticspec-system" }
+agenticspec-types = { path = "../agenticspec-types" }
+session-ir = { path = "../session-ir" }
+session-view = { path = "../session-view" }
+clap = { version = "^4.6.7", features = ["derive"] }
+uuid = { version = "^1.26.1", features = ["v4"] }
+time = { version = "^0.3.45", features = ["formatting"] }

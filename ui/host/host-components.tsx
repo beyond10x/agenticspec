@@ -1,6 +1,6 @@
 // The host components of the generated UI (`ess generate ui --target react`), copied into the
 // generated app as `src/host-components.tsx` by `task ui:build`. One per host slot of
-// `ui/agentspec.ui.yaml`.
+// `ui/agenticspec.ui.yaml`.
 //
 // SessionLanes: the session's events on one time axis, one lane per agent, sub-agents under
 // their parent, a tick per event coloured by its kind.
@@ -20,13 +20,13 @@ const TONE: Record<string, string> = {
   cache_bust: "#b91c1c",
 };
 
-function SessionLanes(props: HostProps<"agentspec.view.SessionEvents">): ReactNode {
+function SessionLanes(props: HostProps<"agenticspec.view.SessionEvents">): ReactNode {
   const session = props.page.session_id ?? "";
   const [rows, setRows] = useState<Row[]>([]);
   useEffect(() => {
     let live = true;
     props.adapter
-      .read({ view: "agentspec.view.SessionEvents", params: { session_id: session } } as never)
+      .read({ view: "agenticspec.view.SessionEvents", params: { session_id: session } } as never)
       .then((result) => {
         if (live) {
           setRows(result.rows as unknown as Row[]);

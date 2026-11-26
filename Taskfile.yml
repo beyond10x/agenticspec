@@ -42,8 +42,8 @@ tasks:
   check:ui:
     desc: Check the ess-ui document against the specification and run its headless tests on the fixtures.
     cmds:
-      - ess ui check --path ui/agentspec.ui.yaml --model spec
-      - ess ui test --path ui/agentspec.ui.yaml ui/tests/session.yaml
+      - ess ui check --path ui/agenticspec.ui.yaml --model spec
+      - ess ui test --path ui/agenticspec.ui.yaml ui/tests/session.yaml
 
   check:app:
     desc: Types, unit tests and a build of the app in ui/app, then its layout, accessibility, keyboard and screen-only-user gates on the fixtures and the ratchet against ux/baseline.json. The lines are in scripts/check-app.sh.
@@ -77,26 +77,26 @@ tasks:
       - cargo nextest run --workspace --locked
 
   ui:build:
-    desc: Build the hand-written app of ui/app into target/ui/www, which `agentspec serve` serves. The lines are in scripts/ui-build.sh.
+    desc: Build the hand-written app of ui/app into target/ui/www, which `agenticspec serve` serves. The lines are in scripts/ui-build.sh.
     cmds:
       - sh scripts/ui-build.sh
 
   sync:
     desc: Lift the new and changed Claude Code sessions of the last 72 hours into the local store.
     cmds:
-      - cargo run --release --locked -p agentspec -- sync
+      - cargo run --release --locked -p agenticspec -- sync
 
   serve:
     desc: Serve the UI and its views from the local store on http://127.0.0.1:7420, synced every 5 seconds.
     cmds:
-      - cargo run --release --locked -p agentspec -- serve
+      - cargo run --release --locked -p agenticspec -- serve
 
   analyze:
-    desc: Write agentspec-dashboard.html for the Claude Code sessions of the last 72 hours on this host.
+    desc: Write agenticspec-dashboard.html for the Claude Code sessions of the last 72 hours on this host.
     cmds:
-      - cargo run --release --locked -p agentspec -- analyze
+      - cargo run --release --locked -p agenticspec -- analyze
 
   kpi:
     desc: KPIs over the Claude Code sessions of the last 72 hours on this host.
     cmds:
-      - cargo run --release --locked -p agentspec -- kpi --output json
+      - cargo run --release --locked -p agenticspec -- kpi --output json

@@ -1,7 +1,7 @@
-# generated from agentspec v1
-# contract digest 0c0727aa4de388310699c24fed8ce0f18713c396101cd870029ee370ff1fdebf
+# generated from agenticspec v1
+# contract digest f055d5e2e3c34626a341be77dc04f1863969498b5a228872e28a799be540eb5f
 # do not edit: regenerate with `ess synthesize`
 
 [workspace]
 resolver = "2"
-members = ["crates/agentspec-server", "crates/agentspec-system", "crates/agentspec-types", "crates/session-ir", "crates/session-view"]
+members = ["crates/agenticspec-server", "crates/agenticspec-system", "crates/agenticspec-types", "crates/session-ir", "crates/session-view"]

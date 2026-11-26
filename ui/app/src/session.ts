@@ -227,14 +227,14 @@ export function useSession(
       'session_events',
       { session_id: sessionId },
       {
-        'agentspec.view.EventAppended': (p) => {
+        'agenticspec.view.EventAppended': (p) => {
           slots.value = addEvent(slots.value, p, width);
           appended.value = p;
         },
-        'agentspec.view.AgentUpdated': (p) => {
+        'agenticspec.view.AgentUpdated': (p) => {
           agents.value = upsert(agents.value, p, 'agent_id');
         },
-        'agentspec.view.SessionUpdated': (p) => {
+        'agenticspec.view.SessionUpdated': (p) => {
           if (session.value) session.value = { ...session.value, ...p };
         },
       },

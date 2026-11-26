@@ -4,7 +4,7 @@ sq is a small query language over your sessions. A query finds the places in ses
 something happened: a call a hook refused, an edit followed by a test run, a long wait on you.
 
 ```console
-agentspec query --text '?- exposure{kind: K, channel: "ToolInput", verdict: "Unk"}.'
+agenticspec query --text '?- exposure{kind: K, channel: "ToolInput", verdict: "Unk"}.'
 ```
 
 This lists the kinds of unconfirmed secrets and personal data that appeared in tool arguments in
@@ -14,10 +14,10 @@ the last 72 hours. `query` prints a JSON report with one row per answer and sess
 
 | form | what runs |
 |---|---|
-| `agentspec query file.sq` | the rules, queries and checks in the file |
-| `agentspec query --text '...'` | sq given inline |
-| `agentspec query file.sq --text '...'` | both, the text appended to the file |
-| `agentspec query file.sq --transcript <session>.jsonl` | one transcript file, read directly, without the store |
+| `agenticspec query file.sq` | the rules, queries and checks in the file |
+| `agenticspec query --text '...'` | sq given inline |
+| `agenticspec query file.sq --text '...'` | both, the text appended to the file |
+| `agenticspec query file.sq --transcript <session>.jsonl` | one transcript file, read directly, without the store |
 
 Without `--transcript`, a query runs over every session of the window. `--since-hours` and `--root`
 choose the window.
@@ -99,8 +99,8 @@ one. Each session gets one verdict per check:
 
 The report counts the verdicts of each check under `ok`, `gap` and `unk`.
 
-The checks that ship with agentspec are in
-[`queries/session.sq`](https://github.com/beyond10x/agentspec/blob/main/queries/session.sq).
+The checks that ship with agenticspec are in
+[`queries/session.sq`](https://github.com/beyond10x/agenticspec/blob/main/queries/session.sq).
 `sync` evaluates them for every session, and the dashboard shows the results.
 
 | check | finds |
@@ -135,7 +135,7 @@ Every step of a session is a node, written `<session>#<number>`.
 | `turn_end` | `node, agent` |
 | `compacted` | `node, agent, before` |
 | `exposure` | `node, id, agent, channel, class, kind, alias, verdict, call` |
-| `refused_cmd` | `node, error`: a step agentspec could not replay |
+| `refused_cmd` | `node, error`: a step agenticspec could not replay |
 | `at` | `node, t`: the time of a node |
 | `next` | `a, b`: `b` is the next step of the same agent |
 | `turn_of` | `node, prompt`: the step belongs to the turn this prompt started |

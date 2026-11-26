@@ -17,7 +17,7 @@ jobs:
   built:
     name: Find the built site
     if: >-
-      github.repository == 'beyond10x/agentspec'
+      github.repository == 'beyond10x/agenticspec'
       && github.ref == 'refs/heads/main'
       && (github.event_name == 'workflow_dispatch'
         || (github.event.workflow_run.conclusion == 'success'
@@ -56,7 +56,7 @@ jobs:
       needs.built.outputs.present == 'true'
       && github.actor == 'b10x-bot[bot]'
       && github.triggering_actor == 'b10x-bot[bot]'
-      && github.repository == 'beyond10x/agentspec'
+      && github.repository == 'beyond10x/agenticspec'
       && github.ref == 'refs/heads/main'
       && (github.event_name == 'workflow_dispatch'
         || (github.event.workflow_run.conclusion == 'success'
@@ -69,8 +69,8 @@ jobs:
       actions: read
     uses: beyond10x/website/.github/workflows/project-site.yml@c870d2c8fa1d62c15c066a9bc382015091575734
     with:
-      repository: agentspec
+      repository: agenticspec
       control_sha: ${{ github.event.workflow_run.head_sha || github.sha }}
-      route_base: /agentspec/
+      route_base: /agenticspec/
       build_workflow: pages.yml
       artifact: b10x-project-site

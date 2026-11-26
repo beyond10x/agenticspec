@@ -5,13 +5,13 @@
 You need a Rust toolchain. Install the binary from the repository:
 
 ```console
-cargo install --locked --git https://github.com/beyond10x/agentspec agentspec
+cargo install --locked --git https://github.com/beyond10x/agenticspec agenticspec
 ```
 
 ## Fill the store
 
 ```console
-agentspec sync
+agenticspec sync
 ```
 
 This reads every Claude Code session with a file changed in the last 72 hours and writes it to the
@@ -21,8 +21,8 @@ the window. Later runs only read what changed.
 Choose another window or another transcript directory:
 
 ```console
-agentspec sync --since-hours 168
-agentspec sync --root /path/to/projects
+agenticspec sync --since-hours 168
+agenticspec sync --root /path/to/projects
 ```
 
 You rarely need to run `sync` yourself. `analyze`, `kpi`, `query`, `mine`, `procedure` and `serve`
@@ -31,7 +31,7 @@ sync first.
 ## Open the dashboard
 
 ```console
-agentspec serve
+agenticspec serve
 ```
 
 Open http://127.0.0.1:7420/. The server listens on 127.0.0.1 only and syncs every 5 seconds, so
@@ -40,17 +40,17 @@ running sessions show up while they work. Use `--port` to pick another port.
 The live UI is a web app that is built from a checkout of the repository with `task ui:build`,
 which needs Node.js 22 and npm.
 `serve` finds it in `target/ui/www` beside the binary, in the directory named by
-`AGENTSPEC_UI_DIR`, or in `ui/` inside the state directory. Without it, `serve` still answers the
+`AGENTICSPEC_UI_DIR`, or in `ui/` inside the state directory. Without it, `serve` still answers the
 data endpoints and says the UI is not built.
 
 ## Write a dashboard file
 
 ```console
-agentspec analyze --out sessions.html
+agenticspec analyze --out sessions.html
 ```
 
 This writes one self-contained HTML file: the KPIs of the window and each session. Without `--out`
-it writes `agentspec-dashboard.html` beside the store, so a run inside a checkout leaves nothing
+it writes `agenticspec-dashboard.html` beside the store, so a run inside a checkout leaves nothing
 there. The file contains your session titles, so keep it out of repositories you publish.
 
 ## Where your data lives
@@ -58,15 +58,16 @@ there. The file contains your session titles, so keep it out of repositories you
 | what | where |
 |---|---|
 | transcripts read | `~/.claude/projects`, or `--root` |
-| the store | `$XDG_DATA_HOME/agentspec/sessions.db`, else `~/.local/share/agentspec/sessions.db` |
+| the store | `$XDG_DATA_HOME/agenticspec/sessions.db`, else `~/.local/share/agenticspec/sessions.db` |
 | another store | `--state-dir <dir>` on any command keeps the store in `<dir>/sessions.db` |
-| the dashboard file | `agentspec-dashboard.html` beside the store, unless `analyze --out` names another |
+| the dashboard file | `agenticspec-dashboard.html` beside the store, unless `analyze --out` names another |
 
-A new version of agentspec may change what the store holds. It then empties the store and fills
+A new version of agenticspec may change what the store holds. It then empties the store and fills
 it again on the next sync.
 
-A store from before the name agentspec, in `~/.local/share/sessionspec/`, is moved to
-`~/.local/share/agentspec/` the first time agentspec opens it.
+A store from before the name agenticspec, in `~/.local/share/agentspec/` or
+`~/.local/share/sessionspec/`, is moved to `~/.local/share/agenticspec/` the first time
+agenticspec opens it.
 
 ## Common options
 
@@ -85,10 +86,11 @@ Some setups let one agent session type into another on your behalf. Name those s
 messages count as yours:
 
 ```console
-export AGENTSPEC_DELEGATES=operator,night-shift
+export AGENTICSPEC_DELEGATES=operator,night-shift
 ```
 
 A message from a named session counts as a delegate's prompt, not a peer session's. A message that
 says it was sent on someone's order also counts as a delegate's.
 
-The older name `SESSIONSPEC_DELEGATES` is still read when `AGENTSPEC_DELEGATES` is not set.
+The older names `AGENTSPEC_DELEGATES` and `SESSIONSPEC_DELEGATES` are still read when
+`AGENTICSPEC_DELEGATES` is not set.

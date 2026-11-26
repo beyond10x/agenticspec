@@ -1,0 +1,1523 @@
+{
+  "format": "ess-cli-plan/2",
+  "binary": "agenticspec",
+  "about": "Lift agent sessions into one IR and evaluate KPIs over them",
+  "globals": {
+    "config": "config",
+    "state": "state-dir",
+    "output": "output"
+  },
+  "callables": {
+    "analyze": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "analyze"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.AnalyzeInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "since_hours": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.AnalyzeResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "path": {
+              "kind": "string"
+            },
+            "sessions": {
+              "kind": "integer"
+            }
+          }
+        }
+      },
+      "errors": {
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "root_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "store_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "export": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "export"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.ExportInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "out": {
+              "kind": "string"
+            },
+            "procedure": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.ExportResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "bindings": {
+              "kind": "string"
+            },
+            "detail": {
+              "kind": "string"
+            },
+            "protocol": {
+              "kind": "string"
+            },
+            "validated": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "procedure_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "kpi": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "kpi"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.KpiInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "since_hours": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.KpiReport",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "autonomy": {
+              "kind": "struct",
+              "fields": {
+                "away_seconds": {
+                  "kind": "integer"
+                },
+                "decisions": {
+                  "kind": "list",
+                  "of": {
+                    "kind": "struct",
+                    "fields": {
+                      "count": {
+                        "kind": "integer"
+                      },
+                      "decider": {
+                        "kind": "enum",
+                        "variants": [
+                          "PermissionMode",
+                          "Classifier",
+                          "Hook",
+                          "Human",
+                          "SafetyCheck",
+                          "Rule",
+                          "NotRecorded"
+                        ]
+                      },
+                      "decision": {
+                        "kind": "enum",
+                        "variants": [
+                          "Accept",
+                          "Refuse"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "prompts": {
+                  "kind": "list",
+                  "of": {
+                    "kind": "struct",
+                    "fields": {
+                      "attribution": {
+                        "kind": "enum",
+                        "variants": [
+                          "Known",
+                          "Inferred",
+                          "Unknown"
+                        ]
+                      },
+                      "author": {
+                        "kind": "enum",
+                        "variants": [
+                          "Human",
+                          "Delegate",
+                          "PeerSession",
+                          "ParentAgent",
+                          "Harness",
+                          "Hook"
+                        ]
+                      },
+                      "count": {
+                        "kind": "integer"
+                      }
+                    }
+                  }
+                },
+                "waiting_on_human_seconds": {
+                  "kind": "integer"
+                },
+                "working_seconds": {
+                  "kind": "integer"
+                }
+              }
+            },
+            "busts": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "cause": {
+                    "kind": "enum",
+                    "variants": [
+                      "ttl_expired",
+                      "model_changed",
+                      "compacted",
+                      "unexplained"
+                    ]
+                  },
+                  "count": {
+                    "kind": "integer"
+                  },
+                  "scope": {
+                    "kind": "enum",
+                    "variants": [
+                      "main",
+                      "sub"
+                    ]
+                  },
+                  "tokens_written_again": {
+                    "kind": "integer"
+                  }
+                }
+              }
+            },
+            "cache": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "hit_permille": {
+                    "kind": "integer"
+                  },
+                  "read_tokens": {
+                    "kind": "integer"
+                  },
+                  "scope": {
+                    "kind": "enum",
+                    "variants": [
+                      "main",
+                      "sub"
+                    ]
+                  },
+                  "uncached_tokens": {
+                    "kind": "integer"
+                  },
+                  "write_tokens": {
+                    "kind": "integer"
+                  }
+                }
+              }
+            },
+            "concurrency": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "max": {
+                    "kind": "integer"
+                  },
+                  "p50": {
+                    "kind": "integer"
+                  },
+                  "p90": {
+                    "kind": "integer"
+                  },
+                  "scope": {
+                    "kind": "enum",
+                    "variants": [
+                      "main",
+                      "sub"
+                    ]
+                  }
+                }
+              }
+            },
+            "cost_microdollars": {
+              "kind": "integer"
+            },
+            "exposures": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "channel": {
+                    "kind": "enum",
+                    "variants": [
+                      "Prompt",
+                      "ToolInput",
+                      "ToolOutput",
+                      "AgentText"
+                    ]
+                  },
+                  "class": {
+                    "kind": "enum",
+                    "variants": [
+                      "Secret",
+                      "PersonalData"
+                    ]
+                  },
+                  "count": {
+                    "kind": "integer"
+                  },
+                  "kind": {
+                    "kind": "string"
+                  },
+                  "sessions": {
+                    "kind": "integer"
+                  },
+                  "verdict": {
+                    "kind": "enum",
+                    "variants": [
+                      "Ok",
+                      "Gap",
+                      "Unk"
+                    ]
+                  }
+                }
+              }
+            },
+            "models": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "context_max": {
+                    "kind": "integer"
+                  },
+                  "context_p50": {
+                    "kind": "integer"
+                  },
+                  "context_p90": {
+                    "kind": "integer"
+                  },
+                  "cost_microdollars": {
+                    "kind": "integer"
+                  },
+                  "messages": {
+                    "kind": "integer"
+                  },
+                  "model": {
+                    "kind": "string"
+                  },
+                  "output_tokens": {
+                    "kind": "integer"
+                  },
+                  "scope": {
+                    "kind": "enum",
+                    "variants": [
+                      "main",
+                      "sub"
+                    ]
+                  }
+                }
+              }
+            },
+            "refused_commands": {
+              "kind": "integer"
+            },
+            "sessions": {
+              "kind": "integer"
+            },
+            "sub_agents": {
+              "kind": "integer"
+            },
+            "transcripts": {
+              "kind": "integer"
+            },
+            "unpriced_messages": {
+              "kind": "integer"
+            },
+            "window_from": {
+              "kind": "string"
+            },
+            "window_to": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "root_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "store_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lift": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "lift"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.LiftInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "transcript": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.LiftResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "agents": {
+              "kind": "integer"
+            },
+            "commands": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "actor": {
+                    "kind": "string"
+                  },
+                  "at": {
+                    "kind": "string"
+                  },
+                  "command": {
+                    "kind": "string"
+                  },
+                  "input": {
+                    "kind": "json"
+                  },
+                  "outcome": {
+                    "kind": "string"
+                  },
+                  "seq": {
+                    "kind": "integer"
+                  }
+                }
+              }
+            },
+            "refused": {
+              "kind": "integer"
+            },
+            "session_id": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "transcript_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "mine": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "mine"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.MineInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "level": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "min_projects": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "min_sessions": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "since_hours": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "top": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.MineReport",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "format": {
+              "kind": "string"
+            },
+            "level": {
+              "kind": "string"
+            },
+            "patterns": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "id": {
+                    "kind": "string"
+                  },
+                  "occurrences": {
+                    "kind": "integer"
+                  },
+                  "ok_permille": {
+                    "kind": "integer"
+                  },
+                  "projects": {
+                    "kind": "integer"
+                  },
+                  "query": {
+                    "kind": "string"
+                  },
+                  "sessions": {
+                    "kind": "integer"
+                  },
+                  "tokens": {
+                    "kind": "list",
+                    "of": {
+                      "kind": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "sessions": {
+              "kind": "integer"
+            },
+            "turns": {
+              "kind": "integer"
+            }
+          }
+        }
+      },
+      "errors": {
+        "root_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "store_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "procedure": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "procedure"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.ProcedureInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "level": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "pattern": {
+              "kind": "string"
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "since_hours": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.Procedure",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "description": {
+              "kind": "string"
+            },
+            "format": {
+              "kind": "string"
+            },
+            "id": {
+              "kind": "string"
+            },
+            "matches": {
+              "kind": "integer"
+            },
+            "parameters": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "kind": {
+                    "kind": "string"
+                  },
+                  "name": {
+                    "kind": "string"
+                  },
+                  "step": {
+                    "kind": "string"
+                  },
+                  "values": {
+                    "kind": "list",
+                    "of": {
+                      "kind": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "pattern": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "query": {
+              "kind": "string"
+            },
+            "sessions": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "steps": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "after": {
+                    "kind": "list",
+                    "of": {
+                      "kind": "string"
+                    }
+                  },
+                  "category": {
+                    "kind": "string"
+                  },
+                  "effect": {
+                    "kind": "string"
+                  },
+                  "id": {
+                    "kind": "string"
+                  },
+                  "kind": {
+                    "kind": "enum",
+                    "variants": [
+                      "program",
+                      "judgement",
+                      "person",
+                      "child"
+                    ]
+                  },
+                  "ok_permille": {
+                    "kind": "integer"
+                  },
+                  "retry_max": {
+                    "kind": "integer"
+                  },
+                  "shape": {
+                    "kind": "optional",
+                    "of": {
+                      "kind": "string"
+                    }
+                  },
+                  "timeout_seconds": {
+                    "kind": "integer"
+                  },
+                  "token": {
+                    "kind": "string"
+                  },
+                  "tool": {
+                    "kind": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "errors": {
+        "no_match": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "root_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "store_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "query": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "query"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.QueryInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "module": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "since_hours": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "text": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "transcript": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.QueryReport",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "checks": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "about": {
+                    "kind": "string"
+                  },
+                  "check": {
+                    "kind": "string"
+                  },
+                  "gap": {
+                    "kind": "integer"
+                  },
+                  "ok": {
+                    "kind": "integer"
+                  },
+                  "severity": {
+                    "kind": "string"
+                  },
+                  "unk": {
+                    "kind": "integer"
+                  }
+                }
+              }
+            },
+            "format": {
+              "kind": "string"
+            },
+            "queries": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "rows": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "certainty": {
+                    "kind": "enum",
+                    "variants": [
+                      "definite",
+                      "possible"
+                    ]
+                  },
+                  "query": {
+                    "kind": "integer"
+                  },
+                  "session_id": {
+                    "kind": "string"
+                  },
+                  "unknown": {
+                    "kind": "list",
+                    "of": {
+                      "kind": "string"
+                    }
+                  },
+                  "values": {
+                    "kind": "list",
+                    "of": {
+                      "kind": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "sessions": {
+              "kind": "integer"
+            },
+            "verdicts": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "check": {
+                    "kind": "string"
+                  },
+                  "rows": {
+                    "kind": "integer"
+                  },
+                  "session_id": {
+                    "kind": "string"
+                  },
+                  "verdict": {
+                    "kind": "enum",
+                    "variants": [
+                      "Ok",
+                      "Gap",
+                      "Unk"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "errors": {
+        "module_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "root_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "store_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "serve"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.ServeInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "port": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "since_hours": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.ServeResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "url": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "port_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "root_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "store_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sync": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sync"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SyncInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "since_hours": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SyncResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "db": {
+              "kind": "string"
+            },
+            "failed": {
+              "kind": "integer"
+            },
+            "lifted": {
+              "kind": "integer"
+            },
+            "ms": {
+              "kind": "integer"
+            },
+            "scanned": {
+              "kind": "integer"
+            },
+            "sessions": {
+              "kind": "integer"
+            },
+            "unchanged": {
+              "kind": "integer"
+            }
+          }
+        }
+      },
+      "errors": {
+        "root_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "store_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "commands": [
+    {
+      "path": [
+        "analyze"
+      ],
+      "aliases": [],
+      "callable": "analyze",
+      "about": "Find the Claude Code sessions on this machine, evaluate each, and write a dashboard file",
+      "arguments": [
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "since_hours",
+          "source": {
+            "kind": "option",
+            "long": "since-hours"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "export"
+      ],
+      "aliases": [],
+      "callable": "export",
+      "about": "Export a procedure as a canon protocol and loom bindings",
+      "arguments": [
+        {
+          "field": "procedure",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "kpi"
+      ],
+      "aliases": [],
+      "callable": "kpi",
+      "about": "Evaluate the KPIs over every Claude Code session in a time window",
+      "arguments": [
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "since_hours",
+          "source": {
+            "kind": "option",
+            "long": "since-hours"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "lift"
+      ],
+      "aliases": [],
+      "callable": "lift",
+      "about": "Lift one Claude Code session and its sub-agents into session IR commands and replay them",
+      "arguments": [
+        {
+          "field": "transcript",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "mine"
+      ],
+      "aliases": [],
+      "callable": "mine",
+      "about": "Find runs of tool calls that recur in agent turns across sessions",
+      "arguments": [
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "since_hours",
+          "source": {
+            "kind": "option",
+            "long": "since-hours"
+          }
+        },
+        {
+          "field": "level",
+          "source": {
+            "kind": "option",
+            "long": "level"
+          }
+        },
+        {
+          "field": "min_sessions",
+          "source": {
+            "kind": "option",
+            "long": "min-sessions"
+          }
+        },
+        {
+          "field": "min_projects",
+          "source": {
+            "kind": "option",
+            "long": "min-projects"
+          }
+        },
+        {
+          "field": "top",
+          "source": {
+            "kind": "option",
+            "long": "top"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "procedure"
+      ],
+      "aliases": [],
+      "callable": "procedure",
+      "about": "Lift a mined pattern into a procedure over its matches",
+      "arguments": [
+        {
+          "field": "pattern",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "since_hours",
+          "source": {
+            "kind": "option",
+            "long": "since-hours"
+          }
+        },
+        {
+          "field": "level",
+          "source": {
+            "kind": "option",
+            "long": "level"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "query"
+      ],
+      "aliases": [],
+      "callable": "query",
+      "about": "Run an sq module of rules, queries and checks over one session or the sessions of a window",
+      "arguments": [
+        {
+          "field": "module",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "text",
+          "source": {
+            "kind": "option",
+            "long": "text"
+          }
+        },
+        {
+          "field": "transcript",
+          "source": {
+            "kind": "option",
+            "long": "transcript"
+          }
+        },
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "since_hours",
+          "source": {
+            "kind": "option",
+            "long": "since-hours"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "serve"
+      ],
+      "aliases": [],
+      "callable": "serve",
+      "about": "Serve the UI and its views from the local store on 127.0.0.1, synced every 5 seconds",
+      "arguments": [
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "since_hours",
+          "source": {
+            "kind": "option",
+            "long": "since-hours"
+          }
+        },
+        {
+          "field": "port",
+          "source": {
+            "kind": "option",
+            "long": "port"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sync"
+      ],
+      "aliases": [],
+      "callable": "sync",
+      "about": "Lift the new and changed sessions of a window into the local store",
+      "arguments": [
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "since_hours",
+          "source": {
+            "kind": "option",
+            "long": "since-hours"
+          }
+        }
+      ]
+    }
+  ],
+  "obligations": [
+    "handler:analyze: implement the owner-qualified callable and its declared result/error contract",
+    "handler:export: implement the owner-qualified callable and its declared result/error contract",
+    "handler:kpi: implement the owner-qualified callable and its declared result/error contract",
+    "handler:lift: implement the owner-qualified callable and its declared result/error contract",
+    "handler:mine: implement the owner-qualified callable and its declared result/error contract",
+    "handler:procedure: implement the owner-qualified callable and its declared result/error contract",
+    "handler:query: implement the owner-qualified callable and its declared result/error contract",
+    "handler:serve: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sync: implement the owner-qualified callable and its declared result/error contract"
+  ]
+}

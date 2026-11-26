@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the hand-written UI of ui/app/ into target/ui/www, which `agentspec serve` serves. Its
+# Builds the hand-written UI of ui/app/ into target/ui/www, which `agenticspec serve` serves. Its
 # types come from the specification (ui/app/src/generated/, written by `task generate` and held by
 # `task check:generated`); nothing in the app is generated. target/ is ignored.
 set -eu

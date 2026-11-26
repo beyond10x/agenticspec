@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The tool is named agenticspec: the repository `https://github.com/beyond10x/agenticspec` (the old URLs redirect there), the documentation `https://beyond10x.github.io/agenticspec/`, the command `agenticspec`, the crates `agenticspec-records` and `agenticspec-types` (Rust paths `agenticspec_records`, `agenticspec_types`), the specification system `agenticspec`, the release archives `agenticspec-<version>-<target>.tar.gz`. Types, functions and their signatures are unchanged; the store stays version 5
+- The store is `~/.local/share/agenticspec/sessions.db`; a store in `~/.local/share/agentspec/` or else `~/.local/share/sessionspec/` is moved there the first time it is opened. The environment variables are `AGENTICSPEC_DELEGATES`, `AGENTICSPEC_UI_DIR` and `AGENTICSPEC_SYNC_MS`; `AGENTSPEC_DELEGATES` and `SESSIONSPEC_DELEGATES` are still read when `AGENTICSPEC_DELEGATES` is not set
+
 ## [0.2.0] - 2026-11-26
 
 ### Added

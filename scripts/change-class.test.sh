@@ -29,15 +29,15 @@ case_ code ux/findings/UXF-001.md
 case_ code ux/rounds/R-01/report.md
 case_ docs-site docs/queries.md design/design.md
 case_ docs-site website/product.json README.md
-case_ code crates/agentspec/src/main.rs
-case_ code crates/agentspec/README.md
+case_ code crates/agenticspec/src/main.rs
+case_ code crates/agenticspec/README.md
 case_ code generated/README.md
 case_ code spec/domains/session.yaml
-case_ code ui/agentspec.ui.yaml
+case_ code ui/agenticspec.ui.yaml
 case_ code queries/session.sq
 case_ code Cargo.toml
 case_ code .github/workflows/pages.yml
-case_ code docs/queries.md crates/agentspec-records/src/wire.rs
+case_ code docs/queries.md crates/agenticspec-records/src/wire.rs
 case_ code ''
 
 # An empty list (a push whose base cannot be read) is code.

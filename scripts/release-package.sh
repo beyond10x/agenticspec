@@ -6,10 +6,10 @@
 #   release-package.sh assets <version>
 #       the names of the files a release carries: one archive per target, then SHA256SUMS
 #   release-package.sh archive <version> <target> <binary> <directory>
-#       write <directory>/agentspec-<version>-<target>.tar.gz. It holds one directory,
-#       agentspec-<version>-<target>, with the binary as `agentspec`, LICENSE and README.md, each
+#       write <directory>/agenticspec-<version>-<target>.tar.gz. It holds one directory,
+#       agenticspec-<version>-<target>, with the binary as `agenticspec`, LICENSE and README.md, each
 #       with owner 0, the directory and the binary with mode 755, the two files with 644.
-#       Refused unless `<binary> --version` prints `agentspec <version>`, that line and no
+#       Refused unless `<binary> --version` prints `agenticspec <version>`, that line and no
 #       other, and exits 0
 #   release-package.sh sums <version> <directory>
 #       write <directory>/SHA256SUMS over the archive of every target and verify it.
@@ -63,7 +63,7 @@ case $command in
   assets)
     [ $# = 1 ] || usage
     version_of "$1"
-    for target in $targets; do echo "agentspec-$1-$target.tar.gz"; done
+    for target in $targets; do echo "agenticspec-$1-$target.tar.gz"; done
     echo SHA256SUMS
     ;;
 
@@ -82,19 +82,19 @@ case $command in
     esac
     status=0
     printed=$("$binary" --version 2> /dev/null) || status=$?
-    [ "$status" = 0 ] || refuse "\`agentspec --version\` exits $status"
-    [ "$printed" = "agentspec $version" ] \
-      || refuse "the binary prints \"$(printf '%s\n' "$printed" | sed -n 1p)\", not \"agentspec $version\""
-    name=agentspec-$version-$target
+    [ "$status" = 0 ] || refuse "\`agenticspec --version\` exits $status"
+    [ "$printed" = "agenticspec $version" ] \
+      || refuse "the binary prints \"$(printf '%s\n' "$printed" | sed -n 1p)\", not \"agenticspec $version\""
+    name=agenticspec-$version-$target
     rm -rf "${directory:?}/$name"
     mkdir -p "$directory/$name"
-    cp "$binary" "$directory/$name/agentspec"
+    cp "$binary" "$directory/$name/agenticspec"
     cp "$root/LICENSE" "$root/README.md" "$directory/$name/"
-    chmod 755 "$directory/$name" "$directory/$name/agentspec"
+    chmod 755 "$directory/$name" "$directory/$name/agenticspec"
     chmod 644 "$directory/$name/LICENSE" "$directory/$name/README.md"
     tar -C "$directory" --owner=0 --group=0 --numeric-owner -czf "$directory/$name.tar.gz" "$name"
     rm -rf "${directory:?}/$name"
-    echo "release-package: $name.tar.gz holds agentspec ($version), LICENSE and README.md"
+    echo "release-package: $name.tar.gz holds agenticspec ($version), LICENSE and README.md"
     ;;
 
   sums)
@@ -103,9 +103,9 @@ case $command in
     version_of "$version"
     set --
     for target in $targets; do
-      [ -f "$directory/agentspec-$version-$target.tar.gz" ] \
-        || refuse "no agentspec-$version-$target.tar.gz in $directory"
-      set -- "$@" "agentspec-$version-$target.tar.gz"
+      [ -f "$directory/agenticspec-$version-$target.tar.gz" ] \
+        || refuse "no agenticspec-$version-$target.tar.gz in $directory"
+      set -- "$@" "agenticspec-$version-$target.tar.gz"
     done
     cd "$directory"
     sha256sum "$@" > SHA256SUMS

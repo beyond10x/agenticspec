@@ -1,5 +1,5 @@
 {
-  "about": "Adapter of the ui-iteration-loop for the agentspec dashboard (ui/app, built into target/ui/www). The fast loop is ui/app/e2e, run by task check:app; the rounds are ux/rounds/R-nn.",
+  "about": "Adapter of the ui-iteration-loop for the agenticspec dashboard (ui/app, built into target/ui/www). The fast loop is ui/app/e2e, run by task check:app; the rounds are ux/rounds/R-nn.",
   "app": "ui/app",
   "scenarios": [
     "find-session-by-search",

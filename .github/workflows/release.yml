@@ -139,26 +139,26 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends musl-tools
           echo "CC_${TARGET//-/_}=musl-gcc" >> "$GITHUB_ENV"
-      - name: Build agentspec and write its archive
+      - name: Build agenticspec and write its archive
         env:
           TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
-          cargo build --locked --release --bin agentspec --target "$TARGET"
-          sh scripts/release-package.sh archive "$GITHUB_REF_NAME" "$TARGET" "target/$TARGET/release/agentspec" dist
+          cargo build --locked --release --bin agenticspec --target "$TARGET"
+          sh scripts/release-package.sh archive "$GITHUB_REF_NAME" "$TARGET" "target/$TARGET/release/agenticspec" dist
       - name: The musl binary is static and runs in a plain Alpine container
         if: contains(matrix.target, '-linux-musl')
         env:
           TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
-          binary="target/$TARGET/release/agentspec"
+          binary="target/$TARGET/release/agenticspec"
           file "$binary"
           file "$binary" | grep -Eq 'statically linked|static-pie linked'
           if ldd "$binary" 2>&1 | grep -q '=>'; then echo "::error::$binary loads shared libraries" >&2; exit 1; fi
-          printed=$(docker run --rm -v "$PWD/target/$TARGET/release:/b:ro" alpine@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f /b/agentspec --version)
+          printed=$(docker run --rm -v "$PWD/target/$TARGET/release:/b:ro" alpine@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f /b/agenticspec --version)
           echo "alpine: $printed"
-          test "$printed" = "agentspec $GITHUB_REF_NAME"
+          test "$printed" = "agenticspec $GITHUB_REF_NAME"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-${{ matrix.target }}
@@ -189,6 +189,6 @@ jobs:
           cat dist/notes.md
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: agentspec-${{ github.ref_name }}-release
+          name: agenticspec-${{ github.ref_name }}-release
           path: dist/*
           if-no-files-found: error

@@ -1,6 +1,6 @@
-// The views of `agentspec serve` answered from the synthetic fixtures of ui/fixtures, for the
+// The views of `agenticspec serve` answered from the synthetic fixtures of ui/fixtures, for the
 // unit tests and the layout and user-bot tests: the same paging, filters and sums the server's
-// queries apply (crates/agentspec-records/src/store.rs), over a handful of rows.
+// queries apply (crates/agenticspec-records/src/store.rs), over a handful of rows.
 
 import sessions from '../../../fixtures/sessions.json' with { type: 'json' };
 import agents from '../../../fixtures/agents.json' with { type: 'json' };

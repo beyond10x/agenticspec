@@ -3,14 +3,14 @@
 version = 4
 
 [[package]]
-name = "agentspec"
+name = "agenticspec"
 version = "0.2.0"
 dependencies = [
- "agentspec-cli-contract",
- "agentspec-records",
- "agentspec-server",
- "agentspec-system",
- "agentspec-types",
+ "agenticspec-cli-contract",
+ "agenticspec-records",
+ "agenticspec-server",
+ "agenticspec-system",
+ "agenticspec-types",
  "rayon",
  "regex",
  "rusqlite",
@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "agentspec-cli-contract"
+name = "agenticspec-cli-contract"
 version = "0.0.0"
 dependencies = [
  "clap",
@@ -34,12 +34,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "agentspec-records"
+name = "agenticspec-records"
 version = "0.2.0"
 dependencies = [
- "agentspec-server",
- "agentspec-system",
- "agentspec-types",
+ "agenticspec-server",
+ "agenticspec-system",
+ "agenticspec-types",
  "rayon",
  "regex",
  "rusqlite",
@@ -51,11 +51,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "agentspec-server"
+name = "agenticspec-server"
 version = "1.0.0"
 dependencies = [
- "agentspec-system",
- "agentspec-types",
+ "agenticspec-system",
+ "agenticspec-types",
  "clap",
  "session-ir",
  "session-view",
@@ -64,16 +64,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "agentspec-system"
+name = "agenticspec-system"
 version = "1.0.0"
 dependencies = [
- "agentspec-types",
+ "agenticspec-types",
  "session-ir",
  "session-view",
 ]
 
 [[package]]
-name = "agentspec-types"
+name = "agenticspec-types"
 version = "1.0.0"
 
 [[package]]
@@ -674,14 +674,14 @@ dependencies = [
 name = "session-ir"
 version = "1.0.0"
 dependencies = [
- "agentspec-types",
+ "agenticspec-types",
 ]
 
 [[package]]
 name = "session-view"
 version = "1.0.0"
 dependencies = [
- "agentspec-types",
+ "agenticspec-types",
 ]
 
 [[package]]

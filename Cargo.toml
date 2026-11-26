@@ -1,23 +1,23 @@
 [workspace]
 resolver = "3"
-members = ["crates/agentspec", "crates/agentspec-records"]
-exclude = ["generated", "crates/agentspec-cli-contract"]
+members = ["crates/agenticspec", "crates/agenticspec-records"]
+exclude = ["generated", "crates/agenticspec-cli-contract"]
 
 [workspace.package]
 version = "0.2.0"
 edition = "2024"
 license = "Apache-2.0"
-repository = "https://github.com/beyond10x/agentspec"
+repository = "https://github.com/beyond10x/agenticspec"
 publish = false
 
 [workspace.dependencies]
-agentspec-types = { path = "generated/crates/agentspec-types" }
+agenticspec-types = { path = "generated/crates/agenticspec-types" }
 session-ir = { path = "generated/crates/session-ir" }
 session-view = { path = "generated/crates/session-view" }
-agentspec-system = { path = "generated/crates/agentspec-system" }
-agentspec-server = { path = "generated/crates/agentspec-server" }
-agentspec-cli-contract = { path = "crates/agentspec-cli-contract" }
-agentspec-records = { path = "crates/agentspec-records" }
+agenticspec-system = { path = "generated/crates/agenticspec-system" }
+agenticspec-server = { path = "generated/crates/agenticspec-server" }
+agenticspec-cli-contract = { path = "crates/agenticspec-cli-contract" }
+agenticspec-records = { path = "crates/agenticspec-records" }
 serde_json = "1"
 sha2 = "0.10"
 regex = "1"
