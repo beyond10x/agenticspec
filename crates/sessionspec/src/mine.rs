@@ -1,4 +1,4 @@
-//! Pattern mining over the session IR (`docs/query-design.md` § 6) and the lift of one pattern
+//! Pattern mining over the session IR (`design/query-design.md` § 6) and the lift of one pattern
 //! into a procedure (§ 6.3).
 //!
 //! Each agent turn becomes a sequence of tokens, one per tool call, never holding content. A run

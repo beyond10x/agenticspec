@@ -1,5 +1,5 @@
 // Checks over the session IR. Run: sessionspec query queries/session.sq
-// Relations: docs/query-design.md § 4.1; durations are milliseconds (5m = 300000).
+// Relations and syntax: docs/queries.md. Durations are milliseconds (5m = 300000).
 
 // 1. The first model turn after an idle gap longer than the cache TTL writes the context again.
 idle_bust(A, Gap, Written) :-

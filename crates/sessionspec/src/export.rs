@@ -1,5 +1,5 @@
 //! Export of a `sessionspec-procedure/1` as a canon `protocol/1` file and loom bindings
-//! (`docs/query-design.md` § 7).
+//! (`design/query-design.md` § 7).
 //!
 //! The protocol holds one action per step, one evidence kind and one claim per step, the order of
 //! the steps as preconditions over claims, and the outcomes `done` and `not_done`. The bindings

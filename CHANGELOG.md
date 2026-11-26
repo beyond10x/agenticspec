@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The documentation site holds user documentation: getting started, dashboard, KPIs, queries, patterns and procedures, privacy and the records library; the design notes moved to `design/` and are no longer published
+
 ## [0.1.0] - 2026-11-26
 
 ### Added

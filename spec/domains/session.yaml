@@ -52,7 +52,7 @@ types:
     naming:
       summary: >-
         Where a record was observed: a harness transcript on disk, or a model call on a gateway's
-        wire (`docs/interaction-records.md`).
+        wire (`design/interaction-records.md`).
 
   - name: sessionspec.session.IncompleteReason
     kind: enum
@@ -599,7 +599,7 @@ commands:
         summary: Milliseconds from the request to the first answer byte.
       - name: declared_cost_microdollars
         type: Optional<Integer>
-        summary: Token counts times the price the gateway's owner declares for the route; absent on a route without one. Not a provider's bill.
+        summary: Token counts times the price the gateway's operator declares for the route; absent on a route without one. Not a provider's bill.
       - name: incomplete
         type: Optional<sessionspec.session.IncompleteReason>
       - name: at
