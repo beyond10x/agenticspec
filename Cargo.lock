@@ -3,6 +3,80 @@
 version = 4
 
 [[package]]
+name = "agentspec"
+version = "0.2.0"
+dependencies = [
+ "agentspec-cli-contract",
+ "agentspec-records",
+ "agentspec-server",
+ "agentspec-system",
+ "agentspec-types",
+ "rayon",
+ "regex",
+ "rusqlite",
+ "serde_json",
+ "session-ir",
+ "session-view",
+ "sha2",
+ "zstd",
+]
+
+[[package]]
+name = "agentspec-cli-contract"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "clap_complete",
+ "rpassword",
+ "rustix",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "agentspec-records"
+version = "0.2.0"
+dependencies = [
+ "agentspec-server",
+ "agentspec-system",
+ "agentspec-types",
+ "rayon",
+ "regex",
+ "rusqlite",
+ "serde_json",
+ "session-ir",
+ "session-view",
+ "sha2",
+ "zstd",
+]
+
+[[package]]
+name = "agentspec-server"
+version = "1.0.0"
+dependencies = [
+ "agentspec-system",
+ "agentspec-types",
+ "clap",
+ "session-ir",
+ "session-view",
+ "time",
+ "uuid",
+]
+
+[[package]]
+name = "agentspec-system"
+version = "1.0.0"
+dependencies = [
+ "agentspec-types",
+ "session-ir",
+ "session-view",
+]
+
+[[package]]
+name = "agentspec-types"
+version = "1.0.0"
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -609,80 +683,6 @@ version = "1.0.0"
 dependencies = [
  "agentspec-types",
 ]
-
-[[package]]
-name = "agentspec"
-version = "0.1.1"
-dependencies = [
- "rayon",
- "regex",
- "rusqlite",
- "serde_json",
- "session-ir",
- "session-view",
- "agentspec-cli-contract",
- "agentspec-records",
- "agentspec-server",
- "agentspec-system",
- "agentspec-types",
- "sha2",
- "zstd",
-]
-
-[[package]]
-name = "agentspec-cli-contract"
-version = "0.0.0"
-dependencies = [
- "clap",
- "clap_complete",
- "rpassword",
- "rustix",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "agentspec-records"
-version = "0.1.1"
-dependencies = [
- "rayon",
- "regex",
- "rusqlite",
- "serde_json",
- "session-ir",
- "session-view",
- "agentspec-server",
- "agentspec-system",
- "agentspec-types",
- "sha2",
- "zstd",
-]
-
-[[package]]
-name = "agentspec-server"
-version = "1.0.0"
-dependencies = [
- "clap",
- "session-ir",
- "session-view",
- "agentspec-system",
- "agentspec-types",
- "time",
- "uuid",
-]
-
-[[package]]
-name = "agentspec-system"
-version = "1.0.0"
-dependencies = [
- "session-ir",
- "session-view",
- "agentspec-types",
-]
-
-[[package]]
-name = "agentspec-types"
-version = "1.0.0"
 
 [[package]]
 name = "sha2"
