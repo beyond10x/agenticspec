@@ -1,0 +1,48 @@
+{
+  "about": "Adapter of the ui-iteration-loop for the sessionspec dashboard (ui/app, built into target/ui/www). The fast loop is ui/app/e2e, run by task check:app; the rounds are ux/rounds/R-nn.",
+  "app": "ui/app",
+  "scenarios": [
+    "find-session-by-search",
+    "slice-kpi-averages",
+    "failing-check",
+    "agent-lane",
+    "embed-session"
+  ],
+  "anchor_scenarios": ["find-session-by-search", "failing-check"],
+  "gating_viewports": [
+    { "width": 1440, "height": 900 },
+    { "width": 1280, "height": 720 }
+  ],
+  "measured_viewports": [
+    { "width": 1920, "height": 1080 },
+    { "width": 1024, "height": 768 },
+    { "width": 390, "height": 844 }
+  ],
+  "themes": ["light", "dark"],
+  "always_visible": [
+    { "id": "top-nav", "role": "banner", "pages": ["overview", "session"] },
+    { "id": "search", "role": "searchbox", "name": "Search sessions", "pages": ["overview"] },
+    { "id": "time-slice", "role": "group", "name": "Time slice", "pages": ["overview"] }
+  ],
+  "regions": ["tiles", "sessions", "timeline", "agents", "checks", "events"],
+  "moments": ["start", "each action", "completion"],
+  "completion": "the scenario's target row or panel is 100 % inside the viewport and shows the scenario's truth",
+  "guidance_cue": null,
+  "protected_focus": null,
+  "screen_only_policy": "deterministic code, no model: ui/app/e2e/bot.ts",
+  "metric_viewport_theme": "light",
+  "axe_tags": ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
+  "baseline": "ux/baseline.json",
+  "rounds": "ux/rounds",
+  "findings": "ux/findings",
+  "levels": {
+    "run": ["L1", "L2", "L3", "L7"],
+    "dropped": {
+      "L0": "no guidance cue, so no engine scenario and no gate 6",
+      "L4": "paid replay; not run",
+      "L5": "paid probe; not run",
+      "L6": "people; not run",
+      "L8": "people; not run"
+    }
+  }
+}

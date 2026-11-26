@@ -186,6 +186,17 @@ jobs:
           tar -xzf "$name.tar.gz"
           echo "$RUNNER_TEMP/$name" >> "$GITHUB_PATH"
           "./$name/ess" --version | grep -Fx "ess $ESS_VERSION"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        if: steps.class.outputs.task == 'check'
+        with:
+          node-version: "22"
+      - name: Install the browser and its system libraries for the app gate
+        if: steps.class.outputs.task == 'check'
+        working-directory: ui/app
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund --loglevel=error
+          npx playwright install --with-deps --only-shell chromium
       - name: Run the repository gate
         if: steps.class.outputs.task != 'none'
         env:

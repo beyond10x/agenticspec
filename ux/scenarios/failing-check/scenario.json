@@ -1,0 +1,11 @@
+{
+  "name": "failing-check",
+  "card": {
+    "persona": "An engineer who wants to know what went wrong in a session.",
+    "task": "Open the session that ported the store and find the check it failed."
+  },
+  "start": "/",
+  "input": { "session": "Port the store" },
+  "truth": { "check": "Cache bust after idle", "status": "Found" },
+  "expectations": ["the failing check is listed before the passed ones", "its status is said in words"]
+}

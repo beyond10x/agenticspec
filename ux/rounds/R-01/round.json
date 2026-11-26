@@ -1,0 +1,1499 @@
+{
+  "round": "R-01",
+  "date": "2026-11-26",
+  "commit": "61d5e67+dirty",
+  "gating": {
+    "runs": 20,
+    "pass": 0
+  },
+  "measured": {
+    "runs": 30,
+    "pass": 2
+  },
+  "problems": {
+    "text cut off without its full value: div.line.muted \"of input tokens read from cache\"": [
+      "1280x720 dark",
+      "1280x720 light",
+      "1440x900 dark",
+      "1440x900 light",
+      "1920x1080 dark (measured)",
+      "1920x1080 light (measured)",
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "axe critical aria-allowed-attr: n nodes, .chip[role=\"radio\"]:nth-child(1)": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)",
+      "1280x720 dark",
+      "1280x720 light",
+      "1440x900 dark",
+      "1440x900 light",
+      "1920x1080 dark (measured)",
+      "1920x1080 light (measured)",
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "axe serious nested-interactive: n nodes, svg[width=\"1176\"]": [
+      "1280x720 dark",
+      "1280x720 light",
+      "1440x900 dark",
+      "1440x900 light",
+      "1920x1080 dark (measured)",
+      "1920x1080 light (measured)"
+    ],
+    "axe serious color-contrast: n nodes, .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]": [
+      "1024x768 dark (measured)",
+      "1280x720 dark",
+      "1440x900 dark",
+      "1920x1080 dark (measured)",
+      "390x844 dark (measured)"
+    ],
+    "axe serious color-contrast: n nodes, .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]": [
+      "1024x768 light (measured)",
+      "1280x720 light",
+      "1440x900 light",
+      "1920x1080 light (measured)",
+      "390x844 light (measured)"
+    ],
+    "axe serious color-contrast: n nodes, .hero-note": [
+      "1024x768 light (measured)",
+      "1280x720 light",
+      "1440x900 light",
+      "1920x1080 light (measured)",
+      "390x844 light (measured)"
+    ],
+    "axe serious nested-interactive: n nodes, svg[width=\"920\"]": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)"
+    ],
+    "text cut off without its full value: td.what.bad \"Refuse · Classifier\"": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "text cut off without its full value: td.what \"by parent agent\"": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "axe serious nested-interactive: n nodes, svg[width=\"330\"]": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "axe critical aria-allowed-attr: n nodes, button:nth-child(1)": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)",
+      "1280x720 dark",
+      "1280x720 light",
+      "1440x900 dark",
+      "1440x900 light",
+      "1920x1080 dark (measured)",
+      "1920x1080 light (measured)",
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "axe serious nested-interactive: n nodes, svg[width=\"1848\"]": [
+      "1920x1080 dark (measured)",
+      "1920x1080 light (measured)"
+    ],
+    "axe serious nested-interactive: n nodes, svg[width=\"1368\"]": [
+      "1440x900 dark",
+      "1440x900 light"
+    ],
+    "axe serious nested-interactive: n nodes, svg[width=\"1208\"]": [
+      "1280x720 dark",
+      "1280x720 light"
+    ],
+    "axe serious nested-interactive: n nodes, svg[width=\"952\"]": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)"
+    ],
+    "axe serious color-contrast: n nodes, .tile.card[data-v-60cdb3a2=\"\"]:nth-child(1) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]": [
+      "1024x768 light (measured)"
+    ],
+    "text cut off without its full value: div.line.muted \"per session · 25.0% refused\"": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ]
+  },
+  "metrics": {
+    "agent-lane@1440x900": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 3,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 194,
+      "reading_load.median": 193,
+      "layout_shift.score": 0.0001
+    },
+    "agent-lane@1280x720": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 3,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 139,
+      "layout_shift.score": 0.0002
+    },
+    "embed-session@1440x900": {
+      "screen_only.actions": 0,
+      "screen_only.looks": 1,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 0,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 210,
+      "reading_load.median": 210,
+      "layout_shift.score": 0.1435
+    },
+    "embed-session@1280x720": {
+      "screen_only.actions": 0,
+      "screen_only.looks": 1,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 0,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 187,
+      "reading_load.median": 187,
+      "layout_shift.score": 0.1098
+    },
+    "failing-check@1440x900": {
+      "screen_only.actions": 1,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 193,
+      "reading_load.median": 166,
+      "layout_shift.score": 0.0001
+    },
+    "failing-check@1280x720": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 3,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 2,
+      "reading_load.max": 155,
+      "reading_load.median": 139,
+      "layout_shift.score": 0.0002
+    },
+    "find-session-by-search@1440x900": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 120.5,
+      "layout_shift.score": 0.0047
+    },
+    "find-session-by-search@1280x720": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 120.5,
+      "layout_shift.score": 0.0074
+    },
+    "slice-kpi-averages@1440x900": {
+      "screen_only.actions": 1,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 139,
+      "layout_shift.score": 0.0001
+    },
+    "slice-kpi-averages@1280x720": {
+      "screen_only.actions": 1,
+      "screen_only.looks": 2,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 1,
+      "reading_load.max": 139,
+      "reading_load.median": 139,
+      "layout_shift.score": 0.0002
+    }
+  },
+  "runs": [
+    {
+      "scenario": "agent-lane",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 41 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 33 node(s), .hero-note",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 33 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 41 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 33 node(s), .hero-note",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 33 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 41 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 33 node(s), .hero-note",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 33 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 41 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 33 node(s), .hero-note",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 33 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": false,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the row of Port the store: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the row of Port the store: text cut off without its full value: td.what \"by parent agent\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "scroll toward the lane of Sub-agent 1: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "scroll toward the lane of Sub-agent 1: text cut off without its full value: td.what \"by parent agent\"",
+        "scroll toward the lane of Sub-agent 1: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "scroll toward the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "after the lane of Sub-agent 1: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the lane of Sub-agent 1: text cut off without its full value: td.what \"by parent agent\"",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 1 node(s), .row.on > td:nth-child(1) > .small.muted[data-v-348defa5=\"\"]",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 2",
+        "scroll 46.046875",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "agent-lane",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": false,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 15 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the row of Port the store: text cut off without its full value: td.what \"by parent agent\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 25 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "scroll toward the lane of Sub-agent 1: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "scroll toward the lane of Sub-agent 1: text cut off without its full value: td.what \"by parent agent\"",
+        "scroll toward the lane of Sub-agent 1: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "scroll toward the lane of Sub-agent 1: axe serious color-contrast: 25 node(s), .hero-note",
+        "scroll toward the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "after the lane of Sub-agent 1: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the lane of Sub-agent 1: text cut off without its full value: td.what \"by parent agent\"",
+        "after the lane of Sub-agent 1: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the lane of Sub-agent 1: axe serious color-contrast: 24 node(s), .hero-note",
+        "after the lane of Sub-agent 1: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: axe critical aria-allowed-attr: 7 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 24 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the lane of Sub-agent 1: 2",
+        "scroll 46.046875",
+        "look the lane of Sub-agent 1: 1",
+        "act the lane of Sub-agent 1",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"1848\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1848\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious color-contrast: 41 node(s), .hero-note",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"1848\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious color-contrast: 41 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1848\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"1368\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1368\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious color-contrast: 41 node(s), .hero-note",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"1368\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious color-contrast: 41 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1368\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"1208\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1208\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious color-contrast: 41 node(s), .hero-note",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"1208\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious color-contrast: 41 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1208\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"952\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"952\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious color-contrast: 41 node(s), .hero-note",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"952\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious color-contrast: 41 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"952\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "embed-session",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "start: axe serious color-contrast: 25 node(s), .hero-note",
+        "start: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: axe critical aria-allowed-attr: 10 node(s), button:nth-child(1)",
+        "completion: axe serious color-contrast: 25 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]"
+      ],
+      "log": [
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 41 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 41 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 41 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 41 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "scroll toward the target: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "scroll toward the target: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 2",
+        "scroll 51.65625",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 41 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "scroll toward the target: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "scroll toward the target: axe serious color-contrast: 41 node(s), .hero-note",
+        "scroll toward the target: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 41 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"1176\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 2",
+        "scroll 51.65625",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]",
+        "scroll toward the target: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "scroll toward the target: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 3",
+        "scroll 139.890625",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 41 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]",
+        "scroll toward the target: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "scroll toward the target: axe serious color-contrast: 40 node(s), .tile.card[data-v-60cdb3a2=\"\"]:nth-child(1) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "scroll toward the target: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 40 node(s), .tile.card[data-v-60cdb3a2=\"\"]:nth-child(1) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"920\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 3",
+        "scroll 139.890625",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "after the row of Port the store: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the row of Port the store: text cut off without its full value: td.what \"by parent agent\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "scroll toward the target: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "scroll toward the target: text cut off without its full value: td.what \"by parent agent\"",
+        "scroll toward the target: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "scroll toward the target: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 3",
+        "scroll 449.859375",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "failing-check",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "start: axe serious color-contrast: 15 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the row of Port the store: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "after the row of Port the store: text cut off without its full value: td.what \"by parent agent\"",
+        "after the row of Port the store: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "after the row of Port the store: axe serious color-contrast: 25 node(s), .hero-note",
+        "after the row of Port the store: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "scroll toward the target: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "scroll toward the target: text cut off without its full value: td.what \"by parent agent\"",
+        "scroll toward the target: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "scroll toward the target: axe serious color-contrast: 25 node(s), .hero-note",
+        "scroll toward the target: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]",
+        "completion: text cut off without its full value: td.what.bad \"Refuse · Classifier\"",
+        "completion: text cut off without its full value: td.what \"by parent agent\"",
+        "completion: axe critical aria-allowed-attr: 10 node(s), .chip[role=\"radio\"]:nth-child(1)",
+        "completion: axe serious color-contrast: 25 node(s), .hero-note",
+        "completion: axe serious nested-interactive: 1 node(s), svg[width=\"330\"]"
+      ],
+      "log": [
+        "look the row of Port the store: 1",
+        "act the row of Port the store",
+        "look the target: 3",
+        "scroll 449.859375",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the search box: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\""
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the search box: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the search box: axe serious color-contrast: 16 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: axe serious color-contrast: 16 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the search box: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\""
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the search box: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the search box: axe serious color-contrast: 16 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: axe serious color-contrast: 16 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the search box: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\""
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the search box: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the search box: axe serious color-contrast: 16 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: axe serious color-contrast: 16 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the search box: axe serious color-contrast: 16 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: axe serious color-contrast: 16 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "after the search box: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the search box: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"per session · 25.0% refused\""
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-session-by-search",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "start: axe serious color-contrast: 15 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the search box: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the search box: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "after the search box: axe serious color-contrast: 11 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "completion: axe serious color-contrast: 11 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the search box: 1",
+        "act the search box",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1920x1080",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\""
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1920x1080",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the 24 h slice: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\""
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the 24 h slice: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1280x720",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\""
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1280x720",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the 24 h slice: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the 24 h slice: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: axe serious color-contrast: 20 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"per session · 25.0% refused\""
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "slice-kpi-averages",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "right": true,
+        "error": null
+      },
+      "problems": [
+        "start: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "start: axe serious color-contrast: 15 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "after the 24 h slice: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "after the 24 h slice: axe serious color-contrast: 15 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]",
+        "completion: text cut off without its full value: div.line.muted \"of input tokens read from cache\"",
+        "completion: text cut off without its full value: div.line.muted \"per session · 25.0% refused\"",
+        "completion: axe serious color-contrast: 15 node(s), .tile.card[data-v-b088fcbd=\"\"]:nth-child(2) > .meta[data-v-60cdb3a2=\"\"] > .line.muted[data-v-60cdb3a2=\"\"]"
+      ],
+      "log": [
+        "look the 24 h slice: 1",
+        "act the 24 h slice",
+        "look the target: 1"
+      ]
+    }
+  ]
+}

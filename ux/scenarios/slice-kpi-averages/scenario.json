@@ -1,0 +1,11 @@
+{
+  "name": "slice-kpi-averages",
+  "card": {
+    "persona": "A team lead who checks what the last day cost.",
+    "task": "Change the time slice to 24 h and read the number of sessions and the cost per session."
+  },
+  "start": "/",
+  "input": { "slice": "24 h" },
+  "truth": { "tiles": { "Sessions": "3", "Cost per session": "$0.32" } },
+  "expectations": ["the chosen slice is shown as pressed", "both tiles are in view after the change"]
+}

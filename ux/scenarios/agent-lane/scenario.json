@@ -1,0 +1,11 @@
+{
+  "name": "agent-lane",
+  "card": {
+    "persona": "An engineer who wants to see what one sub-agent did.",
+    "task": "Open the session that ported the store and read the lane of Sub-agent 1 alone."
+  },
+  "start": "/",
+  "input": { "session": "Port the store", "agent": "Sub-agent 1" },
+  "truth": { "agent": "Sub-agent 1", "cost": "$0.07" },
+  "expectations": ["the chosen lane is marked as chosen", "its cost is shown beside its name"]
+}
