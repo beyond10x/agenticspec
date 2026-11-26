@@ -64,7 +64,7 @@ change.
 | `sessionspec-records` | `append.rs` | the non-blocking writer a gateway appends through (`Appender::spawn`, a bounded queue, drops counted) |
 | `sessionspec-records` | `view.rs`, `sq/`, `pricing.rs`, `time.rs` | view projection, the sq engine, API list prices, time helpers |
 | `sessionspec` | `mine.rs`, `export.rs` | pattern mining, procedure export to canon |
-| `sessionspec` | `serve.rs` | `sessionspec serve`: the `session-view` views from the store, the built UI, SSE channels |
+| `sessionspec` | `serve.rs` | `sessionspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `sessionspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
 | `sessionspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `sessionspec analyze` writes |
 | `sessionspec` | `main.rs` | handler behind the generated CLI |
 

@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `sessionspec serve` reads every view from tables of the store with one query per request and keeps no rows in memory; on a store of 116 sessions its resident memory measured 84 to 164 MB, where it grew past 1.9 GB before
+- `sessionspec serve` runs each sync, the first included, as a `sessionspec sync` child process, one at a time, and never lifts a transcript itself, so the memory of a re-lift goes back to the system when the child ends
 - `sync` lifts transcripts in chunks bounded by size and returns freed memory after a sync
 - The store is version 5; opening a store of an older version fills its derived tables again and keeps its wire rows
 - `sessionspec analyze` without `--out` writes `sessionspec-dashboard.html` beside the store instead of the working directory

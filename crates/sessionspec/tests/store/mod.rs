@@ -211,6 +211,156 @@ fn rss_kib(pid: u32) -> (u64, u64) {
     (field("VmHWM:"), field("VmRSS:"))
 }
 
+/// `n` copies of the fixture session `s1` with its sub-agents under `<dir>/root/project`; returns
+/// the project directory.
+fn copies(dir: &std::path::Path, n: usize) -> PathBuf {
+    let src = root().join("project");
+    let project = dir.join("root/project");
+    std::fs::create_dir_all(&project).unwrap();
+    for k in 0..n {
+        std::fs::copy(src.join("s1.jsonl"), project.join(format!("s{k}.jsonl"))).unwrap();
+        let subs = project.join(format!("s{k}/subagents"));
+        std::fs::create_dir_all(&subs).unwrap();
+        for f in std::fs::read_dir(src.join("s1/subagents")).unwrap() {
+            let f = f.unwrap().path();
+            std::fs::copy(&f, subs.join(f.file_name().unwrap())).unwrap();
+        }
+    }
+    project
+}
+
+/// Marks every transcript of `project` as changed, so the next sync lifts each again.
+fn touch_all(project: &std::path::Path, n: usize, round: u64) {
+    let at = std::time::SystemTime::now() + Duration::from_secs(round + 1);
+    for k in 0..n {
+        let f = std::fs::File::options()
+            .write(true)
+            .open(project.join(format!("s{k}.jsonl")))
+            .unwrap();
+        f.set_modified(at).unwrap();
+    }
+}
+
+/// How many processes whose parent is `pid` run with `arg` on their command line, from `/proc`.
+#[cfg(target_os = "linux")]
+fn children_running(pid: u32, arg: &str) -> usize {
+    let Ok(dir) = std::fs::read_dir("/proc") else {
+        return 0;
+    };
+    dir.filter_map(Result::ok)
+        .filter(|e| {
+            e.file_name()
+                .to_str()
+                .is_some_and(|n| n.parse::<u32>().is_ok())
+        })
+        .filter(|e| {
+            let stat = std::fs::read_to_string(e.path().join("stat")).unwrap_or_default();
+            // Field 4, after the command name in parentheses, is the parent's pid.
+            let ppid = stat
+                .rsplit_once(')')
+                .and_then(|(_, rest)| rest.split_whitespace().nth(1))
+                .and_then(|p| p.parse::<u32>().ok());
+            ppid == Some(pid)
+        })
+        .filter(|e| {
+            let cmd = std::fs::read(e.path().join("cmdline")).unwrap_or_default();
+            cmd.split(|b| *b == 0).any(|a| a == arg.as_bytes())
+        })
+        .count()
+}
+
+/// The server's sync child: `sync` of the server's state directory, root and window, two lifts
+/// at a time, its output closed.
+#[test]
+fn the_server_syncs_through_a_child_process() {
+    let syncer = serve::Syncer {
+        exe: PathBuf::from("/bin/sessionspec"),
+        state_dir: PathBuf::from("/state"),
+        root: PathBuf::from("/root/projects"),
+        since_hours: 24,
+    };
+    let c = syncer.command();
+    assert_eq!(c.get_program(), "/bin/sessionspec");
+    let args: Vec<_> = c.get_args().map(|a| a.to_str().unwrap()).collect();
+    assert_eq!(
+        args,
+        [
+            "sync",
+            "--state-dir",
+            "/state",
+            "--root",
+            "/root/projects",
+            "--since-hours",
+            "24"
+        ]
+    );
+    let threads = c
+        .get_envs()
+        .find(|(k, _)| *k == "RAYON_NUM_THREADS")
+        .and_then(|(_, v)| v);
+    assert_eq!(threads, Some(std::ffi::OsStr::new("2")));
+}
+
+/// `sessionspec serve` never lifts a transcript itself: over 8 syncs that each re-lift 48 changed
+/// sessions, a `sessionspec sync` child of the server is seen running, and the server's peak
+/// resident memory grows by less than 4 MiB after its first sync. Before the sync ran in a
+/// child, the server kept each re-lift's peak (847 MiB after 3.5 min on a 117-session store).
+#[cfg(target_os = "linux")]
+#[test]
+fn the_server_keeps_no_lift_in_its_own_memory() {
+    const GROWTH_KIB: u64 = 4 * 1024;
+    const N: usize = 48;
+    let dir = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("store/child-sync");
+    let _ = std::fs::remove_dir_all(&dir);
+    let project = copies(&dir, N);
+    let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_sessionspec"))
+        .args(["serve", "--port", "0", "--state-dir"])
+        .arg(dir.join("state"))
+        .arg("--root")
+        .arg(dir.join("root"))
+        .env("SESSIONSPEC_SYNC_MS", "100")
+        .env("SESSIONSPEC_UI_DIR", dir.join("no-ui"))
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .unwrap();
+    // The first sync ran in a child before the server opened the store.
+    let db = dir.join("state/sessions.db");
+    let mut held = 0;
+    for _ in 0..100 {
+        std::thread::sleep(Duration::from_millis(50));
+        if db.exists() {
+            held = Store::open(&db).unwrap().sessions().unwrap().len();
+            if held == N {
+                break;
+            }
+        }
+    }
+    std::thread::sleep(Duration::from_millis(300));
+    let (start, _) = rss_kib(child.id());
+    let mut sync_children = 0;
+    for round in 0..8 {
+        touch_all(&project, N, round);
+        for _ in 0..30 {
+            std::thread::sleep(Duration::from_millis(10));
+            sync_children += children_running(child.id(), "sync");
+        }
+    }
+    let (end, now) = rss_kib(child.id());
+    let _ = child.kill();
+    let _ = child.wait();
+    assert_eq!(held, N, "the first sync child did not fill the store");
+    assert!(start > 0, "no /proc status read");
+    assert!(
+        sync_children > 0,
+        "no `sessionspec sync` child of the server seen in 8 syncs"
+    );
+    assert!(
+        end - start < GROWTH_KIB,
+        "serve's peak grew from {start} to {end} KiB (now {now} KiB) over 8 re-lifts"
+    );
+}
+
 /// `sessionspec serve` re-lifts every changed transcript on each sync. Over 48 fixture sessions,
 /// each changed 6 times, its peak resident memory stays under 96 MiB. Measured 2026-11-26: about
 /// 20 MiB; before the sync lifted in chunks and returned freed pages, a copy of a 116-session
@@ -221,18 +371,7 @@ fn serve_holds_its_memory_while_it_re_lifts() {
     const BOUND_KIB: u64 = 96 * 1024;
     let dir = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("store/rss");
     let _ = std::fs::remove_dir_all(&dir);
-    let src = root().join("project");
-    let project = dir.join("root/project");
-    std::fs::create_dir_all(&project).unwrap();
-    for k in 0..48 {
-        std::fs::copy(src.join("s1.jsonl"), project.join(format!("s{k}.jsonl"))).unwrap();
-        let subs = project.join(format!("s{k}/subagents"));
-        std::fs::create_dir_all(&subs).unwrap();
-        for f in std::fs::read_dir(src.join("s1/subagents")).unwrap() {
-            let f = f.unwrap().path();
-            std::fs::copy(&f, subs.join(f.file_name().unwrap())).unwrap();
-        }
-    }
+    let project = copies(&dir, 48);
     let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_sessionspec"))
         .args(["serve", "--port", "0", "--state-dir"])
         .arg(dir.join("state"))
@@ -247,14 +386,7 @@ fn serve_holds_its_memory_while_it_re_lifts() {
     let mut peak = 0;
     for round in 0..6 {
         std::thread::sleep(Duration::from_millis(250));
-        let at = std::time::SystemTime::now() + Duration::from_secs(round + 1);
-        for k in 0..48 {
-            let f = std::fs::File::options()
-                .write(true)
-                .open(project.join(format!("s{k}.jsonl")))
-                .unwrap();
-            f.set_modified(at).unwrap();
-        }
+        touch_all(&project, 48, round);
         peak = peak.max(rss_kib(child.id()).0);
     }
     std::thread::sleep(Duration::from_millis(300));
@@ -298,7 +430,13 @@ fn the_server_answers_views_and_streams_events() {
     let listener = serve::bind(0).unwrap();
     let port = listener.local_addr().unwrap().port();
     let runner = Arc::clone(&shared);
-    std::thread::spawn(move || serve::run(listener, runner, root(), 1));
+    let syncer = serve::Syncer {
+        exe: PathBuf::from(env!("CARGO_BIN_EXE_sessionspec")),
+        state_dir: st.path().parent().unwrap().to_path_buf(),
+        root: root(),
+        since_hours: 1,
+    };
+    std::thread::spawn(move || serve::run(listener, runner, syncer));
 
     let (head, body) = get(port, "/view/views/session-list?search=bash");
     assert!(head.starts_with("HTTP/1.1 200"), "{head}");
