@@ -19,9 +19,12 @@ case_() {
 case_ planning .engineering/planning/a.md
 case_ planning README.md
 case_ planning AGENTS.md CHANGELOG.md
-case_ docs-site docs/design.md
-case_ docs-site research/2026-11-26-baseline.md
-case_ docs-site ui/README.md
+case_ docs-site docs/getting-started.md
+case_ planning design/design.md
+case_ planning design/query-design.md research/2026-11-26-kpi-72h.json
+case_ planning research/2026-11-26-baseline.md
+case_ code ui/README.md
+case_ docs-site docs/queries.md design/design.md
 case_ docs-site website/product.json README.md
 case_ code crates/sessionspec/src/main.rs
 case_ code crates/sessionspec/README.md
@@ -31,7 +34,7 @@ case_ code ui/sessionspec.ui.yaml
 case_ code queries/session.sq
 case_ code Cargo.toml
 case_ code .github/workflows/pages.yml
-case_ code docs/design.md crates/sessionspec-records/src/wire.rs
+case_ code docs/queries.md crates/sessionspec-records/src/wire.rs
 case_ code ''
 
 # An empty list (a push whose base cannot be read) is code.

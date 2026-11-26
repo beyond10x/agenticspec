@@ -3,88 +3,88 @@
   "product": {
     "name": "sessionspec",
     "mark": "S",
-    "eyebrow": "Agent sessions · no release yet",
+    "eyebrow": "Coding-agent sessions · local",
     "promise": [
-      "Agent sessions as typed records",
-      "you can measure and query."
+      "See how your agent sessions",
+      "actually went."
     ],
-    "lede": "sessionspec lifts the transcripts of an agent harness into one specified IR of actors, commands, decisions and events, redacts it, stores it in a local SQLite file, and evaluates KPIs, sq queries and mined patterns on that store. It reads Claude Code transcripts today; an LLM gateway appends the same records from the wire. There is no release yet: build it from source.",
-    "description": "Lift agent sessions into one specified IR, store them in SQLite, and evaluate KPIs, queries and mined patterns over them. Reads Claude Code transcripts; no release yet.",
+    "lede": "sessionspec reads the transcripts of your Claude Code sessions and turns them into numbers you can compare: cost, cache use, time spent waiting on you, refused tool calls, secrets that reached the agent. It runs on your machine and sends nothing anywhere.",
+    "description": "Numbers about your coding-agent sessions, computed on your machine: cost, cache use, waiting time, refused calls, secrets. With a dashboard, a query language and pattern mining.",
     "actions": [
       {
-        "label": "Design",
-        "href": "/docs/",
+        "label": "Get started",
+        "href": "/docs/getting-started",
         "kind": "primary"
       },
       {
-        "label": "Queries and mining",
-        "href": "/docs/query-design"
+        "label": "KPIs",
+        "href": "/docs/kpis"
       },
       {
-        "label": "Interaction records",
-        "href": "/docs/interaction-records"
+        "label": "Queries",
+        "href": "/docs/queries"
       },
       {
-        "label": "Baseline",
-        "href": "/docs/research/baseline"
+        "label": "Privacy",
+        "href": "/docs/privacy"
       }
     ],
-    "meta": "No release yet · Claude Code transcripts · Apache-2.0"
+    "meta": "Claude Code transcripts · runs locally · Apache-2.0"
   },
   "sections": [
     {
       "kind": "flow",
-      "eyebrow": "The pipeline",
+      "eyebrow": "How it works",
       "title": "From a transcript to a number.",
-      "lede": "KPIs read the events the generated component published, never a vendor transcript.",
+      "lede": "Everything below runs on your machine. The store holds no prompt text and no tool output.",
       "steps": [
         {
-          "label": "lift",
-          "title": "Transcript to commands",
-          "description": "An adapter turns each record into IR commands with an actor and an attribution: Known, Inferred or NotRecorded."
+          "label": "read",
+          "title": "Read the transcripts",
+          "description": "Each record becomes a typed step: a prompt, a tool call, a permission decision, a model turn, with who acted."
         },
         {
           "label": "redact",
-          "title": "Classes and counts",
-          "description": "Secrets and personal data become aliases; a finding names its class and count, never the value."
+          "title": "Replace secrets",
+          "description": "Secrets and personal data become aliases such as gitlab_token#1. Only the kind and the count are kept."
         },
         {
           "label": "store",
           "title": "One SQLite file",
-          "description": "sessionspec sync lifts new and changed sessions into a local store, incrementally."
+          "description": "sessionspec sync adds new and changed sessions to a local store. Later runs take seconds."
         },
         {
-          "label": "evaluate",
+          "label": "measure",
           "title": "KPIs, queries, patterns",
-          "description": "KPIs, sq checks and mined patterns run over the store, not over the transcript files."
+          "description": "The dashboard, the KPI report, queries and pattern mining all read the store."
         }
       ]
     },
     {
       "kind": "features",
-      "eyebrow": "Built",
-      "title": "What the repository holds.",
-      "lede": "Each item links to the page that describes it.",
+      "eyebrow": "What you get",
+      "title": "Four ways to look at your sessions.",
+      "lede": "Each item links to its page.",
       "items": [
         {
-          "title": "Session IR",
-          "description": "An ESS specification of actors, commands, decisions, events and views, with generated types and components.",
-          "href": "/docs/"
-        },
-        {
-          "title": "sq",
-          "description": "A typed Datalog over the IR with sequence, aggregates and certainty, and checks in queries/session.sq.",
-          "href": "/docs/query-design"
-        },
-        {
           "title": "Dashboard",
-          "description": "sessionspec serve: a local UI on 127.0.0.1 with global KPIs, a time window, the recent sessions and search.",
-          "href": "/docs/ui"
+          "description": "sessionspec serve: averages over a time window, the recent sessions with search, and each session in detail, updated live.",
+          "href": "/docs/dashboard"
         },
         {
-          "title": "Records library",
-          "description": "sessionspec-records: the store, the wire lift of a gateway call and a non-blocking appender.",
-          "href": "/docs/interaction-records"
+          "title": "KPIs",
+          "description": "Cost at API list price, cache hits and busts, concurrency, time working and time waiting on you, permission decisions.",
+          "href": "/docs/kpis"
+        },
+        {
+          "title": "Queries",
+          "description": "Find sessions where something happened: a refused call asked for again, a long wait, a sub-agent result nobody read.",
+          "href": "/docs/queries"
+        },
+        {
+          "title": "Patterns",
+          "description": "Find runs of tool calls that repeat across sessions and export them as draft procedures.",
+          "href": "/docs/patterns"
         }
       ]
     }

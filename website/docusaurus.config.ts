@@ -4,18 +4,16 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {withProductSite} from '@beyond10x/docs-system/product-site';
 
-// The documentation pages are the repository's own Markdown, read in place from the repository
-// root: docs/, research/ and ui/README.md. Nothing is copied into website/. The table below gives
-// each file its route, its title and the header the docs-system theme draws over it (lede, status,
-// source link); the files themselves stay as they are on GitHub. The landing page is
-// src/pages/index.tsx, which draws product.json with the docs-system product template.
+// The documentation pages are the user documentation in docs/, read in place from the repository
+// root. Nothing is copied into website/. The internal notes in design/ and research/ are not
+// published. The table below gives each file its route, its title and the header the docs-system
+// theme draws over it (lede, status, source link); the files themselves stay as they are on
+// GitHub. The landing page is src/pages/index.tsx, which draws product.json with the docs-system
+// product template.
 
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(siteDir, '..');
 const sourceBase = 'https://github.com/beyond10x/sessionspec/blob/main/';
-
-const releaseState =
-  'No release yet: build the sessionspec binary from source. It reads Claude Code transcripts; other harnesses and the gateway wire are adapters in progress.';
 
 interface Page {
   slug: string;
@@ -26,31 +24,46 @@ interface Page {
 }
 
 const pages: Record<string, Page> = {
-  'docs/design.md': {
+  'docs/index.md': {
     slug: '/',
-    title: 'Design',
-    lede: `The session IR, its actors and attribution, redaction and the KPIs. ${releaseState}`,
+    title: 'What sessionspec is',
+    sidebar_label: 'Overview',
+    lede: 'Numbers about your coding-agent sessions, computed on your machine from their transcripts.',
   },
-  'docs/query-design.md': {
-    slug: '/query-design',
-    title: 'sq: queries and mining',
-    lede: 'The sq query language over the session IR, pattern mining and the export of a mined procedure.',
+  'docs/getting-started.md': {
+    slug: '/getting-started',
+    title: 'Getting started',
+    lede: 'Install sessionspec, fill the store and open the dashboard.',
   },
-  'docs/interaction-records.md': {
-    slug: '/interaction-records',
-    title: 'Interaction records',
-    lede: 'One record format for agent interaction, appended from transcripts and from an LLM gateway, stored in SQLite first.',
-    status: 'planned',
+  'docs/dashboard.md': {
+    slug: '/dashboard',
+    title: 'Dashboard',
+    lede: 'The live web UI, its data endpoints and the dashboard file.',
   },
-  'ui/README.md': {
-    slug: '/ui',
-    title: 'User interface',
-    lede: 'The UI as an ess-ui/1 document over the views of sessionspec.view, its fixtures and its tests.',
+  'docs/kpis.md': {
+    slug: '/kpis',
+    title: 'KPIs',
+    lede: 'Each figure of the KPI report and how to read it.',
   },
-  'research/2026-11-26-baseline.md': {
-    slug: '/research/baseline',
-    title: 'Baseline: 72 hours of sessions',
-    lede: 'Aggregate numbers over 72 hours of Claude Code sessions on one workstation, measured before the first KPI implementation.',
+  'docs/queries.md': {
+    slug: '/queries',
+    title: 'Queries',
+    lede: 'Find the places in your sessions where something happened, with the sq query language.',
+  },
+  'docs/patterns.md': {
+    slug: '/patterns',
+    title: 'Patterns and procedures',
+    lede: 'Find repeated runs of tool calls and export them as draft procedures.',
+  },
+  'docs/privacy.md': {
+    slug: '/privacy',
+    title: 'Privacy',
+    lede: 'What the store holds, what it does not, and how secrets are handled.',
+  },
+  'docs/library.md': {
+    slug: '/library',
+    title: 'Records library',
+    lede: 'Write session records from your own program, such as an LLM gateway.',
   },
 };
 
@@ -95,7 +108,7 @@ const config: Config = {
       {
         docs: {
           path: '..',
-          include: ['docs/*.md', 'research/*.md', 'ui/README.md'],
+          include: ['docs/*.md'],
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
           editUrl: 'https://github.com/beyond10x/sessionspec/tree/main/',
@@ -109,10 +122,10 @@ const config: Config = {
     navbar: {
       title: 'sessionspec',
       items: [
-        {to: '/docs/', label: 'Design', position: 'left', activeBaseRegex: '^/sessionspec/docs/?$'},
-        {to: '/docs/query-design', label: 'Queries', position: 'left'},
-        {to: '/docs/interaction-records', label: 'Records', position: 'left'},
-        {to: '/docs/research/baseline', label: 'Research', position: 'left'},
+        {to: '/docs/getting-started', label: 'Getting started', position: 'left'},
+        {to: '/docs/kpis', label: 'KPIs', position: 'left'},
+        {to: '/docs/queries', label: 'Queries', position: 'left'},
+        {to: '/docs/privacy', label: 'Privacy', position: 'left'},
         {href: 'https://github.com/beyond10x/sessionspec', label: 'GitHub', position: 'right'},
       ],
     },
@@ -121,11 +134,14 @@ const config: Config = {
         {
           title: 'Documentation',
           items: [
-            {label: 'Design', to: '/docs/'},
-            {label: 'sq: queries and mining', to: '/docs/query-design'},
-            {label: 'Interaction records', to: '/docs/interaction-records'},
-            {label: 'User interface', to: '/docs/ui'},
-            {label: 'Baseline', to: '/docs/research/baseline'},
+            {label: 'Overview', to: '/docs/'},
+            {label: 'Getting started', to: '/docs/getting-started'},
+            {label: 'Dashboard', to: '/docs/dashboard'},
+            {label: 'KPIs', to: '/docs/kpis'},
+            {label: 'Queries', to: '/docs/queries'},
+            {label: 'Patterns and procedures', to: '/docs/patterns'},
+            {label: 'Privacy', to: '/docs/privacy'},
+            {label: 'Records library', to: '/docs/library'},
           ],
         },
         {

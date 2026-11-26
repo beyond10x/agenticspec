@@ -19,8 +19,7 @@ Adapter facts the first run found:
 
 ## Why
 
-The owner, 2026-11-26: "we're basically building now KPIs describing the quality of our Claude sessions,
-or in general agentic work." A session of any harness (Claude Code, Codex, a metaharness run, a
+sessionspec measures the quality of agentic work with KPIs. A session of any harness (Claude Code, Codex, a metaharness run, a
 chat) is lifted into one formal representation, and the KPIs are evaluated on that representation,
 never on a vendor transcript.
 
@@ -29,17 +28,13 @@ vendor transcript ──adapter──▶ session IR ──redact──▶ redact
  (claude, codex, …)            (local only)           (persistable)        (numbers + verdicts)
 ```
 
-The name follows the workspace's `*spec` family: `codespec` holds an IR of code (`cir/1`) and
-`codesec` holds rules over it; here the IR of a session and the KPIs over it live in one
-repository (the owner: "It should all be in this one repo").
+The name follows the `*spec` family: `codespec` holds an IR of code (`cir/1`); here the IR of a
+session, the KPIs and the queries over it live in one repository.
 
 ## Model: actors issue commands, commands cause events, events change state
 
-The owner, 2026-11-26: "is it more about actors taking actions causing events, which would be more the
-ESS approach? … it would also track the command side of things … And maybe also state changes over
-time."
-
-An event stream alone loses two things the KPIs need:
+The IR follows the ESS model: actors issue commands, commands cause events, and events change
+state over time. An event stream alone loses two things the KPIs need:
 
 - **The decision on a command.** A tool call is requested, then accepted or refused, and by whom:
   the permission mode, a classifier, a hook, the human once. The baseline counts 352,166 accepts by
@@ -107,8 +102,8 @@ is `unk`, never counted as a leak.
 
 ## Exposure as a quality criterion
 
-The owner, 2026-11-26: "whether personal identifier information or secrets would actually be used that
-could also be a actual quality criteria". The redaction pass produces these facts for free:
+Whether secrets or personal data reach a session, and where they go from there, is a quality
+criterion of its own. The redaction pass produces these facts for free:
 
 - entered context: a secret or personal datum appeared in a tool result or prompt;
 - echoed: the agent wrote it in its own text;
@@ -128,8 +123,8 @@ could also be a actual quality criteria". The redaction pass produces these fact
 - **guardrails**: refusals per 1,000 tool calls by hook, classifier, safety check.
 - **exposure**: the section above.
 
-A KPI has a direction only relative to a declared profile. the owner: "full autonomy isn't necessarily
-a quality thing … It only is if you're looking for autonomous execution". A session declares or is
+A KPI has a direction only relative to a declared profile: full autonomy is a goal for autonomous
+execution, not for pairing or review. A session declares or is
 assigned a profile (autonomous, pairing, review); the profile says which KPIs are ratcheted and in
 which direction.
 
@@ -139,8 +134,7 @@ which direction.
 - `aep` `trace-ir/1` (`aep/crates/observe/trace-domain`): a flat, harness-neutral event IR used
   for transcript conformance of governed runs. An adapter from it is a later input format.
 - `metaharness` `metaharness.event/1`: the event stream of runs metaharness starts; its `audit`
-  refuses foreign transcripts. Not used (the owner, 2026-11-26: "Maybe let's not use the meta harness
-  thing").
+  refuses foreign transcripts. Not used.
 
 ## Build order (proposal)
 

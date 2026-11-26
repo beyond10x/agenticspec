@@ -1,4 +1,4 @@
-//! The wire source (`docs/interaction-records.md` § 2): one finished model call on a gateway,
+//! The wire source (`design/interaction-records.md` § 2): one finished model call on a gateway,
 //! lifted into the session IR's commands.
 //!
 //! A gateway hands each finished call to [`lift_call`] with the [`WireSession`] it keeps per
@@ -62,7 +62,7 @@ pub struct GatewayFacts {
     pub attempts: i64,
     pub queue_wait_ms: Option<i64>,
     pub ttft_ms: Option<i64>,
-    /// Token counts times the price the owner declares for the route; absent without one.
+    /// Token counts times the price the operator declares for the route; absent without one.
     pub declared_cost_microdollars: Option<i64>,
     /// Why the answer is not whole, when it is not.
     pub incomplete: Option<s::IncompleteReason>,

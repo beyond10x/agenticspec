@@ -112,14 +112,11 @@ entities:
         type: String
         summary: >-
           The working directory of the session's first record, relative to the home directory
-          (`~/src/ess`); the projects directory name when no record names one. The owner,
-          2026-11-26: the project shows the home-relative working directory.
+          (`~/src/ess`); the projects directory name when no record names one. The UI shows it as the project.
       - name: title
         type: Optional<String>
         summary: >-
-          The harness's title of the session, which it derives from prompt text. The owner,
-          2026-11-26: a host-local UI may show it; it is written only to the host's local store,
-          never to this repository.
+          The harness's title of the session, which it derives from prompt text. It is written only to the local store.
       - name: names
         type: String
         summary: >-

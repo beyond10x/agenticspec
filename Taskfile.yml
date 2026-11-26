@@ -26,7 +26,7 @@ tasks:
         echo "check:scripts: $n script test(s) passed"
 
   site:
-    desc: Build the documentation site (website/, pages read in place from docs/, research/ and ui/README.md) into website/build, as the job build of .github/workflows/pages.yml does.
+    desc: Build the documentation site (website/, pages read in place from docs/) into website/build, as the job build of .github/workflows/pages.yml does.
     dir: website
     cmds:
       - npm ci

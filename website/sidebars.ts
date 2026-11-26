@@ -3,18 +3,16 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 /** Document ids are the repository paths of the Markdown files, without `.md`. */
 const sidebars: SidebarsConfig = {
   docsSidebar: [
+    'docs/index',
+    'docs/getting-started',
     {
       type: 'category',
-      label: 'sessionspec',
+      label: 'Using sessionspec',
       collapsed: false,
-      items: ['docs/design', 'docs/query-design', 'docs/interaction-records', 'ui/README'],
+      items: ['docs/dashboard', 'docs/kpis', 'docs/queries', 'docs/patterns'],
     },
-    {
-      type: 'category',
-      label: 'Research',
-      collapsed: false,
-      items: ['research/2026-11-26-baseline'],
-    },
+    'docs/privacy',
+    'docs/library',
   ],
 };
 

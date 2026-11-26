@@ -1,4 +1,4 @@
-//! sessionspec-records: the interaction records of agent sessions (`docs/interaction-records.md`).
+//! sessionspec-records: the interaction records of agent sessions (`design/interaction-records.md`).
 //!
 //! Sources lift what they observed into the session IR's commands: `claude` reads Claude Code
 //! transcripts on disk, `wire` lifts one finished model call on a gateway. The commands replay

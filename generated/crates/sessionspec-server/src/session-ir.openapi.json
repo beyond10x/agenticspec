@@ -8,7 +8,7 @@
     "x-ess-provenance": {
       "system": "sessionspec",
       "specification_version": "v1",
-      "contract_digest": "slice-sha256/2:2437c66082c3e186b624169028be4e52b8cf336b5321a74df7c94a353f11540c"
+      "contract_digest": "slice-sha256/2:aac524549c9c67e0c0aae1f80269f7c31fd2988be747ce7a42200f6314373522"
     },
     "x-ess-reached-by": "network"
   },
@@ -2698,7 +2698,7 @@
             "type": "integer"
           },
           "declared_cost_microdollars": {
-            "description": "Token counts times the price the gateway's owner declares for the route; absent on a route without one. Not a provider's bill.",
+            "description": "Token counts times the price the gateway's operator declares for the route; absent on a route without one. Not a provider's bill.",
             "type": "integer"
           },
           "incomplete": {
@@ -3005,7 +3005,7 @@
       },
       "sessionspec.session.Source": {
         "title": "Source",
-        "description": "Where a record was observed: a harness transcript on disk, or a model call on a gateway's wire (`docs/interaction-records.md`).",
+        "description": "Where a record was observed: a harness transcript on disk, or a model call on a gateway's wire (`design/interaction-records.md`).",
         "x-ess-name": "sessionspec.session.Source",
         "x-ess-kind": "enum",
         "type": "string",

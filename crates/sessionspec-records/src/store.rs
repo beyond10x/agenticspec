@@ -2,7 +2,7 @@
 //! commands, and the rows of `sessionspec.view` that `sync` projects from what the generated
 //! component publishes. Readers replay the stored commands instead of parsing transcripts again;
 //! `serve` answers the views from the rows. The store lives outside the repository: it holds the
-//! harness's session titles, which the owner allowed for a host-local UI only (2026-11-26).
+//! harness's session titles, which a local UI may show and which never leave the machine.
 
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::Write as _;

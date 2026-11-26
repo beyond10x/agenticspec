@@ -138,8 +138,7 @@ pages (`/embed/session/<id>`) that show only the session view.
 - sessionspec's static build and `sessionspec serve` render it from the local store.
 - The shared part is the view model, not the renderer. The gateway's dashboard writes its own Vue
   components (session list, session view) over TypeScript types generated from `sessionspec.view`,
-  the split it keeps today (generated `snapshot.ts`, hand-written `.vue`). The owner: the gateway's
-  UI "should always be manual". The page stays one file embedded in the gateway, with no second
+  the split it keeps today (generated `snapshot.ts`, hand-written `.vue`). The page stays one file embedded in the gateway, with no second
   bundle.
 - Session-level KPIs show in their own section beside the per-call KPIs; the page shows what the
   stream carries and computes nothing.
@@ -192,8 +191,6 @@ pages (`/embed/session/<id>`) that show only the session view.
 4. Dashboard: render the session list and the session view from the records.
 
 ## Built (steps 1 and 2)
-
-Accepted by the owner on 2026-11-26 with every default (A1, B, C1, D, E1, F).
 
 - The crate `crates/sessionspec-records` holds the sources, the store, replay, the view
   projection, the KPIs and the sq engine; the `sessionspec` binary is the command line over it.

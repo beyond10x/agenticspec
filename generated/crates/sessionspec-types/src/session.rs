@@ -1,5 +1,5 @@
 // generated from sessionspec v1
-// contract digest 48f7fe6c6e083e2c80c599aa79f7267068cfeadcc7eaa3ddca0e8128040b6cfd
+// contract digest 5a5e91b41741f78d8f88d9bbbc3f8590bdcf3ccc51173eb11b074eef53627627
 // do not edit: regenerate with `ess synthesize`
 
 //! Session — `sessionspec.session`.
@@ -219,7 +219,7 @@ pub struct SessionId(pub String);
 
 /// Source — `sessionspec.session.Source`: one of a closed set of names.
 ///
-/// Where a record was observed: a harness transcript on disk, or a model call on a gateway's wire (`docs/interaction-records.md`).
+/// Where a record was observed: a harness transcript on disk, or a model call on a gateway's wire (`design/interaction-records.md`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Source {
     /// `Disk`.

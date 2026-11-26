@@ -8,7 +8,7 @@
     "x-ess-provenance": {
       "system": "sessionspec",
       "specification_version": "v1",
-      "contract_digest": "slice-sha256/2:6dc300399ea73a9585671d41f4489db8be48b099d5a7af803a86cdeb0e2b2c50"
+      "contract_digest": "slice-sha256/2:c7f259dad431f8e47b3b767965afd6bd6371afa291329980284dd03669bef505"
     },
     "x-ess-reached-by": "network"
   },
@@ -2454,11 +2454,11 @@
           "$ref": "#/x-ess-entities/sessionspec.session.SessionId"
         },
         "project": {
-          "description": "The working directory of the session's first record, relative to the home directory (`~/src/ess`); the projects directory name when no record names one. The owner, 2026-11-26: the project shows the home-relative working directory.",
+          "description": "The working directory of the session's first record, relative to the home directory (`~/src/ess`); the projects directory name when no record names one. The UI shows it as the project.",
           "type": "string"
         },
         "title": {
-          "description": "The harness's title of the session, which it derives from prompt text. The owner, 2026-11-26: a host-local UI may show it; it is written only to the host's local store, never to this repository.",
+          "description": "The harness's title of the session, which it derives from prompt text. It is written only to the local store.",
           "type": "string"
         },
         "names": {
