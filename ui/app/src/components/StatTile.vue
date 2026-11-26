@@ -84,9 +84,7 @@ const hasTrend = computed(() => (props.trend ?? []).filter((v) => v !== null).le
   min-height: 17px;
 }
 .line {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 .delta {
   font-weight: 600;

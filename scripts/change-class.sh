@@ -6,7 +6,8 @@
 #              nothing is built
 #   docs-site  the site's sources (website/, docs/) and planning files:
 #              the site is built, the code gate is not run
-#   code       anything else, or an empty list: the site is built and `task check` runs
+#   code       crates/, generated/, spec/, ui/, ux/, queries/, anything else, or an empty
+#              list: the site is built and `task check` runs
 #
 # Prints the class on one line.
 set -eu
@@ -17,7 +18,7 @@ while IFS= read -r f || [ -n "$f" ]; do
     '') ;;
     .engineering/* | design/* | research/*) planning=1 ;;
     website/* | docs/*) site=1 ;;
-    crates/* | generated/* | spec/* | ui/* | queries/*) code=1 ;;
+    crates/* | generated/* | spec/* | ui/* | ux/* | queries/*) code=1 ;;
     *.md) planning=1 ;;
     *) code=1 ;;
   esac

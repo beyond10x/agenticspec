@@ -207,15 +207,16 @@ export function useSession(
         query('session-agents', { session_id: sessionId }, opts),
         query('session-checks', { session_id: sessionId }, opts),
       ]);
-      session.value = s[0] ?? null;
-      agents.value = a;
-      checks.value = c;
-      if (!s[0]) {
-        error.value = 'No session with this id is in the store.';
-      } else {
+      // The page appears once, with its timeline: parts that arrive one by one push the parts
+      // below them down while the page is read.
+      if (s[0]) {
         width = slotSeconds((ms(s[0].last_at) - ms(s[0].first_at)) / 1000);
         slots.value = await query('session-timeline', { session_id: sessionId, slot_seconds: width }, opts);
       }
+      session.value = s[0] ?? null;
+      agents.value = a;
+      checks.value = c;
+      if (!s[0]) error.value = 'No session with this id is in the store.';
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
       error.value = (err as Error).message;

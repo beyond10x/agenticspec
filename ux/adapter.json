@@ -30,6 +30,11 @@
   "guidance_cue": null,
   "protected_focus": null,
   "screen_only_policy": "deterministic code, no model: ui/app/e2e/bot.ts",
+  "metric_notes": {
+    "screen_only.steers": "always 0: with no guidance cue there is no cue to steer back",
+    "layout_shift.score": "the sum of the page's layout shifts over the whole run, page load included; the scenarios run on a compressed clock, so a per-minute value would mean nothing",
+    "reading_load": "words of visible text in the viewport at each look"
+  },
   "metric_viewport_theme": "light",
   "axe_tags": ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
   "baseline": "ux/baseline.json",

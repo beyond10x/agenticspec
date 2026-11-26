@@ -16,7 +16,7 @@ export default defineConfig({
   outputDir: '../../target/ux/test-results',
   use: { browserName: 'chromium', headless: true },
   projects: [
-    { name: 'gates', testMatch: /(gates|keyboard)\.spec\.ts/ },
+    { name: 'gates', testMatch: /(gates|keyboard|findings)\.spec\.ts/ },
     { name: 'ratchet', testMatch: /ratchet\.spec\.ts/, dependencies: ['gates'] },
     { name: 'measure', testMatch: /measure\.spec\.ts/ },
     { name: 'report', testMatch: /report\.spec\.ts/, dependencies: ['measure'] },

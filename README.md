@@ -25,7 +25,7 @@ cargo install --locked --path crates/sessionspec
 ```console
 sessionspec sync                   # lift new and changed sessions of the last 72 hours into the store
 sessionspec serve                  # the dashboard on http://127.0.0.1:7420/, synced every 5 seconds
-sessionspec analyze                # write a self-contained dashboard file
+sessionspec analyze                # write a self-contained dashboard file beside the store
 sessionspec kpi --output json      # the KPIs over the window
 sessionspec query --text '<sq>'    # an sq module over the sessions of the window
 sessionspec mine                   # recurring runs of tool calls across sessions
@@ -34,7 +34,9 @@ sessionspec mine                   # recurring runs of tool calls across session
 The commands above read `~/.claude/projects` unless `--root` names another directory, and covers the
 last 72 hours unless `--since-hours` says otherwise. The store is
 `$XDG_DATA_HOME/sessionspec/sessions.db` (`~/.local/share/sessionspec/sessions.db`), or the
-`--state-dir` you give. `sessionspec serve` needs the UI built once with `task ui:build`.
+`--state-dir` you give. `sessionspec serve` needs the UI built once with `task ui:build` (Node.js 22).
+The UI has a light and a dark theme and pages for the overview, a session and embedding a session
+in another page: see the dashboard page of the documentation.
 
 `SESSIONSPEC_DELEGATES` names, comma-separated, the sessions that act for you; a message from one
 of them counts as a delegate's prompt, not a peer's.
@@ -47,9 +49,11 @@ which come from prompt text, so it stays local. Nothing is sent anywhere.
 
 ## Develop
 
-`task check` is the gate: the specification, the UI document and its tests, the generated crates,
-the script tests, format, lints and tests. `task site` builds the documentation site. `AGENTS.md`
-holds the rules for changes.
+`task check` is the gate: the specification, the UI document and its tests, the app in `ui/app`
+(types, unit tests, and layout, accessibility, keyboard and screen-only-user tests in a browser,
+with a ratchet on their metrics), the generated crates, the script tests, format, lints and tests.
+`task ux:round -- R-nn` measures a round of UI review into `ux/rounds/`. `task site` builds the
+documentation site. `AGENTS.md` holds the rules for changes.
 
 ## License
 

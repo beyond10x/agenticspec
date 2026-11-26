@@ -78,6 +78,8 @@ export const SCENARIOS: Record<string, Scenario> = {
     async truth(page, c) {
       const pressed = await page.getByRole('group', { name: 'Time slice' }).getByRole('button', { name: c.input.slice }).getAttribute('aria-pressed');
       if (pressed !== 'true') return false;
+      // The figures of 24 h equal those of the default 72 h on the fixtures; the heading tells them apart.
+      if (!((await page.locator('h1 + .sub').textContent()) ?? '').includes(c.truth.heading as string)) return false;
       for (const [label, value] of Object.entries(c.truth.tiles as Record<string, string>)) {
         if ((await tileValue(page, label).textContent())?.trim() !== value) return false;
       }
@@ -110,7 +112,7 @@ export const SCENARIOS: Record<string, Scenario> = {
 
   'embed-session': {
     act: async () => {},
-    target: (page, c) => page.getByRole('img', { name: c.truth.timeline as string }),
+    target: (page, c) => page.getByRole('group', { name: c.truth.timeline as string }),
     async truth(page, c) {
       const banner = await page.getByRole('banner').count();
       const body = (await page.locator('main').textContent()) ?? '';

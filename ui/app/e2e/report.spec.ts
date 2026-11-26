@@ -39,10 +39,19 @@ test('write the round report', async ({ page }) => {
   const rdir = `${UX}rounds/${ROUND}/`;
   mkdirSync(`${rdir}shots`, { recursive: true });
   const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: ROOT }).toString().trim();
-  const dirty = execFileSync('git', ['status', '--porcelain', '--', 'ui/app/src'], { cwd: ROOT }).toString().trim() ? ' with uncommitted changes in ui/app/src' : '';
+  const dirty = execFileSync('git', ['status', '--porcelain', '--', 'ui', 'ux', ':!ux/rounds'], { cwd: ROOT }).toString().trim()
+    ? ' with uncommitted changes in ui/ or ux/'
+    : '';
   const date = new Date().toISOString().slice(0, 10);
+  const want = adapter.scenarios.length * (adapter.gating_viewports.length + adapter.measured_viewports.length) * adapter.themes.length;
+  if (runs.length !== want) throw new Error(`${runs.length} measured runs, the adapter names ${want}`);
 
-  const ok = (r: Run) => r.completion.seen === 1 && r.completion.right && r.moments.every((m) => m.problems.length === 0);
+  // A run completes when its target is in view and right; it is clean when no moment had a
+  // layout or axe problem; it passes when both hold.
+  const completes = (r: Run) => r.completion.seen === 1 && r.completion.right;
+  const clean = (r: Run) => r.moments.every((m) => m.problems.length === 0);
+  const ok = (r: Run) => completes(r) && clean(r);
+  const distinct = (r: Run) => new Set(r.moments.flatMap((m) => m.problems)).size;
   const gating = runs.filter((r) => r.gating);
   const measured = runs.filter((r) => !r.gating);
 
@@ -65,7 +74,7 @@ test('write the round report', async ({ page }) => {
   };
   const completions = runs.filter((r) => vpName(r.viewport) === first).map((r) => ({ r, shot: copy(r.moments[r.moments.length - 1].shot) }));
   const worst = runs
-    .flatMap((r) => r.moments.map((m) => ({ r, m, weight: m.problems.length + (m.label === 'completion' && !ok(r) ? 10 : 0) })))
+    .flatMap((r) => r.moments.map((m) => ({ r, m, weight: m.problems.length + (m.label === 'completion' && !completes(r) ? 10 : 0) })))
     .filter((x) => x.weight > 0)
     .sort((a, b) => b.weight - a.weight || Number(b.r.gating) - Number(a.r.gating))
     .filter((x, i, all) => all.findIndex((y) => y.r.scenario === x.r.scenario && vpName(y.r.viewport) === vpName(x.r.viewport)) === i)
@@ -82,7 +91,7 @@ test('write the round report', async ({ page }) => {
       .join('');
     await page.setViewportSize({ width: 1800, height: 1000 });
     await page.setContent(
-      `<style>body{margin:16px;font:13px system-ui;background:#fff;color:#111}main{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}figure{margin:0}img{width:100%;height:200px;object-fit:contain;object-position:top;border:1px solid #ccc;background:#eee}figcaption{margin-top:4px}</style><h1>${ROUND} contact sheet, ${theme} theme: completion frames</h1><main>${cells}</main>`,
+      `<style>body{margin:16px;font:13px system-ui;background:#fff;color:#111}main{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}figure{margin:0}img{width:100%;height:360px;object-fit:contain;object-position:top;border:1px solid #ccc;background:#eee}figcaption{margin-top:4px}</style><h1>${ROUND} contact sheet, ${theme} theme: completion frames</h1><main>${cells}</main>`,
     );
     await page.screenshot({ path: `${rdir}shots/contact-${theme}.jpg`, type: 'jpeg', quality: 75, fullPage: true });
   }
@@ -99,21 +108,24 @@ test('write the round report', async ({ page }) => {
   lines.push(`# ${ROUND} report`, '');
   lines.push(`Date ${date}. App at commit ${commit}${dirty}. Fixtures: ui/fixtures (synthetic). Written by ux/round.sh.`, '');
   lines.push('## Levels', '');
-  lines.push('- Run: L1 unit (vitest), L2 layout contract and axe-core, L3 screen-only user, L7 two review agents.');
+  lines.push('- This report: L2 layout contract and axe-core at every moment, L3 screen-only user, on every scenario, viewport and theme.');
+  lines.push('- Outside it: L1 unit tests and the gates run in `task check:app`; L7, the two review agents, write review-heuristics.md and review-report.md after this report.');
   lines.push('- Not run: L0 (the UI has no guidance cue), L4 and L5 (paid levels), L6 and L8 (people).');
   lines.push('- So: no survey, no recordings of people, no probe misses. Each run\'s recording is its screenshots and the bot\'s log in round.json.', '');
   lines.push('## Gates at the gating viewports', '');
-  lines.push(`${gating.filter(ok).length} of ${gating.length} runs pass every gate (completion in view and right, no layout or axe problem at any moment).`, '');
-  lines.push('| scenario | viewport | theme | completion | right | problems |', '|---|---|---|---|---|---|');
-  for (const r of gating) {
-    lines.push(`| ${r.scenario} | ${vpName(r.viewport)} | ${r.theme} | glance ${r.completion.seen} | ${r.completion.right ? 'yes' : 'no'} | ${r.moments.reduce((a, m) => a + m.problems.length, 0)} |`);
-  }
-  lines.push('', '## Measured-only viewports', '');
-  lines.push(`${measured.filter(ok).length} of ${measured.length} runs pass every gate. Not gated.`, '');
-  lines.push('| scenario | viewport | theme | completion | right | problems |', '|---|---|---|---|---|---|');
-  for (const r of measured) {
-    lines.push(`| ${r.scenario} | ${vpName(r.viewport)} | ${r.theme} | glance ${r.completion.seen} | ${r.completion.right ? 'yes' : 'no'} | ${r.moments.reduce((a, m) => a + m.problems.length, 0)} |`);
-  }
+  lines.push(`- ${gating.filter(completes).length} of ${gating.length} runs complete: the target in view and right.`);
+  lines.push(`- ${gating.filter(clean).length} of ${gating.length} runs are clean: no layout or axe problem at any moment.`, '');
+  const table = (rs: Run[]) => {
+    lines.push('| scenario | viewport | theme | completion | right | distinct problems |', '|---|---|---|---|---|---|');
+    for (const r of rs) {
+      lines.push(`| ${r.scenario} | ${vpName(r.viewport)} | ${r.theme} | glance ${r.completion.seen} | ${r.completion.right ? 'yes' : 'no'} | ${distinct(r)} |`);
+    }
+  };
+  table(gating);
+  lines.push('', '## Measured-only viewports (not gated)', '');
+  lines.push(`- ${measured.filter(completes).length} of ${measured.length} runs complete.`);
+  lines.push(`- ${measured.filter(clean).length} of ${measured.length} runs are clean.`, '');
+  table(measured);
   lines.push('', '## Problems seen', '');
   if (!problems.size) lines.push('none');
   for (const [p, where] of [...problems.entries()].sort((a, b) => b[1].size - a[1].size)) lines.push(`- ${p} (${where.size}: ${[...where].sort().join(', ')})`);
@@ -130,12 +142,12 @@ test('write the round report', async ({ page }) => {
   }
   lines.push('', '## Worst moments', '');
   if (!worst.length) lines.push('none');
-  for (const w of worst) lines.push(`- ${w.r.scenario} ${vpName(w.r.viewport)} ${w.r.theme}, ${w.m.label}: ${w.m.problems.length} problem(s)${ok(w.r) ? '' : ', run fails a gate'}. ![](${w.shot})`);
+  for (const w of worst) lines.push(`- ${w.r.scenario} ${vpName(w.r.viewport)} ${w.r.theme}, ${w.m.label}: ${w.m.problems.length} problem(s)${completes(w.r) ? '' : ', the run does not complete'}${w.r.gating ? '' : ' (measured only)'}. ![](${w.shot})`);
   lines.push('', '## Completion frames', '');
   for (const c of completions) lines.push(`- ${c.r.scenario} ${first} ${c.r.theme}: ![](${c.shot})`);
   lines.push('', `Contact sheets: ![light](shots/contact-light.jpg) ![dark](shots/contact-dark.jpg)`, '');
   const fs = findings();
-  lines.push('## Findings', '');
+  lines.push('## Findings', '', 'As of this report; the review agents file theirs after it.', '');
   lines.push(fs.length ? fs.map((f) => `- ${f.id} ${f.severity} ${f.status}: ${f.title}`).join('\n') : 'none');
   lines.push('');
   writeFileSync(`${rdir}report.md`, lines.join('\n'));

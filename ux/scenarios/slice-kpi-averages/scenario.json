@@ -6,6 +6,6 @@
   },
   "start": "/",
   "input": { "slice": "24 h" },
-  "truth": { "tiles": { "Sessions": "3", "Cost per session": "$0.32" } },
+  "truth": { "heading": "in the last 24 h", "tiles": { "Sessions": "3", "Cost per session": "$0.32" } },
   "expectations": ["the chosen slice is shown as pressed", "both tiles are in view after the change"]
 }

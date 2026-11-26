@@ -5,7 +5,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { test } from '@playwright/test';
-import { Bot, shiftObserver, where } from './bot.ts';
+import { Bot, settle, shiftObserver, where } from './bot.ts';
 import { open } from './harness.ts';
 import { axe, contract } from './layout.ts';
 import { adapter, card, OUT, SCENARIOS } from './scenarios.ts';
@@ -53,6 +53,7 @@ for (const name of adapter.scenarios) {
         };
         await open(page, c.start, theme);
         const bot = new Bot(page, moment);
+        await settle(page);
         await moment('start');
         const s = SCENARIOS[name];
         let error: string | null = null;

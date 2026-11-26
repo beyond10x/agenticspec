@@ -226,7 +226,7 @@ function laneMeta(l: AgentLane): string {
       :width="width"
       :height="height"
       :viewBox="`0 0 ${width} ${height}`"
-      role="img"
+      role="group"
       :aria-label="`Timeline of ${lanes.length} agents`"
       @mousemove="onMove"
       @mouseleave="hover = null"

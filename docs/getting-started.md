@@ -37,7 +37,8 @@ sessionspec serve
 Open http://127.0.0.1:7420/. The server listens on 127.0.0.1 only and syncs every 5 seconds, so
 running sessions show up while they work. Use `--port` to pick another port.
 
-The live UI is a web app that is built from a checkout of the repository with `task ui:build`.
+The live UI is a web app that is built from a checkout of the repository with `task ui:build`,
+which needs Node.js 22 and npm.
 `serve` finds it in `target/ui/www` beside the binary, in the directory named by
 `SESSIONSPEC_UI_DIR`, or in `ui/` inside the state directory. Without it, `serve` still answers the
 data endpoints and says the UI is not built.

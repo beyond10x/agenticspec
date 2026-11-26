@@ -159,7 +159,6 @@ function amount(e: SessionEventsRow): string {
         class="chip"
         role="radio"
         :aria-checked="mode === o.id"
-        :aria-pressed="mode === o.id"
         @click="mode = o.id"
       >
         {{ o.label }} <span v-if="o.count !== null" class="count">{{ int(o.count) }}</span>
