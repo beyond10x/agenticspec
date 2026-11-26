@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-26
+
 ### Changed
 
 - The tool is named agenticspec: the repository `https://github.com/beyond10x/agenticspec` (the old URLs redirect there), the documentation `https://beyond10x.github.io/agenticspec/`, the command `agenticspec`, the crates `agenticspec-records` and `agenticspec-types` (Rust paths `agenticspec_records`, `agenticspec_types`), the specification system `agenticspec`, the release archives `agenticspec-<version>-<target>.tar.gz`. Types, functions and their signatures are unchanged; the store stays version 5
