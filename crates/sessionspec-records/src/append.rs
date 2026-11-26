@@ -109,6 +109,10 @@ fn writer(store: &Store, program: &crate::sq::Program, rx: &Receiver<Batch>, sta
 impl AppenderHandle {
     /// Queues one call's steps for the session named by `session_hash`. Returns false and counts
     /// a drop when the queue is full or the writer has ended; never blocks.
+    ///
+    /// An empty `steps` (a call that lifts to nothing, such as a token count) returns true and
+    /// queues nothing: no batch is sent and neither `queued` nor `dropped` moves. A caller that
+    /// wants to tell "queued" from "nothing to store" checks `steps.is_empty()` before the call.
     pub fn append(&self, session_hash: &str, harness: s::Harness, steps: Vec<Step>) -> bool {
         if steps.is_empty() {
             return true;
