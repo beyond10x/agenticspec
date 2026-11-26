@@ -20,8 +20,9 @@
 # 4. SHA256SUMS names each archive once, and `sha256sum -c SHA256SUMS` passes there;
 # 5. each archive holds one directory with `sessionspec`, `LICENSE` and `README.md`, nothing else
 #    and no path outside it, and each of the three is a regular file: no link, no directory;
-# 6. `sessionspec --version` of the x86_64 archive prints `sessionspec <version>`, that line and no
-#    other, and exits 0. No file of an archive is run before check 5 passed.
+# 6. `sessionspec --version` of each x86_64 archive (gnu and the static musl one) prints
+#    `sessionspec <version>`, that line and no other, and exits 0. No file of an archive is run
+#    before check 5 passed.
 #
 # Exit 0: every check passed, one line each. Exit 1: one line on standard error names the
 # check that failed. Exit 2: the call is wrong.
@@ -32,7 +33,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 package=$root/scripts/release-package.sh
 bot='b10x-bot[bot]'
-run_target=x86_64-unknown-linux-gnu
+run_targets='x86_64-unknown-linux-gnu x86_64-unknown-linux-musl'
 
 usage() {
   echo "usage: release-verify.sh <version> [--repository <owner>/<name>]" >&2
@@ -164,16 +165,18 @@ for archive in $archives; do
 done
 echo "release-verify: each archive holds sessionspec, LICENSE and README.md"
 
-# 6. The binary of the archive this check can run.
-name=sessionspec-$version-$run_target
+# 6. The binaries of the archives this check can run.
 mkdir "$work/unpacked"
-tar -xzf "$directory/$name.tar.gz" -C "$work/unpacked" 2> /dev/null || refuse "$name.tar.gz does not unpack"
-binary=$work/unpacked/$name/sessionspec
-[ -f "$binary" ] && [ ! -L "$binary" ] && [ -x "$binary" ] \
-  || refuse "the sessionspec of the x86_64 archive is no regular file that can be run"
-status=0
-printed=$("$binary" --version 2> /dev/null) || status=$?
-[ "$status" = 0 ] || refuse "\`sessionspec --version\` of the x86_64 archive exits $status"
-[ "$printed" = "sessionspec $version" ] \
-  || refuse "the sessionspec of the x86_64 archive prints \"$(printf '%s\n' "$printed" | sed -n 1p)\", not \"sessionspec $version\""
-echo "release-verify: the sessionspec of the x86_64 archive prints \"sessionspec $version\" and exits 0"
+for run_target in $run_targets; do
+  name=sessionspec-$version-$run_target
+  tar -xzf "$directory/$name.tar.gz" -C "$work/unpacked" 2> /dev/null || refuse "$name.tar.gz does not unpack"
+  binary=$work/unpacked/$name/sessionspec
+  [ -f "$binary" ] && [ ! -L "$binary" ] && [ -x "$binary" ] \
+    || refuse "the sessionspec of the $run_target archive is no regular file that can be run"
+  status=0
+  printed=$("$binary" --version 2> /dev/null) || status=$?
+  [ "$status" = 0 ] || refuse "\`sessionspec --version\` of the $run_target archive exits $status"
+  [ "$printed" = "sessionspec $version" ] \
+    || refuse "the sessionspec of the $run_target archive prints \"$(printf '%s\n' "$printed" | sed -n 1p)\", not \"sessionspec $version\""
+  echo "release-verify: the sessionspec of the $run_target archive prints \"sessionspec $version\" and exits 0"
+done

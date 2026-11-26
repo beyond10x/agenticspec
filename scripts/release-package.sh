@@ -27,7 +27,9 @@
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-targets='x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu'
+# x86_64-unknown-linux-musl is a static binary: it needs no glibc of the host and is the archive
+# consumers pin.
+targets='x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-unknown-linux-musl'
 
 usage() {
   echo "usage: release-package.sh targets" >&2

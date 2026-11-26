@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A new live UI, written by hand in Vue over types generated from the specification, with a light and a dark theme: an overview with figures per time slice and a searchable session table, a session page with a timeline per agent, agents, checks, cost and prompt breakdowns and a paged event log, and embed pages; built by `task ui:build` (Node.js 22)
 - Views `figures`, `session-timeline` and `session-event-counts`; `session-list` pages by `offset`, `session-events` pages newest first by `before` and filters by `agent`, `kind` and `notable`
 - `task check:app`: the app's unit tests and browser tests of layout, accessibility, keyboard use and a screen-only user on the fixtures, with a ratchet in `ux/baseline.json`; `task ux:round` measures a review round into `ux/rounds/`
+- A static Linux binary in each release, `sessionspec-<version>-x86_64-unknown-linux-musl.tar.gz`, which needs no glibc of the host; the release workflow checks it is static and runs its `--version` in a plain Alpine container
 
 ### Changed
 
