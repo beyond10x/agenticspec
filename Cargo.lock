@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "agenticspec"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "agenticspec-cli-contract",
  "agenticspec-records",
@@ -36,7 +36,7 @@ dependencies = [
 
 [[package]]
 name = "agenticspec-docs"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "agenticspec-render",
  "agenticspec-sim",
@@ -47,7 +47,7 @@ dependencies = [
 
 [[package]]
 name = "agenticspec-records"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "agenticspec-server",
  "agenticspec-system",
@@ -64,7 +64,7 @@ dependencies = [
 
 [[package]]
 name = "agenticspec-render"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde_json",
  "serde_yaml_ng",
@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "agenticspec-sim"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "agenticspec-render",
  "rayon",
