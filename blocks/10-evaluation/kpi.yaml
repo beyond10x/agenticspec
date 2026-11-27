@@ -1,0 +1,442 @@
+# KPI: a KPI as data. Source: design/building-blocks.md, "The blocks" § 10 evaluation ("Name,
+# unit, the events it reads, the block it belongs to, and its direction per profile (autonomous,
+# pairing, review)"), § "KPIs per block" ("A KPI has a direction only under a profile. A gate KPI
+# must be zero for a variant to count") and § "Three levels, two sources of a run" (a simulated
+# and an observed run score with one KPI definition; predicted beside measured, per
+# architecture). Q4 of the design: a KPI is data here and is computed by the existing code.
+# The design calls the direction sets "profiles"; here they are work modes (agentic.kpi.WorkMode), and
+# agentic.shared.ProfileId is the behaviour profile of a simulation only (agentic.experiment).
+domain: agentic.kpi
+
+summary: >-
+  A KPI as data: its name, unit, kind, the block it belongs to, the events it reads and whether it
+  is a gate. A work mode (autonomous, pairing, review) gives each KPI a direction. A measurement is one value of a KPI for an
+  architecture revision or an observed window, from a simulated or an observed run.
+
+naming:
+  wire: kpi
+  display: KPI
+
+types:
+  # agentic.shared declares no identifier for a direction row or a measurement; only this domain
+  # addresses them.
+  - name: agentic.kpi.DirectionId
+    kind: newtype
+    of: Uuid
+  - name: agentic.kpi.MeasurementId
+    kind: newtype
+    of: Uuid
+
+  - name: agentic.kpi.Unit
+    kind: newtype
+    of: String
+    naming:
+      summary: The unit a value is in (seconds, tokens, micro-USD, a share).
+
+  # The name of an event of the run vocabulary, fully qualified (`agentic.question.QuestionDefaulted`).
+  # UNMAPPED: the run block (the session IR) and its event vocabulary are not a domain of this
+  # system yet, so an event name is text and is not checked against a declared event.
+  - name: agentic.kpi.EventName
+    kind: newtype
+    of: String
+
+  # The block a KPI belongs to. One variant per block of "The blocks", and Run (the session IR).
+  # This list belongs in agentic.shared beside the identifiers (reported).
+  - name: agentic.kpi.Block
+    kind: enum
+    variants: [Principal, Delegation, Model, Gateway, Tool, Knowledge, Agent, Harness, Work, Process, Authority, Channel, Question, Workspace, Sandbox, Runtime, Resource, Architecture, Run]
+
+  - name: agentic.kpi.KpiKind
+    kind: enum
+    variants: [Count, Sum, Ratio, Duration, Percentile]
+
+  - name: agentic.kpi.Direction
+    kind: enum
+    variants: [Higher, Lower, Ignore]
+
+  # The three work modes the design names (its "profiles"). UNMAPPED: whether the set is closed. Taken: closed.
+  - name: agentic.kpi.WorkModeKind
+    kind: enum
+    variants: [Autonomous, Pairing, Review]
+
+  - name: agentic.kpi.Source
+    kind: enum
+    variants: [Simulated, Observed]
+
+  - name: agentic.kpi.Window
+    kind: struct
+    fields:
+      - {name: from, type: Timestamp}
+      - {name: to, type: Timestamp}
+
+entities:
+  - name: agentic.kpi.Kpi
+    naming:
+      summary: One KPI definition, read by the code that scores a simulated and an observed run alike.
+    identity:
+      name: kpi_id
+      type: agentic.shared.KpiId
+    fields:
+      - {name: name, type: agentic.shared.Name}
+      - {name: unit, type: agentic.kpi.Unit}
+      - {name: block, type: agentic.kpi.Block}
+      - {name: reads, type: List<agentic.kpi.EventName>}
+      - {name: kind, type: agentic.kpi.KpiKind}
+      # The percentile a Percentile KPI reports (50, 90); absent for every other kind.
+      - {name: percentile, type: Optional<Integer>}
+      # A gate KPI must be zero for a variant to count.
+      - {name: gate, type: Boolean}
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - {name: retire, from: [Active], to: Retired}
+
+  - name: agentic.kpi.WorkMode
+    naming:
+      summary: A way of working (autonomous, pairing, review) under which each KPI has a direction.
+    identity:
+      name: work_mode_id
+      type: agentic.shared.WorkModeId
+    fields:
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.kpi.WorkModeKind}
+    relations:
+      - {name: directions, kind: owns, target: agentic.kpi.WorkModeDirection, cardinality: many, via: work_mode_id}
+    lifecycle:
+      initial: Active
+      states: [Active]
+      terminal: [Active]
+
+  # A KPI with no row in a work mode has no direction there: a search does not weigh it.
+  - name: agentic.kpi.WorkModeDirection
+    naming:
+      summary: The direction one KPI has under one work mode.
+    identity:
+      name: direction_id
+      type: agentic.kpi.DirectionId
+    fields:
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: direction, type: agentic.kpi.Direction}
+    relations:
+      - {name: kpi, kind: references, target: agentic.kpi.Kpi, cardinality: one, via: kpi_id}
+    lifecycle:
+      initial: Set
+      states: [Set]
+      terminal: [Set]
+
+  # A simulated measurement names the architecture revision that was simulated; an observed one
+  # names the window it was observed in, and the revision when the observed setup is one.
+  - name: agentic.kpi.Measurement
+    naming:
+      summary: One value of a KPI for an architecture revision or an observed window.
+    identity:
+      name: measurement_id
+      type: agentic.kpi.MeasurementId
+    fields:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: revision_id, type: Optional<agentic.shared.ArchitectureRevisionId>}
+      - {name: window, type: Optional<agentic.kpi.Window>}
+      - {name: value, type: Decimal}
+      - {name: source, type: agentic.kpi.Source}
+    relations:
+      - {name: kpi, kind: references, target: agentic.kpi.Kpi, cardinality: one, via: kpi_id}
+      - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+errors:
+  - name: agentic.kpi.NoSuchKpi
+    summary: No KPI has this id, and nothing changed.
+  - name: agentic.kpi.RetiredKpi
+    summary: The KPI is retired, so it takes no direction and no measurement, and nothing changed.
+  - name: agentic.kpi.KpiNameTaken
+    summary: A KPI of this name exists, and nothing was defined.
+  - name: agentic.kpi.NoEventsRead
+    summary: A KPI reads at least one event, and nothing was defined.
+  - name: agentic.kpi.PercentileMissing
+    summary: A Percentile KPI names its percentile, between 1 and 99, and nothing was defined.
+  - name: agentic.kpi.NoSuchWorkMode
+    summary: No work mode has this id, and nothing changed.
+  - name: agentic.kpi.WorkModeNameTaken
+    summary: A work mode of this name exists, and nothing was created.
+  - name: agentic.kpi.DirectionExists
+    summary: The work mode already gives this KPI a direction, and nothing changed.
+  - name: agentic.kpi.RevisionMissing
+    summary: A simulated measurement names the architecture revision that was simulated, and nothing was recorded.
+  - name: agentic.kpi.WindowMissing
+    summary: An observed measurement names the window it was observed in, and nothing was recorded.
+  - name: agentic.kpi.InvalidWindow
+    summary: A window ends after it starts, and nothing was recorded.
+  - name: agentic.kpi.NoSuchRevision
+    summary: No architecture revision has this id, and nothing was recorded.
+
+events:
+  - name: agentic.kpi.KpiDefined
+    fields:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: block, type: agentic.kpi.Block}
+      - {name: kind, type: agentic.kpi.KpiKind}
+      - {name: gate, type: Boolean}
+  - name: agentic.kpi.KpiRetired
+    fields:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+  - name: agentic.kpi.WorkModeCreated
+    fields:
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.kpi.WorkModeKind}
+  - name: agentic.kpi.DirectionSet
+    fields:
+      - {name: direction_id, type: agentic.kpi.DirectionId}
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: direction, type: agentic.kpi.Direction}
+  - name: agentic.kpi.MeasurementRecorded
+    fields:
+      - {name: measurement_id, type: agentic.kpi.MeasurementId}
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: value, type: Decimal}
+      - {name: source, type: agentic.kpi.Source}
+
+commands:
+  - name: agentic.kpi.DefineKpi
+    naming:
+      display: Define a KPI
+    input:
+      - {name: name, type: agentic.shared.Name}
+      - {name: unit, type: agentic.kpi.Unit}
+      - {name: block, type: agentic.kpi.Block}
+      - {name: reads, type: List<agentic.kpi.EventName>}
+      - {name: kind, type: agentic.kpi.KpiKind}
+      - {name: percentile, type: Optional<Integer>}
+      - {name: gate, type: Boolean}
+    outcomes:
+      - name: no-events-read
+        when: reads.count == 0
+        error: agentic.kpi.NoEventsRead
+      - name: percentile-missing
+        when:
+          all:
+            - kind == Percentile
+            - not defined(percentile)
+        error: agentic.kpi.PercentileMissing
+      - name: percentile-out-of-range
+        when:
+          any:
+            - percentile < 1
+            - percentile > 99
+        error: agentic.kpi.PercentileMissing
+      - name: name-taken
+        when_related:
+          entity: agentic.kpi.Kpi
+          where: name == input.name
+          exists: true
+        error: agentic.kpi.KpiNameTaken
+      - name: defined
+        creates: agentic.kpi.Kpi
+        instance: kpi_id
+        sets:
+          name: input.name
+          unit: input.unit
+          block: input.block
+          reads: input.reads
+          kind: input.kind
+          percentile: input.percentile
+          gate: input.gate
+        emits: [agentic.kpi.KpiDefined]
+        payload:
+          agentic.kpi.KpiDefined:
+            kpi_id: {generated: true}
+            name: input.name
+            block: input.block
+            kind: input.kind
+            gate: input.gate
+
+  # A retired KPI keeps its measurements and directions; it takes no new one.
+  - name: agentic.kpi.RetireKpi
+    naming:
+      display: Retire a KPI
+    input:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+    outcomes:
+      - name: no-such-kpi
+        unknown_instance: true
+        error: agentic.kpi.NoSuchKpi
+      - name: retired
+        moves: agentic.kpi.Kpi.retire
+        instance: kpi_id
+        emits: [agentic.kpi.KpiRetired]
+        payload:
+          agentic.kpi.KpiRetired:
+            kpi_id: input.kpi_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.kpi.RetiredKpi
+
+  - name: agentic.kpi.CreateWorkMode
+    naming:
+      display: Create a work mode
+    input:
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.kpi.WorkModeKind}
+    outcomes:
+      - name: name-taken
+        when_related:
+          entity: agentic.kpi.WorkMode
+          where: name == input.name
+          exists: true
+        error: agentic.kpi.WorkModeNameTaken
+      - name: created
+        creates: agentic.kpi.WorkMode
+        instance: work_mode_id
+        sets:
+          name: input.name
+          kind: input.kind
+        emits: [agentic.kpi.WorkModeCreated]
+        payload:
+          agentic.kpi.WorkModeCreated:
+            work_mode_id: {generated: true}
+            name: input.name
+            kind: input.kind
+
+  # One direction per KPI and work mode; a second is refused, never overwritten.
+  - name: agentic.kpi.SetDirection
+    naming:
+      display: Give a KPI a direction under a work mode
+    input:
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: direction, type: agentic.kpi.Direction}
+    outcomes:
+      - name: no-such-work-mode
+        when_related: {via: input.work_mode_id, exists: false}
+        error: agentic.kpi.NoSuchWorkMode
+      - name: no-such-kpi
+        when_related: {via: input.kpi_id, exists: false}
+        error: agentic.kpi.NoSuchKpi
+      - name: kpi-retired
+        when_related: {via: input.kpi_id, predicate: state == Retired}
+        error: agentic.kpi.RetiredKpi
+      - name: direction-exists
+        when_related:
+          entity: agentic.kpi.WorkModeDirection
+          where:
+            all:
+              - work_mode_id == input.work_mode_id
+              - kpi_id == input.kpi_id
+          exists: true
+        error: agentic.kpi.DirectionExists
+      - name: set
+        creates: agentic.kpi.WorkModeDirection
+        instance: direction_id
+        sets:
+          work_mode_id: input.work_mode_id
+          kpi_id: input.kpi_id
+          direction: input.direction
+        emits: [agentic.kpi.DirectionSet]
+        payload:
+          agentic.kpi.DirectionSet:
+            direction_id: {generated: true}
+            work_mode_id: input.work_mode_id
+            kpi_id: input.kpi_id
+            direction: input.direction
+
+  - name: agentic.kpi.RecordMeasurement
+    naming:
+      display: Record a measurement
+    input:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: revision_id, type: Optional<agentic.shared.ArchitectureRevisionId>}
+      - {name: window, type: Optional<agentic.kpi.Window>}
+      - {name: value, type: Decimal}
+      - {name: source, type: agentic.kpi.Source}
+    outcomes:
+      - name: revision-missing
+        when:
+          all:
+            - source == Simulated
+            - not defined(revision_id)
+        error: agentic.kpi.RevisionMissing
+      - name: window-missing
+        when:
+          all:
+            - source == Observed
+            - not defined(window)
+        error: agentic.kpi.WindowMissing
+      - name: invalid-window
+        when: window.to <= window.from
+        error: agentic.kpi.InvalidWindow
+      - name: no-such-kpi
+        when_related: {via: input.kpi_id, exists: false}
+        error: agentic.kpi.NoSuchKpi
+      - name: no-such-revision
+        when_related: {via: input.revision_id, exists: false}
+        error: agentic.kpi.NoSuchRevision
+      - name: kpi-retired
+        when_related: {via: input.kpi_id, predicate: state == Retired}
+        error: agentic.kpi.RetiredKpi
+      - name: recorded
+        creates: agentic.kpi.Measurement
+        instance: measurement_id
+        sets:
+          kpi_id: input.kpi_id
+          revision_id: input.revision_id
+          window: input.window
+          value: input.value
+          source: input.source
+        emits: [agentic.kpi.MeasurementRecorded]
+        payload:
+          agentic.kpi.MeasurementRecorded:
+            measurement_id: {generated: true}
+            kpi_id: input.kpi_id
+            value: input.value
+            source: input.source
+
+views:
+  - name: agentic.kpi.Kpis
+    source: agentic.kpi.Kpi
+    consistency: read_your_writes
+    fields:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: unit, type: agentic.kpi.Unit}
+      - {name: block, type: agentic.kpi.Block}
+      - {name: reads, type: List<agentic.kpi.EventName>}
+      - {name: kind, type: agentic.kpi.KpiKind}
+      - {name: percentile, type: Optional<Integer>}
+      - {name: gate, type: Boolean}
+      - {name: state, type: agentic.kpi.Kpi.State}
+
+  # The directions of one work mode.
+  - name: agentic.kpi.Directions
+    source: agentic.kpi.WorkModeDirection
+    consistency: read_your_writes
+    params:
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+    filter: work_mode_id == param.work_mode_id
+    fields:
+      - {name: direction_id, type: agentic.kpi.DirectionId}
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: direction, type: agentic.kpi.Direction}
+
+  # Predicted beside measured: the measurements of one KPI, simulated and observed.
+  - name: agentic.kpi.Measurements
+    source: agentic.kpi.Measurement
+    consistency: read_your_writes
+    params:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+    filter: kpi_id == param.kpi_id
+    fields:
+      - {name: measurement_id, type: agentic.kpi.MeasurementId}
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: revision_id, type: Optional<agentic.shared.ArchitectureRevisionId>}
+      - {name: window, type: Optional<agentic.kpi.Window>}
+      - {name: value, type: Decimal}
+      - {name: source, type: agentic.kpi.Source}

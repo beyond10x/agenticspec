@@ -1,0 +1,20 @@
+format: agenticspec-architecture/1
+architecture: solo
+summary: >-
+  One agent with both tasks, asking its owner directly. In 2611.00314 this topology solved 62%,
+  against 16% for two agents that do not see each other and 54% for a hand-off. The simulator draws
+  every task's success from the profile's step chain, whatever the topology, so these differences do
+  not come out of a run; it shows what one agent costs in waiting, money and backlog.
+
+parts:
+  owner: { block: principal, kind: human }
+  agent: { block: agent, harness: coding }
+  model: { block: model, route: frontier }
+
+links:
+  - { from: owner, to: agent, carries: prompt }
+  - { from: agent, to: owner, carries: question }
+  - { from: agent, to: model, carries: model_call }
+
+policies:
+  question_default_after: 15m

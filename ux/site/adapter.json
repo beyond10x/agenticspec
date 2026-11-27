@@ -1,0 +1,65 @@
+{
+  "about": "Adapter of the ui-iteration-loop for the agenticspec docs site (website/, built into website/build and served by docusaurus serve under /agenticspec/). The fast loop is website/e2e, run by task check:site; the rounds are ux/site/rounds/S-nn.",
+  "site": "website",
+  "base_path": "/agenticspec",
+  "scenarios": [
+    "find-harness-kpis",
+    "layer-of-workspace",
+    "gate-kpis-of-authority",
+    "what-question-depends-on",
+    "best-variant-of-author-reviewer",
+    "toolcall-lifecycle",
+    "trigger-block-lifecycle"
+  ],
+  "anchor_scenarios": ["find-harness-kpis", "layer-of-workspace"],
+  "gating_viewports": [
+    { "width": 1440, "height": 900 },
+    { "width": 1280, "height": 800 }
+  ],
+  "measured_viewports": [
+    { "width": 1024, "height": 768 },
+    { "width": 768, "height": 1024 },
+    { "width": 390, "height": 844 }
+  ],
+  "themes": ["light", "dark"],
+  "always_visible": [
+    { "id": "navbar", "role": "navigation", "name": "Main", "pages": ["home", "doc"], "min_width": 0 },
+    { "id": "theme-toggle", "role": "button", "name": "^Switch between dark and light mode", "pages": ["home", "doc"], "min_width": 997 },
+    { "id": "sidebar", "role": "navigation", "name": "Docs sidebar", "pages": ["doc"], "min_width": 997 }
+  ],
+  "search": null,
+  "search_note": "the site has no search box (no search plugin in website/docusaurus.config.ts); the KPI catalogue's own search field is a control of that page, not an always-visible element",
+  "pages_checked": ["docs/blocks", "docs/architectures", "docs/kpis-catalogue"],
+  "regions": ["navbar", "sidebar", "toc", "main", "layer-map", "kpi-catalogue", "architecture-frame"],
+  "moments": ["start", "each action", "completion"],
+  "completion": "the scenario's target element is 100 % inside the viewport, not covered at its centre, and shows the scenario's truth; a target taller than the viewport counts as in view when its top is (S-02, T4)",
+  "guidance_cue": null,
+  "protected_focus": null,
+  "screen_only_policy": "deterministic code, no model: website/e2e/bot.ts; the route of each task is the steps of its card, each a visible control found by role and name",
+  "contract_notes": {
+    "pre": "a code block (pre) may scroll sideways in its box; every other element may not",
+    "below_997": "the theme toggle and the sidebar sit in the collapsed menu below 997 px wide (Docusaurus), so they are always-visible only from 997 px"
+  },
+  "metric_notes": {
+    "screen_only.steers": "always 0: with no guidance cue there is no cue to steer back",
+    "layout_shift.score": "the sum of the layout shifts of every page the run opened, page loads included",
+    "reading_load": "words of visible text in the viewport at each look",
+    "aborted_runs": "a run that stops before its target reports no reading load, glance or time to act (null), and stays out of the metric tables and sums (S-02, T5)"
+  },
+  "metric_viewport_theme": "light",
+  "axe_tags": ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
+  "baseline": "ux/site/baseline.json",
+  "rounds": "ux/site/rounds",
+  "findings": "ux/site/findings",
+  "levels": {
+    "run": ["L2", "L3", "L7"],
+    "dropped": {
+      "L0": "no guidance cue, so no engine scenario and no gate 6",
+      "L1": "the site has no unit tests of its components yet",
+      "L4": "paid replay; not run",
+      "L5": "paid probe; not run",
+      "L6": "people; not run",
+      "L8": "people; not run"
+    }
+  }
+}

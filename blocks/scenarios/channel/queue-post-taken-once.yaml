@@ -1,0 +1,89 @@
+# A queue hands each post to one subscriber. Synthesis cannot reach a post (it sits behind
+# PostMessage's subscription check, ESS-SYNTH-004), so this scenario walks the path by hand: a
+# party opens a queue, two workers subscribe, the opener posts a request, the first worker takes
+# it, and the second worker's take of the same post is refused.
+type: ess-scenario/7
+domain: agentic.channel
+scenario: queue-post-taken-once
+summary: On a queue, the first subscriber to take a post gets it; a second take is refused.
+
+arrange:
+  - instance: q
+    entity: agentic.channel.Channel
+  - instance: p
+    entity: agentic.channel.Post
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.channel.OpenSharedChannel
+    actor: agentic.channel.Participant
+    caller: {party: 00000000-0000-4000-8000-0000000000a1, party_kind: Principal}
+    input: {kind: AgentMessage, distribution: Queue, ordered: true, may_lose: false}
+    outcome: opened
+    capture: {instance: q, event: agentic.channel.SharedChannelOpened, field: channel_id}
+
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.channel.Subscribe
+    actor: agentic.channel.Participant
+    caller: {party: 00000000-0000-4000-8000-0000000000a1, party_kind: Principal}
+    input: {channel_id: {$instance: q}, party: 00000000-0000-4000-8000-0000000000a1}
+    outcome: subscribed
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.channel.Subscribe
+    actor: agentic.channel.Participant
+    caller: {party: 00000000-0000-4000-8000-0000000000b1, party_kind: Session}
+    input: {channel_id: {$instance: q}, party: 00000000-0000-4000-8000-0000000000b1}
+    outcome: subscribed
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.channel.Subscribe
+    actor: agentic.channel.Participant
+    caller: {party: 00000000-0000-4000-8000-0000000000b2, party_kind: Session}
+    input: {channel_id: {$instance: q}, party: 00000000-0000-4000-8000-0000000000b2}
+    outcome: subscribed
+
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.channel.PostMessage
+    actor: agentic.channel.Participant
+    caller: {party: 00000000-0000-4000-8000-0000000000a1, party_kind: Principal}
+    input:
+      channel_id: {$instance: q}
+      from: 00000000-0000-4000-8000-0000000000a1
+      act: Request
+      content: {digest: sha256-task-1, length: 120, class: task}
+    outcome: posted
+    capture: {instance: p, event: agentic.channel.Posted, field: post_id}
+
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.channel.TakePost
+    actor: agentic.channel.Participant
+    caller: {party: 00000000-0000-4000-8000-0000000000b1, party_kind: Session}
+    input: {post_id: {$instance: p}, reader: 00000000-0000-4000-8000-0000000000b1}
+    outcome: taken
+    events:
+      - event: agentic.channel.PostTaken
+        payload: {post_id: {$instance: p}}
+
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.channel.TakePost
+    actor: agentic.channel.Participant
+    caller: {party: 00000000-0000-4000-8000-0000000000b2, party_kind: Session}
+    input: {post_id: {$instance: p}, reader: 00000000-0000-4000-8000-0000000000b2}
+    outcome: already-taken
+    error:
+      name: agentic.channel.PostAlreadyTaken
+    no_events: [agentic.channel.PostTaken]
+
+assert:
+  - view: agentic.channel.ChannelPosts
+    params:
+      channel_id: {$instance: q}
+    counts:
+      at_least: 1
+      at_most: 1
+  - view: agentic.channel.ChannelPosts
+    params:
+      channel_id: {$instance: q}
+    contains:
+      post_id: {$instance: p}
+      taken_by: 00000000-0000-4000-8000-0000000000b1
+      state: Taken

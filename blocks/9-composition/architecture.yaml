@@ -1,0 +1,765 @@
+# Architecture: the composed setup. Source: design/building-blocks.md, "The blocks" § 9
+# composition ("Parts (instances of blocks), links (who may call or message whom), a border (what
+# a human reaches), revisions. No link, no reach") and § "An architecture document" (the
+# workstation example, lowered to commands in a fixed order: declare the parts, declare the links,
+# commit the revision). Modelled on weft's formation (rows edited one by one, then a commit that
+# freezes them into an immutable revision); nothing of weft is copied.
+domain: agentic.architecture
+
+summary: >-
+  An architecture composes building blocks into one concrete setup: parts (named instances of a
+  block, with a count), links (which part may call or message which, and what the link carries),
+  a border (the parts a human principal reaches) and immutable revisions. No link, no reach: two
+  parts without a link cannot reach each other.
+
+naming:
+  wire: architecture
+  display: Architecture
+
+types:
+  - name: agentic.architecture.Digest
+    kind: newtype
+    of: String
+    naming:
+      summary: Digest of the canonical form of an architecture's parts, links and border.
+
+  # The blocks a part may instantiate. "The blocks" lists the block domains; a pool is the
+  # resource block's pool (the example's `builds: {block: resource, kind: pool}`).
+  # Trigger and Schedule (agentic.trigger) are parts: what wakes an agent part is part of the
+  # setup, and a link carrying Trigger says which agent part it wakes.
+  # UNMAPPED: whether delegation, work, process, authority, question, knowledge and the other
+  # resource kinds (queue, rate limit, cache) are parts of an architecture or only of a run. The
+  # design's example uses none of them. Taken: Knowledge is a part (an agent is given it); the
+  # others are not.
+  - name: agentic.architecture.PartKind
+    kind: enum
+    variants: [Principal, Agent, Harness, Model, Gateway, Tool, Knowledge, Channel, Workspace, Sandbox, Runtime, Pool, Trigger, Schedule]
+
+  # What a link carries. The example writes `carries: question`, `order`, `claim`; a link with no
+  # `carries:` (`worker -> gateway`) is a model call, and `owner -> operator over chat` a prompt.
+  # Trigger: a trigger or schedule part wakes an agent part.
+  - name: agentic.architecture.Carries
+    kind: enum
+    variants: [Prompt, Order, Question, Answer, ModelCall, ToolCall, Claim, Message, Trigger]
+
+  # How the copies of an agent part (a swarm) coordinate: Orchestrator, one copy or another part
+  # hands out the work; Board, the copies read and write a typed board without an orchestrator
+  # (2609.26781: 19.31% resolved at 1 agent, 28.78% at 128); Mesh, the copies message each other
+  # directly; None, they do not coordinate.
+  - name: agentic.architecture.Coordination
+    kind: enum
+    variants: [Orchestrator, Board, Mesh, None]
+
+  # A part's block-specific settings: the example's `harness: coding`, `slots: 16`,
+  # `sharing: exclusive`, `egress: [gateway]`, `upstreams: [provider]`; an experiment's mutation
+  # names a part and one of these (`{part: builds, field: slots}`).
+  # UNMAPPED: the typed settings of each block. The block domains (layers 1-8) own them; this
+  # domain keeps them as named text until a block's own type is referenced here.
+  - name: agentic.architecture.Setting
+    kind: struct
+    fields:
+      - {name: name, type: String}
+      - {name: value, type: String}
+
+entities:
+  # UNMAPPED: the brief names the lifecycle "Draft -> Committed revisions, Retired". An outcome
+  # that records a revision creates the revision row, and ESS admits no second effect beside a
+  # creation (ESS-COMMAND-009, `unsupported_construct`: "creates its subject and declares
+  # `affects:`"), so the architecture cannot move to Committed in the commit itself. Taken: the
+  # architecture is Draft (editable) until retired, and "committed" is "has a revision", read
+  # through the Revisions view and, in agentic.experiment, through a row-set guard.
+  - name: agentic.architecture.Architecture
+    naming:
+      summary: One composed setup, edited as parts, links and a border, frozen by each commit into a revision.
+    identity:
+      name: architecture_id
+      type: agentic.shared.ArchitectureId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+    relations:
+      - {name: parts, kind: owns, target: agentic.architecture.Part, cardinality: many, via: architecture_id}
+      - {name: links, kind: owns, target: agentic.architecture.Link, cardinality: many, via: architecture_id}
+      - {name: revisions, kind: owns, target: agentic.architecture.ArchitectureRevision, cardinality: many, via: architecture_id}
+    lifecycle:
+      initial: Draft
+      states:
+        - {name: Draft, summary: "Takes parts, links, a border and commits."}
+        - {name: Retired, summary: "Takes no edit and no commit; its revisions stay."}
+      terminal: [Retired]
+      transitions:
+        - {name: retire, from: [Draft], to: Retired}
+
+  # A named instance of a block. `count` copies of it run; `per` names another part when there
+  # is one copy for each copy of that part (`tree: {per: worker}`); `acts_for` names the principal
+  # part an agent part acts for (`operator: {acts_for: owner}`).
+  - name: agentic.architecture.Part
+    naming:
+      summary: A named instance of a building block inside one architecture.
+    identity:
+      name: part_id
+      type: agentic.shared.PartId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.architecture.PartKind}
+      - {name: count, type: Integer}
+      - {name: per_part_id, type: Optional<agentic.shared.PartId>}
+      - {name: acts_for_part_id, type: Optional<agentic.shared.PartId>}
+      - {name: settings, type: List<agentic.architecture.Setting>}
+      # On the border: a human principal reaches this part from outside the architecture.
+      - {name: on_border, type: Boolean}
+      # A swarm: how the copies of an agent part coordinate, and the time between the starts of
+      # two copies. A new part does not coordinate and starts its copies at once; SetSwarm sets
+      # both.
+      # UNMAPPED: the stagger figures (2609.26781 started one agent every 30 s, then every 3 s) come
+      # from the task brief; design/research-findings.md does not list them. Taken: a Duration with
+      # no default and no bound.
+      - {name: coordination, type: agentic.architecture.Coordination}
+      - {name: start_stagger, type: Optional<Duration>}
+    invariants:
+      - count >= 1
+    relations:
+      - {name: per, kind: references, target: agentic.architecture.Part, cardinality: one, via: per_part_id}
+      - {name: acts_for, kind: references, target: agentic.architecture.Part, cardinality: one, via: acts_for_part_id}
+    # UNMAPPED: the design names no removal of a part or a link. Taken: none; a changed setup is a
+    # new architecture or a further commit of added rows.
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+
+  # An allowed call or message from one part to another of the same architecture. Default deny:
+  # no row, no reach. The kinds of both ends are copied from the parts when the link is added, so
+  # a commit can test a part's links without a second hop.
+  - name: agentic.architecture.Link
+    naming:
+      summary: An allowed call or message from one part to another of the same architecture, carrying one kind of traffic.
+    identity:
+      name: link_id
+      type: agentic.shared.LinkId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: from_part_id, type: agentic.shared.PartId}
+      - {name: to_part_id, type: agentic.shared.PartId}
+      - {name: carries, type: agentic.architecture.Carries}
+      - {name: over_part_id, type: Optional<agentic.shared.PartId>}
+      - {name: from_kind, type: agentic.architecture.PartKind}
+      - {name: to_kind, type: agentic.architecture.PartKind}
+    relations:
+      - {name: from, kind: references, target: agentic.architecture.Part, cardinality: one, via: from_part_id}
+      - {name: to, kind: references, target: agentic.architecture.Part, cardinality: one, via: to_part_id}
+      - {name: over, kind: references, target: agentic.architecture.Part, cardinality: one, via: over_part_id}
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+
+  # Immutable: one state, no transition, no command that changes it.
+  - name: agentic.architecture.ArchitectureRevision
+    naming:
+      summary: An immutable snapshot of an architecture's parts, links and border.
+    identity:
+      name: revision_id
+      type: agentic.shared.ArchitectureRevisionId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      # 1 for the first revision of an architecture, one more for each next. Minted.
+      - {name: number, type: Integer}
+      - {name: digest, type: agentic.architecture.Digest}
+    invariants:
+      - number >= 1
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+errors:
+  - name: agentic.architecture.NoSuchArchitecture
+    summary: No architecture has this id, and nothing changed.
+  - name: agentic.architecture.RetiredArchitecture
+    summary: The architecture is retired, so it takes no edit and no commit, and nothing changed.
+  - name: agentic.architecture.InvalidCount
+    summary: A part runs at least one copy, and nothing was added.
+  - name: agentic.architecture.PartNameTaken
+    summary: The architecture already has a part of this name, and nothing was added.
+  - name: agentic.architecture.NoSuchPart
+    summary: A part this request names does not exist, and nothing changed.
+  - name: agentic.architecture.ForeignPart
+    summary: A part this request names belongs to another architecture, and nothing changed.
+  - name: agentic.architecture.ActsForNeedsAgent
+    summary: Only an agent part acts for a principal, and nothing was added.
+  - name: agentic.architecture.ActsForNotPrincipal
+    summary: An agent part acts for a principal part, and the part named is not one; nothing was added.
+  - name: agentic.architecture.SwarmNeedsAgent
+    summary: Only the copies of an agent part coordinate as a swarm, and nothing changed.
+  - name: agentic.architecture.TriggerSourceNotTrigger
+    summary: A link carrying Trigger starts at a trigger or schedule part, and the part named is neither; nothing was added.
+  - name: agentic.architecture.TriggerTargetNotAgent
+    summary: A link carrying Trigger wakes an agent part, and the part named is not one; nothing was added.
+  - name: agentic.architecture.SelfReference
+    summary: A link, a per or an acts-for names the part itself, and nothing changed.
+  - name: agentic.architecture.NotAChannel
+    summary: A link travels over a channel part, and the part named is not one; nothing was added.
+  - name: agentic.architecture.TargetCannotAnswer
+    summary: A link carrying questions ends at a principal or an agent part, the only parts that answer; nothing was added.
+  - name: agentic.architecture.LinkExists
+    summary: The architecture already has this link, and nothing was added.
+  - name: agentic.architecture.NotReachedByPrincipal
+    summary: No link from a principal part reaches this part, so it cannot be on the border; nothing changed.
+  - name: agentic.architecture.EmptyArchitecture
+    summary: The architecture has no part, so no revision was recorded.
+  - name: agentic.architecture.AgentWithoutModel
+    summary: An agent part has no link carrying model calls to a model or gateway part, so no revision was recorded.
+  - name: agentic.architecture.QuestionWithoutAnswerer
+    summary: A link carries questions to an agent part that acts for no principal, so no party may answer and no revision was recorded.
+
+events:
+  - name: agentic.architecture.ArchitectureCreated
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+  - name: agentic.architecture.PartAdded
+    fields:
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.architecture.PartKind}
+      - {name: count, type: Integer}
+  - name: agentic.architecture.LinkAdded
+    fields:
+      - {name: link_id, type: agentic.shared.LinkId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: from_part_id, type: agentic.shared.PartId}
+      - {name: to_part_id, type: agentic.shared.PartId}
+      - {name: carries, type: agentic.architecture.Carries}
+  - name: agentic.architecture.PartPerSet
+    fields:
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: per_part_id, type: agentic.shared.PartId}
+  - name: agentic.architecture.AgentActsFor
+    fields:
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: principal_part_id, type: agentic.shared.PartId}
+  - name: agentic.architecture.SwarmSet
+    fields:
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: coordination, type: agentic.architecture.Coordination}
+      - {name: start_stagger, type: Optional<Duration>}
+  - name: agentic.architecture.PartBordered
+    fields:
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+  - name: agentic.architecture.RevisionCommitted
+    fields:
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: number, type: Integer}
+      - {name: digest, type: agentic.architecture.Digest}
+  - name: agentic.architecture.ArchitectureRetired
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+
+commands:
+  - name: agentic.architecture.CreateArchitecture
+    naming:
+      display: Create an architecture
+    input:
+      - {name: name, type: agentic.shared.Name}
+    outcomes:
+      - name: created
+        creates: agentic.architecture.Architecture
+        instance: architecture_id
+        sets:
+          name: input.name
+        emits: [agentic.architecture.ArchitectureCreated]
+        payload:
+          agentic.architecture.ArchitectureCreated:
+            architecture_id: {generated: true}
+            name: input.name
+
+  # Declare a part. A new part runs `count` copies, is per no other part, acts for no principal
+  # and is off the border. `per` and `acts_for` are set by commands of their own, after the part
+  # they name exists.
+  # ESS limit: a creating command that guards on another row of its own entity
+  # (`when_related: {via: input.per_part_id}` on AddPart) gets no synthesized scenario for any of
+  # its outcomes (ESS-SYNTH-003, "no candidate of the 1 tried satisfies a row of Part for
+  # input.per_part_id"); the separate commands keep every rule and let synthesis arrange rows.
+  - name: agentic.architecture.AddPart
+    naming:
+      display: Add a part
+    input:
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.architecture.PartKind}
+      - {name: count, type: Integer}
+      - {name: settings, type: List<agentic.architecture.Setting>}
+    outcomes:
+      - name: invalid-count
+        when: count < 1
+        error: agentic.architecture.InvalidCount
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: name-taken
+        when_related:
+          entity: agentic.architecture.Part
+          where:
+            all:
+              - architecture_id == input.architecture_id
+              - name == input.name
+          exists: true
+        error: agentic.architecture.PartNameTaken
+      - name: added
+        creates: agentic.architecture.Part
+        instance: part_id
+        sets:
+          architecture_id: input.architecture_id
+          name: input.name
+          kind: input.kind
+          count: input.count
+          settings: input.settings
+          on_border: false
+          coordination: None
+        emits: [agentic.architecture.PartAdded]
+        payload:
+          agentic.architecture.PartAdded:
+            part_id: input.part_id
+            architecture_id: input.architecture_id
+            name: input.name
+            kind: input.kind
+            count: input.count
+
+  # One copy of this part for each copy of another part of the same architecture
+  # (`tree: {per: worker}`).
+  - name: agentic.architecture.SetPer
+    naming:
+      display: Run a part once per copy of another
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: per_part_id, type: agentic.shared.PartId}
+    outcomes:
+      - name: self-reference
+        when: part_id == per_part_id
+        error: agentic.architecture.SelfReference
+      - name: no-such-part
+        unknown_instance: true
+        error: agentic.architecture.NoSuchPart
+      - name: foreign-part
+        when_subject: {predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: no-such-per-part
+        when_related: {via: input.per_part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: foreign-per-part
+        when_related: {via: input.per_part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: set
+        updates: agentic.architecture.Part
+        instance: part_id
+        sets:
+          per_part_id: input.per_part_id
+        emits: [agentic.architecture.PartPerSet]
+        payload:
+          agentic.architecture.PartPerSet:
+            part_id: input.part_id
+            per_part_id: input.per_part_id
+
+  # An agent part acts for a principal part of the same architecture (`operator: {acts_for:
+  # owner}`). Only an agent part acts for anyone, and only for a principal part.
+  - name: agentic.architecture.SetActsFor
+    naming:
+      display: Let an agent part act for a principal part
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: principal_part_id, type: agentic.shared.PartId}
+    outcomes:
+      - name: self-reference
+        when: part_id == principal_part_id
+        error: agentic.architecture.SelfReference
+      - name: no-such-part
+        unknown_instance: true
+        error: agentic.architecture.NoSuchPart
+      - name: foreign-part
+        when_subject: {predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: not-an-agent
+        when_subject: {predicate: kind != Agent}
+        error: agentic.architecture.ActsForNeedsAgent
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: no-such-principal-part
+        when_related: {via: input.principal_part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: foreign-principal-part
+        when_related: {via: input.principal_part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: not-a-principal
+        when_related: {via: input.principal_part_id, predicate: kind != Principal}
+        error: agentic.architecture.ActsForNotPrincipal
+      - name: set
+        updates: agentic.architecture.Part
+        instance: part_id
+        sets:
+          acts_for_part_id: input.principal_part_id
+        emits: [agentic.architecture.AgentActsFor]
+        payload:
+          agentic.architecture.AgentActsFor:
+            part_id: input.part_id
+            principal_part_id: input.principal_part_id
+
+  # Allow one part to call or message another. Both ends, and the channel a link travels over,
+  # are parts of this architecture. A link carrying questions ends at a part that answers.
+  - name: agentic.architecture.AddLink
+    naming:
+      display: Allow a link
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: from_part_id, type: agentic.shared.PartId}
+      - {name: to_part_id, type: agentic.shared.PartId}
+      - {name: carries, type: agentic.architecture.Carries}
+      - {name: over_part_id, type: Optional<agentic.shared.PartId>}
+    outcomes:
+      - name: self-link
+        when: from_part_id == to_part_id
+        error: agentic.architecture.SelfReference
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: no-such-from-part
+        when_related: {via: input.from_part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: no-such-to-part
+        when_related: {via: input.to_part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: no-such-channel-part
+        when_related: {via: input.over_part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: foreign-from-part
+        when_related: {via: input.from_part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: foreign-to-part
+        when_related: {via: input.to_part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: foreign-channel-part
+        when_related: {via: input.over_part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: not-a-channel
+        when_related: {via: input.over_part_id, predicate: kind != Channel}
+        error: agentic.architecture.NotAChannel
+      - name: trigger-source-not-trigger
+        when_related:
+          via: input.from_part_id
+          predicate:
+            all:
+              - input.carries == Trigger
+              - kind != Trigger
+              - kind != Schedule
+        error: agentic.architecture.TriggerSourceNotTrigger
+      - name: trigger-target-not-agent
+        when_related:
+          via: input.to_part_id
+          predicate:
+            all:
+              - input.carries == Trigger
+              - kind != Agent
+        error: agentic.architecture.TriggerTargetNotAgent
+      - name: target-cannot-answer
+        when_related:
+          via: input.to_part_id
+          predicate:
+            all:
+              - input.carries == Question
+              - kind != Principal
+              - kind != Agent
+        error: agentic.architecture.TargetCannotAnswer
+      - name: exists
+        when_related:
+          entity: agentic.architecture.Link
+          where:
+            all:
+              - from_part_id == input.from_part_id
+              - to_part_id == input.to_part_id
+              - carries == input.carries
+          exists: true
+        error: agentic.architecture.LinkExists
+      - name: added
+        creates: agentic.architecture.Link
+        instance: link_id
+        sets:
+          architecture_id: input.architecture_id
+          from_part_id: input.from_part_id
+          to_part_id: input.to_part_id
+          carries: input.carries
+          over_part_id: input.over_part_id
+          from_kind: {related: {via: input.from_part_id, field: kind}}
+          to_kind: {related: {via: input.to_part_id, field: kind}}
+        emits: [agentic.architecture.LinkAdded]
+        payload:
+          agentic.architecture.LinkAdded:
+            link_id: {generated: true}
+            architecture_id: input.architecture_id
+            from_part_id: input.from_part_id
+            to_part_id: input.to_part_id
+            carries: input.carries
+
+  # Make an agent part a swarm: how its copies coordinate (an orchestrator, a shared board, a
+  # mesh, or not at all) and the time between the starts of two copies. Only an agent part runs
+  # copies that coordinate.
+  - name: agentic.architecture.SetSwarm
+    naming:
+      display: Make an agent part a swarm
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: coordination, type: agentic.architecture.Coordination}
+      - {name: start_stagger, type: Optional<Duration>}
+    outcomes:
+      - name: no-such-part
+        unknown_instance: true
+        error: agentic.architecture.NoSuchPart
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: missing-part
+        when_related: {via: input.part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: foreign-part
+        when_related: {via: input.part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: not-an-agent
+        when_related: {via: input.part_id, predicate: kind != Agent}
+        error: agentic.architecture.SwarmNeedsAgent
+      - name: set
+        updates: agentic.architecture.Part
+        instance: part_id
+        sets:
+          coordination: input.coordination
+          start_stagger: input.start_stagger
+        emits: [agentic.architecture.SwarmSet]
+        payload:
+          agentic.architecture.SwarmSet:
+            part_id: input.part_id
+            coordination: input.coordination
+            start_stagger: input.start_stagger
+
+  # Put a part on the border: a human principal reaches it from outside. Only a part a principal
+  # part already links to may be on it (no link, no reach).
+  # UNMAPPED: the design says "what a human reaches"; a principal part carries no principal kind
+  # here (human, organization, service). Taken: any principal part's link counts.
+  - name: agentic.architecture.SetBorder
+    naming:
+      display: Put a part on the border
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: part_id, type: agentic.shared.PartId}
+    outcomes:
+      - name: no-such-part
+        unknown_instance: true
+        error: agentic.architecture.NoSuchPart
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: missing-part
+        when_related: {via: input.part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: foreign-part
+        when_related: {via: input.part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: not-reached
+        when_related:
+          entity: agentic.architecture.Link
+          where:
+            all:
+              - to_part_id == input.part_id
+              - from_kind == Principal
+          exists: false
+        error: agentic.architecture.NotReachedByPrincipal
+      - name: bordered
+        updates: agentic.architecture.Part
+        instance: part_id
+        sets:
+          on_border: true
+        emits: [agentic.architecture.PartBordered]
+        payload:
+          agentic.architecture.PartBordered:
+            part_id: input.part_id
+            architecture_id: input.architecture_id
+
+  # Freeze the current parts, links and border into a revision. Refused when nothing is declared,
+  # when an agent part has no path to a model, and when a question has no party that may answer.
+  - name: agentic.architecture.CommitRevision
+    naming:
+      display: Commit an architecture revision
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+    outcomes:
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: empty
+        when_related:
+          entity: agentic.architecture.Part
+          where: architecture_id == input.architecture_id
+          exists: false
+        error: agentic.architecture.EmptyArchitecture
+      - name: agent-without-model
+        when_related:
+          entity: agentic.architecture.Part
+          where:
+            all:
+              - architecture_id == input.architecture_id
+              - kind == Agent
+              - not:
+                  exists:
+                    in: {entity: agentic.architecture.Link}
+                    as: link
+                    that:
+                      all:
+                        - link.from_part_id == part_id
+                        - link.carries == ModelCall
+                        - any: [link.to_kind == Model, link.to_kind == Gateway]
+          exists: true
+        error: agentic.architecture.AgentWithoutModel
+        # UNMAPPED: the design says a refusal "names the part and the rule". An error payload read
+        # from the first offending part (`{related: {entity: Part, where: <the same test>, order_by:
+        # [name, part_id], first: name}}`) validates, and the interpreted target answers it
+        # ESS-CF-TARGET ("the value source ... of an error is not interpreted yet"), so the error
+        # carries no part name here.
+      - name: question-without-answerer
+        when_related:
+          entity: agentic.architecture.Link
+          where:
+            all:
+              - architecture_id == input.architecture_id
+              - carries == Question
+              - to_kind == Agent
+              - not:
+                  exists:
+                    in: {entity: agentic.architecture.Part}
+                    as: target
+                    that:
+                      all:
+                        - target.part_id == to_part_id
+                        - defined(target.acts_for_part_id)
+          exists: true
+        error: agentic.architecture.QuestionWithoutAnswerer
+      - name: committed
+        creates: agentic.architecture.ArchitectureRevision
+        instance: revision_id
+        sets:
+          architecture_id: input.architecture_id
+          number: {generated: true}
+          digest: {generated: true}
+        emits: [agentic.architecture.RevisionCommitted]
+        payload:
+          agentic.architecture.RevisionCommitted:
+            revision_id: {generated: true}
+            architecture_id: input.architecture_id
+            number: {generated: true}
+            digest: {generated: true}
+
+  - name: agentic.architecture.RetireArchitecture
+    naming:
+      display: Retire an architecture
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+    outcomes:
+      - name: no-such-architecture
+        unknown_instance: true
+        error: agentic.architecture.NoSuchArchitecture
+      - name: retired
+        moves: agentic.architecture.Architecture.retire
+        instance: architecture_id
+        emits: [agentic.architecture.ArchitectureRetired]
+        payload:
+          agentic.architecture.ArchitectureRetired:
+            architecture_id: input.architecture_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.architecture.RetiredArchitecture
+
+views:
+  # Who may call whom: one row per link. No row, no reach.
+  - name: agentic.architecture.Reach
+    source: agentic.architecture.Link
+    consistency: read_your_writes
+    params:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+    filter: architecture_id == param.architecture_id
+    fields:
+      - {name: link_id, type: agentic.shared.LinkId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: from_part_id, type: agentic.shared.PartId}
+      - name: from_name
+        type: Optional<agentic.shared.Name>
+        field: {related: {via: from_part_id, field: name}}
+      - {name: to_part_id, type: agentic.shared.PartId}
+      - name: to_name
+        type: Optional<agentic.shared.Name>
+        field: {related: {via: to_part_id, field: name}}
+      - {name: carries, type: agentic.architecture.Carries}
+      - {name: over_part_id, type: Optional<agentic.shared.PartId>}
+      - {name: from_kind, type: agentic.architecture.PartKind}
+      - {name: to_kind, type: agentic.architecture.PartKind}
+
+  - name: agentic.architecture.Parts
+    source: agentic.architecture.Part
+    consistency: read_your_writes
+    fields:
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.architecture.PartKind}
+      - {name: count, type: Integer}
+      - {name: per_part_id, type: Optional<agentic.shared.PartId>}
+      - {name: acts_for_part_id, type: Optional<agentic.shared.PartId>}
+      - {name: settings, type: List<agentic.architecture.Setting>}
+      - {name: on_border, type: Boolean}
+      - {name: coordination, type: agentic.architecture.Coordination}
+      - {name: start_stagger, type: Optional<Duration>}
+
+  - name: agentic.architecture.Revisions
+    source: agentic.architecture.ArchitectureRevision
+    consistency: read_your_writes
+    fields:
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: number, type: Integer}
+      - {name: digest, type: agentic.architecture.Digest}
+
+  - name: agentic.architecture.Architectures
+    source: agentic.architecture.Architecture
+    consistency: read_your_writes
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: state, type: agentic.architecture.Architecture.State}

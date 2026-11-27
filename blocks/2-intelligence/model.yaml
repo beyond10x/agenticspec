@@ -1,0 +1,705 @@
+domain: agentic.model
+
+summary: >-
+  What a model is and how it is reached. A provider offers models; a model has capabilities, a
+  context window and a price per token class; an endpoint is where one model is served; a route is
+  a name that resolves to one endpoint and model. An inference is one request on a route with its
+  usage, latency and outcome. A retired route accepts no new inference.
+
+naming:
+  wire: model
+  display: Model
+
+types:
+  - name: agentic.model.Capability
+    kind: enum
+    variants: [Text, Vision, Audio, ToolUse, Reasoning, StructuredOutput, Embedding]
+    naming:
+      summary: What a model can do beyond reading and writing text.
+
+  - name: agentic.model.Wire
+    kind: enum
+    variants: [Messages, Chat, Responses, Native]
+    naming:
+      summary: The request protocol an endpoint speaks.
+
+  - name: agentic.model.Hosting
+    kind: enum
+    variants: [Vendor, Managed, Local]
+    naming:
+      summary: >-
+        Who runs what serves an endpoint. Vendor is a provider's API, always up. Managed is a
+        server the owner starts and stops on rented compute, so a call may wait for it to start and
+        its start costs money before any token (agentic.runtime holds its instances and their
+        phase). Local is a server on the owner's own machine.
+
+  - name: agentic.model.InferenceOutcome
+    kind: enum
+    variants: [Ok, Refused, RateLimited, Error]
+    naming:
+      summary: >-
+        How one inference ended. Refused is the model or its provider declining the request; it is
+        not the gateway's admission, which is `agentic.gateway`.
+
+  - name: agentic.model.TokenPrice
+    kind: struct
+    naming:
+      summary: >-
+        Price of one million tokens of each class, as Money in micro-USD. The classes are those of
+        `agentic.shared.Usage`.
+    fields:
+      - {name: input, type: agentic.shared.Money}
+      - {name: cache_read, type: agentic.shared.Money}
+      - {name: cache_write, type: agentic.shared.Money}
+      - {name: output, type: agentic.shared.Money}
+    # UNMAPPED: the design lists thinking tokens as a usage class; agentic.shared.Usage has no
+    # thinking field and the price has no class for it. Open question for the owner: bill thinking
+    # as output (as most providers do) or add a class to both.
+
+  - name: agentic.model.Latency
+    kind: struct
+    fields:
+      - {name: total_ms, type: Integer}
+      - {name: first_token_ms, type: Optional<Integer>}
+    invariants:
+      - total_ms >= 0
+
+entities:
+  - name: agentic.model.Provider
+    naming:
+      summary: Who offers models, a vendor API, a cloud platform, or a model host the owner runs.
+    identity:
+      name: provider_id
+      type: agentic.shared.ProviderId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+    relations:
+      - name: models
+        kind: owns
+        target: agentic.model.Model
+        cardinality: many
+        via: provider_id
+    lifecycle:
+      initial: Registered
+      states: [Registered]
+      terminal: [Registered]
+
+  - name: agentic.model.Model
+    naming:
+      summary: One model of one provider, with what it can do, how much it reads and what a token costs.
+    identity:
+      name: model_id
+      type: agentic.shared.ModelId
+    fields:
+      - name: provider_id
+        type: agentic.shared.ProviderId
+      - name: name
+        type: agentic.shared.Name
+      - name: capabilities
+        type: List<agentic.model.Capability>
+      - name: context_window
+        type: Integer
+        summary: Tokens the model reads at once, input and output together.
+      - name: price
+        type: agentic.model.TokenPrice
+    invariants:
+      - context_window > 0
+    lifecycle:
+      initial: Current
+      states: [Current, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Current]
+          to: Retired
+
+  - name: agentic.model.Endpoint
+    naming:
+      summary: Where one model is served, an address and the protocol it speaks.
+    identity:
+      name: endpoint_id
+      type: agentic.shared.EndpointId
+    fields:
+      - name: model_id
+        type: agentic.shared.ModelId
+      - name: address
+        type: String
+      - name: wire
+        type: agentic.model.Wire
+      - name: hosting
+        type: agentic.model.Hosting
+      - name: start_wait_seconds
+        type: Optional<Integer>
+        summary: How long a Managed or Local server takes from a start until it answers; absent for one that is always up.
+    relations:
+      - name: model
+        kind: references
+        target: agentic.model.Model
+        cardinality: one
+        via: model_id
+    lifecycle:
+      initial: Open
+      states: [Open, Closed]
+      terminal: [Closed]
+      transitions:
+        - name: close
+          from: [Open]
+          to: Closed
+
+  - name: agentic.model.Route
+    naming:
+      summary: A name that resolves to one endpoint and the model it serves. Callers name routes, never endpoints.
+    identity:
+      name: route_id
+      type: agentic.shared.RouteId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: endpoint_id
+        type: agentic.shared.EndpointId
+      - name: model_id
+        type: agentic.shared.ModelId
+    relations:
+      - name: endpoint
+        kind: references
+        target: agentic.model.Endpoint
+        cardinality: one
+        via: endpoint_id
+      - name: model
+        kind: references
+        target: agentic.model.Model
+        cardinality: one
+        via: model_id
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Active]
+          to: Retired
+
+  - name: agentic.model.Inference
+    naming:
+      summary: >-
+        One request on one route. Started when the request is accepted, Finished when it ended,
+        with the usage, the latency and how it ended. Content is never held: the request is a
+        digest and a length.
+    identity:
+      name: inference_id
+      type: agentic.shared.InferenceId
+    fields:
+      - name: route_id
+        type: agentic.shared.RouteId
+      - name: request
+        type: agentic.shared.Content
+      - name: usage
+        type: Optional<agentic.shared.Usage>
+      - name: latency
+        type: Optional<agentic.model.Latency>
+      - name: outcome
+        type: Optional<agentic.model.InferenceOutcome>
+    relations:
+      - name: route
+        kind: references
+        target: agentic.model.Route
+        cardinality: one
+        via: route_id
+    lifecycle:
+      initial: Started
+      states: [Started, Finished]
+      terminal: [Finished]
+      transitions:
+        - name: finish
+          from: [Started]
+          to: Finished
+
+actors:
+  - name: agentic.model.Operator
+    naming:
+      display: Model operator
+      summary: Whoever keeps the catalogue of providers, models, endpoints and routes.
+    may:
+      - agentic.model.RegisterProvider
+      - agentic.model.DeclareModel
+      - agentic.model.RetireModel
+      - agentic.model.OpenEndpoint
+      - agentic.model.CloseEndpoint
+      - agentic.model.DefineRoute
+      - agentic.model.RetireRoute
+
+  - name: agentic.model.Caller
+    naming:
+      display: Caller
+      summary: Whatever makes inferences on a route; in a running system the gateway does it for the agent.
+    may:
+      - agentic.model.StartInference
+      - agentic.model.FinishInference
+
+errors:
+  - name: agentic.model.UnknownProvider
+    summary: No provider of this identity is registered.
+    fields:
+      - {name: provider_id, type: agentic.shared.ProviderId}
+
+  - name: agentic.model.UnknownModel
+    summary: No model of this identity is declared.
+    fields:
+      - {name: model_id, type: agentic.shared.ModelId}
+
+  - name: agentic.model.UnknownEndpoint
+    summary: No endpoint of this identity is open or closed; none was ever opened.
+    fields:
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+
+  - name: agentic.model.UnknownRoute
+    summary: No route of this identity is defined.
+    fields:
+      - {name: route_id, type: agentic.shared.RouteId}
+
+  - name: agentic.model.InvalidContextWindow
+    summary: The context window is not a positive number of tokens.
+    fields:
+      - {name: submitted, type: Integer}
+
+  - name: agentic.model.ModelIsRetired
+    summary: The model is retired; nothing new is served from it.
+    fields:
+      - {name: model_id, type: agentic.shared.ModelId}
+
+  - name: agentic.model.EndpointIsClosed
+    summary: The endpoint is closed; no route may point at it.
+    fields:
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+
+  - name: agentic.model.RouteIsRetired
+    summary: The route is retired; an inference on it is refused.
+    fields:
+      - {name: route_id, type: agentic.shared.RouteId}
+
+  - name: agentic.model.ModelStateConflict
+    summary: The model is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.model.Model.State}
+
+  - name: agentic.model.EndpointStateConflict
+    summary: The endpoint is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.model.Endpoint.State}
+
+  - name: agentic.model.RouteStateConflict
+    summary: The route is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.model.Route.State}
+
+  - name: agentic.model.InferenceStateConflict
+    summary: The inference is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.model.Inference.State}
+
+commands:
+  - name: agentic.model.RegisterProvider
+    naming:
+      wire: register-provider
+      display: Register a provider
+    input:
+      - {name: provider_id, type: agentic.shared.ProviderId}
+      - {name: name, type: agentic.shared.Name}
+    outcomes:
+      - name: registered
+        creates: agentic.model.Provider
+        instance: provider_id
+        sets:
+          name: input.name
+        emits: [agentic.model.ProviderRegistered]
+        payload:
+          agentic.model.ProviderRegistered:
+            provider_id: input.provider_id
+            name: input.name
+        summary: The provider exists and offers no model yet.
+
+  - name: agentic.model.DeclareModel
+    naming:
+      wire: declare-model
+      display: Declare a model
+    input:
+      - {name: model_id, type: agentic.shared.ModelId}
+      - {name: provider_id, type: agentic.shared.ProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: capabilities, type: "List<agentic.model.Capability>"}
+      - {name: context_window, type: Integer}
+      - {name: price, type: agentic.model.TokenPrice}
+    outcomes:
+      - name: unknown-provider
+        when_related: {via: input.provider_id, exists: false}
+        error: agentic.model.UnknownProvider
+        payload:
+          agentic.model.UnknownProvider:
+            provider_id: input.provider_id
+        summary: The provider is not registered, so the model has no offerer.
+      - name: declared
+        when: context_window > 0
+        creates: agentic.model.Model
+        instance: model_id
+        sets:
+          provider_id: input.provider_id
+          name: input.name
+          capabilities: input.capabilities
+          context_window: input.context_window
+          price: input.price
+        emits: [agentic.model.ModelDeclared]
+        payload:
+          agentic.model.ModelDeclared:
+            model_id: input.model_id
+            provider_id: input.provider_id
+            name: input.name
+            context_window: input.context_window
+        summary: The model is Current and may be served.
+      - name: invalid-window
+        error: agentic.model.InvalidContextWindow
+        payload:
+          agentic.model.InvalidContextWindow:
+            submitted: input.context_window
+        summary: The context window was not positive, and nothing was declared.
+
+  - name: agentic.model.RetireModel
+    naming:
+      wire: retire-model
+      display: Retire a model
+    input:
+      - {name: model_id, type: agentic.shared.ModelId}
+    outcomes:
+      - name: retired
+        moves: agentic.model.Model.retire
+        instance: model_id
+        emits: [agentic.model.ModelRetired]
+        payload:
+          agentic.model.ModelRetired:
+            model_id: input.model_id
+        summary: The model is Retired; no endpoint or route may be opened on it.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.model.ModelStateConflict
+        summary: The model was already retired.
+
+  - name: agentic.model.OpenEndpoint
+    naming:
+      wire: open-endpoint
+      display: Open an endpoint
+    input:
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+      - {name: model_id, type: agentic.shared.ModelId}
+      - {name: address, type: String}
+      - {name: wire, type: agentic.model.Wire}
+      - {name: hosting, type: agentic.model.Hosting}
+      - {name: start_wait_seconds, type: Optional<Integer>}
+    outcomes:
+      - name: unknown-model
+        when_related: {via: input.model_id, exists: false}
+        error: agentic.model.UnknownModel
+        payload:
+          agentic.model.UnknownModel:
+            model_id: input.model_id
+        summary: The model is not declared, so there is nothing to serve.
+      - name: model-retired
+        when_related: {via: input.model_id, predicate: state == Retired}
+        error: agentic.model.ModelIsRetired
+        payload:
+          agentic.model.ModelIsRetired:
+            model_id: input.model_id
+        summary: The model is retired, so no new endpoint serves it.
+      - name: opened
+        creates: agentic.model.Endpoint
+        instance: endpoint_id
+        sets:
+          model_id: input.model_id
+          address: input.address
+          wire: input.wire
+          hosting: input.hosting
+          start_wait_seconds: input.start_wait_seconds
+        emits: [agentic.model.EndpointOpened]
+        payload:
+          agentic.model.EndpointOpened:
+            endpoint_id: input.endpoint_id
+            model_id: input.model_id
+            address: input.address
+            wire: input.wire
+            hosting: input.hosting
+        summary: The endpoint is Open.
+
+  - name: agentic.model.CloseEndpoint
+    naming:
+      wire: close-endpoint
+      display: Close an endpoint
+    input:
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+    outcomes:
+      - name: closed
+        moves: agentic.model.Endpoint.close
+        instance: endpoint_id
+        emits: [agentic.model.EndpointClosed]
+        payload:
+          agentic.model.EndpointClosed:
+            endpoint_id: input.endpoint_id
+        summary: The endpoint is Closed; routes that point at it stay defined and are for the operator to retire.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.model.EndpointStateConflict
+        summary: The endpoint was already closed.
+
+  - name: agentic.model.DefineRoute
+    naming:
+      wire: define-route
+      display: Define a route
+    input:
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+      - {name: model_id, type: agentic.shared.ModelId}
+    outcomes:
+      - name: unknown-endpoint
+        when_related: {via: input.endpoint_id, exists: false}
+        error: agentic.model.UnknownEndpoint
+        payload:
+          agentic.model.UnknownEndpoint:
+            endpoint_id: input.endpoint_id
+        summary: The endpoint was never opened.
+      - name: unknown-model
+        when_related: {via: input.model_id, exists: false}
+        error: agentic.model.UnknownModel
+        payload:
+          agentic.model.UnknownModel:
+            model_id: input.model_id
+        summary: The model is not declared.
+      - name: endpoint-closed
+        when_related: {via: input.endpoint_id, predicate: state == Closed}
+        error: agentic.model.EndpointIsClosed
+        payload:
+          agentic.model.EndpointIsClosed:
+            endpoint_id: input.endpoint_id
+        summary: The endpoint is closed, so a route to it would never be served.
+      - name: model-retired
+        when_related: {via: input.model_id, predicate: state == Retired}
+        error: agentic.model.ModelIsRetired
+        payload:
+          agentic.model.ModelIsRetired:
+            model_id: input.model_id
+        summary: The model is retired, so a new route to it is refused.
+      - name: defined
+        creates: agentic.model.Route
+        instance: route_id
+        sets:
+          name: input.name
+          endpoint_id: input.endpoint_id
+          model_id: input.model_id
+        emits: [agentic.model.RouteDefined]
+        payload:
+          agentic.model.RouteDefined:
+            route_id: input.route_id
+            name: input.name
+            endpoint_id: input.endpoint_id
+            model_id: input.model_id
+        summary: The route is Active and resolves to the endpoint and model.
+    # UNMAPPED: nothing here says whether the endpoint's model must equal the route's model_id.
+    # ESS cannot compare a related row's field with an input field, so a route could name a model
+    # its endpoint does not serve. Open question for the owner: drop model_id from the route.
+
+  - name: agentic.model.RetireRoute
+    naming:
+      wire: retire-route
+      display: Retire a route
+    input:
+      - {name: route_id, type: agentic.shared.RouteId}
+    outcomes:
+      - name: retired
+        moves: agentic.model.Route.retire
+        instance: route_id
+        emits: [agentic.model.RouteRetired]
+        payload:
+          agentic.model.RouteRetired:
+            route_id: input.route_id
+        summary: The route is Retired; an inference on it is refused from now on.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.model.RouteStateConflict
+        summary: The route was already retired.
+
+  - name: agentic.model.StartInference
+    naming:
+      wire: start-inference
+      display: Start an inference
+    input:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: request, type: agentic.shared.Content}
+    outcomes:
+      - name: unknown-route
+        when_related: {via: input.route_id, exists: false}
+        error: agentic.model.UnknownRoute
+        payload:
+          agentic.model.UnknownRoute:
+            route_id: input.route_id
+        summary: No route of this name exists, so the request has nowhere to go.
+      - name: route-retired
+        when_related: {via: input.route_id, predicate: state == Retired}
+        error: agentic.model.RouteIsRetired
+        payload:
+          agentic.model.RouteIsRetired:
+            route_id: input.route_id
+        summary: The route is retired, so no inference starts on it.
+      - name: started
+        creates: agentic.model.Inference
+        instance: inference_id
+        sets:
+          route_id: input.route_id
+          request: input.request
+        emits: [agentic.model.InferenceStarted]
+        payload:
+          agentic.model.InferenceStarted:
+            inference_id: input.inference_id
+            route_id: input.route_id
+            request: input.request
+        summary: The inference is Started and holds no usage yet.
+
+  - name: agentic.model.FinishInference
+    naming:
+      wire: finish-inference
+      display: Finish an inference
+    input:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: outcome, type: agentic.model.InferenceOutcome}
+      - {name: usage, type: agentic.shared.Usage}
+      - {name: latency, type: agentic.model.Latency}
+    outcomes:
+      - name: finished
+        moves: agentic.model.Inference.finish
+        instance: inference_id
+        sets:
+          outcome: input.outcome
+          usage: input.usage
+          latency: input.latency
+        emits: [agentic.model.InferenceFinished]
+        payload:
+          agentic.model.InferenceFinished:
+            inference_id: input.inference_id
+            outcome: input.outcome
+            usage: input.usage
+            latency: input.latency
+        summary: The inference is Finished with its usage, latency and outcome on record.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.model.InferenceStateConflict
+        summary: The inference had already finished.
+
+events:
+  - name: agentic.model.ProviderRegistered
+    fields:
+      - {name: provider_id, type: agentic.shared.ProviderId}
+      - {name: name, type: agentic.shared.Name}
+
+  - name: agentic.model.ModelDeclared
+    fields:
+      - {name: model_id, type: agentic.shared.ModelId}
+      - {name: provider_id, type: agentic.shared.ProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: context_window, type: Integer}
+
+  - name: agentic.model.ModelRetired
+    fields:
+      - {name: model_id, type: agentic.shared.ModelId}
+
+  - name: agentic.model.EndpointOpened
+    fields:
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+      - {name: model_id, type: agentic.shared.ModelId}
+      - {name: address, type: String}
+      - {name: wire, type: agentic.model.Wire}
+      - {name: hosting, type: agentic.model.Hosting}
+
+  - name: agentic.model.EndpointClosed
+    fields:
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+
+  - name: agentic.model.RouteDefined
+    fields:
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+      - {name: model_id, type: agentic.shared.ModelId}
+
+  - name: agentic.model.RouteRetired
+    fields:
+      - {name: route_id, type: agentic.shared.RouteId}
+
+  - name: agentic.model.InferenceStarted
+    fields:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: request, type: agentic.shared.Content}
+
+  - name: agentic.model.InferenceFinished
+    fields:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: outcome, type: agentic.model.InferenceOutcome}
+      - {name: usage, type: agentic.shared.Usage}
+      - {name: latency, type: agentic.model.Latency}
+
+views:
+  - name: agentic.model.Models
+    source: agentic.model.Model
+    consistency: read_your_writes
+    fields:
+      - {name: model_id, type: agentic.shared.ModelId}
+      - {name: provider_id, type: agentic.shared.ProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: context_window, type: Integer}
+      - {name: capabilities, type: "List<agentic.model.Capability>"}
+      - {name: price, type: agentic.model.TokenPrice}
+      - {name: state, type: agentic.model.Model.State}
+    naming:
+      wire: models
+      display: Models
+
+  - name: agentic.model.Routes
+    source: agentic.model.Route
+    consistency: read_your_writes
+    fields:
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+      - {name: model_id, type: agentic.shared.ModelId}
+      - {name: state, type: agentic.model.Route.State}
+    naming:
+      wire: routes
+      display: Routes
+
+  - name: agentic.model.Inferences
+    source: agentic.model.Inference
+    consistency: read_your_writes
+    fields:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: request, type: agentic.shared.Content}
+      - {name: usage, type: Optional<agentic.shared.Usage>}
+      - {name: latency, type: Optional<agentic.model.Latency>}
+      - {name: outcome, type: Optional<agentic.model.InferenceOutcome>}
+      - {name: state, type: agentic.model.Inference.State}
+    naming:
+      wire: inferences
+      display: Inferences
+
+  - name: agentic.model.Endpoints
+    source: agentic.model.Endpoint
+    consistency: read_your_writes
+    fields:
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+      - {name: model_id, type: agentic.shared.ModelId}
+      - {name: address, type: String}
+      - {name: wire, type: agentic.model.Wire}
+      - {name: hosting, type: agentic.model.Hosting}
+      - {name: start_wait_seconds, type: Optional<Integer>}
+      - {name: state, type: agentic.model.Endpoint.State}
+    naming:
+      wire: endpoints
+      display: Endpoints

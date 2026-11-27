@@ -1,0 +1,274 @@
+/*
+ * The building-block pages: family colours (the architecture renderer's palette, light and dark),
+ * the layer map, block headers, lifecycles, the KPI catalogue and the architecture frame.
+ */
+
+:root {
+  --as-principal: #b87d00;
+  --as-agent: #2a78d6;
+  --as-collab: #d0588a;
+  --as-work: #008300;
+  --as-intel: #6250d6;
+  --as-capability: #138a60;
+  --as-place: #d65a26;
+  --as-resource: #d23f3e;
+  --as-composition: #0c7c8a;
+  --as-evaluation: #6f5aa8;
+  --as-foundation: #7d7a70;
+  --as-other: #8f8d85;
+  --as-card: var(--b10x-color-surface, #fbf9f2);
+  --as-card-hover: color-mix(in srgb, var(--as-card) 88%, var(--b10x-color-heading, #08131e) 12%);
+  --as-ink: var(--b10x-color-heading, #08131e);
+  --as-text: var(--b10x-color-text, #1c2932);
+  --as-muted: var(--b10x-color-muted, #52616a);
+  --as-line: color-mix(in srgb, var(--b10x-color-line, #898b88) 55%, transparent);
+  --as-edge: color-mix(in srgb, var(--b10x-color-muted, #52616a) 55%, transparent);
+  --as-edge-on: var(--b10x-color-link, #0c6478);
+  --as-band: color-mix(in srgb, var(--b10x-color-heading, #08131e) 3.5%, transparent);
+  --as-good: var(--b10x-color-success, #477000);
+  --as-bad: var(--b10x-color-danger, #8f3e3e);
+  --as-warn: var(--b10x-color-warning, #8a4d00);
+}
+
+[data-theme='dark'] {
+  --as-principal: #d99a10;
+  --as-agent: #4b93ea;
+  --as-collab: #e06b98;
+  --as-work: #2fae3f;
+  --as-intel: #9085e9;
+  --as-capability: #22b07f;
+  --as-place: #e8703c;
+  --as-resource: #ec6f6e;
+  --as-composition: #37b6c4;
+  --as-evaluation: #a993e6;
+  --as-foundation: #9c998f;
+  --as-other: #77756e;
+  --as-band: color-mix(in srgb, var(--b10x-color-heading, #f4f5ed) 4%, transparent);
+  --as-edge: color-mix(in srgb, var(--b10x-color-muted, #aab6ba) 50%, transparent);
+}
+
+.as-fam-principal { --fam: var(--as-principal); }
+.as-fam-agent { --fam: var(--as-agent); }
+.as-fam-collab { --fam: var(--as-collab); }
+.as-fam-work { --fam: var(--as-work); }
+.as-fam-intel { --fam: var(--as-intel); }
+.as-fam-capability { --fam: var(--as-capability); }
+.as-fam-place { --fam: var(--as-place); }
+.as-fam-resource { --fam: var(--as-resource); }
+.as-fam-composition { --fam: var(--as-composition); }
+.as-fam-evaluation { --fam: var(--as-evaluation); }
+.as-fam-foundation { --fam: var(--as-foundation); }
+.as-fam-other { --fam: var(--as-other); }
+
+/* Tags inside generated tables: refused, gate, marked, accepted. Key data: 14 px (SUF-013). */
+.as-tag {
+  display: inline-block;
+  padding: 0 0.45em;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  white-space: nowrap;
+  vertical-align: 0.08em;
+  border: 1px solid currentColor;
+}
+.as-tag--refused { color: var(--as-bad); background: color-mix(in srgb, var(--as-bad) 9%, transparent); }
+.as-tag--gate { color: var(--as-warn); background: color-mix(in srgb, var(--as-warn) 9%, transparent); }
+.as-tag--accepted { color: var(--as-good); background: color-mix(in srgb, var(--as-good) 10%, transparent); }
+.as-tag--marked { color: var(--as-edge-on); background: color-mix(in srgb, var(--as-edge-on) 9%, transparent); }
+.as-tag--planned { color: var(--as-muted); }
+
+/* Generated tables read as reference tables: compact, top-aligned, code never wraps mid-name.
+   Heads, cells and the names in them at 14 px (SUF-013), the heads in sentence case. */
+.markdown:has(.as-head, .as-arch, .as-map) table { font-size: 0.875rem; }
+.markdown:has(.as-head, .as-arch, .as-map) table th { font-size: 0.875rem; letter-spacing: 0; text-transform: none; }
+.markdown:has(.as-head, .as-arch, .as-map) table :is(td, th) code { font-size: 0.875rem; }
+.markdown:has(.as-head, .as-arch, .as-map) table td, .markdown:has(.as-head, .as-arch, .as-map) table th { vertical-align: top; padding: 0.45rem 0.65rem; }
+.markdown:has(.as-head, .as-arch, .as-map) table td:first-child code { white-space: nowrap; }
+.markdown:has(.as-head, .as-arch, .as-map) table td:not(:first-child) code { white-space: normal; overflow-wrap: anywhere; }
+.markdown:has(.as-head, .as-arch, .as-map) table small { color: var(--as-muted); font-size: 0.92em; line-height: 1.45; display: inline-block; margin-top: 0.15rem; }
+
+/* ---------- layer map ---------- */
+
+.as-map { margin: 1.5rem 0 2rem; }
+.as-map__frame {
+  border: 1px solid var(--as-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--as-card) 40%, transparent);
+  padding: 10px 10px 4px;
+}
+.as-map__frame > svg { display: block; width: 100%; height: auto; overflow: visible; }
+.as-map__band { fill: var(--as-band); }
+.as-map__layer-n { fill: var(--as-ink); font: 700 26px/1 var(--b10x-font-sans, system-ui); font-variant-numeric: tabular-nums; }
+.as-map__layer-name { fill: var(--as-muted); font: 600 11.5px/1 var(--b10x-font-sans, system-ui); letter-spacing: 0.06em; text-transform: uppercase; }
+.as-map__edge { fill: none; stroke: var(--as-edge); stroke-width: 1.4; transition: opacity 140ms ease, stroke 140ms ease; }
+.as-map__edge--on { stroke: var(--as-edge-on); stroke-width: 2.2; }
+.as-map__edge--off { opacity: 0.12; }
+.as-map__arrow { fill: var(--as-edge); }
+.as-map__arrow--on { fill: var(--as-edge-on); }
+
+.as-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  padding: 8px 11px 7px 13px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--fam) 38%, var(--as-line));
+  background:
+    linear-gradient(90deg, var(--fam) 0 4px, transparent 4px),
+    linear-gradient(180deg, color-mix(in srgb, var(--fam) 9%, var(--as-card)), var(--as-card));
+  color: var(--as-text);
+  text-decoration: none !important;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--as-ink) 8%, transparent);
+  transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease, border-color 140ms ease;
+  overflow: hidden;
+}
+.as-card:hover, .as-card:focus-visible, .as-card--on {
+  border-color: var(--fam);
+  box-shadow: 0 0 0 1px var(--fam), 0 6px 18px color-mix(in srgb, var(--as-ink) 14%, transparent);
+}
+.as-card:focus-visible { outline: 2px solid var(--as-edge-on); outline-offset: 2px; }
+.as-card--off { opacity: 0.42; }
+.as-card__head { display: flex; align-items: center; gap: 6px; }
+.as-card__icon { flex: none; width: 15px; height: 15px; color: var(--fam); }
+.as-card__icon path { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.as-card__name { font: 650 14.5px/1.2 var(--b10x-font-mono, ui-monospace, monospace); color: var(--as-ink); letter-spacing: -0.01em; }
+.as-card__summary {
+  font-size: 12.2px;
+  line-height: 1.35;
+  color: var(--as-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.as-card__meta { margin-top: auto; display: flex; gap: 8px; font-size: 11px; color: var(--as-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.as-card__meta b { color: var(--as-text); font-weight: 650; }
+.as-card__kpi { margin-left: auto; color: var(--fam) !important; }
+.as-card--band { flex-direction: row; align-items: center; gap: 14px; padding-left: 16px; }
+.as-card--band .as-card__summary { -webkit-line-clamp: 2; flex: 1; }
+
+.as-map__legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 4px 0; font-size: 12px; color: var(--as-muted); }
+.as-map__legend span { display: inline-flex; align-items: center; gap: 6px; }
+.as-map__legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--fam); display: inline-block; }
+.as-map__hint { font-size: 12px; color: var(--as-muted); margin: 6px 4px 0; }
+
+@media (max-width: 760px) {
+  .as-map__frame { overflow-x: auto; }
+  .as-map__frame > svg { min-width: 760px; }
+}
+
+/* ---------- block header ---------- */
+
+.as-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  margin: 0.25rem 0 1.4rem;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--fam) 35%, var(--as-line));
+  background: linear-gradient(90deg, var(--fam) 0 5px, transparent 5px),
+    linear-gradient(120deg, color-mix(in srgb, var(--fam) 10%, var(--as-card)), var(--as-card) 70%);
+}
+.as-head__id { display: flex; align-items: center; gap: 10px; padding: 0 12px 0 6px; margin-right: 4px; border-right: 1px solid var(--as-line); }
+.as-head__icon { width: 30px; height: 30px; color: var(--fam); }
+.as-head__icon path { fill: none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
+.as-head__layer { display: flex; flex-direction: column; line-height: 1.15; }
+.as-head__layer b { font-size: 0.95rem; color: var(--as-ink); }
+.as-head__layer span { font-size: 0.76rem; color: var(--as-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.as-head__stats { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
+.as-stat { display: flex; flex-direction: column; line-height: 1.1; min-width: 3.4rem; }
+.as-stat b { font-size: 1.25rem; color: var(--as-ink); font-variant-numeric: tabular-nums; }
+.as-stat span { font-size: 0.74rem; color: var(--as-muted); }
+.as-stat--zero b { color: var(--as-muted); font-weight: 500; }
+
+/* ---------- lifecycle ---------- */
+
+.as-life { margin: 0.4rem 0 1.6rem; }
+.as-life__frame {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 8px 12px 4px;
+  border-radius: 10px;
+  border: 1px dashed var(--as-line);
+  background: color-mix(in srgb, var(--as-card) 50%, transparent);
+}
+.as-life__title { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--as-muted); margin: 0 0 2px; }
+.as-life svg { display: block; }
+.as-life__node rect { fill: var(--as-card); stroke: color-mix(in srgb, var(--as-edge-on) 55%, var(--as-line)); stroke-width: 1.2; }
+.as-life__node--terminal rect.outer { fill: none; stroke: color-mix(in srgb, var(--as-muted) 60%, transparent); }
+.as-life__node--terminal rect:not(.outer) { stroke: color-mix(in srgb, var(--as-muted) 70%, transparent); }
+.as-life__node--initial rect { stroke: var(--as-edge-on); stroke-width: 1.8; }
+.as-life__node text { fill: var(--as-ink); font: 600 12.5px/1 var(--b10x-font-mono, ui-monospace, monospace); }
+.as-life__edge { fill: none; stroke: var(--as-muted); stroke-width: 1.2; }
+.as-life__start { fill: var(--as-edge-on); }
+.as-life__arrow { fill: var(--as-muted); }
+.as-life__label { fill: var(--as-muted); font: 11px/1 var(--b10x-font-mono, ui-monospace, monospace); paint-order: stroke; stroke: var(--b10x-color-canvas, #f4f2eb); stroke-width: 4px; stroke-linejoin: round; }
+
+/* ---------- KPI catalogue ---------- */
+
+.as-kpis { margin: 1.2rem 0 2rem; }
+.as-kpis__controls { display: grid; grid-template-columns: minmax(12rem, 1.4fr) minmax(9rem, 1fr); gap: 10px 14px; align-items: end; margin-bottom: 10px; }
+.as-kpis__field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; color: var(--as-muted); }
+.as-kpis__field input, .as-kpis__field select {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--as-text);
+  background: var(--as-card);
+  border: 1px solid var(--as-line);
+  border-radius: 8px;
+  padding: 0.42rem 0.6rem;
+  min-height: 2.2rem;
+}
+.as-kpis__chips { display: flex; flex-wrap: wrap; gap: 6px 16px; grid-column: 1 / -1; }
+.as-kpis__group { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; font-size: 0.78rem; color: var(--as-muted); }
+.as-kpis__group > span { margin-right: 2px; }
+.as-chip {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.18rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid var(--as-line);
+  background: transparent;
+  color: var(--as-text);
+  cursor: pointer;
+  min-height: 1.9rem;
+}
+.as-chip[aria-pressed='true'] { background: color-mix(in srgb, var(--as-edge-on) 16%, transparent); border-color: var(--as-edge-on); color: var(--as-ink); }
+.as-chip small { color: var(--as-muted); margin-left: 5px; font-size: 1em; font-variant-numeric: tabular-nums; }
+.as-kpis__count { font-size: 0.82rem; color: var(--as-muted); margin: 4px 0 8px; }
+.as-kpis__scroll { overflow-x: auto; border: 1px solid var(--as-line); border-radius: 12px; }
+.as-kpis table { display: table; width: 100%; margin: 0; border-collapse: collapse; font-size: 0.875rem; }
+.as-kpis thead th { position: sticky; top: 0; background: var(--as-card); z-index: 1; text-align: left; white-space: nowrap; padding: 0; border-bottom: 1px solid var(--as-line); font-size: 0.875rem; letter-spacing: 0; text-transform: none; }
+.as-kpis thead button { font: inherit; font-weight: 650; color: var(--as-ink); background: none; border: 0; padding: 0.55rem 0.65rem; cursor: pointer; width: 100%; text-align: left; }
+.as-kpis thead button:hover { color: var(--as-edge-on); }
+.as-kpis tbody tr { border-top: 1px solid color-mix(in srgb, var(--as-line) 60%, transparent); }
+.as-kpis tbody tr:nth-child(2n) { background: color-mix(in srgb, var(--as-band) 100%, transparent); }
+.as-kpis td { vertical-align: top; padding: 0.5rem 0.65rem; border: 0; }
+.as-kpis td code { white-space: nowrap; font-size: 0.875rem; }
+.as-kpis__what p { margin: 0.2rem 0 0; color: var(--as-text); }
+.as-kpis__what small { display: block; margin-top: 0.2rem; color: var(--as-muted); line-height: 1.45; }
+.as-kpis__block { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-family: var(--b10x-font-mono, ui-monospace, monospace); font-size: 0.875rem; }
+.as-kpis__block i { width: 9px; height: 9px; border-radius: 2px; background: var(--fam); display: inline-block; }
+.as-kpis__empty { padding: 1.4rem; text-align: center; color: var(--as-muted); }
+
+@media (max-width: 720px) {
+  .as-kpis__controls { grid-template-columns: 1fr; }
+}
+
+/* ---------- architecture frame ---------- */
+
+.as-arch { margin: 0.4rem 0 1.8rem; }
+.as-arch__bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px; font-size: 0.85rem; color: var(--as-muted); }
+.as-arch__bar a { white-space: nowrap; font-weight: 600; }
+.as-arch iframe { display: block; width: 100%; border: 1px solid var(--as-line); border-radius: 12px; background: var(--as-card); }
+
+/* A box that scrolls sideways takes focus (SUF-008): its ring is the one of the cards. */
+.as-life__frame:focus-visible, .as-kpis__scroll:focus-visible, .as-map__frame:focus-visible { outline: 2px solid var(--as-edge-on); outline-offset: 2px; }

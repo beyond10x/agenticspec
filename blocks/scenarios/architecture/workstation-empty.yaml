@@ -1,0 +1,31 @@
+# Broken variant: the workstation architecture created and committed before any part is
+# declared. An empty architecture records no revision.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: workstation-empty
+summary: An architecture with no part is refused at commit, and no revision is recorded.
+
+arrange:
+  - instance: ws
+    entity: agentic.architecture.Architecture
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: workstation}
+    outcome: created
+    capture: {instance: ws, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.architecture.CommitRevision
+    input:
+      architecture_id: {$instance: ws}
+    outcome: empty
+    error:
+      name: agentic.architecture.EmptyArchitecture
+    no_events: [agentic.architecture.RevisionCommitted]
+
+assert:
+  - view: agentic.architecture.Revisions
+    counts:
+      at_most: 0

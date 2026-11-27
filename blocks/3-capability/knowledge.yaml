@@ -1,0 +1,232 @@
+domain: agentic.knowledge
+
+summary: >-
+  What an agent is given before it acts: instructions, skills, memory entries, context files and
+  concepts. A concept is a named practice an agent applies, such as "test first" or "a default
+  proceeds". An item is published for a scope (an organization or a repository), revised
+  as its content changes, and withdrawn when it no longer applies. Content is held as a digest and
+  a length, never as text.
+
+naming:
+  wire: knowledge
+  display: Knowledge
+
+types:
+  - name: agentic.knowledge.KnowledgeKind
+    kind: enum
+    variants: [Instruction, Skill, Memory, ContextFile, Concept]
+    naming:
+      summary: >-
+        What an item is. An Instruction tells an agent what to do, a Skill is a procedure it may
+        load, Memory is what it kept from earlier work, a ContextFile is a file read into its
+        context, a Concept is a named practice it applies.
+
+  - name: agentic.knowledge.KnowledgeScope
+    kind: enum
+    variants: [Organization, Repository]
+    naming:
+      summary: >-
+        Whom an item applies to. Organization applies to every agent, Repository to agents working
+        in one repository. What one agent is given is listed by its revision in `agentic.agent`.
+
+entities:
+  - name: agentic.knowledge.KnowledgeItem
+    naming:
+      summary: One item of knowledge for one scope. Published until withdrawn; a revision keeps the identity.
+    identity:
+      name: knowledge_id
+      type: agentic.shared.KnowledgeId
+    fields:
+      - name: kind
+        type: agentic.knowledge.KnowledgeKind
+      - name: name
+        type: agentic.shared.Name
+      - name: scope
+        type: agentic.knowledge.KnowledgeScope
+      - name: repository
+        type: Optional<String>
+        summary: The repository the item applies to; present exactly when the scope is Repository.
+      - name: content
+        type: agentic.shared.Content
+      - name: revision
+        type: Integer
+        summary: 1 at publication, one more at each revision.
+    invariants:
+      - revision >= 1
+    # Agent-scoped knowledge is expressed by the agent revision, which lists its knowledge ids.
+    # UNMAPPED: whether a repository
+    # deserves an identifier in `agentic.shared`; it is a String here. Open question for the owner.
+    # UNMAPPED: nothing here records that an agent applied a concept. Open question for the owner:
+    # whether use is an event of this block or of `agentic.harness`.
+    lifecycle:
+      initial: Published
+      states: [Published, Withdrawn]
+      terminal: [Withdrawn]
+      transitions:
+        - name: revise
+          from: [Published]
+          to: Published
+        - name: withdraw
+          from: [Published]
+          to: Withdrawn
+
+actors:
+  - name: agentic.knowledge.KnowledgeAuthor
+    naming:
+      display: Knowledge author
+      summary: Whoever writes and keeps the knowledge of a scope.
+    may:
+      - agentic.knowledge.PublishKnowledge
+      - agentic.knowledge.ReviseKnowledge
+      - agentic.knowledge.WithdrawKnowledge
+
+errors:
+  - name: agentic.knowledge.ScopeTargetMissing
+    summary: The scope names a repository and the request gave none.
+    fields:
+      - {name: scope, type: agentic.knowledge.KnowledgeScope}
+
+  - name: agentic.knowledge.KnowledgeStateConflict
+    summary: The item is not in a state this command acts from; it was withdrawn.
+    fields:
+      - {name: state, type: agentic.knowledge.KnowledgeItem.State}
+
+commands:
+  - name: agentic.knowledge.PublishKnowledge
+    naming:
+      wire: publish-knowledge
+      display: Publish knowledge
+    input:
+      - {name: knowledge_id, type: agentic.shared.KnowledgeId}
+      - {name: kind, type: agentic.knowledge.KnowledgeKind}
+      - {name: name, type: agentic.shared.Name}
+      - {name: scope, type: agentic.knowledge.KnowledgeScope}
+      - {name: repository, type: "Optional<String>"}
+      - {name: content, type: agentic.shared.Content}
+    outcomes:
+      - name: repository-missing
+        when:
+          all:
+            - scope == Repository
+            - not defined(repository)
+        error: agentic.knowledge.ScopeTargetMissing
+        payload:
+          agentic.knowledge.ScopeTargetMissing:
+            scope: input.scope
+        summary: The scope is Repository and no repository was named; nothing is published.
+      - name: published
+        creates: agentic.knowledge.KnowledgeItem
+        instance: knowledge_id
+        sets:
+          kind: input.kind
+          name: input.name
+          scope: input.scope
+          repository: input.repository
+          content: input.content
+          revision: 1
+        emits: [agentic.knowledge.KnowledgePublished]
+        payload:
+          agentic.knowledge.KnowledgePublished:
+            knowledge_id: input.knowledge_id
+            kind: input.kind
+            name: input.name
+            scope: input.scope
+            repository: input.repository
+            content: input.content
+        summary: The item is Published at revision 1 and reaches every agent in its scope.
+
+  - name: agentic.knowledge.ReviseKnowledge
+    naming:
+      wire: revise-knowledge
+      display: Revise knowledge
+    input:
+      - {name: knowledge_id, type: agentic.shared.KnowledgeId}
+      - {name: content, type: agentic.shared.Content}
+    outcomes:
+      - name: revised
+        moves: agentic.knowledge.KnowledgeItem.revise
+        instance: knowledge_id
+        sets:
+          content: input.content
+          revision: {increment: 1}
+        emits: [agentic.knowledge.KnowledgeRevised]
+        payload:
+          agentic.knowledge.KnowledgeRevised:
+            knowledge_id: input.knowledge_id
+            content: input.content
+        summary: The item holds the new content under the next revision.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.knowledge.KnowledgeStateConflict
+        summary: The item was withdrawn, so it cannot be revised.
+
+  - name: agentic.knowledge.WithdrawKnowledge
+    naming:
+      wire: withdraw-knowledge
+      display: Withdraw knowledge
+    input:
+      - {name: knowledge_id, type: agentic.shared.KnowledgeId}
+    outcomes:
+      - name: withdrawn
+        moves: agentic.knowledge.KnowledgeItem.withdraw
+        instance: knowledge_id
+        emits: [agentic.knowledge.KnowledgeWithdrawn]
+        payload:
+          agentic.knowledge.KnowledgeWithdrawn:
+            knowledge_id: input.knowledge_id
+        summary: The item is Withdrawn and reaches no agent from now on.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.knowledge.KnowledgeStateConflict
+        summary: The item was already withdrawn.
+
+events:
+  - name: agentic.knowledge.KnowledgePublished
+    fields:
+      - {name: knowledge_id, type: agentic.shared.KnowledgeId}
+      - {name: kind, type: agentic.knowledge.KnowledgeKind}
+      - {name: name, type: agentic.shared.Name}
+      - {name: scope, type: agentic.knowledge.KnowledgeScope}
+      - {name: repository, type: Optional<String>}
+      - {name: content, type: agentic.shared.Content}
+
+  - name: agentic.knowledge.KnowledgeRevised
+    fields:
+      - {name: knowledge_id, type: agentic.shared.KnowledgeId}
+      - {name: content, type: agentic.shared.Content}
+
+  - name: agentic.knowledge.KnowledgeWithdrawn
+    fields:
+      - {name: knowledge_id, type: agentic.shared.KnowledgeId}
+
+views:
+  - name: agentic.knowledge.Knowledge
+    source: agentic.knowledge.KnowledgeItem
+    consistency: read_your_writes
+    fields:
+      - {name: knowledge_id, type: agentic.shared.KnowledgeId}
+      - {name: kind, type: agentic.knowledge.KnowledgeKind}
+      - {name: name, type: agentic.shared.Name}
+      - {name: scope, type: agentic.knowledge.KnowledgeScope}
+      - {name: repository, type: Optional<String>}
+      - {name: content, type: agentic.shared.Content}
+      - {name: revision, type: Integer}
+      - {name: state, type: agentic.knowledge.KnowledgeItem.State}
+    naming:
+      wire: knowledge
+      display: Knowledge
+
+  - name: agentic.knowledge.PublishedConcepts
+    source: agentic.knowledge.KnowledgeItem
+    consistency: read_your_writes
+    filter:
+      all:
+        - kind == Concept
+        - state == Published
+    fields:
+      - {name: knowledge_id, type: agentic.shared.KnowledgeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: scope, type: agentic.knowledge.KnowledgeScope}
+    naming:
+      wire: published-concepts
+      display: Published concepts

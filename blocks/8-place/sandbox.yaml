@@ -1,0 +1,287 @@
+domain: agentic.sandbox
+
+summary: >-
+  What a workload can reach: an isolation level, the paths it may write, the hosts and ports it
+  may connect to, and the secrets it may read, by name only. Default deny: a reach no rule names
+  is refused. A secret's value is never part of the contract.
+
+naming:
+  wire: sandbox
+  display: Sandbox
+
+types:
+  - name: agentic.sandbox.Host
+    kind: newtype
+    of: String
+    naming:
+      summary: A host name or address, matched exactly.
+
+  - name: agentic.sandbox.Path
+    kind: newtype
+    of: String
+    naming:
+      summary: A path in the file system the workload sees, matched exactly.
+
+  - name: agentic.sandbox.SecretName
+    kind: newtype
+    of: String
+    naming:
+      summary: The name a secret is granted by; the value never appears.
+
+  - name: agentic.sandbox.EgressRule
+    kind: struct
+    fields:
+      - {name: host, type: agentic.sandbox.Host}
+      - {name: port, type: Integer}
+    invariants:
+      - port >= 1
+      - port <= 65535
+
+entities:
+  - name: agentic.sandbox.Sandbox
+    naming:
+      summary: One set of reach rules a workload runs under.
+    identity:
+      name: sandbox_id
+      type: agentic.shared.SandboxId
+    # UNMAPPED: the design lists "an identity" (the workload identity a sandbox lends) among a
+    # sandbox's parts; no source says what it is or what checks it, so it is not modelled.
+    # UNMAPPED: rules match exactly. Prefix paths and host patterns (a directory and everything
+    # under it, a domain and its subdomains) are not expressible: a guard tests a stored list
+    # element only with `==` against the input; `starts_with` takes a literal.
+    fields:
+      - name: isolation
+        type: agentic.shared.IsolationLevel
+      - name: writable_paths
+        type: List<agentic.sandbox.Path>
+      - name: egress
+        type: List<agentic.sandbox.EgressRule>
+      - name: secret_grants
+        type: List<agentic.sandbox.SecretName>
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Active]
+          to: Retired
+
+actors:
+  - name: agentic.sandbox.Operator
+    naming:
+      display: Operator
+      summary: Who defines and retires sandboxes.
+    may:
+      - agentic.sandbox.DefineSandbox
+      - agentic.sandbox.RetireSandbox
+
+  - name: agentic.sandbox.Enforcer
+    naming:
+      display: Enforcer
+      summary: What stands between a workload and what it tries to reach, and asks first.
+    may:
+      - agentic.sandbox.CheckEgress
+      - agentic.sandbox.CheckSecretRead
+      - agentic.sandbox.CheckWrite
+
+errors:
+  - name: agentic.sandbox.UnknownSandbox
+    summary: No sandbox has this identity.
+    fields:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+
+  - name: agentic.sandbox.SandboxIsRetired
+    summary: The sandbox is retired; it allows nothing.
+
+  - name: agentic.sandbox.SandboxStateConflict
+    summary: The sandbox is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.sandbox.Sandbox.State}
+
+  - name: agentic.sandbox.EgressDenied
+    summary: No egress rule names this host and port.
+    fields:
+      - {name: host, type: agentic.sandbox.Host}
+      - {name: port, type: Integer}
+
+  - name: agentic.sandbox.SecretDenied
+    summary: No grant names this secret.
+    fields:
+      - {name: name, type: agentic.sandbox.SecretName}
+
+  - name: agentic.sandbox.WriteDenied
+    summary: The path is not writable in this sandbox.
+    fields:
+      - {name: path, type: agentic.sandbox.Path}
+
+commands:
+  - name: agentic.sandbox.DefineSandbox
+    naming:
+      wire: define-sandbox
+      display: Define a sandbox
+    input:
+      - {name: isolation, type: agentic.shared.IsolationLevel}
+      - name: writable_paths
+        type: List<agentic.sandbox.Path>
+        example: ["/work"]
+      - name: egress
+        type: List<agentic.sandbox.EgressRule>
+        example:
+          - {host: gateway.internal, port: 443}
+      - name: secret_grants
+        type: List<agentic.sandbox.SecretName>
+        example: [gateway-token]
+    outcomes:
+      - name: defined
+        creates: agentic.sandbox.Sandbox
+        instance: sandbox_id
+        sets:
+          isolation: input.isolation
+          writable_paths: input.writable_paths
+          egress: input.egress
+          secret_grants: input.secret_grants
+        emits: [agentic.sandbox.SandboxDefined]
+        payload:
+          agentic.sandbox.SandboxDefined:
+            sandbox_id: {generated: true}
+            isolation: input.isolation
+
+  - name: agentic.sandbox.RetireSandbox
+    naming:
+      wire: retire-sandbox
+      display: Retire a sandbox
+    input:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.sandbox.UnknownSandbox
+        payload:
+          agentic.sandbox.UnknownSandbox: {sandbox_id: input.sandbox_id}
+      - name: retired
+        moves: agentic.sandbox.Sandbox.retire
+        instance: sandbox_id
+        emits: [agentic.sandbox.SandboxRetired]
+        payload:
+          agentic.sandbox.SandboxRetired: {sandbox_id: input.sandbox_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.sandbox.SandboxStateConflict
+        payload:
+          agentic.sandbox.SandboxStateConflict: {state: {subject: state}}
+
+  # The three checks change nothing. A retired sandbox allows nothing; a reach no rule names is
+  # refused by name; only a reach a rule names is accepted.
+  - name: agentic.sandbox.CheckEgress
+    naming:
+      wire: check-egress
+      display: Check an egress
+    input:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+      - {name: host, type: agentic.sandbox.Host}
+      - {name: port, type: Integer}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.sandbox.UnknownSandbox
+        payload:
+          agentic.sandbox.UnknownSandbox: {sandbox_id: input.sandbox_id}
+      - name: retired
+        when_subject:
+          predicate: state == Retired
+        error: agentic.sandbox.SandboxIsRetired
+      - name: denied
+        when_subject:
+          predicate:
+            not:
+              exists: {in: egress, as: r, that: {all: [r.host == input.host, r.port == input.port]}}
+        error: agentic.sandbox.EgressDenied
+        payload:
+          agentic.sandbox.EgressDenied: {host: input.host, port: input.port}
+      - name: allowed
+        preserves: agentic.sandbox.Sandbox
+        instance: sandbox_id
+
+  - name: agentic.sandbox.CheckSecretRead
+    naming:
+      wire: check-secret-read
+      display: Check a secret read
+    input:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+      - {name: name, type: agentic.sandbox.SecretName}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.sandbox.UnknownSandbox
+        payload:
+          agentic.sandbox.UnknownSandbox: {sandbox_id: input.sandbox_id}
+      - name: retired
+        when_subject:
+          predicate: state == Retired
+        error: agentic.sandbox.SandboxIsRetired
+      - name: denied
+        when_subject:
+          predicate:
+            not:
+              exists: {in: secret_grants, as: s, that: s == input.name}
+        error: agentic.sandbox.SecretDenied
+        payload:
+          agentic.sandbox.SecretDenied: {name: input.name}
+      - name: granted
+        preserves: agentic.sandbox.Sandbox
+        instance: sandbox_id
+
+  - name: agentic.sandbox.CheckWrite
+    naming:
+      wire: check-write
+      display: Check a write
+    input:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+      - {name: path, type: agentic.sandbox.Path}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.sandbox.UnknownSandbox
+        payload:
+          agentic.sandbox.UnknownSandbox: {sandbox_id: input.sandbox_id}
+      - name: retired
+        when_subject:
+          predicate: state == Retired
+        error: agentic.sandbox.SandboxIsRetired
+      - name: denied
+        when_subject:
+          predicate:
+            not:
+              exists: {in: writable_paths, as: p, that: p == input.path}
+        error: agentic.sandbox.WriteDenied
+        payload:
+          agentic.sandbox.WriteDenied: {path: input.path}
+      - name: allowed
+        preserves: agentic.sandbox.Sandbox
+        instance: sandbox_id
+
+events:
+  - name: agentic.sandbox.SandboxDefined
+    fields:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+      - {name: isolation, type: agentic.shared.IsolationLevel}
+
+  - name: agentic.sandbox.SandboxRetired
+    fields:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+
+views:
+  - name: agentic.sandbox.Sandboxes
+    source: agentic.sandbox.Sandbox
+    consistency: read_your_writes
+    fields:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+      - {name: isolation, type: agentic.shared.IsolationLevel}
+      - {name: writable_paths, type: List<agentic.sandbox.Path>}
+      - {name: egress, type: List<agentic.sandbox.EgressRule>}
+      - {name: secret_grants, type: List<agentic.sandbox.SecretName>}
+      - {name: state, type: agentic.sandbox.Sandbox.State}
+    naming:
+      wire: sandboxes
+      display: Sandboxes

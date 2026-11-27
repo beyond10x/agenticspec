@@ -1,0 +1,137 @@
+# A run of a process records its steps (consumer gap G5). Synthesis reaches no outcome of
+# RecordStep (ESS-SYNTH-001: arranging the run's task and the assignment's task gives two rows one
+# ProcessId), so this scenario walks the path by hand: a process is published, a task follows it,
+# an agent revision is assigned, a run starts on a route, an agent step and a person step are
+# recorded, the run ends, and a step recorded after the end is refused.
+type: ess-scenario/7
+domain: agentic.work
+scenario: run-records-steps
+summary: A running run records its steps once each; a run that has ended takes no further step.
+
+arrange:
+  - instance: task
+    entity: agentic.work.Task
+  - instance: run
+    entity: agentic.work.Run
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.process.PublishProcess
+    input:
+      process_id: 00000000-0000-4000-8000-00000000c001
+      name: release-notes
+      version: 1
+      source_digest: sha256-process-1
+      at: 2026-11-27T09:00:00Z
+    outcome: published
+
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.work.CreateTask
+    actor: agentic.work.Requester
+    input:
+      goal: {digest: sha256-goal-1, length: 80, class: goal}
+      requested_by: 00000000-0000-4000-8000-0000000000a1
+      process_id: 00000000-0000-4000-8000-00000000c001
+      at: 2026-11-27T09:00:01Z
+    outcome: created
+    capture: {instance: task, event: agentic.work.TaskCreated, field: task_id}
+
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.work.OfferAssignment
+    actor: agentic.work.Requester
+    input:
+      assignment_id: 00000000-0000-4000-8000-00000000d001
+      task_id: {$instance: task}
+      agent_revision_id: 00000000-0000-4000-8000-00000000e001
+      on_behalf_of: 00000000-0000-4000-8000-0000000000a1
+      at: 2026-11-27T09:00:02Z
+    outcome: offered
+
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.work.ActivateAssignment
+    actor: agentic.work.Requester
+    input:
+      assignment_id: 00000000-0000-4000-8000-00000000d001
+      at: 2026-11-27T09:00:03Z
+    outcome: activated
+
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.work.StartRun
+    actor: agentic.work.Worker
+    input:
+      assignment_id: 00000000-0000-4000-8000-00000000d001
+      harness_session_id: 00000000-0000-4000-8000-00000000f001
+      route_id: 00000000-0000-4000-8000-00000000b001
+      at: 2026-11-27T09:00:04Z
+    outcome: started
+    capture: {instance: run, event: agentic.work.RunStarted, field: run_id}
+
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.work.RecordStep
+    actor: agentic.work.Worker
+    input:
+      step_id: 00000000-0000-4000-8000-00000000a501
+      run_id: {$instance: run}
+      action: draft
+      kind: Agent
+      harness_session_id: 00000000-0000-4000-8000-00000000f001
+      result: Passed
+      at: 2026-11-27T09:00:05Z
+    outcome: recorded
+    events:
+      - event: agentic.work.StepRecorded
+        payload: {step_id: 00000000-0000-4000-8000-00000000a501, kind: Agent, result: Passed}
+
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.work.RecordStep
+    actor: agentic.work.Worker
+    input:
+      step_id: 00000000-0000-4000-8000-00000000a502
+      run_id: {$instance: run}
+      action: approve-text
+      kind: Person
+      result: Passed
+      at: 2026-11-27T09:00:06Z
+    outcome: recorded
+
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.work.EndRun
+    actor: agentic.work.Worker
+    input:
+      run_id: {$instance: run}
+      outcome: Done
+      at: 2026-11-27T09:00:07Z
+    outcome: ended
+
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.work.RecordStep
+    actor: agentic.work.Worker
+    input:
+      step_id: 00000000-0000-4000-8000-00000000a503
+      run_id: {$instance: run}
+      action: late
+      kind: Program
+      result: Failed
+      at: 2026-11-27T09:00:08Z
+    outcome: run-ended
+    error:
+      name: agentic.work.RunStateConflict
+    no_events: [agentic.work.StepRecorded]
+
+assert:
+  - view: agentic.work.Steps
+    contains:
+      step_id: 00000000-0000-4000-8000-00000000a501
+      run_id: {$instance: run}
+      kind: Agent
+      result: Passed
+      state: Recorded
+  - view: agentic.work.Steps
+    contains:
+      step_id: 00000000-0000-4000-8000-00000000a502
+      kind: Person
+  - view: agentic.work.Runs
+    contains:
+      run_id: {$instance: run}
+      route_id: 00000000-0000-4000-8000-00000000b001
+      state: Ended

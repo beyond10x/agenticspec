@@ -1,0 +1,545 @@
+domain: agentic.runtime
+
+summary: >-
+  What runs a workload. A runtime says which kinds of workload it runs and the least isolation it
+  runs them under. A workload is a package by digest, a shape and the sandbox it runs in; an
+  instance is one running copy, started, observed and stopped. A Model workload serves one
+  endpoint of agentic.model; its instance's state is the endpoint's phase (Pending starting,
+  Running ready, Exited stopped), and its start may cost money, booked against a budget. A compute cloud and an agent
+  runtime each play this block; neither is described here.
+
+naming:
+  wire: runtime
+  display: Runtime
+
+types:
+  - name: agentic.runtime.WorkloadKind
+    kind: enum
+    variants: [Agent, Service, Job, Model, Snippet]
+
+  - name: agentic.runtime.PackageDigest
+    kind: newtype
+    of: String
+    naming:
+      summary: The content digest of the package a workload runs.
+
+  # UNMAPPED: the design names "a shape" and no source says what it holds; CPU and memory are the
+  # least a runtime places a workload by. Owner to confirm or replace.
+  - name: agentic.runtime.Shape
+    kind: struct
+    fields:
+      - {name: cpu_millis, type: Integer}
+      - {name: memory_mib, type: Integer}
+    invariants:
+      - cpu_millis > 0
+      - memory_mib > 0
+
+entities:
+  - name: agentic.runtime.Runtime
+    naming:
+      summary: One place that runs workloads of the kinds it names.
+    identity:
+      name: runtime_id
+      type: agentic.shared.RuntimeId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: kinds
+        type: List<agentic.runtime.WorkloadKind>
+      - name: min_isolation
+        type: agentic.shared.IsolationLevel
+    lifecycle:
+      initial: Available
+      states: [Available]
+      terminal: [Available]
+
+  - name: agentic.runtime.Workload
+    naming:
+      summary: A package placed on one runtime, with its shape and its sandbox.
+    identity:
+      name: workload_id
+      type: agentic.shared.WorkloadId
+    fields:
+      - name: runtime_id
+        type: agentic.shared.RuntimeId
+      - name: kind
+        type: agentic.runtime.WorkloadKind
+      - name: package
+        type: agentic.runtime.PackageDigest
+      - name: shape
+        type: agentic.runtime.Shape
+      - name: sandbox_id
+        type: agentic.shared.SandboxId
+      - name: endpoint_id
+        type: Optional<agentic.shared.EndpointId>
+        summary: The endpoint a Model workload serves.
+      - name: start_cost
+        type: Optional<agentic.shared.Money>
+        summary: What one start of an instance costs before it does any work, as a rented model server does.
+    relations:
+      - name: runtime
+        kind: references
+        target: agentic.runtime.Runtime
+        cardinality: one
+        via: runtime_id
+      - name: sandbox
+        kind: references
+        target: agentic.sandbox.Sandbox
+        cardinality: one
+        via: sandbox_id
+      - name: endpoint
+        kind: references
+        target: agentic.model.Endpoint
+        cardinality: one
+        via: endpoint_id
+    lifecycle:
+      initial: Defined
+      states: [Defined]
+      terminal: [Defined]
+
+  - name: agentic.runtime.Instance
+    naming:
+      summary: One running copy of a workload.
+    identity:
+      name: instance_id
+      type: agentic.shared.InstanceId
+    fields:
+      - name: workload_id
+        type: agentic.shared.WorkloadId
+      - name: exit_code
+        type: Optional<Integer>
+      - name: reason
+        type: Optional<String>
+        summary: Why the instance failed, as the runtime reports it.
+      - name: budget_id
+        type: Optional<agentic.shared.BudgetId>
+        summary: >-
+          The budget the start cost was booked against (agentic.authority RecordSpend) before the
+          start. A booking refused over the limit (OverLimit) is a start refused at a cap; a caller
+          that finds an instance of the workload Pending or Running joins it and starts none.
+    relations:
+      - name: workload
+        kind: references
+        target: agentic.runtime.Workload
+        cardinality: one
+        via: workload_id
+      - name: budget
+        kind: references
+        target: agentic.authority.Budget
+        cardinality: one
+        via: budget_id
+    lifecycle:
+      initial: Pending
+      states: [Pending, Running, Exited, Failed]
+      terminal: [Exited, Failed]
+      transitions:
+        - name: run
+          from: [Pending]
+          to: Running
+        - name: exit
+          from: [Running]
+          to: Exited
+        - name: fail
+          from: [Pending, Running]
+          to: Failed
+        - name: stop
+          from: [Pending, Running]
+          to: Exited
+
+actors:
+  - name: agentic.runtime.Operator
+    naming:
+      display: Operator
+      summary: Who registers runtimes, places workloads and starts and stops instances.
+    may:
+      - agentic.runtime.RegisterRuntime
+      - agentic.runtime.DefineWorkload
+      - agentic.runtime.StartInstance
+      - agentic.runtime.StopInstance
+
+  - name: agentic.runtime.Host
+    naming:
+      display: Host
+      summary: The runtime itself, reporting what its instances do.
+    may:
+      - agentic.runtime.ReportRunning
+      - agentic.runtime.ReportExited
+      - agentic.runtime.ReportFailed
+
+errors:
+  - name: agentic.runtime.NoKinds
+    summary: A runtime runs at least one kind of workload.
+
+  - name: agentic.runtime.UnknownRuntime
+    summary: No runtime has this identity.
+    fields:
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+
+  - name: agentic.runtime.UnknownSandbox
+    summary: No sandbox has this identity.
+    fields:
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+
+  - name: agentic.runtime.KindNotRun
+    summary: The runtime does not run workloads of this kind.
+    fields:
+      - {name: kind, type: agentic.runtime.WorkloadKind}
+
+  - name: agentic.runtime.IsolationTooLow
+    summary: The sandbox isolates less than the runtime's minimum.
+
+  - name: agentic.runtime.SandboxNotActive
+    summary: The sandbox is retired; nothing is placed in it.
+
+  - name: agentic.runtime.UnknownWorkload
+    summary: No workload has this identity.
+    fields:
+      - {name: workload_id, type: agentic.shared.WorkloadId}
+
+  - name: agentic.runtime.UnknownInstance
+    summary: No instance has this identity.
+    fields:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+
+  - name: agentic.runtime.InstanceStateConflict
+    summary: The instance is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.runtime.Instance.State}
+
+commands:
+  - name: agentic.runtime.RegisterRuntime
+    naming:
+      wire: register-runtime
+      display: Register a runtime
+    input:
+      - {name: name, type: agentic.shared.Name}
+      - name: kinds
+        type: List<agentic.runtime.WorkloadKind>
+        example: [Agent, Job]
+      - {name: min_isolation, type: agentic.shared.IsolationLevel}
+    outcomes:
+      - name: no-kinds
+        when: kinds.count == 0
+        error: agentic.runtime.NoKinds
+      - name: registered
+        creates: agentic.runtime.Runtime
+        instance: runtime_id
+        sets:
+          name: input.name
+          kinds: input.kinds
+          min_isolation: input.min_isolation
+        emits: [agentic.runtime.RuntimeRegistered]
+        payload:
+          agentic.runtime.RuntimeRegistered:
+            runtime_id: {generated: true}
+            name: input.name
+            min_isolation: input.min_isolation
+
+  # The isolation of the sandbox is compared with the runtime's minimum. ESS refuses an ordering
+  # comparison of enum variants at every format, even over the ordered IsolationLevel, so each
+  # sandbox level is refused against the minimums above it, one branch per level.
+  - name: agentic.runtime.DefineWorkload
+    naming:
+      wire: define-workload
+      display: Define a workload
+      summary: Place a package on a runtime, with a shape and a sandbox.
+    input:
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+      - {name: kind, type: agentic.runtime.WorkloadKind}
+      - {name: package, type: agentic.runtime.PackageDigest}
+      - {name: shape, type: agentic.runtime.Shape}
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+      - {name: endpoint_id, type: Optional<agentic.shared.EndpointId>}
+      - {name: start_cost, type: Optional<agentic.shared.Money>}
+    outcomes:
+      - name: unknown-runtime
+        when_related:
+          via: input.runtime_id
+          exists: false
+        error: agentic.runtime.UnknownRuntime
+        payload:
+          agentic.runtime.UnknownRuntime: {runtime_id: input.runtime_id}
+      - name: unknown-sandbox
+        when_related:
+          via: input.sandbox_id
+          exists: false
+        error: agentic.runtime.UnknownSandbox
+        payload:
+          agentic.runtime.UnknownSandbox: {sandbox_id: input.sandbox_id}
+      - name: kind-not-run
+        when_related:
+          via: input.runtime_id
+          predicate:
+            not:
+              exists: {in: kinds, as: k, that: k == input.kind}
+        error: agentic.runtime.KindNotRun
+        payload:
+          agentic.runtime.KindNotRun: {kind: input.kind}
+      - name: sandbox-retired
+        when_related:
+          via: input.sandbox_id
+          predicate: state == Retired
+        error: agentic.runtime.SandboxNotActive
+      - name: isolation-none-too-low
+        when_related:
+          all:
+            - {via: input.sandbox_id, predicate: isolation == None}
+            - {via: input.runtime_id, predicate: {min_isolation: [Process, Container, UserKernel, MicroVm]}}
+        error: agentic.runtime.IsolationTooLow
+      - name: isolation-process-too-low
+        when_related:
+          all:
+            - {via: input.sandbox_id, predicate: isolation == Process}
+            - {via: input.runtime_id, predicate: {min_isolation: [Container, UserKernel, MicroVm]}}
+        error: agentic.runtime.IsolationTooLow
+      - name: isolation-container-too-low
+        when_related:
+          all:
+            - {via: input.sandbox_id, predicate: isolation == Container}
+            - {via: input.runtime_id, predicate: {min_isolation: [UserKernel, MicroVm]}}
+        error: agentic.runtime.IsolationTooLow
+      - name: isolation-userkernel-too-low
+        when_related:
+          all:
+            - {via: input.sandbox_id, predicate: isolation == UserKernel}
+            - {via: input.runtime_id, predicate: min_isolation == MicroVm}
+        error: agentic.runtime.IsolationTooLow
+      - name: defined
+        creates: agentic.runtime.Workload
+        instance: workload_id
+        sets:
+          runtime_id: input.runtime_id
+          kind: input.kind
+          package: input.package
+          shape: input.shape
+          sandbox_id: input.sandbox_id
+          endpoint_id: input.endpoint_id
+          start_cost: input.start_cost
+        emits: [agentic.runtime.WorkloadDefined]
+        payload:
+          agentic.runtime.WorkloadDefined:
+            workload_id: {generated: true}
+            runtime_id: input.runtime_id
+            kind: input.kind
+            package: input.package
+            sandbox_id: input.sandbox_id
+            endpoint_id: input.endpoint_id
+
+  - name: agentic.runtime.StartInstance
+    naming:
+      wire: start-instance
+      display: Start an instance
+    input:
+      - {name: workload_id, type: agentic.shared.WorkloadId}
+      - {name: budget_id, type: Optional<agentic.shared.BudgetId>}
+    outcomes:
+      - name: unknown-workload
+        when_related:
+          via: input.workload_id
+          exists: false
+        error: agentic.runtime.UnknownWorkload
+        payload:
+          agentic.runtime.UnknownWorkload: {workload_id: input.workload_id}
+      - name: started
+        creates: agentic.runtime.Instance
+        instance: instance_id
+        sets:
+          workload_id: input.workload_id
+          budget_id: input.budget_id
+        emits: [agentic.runtime.InstanceStarted]
+        payload:
+          agentic.runtime.InstanceStarted:
+            instance_id: {generated: true}
+            workload_id: input.workload_id
+            budget_id: input.budget_id
+
+  - name: agentic.runtime.ReportRunning
+    naming:
+      wire: report-running
+      display: Report an instance running
+    input:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.runtime.UnknownInstance
+        payload:
+          agentic.runtime.UnknownInstance: {instance_id: input.instance_id}
+      - name: running
+        moves: agentic.runtime.Instance.run
+        instance: instance_id
+        emits: [agentic.runtime.InstanceRunning]
+        payload:
+          agentic.runtime.InstanceRunning: {instance_id: input.instance_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.runtime.InstanceStateConflict
+        payload:
+          agentic.runtime.InstanceStateConflict: {state: {subject: state}}
+
+  - name: agentic.runtime.ReportExited
+    naming:
+      wire: report-exited
+      display: Report an instance exited
+    input:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+      - {name: exit_code, type: Integer}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.runtime.UnknownInstance
+        payload:
+          agentic.runtime.UnknownInstance: {instance_id: input.instance_id}
+      - name: exited
+        moves: agentic.runtime.Instance.exit
+        instance: instance_id
+        sets:
+          exit_code: input.exit_code
+        emits: [agentic.runtime.InstanceExited]
+        payload:
+          agentic.runtime.InstanceExited:
+            instance_id: input.instance_id
+            exit_code: input.exit_code
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.runtime.InstanceStateConflict
+        payload:
+          agentic.runtime.InstanceStateConflict: {state: {subject: state}}
+
+  - name: agentic.runtime.ReportFailed
+    naming:
+      wire: report-failed
+      display: Report an instance failed
+    input:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+      - {name: reason, type: String}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.runtime.UnknownInstance
+        payload:
+          agentic.runtime.UnknownInstance: {instance_id: input.instance_id}
+      - name: failed
+        moves: agentic.runtime.Instance.fail
+        instance: instance_id
+        sets:
+          reason: input.reason
+        emits: [agentic.runtime.InstanceFailed]
+        payload:
+          agentic.runtime.InstanceFailed:
+            instance_id: input.instance_id
+            reason: input.reason
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.runtime.InstanceStateConflict
+        payload:
+          agentic.runtime.InstanceStateConflict: {state: {subject: state}}
+
+  - name: agentic.runtime.StopInstance
+    naming:
+      wire: stop-instance
+      display: Stop an instance
+    input:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.runtime.UnknownInstance
+        payload:
+          agentic.runtime.UnknownInstance: {instance_id: input.instance_id}
+      - name: stopped
+        moves: agentic.runtime.Instance.stop
+        instance: instance_id
+        emits: [agentic.runtime.InstanceStopped]
+        payload:
+          agentic.runtime.InstanceStopped: {instance_id: input.instance_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.runtime.InstanceStateConflict
+        payload:
+          agentic.runtime.InstanceStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.runtime.RuntimeRegistered
+    fields:
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: min_isolation, type: agentic.shared.IsolationLevel}
+
+  - name: agentic.runtime.WorkloadDefined
+    fields:
+      - {name: workload_id, type: agentic.shared.WorkloadId}
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+      - {name: kind, type: agentic.runtime.WorkloadKind}
+      - {name: package, type: agentic.runtime.PackageDigest}
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+      - {name: endpoint_id, type: Optional<agentic.shared.EndpointId>}
+
+  - name: agentic.runtime.InstanceStarted
+    fields:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+      - {name: workload_id, type: agentic.shared.WorkloadId}
+      - {name: budget_id, type: Optional<agentic.shared.BudgetId>}
+
+  - name: agentic.runtime.InstanceRunning
+    fields:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+
+  - name: agentic.runtime.InstanceExited
+    fields:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+      - {name: exit_code, type: Integer}
+
+  - name: agentic.runtime.InstanceFailed
+    fields:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+      - {name: reason, type: String}
+
+  - name: agentic.runtime.InstanceStopped
+    fields:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+
+views:
+  - name: agentic.runtime.Runtimes
+    source: agentic.runtime.Runtime
+    consistency: read_your_writes
+    fields:
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kinds, type: List<agentic.runtime.WorkloadKind>}
+      - {name: min_isolation, type: agentic.shared.IsolationLevel}
+      - {name: state, type: agentic.runtime.Runtime.State}
+    naming:
+      wire: runtimes
+      display: Runtimes
+
+  - name: agentic.runtime.Workloads
+    source: agentic.runtime.Workload
+    consistency: read_your_writes
+    fields:
+      - {name: workload_id, type: agentic.shared.WorkloadId}
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+      - {name: kind, type: agentic.runtime.WorkloadKind}
+      - {name: package, type: agentic.runtime.PackageDigest}
+      - {name: shape, type: agentic.runtime.Shape}
+      - {name: sandbox_id, type: agentic.shared.SandboxId}
+      - {name: endpoint_id, type: Optional<agentic.shared.EndpointId>}
+      - {name: start_cost, type: Optional<agentic.shared.Money>}
+      - {name: state, type: agentic.runtime.Workload.State}
+    naming:
+      wire: workloads
+      display: Workloads
+
+  - name: agentic.runtime.Instances
+    source: agentic.runtime.Instance
+    consistency: read_your_writes
+    fields:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+      - {name: workload_id, type: agentic.shared.WorkloadId}
+      - {name: exit_code, type: Optional<Integer>}
+      - {name: reason, type: Optional<String>}
+      - {name: budget_id, type: Optional<agentic.shared.BudgetId>}
+      - {name: state, type: agentic.runtime.Instance.State}
+    naming:
+      wire: instances
+      display: Instances

@@ -1,0 +1,170 @@
+domain: agentic.process
+
+summary: >-
+  The procedure a task follows, held by identifier only. A process has a name, a version and the
+  digest of its source; it is published or withdrawn. Whether a step of a task is legitimate under
+  the process is decided by an external evaluator, never here.
+
+naming:
+  wire: process
+  display: Process
+
+entities:
+  - name: agentic.process.Process
+    naming:
+      summary: >-
+        One published version of a procedure. A task names it by ProcessId; the source itself lives
+        with the evaluator and is known here by its digest.
+    identity:
+      name: process_id
+      type: agentic.shared.ProcessId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: version
+        type: Integer
+      - name: source_digest
+        type: String
+        summary: sha256 of the process source, lower-case hex.
+    lifecycle:
+      initial: Published
+      states: [Published, Withdrawn]
+      terminal: [Withdrawn]
+      transitions:
+        - name: withdraw
+          from: [Published]
+          to: Withdrawn
+
+errors:
+  - name: agentic.process.ProcessAlreadyPublished
+    summary: A process of this identifier exists; a changed procedure is a new identifier.
+    fields:
+      - name: process_id
+        type: agentic.shared.ProcessId
+
+  - name: agentic.process.ProcessNotFound
+    summary: No process of this identifier was published.
+    fields:
+      - name: process_id
+        type: agentic.shared.ProcessId
+
+  - name: agentic.process.InvalidVersion
+    summary: A version starts at 1.
+    fields:
+      - name: version
+        type: Integer
+
+  - name: agentic.process.ProcessStateConflict
+    summary: The process is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.process.Process.State
+
+commands:
+  - name: agentic.process.PublishProcess
+    naming:
+      wire: publish-process
+      display: Publish a process
+    input:
+      - name: process_id
+        type: agentic.shared.ProcessId
+      - name: name
+        type: agentic.shared.Name
+      - name: version
+        type: Integer
+      - name: source_digest
+        type: String
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: invalid-version
+        when: version < 1
+        error: agentic.process.InvalidVersion
+        payload:
+          agentic.process.InvalidVersion:
+            version: input.version
+        summary: A version below 1 names no version.
+      - name: published
+        creates: agentic.process.Process
+        instance: process_id
+        sets:
+          name: input.name
+          version: input.version
+          source_digest: input.source_digest
+        emits:
+          - agentic.process.ProcessPublished
+        payload:
+          agentic.process.ProcessPublished:
+            process_id: input.process_id
+            name: input.name
+            version: input.version
+            source_digest: input.source_digest
+            at: input.at
+        summary: Tasks may now name the process.
+      - name: already-published
+        existing_instance: true
+        error: agentic.process.ProcessAlreadyPublished
+        payload:
+          agentic.process.ProcessAlreadyPublished:
+            process_id: input.process_id
+
+  - name: agentic.process.WithdrawProcess
+    naming:
+      wire: withdraw-process
+      display: Withdraw a process
+    input:
+      - name: process_id
+        type: agentic.shared.ProcessId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-process
+        unknown_instance: true
+        error: agentic.process.ProcessNotFound
+        payload:
+          agentic.process.ProcessNotFound:
+            process_id: input.process_id
+      - name: withdrawn
+        moves: agentic.process.Process.withdraw
+        instance: process_id
+        emits:
+          - agentic.process.ProcessWithdrawn
+        payload:
+          agentic.process.ProcessWithdrawn:
+            process_id: input.process_id
+            at: input.at
+        summary: No new task may name the process; tasks that follow it are not affected here.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.process.ProcessStateConflict
+        payload:
+          agentic.process.ProcessStateConflict:
+            state: {subject: state}
+
+events:
+  - name: agentic.process.ProcessPublished
+    fields:
+      - {name: process_id, type: agentic.shared.ProcessId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: version, type: Integer}
+      - {name: source_digest, type: String}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.process.ProcessWithdrawn
+    fields:
+      - {name: process_id, type: agentic.shared.ProcessId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.process.Processes
+    source: agentic.process.Process
+    consistency: read_your_writes
+    fields:
+      - {name: process_id, type: agentic.shared.ProcessId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: version, type: Integer}
+      - {name: source_digest, type: String}
+      - {name: state, type: agentic.process.Process.State}
+    naming:
+      wire: processes
+      display: Processes

@@ -1,0 +1,20 @@
+{
+  "name": "gate-kpis-of-authority",
+  "anchor": false,
+  "card": {
+    "persona": "A reviewer of an architecture who needs the KPIs that must be zero for the authority block.",
+    "task": "In the KPI catalogue, find the gates of the authority block."
+  },
+  "start": "/docs/kpis-catalogue",
+  "steps": [
+    { "select": "Block", "option": "6 · authority" },
+    { "click": "button", "name": "^gate\\s*\\d+$", "in": "main" }
+  ],
+  "target": { "kind": "kpi-rows" },
+  "truth": {
+    "path": "/docs/kpis-catalogue",
+    "kpis": ["approvals_by_session", "spend_after_exhaustion", "actions_without_grant"],
+    "count": "3 of 125 KPIs"
+  },
+  "expectations": ["the table shows exactly the three gates of authority, all in view", "the count says 3 of 125 KPIs"]
+}

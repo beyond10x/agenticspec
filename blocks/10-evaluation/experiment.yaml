@@ -1,0 +1,418 @@
+# Experiment: an architecture, a load, a work mode, a profile, faults, mutations, a search, and the result.
+# Source: design/building-blocks.md, "The blocks" § 10 evaluation and § "Simulation" (the
+# proposed `agenticspec-experiment/1` file: architecture, work mode, profile, load, faults, mutations, search
+# mode `exhaustive` or `fit`, weights and gates; "Fitness is a weighted sum of KPIs. A variant with
+# a non-zero gate KPI is out"). The simulator that runs an experiment is not specified here (Q2 of
+# the design); this domain is the record of what was asked and what came out.
+domain: agentic.experiment
+
+summary: >-
+  An experiment simulates a committed architecture under a load, faults, a work mode and a profile, changes it
+  by mutations, and searches the variants exhaustively or by fitting. Each variant is one point of
+  the search: the values it changed, its measured KPIs, its fitness and whether it is feasible.
+
+naming:
+  wire: experiment
+  display: Experiment
+
+types:
+  # agentic.shared declares no identifier for a variant; only this domain addresses it.
+  - name: agentic.experiment.VariantId
+    kind: newtype
+    of: Uuid
+
+  - name: agentic.experiment.SearchMode
+    kind: enum
+    variants: [Exhaustive, Fit]
+
+  # The faults "What a simulation answers" names: a human away, a pool at zero, a channel that
+  # drops a message, a rate limit.
+  - name: agentic.experiment.FaultKind
+    kind: enum
+    variants: [PrincipalAway, PoolEmpty, ChannelDrop, RateLimited]
+
+  # `{kind: principal_away, who: owner, from: 2h, for: 3h}`: a fault on one part, from an offset
+  # into the run, for a duration.
+  - name: agentic.experiment.Fault
+    kind: struct
+    fields:
+      - {name: kind, type: agentic.experiment.FaultKind}
+      - {name: part, type: agentic.shared.Name}
+      - {name: from, type: Duration}
+      - {name: lasts, type: Duration}
+
+  # UNMAPPED: the design's load names one figure (`tasks_per_hour: 6`); whether a load has more
+  # (a task mix, an arrival shape) is open.
+  - name: agentic.experiment.Load
+    kind: struct
+    fields:
+      - {name: tasks_per_hour, type: Integer}
+    invariants:
+      - tasks_per_hour >= 0
+
+  # `{part: builds, field: slots, values: [8, 16, 32]}`; a mutation with no part changes a value
+  # of the architecture itself (`questions.default_after`).
+  - name: agentic.experiment.Mutation
+    kind: struct
+    fields:
+      - {name: part, type: Optional<agentic.shared.Name>}
+      - {name: field, type: String}
+      - {name: values, type: List<String>}
+
+  # One value a variant took for one mutation.
+  - name: agentic.experiment.Assignment
+    kind: struct
+    fields:
+      - {name: part, type: Optional<agentic.shared.Name>}
+      - {name: field, type: String}
+      - {name: value, type: String}
+
+  # `weights: {owner_wait_share: -10, cost_per_task: -1, tasks_done: 5}`.
+  - name: agentic.experiment.Weight
+    kind: struct
+    fields:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: weight, type: Decimal}
+
+  # One KPI value a variant measured.
+  - name: agentic.experiment.Score
+    kind: struct
+    fields:
+      - {name: kpi_id, type: agentic.shared.KpiId}
+      - {name: value, type: Decimal}
+
+entities:
+  # `profile_id` is the behaviour profile of the simulation (the design names `profile: profiles/coding.yaml`:
+  # distributions fitted from the store, turns per task, tokens per turn, answer delay of a human).
+  # `work_mode_id` is the KPI direction set (autonomous, pairing, review) of agentic.kpi, which gives
+  # the directions the search weighs.
+  # UNMAPPED: the behaviour profile has no entity and no block yet, so `profile_id` has no `references`
+  # relation; it is held by identifier only. Open question for the owner: where profiles live.
+  - name: agentic.experiment.Experiment
+    naming:
+      summary: One search over variants of a committed architecture, under a load, faults, a work mode and a profile.
+    identity:
+      name: experiment_id
+      type: agentic.shared.ExperimentId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: profile_id, type: agentic.shared.ProfileId}
+      - {name: load, type: agentic.experiment.Load}
+      - {name: faults, type: List<agentic.experiment.Fault>}
+      - {name: mutations, type: List<agentic.experiment.Mutation>}
+      - {name: mode, type: agentic.experiment.SearchMode}
+      - {name: weights, type: List<agentic.experiment.Weight>}
+      # Gate KPIs: a variant with a non-zero value of one is not feasible.
+      - {name: gates, type: List<agentic.shared.KpiId>}
+      - {name: failure, type: Optional<String>}
+    relations:
+      - {name: architecture, kind: references, target: agentic.architecture.Architecture, cardinality: one, via: architecture_id}
+      - {name: work_mode, kind: references, target: agentic.kpi.WorkMode, cardinality: one, via: work_mode_id}
+      - {name: gate_kpis, kind: references, target: agentic.kpi.Kpi, cardinality: many, via: gates}
+      - {name: variants, kind: owns, target: agentic.experiment.Variant, cardinality: many, via: experiment_id}
+    lifecycle:
+      initial: Planned
+      states: [Planned, Running, Done, Failed]
+      terminal: [Done, Failed]
+      transitions:
+        - {name: start, from: [Planned], to: Running}
+        - {name: finish, from: [Running], to: Done}
+        - {name: fail, from: [Planned, Running], to: Failed}
+
+  - name: agentic.experiment.Variant
+    naming:
+      summary: One point of a search, with the values it changed, its measured KPIs, its fitness and whether it is feasible.
+    identity:
+      name: variant_id
+      type: agentic.experiment.VariantId
+    fields:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: values, type: List<agentic.experiment.Assignment>}
+      - {name: measurements, type: List<agentic.experiment.Score>}
+      - {name: fitness, type: Decimal}
+      - {name: feasible, type: Boolean}
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+errors:
+  - name: agentic.experiment.NoSuchExperiment
+    summary: No experiment has this id, and nothing changed.
+  - name: agentic.experiment.ExperimentStateConflict
+    summary: The experiment is not in a state that takes this command, and nothing changed.
+  - name: agentic.experiment.NoSuchArchitecture
+    summary: No architecture has this id, and nothing was planned.
+  - name: agentic.experiment.ArchitectureRetired
+    summary: The architecture is retired, and nothing was planned.
+  - name: agentic.experiment.ArchitectureNotCommitted
+    summary: The architecture has no committed revision to simulate, and nothing was planned.
+  - name: agentic.experiment.NoSuchWorkMode
+    summary: No work mode has this id, and nothing was planned.
+  - name: agentic.experiment.UnknownKpi
+    summary: A weight or a gate names a KPI that does not exist or is retired, or a gate names a KPI that is no gate; nothing was planned.
+  - name: agentic.experiment.EmptyMutation
+    summary: A mutation lists no value, and nothing was planned.
+  - name: agentic.experiment.NoWeights
+    summary: A fitting search weighs at least one KPI, and nothing was planned.
+  - name: agentic.experiment.ExperimentNotRunning
+    summary: Variants are recorded only while the experiment runs, and nothing was recorded.
+  - name: agentic.experiment.InfeasibleVariant
+    summary: The variant is reported feasible while one of the experiment's gate KPIs measured above zero, and nothing was recorded.
+  - name: agentic.experiment.NoVariant
+    summary: The experiment recorded no variant, so it cannot be done; nothing changed.
+
+events:
+  - name: agentic.experiment.ExperimentPlanned
+    fields:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: profile_id, type: agentic.shared.ProfileId}
+      - {name: mode, type: agentic.experiment.SearchMode}
+  - name: agentic.experiment.ExperimentStarted
+    fields:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+  - name: agentic.experiment.VariantRecorded
+    fields:
+      - {name: variant_id, type: agentic.experiment.VariantId}
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: fitness, type: Decimal}
+      - {name: feasible, type: Boolean}
+  - name: agentic.experiment.ExperimentDone
+    fields:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+  - name: agentic.experiment.ExperimentFailed
+    fields:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: reason, type: String}
+
+commands:
+  # Plan an experiment over a committed architecture.
+  - name: agentic.experiment.PlanExperiment
+    naming:
+      display: Plan an experiment
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: profile_id, type: agentic.shared.ProfileId}
+      - {name: load, type: agentic.experiment.Load}
+      - {name: faults, type: List<agentic.experiment.Fault>}
+      - {name: mutations, type: List<agentic.experiment.Mutation>}
+      - {name: mode, type: agentic.experiment.SearchMode}
+      - {name: weights, type: List<agentic.experiment.Weight>}
+      - {name: gates, type: List<agentic.shared.KpiId>}
+    outcomes:
+      - name: empty-mutation
+        when:
+          exists: {in: mutations, as: m, that: m.values.count == 0}
+        error: agentic.experiment.EmptyMutation
+      - name: no-weights
+        when:
+          all:
+            - mode == Fit
+            - weights.count == 0
+        error: agentic.experiment.NoWeights
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.experiment.NoSuchArchitecture
+      - name: no-such-work-mode
+        when_related: {via: input.work_mode_id, exists: false}
+        error: agentic.experiment.NoSuchWorkMode
+      - name: architecture-retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.experiment.ArchitectureRetired
+      - name: not-committed
+        when_related:
+          entity: agentic.architecture.ArchitectureRevision
+          where: architecture_id == input.architecture_id
+          exists: false
+        error: agentic.experiment.ArchitectureNotCommitted
+      # ESS limit: a guard over the rows an input list names (`when_related: {via: input.gates,
+      # exists: false}`) is refused beside another related row, a predicate over those rows
+      # (retired, no gate) is refused at every format, and a KPI named inside a list of structs
+      # (`weights[].kpi_id`) is no reference a guard reads. So the check is the implementation's.
+      - name: unknown-kpi
+        external: a weight or a gate names a KPI that does not exist or is retired, or a gate names a KPI that is no gate
+        error: agentic.experiment.UnknownKpi
+      - name: planned
+        creates: agentic.experiment.Experiment
+        instance: experiment_id
+        sets:
+          architecture_id: input.architecture_id
+          work_mode_id: input.work_mode_id
+          profile_id: input.profile_id
+          load: input.load
+          faults: input.faults
+          mutations: input.mutations
+          mode: input.mode
+          weights: input.weights
+          gates: input.gates
+        emits: [agentic.experiment.ExperimentPlanned]
+        payload:
+          agentic.experiment.ExperimentPlanned:
+            experiment_id: {generated: true}
+            architecture_id: input.architecture_id
+            work_mode_id: input.work_mode_id
+            profile_id: input.profile_id
+            mode: input.mode
+
+  - name: agentic.experiment.StartExperiment
+    naming:
+      display: Start an experiment
+    input:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+    outcomes:
+      - name: no-such-experiment
+        unknown_instance: true
+        error: agentic.experiment.NoSuchExperiment
+      - name: started
+        moves: agentic.experiment.Experiment.start
+        instance: experiment_id
+        emits: [agentic.experiment.ExperimentStarted]
+        payload:
+          agentic.experiment.ExperimentStarted:
+            experiment_id: input.experiment_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.experiment.ExperimentStateConflict
+
+  # Record one point of the search. Feasibility is reported by the simulator.
+  - name: agentic.experiment.RecordVariant
+    naming:
+      display: Record a variant
+    input:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: values, type: List<agentic.experiment.Assignment>}
+      - {name: measurements, type: List<agentic.experiment.Score>}
+      - {name: fitness, type: Decimal}
+      - {name: feasible, type: Boolean}
+    outcomes:
+      - name: no-such-experiment
+        when_related: {via: input.experiment_id, exists: false}
+        error: agentic.experiment.NoSuchExperiment
+      - name: not-running
+        when_related: {via: input.experiment_id, predicate: state != Running}
+        error: agentic.experiment.ExperimentNotRunning
+      # ESS limit: "feasible only when every gate KPI measured zero" compares an input list
+      # (`measurements`) with a stored list of the related experiment (`gates`); no guard reads
+      # a related row's list against the input. So the check is the implementation's.
+      - name: infeasible
+        external: the variant is reported feasible while a gate KPI of the experiment measured above zero
+        error: agentic.experiment.InfeasibleVariant
+      - name: recorded
+        creates: agentic.experiment.Variant
+        instance: variant_id
+        sets:
+          experiment_id: input.experiment_id
+          values: input.values
+          measurements: input.measurements
+          fitness: input.fitness
+          feasible: input.feasible
+        emits: [agentic.experiment.VariantRecorded]
+        payload:
+          agentic.experiment.VariantRecorded:
+            variant_id: {generated: true}
+            experiment_id: input.experiment_id
+            fitness: input.fitness
+            feasible: input.feasible
+
+  - name: agentic.experiment.CompleteExperiment
+    naming:
+      display: Complete an experiment
+    input:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+    outcomes:
+      - name: no-such-experiment
+        when_related: {via: input.experiment_id, exists: false}
+        error: agentic.experiment.NoSuchExperiment
+      - name: not-running
+        when_related: {via: input.experiment_id, predicate: state != Running}
+        error: agentic.experiment.ExperimentStateConflict
+      - name: no-variant
+        when_related:
+          entity: agentic.experiment.Variant
+          where: experiment_id == input.experiment_id
+          exists: false
+        error: agentic.experiment.NoVariant
+      - name: done
+        moves: agentic.experiment.Experiment.finish
+        instance: experiment_id
+        emits: [agentic.experiment.ExperimentDone]
+        payload:
+          agentic.experiment.ExperimentDone:
+            experiment_id: input.experiment_id
+
+  - name: agentic.experiment.FailExperiment
+    naming:
+      display: Fail an experiment
+    input:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: reason, type: String}
+    outcomes:
+      - name: no-such-experiment
+        unknown_instance: true
+        error: agentic.experiment.NoSuchExperiment
+      - name: failed
+        moves: agentic.experiment.Experiment.fail
+        instance: experiment_id
+        sets:
+          failure: input.reason
+        emits: [agentic.experiment.ExperimentFailed]
+        payload:
+          agentic.experiment.ExperimentFailed:
+            experiment_id: input.experiment_id
+            reason: input.reason
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.experiment.ExperimentStateConflict
+
+views:
+  - name: agentic.experiment.Experiments
+    source: agentic.experiment.Experiment
+    consistency: read_your_writes
+    fields:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: work_mode_id, type: agentic.shared.WorkModeId}
+      - {name: profile_id, type: agentic.shared.ProfileId}
+      - {name: load, type: agentic.experiment.Load}
+      - {name: mode, type: agentic.experiment.SearchMode}
+      - {name: failure, type: Optional<String>}
+      - {name: state, type: agentic.experiment.Experiment.State}
+
+  - name: agentic.experiment.Variants
+    source: agentic.experiment.Variant
+    consistency: read_your_writes
+    params:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+    filter: experiment_id == param.experiment_id
+    fields:
+      - {name: variant_id, type: agentic.experiment.VariantId}
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: values, type: List<agentic.experiment.Assignment>}
+      - {name: measurements, type: List<agentic.experiment.Score>}
+      - {name: fitness, type: Decimal}
+      - {name: feasible, type: Boolean}
+
+  # The best variant of an experiment: its feasible variants, highest fitness first. The first
+  # row is the best; a read with `size: 1` answers it alone.
+  - name: agentic.experiment.BestVariant
+    source: agentic.experiment.Variant
+    consistency: read_your_writes
+    params:
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: page, type: Optional<Integer>}
+      - {name: size, type: Optional<Integer>}
+    filter:
+      all:
+        - experiment_id == param.experiment_id
+        - feasible == true
+    order_by: [fitness desc, variant_id asc]
+    paging: {page: page, size: size}
+    fields:
+      - {name: variant_id, type: agentic.experiment.VariantId}
+      - {name: experiment_id, type: agentic.shared.ExperimentId}
+      - {name: values, type: List<agentic.experiment.Assignment>}
+      - {name: fitness, type: Decimal}

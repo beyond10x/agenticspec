@@ -1,0 +1,146 @@
+format: agenticspec-ladder/1
+ladder: agentic-ladder
+title: The agentic ladder
+summary: >-
+  Seven stages of agentic engineering, measured by throughput: how much work runs through one
+  person, as opposed to the work that person does by hand. Between some stages sits a barrier, a
+  change of mental model rather than of tooling, where people stall.
+rule: >-
+  Each stage of throughput needs its matching trust: a way to establish that the output is correct
+  without reading every line. Throughput without it produces bad output faster.
+
+stages:
+  - id: S1
+    name: Paired
+    marker: One agent session at a time. The human still finishes the grunt work the agent cannot; the gain is real but small, about 20 %.
+    trust_need: The human reads every diff.
+    unit_of_work: a diff
+  - id: S2
+    name: Orchestrator
+    marker: Many parallel sessions, agents and sub-agents. Grunt work is always delegated; the human decomposes, delegates and reviews.
+    trust_need: Specs before sessions, context files, and agents that prove their work with tests.
+    unit_of_work: a task
+  - id: S3
+    name: Always-on
+    marker: At least one process almost always runs after the working day ends, and unattended runs last hours.
+    trust_need: "A harness: sandboxes, permissions and automated checks trusted while you are asleep."
+    unit_of_work: a night
+  - id: S4
+    name: Experimenter
+    marker: The same work runs twice from the same starting state, varied in method, and the two runs are compared automatically.
+    trust_need: Reproducible starting states, evals and objective comparison metrics.
+    unit_of_work: a method
+  - id: S5
+    name: Wholesale writer and rewriter
+    marker: Whole components and systems are written and rewritten routinely, with parity guaranteed. Language round-trips have been done.
+    trust_need: Explicit contracts, and self-validation strong enough to prove parity across a whole component.
+    unit_of_work: a component
+  - id: S6
+    name: Live loop
+    marker: Requirements and live defect data go in; a triaged fix candidate comes out within minutes.
+    trust_need: "Governed autonomy: authority boundaries, a triage policy, evidence and earned completion."
+    unit_of_work: a defect stream
+  - id: S7
+    name: Factory builder
+    marker: Builds the frameworks and tools that change how other people work.
+    trust_need: "Principles: how truth is established, how goals are pursued and checked, how evidence earns completion."
+    unit_of_work: other people's ladders
+
+barriers:
+  - id: B1
+    name: Meta yourself up
+    between: [S1, S2]
+    decision: I will never do grunt work again. From now on I organise sessions instead of working in one.
+  - id: B2
+    name: Experimentation is normal
+    between: [S3, S4]
+    decision: It is normal to take the repository as it was before a batch of work, redo the work a different way, and have the two compared automatically.
+  - id: B3
+    name: The meta level
+    between: [S6, S7]
+    decision: I work on the underlying patterns, information, semantics, truth, validation and goal seeking, and build the system that builds the software.
+
+rungs:
+  - id: sandboxed
+    stage: S1
+    title: One session, in a sandbox
+    changed: You sit at your workstation with one agent session. It runs in a sandbox because that is the default, and you read every diff it proposes.
+    architecture: ../architectures/ladder/01-sandboxed.yaml
+    trust:
+      you: reads every diff
+      box: "sandbox: the checkout and the model, nothing else"
+  - id: sandbox-off
+    stage: S1
+    title: The sandbox switched off
+    changed: You switch the sandbox off. The permission prompts stop, and the session now reaches everything your account reaches.
+    architecture: ../architectures/ladder/02-sandbox-off.yaml
+    risk: More reach, less trust. You reading every diff is now the only guard.
+  - id: subagents
+    stage: S2
+    title: Sub-agents
+    changed: The session stops doing the work itself. It splits a task, hands the parts to sub-agents and answers their questions for you.
+    architecture: ../architectures/ladder/03-subagents.yaml
+    trust:
+      you: ~
+      context: context files tell every agent how the repository works
+      tests: agents prove their work with tests
+  - id: background-sessions
+    stage: S2
+    title: Background sessions, one worktree each
+    changed: Several sessions run in the background, each in its own worktree and each started from a spec you wrote first. You decompose, delegate and review.
+    architecture: ../architectures/ladder/04-background-sessions.yaml
+    trust:
+      specs: specs before sessions
+  - id: scheduled
+    stage: S3
+    title: Scheduled agents work through the night
+    changed: A clock wakes night agents every 30 minutes and they work through the backlog after you log off. Nobody watches them, so a harness does.
+    architecture: ../architectures/ladder/05-scheduled.yaml
+    trust:
+      box: "sandbox again, for every unattended agent"
+      grants: permissions say what each agent may do
+      gateway: every model call passes one gateway and is recorded
+      verifier: a verifier checks every finished task
+  - id: experiments
+    stage: S4
+    title: Replay, vary, compare
+    changed: The same work runs twice from a pinned base, with two different methods, and an experiment compares the results on the same metrics. You change your method on evidence, not opinion.
+    architecture: ../architectures/ladder/06-experiments.yaml
+    trust:
+      base: a reproducible starting state
+      compare: evals and an objective comparison metric
+  - id: swarm-rewrite
+    stage: S5
+    title: A swarm rewrites a whole component
+    changed: The session breaks a rewrite into entries on a shared board and a swarm of agents claims them. Code becomes disposable, because parity is proven, not hoped for.
+    architecture: ../architectures/ladder/07-swarm-rewrite.yaml
+    trust:
+      contract: an explicit contract of what the component does
+      conformance: a conformance suite proves parity with the old version
+      verifier: rejects what the suite does not pass, with two copies
+  - id: live-loop
+    stage: S6
+    title: Defects in, fix candidates out
+    changed: Defects and requirements arrive on a channel. A trigger wakes a triage agent for each one, and a triaged fix candidate comes out within minutes.
+    architecture: ../architectures/ladder/08-live-loop.yaml
+    trust:
+      grants: authority boundaries
+      policy: a triage policy says what the loop may take on alone
+      evidence: every candidate carries the evidence that earns its completion
+  - id: factory
+    stage: S7
+    title: A factory of teams
+    changed: You stop running the system and design it. A factory orchestrator hands work to teams of agents; budgets bound what they spend, KPIs measure what they deliver, and written principles govern when work counts as done.
+    architecture: ../architectures/ladder/09-factory.yaml
+    trust:
+      budgets: budgets bound what the factory spends
+      kpis: KPIs measure what it delivers
+      principles: principles of truth, goals and checking
+      verifier: grows with the teams, four copies
+
+simulation:
+  profile: ../profiles/coding.yaml
+  horizon: 24h
+  seeds: 4
+  seed: 1
+  tasks_per_hour_per_worker: 1.5

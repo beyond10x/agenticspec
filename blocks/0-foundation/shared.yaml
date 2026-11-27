@@ -1,0 +1,144 @@
+domain: agentic.shared
+
+summary: >-
+  Identifiers of every entity of the building blocks and the value types more than one block
+  uses. A domain names another domain's entity through its identifier here, as a field, and
+  declares a `references` relation on its own entity.
+
+naming:
+  wire: shared
+  display: Shared
+
+types:
+  # 1 principals
+  - {name: agentic.shared.PrincipalId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.DelegationId, kind: newtype, of: Uuid}
+
+  # 2 intelligence
+  - {name: agentic.shared.ProviderId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ModelId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.EndpointId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.RouteId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.InferenceId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.GatewayId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.UpstreamId, kind: newtype, of: Uuid}
+
+  # 3 capability
+  - {name: agentic.shared.ToolProviderId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ToolId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.KnowledgeId, kind: newtype, of: Uuid}
+
+  # 4 agent
+  - {name: agentic.shared.AgentId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.AgentRevisionId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.HarnessId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.HarnessSessionId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.TurnId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ToolCallId, kind: newtype, of: Uuid}
+
+  # 5 work
+  - {name: agentic.shared.TaskId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.AssignmentId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.RunId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.DeliverableId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.StepId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ProcessId, kind: newtype, of: Uuid}
+
+  # 6 governance
+  - {name: agentic.shared.GrantId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.DecisionId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.BudgetId, kind: newtype, of: Uuid}
+
+  # 7 collaboration
+  - {name: agentic.shared.ChannelId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.MessageId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.QuestionId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.SubscriptionId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.PostId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.TriggerId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ScheduleId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.FiringId, kind: newtype, of: Uuid}
+
+  # 8 place
+  - {name: agentic.shared.WorkspaceId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.LeaseId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ProposalId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.SandboxId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.RuntimeId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.WorkloadId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.InstanceId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.PoolId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ClaimId, kind: newtype, of: Uuid}
+
+  # 9 composition
+  - {name: agentic.shared.ArchitectureId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.PartId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.LinkId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ArchitectureRevisionId, kind: newtype, of: Uuid}
+
+  # 10 evaluation
+  - {name: agentic.shared.KpiId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ExperimentId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ProfileId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.WorkModeId, kind: newtype, of: Uuid}
+
+  # shared values
+  - {name: agentic.shared.Name, kind: newtype, of: String}
+
+  - name: agentic.shared.Attribution
+    kind: enum
+    variants: [Known, Inferred, NotRecorded]
+
+  - name: agentic.shared.PrincipalKind
+    kind: enum
+    variants: [Human, Organization, Service, Agent]
+
+  - name: agentic.shared.ToolCategory
+    kind: enum
+    variants: [Read, Search, Edit, Execute, Network, Spawn, Message, Plan, Other]
+
+  - name: agentic.shared.Sharing
+    kind: enum
+    variants: [Exclusive, SharedReadOnly, SharedReadWrite]
+
+  - name: agentic.shared.IsolationLevel
+    kind: enum
+    ordered: true
+    variants: [None, Process, Container, UserKernel, MicroVm]
+
+  - name: agentic.shared.Verdict
+    kind: enum
+    variants: [Allow, Deny, ApprovalRequired]
+
+  - name: agentic.shared.Decider
+    kind: enum
+    variants: [PermissionMode, Classifier, Hook, Rule, Delegate, Human, NotRecorded]
+
+  - name: agentic.shared.Content
+    kind: struct
+    fields:
+      - {name: digest, type: String}
+      - {name: length, type: Integer}
+      - {name: class, type: String}
+    invariants:
+      - length >= 0
+
+  - name: agentic.shared.Usage
+    kind: struct
+    fields:
+      - {name: input_tokens, type: Integer}
+      - {name: cache_read_tokens, type: Integer}
+      - {name: cache_write_tokens, type: Integer}
+      - {name: output_tokens, type: Integer}
+    invariants:
+      - input_tokens >= 0
+      - cache_read_tokens >= 0
+      - cache_write_tokens >= 0
+      - output_tokens >= 0
+
+  - name: agentic.shared.Money
+    kind: struct
+    fields:
+      - {name: micro_usd, type: Integer}
+    invariants:
+      - micro_usd >= 0

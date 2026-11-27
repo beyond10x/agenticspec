@@ -5,12 +5,69 @@ tasks:
     desc: Run the repository gate.
     cmds:
       - task: check:spec
+      - task: check:blocks
       - task: check:ui
       - task: check:app
       - task: check:generated
+      - task: check:docs
+      - task: check:ladder
+      - task: check:site
       - task: check:scripts
       - task: check:rust
       - task: test
+
+  check:blocks:
+    desc: Validate the building blocks (blocks/), hold their layering, and run their conformance suite, authored scenarios included, on the interpreter. The suite is synthesized once per digest of its sources into target/blocks-conform/ (scripts/check-blocks-conform.sh).
+    cmds:
+      - ess specify validate --path blocks --strict-requires
+      - task: check:layers
+      - task: check:kpis
+      - scripts/check-blocks-conform.sh
+
+  slow:blocks:
+    desc: Slow lane. Synthesize the conformance suite of blocks/ afresh, compare it byte for byte with the cached suite of the same digest, and run it.
+    cmds:
+      - scripts/check-blocks-conform.sh --slow
+
+  check:kpis:
+    desc: Check kpis/catalogue.yaml against its format, the blocks and the events they declare.
+    cmds:
+      - scripts/check-kpis.sh
+
+  check:layers:
+    desc: Fail when a block depends on a block of a higher layer or two blocks of one layer depend on each other; then each fixture under scripts/fixtures/layers must fail.
+    cmds:
+      - scripts/check-layers.sh
+      - scripts/check-layers.sh --negative
+
+  layers:graph:
+    desc: Print the dependency graph between blocks with counts, then the layer check.
+    cmds:
+      - scripts/check-layers.sh --graph
+
+  docs:generate:
+    desc: Write the generated pages of the docs site (docs/blocks/, docs/architectures/, docs/kpis-catalogue.md, website/static/architectures/, website/src/generated/) from blocks/, kpis/catalogue.yaml, architectures/ and experiments/.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root .
+
+  check:docs:
+    desc: Fail when a generated page of the docs site differs from a fresh generation, is missing or is not generated; names the files.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --check
+
+  ladder:generate:
+    desc: Check the agentic ladder (ladder/ladder.yaml and its rungs in architectures/ladder/) and write the data file of its page, website/static/ladder/ladder.json.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-sim
+      - target/debug/agenticspec-sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json
+
+  check:ladder:
+    desc: Fail when the agentic ladder is refused or website/static/ladder/ladder.json differs from a fresh generation.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-sim
+      - target/debug/agenticspec-sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json --check
 
   check:scripts:
     desc: Run every script test, scripts/*.test.sh.
@@ -54,6 +111,16 @@ tasks:
     desc: Measure a round of the ui-iteration-loop into ux/rounds/R-nn (task ux:round -- R-nn). The lines are in ux/round.sh.
     cmds:
       - sh ux/round.sh {{.CLI_ARGS}}
+
+  check:site:
+    desc: Build the docs site into website/build when its inputs changed or there is none, then its layout, accessibility, keyboard, screen-only-user and page-sweep gates and the ratchet against ux/site/baseline.json. The lines are in scripts/check-site.sh.
+    cmds:
+      - sh scripts/check-site.sh
+
+  ux:site-round:
+    desc: Measure a round of the ui-iteration-loop of the docs site into ux/site/rounds/S-nn (task ux:site-round -- S-nn). The lines are in ux/site/round.sh.
+    cmds:
+      - sh ux/site/round.sh {{.CLI_ARGS}}
 
   check:generated:
     desc: Compare each generated directory, byte for byte, with a fresh generation. The lines are in scripts/check-generated.sh.

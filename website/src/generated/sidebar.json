@@ -1,0 +1,116 @@
+{
+  "architectures": [
+    "docs/architectures/author-reviewer",
+    "docs/architectures/handoff",
+    "docs/architectures/orchestrator-workers",
+    "docs/architectures/parallel-unaware",
+    "docs/architectures/planner-executor",
+    "docs/architectures/scheduled-loops",
+    "docs/architectures/scope-partition",
+    "docs/architectures/shared-board",
+    "docs/architectures/solo",
+    "docs/architectures/workstation"
+  ],
+  "blocks": [
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/0-foundation/shared"
+      ],
+      "label": "0 · foundation",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/1-principals/delegation",
+        "docs/blocks/1-principals/principal"
+      ],
+      "label": "1 · principals",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/2-intelligence/gateway",
+        "docs/blocks/2-intelligence/model"
+      ],
+      "label": "2 · intelligence",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/3-capability/knowledge",
+        "docs/blocks/3-capability/tool"
+      ],
+      "label": "3 · capability",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/4-agent/agent",
+        "docs/blocks/4-agent/harness"
+      ],
+      "label": "4 · agent",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/5-work/process",
+        "docs/blocks/5-work/work"
+      ],
+      "label": "5 · work",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/6-governance/authority"
+      ],
+      "label": "6 · governance",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/7-collaboration/channel",
+        "docs/blocks/7-collaboration/question",
+        "docs/blocks/7-collaboration/trigger"
+      ],
+      "label": "7 · collaboration",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/8-place/resource",
+        "docs/blocks/8-place/runtime",
+        "docs/blocks/8-place/sandbox",
+        "docs/blocks/8-place/workspace"
+      ],
+      "label": "8 · place",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/9-composition/architecture"
+      ],
+      "label": "9 · composition",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/blocks/10-evaluation/experiment",
+        "docs/blocks/10-evaluation/kpi"
+      ],
+      "label": "10 · evaluation",
+      "type": "category"
+    },
+    "docs/blocks/planned"
+  ]
+}

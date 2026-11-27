@@ -1,0 +1,1060 @@
+domain: agentic.harness
+
+summary: >-
+  The loop that turns a model into an agent: it sends the context to a model, takes the answer,
+  runs tools, compacts the context when it grows, and stops. A harness is of one kind: a vendor's
+  loop run as it ships, a loop driven from outside, or a loop native to this system. A harness
+  session is one agent revision running in a harness for a principal. A sub-agent is a session
+  whose parent is another session, so sessions form a tree with a depth that the harness bounds.
+  Every model call of a session is a turn, with the inference it made and its usage. Every call of a
+  tool by a session is a tool call: requested, decided (allowed or denied, with who decided), and
+  then completed or failed; a call of a withdrawn tool is refused, and a call that was not allowed
+  cannot complete.
+
+naming:
+  wire: harness
+  display: Harness
+
+# UNMAPPED: the session's limits (`context_window`, `max_depth`) are request fields at OpenSession,
+# refused when above the harness's (`limits-above-harness`), and not copied from the harness: a
+# `{related: ...}` value in a `creates` outcome made every scenario that needs a stored session
+# unarrangeable (ESS-SYNTH-003). A session may therefore run with smaller limits than its harness.
+# UNMAPPED: nothing checks that a session's principal may use the agent revision, nor that a
+# sub-agent's revision is within the parent's delegation; delegation checks live in
+# agentic.delegation and are not read here.
+# UNMAPPED: the depth of a sub-agent is a request field, checked against the parent's depth plus 1
+# (`wrong-depth`); ESS cannot derive it from the parent in the same outcome.
+# UNMAPPED: no outcome ends a session on a context-size or budget limit; the harness only refuses a
+# turn above the window (`context-window-exceeded`). A budget limit lives on agentic.agent.BudgetLimits
+# and is not enforced here.
+types:
+  - name: agentic.harness.HarnessKind
+    kind: enum
+    variants: [Vendor, Driven, Native]
+    naming:
+      summary: >-
+        Vendor is a loop a vendor ships and this system only observes. Driven is a loop whose
+        steps an orchestrator outside it issues. Native is a loop written for this system.
+
+  - name: agentic.harness.PermissionMode
+    kind: enum
+    variants: [Ask, AcceptEdits, PlanOnly, Unrestricted]
+    naming:
+      summary: >-
+        How the session treats an action that needs a decision: ask every time, accept edits and
+        ask for the rest, plan without acting, or take every action. The default of a session is
+        the mode it is opened with; a sub-agent starts in its parent's mode.
+
+  - name: agentic.harness.SessionRole
+    kind: enum
+    variants: [Main, SubAgent]
+    naming:
+      summary: Main is a session opened for a principal; SubAgent is one a session spawned.
+
+entities:
+  - name: agentic.harness.Harness
+    naming:
+      summary: >-
+        A loop an agent can run in, with the limits it holds every session to: the size of the
+        context window and the deepest sub-agent nesting.
+    identity:
+      name: harness_id
+      type: agentic.shared.HarnessId
+    fields:
+      - name: kind
+        type: agentic.harness.HarnessKind
+      - name: name
+        type: agentic.shared.Name
+      - name: context_window
+        type: Integer
+        summary: The most tokens of context one turn may carry.
+      - name: max_depth
+        type: Integer
+        summary: The deepest sub-agent level; 0 allows no sub-agent.
+      - name: registered_at
+        type: Timestamp
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Active]
+          to: Retired
+
+  - name: agentic.harness.HarnessSession
+    naming:
+      summary: >-
+        One agent revision running in one harness, acting for one principal. Open until it ends.
+        The limits of the harness at the time it opened are kept on the session.
+    identity:
+      name: harness_session_id
+      type: agentic.shared.HarnessSessionId
+    fields:
+      - name: harness_id
+        type: agentic.shared.HarnessId
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+        summary: The principal the session acts for; a sub-agent acts for its parent's.
+      - name: parent_session_id
+        type: Optional<agentic.shared.HarnessSessionId>
+        summary: The session that spawned this one; absent for a main session.
+      - name: role
+        type: agentic.harness.SessionRole
+      - name: depth
+        type: Integer
+        summary: 0 for a main session, the parent's depth plus 1 for a sub-agent.
+      - name: max_depth
+        type: Integer
+      - name: context_window
+        type: Integer
+      - name: permission_mode
+        type: agentic.harness.PermissionMode
+      - name: opened_at
+        type: Timestamp
+      - name: name
+        type: Optional<agentic.shared.Name>
+        summary: >-
+          The name other sessions and the owner address this session by. What the session is for is
+          the role of its agent revision; the files it works in are the workspace it holds a lease
+          on (agentic.workspace names the session as the holder).
+      - name: requested_route
+        type: Optional<agentic.shared.RouteId>
+        summary: >-
+          The route the spawning session asked for a sub-agent; absent, the agent revision's Primary
+          model binding applies. Which model its turns used is read from their inferences.
+    relations:
+      - name: requested
+        kind: references
+        target: agentic.model.Route
+        cardinality: one
+        via: requested_route
+      - name: harness
+        kind: references
+        target: agentic.harness.Harness
+        cardinality: one
+        via: harness_id
+      - name: agent_revision
+        kind: references
+        target: agentic.agent.AgentRevision
+        cardinality: one
+        via: agent_revision_id
+      - name: principal
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: principal_id
+      - name: parent
+        kind: references
+        target: agentic.harness.HarnessSession
+        cardinality: one
+        via: parent_session_id
+    lifecycle:
+      initial: Open
+      states: [Open, Ended]
+      terminal: [Ended]
+      transitions:
+        - name: end
+          from: [Open]
+          to: Ended
+
+  - name: agentic.harness.Turn
+    naming:
+      summary: >-
+        One model call of a session: the inference it made, what it used and how large the
+        context was when it was sent. Recorded once and never changed.
+    identity:
+      name: turn_id
+      type: agentic.shared.TurnId
+    fields:
+      - name: harness_session_id
+        type: agentic.shared.HarnessSessionId
+      - name: inference_id
+        type: agentic.shared.InferenceId
+        summary: The model block's record of the call; held by identifier only.
+      - name: usage
+        type: agentic.shared.Usage
+      - name: context_tokens
+        type: Integer
+      - name: at
+        type: Timestamp
+    relations:
+      - name: session
+        kind: references
+        target: agentic.harness.HarnessSession
+        cardinality: one
+        via: harness_session_id
+    # UNMAPPED: `inference_id` is an InferenceId and no `references` relation is declared. The
+    # model block that owns the inference record is layer 2 and is written separately. A
+    # full-system validate may warn ESS-ENTITY-019 once it declares that entity. Open question for
+    # the owner: declare the relation then.
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+  - name: agentic.harness.Compaction
+    naming:
+      summary: >-
+        The context of a session was replaced by a summary: how large it was and how large it is
+        now. The turn after it writes the model's cache again.
+    identity:
+      name: compaction_id
+      type: agentic.shared.TurnId
+    fields:
+      - name: harness_session_id
+        type: agentic.shared.HarnessSessionId
+      - name: tokens_before
+        type: Integer
+      - name: tokens_after
+        type: Integer
+      - name: at
+        type: Timestamp
+    # UNMAPPED: the identity of a compaction is a TurnId because `agentic.shared` declares no
+    # CompactionId and shared.yaml is not mine to edit. Open question for the owner: add
+    # `CompactionId` to shared and use it here.
+    relations:
+      - name: session
+        kind: references
+        target: agentic.harness.HarnessSession
+        cardinality: one
+        via: harness_session_id
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+  - name: agentic.harness.ToolCall
+    naming:
+      summary: >-
+        One call of a tool by a harness session. Requested until decided; Allowed or Denied by a
+        verdict that is recorded on the call with who decided and how well that is known; an
+        Allowed call ends Completed or Failed. `agentic.authority` may later reference a call; the
+        call holds no decision identifier.
+    identity:
+      name: tool_call_id
+      type: agentic.shared.ToolCallId
+    fields:
+      - name: tool_id
+        type: agentic.shared.ToolId
+      - name: harness_session_id
+        type: agentic.shared.HarnessSessionId
+      - name: input
+        type: agentic.shared.Content
+      - name: verdict
+        type: Optional<agentic.shared.Verdict>
+        summary: The recorded decision, Allow or Deny; absent while the call is Requested.
+      - name: decider
+        type: Optional<agentic.shared.Decider>
+      - name: attribution
+        type: Optional<agentic.shared.Attribution>
+        summary: Whether the decider was recorded, inferred or is not recorded.
+      - name: output
+        type: Optional<agentic.shared.Content>
+    relations:
+      - name: tool
+        kind: references
+        target: agentic.tool.Tool
+        cardinality: one
+        via: tool_id
+      - name: session
+        kind: references
+        target: agentic.harness.HarnessSession
+        cardinality: one
+        via: harness_session_id
+    lifecycle:
+      initial: Requested
+      states: [Requested, Allowed, Denied, Completed, Failed]
+      terminal: [Denied, Completed, Failed]
+      transitions:
+        - name: allow
+          from: [Requested]
+          to: Allowed
+        - name: deny
+          from: [Requested]
+          to: Denied
+        - name: complete
+          from: [Allowed]
+          to: Completed
+        - name: fail
+          from: [Allowed]
+          to: Failed
+
+actors:
+  - name: agentic.harness.CallingHarness
+    naming:
+      display: Calling harness
+      summary: The harness that asks for a call and reports its result.
+    may:
+      - agentic.harness.RequestToolCall
+      - agentic.harness.CompleteToolCall
+
+  - name: agentic.harness.CallDecider
+    naming:
+      display: Decider
+      summary: Whatever decides a call, a permission mode, a classifier, a hook, a rule, a delegate or a human.
+    may:
+      - agentic.harness.DecideToolCall
+
+errors:
+  - name: agentic.harness.InvalidLimits
+    summary: The context window is not at least 1 or the depth limit is negative.
+    fields:
+      - name: harness_id
+        type: agentic.shared.HarnessId
+
+  - name: agentic.harness.UnknownHarness
+    summary: No harness of this identity is registered.
+    fields:
+      - name: harness_id
+        type: agentic.shared.HarnessId
+
+  - name: agentic.harness.HarnessStateConflict
+    summary: The harness is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.harness.Harness.State
+
+  - name: agentic.harness.LimitsAboveHarness
+    summary: A session asks for a larger context window or deeper nesting than its harness allows.
+    fields:
+      - name: harness_id
+        type: agentic.shared.HarnessId
+
+  - name: agentic.harness.UnknownRevision
+    summary: No agent revision of this identity is published.
+    fields:
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+
+  - name: agentic.harness.RevisionRetired
+    summary: A retired agent revision is not run.
+    fields:
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+
+  - name: agentic.harness.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.harness.PrincipalRetired
+    summary: A session does not act for a retired principal.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.harness.UnknownSession
+    summary: No session of this identity was opened.
+    fields:
+      - name: harness_session_id
+        type: agentic.shared.HarnessSessionId
+
+  - name: agentic.harness.SessionStateConflict
+    summary: The session is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.harness.HarnessSession.State
+
+  - name: agentic.harness.MaxDepthExceeded
+    summary: The parent is already at the deepest level its harness allows.
+    fields:
+      - name: parent_session_id
+        type: agentic.shared.HarnessSessionId
+      - name: max_depth
+        type: Integer
+
+  - name: agentic.harness.WrongDepth
+    summary: The depth named is not the parent's depth plus 1.
+    fields:
+      - name: parent_session_id
+        type: agentic.shared.HarnessSessionId
+
+  - name: agentic.harness.ContextWindowExceeded
+    summary: The turn carries more context than the session's window holds.
+    fields:
+      - name: harness_session_id
+        type: agentic.shared.HarnessSessionId
+      - name: context_tokens
+        type: Integer
+
+  - name: agentic.harness.CompactionDidNotShrink
+    summary: A compaction leaves the context no smaller than it was.
+    fields:
+      - name: harness_session_id
+        type: agentic.shared.HarnessSessionId
+
+  - name: agentic.harness.UnknownTool
+    summary: No tool of this identity is published.
+    fields:
+      - {name: tool_id, type: agentic.shared.ToolId}
+
+  - name: agentic.harness.ToolIsWithdrawn
+    summary: The tool is withdrawn; a call to it is refused.
+    fields:
+      - {name: tool_id, type: agentic.shared.ToolId}
+
+  - name: agentic.harness.ApprovalNotFinal
+    summary: >-
+      ApprovalRequired is not a final decision. The call stays Requested until an Allow or a Deny
+      is recorded.
+    fields:
+      - {name: verdict, type: agentic.shared.Verdict}
+
+  - name: agentic.harness.ToolCallStateConflict
+    summary: >-
+      The call is not in a state this command acts from. Completing a call that is Requested or
+      Denied is refused with this error: a call completes only after it was allowed.
+    fields:
+      - {name: state, type: agentic.harness.ToolCall.State}
+
+events:
+  - name: agentic.harness.HarnessRegistered
+    fields:
+      - {name: harness_id, type: agentic.shared.HarnessId}
+      - {name: kind, type: agentic.harness.HarnessKind}
+      - {name: context_window, type: Integer}
+      - {name: max_depth, type: Integer}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.harness.HarnessRetired
+    fields:
+      - {name: harness_id, type: agentic.shared.HarnessId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.harness.SessionOpened
+    fields:
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: harness_id, type: agentic.shared.HarnessId}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: permission_mode, type: agentic.harness.PermissionMode}
+      - {name: name, type: Optional<agentic.shared.Name>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.harness.SubAgentSpawned
+    fields:
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: parent_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: depth, type: Integer}
+      - {name: name, type: Optional<agentic.shared.Name>}
+      - {name: requested_route, type: Optional<agentic.shared.RouteId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.harness.TurnRecorded
+    fields:
+      - {name: turn_id, type: agentic.shared.TurnId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: usage, type: agentic.shared.Usage}
+      - {name: context_tokens, type: Integer}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.harness.ContextCompacted
+    fields:
+      - {name: compaction_id, type: agentic.shared.TurnId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: tokens_before, type: Integer}
+      - {name: tokens_after, type: Integer}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.harness.SessionEnded
+    fields:
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.harness.ToolCallRequested
+    fields:
+      - {name: tool_call_id, type: agentic.shared.ToolCallId}
+      - {name: tool_id, type: agentic.shared.ToolId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: input, type: agentic.shared.Content}
+
+  - name: agentic.harness.ToolCallDecided
+    fields:
+      - {name: tool_call_id, type: agentic.shared.ToolCallId}
+      - {name: verdict, type: agentic.shared.Verdict}
+      - {name: decider, type: agentic.shared.Decider}
+      - {name: attribution, type: agentic.shared.Attribution}
+
+  - name: agentic.harness.ToolCallCompleted
+    fields:
+      - {name: tool_call_id, type: agentic.shared.ToolCallId}
+      - {name: ok, type: Boolean}
+      - {name: output, type: agentic.shared.Content}
+
+commands:
+  - name: agentic.harness.RegisterHarness
+    naming:
+      wire: register-harness
+      display: Register a harness
+    input:
+      - {name: harness_id, type: agentic.shared.HarnessId}
+      - {name: kind, type: agentic.harness.HarnessKind}
+      - {name: name, type: agentic.shared.Name}
+      - {name: context_window, type: Integer}
+      - {name: max_depth, type: Integer}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: invalid-limits
+        when:
+          any:
+            - context_window < 1
+            - max_depth < 0
+        error: agentic.harness.InvalidLimits
+        payload:
+          agentic.harness.InvalidLimits: {harness_id: input.harness_id}
+      - name: registered
+        creates: agentic.harness.Harness
+        instance: harness_id
+        sets:
+          kind: input.kind
+          name: input.name
+          context_window: input.context_window
+          max_depth: input.max_depth
+          registered_at: input.at
+        emits: [agentic.harness.HarnessRegistered]
+        payload:
+          agentic.harness.HarnessRegistered:
+            harness_id: input.harness_id
+            kind: input.kind
+            context_window: input.context_window
+            max_depth: input.max_depth
+            at: input.at
+        summary: The harness is Active and sessions may open in it.
+
+  - name: agentic.harness.RetireHarness
+    naming:
+      wire: retire-harness
+      display: Retire a harness
+    input:
+      - {name: harness_id, type: agentic.shared.HarnessId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-harness
+        unknown_instance: true
+        error: agentic.harness.UnknownHarness
+        payload:
+          agentic.harness.UnknownHarness: {harness_id: input.harness_id}
+      - name: retired
+        moves: agentic.harness.Harness.retire
+        instance: harness_id
+        emits: [agentic.harness.HarnessRetired]
+        payload:
+          agentic.harness.HarnessRetired:
+            harness_id: input.harness_id
+            at: input.at
+        summary: No new session opens in it; sessions already open run on.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.harness.HarnessStateConflict
+        payload:
+          agentic.harness.HarnessStateConflict: {state: {subject: state}}
+
+  - name: agentic.harness.OpenSession
+    naming:
+      wire: open-session
+      display: Open a session
+      summary: >-
+        Starts an agent revision in a harness for a principal. Default deny: an unknown or
+        retired harness, revision or principal is refused.
+    input:
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: harness_id, type: agentic.shared.HarnessId}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: permission_mode, type: agentic.harness.PermissionMode}
+      - {name: context_window, type: Integer}
+      - {name: max_depth, type: Integer}
+      - {name: name, type: Optional<agentic.shared.Name>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-harness
+        when_related: {via: input.harness_id, exists: false}
+        error: agentic.harness.UnknownHarness
+        payload:
+          agentic.harness.UnknownHarness: {harness_id: input.harness_id}
+      - name: no-such-revision
+        when_related: {via: input.agent_revision_id, exists: false}
+        error: agentic.harness.UnknownRevision
+        payload:
+          agentic.harness.UnknownRevision: {agent_revision_id: input.agent_revision_id}
+      - name: no-such-principal
+        when_related: {via: input.principal_id, exists: false}
+        error: agentic.harness.UnknownPrincipal
+        payload:
+          agentic.harness.UnknownPrincipal: {principal_id: input.principal_id}
+      - name: harness-retired
+        when_related: {via: input.harness_id, predicate: state == Retired}
+        error: agentic.harness.HarnessStateConflict
+        payload:
+          agentic.harness.HarnessStateConflict:
+            state: {related: {via: input.harness_id, field: state}}
+      - name: revision-retired
+        when_related: {via: input.agent_revision_id, predicate: state == Retired}
+        error: agentic.harness.RevisionRetired
+        payload:
+          agentic.harness.RevisionRetired: {agent_revision_id: input.agent_revision_id}
+      - name: principal-retired
+        when_related: {via: input.principal_id, predicate: state == Retired}
+        error: agentic.harness.PrincipalRetired
+        payload:
+          agentic.harness.PrincipalRetired: {principal_id: input.principal_id}
+      - name: limits-above-harness
+        when_related:
+          via: input.harness_id
+          predicate: input.context_window > context_window
+        error: agentic.harness.LimitsAboveHarness
+        payload:
+          agentic.harness.LimitsAboveHarness: {harness_id: input.harness_id}
+      - name: depth-limit-above-harness
+        when_related:
+          via: input.harness_id
+          predicate: input.max_depth > max_depth
+        error: agentic.harness.LimitsAboveHarness
+        payload:
+          agentic.harness.LimitsAboveHarness: {harness_id: input.harness_id}
+      - name: opened
+        creates: agentic.harness.HarnessSession
+        instance: harness_session_id
+        sets:
+          harness_id: input.harness_id
+          agent_revision_id: input.agent_revision_id
+          principal_id: input.principal_id
+          role: Main
+          depth: 0
+          max_depth: input.max_depth
+          context_window: input.context_window
+          permission_mode: input.permission_mode
+          opened_at: input.at
+          name: input.name
+        emits: [agentic.harness.SessionOpened]
+        payload:
+          agentic.harness.SessionOpened:
+            harness_session_id: input.harness_session_id
+            harness_id: input.harness_id
+            agent_revision_id: input.agent_revision_id
+            principal_id: input.principal_id
+            permission_mode: input.permission_mode
+            name: input.name
+            at: input.at
+        summary: The session is Open at depth 0 with no turn yet.
+
+  - name: agentic.harness.SpawnSubAgent
+    naming:
+      wire: spawn-sub-agent
+      display: Spawn a sub-agent session
+      summary: >-
+        A session starts another as its sub-agent. The child runs in the parent's harness, for
+        the parent's principal and in the parent's permission mode, one level deeper. Refused
+        beyond the harness's maximum depth.
+    input:
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: parent_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: depth, type: Integer}
+      - {name: name, type: Optional<agentic.shared.Name>}
+      - {name: requested_route, type: Optional<agentic.shared.RouteId>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-parent
+        when_related: {via: input.parent_session_id, exists: false}
+        error: agentic.harness.UnknownSession
+        payload:
+          agentic.harness.UnknownSession: {harness_session_id: input.parent_session_id}
+      - name: no-such-revision
+        when_related: {via: input.agent_revision_id, exists: false}
+        error: agentic.harness.UnknownRevision
+        payload:
+          agentic.harness.UnknownRevision: {agent_revision_id: input.agent_revision_id}
+      - name: parent-not-open
+        when_related: {via: input.parent_session_id, predicate: state != Open}
+        error: agentic.harness.SessionStateConflict
+        payload:
+          agentic.harness.SessionStateConflict:
+            state: {related: {via: input.parent_session_id, field: state}}
+      - name: max-depth-exceeded
+        when_related: {via: input.parent_session_id, predicate: depth >= max_depth}
+        error: agentic.harness.MaxDepthExceeded
+        payload:
+          agentic.harness.MaxDepthExceeded:
+            parent_session_id: input.parent_session_id
+            max_depth: {related: {via: input.parent_session_id, field: max_depth}}
+      - name: wrong-depth
+        when_related:
+          via: input.parent_session_id
+          predicate: input.depth != depth + 1
+        error: agentic.harness.WrongDepth
+        payload:
+          agentic.harness.WrongDepth: {parent_session_id: input.parent_session_id}
+      - name: revision-retired
+        when_related: {via: input.agent_revision_id, predicate: state == Retired}
+        error: agentic.harness.RevisionRetired
+        payload:
+          agentic.harness.RevisionRetired: {agent_revision_id: input.agent_revision_id}
+      - name: spawned
+        creates: agentic.harness.HarnessSession
+        instance: harness_session_id
+        sets:
+          harness_id: {related: {via: input.parent_session_id, field: harness_id}}
+          agent_revision_id: input.agent_revision_id
+          principal_id: {related: {via: input.parent_session_id, field: principal_id}}
+          parent_session_id: input.parent_session_id
+          role: SubAgent
+          depth: input.depth
+          max_depth: {related: {via: input.parent_session_id, field: max_depth}}
+          context_window: {related: {via: input.parent_session_id, field: context_window}}
+          permission_mode: {related: {via: input.parent_session_id, field: permission_mode}}
+          opened_at: input.at
+          name: input.name
+          requested_route: input.requested_route
+        emits: [agentic.harness.SubAgentSpawned]
+        payload:
+          agentic.harness.SubAgentSpawned:
+            harness_session_id: input.harness_session_id
+            parent_session_id: input.parent_session_id
+            agent_revision_id: input.agent_revision_id
+            depth: input.depth
+            name: input.name
+            requested_route: input.requested_route
+            at: input.at
+        summary: The sub-agent session is Open, one level below its parent.
+
+  - name: agentic.harness.RecordTurn
+    naming:
+      wire: record-turn
+      display: Record a turn
+      summary: >-
+        One model call of an open session, with the inference it made, what it used and how
+        large the context was. A turn whose context does not fit the window is refused.
+    input:
+      - {name: turn_id, type: agentic.shared.TurnId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: usage, type: agentic.shared.Usage}
+      - {name: context_tokens, type: Integer}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-session
+        when_related: {via: input.harness_session_id, exists: false}
+        error: agentic.harness.UnknownSession
+        payload:
+          agentic.harness.UnknownSession: {harness_session_id: input.harness_session_id}
+      - name: session-not-open
+        when_related: {via: input.harness_session_id, predicate: state != Open}
+        error: agentic.harness.SessionStateConflict
+        payload:
+          agentic.harness.SessionStateConflict:
+            state: {related: {via: input.harness_session_id, field: state}}
+      - name: context-window-exceeded
+        when_related: {via: input.harness_session_id, predicate: input.context_tokens > context_window}
+        error: agentic.harness.ContextWindowExceeded
+        payload:
+          agentic.harness.ContextWindowExceeded:
+            harness_session_id: input.harness_session_id
+            context_tokens: input.context_tokens
+      - name: recorded
+        creates: agentic.harness.Turn
+        instance: turn_id
+        sets:
+          harness_session_id: input.harness_session_id
+          inference_id: input.inference_id
+          usage: input.usage
+          context_tokens: input.context_tokens
+          at: input.at
+        emits: [agentic.harness.TurnRecorded]
+        payload:
+          agentic.harness.TurnRecorded:
+            turn_id: input.turn_id
+            harness_session_id: input.harness_session_id
+            inference_id: input.inference_id
+            usage: input.usage
+            context_tokens: input.context_tokens
+            at: input.at
+        summary: The turn is on record under its session.
+
+  - name: agentic.harness.CompactContext
+    naming:
+      wire: compact-context
+      display: Compact the context
+      summary: The session replaces its context by a summary. The result must be smaller.
+    input:
+      - {name: compaction_id, type: agentic.shared.TurnId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: tokens_before, type: Integer}
+      - {name: tokens_after, type: Integer}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: did-not-shrink
+        when: tokens_after >= tokens_before
+        error: agentic.harness.CompactionDidNotShrink
+        payload:
+          agentic.harness.CompactionDidNotShrink: {harness_session_id: input.harness_session_id}
+      - name: no-such-session
+        when_related: {via: input.harness_session_id, exists: false}
+        error: agentic.harness.UnknownSession
+        payload:
+          agentic.harness.UnknownSession: {harness_session_id: input.harness_session_id}
+      - name: session-not-open
+        when_related: {via: input.harness_session_id, predicate: state != Open}
+        error: agentic.harness.SessionStateConflict
+        payload:
+          agentic.harness.SessionStateConflict:
+            state: {related: {via: input.harness_session_id, field: state}}
+      - name: compacted
+        creates: agentic.harness.Compaction
+        instance: compaction_id
+        sets:
+          harness_session_id: input.harness_session_id
+          tokens_before: input.tokens_before
+          tokens_after: input.tokens_after
+          at: input.at
+        emits: [agentic.harness.ContextCompacted]
+        payload:
+          agentic.harness.ContextCompacted:
+            compaction_id: input.compaction_id
+            harness_session_id: input.harness_session_id
+            tokens_before: input.tokens_before
+            tokens_after: input.tokens_after
+            at: input.at
+        summary: The next turn starts from the smaller context and writes the model's cache again.
+
+  - name: agentic.harness.EndSession
+    naming:
+      wire: end-session
+      display: End a session
+    input:
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-session
+        unknown_instance: true
+        error: agentic.harness.UnknownSession
+        payload:
+          agentic.harness.UnknownSession: {harness_session_id: input.harness_session_id}
+      - name: ended
+        moves: agentic.harness.HarnessSession.end
+        instance: harness_session_id
+        emits: [agentic.harness.SessionEnded]
+        payload:
+          agentic.harness.SessionEnded:
+            harness_session_id: input.harness_session_id
+            at: input.at
+        # UNMAPPED: ending a session must end its sub-agents at every depth. ESS has no transitive
+        # closure, so only the sessions spawned directly from this one end here (`affects:`).
+        # Open question for the owner: end sub-agents bottom-up by the caller, or accept depth 1.
+        affects:
+          - entity: agentic.harness.HarnessSession
+            where: parent_session_id == subject.harness_session_id
+            moves: agentic.harness.HarnessSession.end
+        summary: The session and the sub-agent sessions spawned directly from it have ended.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.harness.SessionStateConflict
+        payload:
+          agentic.harness.SessionStateConflict: {state: {subject: state}}
+
+  - name: agentic.harness.RequestToolCall
+    naming:
+      wire: request-tool-call
+      display: Request a tool call
+    input:
+      - {name: tool_call_id, type: agentic.shared.ToolCallId}
+      - {name: tool_id, type: agentic.shared.ToolId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: input, type: agentic.shared.Content}
+    outcomes:
+      - name: unknown-tool
+        when_related: {via: input.tool_id, exists: false}
+        error: agentic.harness.UnknownTool
+        payload:
+          agentic.harness.UnknownTool:
+            tool_id: input.tool_id
+        summary: The tool was never published; nothing is requested.
+      - name: tool-withdrawn
+        when_related: {via: input.tool_id, predicate: state == Withdrawn}
+        error: agentic.harness.ToolIsWithdrawn
+        payload:
+          agentic.harness.ToolIsWithdrawn:
+            tool_id: input.tool_id
+        summary: The tool is withdrawn; the call is refused and not recorded.
+      - name: requested
+        creates: agentic.harness.ToolCall
+        instance: tool_call_id
+        sets:
+          tool_id: input.tool_id
+          harness_session_id: input.harness_session_id
+          input: input.input
+        emits: [agentic.harness.ToolCallRequested]
+        payload:
+          agentic.harness.ToolCallRequested:
+            tool_call_id: input.tool_call_id
+            tool_id: input.tool_id
+            harness_session_id: input.harness_session_id
+            input: input.input
+        summary: The call is Requested and waits for a decision.
+
+  - name: agentic.harness.DecideToolCall
+    naming:
+      wire: decide-tool-call
+      display: Decide a tool call
+    input:
+      - {name: tool_call_id, type: agentic.shared.ToolCallId}
+      - {name: verdict, type: agentic.shared.Verdict}
+      - {name: decider, type: agentic.shared.Decider}
+      - {name: attribution, type: agentic.shared.Attribution}
+    outcomes:
+      - name: allowed
+        when: verdict == Allow
+        moves: agentic.harness.ToolCall.allow
+        instance: tool_call_id
+        sets:
+          verdict: input.verdict
+          decider: input.decider
+          attribution: input.attribution
+        emits: [agentic.harness.ToolCallDecided]
+        payload:
+          agentic.harness.ToolCallDecided:
+            tool_call_id: input.tool_call_id
+            verdict: input.verdict
+            decider: input.decider
+            attribution: input.attribution
+        summary: The call is Allowed and the tool runs.
+      - name: denied
+        when: verdict == Deny
+        moves: agentic.harness.ToolCall.deny
+        instance: tool_call_id
+        sets:
+          verdict: input.verdict
+          decider: input.decider
+          attribution: input.attribution
+        emits: [agentic.harness.ToolCallDecided]
+        payload:
+          agentic.harness.ToolCallDecided:
+            tool_call_id: input.tool_call_id
+            verdict: input.verdict
+            decider: input.decider
+            attribution: input.attribution
+        summary: The call is Denied; the tool does not run.
+      - name: approval-pending
+        error: agentic.harness.ApprovalNotFinal
+        payload:
+          agentic.harness.ApprovalNotFinal:
+            verdict: input.verdict
+        summary: The verdict was ApprovalRequired; the call stays Requested.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.harness.ToolCallStateConflict
+        summary: The call was already decided.
+
+  - name: agentic.harness.CompleteToolCall
+    naming:
+      wire: complete-tool-call
+      display: Complete a tool call
+    input:
+      - {name: tool_call_id, type: agentic.shared.ToolCallId}
+      - {name: ok, type: Boolean}
+      - {name: output, type: agentic.shared.Content}
+    outcomes:
+      - name: completed
+        when: ok == true
+        moves: agentic.harness.ToolCall.complete
+        instance: tool_call_id
+        sets:
+          output: input.output
+        emits: [agentic.harness.ToolCallCompleted]
+        payload:
+          agentic.harness.ToolCallCompleted:
+            tool_call_id: input.tool_call_id
+            ok: input.ok
+            output: input.output
+        summary: The tool returned a result.
+      - name: failed
+        moves: agentic.harness.ToolCall.fail
+        instance: tool_call_id
+        sets:
+          output: input.output
+        emits: [agentic.harness.ToolCallCompleted]
+        payload:
+          agentic.harness.ToolCallCompleted:
+            tool_call_id: input.tool_call_id
+            ok: input.ok
+            output: input.output
+        summary: The tool returned an error.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.harness.ToolCallStateConflict
+        summary: The call was not Allowed, so it cannot complete, it is undecided, denied or already finished.
+
+views:
+  - name: agentic.harness.Harnesses
+    source: agentic.harness.Harness
+    consistency: read_your_writes
+    fields:
+      - {name: harness_id, type: agentic.shared.HarnessId}
+      - {name: kind, type: agentic.harness.HarnessKind}
+      - {name: name, type: agentic.shared.Name}
+      - {name: context_window, type: Integer}
+      - {name: max_depth, type: Integer}
+      - {name: registered_at, type: Timestamp}
+      - {name: state, type: agentic.harness.Harness.State}
+    naming:
+      wire: harnesses
+      display: Harnesses
+
+  - name: agentic.harness.HarnessSessions
+    source: agentic.harness.HarnessSession
+    consistency: read_your_writes
+    fields:
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: harness_id, type: agentic.shared.HarnessId}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: parent_session_id, type: Optional<agentic.shared.HarnessSessionId>}
+      - {name: role, type: agentic.harness.SessionRole}
+      - {name: depth, type: Integer}
+      - {name: max_depth, type: Integer}
+      - {name: context_window, type: Integer}
+      - {name: permission_mode, type: agentic.harness.PermissionMode}
+      - {name: opened_at, type: Timestamp}
+      - {name: name, type: Optional<agentic.shared.Name>}
+      - {name: requested_route, type: Optional<agentic.shared.RouteId>}
+      - {name: state, type: agentic.harness.HarnessSession.State}
+    naming:
+      wire: harness-sessions
+      display: Harness sessions
+
+  - name: agentic.harness.Turns
+    source: agentic.harness.Turn
+    consistency: read_your_writes
+    fields:
+      - {name: turn_id, type: agentic.shared.TurnId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: usage, type: agentic.shared.Usage}
+      - {name: context_tokens, type: Integer}
+      - {name: at, type: Timestamp}
+    naming:
+      wire: turns
+      display: Turns
+
+  - name: agentic.harness.ToolCalls
+    source: agentic.harness.ToolCall
+    consistency: read_your_writes
+    fields:
+      - {name: tool_call_id, type: agentic.shared.ToolCallId}
+      - {name: tool_id, type: agentic.shared.ToolId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: input, type: agentic.shared.Content}
+      - {name: verdict, type: Optional<agentic.shared.Verdict>}
+      - {name: decider, type: Optional<agentic.shared.Decider>}
+      - {name: attribution, type: Optional<agentic.shared.Attribution>}
+      - {name: output, type: Optional<agentic.shared.Content>}
+      - {name: state, type: agentic.harness.ToolCall.State}
+    naming:
+      wire: tool-calls
+      display: Tool calls

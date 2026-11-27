@@ -1,0 +1,20 @@
+{
+  "name": "trigger-block-lifecycle",
+  "anchor": false,
+  "card": {
+    "persona": "An operator who wires a schedule to an agent and must know when a firing stops counting.",
+    "task": "On the trigger block page, read the lifecycle of a firing and the states it ends in."
+  },
+  "start": "/",
+  "steps": [
+    { "click": "link", "name": "Building blocks", "in": "navbar" },
+    { "click": "link", "name": "^trigger\\b", "in": "main" },
+    { "click": "link", "name": "Firing", "in": "toc" }
+  ],
+  "target": { "kind": "lifecycle", "entity": "Firing" },
+  "truth": {
+    "path": "/docs/blocks/7-collaboration/trigger",
+    "terminal": ["Ended", "Failed", "Skipped"]
+  },
+  "expectations": ["the lifecycle diagram of Firing is in view and marks Ended, Skipped and Failed as the end states"]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "what-question-depends-on",
+  "anchor": false,
+  "card": {
+    "persona": "An implementer of the question block who wants to know what must exist first.",
+    "task": "Find the blocks the question block depends on."
+  },
+  "start": "/",
+  "steps": [
+    { "click": "link", "name": "Building blocks", "in": "navbar" },
+    { "click": "link", "name": "^question\\b", "in": "main" },
+    { "click": "link", "name": "Depends on", "in": "toc" }
+  ],
+  "target": { "kind": "section-list", "heading": "Depends on" },
+  "truth": {
+    "path": "/docs/blocks/7-collaboration/question",
+    "blocks": ["channel", "work", "delegation", "shared"]
+  },
+  "expectations": ["the Depends on list is in view and names channel, work, delegation and shared"]
+}

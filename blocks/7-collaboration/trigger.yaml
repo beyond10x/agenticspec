@@ -1,0 +1,900 @@
+# Trigger: what wakes an agent. Source: the brief of 2026-11-27 (triggers, schedules, firings) and
+# design/research-findings.md: wake rules on intake cut total coordination failure from 21 of 50
+# to 4 of 32 (2611.00689); scheduled agent loops went from 2.2 to about 35 merged pull requests per
+# day (2610.36254).
+domain: agentic.trigger
+
+summary: >-
+  What wakes an agent. A trigger names what it waits for (a post its subscription receives, a
+  schedule's tick, or a named event of another block), the agent revision it wakes, and how many
+  runs it lets overlap. Each time it fires it records a firing, which starts a run or a harness
+  session, is skipped by the trigger's policy, or fails. A disabled trigger does not fire.
+
+naming:
+  wire: trigger
+  display: Trigger
+
+types:
+  # OnEvent comes first: synthesis builds its inputs with the first variant, and only an OnEvent
+  # trigger names its source as plain text; with OnMessage first every CreateTrigger scenario that
+  # left the subscription out was refused as source-missing (ESS-SYNTH-019).
+  - name: agentic.trigger.TriggerKind
+    kind: enum
+    variants: [OnEvent, OnMessage, OnSchedule]
+    naming:
+      summary: >-
+        OnMessage fires when its subscription receives a matching post; OnSchedule when its
+        schedule ticks; OnEvent when another block emits the named event.
+
+  # What happens when the trigger fires while its runs already fill its limit. Skip records the
+  # firing as skipped; Queue records it to start when a run ends; Parallel lets up to
+  # `max_parallel` runs overlap and refuses a firing beyond them. Skip and Queue allow one run.
+  - name: agentic.trigger.ConcurrencyPolicy
+    kind: enum
+    variants: [Skip, Queue, Parallel]
+
+  - name: agentic.trigger.StartMode
+    kind: enum
+    variants: [Auto, Offer]
+    naming:
+      summary: >-
+        Auto starts the run when the trigger fires; Offer waits in Fired until a principal accepts
+        the firing (a question), and the dispatcher then records the start.
+
+entities:
+  # UNMAPPED: the brief says a schedule's "restriction checks" must pass before it can be enabled
+  # (2610.36254); what the checks are is in no code, contract or artifact here. Taken: a checker
+  # records one pass for the schedule as a whole; the checks themselves are outside this contract.
+  # UNMAPPED: the expression is "cron-like" text; its grammar and how `next_fire_at` follows from
+  # it and the timezone are not specified. Taken: text, not empty; the scheduler records the next
+  # fire time.
+  - name: agentic.trigger.Schedule
+    naming:
+      summary: When a scheduled trigger fires, as a cron-like expression in a timezone.
+    identity:
+      name: schedule_id
+      type: agentic.shared.ScheduleId
+    fields:
+      - name: expression
+        type: String
+      - name: timezone
+        type: String
+      - name: next_fire_at
+        type: Timestamp
+      - name: checks_passed_at
+        type: Optional<Timestamp>
+    lifecycle:
+      initial: Unchecked
+      states:
+        - {name: Unchecked, summary: "Its restriction checks have not passed; it cannot be enabled."}
+        - {name: Disabled, summary: "Its checks passed; it does not tick."}
+        - {name: Enabled, summary: "It ticks at next_fire_at."}
+      transitions:
+        - {name: pass_checks, from: [Unchecked], to: Disabled}
+        - {name: enable, from: [Disabled], to: Enabled}
+        - {name: disable, from: [Enabled], to: Disabled}
+
+  # UNMAPPED: the brief gives a trigger "optionally a task template"; no block declares a task
+  # template (agentic.work has tasks, not templates). Taken: an optional text naming it, until
+  # the owner says what a template is and which block holds it.
+  # UNMAPPED: whether a post matches the subscription's filter, and whether the post is on the
+  # subscription's channel, is decided where posts are delivered (two hops from here). Taken: a
+  # firing for a post records the post; the match is not checked by this contract. Nor is it
+  # checked that the post exists: with a relation to agentic.channel.Post and an `unknown-post`
+  # refusal, no firing could be arranged for a scenario, because a post is created only behind
+  # PostMessage's subscription check (ESS-SYNTH-004), and FireTrigger lost every scenario.
+  - name: agentic.trigger.Trigger
+    naming:
+      summary: What wakes one agent revision, and how many of its runs may overlap.
+    identity:
+      name: trigger_id
+      type: agentic.shared.TriggerId
+    fields:
+      - name: kind
+        type: agentic.trigger.TriggerKind
+      - name: subscription_id
+        type: Optional<agentic.shared.SubscriptionId>
+        summary: What an OnMessage trigger listens on.
+      - name: schedule_id
+        type: Optional<agentic.shared.ScheduleId>
+        summary: What an OnSchedule trigger follows.
+      - name: event_name
+        type: Optional<String>
+        summary: The fully qualified name of the event an OnEvent trigger waits for, such as agentic.work.RunEnded.
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+      - name: task_template
+        type: Optional<String>
+      - name: policy
+        type: agentic.trigger.ConcurrencyPolicy
+      - name: max_parallel
+        type: Integer
+        summary: How many of its runs may overlap; 1 under Skip and Queue.
+      - name: running
+        type: Integer
+        summary: Its firings started and not yet ended.
+      - name: condition
+        type: Optional<String>
+        summary: >-
+          A condition over the subject of the event an OnEvent trigger waits for, such as an entity
+          of one kind entering one state with a field over a bound. UNMAPPED: its grammar is not
+          stated; the scheduler evaluates it (consumer gap G15).
+      - name: process_id
+        type: Optional<agentic.shared.ProcessId>
+        summary: The process the task it starts follows.
+      - name: intake
+        type: Optional<String>
+        summary: >-
+          How the task's intake is taken from the event's subject. UNMAPPED: a mapping in text; its
+          form is not stated (consumer gap G15).
+      - name: start_mode
+        type: Optional<agentic.trigger.StartMode>
+        summary: Absent means Auto.
+    invariants:
+      - max_parallel >= 1
+      - running >= 0
+    relations:
+      - {name: subscription, kind: references, target: agentic.channel.Subscription, cardinality: one, via: subscription_id}
+      - {name: schedule, kind: references, target: agentic.trigger.Schedule, cardinality: one, via: schedule_id}
+      - {name: agent_revision, kind: references, target: agentic.agent.AgentRevision, cardinality: one, via: agent_revision_id}
+      - {name: process, kind: references, target: agentic.process.Process, cardinality: one, via: process_id}
+      - {name: firings, kind: owns, target: agentic.trigger.Firing, cardinality: many, via: trigger_id}
+    lifecycle:
+      initial: Disabled
+      states: [Disabled, Enabled]
+      transitions:
+        - {name: enable, from: [Disabled], to: Enabled}
+        - {name: disable, from: [Enabled], to: Disabled}
+
+  # One firing of a trigger: for a post (OnMessage), for a tick (OnSchedule), or for an event.
+  # Started names the run or the harness session it started; Ended is when that run ended, so the
+  # trigger counts its overlapping runs. Ended is not in the brief, which lists Fired, Started,
+  # Skipped and Failed; without it a started firing never stops counting against the limit.
+  - name: agentic.trigger.Firing
+    naming:
+      summary: One time a trigger fired, and what became of it.
+    identity:
+      name: firing_id
+      type: agentic.shared.FiringId
+    fields:
+      - name: trigger_id
+        type: agentic.shared.TriggerId
+      - name: fired_at
+        type: Timestamp
+      - name: post_id
+        type: Optional<agentic.shared.PostId>
+      - name: tick
+        type: Optional<Timestamp>
+      - name: run_id
+        type: Optional<agentic.shared.RunId>
+      - name: harness_session_id
+        type: Optional<agentic.shared.HarnessSessionId>
+      - name: started_at
+        type: Optional<Timestamp>
+      - name: ended_at
+        type: Optional<Timestamp>
+      - name: failure
+        type: Optional<String>
+      - name: subject_key
+        type: Optional<String>
+        summary: >-
+          The subject and the state entry an OnEvent firing is for, so a second firing for the
+          same entry can be told as a duplicate. UNMAPPED: the refusal of a duplicate is not
+          written; it needs a row-set guard over the trigger's firings, which costs synthesis time
+          (see RecordStart) (consumer gap G15).
+    relations:
+      - {name: run, kind: references, target: agentic.work.Run, cardinality: one, via: run_id}
+      - {name: harness_session, kind: references, target: agentic.harness.HarnessSession, cardinality: one, via: harness_session_id}
+    lifecycle:
+      initial: Fired
+      states: [Fired, Started, Ended, Skipped, Failed]
+      terminal: [Ended, Skipped, Failed]
+      transitions:
+        - {name: start, from: [Fired], to: Started}
+        - {name: end, from: [Started], to: Ended}
+        - {name: skip, from: [Fired], to: Skipped}
+        - {name: fail, from: [Fired], to: Failed}
+
+actors:
+  - name: agentic.trigger.TriggerOwner
+    naming:
+      display: Trigger owner
+      summary: Who sets up what wakes an agent.
+    may:
+      - agentic.trigger.CreateSchedule
+      - agentic.trigger.EnableSchedule
+      - agentic.trigger.DisableSchedule
+      - agentic.trigger.CreateTrigger
+      - agentic.trigger.EnableTrigger
+      - agentic.trigger.DisableTrigger
+
+  - name: agentic.trigger.Checker
+    naming:
+      display: Checker
+      summary: Records that a schedule's restriction checks passed.
+    may:
+      - agentic.trigger.PassScheduleChecks
+
+  - name: agentic.trigger.Scheduler
+    naming:
+      display: Scheduler
+      summary: Fires triggers when what they wait for happens, and moves schedules on.
+    may:
+      - agentic.trigger.FireTrigger
+      - agentic.trigger.AdvanceSchedule
+
+  - name: agentic.trigger.Dispatcher
+    naming:
+      display: Dispatcher
+      summary: Starts a run or a harness session for a firing and reports how it went.
+    may:
+      - agentic.trigger.RecordStart
+      - agentic.trigger.RecordEnd
+      - agentic.trigger.RecordFailure
+      - agentic.trigger.SkipFiring
+
+errors:
+  - name: agentic.trigger.InvalidSchedule
+    summary: A schedule has a non-empty expression and timezone; nothing was created.
+  - name: agentic.trigger.UnknownSchedule
+    summary: No schedule has this identity; nothing changed.
+  - name: agentic.trigger.ChecksNotPassed
+    summary: The schedule's restriction checks have not passed, so it is not enabled.
+  - name: agentic.trigger.ScheduleNotEnabled
+    summary: The schedule is not enabled, so it does not tick and its trigger is not enabled.
+  - name: agentic.trigger.ScheduleStateConflict
+    summary: The schedule is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.trigger.Schedule.State}
+  - name: agentic.trigger.InvalidConcurrency
+    summary: A trigger lets at least one run start, and only a Parallel trigger more than one; nothing was created.
+  - name: agentic.trigger.TriggerSourceMissing
+    summary: An OnMessage trigger names a subscription, an OnSchedule trigger a schedule and an OnEvent trigger an event; nothing was created.
+  - name: agentic.trigger.UnknownSubscription
+    summary: No subscription has this identity; nothing changed.
+  - name: agentic.trigger.UnknownAgentRevision
+    summary: No agent revision has this identity; nothing was created.
+  - name: agentic.trigger.UnknownTrigger
+    summary: No trigger has this identity; nothing changed.
+  - name: agentic.trigger.TriggerIsDisabled
+    summary: The trigger is disabled, so it does not fire.
+  - name: agentic.trigger.TriggerStateConflict
+    summary: The trigger is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.trigger.Trigger.State}
+  - name: agentic.trigger.FiringCauseMissing
+    summary: An OnMessage trigger fires for a post and an OnSchedule trigger for a tick; nothing was recorded.
+  - name: agentic.trigger.ConcurrencyLimitReached
+    summary: The trigger's runs already fill its limit, so the firing is not recorded or not started.
+  - name: agentic.trigger.UnknownFiring
+    summary: No firing has this identity; nothing changed.
+  - name: agentic.trigger.FiringNotWaiting
+    summary: No firing of this trigger with this identity waits to start; nothing changed.
+  - name: agentic.trigger.FiringNotRunning
+    summary: No firing of this trigger with this identity has a run going; nothing changed.
+  - name: agentic.trigger.FiringStateConflict
+    summary: The firing is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.trigger.Firing.State}
+  - name: agentic.trigger.StartWithoutRun
+    summary: A started firing names the run or the harness session it started.
+
+commands:
+  - name: agentic.trigger.CreateSchedule
+    naming:
+      display: Create a schedule
+    input:
+      - {name: expression, type: String}
+      - {name: timezone, type: String}
+      - {name: next_fire_at, type: Timestamp}
+    outcomes:
+      - name: invalid
+        when:
+          any: [expression.count == 0, timezone.count == 0]
+        error: agentic.trigger.InvalidSchedule
+      - name: created
+        creates: agentic.trigger.Schedule
+        instance: schedule_id
+        sets:
+          expression: input.expression
+          timezone: input.timezone
+          next_fire_at: input.next_fire_at
+        emits: [agentic.trigger.ScheduleCreated]
+        payload:
+          agentic.trigger.ScheduleCreated:
+            schedule_id: {generated: true}
+            expression: input.expression
+            timezone: input.timezone
+            next_fire_at: input.next_fire_at
+
+  - name: agentic.trigger.PassScheduleChecks
+    naming:
+      display: Record that a schedule's checks passed
+    input:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.trigger.UnknownSchedule
+      - name: passed
+        moves: agentic.trigger.Schedule.pass_checks
+        instance: schedule_id
+        sets:
+          checks_passed_at: {generated: true}
+        emits: [agentic.trigger.ScheduleChecked]
+        payload:
+          agentic.trigger.ScheduleChecked:
+            schedule_id: input.schedule_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.trigger.ScheduleStateConflict
+        payload:
+          agentic.trigger.ScheduleStateConflict:
+            state: {subject: state}
+
+  # 2610.36254: a schedule whose restriction checks have not passed cannot be enabled.
+  - name: agentic.trigger.EnableSchedule
+    naming:
+      display: Enable a schedule
+    input:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.trigger.UnknownSchedule
+      - name: checks-not-passed
+        when_subject:
+          predicate: state == Unchecked
+        error: agentic.trigger.ChecksNotPassed
+      - name: enabled
+        moves: agentic.trigger.Schedule.enable
+        instance: schedule_id
+        emits: [agentic.trigger.ScheduleEnabled]
+        payload:
+          agentic.trigger.ScheduleEnabled:
+            schedule_id: input.schedule_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.trigger.ScheduleStateConflict
+        payload:
+          agentic.trigger.ScheduleStateConflict:
+            state: {subject: state}
+
+  - name: agentic.trigger.DisableSchedule
+    naming:
+      display: Disable a schedule
+    input:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.trigger.UnknownSchedule
+      - name: disabled
+        moves: agentic.trigger.Schedule.disable
+        instance: schedule_id
+        emits: [agentic.trigger.ScheduleDisabled]
+        payload:
+          agentic.trigger.ScheduleDisabled:
+            schedule_id: input.schedule_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.trigger.ScheduleStateConflict
+        payload:
+          agentic.trigger.ScheduleStateConflict:
+            state: {subject: state}
+
+  - name: agentic.trigger.AdvanceSchedule
+    naming:
+      display: Move a schedule to its next fire time
+    input:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+      - {name: next_fire_at, type: Timestamp}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.trigger.UnknownSchedule
+      - name: not-enabled
+        when_subject:
+          predicate: state != Enabled
+        error: agentic.trigger.ScheduleNotEnabled
+      - name: advanced
+        updates: agentic.trigger.Schedule
+        instance: schedule_id
+        sets:
+          next_fire_at: input.next_fire_at
+        emits: [agentic.trigger.ScheduleAdvanced]
+        payload:
+          agentic.trigger.ScheduleAdvanced:
+            schedule_id: input.schedule_id
+            next_fire_at: input.next_fire_at
+
+  # A trigger is created disabled, with no run started. It names what it waits for, and that
+  # thing exists; Skip and Queue let one run start, Parallel up to max_parallel.
+  - name: agentic.trigger.CreateTrigger
+    naming:
+      display: Create a trigger
+    input:
+      - {name: kind, type: agentic.trigger.TriggerKind}
+      - {name: subscription_id, type: Optional<agentic.shared.SubscriptionId>}
+      - {name: schedule_id, type: Optional<agentic.shared.ScheduleId>}
+      - {name: event_name, type: Optional<String>}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: task_template, type: Optional<String>}
+      - {name: policy, type: agentic.trigger.ConcurrencyPolicy}
+      - {name: max_parallel, type: Integer}
+      - {name: condition, type: Optional<String>}
+      - {name: process_id, type: Optional<agentic.shared.ProcessId>}
+      - {name: intake, type: Optional<String>}
+      - {name: start_mode, type: Optional<agentic.trigger.StartMode>}
+    outcomes:
+      - name: invalid-concurrency
+        when:
+          any:
+            - max_parallel < 1
+            - all: [policy != Parallel, max_parallel != 1]
+        error: agentic.trigger.InvalidConcurrency
+      - name: source-missing
+        when:
+          any:
+            - all: [kind == OnMessage, not defined(subscription_id)]
+            - all: [kind == OnSchedule, not defined(schedule_id)]
+            - all: [kind == OnEvent, not defined(event_name)]
+        error: agentic.trigger.TriggerSourceMissing
+      - name: unknown-subscription
+        when_related: {via: input.subscription_id, exists: false}
+        error: agentic.trigger.UnknownSubscription
+      - name: unknown-schedule
+        when_related: {via: input.schedule_id, exists: false}
+        error: agentic.trigger.UnknownSchedule
+      - name: unknown-revision
+        when_related: {via: input.agent_revision_id, exists: false}
+        error: agentic.trigger.UnknownAgentRevision
+      - name: created
+        creates: agentic.trigger.Trigger
+        instance: trigger_id
+        sets:
+          kind: input.kind
+          subscription_id: input.subscription_id
+          schedule_id: input.schedule_id
+          event_name: input.event_name
+          agent_revision_id: input.agent_revision_id
+          task_template: input.task_template
+          policy: input.policy
+          max_parallel: input.max_parallel
+          running: 0
+          condition: input.condition
+          process_id: input.process_id
+          intake: input.intake
+          start_mode: input.start_mode
+        emits: [agentic.trigger.TriggerCreated]
+        payload:
+          agentic.trigger.TriggerCreated:
+            trigger_id: {generated: true}
+            kind: input.kind
+            agent_revision_id: input.agent_revision_id
+            policy: input.policy
+            max_parallel: input.max_parallel
+
+  # An OnSchedule trigger is enabled only while its schedule is enabled.
+  # UNMAPPED: an OnMessage trigger whose subscription has ended should not be enabled either. A
+  # command reads one related row through its subject (ESS-COMMAND-004, "a command reads one
+  # related row"), and the schedule takes it. Open question for the owner: refuse it with the
+  # subscription named in the input, or leave it to the firing.
+  - name: agentic.trigger.EnableTrigger
+    naming:
+      display: Enable a trigger
+    input:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.trigger.UnknownTrigger
+      - name: schedule-not-enabled
+        when_related: {via: schedule_id, predicate: state != Enabled}
+        error: agentic.trigger.ScheduleNotEnabled
+      - name: enabled
+        moves: agentic.trigger.Trigger.enable
+        instance: trigger_id
+        emits: [agentic.trigger.TriggerEnabled]
+        payload:
+          agentic.trigger.TriggerEnabled:
+            trigger_id: input.trigger_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.trigger.TriggerStateConflict
+        payload:
+          agentic.trigger.TriggerStateConflict:
+            state: {subject: state}
+
+  - name: agentic.trigger.DisableTrigger
+    naming:
+      display: Disable a trigger
+    input:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.trigger.UnknownTrigger
+      - name: disabled
+        moves: agentic.trigger.Trigger.disable
+        instance: trigger_id
+        emits: [agentic.trigger.TriggerDisabled]
+        payload:
+          agentic.trigger.TriggerDisabled:
+            trigger_id: input.trigger_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.trigger.TriggerStateConflict
+        payload:
+          agentic.trigger.TriggerStateConflict:
+            state: {subject: state}
+
+  # The trigger fires. A disabled trigger is refused. While its started runs fill its limit, the
+  # policy answers: Skip records the firing Skipped, Queue records it Fired to start when a run
+  # ends, Parallel refuses it.
+  - name: agentic.trigger.FireTrigger
+    naming:
+      display: Fire a trigger
+    input:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: post_id, type: Optional<agentic.shared.PostId>}
+      - {name: tick, type: Optional<Timestamp>}
+      - {name: subject_key, type: Optional<String>}
+    outcomes:
+      - name: unknown-trigger
+        when_related: {via: input.trigger_id, exists: false}
+        error: agentic.trigger.UnknownTrigger
+      - name: disabled
+        when_related: {via: input.trigger_id, predicate: state == Disabled}
+        error: agentic.trigger.TriggerIsDisabled
+      - name: cause-missing
+        when_related:
+          via: input.trigger_id
+          predicate:
+            any:
+              - all: [kind == OnMessage, not defined(input.post_id)]
+              - all: [kind == OnSchedule, not defined(input.tick)]
+        error: agentic.trigger.FiringCauseMissing
+      - name: limit-reached
+        when_related:
+          via: input.trigger_id
+          predicate: {all: [running >= max_parallel, policy == Parallel]}
+        error: agentic.trigger.ConcurrencyLimitReached
+      - name: skipped
+        when_related:
+          via: input.trigger_id
+          predicate: {all: [running >= max_parallel, policy == Skip]}
+        creates: agentic.trigger.Firing
+        instance: firing_id
+        into: Skipped
+        sets:
+          trigger_id: input.trigger_id
+          fired_at: {generated: true}
+          post_id: input.post_id
+          tick: input.tick
+          subject_key: input.subject_key
+        emits: [agentic.trigger.FiringSkipped]
+        payload:
+          agentic.trigger.FiringSkipped:
+            firing_id: {generated: true}
+            trigger_id: input.trigger_id
+      - name: queued
+        when_related:
+          via: input.trigger_id
+          predicate: {all: [running >= max_parallel, policy == Queue]}
+        creates: agentic.trigger.Firing
+        instance: firing_id
+        sets:
+          trigger_id: input.trigger_id
+          fired_at: {generated: true}
+          post_id: input.post_id
+          tick: input.tick
+          subject_key: input.subject_key
+        emits: [agentic.trigger.FiringQueued]
+        payload:
+          agentic.trigger.FiringQueued:
+            firing_id: {generated: true}
+            trigger_id: input.trigger_id
+      - name: fired
+        creates: agentic.trigger.Firing
+        instance: firing_id
+        sets:
+          trigger_id: input.trigger_id
+          fired_at: {generated: true}
+          post_id: input.post_id
+          tick: input.tick
+          subject_key: input.subject_key
+        emits: [agentic.trigger.TriggerFired]
+        payload:
+          agentic.trigger.TriggerFired:
+            firing_id: {generated: true}
+            trigger_id: input.trigger_id
+            post_id: input.post_id
+            tick: input.tick
+
+  # A run or a harness session started for a firing that waits (Fired, of this trigger). The
+  # trigger counts it, so the subject is the trigger and the firing moves beside it.
+  # UNMAPPED: whether a start beyond the limit is refused here as well (a queued firing waits for
+  # a run to end). The brief puts the limit on firing only. A refusal here reads the subject
+  # (`running >= max_parallel`) beside the row set of firings, and a command reads one kind of
+  # related row (ESS-COMMAND-009); reading each firing through its identity instead (unknown,
+  # foreign, not fired) made the suite synthesis about 40 s slower. Taken: the dispatcher starts a
+  # queued firing only after a run ended; this contract does not refuse it.
+  - name: agentic.trigger.RecordStart
+    naming:
+      display: Record that a firing started
+    input:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: harness_session_id, type: Optional<agentic.shared.HarnessSessionId>}
+    outcomes:
+      - name: without-run
+        when:
+          all: [not defined(run_id), not defined(harness_session_id)]
+        error: agentic.trigger.StartWithoutRun
+      - name: unknown-trigger
+        unknown_instance: true
+        error: agentic.trigger.UnknownTrigger
+      - name: firing-not-waiting
+        when_related:
+          entity: agentic.trigger.Firing
+          where:
+            all:
+              - firing_id == input.firing_id
+              - trigger_id == input.trigger_id
+              - state == Fired
+          exists: false
+        error: agentic.trigger.FiringNotWaiting
+      - name: started
+        updates: agentic.trigger.Trigger
+        instance: trigger_id
+        sets:
+          running: {increment: 1}
+        affects:
+          - entity: agentic.trigger.Firing
+            where: firing_id == input.firing_id
+            moves: agentic.trigger.Firing.start
+            sets:
+              run_id: input.run_id
+              harness_session_id: input.harness_session_id
+              started_at: {generated: true}
+        emits: [agentic.trigger.FiringStarted]
+        payload:
+          agentic.trigger.FiringStarted:
+            firing_id: input.firing_id
+            trigger_id: input.trigger_id
+            run_id: input.run_id
+            harness_session_id: input.harness_session_id
+
+  # The run of a started firing ended: the firing ends and the trigger counts one run less.
+  - name: agentic.trigger.RecordEnd
+    naming:
+      display: Record that a firing's run ended
+    input:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: firing_id, type: agentic.shared.FiringId}
+    outcomes:
+      - name: unknown-trigger
+        unknown_instance: true
+        error: agentic.trigger.UnknownTrigger
+      - name: firing-not-running
+        when_related:
+          entity: agentic.trigger.Firing
+          where:
+            all:
+              - firing_id == input.firing_id
+              - trigger_id == input.trigger_id
+              - state == Started
+          exists: false
+        error: agentic.trigger.FiringNotRunning
+      - name: ended
+        updates: agentic.trigger.Trigger
+        instance: trigger_id
+        sets:
+          running: {increment: -1}
+        affects:
+          - entity: agentic.trigger.Firing
+            where: firing_id == input.firing_id
+            moves: agentic.trigger.Firing.end
+            sets:
+              ended_at: {generated: true}
+        emits: [agentic.trigger.FiringEnded]
+        payload:
+          agentic.trigger.FiringEnded:
+            firing_id: input.firing_id
+            trigger_id: input.trigger_id
+
+  - name: agentic.trigger.RecordFailure
+    naming:
+      display: Record that a firing failed to start
+    input:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: failure, type: String}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.trigger.UnknownFiring
+      - name: failed
+        moves: agentic.trigger.Firing.fail
+        instance: firing_id
+        sets:
+          failure: input.failure
+        emits: [agentic.trigger.FiringFailed]
+        payload:
+          agentic.trigger.FiringFailed:
+            firing_id: input.firing_id
+            failure: input.failure
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.trigger.FiringStateConflict
+        payload:
+          agentic.trigger.FiringStateConflict:
+            state: {subject: state}
+
+  # A queued firing the dispatcher drops by the trigger's policy (Skip), for example when another
+  # run started first.
+  - name: agentic.trigger.SkipFiring
+    naming:
+      display: Skip a waiting firing
+    input:
+      - {name: firing_id, type: agentic.shared.FiringId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.trigger.UnknownFiring
+      - name: skipped
+        moves: agentic.trigger.Firing.skip
+        instance: firing_id
+        emits: [agentic.trigger.FiringSkipped]
+        payload:
+          agentic.trigger.FiringSkipped:
+            firing_id: input.firing_id
+            trigger_id: {subject: trigger_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.trigger.FiringStateConflict
+        payload:
+          agentic.trigger.FiringStateConflict:
+            state: {subject: state}
+
+events:
+  - name: agentic.trigger.ScheduleCreated
+    fields:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+      - {name: expression, type: String}
+      - {name: timezone, type: String}
+      - {name: next_fire_at, type: Timestamp}
+  - name: agentic.trigger.ScheduleChecked
+    fields:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+  - name: agentic.trigger.ScheduleEnabled
+    fields:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+  - name: agentic.trigger.ScheduleDisabled
+    fields:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+  - name: agentic.trigger.ScheduleAdvanced
+    fields:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+      - {name: next_fire_at, type: Timestamp}
+  - name: agentic.trigger.TriggerCreated
+    fields:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: kind, type: agentic.trigger.TriggerKind}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: policy, type: agentic.trigger.ConcurrencyPolicy}
+      - {name: max_parallel, type: Integer}
+  - name: agentic.trigger.TriggerEnabled
+    fields:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+  - name: agentic.trigger.TriggerDisabled
+    fields:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+  - name: agentic.trigger.TriggerFired
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: post_id, type: Optional<agentic.shared.PostId>}
+      - {name: tick, type: Optional<Timestamp>}
+  - name: agentic.trigger.FiringQueued
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+  - name: agentic.trigger.FiringSkipped
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+  - name: agentic.trigger.FiringStarted
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: harness_session_id, type: Optional<agentic.shared.HarnessSessionId>}
+  - name: agentic.trigger.FiringEnded
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+  - name: agentic.trigger.FiringFailed
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: failure, type: String}
+
+views:
+  - name: agentic.trigger.Triggers
+    source: agentic.trigger.Trigger
+    consistency: read_your_writes
+    fields:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: kind, type: agentic.trigger.TriggerKind}
+      - {name: subscription_id, type: Optional<agentic.shared.SubscriptionId>}
+      - {name: schedule_id, type: Optional<agentic.shared.ScheduleId>}
+      - {name: event_name, type: Optional<String>}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: task_template, type: Optional<String>}
+      - {name: policy, type: agentic.trigger.ConcurrencyPolicy}
+      - {name: max_parallel, type: Integer}
+      - {name: running, type: Integer}
+      - {name: condition, type: Optional<String>}
+      - {name: process_id, type: Optional<agentic.shared.ProcessId>}
+      - {name: intake, type: Optional<String>}
+      - {name: start_mode, type: Optional<agentic.trigger.StartMode>}
+      - {name: state, type: agentic.trigger.Trigger.State}
+
+  - name: agentic.trigger.TriggersOfRevision
+    source: agentic.trigger.Trigger
+    consistency: read_your_writes
+    params:
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+    filter: agent_revision_id == param.agent_revision_id
+    fields:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: kind, type: agentic.trigger.TriggerKind}
+      - {name: policy, type: agentic.trigger.ConcurrencyPolicy}
+      - {name: max_parallel, type: Integer}
+      - {name: running, type: Integer}
+      - {name: state, type: agentic.trigger.Trigger.State}
+
+  - name: agentic.trigger.Schedules
+    source: agentic.trigger.Schedule
+    consistency: read_your_writes
+    fields:
+      - {name: schedule_id, type: agentic.shared.ScheduleId}
+      - {name: expression, type: String}
+      - {name: timezone, type: String}
+      - {name: next_fire_at, type: Timestamp}
+      - {name: checks_passed_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.trigger.Schedule.State}
+
+  - name: agentic.trigger.Firings
+    source: agentic.trigger.Firing
+    consistency: read_your_writes
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: fired_at, type: Timestamp}
+      - {name: post_id, type: Optional<agentic.shared.PostId>}
+      - {name: tick, type: Optional<Timestamp>}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: harness_session_id, type: Optional<agentic.shared.HarnessSessionId>}
+      - {name: started_at, type: Optional<Timestamp>}
+      - {name: ended_at, type: Optional<Timestamp>}
+      - {name: failure, type: Optional<String>}
+      - {name: subject_key, type: Optional<String>}
+      - {name: state, type: agentic.trigger.Firing.State}
+
+  # The firings of one trigger with the time each fired; a reader orders them by fired_at.
+  - name: agentic.trigger.RecentFirings
+    source: agentic.trigger.Firing
+    consistency: read_your_writes
+    params:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+    filter: trigger_id == param.trigger_id
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: fired_at, type: Timestamp}
+      - {name: post_id, type: Optional<agentic.shared.PostId>}
+      - {name: tick, type: Optional<Timestamp>}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: harness_session_id, type: Optional<agentic.shared.HarnessSessionId>}
+      - {name: state, type: agentic.trigger.Firing.State}

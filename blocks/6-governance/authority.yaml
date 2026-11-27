@@ -1,0 +1,970 @@
+domain: agentic.authority
+
+summary: >-
+  What may happen. A grant lets a principal or an agent revision perform an action class on a scope
+  until it expires, as a standing permission, a standing approval requirement or a standing
+  prohibition, with its conditions and exclusions; a budget caps tokens, money, wall time or tool
+  calls of a principal, an agent revision, a run or a route, for its whole life or per call, day or
+  month; a decision answers one request with a verdict, who decided, under which delegation and
+  on which grant. Default deny: a request no grant
+  covers is refused with a named error, never allowed by silence.
+
+naming:
+  wire: authority
+  display: Authority
+
+types:
+  - name: agentic.authority.SubjectKind
+    kind: enum
+    variants: [Principal, AgentRevision]
+    naming:
+      summary: >-
+        What a grantee or a budget owner identifies. The identifier is a plain Uuid beside this kind
+        because a row-set guard compares fields, not a union of two identifier types.
+
+  - name: agentic.authority.BudgetOwnerKind
+    kind: enum
+    variants: [Principal, AgentRevision, Run, Route]
+    naming:
+      summary: >-
+        What a budget caps: everything a principal or an agent revision spends, one run of
+        agentic.work, or one route of agentic.model (the starts of a Managed server behind it
+        included). The identifier is a plain Uuid beside this kind, as for SubjectKind.
+
+  - name: agentic.authority.BudgetWindow
+    kind: enum
+    variants: [Total, Call, Day, Month]
+    naming:
+      summary: >-
+        The period a budget's limit holds for: the whole life of its owner, one call, one
+        calendar day or one calendar month. UNMAPPED: a windowed budget is read as one budget per
+        window, opened by the meter when the window starts; no command resets what was spent, and
+        the timezone of a day is not stated (consumer gap G3).
+
+  - name: agentic.authority.BudgetResource
+    kind: enum
+    variants: [Tokens, Money, WallTime, ToolCalls]
+    naming:
+      summary: >-
+        What a budget counts. Tokens in tokens, Money in micro-USD (agentic.shared.Money), WallTime
+        in milliseconds, ToolCalls in calls. UNMAPPED: the unit per resource is a convention of this
+        description; no type carries it.
+
+entities:
+  - name: agentic.authority.Grant
+    naming:
+      summary: >-
+        A principal or an agent revision may perform an action class on a scope until the grant
+        expires or is revoked. UNMAPPED: a scope is matched by equality of its text; prefix, glob or
+        path-tree matching belongs to the evaluator that mints scopes.
+    identity:
+      name: grant_id
+      type: agentic.shared.GrantId
+    fields:
+      - name: grantee_kind
+        type: agentic.authority.SubjectKind
+      - name: grantee_id
+        type: Uuid
+        summary: A PrincipalId or an AgentRevisionId, as grantee_kind says.
+      - name: action_class
+        type: agentic.shared.ToolCategory
+      - name: scope
+        type: String
+      - name: expires_at
+        type: Timestamp
+      - name: granted_by
+        type: agentic.shared.PrincipalId
+      - name: granted_at
+        type: Timestamp
+      - name: effect
+        type: agentic.shared.Verdict
+        summary: >-
+          Allow lets the action happen without asking; ApprovalRequired lets it happen once
+          approved; Deny is a standing prohibition, under which no Allow or ApprovalRequired
+          decision is recorded.
+      - name: condition
+        type: Optional<String>
+        summary: >-
+          A condition over state outside the request under which the grant applies, such as no
+          pipeline running. UNMAPPED: its grammar and who evaluates it are not stated; the
+          evaluator that names the grant checks it (consumer gap G2).
+      - name: excludes
+        type: List<agentic.shared.Name>
+        summary: The cases the grant does not cover, by name, though they fall in its action class and scope.
+      - name: supersedes
+        type: Optional<agentic.shared.GrantId>
+        summary: The earlier grant this one replaces; revoking that one is a separate command.
+    relations:
+      - name: grantor
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: granted_by
+      - name: superseded
+        kind: references
+        target: agentic.authority.Grant
+        cardinality: one
+        via: supersedes
+    lifecycle:
+      initial: Active
+      states: [Active, Revoked]
+      terminal: [Revoked]
+      transitions:
+        - name: revoke
+          from: [Active]
+          to: Revoked
+
+  - name: agentic.authority.Budget
+    naming:
+      summary: >-
+        A limit on one resource for one owner, and what was spent against it. Spent never passes
+        the limit; a budget at its limit is Exhausted.
+    identity:
+      name: budget_id
+      type: agentic.shared.BudgetId
+    fields:
+      - name: owner_kind
+        type: agentic.authority.BudgetOwnerKind
+      - name: owner_id
+        type: Uuid
+      - name: resource
+        type: agentic.authority.BudgetResource
+      - name: window
+        type: agentic.authority.BudgetWindow
+      - name: limit
+        type: Integer
+      - name: spent
+        type: Integer
+    invariants:
+      - spent >= 0
+      - limit >= 0
+    lifecycle:
+      initial: Open
+      states: [Open, Exhausted]
+      terminal: [Exhausted]
+      transitions:
+        - name: record
+          from: [Open]
+          to: Open
+        - name: exhaust
+          from: [Open]
+          to: Exhausted
+
+  - name: agentic.authority.Decision
+    naming:
+      summary: >-
+        The answer to one request: its verdict, who decided it, how that is known, and the
+        delegation it was made under. An ApprovalRequired decision stays Recorded, awaiting approval, until a human or a
+        delegate approves or rejects it.
+    identity:
+      name: decision_id
+      type: agentic.shared.DecisionId
+    fields:
+      - name: requester_kind
+        type: agentic.authority.SubjectKind
+      - name: requester_id
+        type: Uuid
+      - name: action_class
+        type: agentic.shared.ToolCategory
+      - name: scope
+        type: String
+      - name: verdict
+        type: agentic.shared.Verdict
+      - name: decider
+        type: agentic.shared.Decider
+      - name: attribution
+        type: agentic.shared.Attribution
+      - name: delegation
+        type: Optional<agentic.shared.DelegationId>
+      - name: decided_at
+        type: Timestamp
+      - name: approved_by
+        type: Optional<agentic.shared.Decider>
+      - name: approval_delegation
+        type: Optional<agentic.shared.DelegationId>
+      - name: resolved_at
+        type: Optional<Timestamp>
+      - name: grant_id
+        type: Optional<agentic.shared.GrantId>
+        summary: >-
+          The grant the decision rests on: the one an Allow or ApprovalRequired was recorded under,
+          or the standing prohibition a Deny names. Absent on a Deny no grant names.
+    relations:
+      - name: grant
+        kind: references
+        target: agentic.authority.Grant
+        cardinality: one
+        via: grant_id
+    lifecycle:
+      initial: Recorded
+      states: [Recorded, Approved, Rejected]
+      terminal: [Approved, Rejected]
+      transitions:
+        - name: approve
+          from: [Recorded]
+          to: Approved
+        - name: reject
+          from: [Recorded]
+          to: Rejected
+
+actors:
+  - name: agentic.authority.Authority
+    naming:
+      display: Authority
+      summary: >-
+        What decides a request: a permission mode, a classifier, a hook, a rule, a delegate or a
+        human.
+    may:
+      - agentic.authority.DecideRequest
+      - agentic.authority.DenyRequest
+      - agentic.authority.Grants
+      - agentic.authority.Budgets
+      - agentic.authority.Decisions
+      - agentic.authority.OpenApprovals
+
+  - name: agentic.authority.Steward
+    naming:
+      display: Steward
+      summary: A human, or a delegate whose delegation covers it, who grants, budgets and approves.
+    may:
+      - agentic.authority.GrantAuthority
+      - agentic.authority.RevokeGrant
+      - agentic.authority.OpenBudget
+      - agentic.authority.ApproveDecision
+      - agentic.authority.RejectDecision
+      - agentic.authority.Grants
+      - agentic.authority.Budgets
+      - agentic.authority.Decisions
+      - agentic.authority.OpenApprovals
+
+  - name: agentic.authority.Meter
+    naming:
+      display: Meter
+      summary: What observes consumption and reports it against a budget.
+    may:
+      - agentic.authority.RecordSpend
+      - agentic.authority.Budgets
+
+errors:
+  - name: agentic.authority.GrantAlreadyExpired
+    summary: A grant must expire after the instant it is made.
+    fields:
+      - name: expires_at
+        type: Timestamp
+
+  - name: agentic.authority.GrantNotFound
+    fields:
+      - name: grant_id
+        type: agentic.shared.GrantId
+
+  - name: agentic.authority.GrantStateConflict
+    fields:
+      - name: state
+        type: agentic.authority.Grant.State
+
+  - name: agentic.authority.NegativeLimit
+    fields:
+      - name: limit
+        type: Integer
+
+  - name: agentic.authority.BudgetNotFound
+    fields:
+      - name: budget_id
+        type: agentic.shared.BudgetId
+
+  - name: agentic.authority.BudgetStateConflict
+    fields:
+      - name: state
+        type: agentic.authority.Budget.State
+
+  - name: agentic.authority.OverLimit
+    summary: The reported total would pass the budget's limit; nothing was recorded.
+    fields:
+      - name: budget_id
+        type: agentic.shared.BudgetId
+      - name: spent_total
+        type: Integer
+
+  - name: agentic.authority.SpendRegressed
+    summary: A total below what is already recorded; spending only grows.
+    fields:
+      - name: budget_id
+        type: agentic.shared.BudgetId
+      - name: spent_total
+        type: Integer
+
+  - name: agentic.authority.NoGrantCovers
+    summary: >-
+      No active, unexpired grant covers the requester, the action class and the scope. Default deny:
+      an Allow or an ApprovalRequired verdict needs a grant under it.
+    fields:
+      - name: action_class
+        type: agentic.shared.ToolCategory
+      - name: scope
+        type: String
+
+  - name: agentic.authority.GrantForbids
+    summary: The grant named is a standing prohibition (effect Deny); nothing is allowed under it.
+    fields:
+      - name: grant_id
+        type: agentic.shared.GrantId
+
+  - name: agentic.authority.DenyNeedsNoGrant
+    summary: A Deny is recorded by DenyRequest, not DecideRequest.
+    fields: []
+
+  - name: agentic.authority.DelegationRequired
+    summary: A Delegate acts under a delegation; none was named.
+    fields: []
+
+  - name: agentic.authority.ApproverNotPermitted
+    summary: Only a human, or a delegate whose delegation covers approval, may approve.
+    fields:
+      - name: approver
+        type: agentic.shared.Decider
+
+  - name: agentic.authority.DelegationScopeLacksApproval
+    summary: The delegation's scope does not cover approval.
+    fields:
+      - name: delegation
+        type: Optional<agentic.shared.DelegationId>
+
+  - name: agentic.authority.DecisionNotFound
+    fields:
+      - name: decision_id
+        type: agentic.shared.DecisionId
+
+  - name: agentic.authority.DecisionNotAwaiting
+    summary: The decision is an Allow or a Deny; nothing awaits approval.
+    fields:
+      - name: decision_id
+        type: agentic.shared.DecisionId
+
+  - name: agentic.authority.DecisionStateConflict
+    summary: The decision is not awaiting approval.
+    fields:
+      - name: state
+        type: agentic.authority.Decision.State
+
+commands:
+  - name: agentic.authority.GrantAuthority
+    naming:
+      wire: grant-authority
+      display: Grant authority
+    input:
+      - name: grantee_kind
+        type: agentic.authority.SubjectKind
+      - name: grantee_id
+        type: Uuid
+      - name: action_class
+        type: agentic.shared.ToolCategory
+      - name: scope
+        type: String
+      - name: expires_at
+        type: Timestamp
+      - name: granted_by
+        type: agentic.shared.PrincipalId
+      - name: effect
+        type: agentic.shared.Verdict
+      - name: condition
+        type: Optional<String>
+      - name: excludes
+        type: List<agentic.shared.Name>
+      - name: supersedes
+        type: Optional<agentic.shared.GrantId>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: already-expired
+        when: expires_at <= at
+        error: agentic.authority.GrantAlreadyExpired
+        payload:
+          agentic.authority.GrantAlreadyExpired:
+            expires_at: input.expires_at
+      - name: granted
+        creates: agentic.authority.Grant
+        instance: grant_id
+        sets:
+          grantee_kind: input.grantee_kind
+          grantee_id: input.grantee_id
+          action_class: input.action_class
+          scope: input.scope
+          expires_at: input.expires_at
+          granted_by: input.granted_by
+          granted_at: input.at
+          effect: input.effect
+          condition: input.condition
+          excludes: input.excludes
+          supersedes: input.supersedes
+        emits:
+          - agentic.authority.GrantIssued
+        payload:
+          agentic.authority.GrantIssued:
+            grant_id: {generated: true}
+            grantee_kind: input.grantee_kind
+            grantee_id: input.grantee_id
+            action_class: input.action_class
+            scope: input.scope
+            expires_at: input.expires_at
+            granted_by: input.granted_by
+            effect: input.effect
+            supersedes: input.supersedes
+            at: input.at
+
+  - name: agentic.authority.RevokeGrant
+    naming:
+      wire: revoke-grant
+      display: Revoke a grant
+    input:
+      - name: grant_id
+        type: agentic.shared.GrantId
+      - name: revoked_by
+        type: agentic.shared.PrincipalId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-grant
+        unknown_instance: true
+        error: agentic.authority.GrantNotFound
+        payload:
+          agentic.authority.GrantNotFound:
+            grant_id: input.grant_id
+      - name: revoked
+        moves: agentic.authority.Grant.revoke
+        instance: grant_id
+        emits:
+          - agentic.authority.GrantRevoked
+        payload:
+          agentic.authority.GrantRevoked:
+            grant_id: input.grant_id
+            revoked_by: input.revoked_by
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.authority.GrantStateConflict
+        payload:
+          agentic.authority.GrantStateConflict:
+            state: {subject: state}
+
+  - name: agentic.authority.OpenBudget
+    naming:
+      wire: open-budget
+      display: Open a budget
+    input:
+      - name: owner_kind
+        type: agentic.authority.BudgetOwnerKind
+      - name: owner_id
+        type: Uuid
+      - name: resource
+        type: agentic.authority.BudgetResource
+      - name: window
+        type: agentic.authority.BudgetWindow
+      - name: limit
+        type: Integer
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: negative-limit
+        when: limit < 0
+        error: agentic.authority.NegativeLimit
+        payload:
+          agentic.authority.NegativeLimit:
+            limit: input.limit
+      - name: opened
+        creates: agentic.authority.Budget
+        instance: budget_id
+        sets:
+          owner_kind: input.owner_kind
+          owner_id: input.owner_id
+          resource: input.resource
+          window: input.window
+          limit: input.limit
+          spent: 0
+        emits:
+          - agentic.authority.BudgetOpened
+        payload:
+          agentic.authority.BudgetOpened:
+            budget_id: {generated: true}
+            owner_kind: input.owner_kind
+            owner_id: input.owner_id
+            resource: input.resource
+            window: input.window
+            limit: input.limit
+            at: input.at
+
+  - name: agentic.authority.RecordSpend
+    naming:
+      wire: record-spend
+      display: Record spend
+      summary: >-
+        The meter reports the cumulative total spent. UNMAPPED: ESS has no arithmetic over a stored
+        field and an input, so the command carries the new total, not the amount; the meter is the
+        one that adds.
+    input:
+      - name: budget_id
+        type: agentic.shared.BudgetId
+      - name: spent_total
+        type: Integer
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-budget
+        unknown_instance: true
+        error: agentic.authority.BudgetNotFound
+        payload:
+          agentic.authority.BudgetNotFound:
+            budget_id: input.budget_id
+      - name: over-limit
+        when_subject: {predicate: input.spent_total > limit}
+        error: agentic.authority.OverLimit
+        payload:
+          agentic.authority.OverLimit:
+            budget_id: input.budget_id
+            spent_total: input.spent_total
+      - name: regressed
+        when_subject: {predicate: input.spent_total < spent}
+        error: agentic.authority.SpendRegressed
+        payload:
+          agentic.authority.SpendRegressed:
+            budget_id: input.budget_id
+            spent_total: input.spent_total
+      - name: exhausted
+        when_subject: {predicate: input.spent_total == limit}
+        moves: agentic.authority.Budget.exhaust
+        instance: budget_id
+        sets:
+          spent: input.spent_total
+        emits:
+          - agentic.authority.SpendRecorded
+          - agentic.authority.BudgetExhausted
+        payload:
+          agentic.authority.SpendRecorded:
+            budget_id: input.budget_id
+            spent_total: input.spent_total
+            at: input.at
+          agentic.authority.BudgetExhausted:
+            budget_id: input.budget_id
+            at: input.at
+      - name: recorded
+        moves: agentic.authority.Budget.record
+        instance: budget_id
+        sets:
+          spent: input.spent_total
+        emits:
+          - agentic.authority.SpendRecorded
+        payload:
+          agentic.authority.SpendRecorded:
+            budget_id: input.budget_id
+            spent_total: input.spent_total
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.authority.BudgetStateConflict
+        payload:
+          agentic.authority.BudgetStateConflict:
+            state: {subject: state}
+
+  - name: agentic.authority.DecideRequest
+    naming:
+      wire: decide-request
+      display: Decide a request
+      summary: >-
+        Records an Allow or an ApprovalRequired verdict for one request, under the grant that covers
+        it. Without an active grant the command is refused: default deny. A Deny is recorded by
+        DenyRequest, which needs no grant. An ApprovalRequired decision awaits approval until
+        approved or rejected. UNMAPPED: that the grant's grantee, action class, scope and expiry
+        equal the request's is not compared here (a related row's fields cannot be compared to
+        input fields); the evaluator that names the grant checks it.
+    input:
+      - name: grant_id
+        type: agentic.shared.GrantId
+      - name: requester_kind
+        type: agentic.authority.SubjectKind
+      - name: requester_id
+        type: Uuid
+      - name: action_class
+        type: agentic.shared.ToolCategory
+      - name: scope
+        type: String
+      - name: verdict
+        type: agentic.shared.Verdict
+      - name: decider
+        type: agentic.shared.Decider
+      - name: attribution
+        type: agentic.shared.Attribution
+      - name: delegation
+        type: Optional<agentic.shared.DelegationId>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: verdict-is-deny
+        when: verdict == Deny
+        error: agentic.authority.DenyNeedsNoGrant
+      - name: delegation-required
+        when: {all: [decider == Delegate, not defined(delegation)]}
+        error: agentic.authority.DelegationRequired
+      - name: no-such-grant
+        when_related: {via: input.grant_id, exists: false}
+        error: agentic.authority.NoGrantCovers
+        payload:
+          agentic.authority.NoGrantCovers:
+            action_class: input.action_class
+            scope: input.scope
+      - name: grant-not-active
+        when_related: {via: input.grant_id, predicate: state != Active}
+        error: agentic.authority.NoGrantCovers
+        payload:
+          agentic.authority.NoGrantCovers:
+            action_class: input.action_class
+            scope: input.scope
+      - name: grant-forbids
+        when_related: {via: input.grant_id, predicate: effect == Deny}
+        error: agentic.authority.GrantForbids
+        payload:
+          agentic.authority.GrantForbids:
+            grant_id: input.grant_id
+      - name: recorded
+        creates: agentic.authority.Decision
+        instance: decision_id
+        sets:
+          requester_kind: input.requester_kind
+          requester_id: input.requester_id
+          action_class: input.action_class
+          scope: input.scope
+          verdict: input.verdict
+          decider: input.decider
+          attribution: input.attribution
+          delegation: input.delegation
+          decided_at: input.at
+          grant_id: input.grant_id
+        emits:
+          - agentic.authority.DecisionRecorded
+        payload:
+          agentic.authority.DecisionRecorded:
+            decision_id: {generated: true}
+            requester_kind: input.requester_kind
+            requester_id: input.requester_id
+            action_class: input.action_class
+            scope: input.scope
+            verdict: input.verdict
+            decider: input.decider
+            attribution: input.attribution
+            delegation: input.delegation
+            grant_id: input.grant_id
+            at: input.at
+
+  - name: agentic.authority.DenyRequest
+    naming:
+      wire: deny-request
+      display: Deny a request
+      summary: Records a Deny. It needs no grant, because denying is always safe.
+    input:
+      - name: requester_kind
+        type: agentic.authority.SubjectKind
+      - name: requester_id
+        type: Uuid
+      - name: action_class
+        type: agentic.shared.ToolCategory
+      - name: scope
+        type: String
+      - name: decider
+        type: agentic.shared.Decider
+      - name: attribution
+        type: agentic.shared.Attribution
+      - name: delegation
+        type: Optional<agentic.shared.DelegationId>
+      - name: grant_id
+        type: Optional<agentic.shared.GrantId>
+        summary: The standing prohibition the denial rests on, when one does.
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: delegation-required
+        when: {all: [decider == Delegate, not defined(delegation)]}
+        error: agentic.authority.DelegationRequired
+      - name: denied
+        creates: agentic.authority.Decision
+        instance: decision_id
+        sets:
+          requester_kind: input.requester_kind
+          requester_id: input.requester_id
+          action_class: input.action_class
+          scope: input.scope
+          verdict: Deny
+          decider: input.decider
+          attribution: input.attribution
+          delegation: input.delegation
+          decided_at: input.at
+          grant_id: input.grant_id
+        emits:
+          - agentic.authority.DecisionRecorded
+        payload:
+          agentic.authority.DecisionRecorded:
+            decision_id: {generated: true}
+            requester_kind: input.requester_kind
+            requester_id: input.requester_id
+            action_class: input.action_class
+            scope: input.scope
+            verdict: Deny
+            decider: input.decider
+            attribution: input.attribution
+            delegation: input.delegation
+            grant_id: input.grant_id
+            at: input.at
+
+  - name: agentic.authority.ApproveDecision
+    naming:
+      wire: approve-decision
+      display: Approve a pending decision
+      summary: >-
+        Only a human, or a delegate whose delegation scope covers approval, approves. UNMAPPED: the
+        delegation's scope lives in the delegation block, so the check is an external refusal here.
+    input:
+      - name: decision_id
+        type: agentic.shared.DecisionId
+      - name: approver
+        type: agentic.shared.Decider
+      - name: delegation
+        type: Optional<agentic.shared.DelegationId>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: approver-not-permitted
+        when: {all: [approver != Human, approver != Delegate]}
+        error: agentic.authority.ApproverNotPermitted
+        payload:
+          agentic.authority.ApproverNotPermitted:
+            approver: input.approver
+      - name: delegation-required
+        when: {all: [approver == Delegate, not defined(delegation)]}
+        error: agentic.authority.DelegationRequired
+      - name: no-such-decision
+        unknown_instance: true
+        error: agentic.authority.DecisionNotFound
+        payload:
+          agentic.authority.DecisionNotFound:
+            decision_id: input.decision_id
+      - name: not-awaiting-approval
+        when_subject: {predicate: verdict != ApprovalRequired}
+        error: agentic.authority.DecisionNotAwaiting
+        payload:
+          agentic.authority.DecisionNotAwaiting:
+            decision_id: input.decision_id
+      - name: scope-lacks-approval
+        external: the delegation's scope does not cover approval
+        when: approver == Delegate
+        error: agentic.authority.DelegationScopeLacksApproval
+        payload:
+          agentic.authority.DelegationScopeLacksApproval:
+            delegation: input.delegation
+      - name: approved
+        moves: agentic.authority.Decision.approve
+        instance: decision_id
+        sets:
+          approved_by: input.approver
+          approval_delegation: input.delegation
+          resolved_at: input.at
+        emits:
+          - agentic.authority.ApprovalGranted
+        payload:
+          agentic.authority.ApprovalGranted:
+            decision_id: input.decision_id
+            approver: input.approver
+            delegation: input.delegation
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.authority.DecisionStateConflict
+        payload:
+          agentic.authority.DecisionStateConflict:
+            state: {subject: state}
+
+  - name: agentic.authority.RejectDecision
+    naming:
+      wire: reject-decision
+      display: Reject a pending decision
+      summary: Rejecting is always safe, so any decider may reject.
+    input:
+      - name: decision_id
+        type: agentic.shared.DecisionId
+      - name: rejecter
+        type: agentic.shared.Decider
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-decision
+        unknown_instance: true
+        error: agentic.authority.DecisionNotFound
+        payload:
+          agentic.authority.DecisionNotFound:
+            decision_id: input.decision_id
+      - name: not-awaiting-approval
+        when_subject: {predicate: verdict != ApprovalRequired}
+        error: agentic.authority.DecisionNotAwaiting
+        payload:
+          agentic.authority.DecisionNotAwaiting:
+            decision_id: input.decision_id
+      - name: rejected
+        moves: agentic.authority.Decision.reject
+        instance: decision_id
+        sets:
+          resolved_at: input.at
+        emits:
+          - agentic.authority.ApprovalRejected
+        payload:
+          agentic.authority.ApprovalRejected:
+            decision_id: input.decision_id
+            rejecter: input.rejecter
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.authority.DecisionStateConflict
+        payload:
+          agentic.authority.DecisionStateConflict:
+            state: {subject: state}
+
+events:
+  - name: agentic.authority.GrantIssued
+    fields:
+      - {name: grant_id, type: agentic.shared.GrantId}
+      - {name: grantee_kind, type: agentic.authority.SubjectKind}
+      - {name: grantee_id, type: Uuid}
+      - {name: action_class, type: agentic.shared.ToolCategory}
+      - {name: scope, type: String}
+      - {name: expires_at, type: Timestamp}
+      - {name: granted_by, type: agentic.shared.PrincipalId}
+      - {name: effect, type: agentic.shared.Verdict}
+      - {name: supersedes, type: "Optional<agentic.shared.GrantId>"}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.authority.GrantRevoked
+    fields:
+      - {name: grant_id, type: agentic.shared.GrantId}
+      - {name: revoked_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.authority.BudgetOpened
+    fields:
+      - {name: budget_id, type: agentic.shared.BudgetId}
+      - {name: owner_kind, type: agentic.authority.BudgetOwnerKind}
+      - {name: owner_id, type: Uuid}
+      - {name: resource, type: agentic.authority.BudgetResource}
+      - {name: window, type: agentic.authority.BudgetWindow}
+      - {name: limit, type: Integer}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.authority.SpendRecorded
+    fields:
+      - {name: budget_id, type: agentic.shared.BudgetId}
+      - {name: spent_total, type: Integer}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.authority.BudgetExhausted
+    fields:
+      - {name: budget_id, type: agentic.shared.BudgetId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.authority.DecisionRecorded
+    fields:
+      - {name: decision_id, type: agentic.shared.DecisionId}
+      - {name: requester_kind, type: agentic.authority.SubjectKind}
+      - {name: requester_id, type: Uuid}
+      - {name: action_class, type: agentic.shared.ToolCategory}
+      - {name: scope, type: String}
+      - {name: verdict, type: agentic.shared.Verdict}
+      - {name: decider, type: agentic.shared.Decider}
+      - {name: attribution, type: agentic.shared.Attribution}
+      - {name: delegation, type: "Optional<agentic.shared.DelegationId>"}
+      - {name: grant_id, type: "Optional<agentic.shared.GrantId>"}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.authority.ApprovalGranted
+    fields:
+      - {name: decision_id, type: agentic.shared.DecisionId}
+      - {name: approver, type: agentic.shared.Decider}
+      - {name: delegation, type: "Optional<agentic.shared.DelegationId>"}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.authority.ApprovalRejected
+    fields:
+      - {name: decision_id, type: agentic.shared.DecisionId}
+      - {name: rejecter, type: agentic.shared.Decider}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.authority.Grants
+    source: agentic.authority.Grant
+    consistency: read_your_writes
+    fields:
+      - {name: grant_id, type: agentic.shared.GrantId}
+      - {name: grantee_kind, type: agentic.authority.SubjectKind}
+      - {name: grantee_id, type: Uuid}
+      - {name: action_class, type: agentic.shared.ToolCategory}
+      - {name: scope, type: String}
+      - {name: expires_at, type: Timestamp}
+      - {name: granted_by, type: agentic.shared.PrincipalId}
+      - {name: granted_at, type: Timestamp}
+      - {name: effect, type: agentic.shared.Verdict}
+      - {name: condition, type: "Optional<String>"}
+      - {name: excludes, type: "List<agentic.shared.Name>"}
+      - {name: supersedes, type: "Optional<agentic.shared.GrantId>"}
+      - {name: state, type: agentic.authority.Grant.State}
+    naming:
+      wire: grants
+      display: Grants
+
+  - name: agentic.authority.Budgets
+    source: agentic.authority.Budget
+    consistency: read_your_writes
+    fields:
+      - {name: budget_id, type: agentic.shared.BudgetId}
+      - {name: owner_kind, type: agentic.authority.BudgetOwnerKind}
+      - {name: owner_id, type: Uuid}
+      - {name: resource, type: agentic.authority.BudgetResource}
+      - {name: window, type: agentic.authority.BudgetWindow}
+      - {name: limit, type: Integer}
+      - {name: spent, type: Integer}
+      - {name: state, type: agentic.authority.Budget.State}
+    naming:
+      wire: budgets
+      display: Budgets
+
+  - name: agentic.authority.Decisions
+    source: agentic.authority.Decision
+    consistency: read_your_writes
+    fields:
+      - {name: decision_id, type: agentic.shared.DecisionId}
+      - {name: requester_kind, type: agentic.authority.SubjectKind}
+      - {name: requester_id, type: Uuid}
+      - {name: action_class, type: agentic.shared.ToolCategory}
+      - {name: scope, type: String}
+      - {name: verdict, type: agentic.shared.Verdict}
+      - {name: decider, type: agentic.shared.Decider}
+      - {name: attribution, type: agentic.shared.Attribution}
+      - {name: delegation, type: "Optional<agentic.shared.DelegationId>"}
+      - {name: decided_at, type: Timestamp}
+      - {name: approved_by, type: "Optional<agentic.shared.Decider>"}
+      - {name: approval_delegation, type: "Optional<agentic.shared.DelegationId>"}
+      - {name: resolved_at, type: "Optional<Timestamp>"}
+      - {name: grant_id, type: "Optional<agentic.shared.GrantId>"}
+      - {name: state, type: agentic.authority.Decision.State}
+    naming:
+      wire: decisions
+      display: Decisions
+
+  - name: agentic.authority.OpenApprovals
+    source: agentic.authority.Decision
+    consistency: read_your_writes
+    filter: {all: [state == Recorded, verdict == ApprovalRequired]}
+    fields:
+      - {name: decision_id, type: agentic.shared.DecisionId}
+      - {name: requester_kind, type: agentic.authority.SubjectKind}
+      - {name: requester_id, type: Uuid}
+      - {name: action_class, type: agentic.shared.ToolCategory}
+      - {name: scope, type: String}
+      - {name: decider, type: agentic.shared.Decider}
+      - {name: delegation, type: "Optional<agentic.shared.DelegationId>"}
+      - {name: decided_at, type: Timestamp}
+    naming:
+      wire: open-approvals
+      display: Open approvals

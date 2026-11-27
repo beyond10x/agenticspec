@@ -1,0 +1,1199 @@
+domain: agentic.work
+
+summary: >-
+  What an agent is asked to do. A task states a goal for a principal and follows a process. An
+  assignment binds one agent revision to the task for a principal; a run is one bounded period of
+  execution of the assignment in a harness session, on a route, and records each of its steps
+  once; a deliverable is what a run hands back, a
+  proposal or an artifact, accepted only with evidence. The block holds no goal text, only its
+  digest. UNMAPPED: at most one open run per assignment, ending an assignment ending its runs,
+  and a task being Done only with an accepted deliverable are not enforced here; the first two need
+  a row-set guard that synthesis cannot arrange, the third belongs to the process evaluator.
+
+naming:
+  wire: work
+  display: Work
+
+types:
+  - name: agentic.work.RunOutcome
+    kind: enum
+    variants: [Done, Failed, Stopped, BudgetExhausted]
+    naming:
+      summary: >-
+        How a run ended. Done means it reached the end of what it was asked. Failed means it could
+        not. Stopped means a principal or the runtime stopped it, or its assignment ended under it.
+        BudgetExhausted means a budget ran out.
+
+  - name: agentic.work.SuspendReason
+    kind: enum
+    variants: [AwaitingApproval, AwaitingAnswer, AwaitingResource, Requested]
+    naming:
+      summary: "Why a run waits. It is carried by the event, not stored on the run."
+
+  - name: agentic.work.TaskEnd
+    kind: enum
+    variants: [Done, Cancelled]
+    naming:
+      summary: >-
+        How a closed task ended. Whether a task may be completed without an accepted deliverable is
+        the rule of its process, judged by the process's evaluator; this block does not decide it.
+
+  - name: agentic.work.AssignmentEnd
+    kind: enum
+    variants: [Completed, Released]
+    naming:
+      summary: >-
+        Completed means the agent finished its part and the task stays assigned until it is
+        completed. Released means the binding was given up and the task is open again.
+
+  - name: agentic.work.DeliverableKind
+    kind: enum
+    variants: [Proposal, Artifact]
+    naming:
+      summary: A proposal asks for a decision or a merge; an artifact is a finished thing.
+
+  - name: agentic.work.StepKind
+    kind: enum
+    variants: [Program, Agent, Person, Child]
+    naming:
+      summary: >-
+        Who carries out one step of a run: a program, an agent (a harness session), a person
+        (the run waits on a question meanwhile, SuspendReason AwaitingAnswer), or a child task
+        whose own runs do the work.
+
+  - name: agentic.work.StepResult
+    kind: enum
+    variants: [Passed, Failed, Skipped]
+
+entities:
+  - name: agentic.work.Task
+    naming:
+      summary: >-
+        A goal a principal wants reached, under one process. A task may have a parent task it is
+        part of. It is Assigned while one assignment is Active, which is how a second active
+        assignment is refused.
+    identity:
+      name: task_id
+      type: agentic.shared.TaskId
+    fields:
+      - name: goal
+        type: agentic.shared.Content
+      - name: requested_by
+        type: agentic.shared.PrincipalId
+      - name: process_id
+        type: agentic.shared.ProcessId
+      - name: parent_task_id
+        type: Optional<agentic.shared.TaskId>
+      - name: closed_as
+        type: Optional<agentic.work.TaskEnd>
+    relations:
+      - name: parent
+        kind: references
+        target: agentic.work.Task
+        cardinality: one
+        via: parent_task_id
+      - name: process
+        kind: references
+        target: agentic.process.Process
+        cardinality: one
+        via: process_id
+    lifecycle:
+      initial: Open
+      states: [Open, Assigned, Closed]
+      terminal: [Closed]
+      transitions:
+        - name: assign
+          from: [Open]
+          to: Assigned
+        - name: release
+          from: [Assigned]
+          to: Open
+        - name: complete
+          from: [Open, Assigned]
+          to: Closed
+        - name: cancel
+          from: [Open]
+          to: Closed
+
+  - name: agentic.work.Assignment
+    naming:
+      summary: >-
+        One agent revision bound to one task for a principal. It is offered, then activated; only
+        activation binds the task, and a task has one Active assignment at a time.
+    identity:
+      name: assignment_id
+      type: agentic.shared.AssignmentId
+    fields:
+      - name: task_id
+        type: agentic.shared.TaskId
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+      - name: on_behalf_of
+        type: agentic.shared.PrincipalId
+      - name: assigned_at
+        type: Timestamp
+    relations:
+      - name: task
+        kind: references
+        target: agentic.work.Task
+        cardinality: one
+        via: task_id
+    lifecycle:
+      initial: Offered
+      states: [Offered, Active, Completed, Released]
+      terminal: [Completed, Released]
+      transitions:
+        - name: activate
+          from: [Offered]
+          to: Active
+        - name: complete
+          from: [Active]
+          to: Completed
+        - name: release
+          from: [Offered, Active]
+          to: Released
+
+  - name: agentic.work.Run
+    naming:
+      summary: >-
+        One bounded period of execution of an assignment in a harness session. It runs, may be
+        suspended and resumed, and ends once with an outcome.
+    identity:
+      name: run_id
+      type: agentic.shared.RunId
+    fields:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+      - name: harness_session_id
+        type: agentic.shared.HarnessSessionId
+      - name: started_at
+        type: Timestamp
+      - name: outcome
+        type: Optional<agentic.work.RunOutcome>
+      - name: ended_at
+        type: Optional<Timestamp>
+      - name: route_id
+        type: Optional<agentic.shared.RouteId>
+        summary: The model route the run was started on, when its process picks one for the whole run.
+    relations:
+      - name: assignment
+        kind: references
+        target: agentic.work.Assignment
+        cardinality: one
+        via: assignment_id
+      - name: route
+        kind: references
+        target: agentic.model.Route
+        cardinality: one
+        via: route_id
+      - name: steps
+        kind: owns
+        target: agentic.work.Step
+        cardinality: many
+        via: run_id
+    lifecycle:
+      initial: Running
+      states: [Running, Suspended, Ended]
+      terminal: [Ended]
+      transitions:
+        - name: suspend
+          from: [Running]
+          to: Suspended
+        - name: resume
+          from: [Suspended]
+          to: Running
+        - name: end
+          from: [Running, Suspended]
+          to: Ended
+
+  # A step is recorded once, when it has ended; while a person step waits, the run is suspended
+  # (AwaitingAnswer) and the question block holds the question.
+  # UNMAPPED: whether a write step needs a person's approval (required, not required, or always,
+  # never switchable) is a rule of the process the task follows, judged by its evaluator; no field
+  # holds it here (consumer gap G5).
+  - name: agentic.work.Step
+    naming:
+      summary: >-
+        One step of a run of a process: what it did, who carried it out, and how it ended. The
+        child task of a Child step names the run's task as its parent (Task.parent_task_id).
+    identity:
+      name: step_id
+      type: agentic.shared.StepId
+    fields:
+      - name: run_id
+        type: agentic.shared.RunId
+      - name: action
+        type: agentic.shared.Name
+        summary: The step's name in the process.
+      - name: kind
+        type: agentic.work.StepKind
+      - name: harness_session_id
+        type: Optional<agentic.shared.HarnessSessionId>
+        summary: The session that carried out an Agent step.
+      - name: result
+        type: agentic.work.StepResult
+      - name: recorded_at
+        type: Timestamp
+    relations:
+      - name: session
+        kind: references
+        target: agentic.harness.HarnessSession
+        cardinality: one
+        via: harness_session_id
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+  - name: agentic.work.Deliverable
+    naming:
+      summary: >-
+        What a run hands back for a task, with the digests of the evidence that supports it. It is
+        accepted or rejected by a principal; acceptance needs evidence.
+    identity:
+      name: deliverable_id
+      type: agentic.shared.DeliverableId
+    fields:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+      - name: task_id
+        type: agentic.shared.TaskId
+      - name: kind
+        type: agentic.work.DeliverableKind
+      - name: content
+        type: agentic.shared.Content
+      - name: evidence
+        type: List<String>
+        summary: Digests (sha256, lower-case hex) of what supports the deliverable.
+      - name: submitted_at
+        type: Timestamp
+    relations:
+      - name: assignment
+        kind: references
+        target: agentic.work.Assignment
+        cardinality: one
+        via: assignment_id
+      - name: task
+        kind: references
+        target: agentic.work.Task
+        cardinality: one
+        via: task_id
+    lifecycle:
+      initial: Proposed
+      states: [Proposed, Accepted, Rejected]
+      terminal: [Accepted, Rejected]
+      transitions:
+        - name: accept
+          from: [Proposed]
+          to: Accepted
+        - name: reject
+          from: [Proposed]
+          to: Rejected
+
+actors:
+  - name: agentic.work.Requester
+    naming:
+      display: Requester
+      summary: A principal who asks for work and decides what is accepted.
+    may:
+      - agentic.work.CreateTask
+      - agentic.work.CompleteTask
+      - agentic.work.CancelTask
+      - agentic.work.OfferAssignment
+      - agentic.work.ActivateAssignment
+      - agentic.work.EndAssignment
+      - agentic.work.AcceptDeliverable
+      - agentic.work.RejectDeliverable
+      - agentic.work.Tasks
+      - agentic.work.Assignments
+      - agentic.work.Runs
+      - agentic.work.Deliverables
+
+  - name: agentic.work.Worker
+    naming:
+      display: Worker
+      summary: The runtime of an assigned agent.
+    may:
+      - agentic.work.StartRun
+      - agentic.work.SuspendRun
+      - agentic.work.ResumeRun
+      - agentic.work.EndRun
+      - agentic.work.RecordStep
+      - agentic.work.SubmitDeliverable
+      - agentic.work.Runs
+      - agentic.work.Steps
+      - agentic.work.Deliverables
+
+errors:
+  - name: agentic.work.TaskNotFound
+    fields:
+      - name: task_id
+        type: agentic.shared.TaskId
+
+  - name: agentic.work.TaskStateConflict
+    fields:
+      - name: state
+        type: agentic.work.Task.State
+
+  - name: agentic.work.UnknownProcess
+    summary: The task names a process nobody published.
+    fields:
+      - name: process_id
+        type: agentic.shared.ProcessId
+
+  - name: agentic.work.ProcessNotPublished
+    summary: The process is withdrawn; a new task cannot follow it.
+    fields:
+      - name: process_id
+        type: agentic.shared.ProcessId
+
+  - name: agentic.work.UnknownParentTask
+    fields:
+      - name: parent_task_id
+        type: agentic.shared.TaskId
+
+  - name: agentic.work.ParentTaskNotOpen
+    fields:
+      - name: parent_task_id
+        type: agentic.shared.TaskId
+
+  - name: agentic.work.TaskNotOpen
+    summary: >-
+      The task is not Open: it is done, cancelled, or already bound to an Active assignment. A second
+      active assignment of one task is refused with this error.
+    fields:
+      - name: task_id
+        type: agentic.shared.TaskId
+
+  - name: agentic.work.AssignmentNotFound
+    fields:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+
+  - name: agentic.work.AssignmentAlreadyOffered
+    summary: An assignment of this identifier exists.
+    fields:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+
+  - name: agentic.work.AssignmentNotOffered
+    summary: The assignment is not Offered, or it is an assignment of another task.
+    fields:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+
+  - name: agentic.work.AssignmentNotActive
+    summary: The assignment is not Active; it takes no run and no deliverable.
+    fields:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+
+  - name: agentic.work.AssignmentStateConflict
+    fields:
+      - name: state
+        type: agentic.work.Assignment.State
+
+  - name: agentic.work.RunNotFound
+    fields:
+      - name: run_id
+        type: agentic.shared.RunId
+
+  - name: agentic.work.RunStateConflict
+    fields:
+      - name: state
+        type: agentic.work.Run.State
+
+  - name: agentic.work.DeliverableNotFound
+    fields:
+      - name: deliverable_id
+        type: agentic.shared.DeliverableId
+
+  - name: agentic.work.DeliverableStateConflict
+    fields:
+      - name: state
+        type: agentic.work.Deliverable.State
+
+  - name: agentic.work.EvidenceMissing
+    summary: A deliverable without evidence digests cannot be accepted.
+    fields:
+      - name: deliverable_id
+        type: agentic.shared.DeliverableId
+
+commands:
+  - name: agentic.work.CreateTask
+    naming:
+      wire: create-task
+      display: Create a task
+    input:
+      - name: goal
+        type: agentic.shared.Content
+      - name: requested_by
+        type: agentic.shared.PrincipalId
+      - name: process_id
+        type: agentic.shared.ProcessId
+      - name: parent_task_id
+        type: Optional<agentic.shared.TaskId>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: unknown-process
+        when_related: {via: input.process_id, exists: false}
+        error: agentic.work.UnknownProcess
+        payload:
+          agentic.work.UnknownProcess:
+            process_id: input.process_id
+      - name: unknown-parent
+        when_related: {via: input.parent_task_id, exists: false}
+        error: agentic.work.UnknownParentTask
+        payload:
+          agentic.work.UnknownParentTask:
+            parent_task_id: input.parent_task_id
+      - name: process-not-published
+        when_related: {via: input.process_id, predicate: state != Published}
+        error: agentic.work.ProcessNotPublished
+        payload:
+          agentic.work.ProcessNotPublished:
+            process_id: input.process_id
+      - name: parent-not-open
+        when_related: {via: input.parent_task_id, predicate: state == Closed}
+        error: agentic.work.ParentTaskNotOpen
+        payload:
+          agentic.work.ParentTaskNotOpen:
+            parent_task_id: input.parent_task_id
+      - name: created
+        creates: agentic.work.Task
+        instance: task_id
+        sets:
+          goal: input.goal
+          requested_by: input.requested_by
+          process_id: input.process_id
+          parent_task_id: input.parent_task_id
+        emits:
+          - agentic.work.TaskCreated
+        payload:
+          agentic.work.TaskCreated:
+            task_id: {generated: true}
+            goal: input.goal
+            requested_by: input.requested_by
+            process_id: input.process_id
+            parent_task_id: input.parent_task_id
+            at: input.at
+        summary: The task is Open and has no assignment.
+
+  - name: agentic.work.CompleteTask
+    naming:
+      wire: complete-task
+      display: Complete a task
+    input:
+      - name: task_id
+        type: agentic.shared.TaskId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-task
+        unknown_instance: true
+        error: agentic.work.TaskNotFound
+        payload:
+          agentic.work.TaskNotFound:
+            task_id: input.task_id
+      - name: completed
+        moves: agentic.work.Task.complete
+        instance: task_id
+        sets:
+          closed_as: Done
+        emits:
+          - agentic.work.TaskCompleted
+        payload:
+          agentic.work.TaskCompleted:
+            task_id: input.task_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.TaskStateConflict
+        payload:
+          agentic.work.TaskStateConflict:
+            state: {subject: state}
+
+  - name: agentic.work.CancelTask
+    naming:
+      wire: cancel-task
+      display: Cancel a task
+    input:
+      - name: task_id
+        type: agentic.shared.TaskId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-task
+        unknown_instance: true
+        error: agentic.work.TaskNotFound
+        payload:
+          agentic.work.TaskNotFound:
+            task_id: input.task_id
+      - name: cancelled
+        moves: agentic.work.Task.cancel
+        instance: task_id
+        sets:
+          closed_as: Cancelled
+        emits:
+          - agentic.work.TaskCancelled
+        payload:
+          agentic.work.TaskCancelled:
+            task_id: input.task_id
+            at: input.at
+        summary: Only an Open task is cancelled; release its assignment first.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.TaskStateConflict
+        payload:
+          agentic.work.TaskStateConflict:
+            state: {subject: state}
+
+  - name: agentic.work.OfferAssignment
+    naming:
+      wire: offer-assignment
+      display: Offer an assignment of a task to an agent revision
+    input:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+      - name: task_id
+        type: agentic.shared.TaskId
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+      - name: on_behalf_of
+        type: agentic.shared.PrincipalId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: already-offered
+        existing_instance: true
+        error: agentic.work.AssignmentAlreadyOffered
+        payload:
+          agentic.work.AssignmentAlreadyOffered:
+            assignment_id: input.assignment_id
+      - name: offered
+        creates: agentic.work.Assignment
+        instance: assignment_id
+        sets:
+          task_id: input.task_id
+          agent_revision_id: input.agent_revision_id
+          on_behalf_of: input.on_behalf_of
+          assigned_at: input.at
+        emits:
+          - agentic.work.AssignmentOffered
+        payload:
+          agentic.work.AssignmentOffered:
+            assignment_id: input.assignment_id
+            task_id: input.task_id
+            agent_revision_id: input.agent_revision_id
+            on_behalf_of: input.on_behalf_of
+            at: input.at
+        summary: >-
+          The assignment is Offered and binds nothing; several offers of one task may wait, one is
+          activated. An offer for an unknown or closed task can never be activated, so it is not
+          checked here.
+
+  - name: agentic.work.ActivateAssignment
+    naming:
+      wire: activate-assignment
+      display: Activate an offered assignment
+      summary: >-
+        The assignment becomes Active and its task becomes Assigned in one decision. A task that is
+        not Open, one that already has an Active assignment included, refuses it.
+    input:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-assignment
+        unknown_instance: true
+        error: agentic.work.AssignmentNotFound
+        payload:
+          agentic.work.AssignmentNotFound:
+            assignment_id: input.assignment_id
+      - name: no-such-task
+        when_related: {via: task_id, exists: false}
+        error: agentic.work.TaskNotFound
+        summary: The offer named a task nobody created.
+      - name: task-not-open
+        when_related: {via: task_id, predicate: state != Open}
+        error: agentic.work.TaskNotOpen
+        summary: The task is closed or already Assigned; a second active assignment is refused.
+      - name: activated
+        moves: agentic.work.Assignment.activate
+        instance: assignment_id
+        emits:
+          - agentic.work.AssignmentActivated
+        payload:
+          agentic.work.AssignmentActivated:
+            assignment_id: input.assignment_id
+            task_id: {subject: task_id}
+            at: input.at
+        affects:
+          - entity: agentic.work.Task
+            where: task_id == subject.task_id
+            moves: agentic.work.Task.assign
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.AssignmentNotOffered
+        payload:
+          agentic.work.AssignmentNotOffered:
+            assignment_id: input.assignment_id
+
+  - name: agentic.work.EndAssignment
+    naming:
+      wire: end-assignment
+      display: End an assignment
+      summary: >-
+        Ends the assignment. A released assignment opens its task again when the task was bound to
+        it. The runtime ends the assignment's runs with EndRun; this block does not end them.
+    input:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+      - name: outcome
+        type: agentic.work.AssignmentEnd
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-assignment
+        unknown_instance: true
+        error: agentic.work.AssignmentNotFound
+        payload:
+          agentic.work.AssignmentNotFound:
+            assignment_id: input.assignment_id
+      - name: completed
+        when: outcome == Completed
+        moves: agentic.work.Assignment.complete
+        instance: assignment_id
+        emits:
+          - agentic.work.AssignmentEnded
+        payload:
+          agentic.work.AssignmentEnded:
+            assignment_id: input.assignment_id
+            outcome: input.outcome
+            at: input.at
+      - name: released
+        moves: agentic.work.Assignment.release
+        instance: assignment_id
+        emits:
+          - agentic.work.AssignmentEnded
+        payload:
+          agentic.work.AssignmentEnded:
+            assignment_id: input.assignment_id
+            outcome: input.outcome
+            at: input.at
+        affects:
+          - entity: agentic.work.Task
+            where: task_id == subject.task_id
+            moves: agentic.work.Task.release
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.AssignmentStateConflict
+        payload:
+          agentic.work.AssignmentStateConflict:
+            state: {subject: state}
+
+  - name: agentic.work.StartRun
+    naming:
+      wire: start-run
+      display: Start a run
+    input:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+      - name: harness_session_id
+        type: agentic.shared.HarnessSessionId
+      - name: route_id
+        type: Optional<agentic.shared.RouteId>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-assignment
+        when_related: {via: input.assignment_id, exists: false}
+        error: agentic.work.AssignmentNotFound
+        payload:
+          agentic.work.AssignmentNotFound:
+            assignment_id: input.assignment_id
+      - name: assignment-not-active
+        when_related: {via: input.assignment_id, predicate: state != Active}
+        error: agentic.work.AssignmentNotActive
+        payload:
+          agentic.work.AssignmentNotActive:
+            assignment_id: input.assignment_id
+        summary: A run on an assignment that is not Active (offered, completed or released) is refused.
+      - name: started
+        creates: agentic.work.Run
+        instance: run_id
+        sets:
+          assignment_id: input.assignment_id
+          harness_session_id: input.harness_session_id
+          started_at: input.at
+          route_id: input.route_id
+        emits:
+          - agentic.work.RunStarted
+        payload:
+          agentic.work.RunStarted:
+            run_id: {generated: true}
+            assignment_id: input.assignment_id
+            harness_session_id: input.harness_session_id
+            route_id: input.route_id
+            at: input.at
+
+  - name: agentic.work.SuspendRun
+    naming:
+      wire: suspend-run
+      display: Suspend a run
+    input:
+      - name: run_id
+        type: agentic.shared.RunId
+      - name: reason
+        type: agentic.work.SuspendReason
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.work.RunNotFound
+        payload:
+          agentic.work.RunNotFound:
+            run_id: input.run_id
+      - name: suspended
+        moves: agentic.work.Run.suspend
+        instance: run_id
+        emits:
+          - agentic.work.RunSuspended
+        payload:
+          agentic.work.RunSuspended:
+            run_id: input.run_id
+            reason: input.reason
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.RunStateConflict
+        payload:
+          agentic.work.RunStateConflict:
+            state: {subject: state}
+
+  - name: agentic.work.ResumeRun
+    naming:
+      wire: resume-run
+      display: Resume a run
+    input:
+      - name: run_id
+        type: agentic.shared.RunId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.work.RunNotFound
+        payload:
+          agentic.work.RunNotFound:
+            run_id: input.run_id
+      - name: resumed
+        moves: agentic.work.Run.resume
+        instance: run_id
+        emits:
+          - agentic.work.RunResumed
+        payload:
+          agentic.work.RunResumed:
+            run_id: input.run_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.RunStateConflict
+        payload:
+          agentic.work.RunStateConflict:
+            state: {subject: state}
+
+  - name: agentic.work.EndRun
+    naming:
+      wire: end-run
+      display: End a run
+    input:
+      - name: run_id
+        type: agentic.shared.RunId
+      - name: outcome
+        type: agentic.work.RunOutcome
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.work.RunNotFound
+        payload:
+          agentic.work.RunNotFound:
+            run_id: input.run_id
+      - name: ended
+        moves: agentic.work.Run.end
+        instance: run_id
+        sets:
+          outcome: input.outcome
+          ended_at: input.at
+        emits:
+          - agentic.work.RunEnded
+        payload:
+          agentic.work.RunEnded:
+            run_id: input.run_id
+            outcome: input.outcome
+            at: input.at
+        summary: The run ended once and never runs again; a new run is a new period.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.RunStateConflict
+        payload:
+          agentic.work.RunStateConflict:
+            state: {subject: state}
+
+  - name: agentic.work.RecordStep
+    naming:
+      wire: record-step
+      display: Record a step of a run
+      summary: A step of a run has ended; it is recorded once, with who carried it out and its result.
+    input:
+      - name: step_id
+        type: agentic.shared.StepId
+      - name: run_id
+        type: agentic.shared.RunId
+      - name: action
+        type: agentic.shared.Name
+      - name: kind
+        type: agentic.work.StepKind
+      - name: harness_session_id
+        type: Optional<agentic.shared.HarnessSessionId>
+      - name: result
+        type: agentic.work.StepResult
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-run
+        when_related: {via: input.run_id, exists: false}
+        error: agentic.work.RunNotFound
+        payload:
+          agentic.work.RunNotFound:
+            run_id: input.run_id
+      - name: run-ended
+        when_related: {via: input.run_id, predicate: state == Ended}
+        error: agentic.work.RunStateConflict
+        payload:
+          agentic.work.RunStateConflict:
+            state: {related: {via: input.run_id, field: state}}
+        summary: A run that has ended takes no further step.
+      - name: recorded
+        creates: agentic.work.Step
+        instance: step_id
+        sets:
+          run_id: input.run_id
+          action: input.action
+          kind: input.kind
+          harness_session_id: input.harness_session_id
+          result: input.result
+          recorded_at: input.at
+        emits:
+          - agentic.work.StepRecorded
+        payload:
+          agentic.work.StepRecorded:
+            step_id: input.step_id
+            run_id: input.run_id
+            action: input.action
+            kind: input.kind
+            result: input.result
+            at: input.at
+
+  - name: agentic.work.SubmitDeliverable
+    naming:
+      wire: submit-deliverable
+      display: Submit a deliverable
+    input:
+      - name: assignment_id
+        type: agentic.shared.AssignmentId
+      - name: kind
+        type: agentic.work.DeliverableKind
+      - name: content
+        type: agentic.shared.Content
+      - name: evidence
+        type: List<String>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-assignment
+        when_related: {via: input.assignment_id, exists: false}
+        error: agentic.work.AssignmentNotFound
+        payload:
+          agentic.work.AssignmentNotFound:
+            assignment_id: input.assignment_id
+      - name: assignment-not-active
+        when_related: {via: input.assignment_id, predicate: state != Active}
+        error: agentic.work.AssignmentNotActive
+        payload:
+          agentic.work.AssignmentNotActive:
+            assignment_id: input.assignment_id
+      - name: submitted
+        creates: agentic.work.Deliverable
+        instance: deliverable_id
+        sets:
+          assignment_id: input.assignment_id
+          task_id: {related: {via: input.assignment_id, field: task_id}}
+          kind: input.kind
+          content: input.content
+          evidence: input.evidence
+          submitted_at: input.at
+        emits:
+          - agentic.work.DeliverableSubmitted
+        payload:
+          agentic.work.DeliverableSubmitted:
+            deliverable_id: {generated: true}
+            assignment_id: input.assignment_id
+            kind: input.kind
+            content: input.content
+            evidence: input.evidence
+            at: input.at
+        summary: The deliverable is Proposed; with no evidence it can only be rejected.
+
+  - name: agentic.work.AcceptDeliverable
+    naming:
+      wire: accept-deliverable
+      display: Accept a deliverable
+    input:
+      - name: deliverable_id
+        type: agentic.shared.DeliverableId
+      - name: accepted_by
+        type: agentic.shared.PrincipalId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-deliverable
+        unknown_instance: true
+        error: agentic.work.DeliverableNotFound
+        payload:
+          agentic.work.DeliverableNotFound:
+            deliverable_id: input.deliverable_id
+      - name: no-evidence
+        when_subject: {predicate: {all: [state == Proposed, evidence.count == 0]}}
+        error: agentic.work.EvidenceMissing
+        payload:
+          agentic.work.EvidenceMissing:
+            deliverable_id: input.deliverable_id
+        summary: Accepting without evidence digests is refused.
+      - name: accepted
+        moves: agentic.work.Deliverable.accept
+        instance: deliverable_id
+        emits:
+          - agentic.work.DeliverableAccepted
+        payload:
+          agentic.work.DeliverableAccepted:
+            deliverable_id: input.deliverable_id
+            accepted_by: input.accepted_by
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.DeliverableStateConflict
+        payload:
+          agentic.work.DeliverableStateConflict:
+            state: {subject: state}
+
+  - name: agentic.work.RejectDeliverable
+    naming:
+      wire: reject-deliverable
+      display: Reject a deliverable
+    input:
+      - name: deliverable_id
+        type: agentic.shared.DeliverableId
+      - name: rejected_by
+        type: agentic.shared.PrincipalId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: no-such-deliverable
+        unknown_instance: true
+        error: agentic.work.DeliverableNotFound
+        payload:
+          agentic.work.DeliverableNotFound:
+            deliverable_id: input.deliverable_id
+      - name: rejected
+        moves: agentic.work.Deliverable.reject
+        instance: deliverable_id
+        emits:
+          - agentic.work.DeliverableRejected
+        payload:
+          agentic.work.DeliverableRejected:
+            deliverable_id: input.deliverable_id
+            rejected_by: input.rejected_by
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.work.DeliverableStateConflict
+        payload:
+          agentic.work.DeliverableStateConflict:
+            state: {subject: state}
+
+events:
+  - name: agentic.work.TaskCreated
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+      - {name: goal, type: agentic.shared.Content}
+      - {name: requested_by, type: agentic.shared.PrincipalId}
+      - {name: process_id, type: agentic.shared.ProcessId}
+      - {name: parent_task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.TaskCompleted
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.TaskCancelled
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.AssignmentOffered
+    fields:
+      - {name: assignment_id, type: agentic.shared.AssignmentId}
+      - {name: task_id, type: agentic.shared.TaskId}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: on_behalf_of, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.AssignmentActivated
+    fields:
+      - {name: assignment_id, type: agentic.shared.AssignmentId}
+      - {name: task_id, type: agentic.shared.TaskId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.AssignmentEnded
+    fields:
+      - {name: assignment_id, type: agentic.shared.AssignmentId}
+      - {name: outcome, type: agentic.work.AssignmentEnd}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.RunStarted
+    fields:
+      - {name: run_id, type: agentic.shared.RunId}
+      - {name: assignment_id, type: agentic.shared.AssignmentId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: route_id, type: Optional<agentic.shared.RouteId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.RunSuspended
+    fields:
+      - {name: run_id, type: agentic.shared.RunId}
+      - {name: reason, type: agentic.work.SuspendReason}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.RunResumed
+    fields:
+      - {name: run_id, type: agentic.shared.RunId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.RunEnded
+    fields:
+      - {name: run_id, type: agentic.shared.RunId}
+      - {name: outcome, type: agentic.work.RunOutcome}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.StepRecorded
+    fields:
+      - {name: step_id, type: agentic.shared.StepId}
+      - {name: run_id, type: agentic.shared.RunId}
+      - {name: action, type: agentic.shared.Name}
+      - {name: kind, type: agentic.work.StepKind}
+      - {name: result, type: agentic.work.StepResult}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.DeliverableSubmitted
+    fields:
+      - {name: deliverable_id, type: agentic.shared.DeliverableId}
+      - {name: assignment_id, type: agentic.shared.AssignmentId}
+      - {name: kind, type: agentic.work.DeliverableKind}
+      - {name: content, type: agentic.shared.Content}
+      - {name: evidence, type: "List<String>"}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.DeliverableAccepted
+    fields:
+      - {name: deliverable_id, type: agentic.shared.DeliverableId}
+      - {name: accepted_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.work.DeliverableRejected
+    fields:
+      - {name: deliverable_id, type: agentic.shared.DeliverableId}
+      - {name: rejected_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.work.Tasks
+    source: agentic.work.Task
+    consistency: read_your_writes
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+      - {name: goal, type: agentic.shared.Content}
+      - {name: requested_by, type: agentic.shared.PrincipalId}
+      - {name: process_id, type: agentic.shared.ProcessId}
+      - {name: parent_task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: closed_as, type: Optional<agentic.work.TaskEnd>}
+      - {name: state, type: agentic.work.Task.State}
+    naming:
+      wire: tasks
+      display: Tasks
+
+  - name: agentic.work.Assignments
+    source: agentic.work.Assignment
+    consistency: read_your_writes
+    fields:
+      - {name: assignment_id, type: agentic.shared.AssignmentId}
+      - {name: task_id, type: agentic.shared.TaskId}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: on_behalf_of, type: agentic.shared.PrincipalId}
+      - {name: assigned_at, type: Timestamp}
+      - {name: state, type: agentic.work.Assignment.State}
+    naming:
+      wire: assignments
+      display: Assignments
+
+  - name: agentic.work.Runs
+    source: agentic.work.Run
+    consistency: read_your_writes
+    fields:
+      - {name: run_id, type: agentic.shared.RunId}
+      - {name: assignment_id, type: agentic.shared.AssignmentId}
+      - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
+      - {name: started_at, type: Timestamp}
+      - {name: outcome, type: Optional<agentic.work.RunOutcome>}
+      - {name: ended_at, type: Optional<Timestamp>}
+      - {name: route_id, type: Optional<agentic.shared.RouteId>}
+      - {name: state, type: agentic.work.Run.State}
+    naming:
+      wire: runs
+      display: Runs
+
+  - name: agentic.work.Steps
+    source: agentic.work.Step
+    consistency: read_your_writes
+    fields:
+      - {name: step_id, type: agentic.shared.StepId}
+      - {name: run_id, type: agentic.shared.RunId}
+      - {name: action, type: agentic.shared.Name}
+      - {name: kind, type: agentic.work.StepKind}
+      - {name: harness_session_id, type: Optional<agentic.shared.HarnessSessionId>}
+      - {name: result, type: agentic.work.StepResult}
+      - {name: recorded_at, type: Timestamp}
+      - {name: state, type: agentic.work.Step.State}
+    naming:
+      wire: steps
+      display: Steps
+
+  - name: agentic.work.Deliverables
+    source: agentic.work.Deliverable
+    consistency: read_your_writes
+    fields:
+      - {name: deliverable_id, type: agentic.shared.DeliverableId}
+      - {name: assignment_id, type: agentic.shared.AssignmentId}
+      - {name: task_id, type: agentic.shared.TaskId}
+      - {name: kind, type: agentic.work.DeliverableKind}
+      - {name: evidence, type: "List<String>"}
+      - {name: state, type: agentic.work.Deliverable.State}
+    naming:
+      wire: deliverables
+      display: Deliverables

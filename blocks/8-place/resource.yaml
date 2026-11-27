@@ -1,0 +1,554 @@
+domain: agentic.resource
+
+summary: >-
+  What agents share and wait for: a pool of a fixed capacity (build slots, a rate limit, a cache,
+  seats) and the claims on it. A claim waits in the queue until the pool grants it, holds for at
+  most its time limit, and ends released, expired or killed; its holder may withdraw it while it
+  is queued. A claim over capacity waits; it is never refused for that. The queue publishes when
+  each claim joined it (queued_at), the order the pool grants in.
+
+# UNMAPPED: a grant out of queue order is not refused; it needs a row-set guard over the queued
+# claims of the pool. The scheduler keeps the order (consumer gap G10).
+
+naming:
+  wire: resource
+  display: Resource
+
+types:
+  - name: agentic.resource.PoolKind
+    kind: enum
+    variants: [BuildSlots, RateLimit, Cache, Seats]
+
+entities:
+  - name: agentic.resource.Pool
+    naming:
+      summary: A shared resource with a fixed number of units, each held by one claim at a time.
+    identity:
+      name: pool_id
+      type: agentic.shared.PoolId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: kind
+        type: agentic.resource.PoolKind
+      - name: capacity
+        type: Integer
+      - name: held
+        type: Integer
+        summary: The claims holding a unit now.
+    invariants:
+      - capacity > 0
+      - held >= 0
+      - held <= capacity
+    lifecycle:
+      initial: Open
+      states: [Open]
+      terminal: [Open]
+
+  - name: agentic.resource.Claim
+    naming:
+      summary: One party's claim on one unit of a pool, for at most its time limit.
+    identity:
+      name: claim_id
+      type: agentic.shared.ClaimId
+    fields:
+      - name: pool_id
+        type: agentic.shared.PoolId
+      - name: holder
+        type: agentic.channel.PartyId
+      - name: time_limit_seconds
+        type: Integer
+      # UNMAPPED: the pool sets `held_until` when it grants the claim; that it equals the grant
+      # instant plus `time_limit_seconds` is not checked (no value expression adds a stored
+      # Integer to `now` here).
+      - name: queued_at
+        type: Timestamp
+        summary: When the claim joined the queue; the pool grants queued claims in this order.
+      - name: held_until
+        type: Optional<Timestamp>
+    invariants:
+      - time_limit_seconds > 0
+    relations:
+      - name: pool
+        kind: references
+        target: agentic.resource.Pool
+        cardinality: one
+        via: pool_id
+    # UNMAPPED: Expired and Killed are read as: Expired, the pool ended a held claim at its time
+    # limit (the design's KPI "jobs killed at their limit" counts these); Killed, the pool's
+    # operator ended a held claim by force before its limit. Owner to confirm the two meanings.
+    # Withdrawn: the holder took a queued claim back, as a click queued for a busy route is
+    # cancelled (consumer gap G10).
+    lifecycle:
+      initial: Queued
+      states: [Queued, Held, Released, Expired, Killed, Withdrawn]
+      terminal: [Released, Expired, Killed, Withdrawn]
+      transitions:
+        - name: grant
+          from: [Queued]
+          to: Held
+        - name: release
+          from: [Held]
+          to: Released
+        - name: expire
+          from: [Held]
+          to: Expired
+        - name: kill
+          from: [Held]
+          to: Killed
+        - name: withdraw
+          from: [Queued]
+          to: Withdrawn
+
+actors:
+  - name: agentic.resource.Claimant
+    naming:
+      display: Claimant
+      summary: A party that claims units; its credential names the party it is.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+    may:
+      - agentic.resource.RequestClaim
+      - agentic.resource.ReleaseClaim
+      - agentic.resource.WithdrawClaim
+
+  - name: agentic.resource.Scheduler
+    naming:
+      display: Scheduler
+      summary: The pool's own scheduler; it grants queued claims and ends held ones.
+    may:
+      - agentic.resource.CreatePool
+      - agentic.resource.GrantClaim
+      - agentic.resource.ExpireClaim
+      - agentic.resource.KillClaim
+
+errors:
+  - name: agentic.resource.ZeroCapacity
+    summary: A pool has at least one unit.
+
+  - name: agentic.resource.NoTimeLimit
+    summary: A claim names a time limit of at least one second.
+
+  - name: agentic.resource.UnknownPool
+    summary: No pool has this identity.
+    fields:
+      - {name: pool_id, type: agentic.shared.PoolId}
+
+  - name: agentic.resource.UnknownClaim
+    summary: No claim has this identity.
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+
+  - name: agentic.resource.OtherPool
+    summary: The claim was made on another pool.
+
+  - name: agentic.resource.PoolFull
+    summary: Every unit is held; the claim stays queued.
+
+  - name: agentic.resource.ClaimNotQueued
+    summary: The claim is not waiting in the queue.
+
+  - name: agentic.resource.ClaimNotHeld
+    summary: The claim does not hold a unit.
+
+  - name: agentic.resource.NotTheHolder
+    summary: Only the claim's holder releases it.
+
+  - name: agentic.resource.LimitNotReached
+    summary: The claim's time limit has not passed.
+
+  - name: agentic.resource.ClaimStateConflict
+    summary: The claim is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.resource.Claim.State}
+
+commands:
+  - name: agentic.resource.CreatePool
+    naming:
+      wire: create-pool
+      display: Create a pool
+    input:
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.resource.PoolKind}
+      - {name: capacity, type: Integer}
+    outcomes:
+      - name: zero-capacity
+        when: capacity <= 0
+        error: agentic.resource.ZeroCapacity
+      - name: created
+        creates: agentic.resource.Pool
+        instance: pool_id
+        sets:
+          name: input.name
+          kind: input.kind
+          capacity: input.capacity
+          held: 0
+        emits: [agentic.resource.PoolCreated]
+        payload:
+          agentic.resource.PoolCreated:
+            pool_id: {generated: true}
+            kind: input.kind
+            capacity: input.capacity
+
+  - name: agentic.resource.RequestClaim
+    naming:
+      wire: request-claim
+      display: Request a claim
+      summary: The caller joins the queue of a pool for one unit, for at most the time limit.
+    input:
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: time_limit_seconds, type: Integer}
+    outcomes:
+      - name: no-time-limit
+        when: time_limit_seconds <= 0
+        error: agentic.resource.NoTimeLimit
+      - name: unknown-pool
+        when_related:
+          via: input.pool_id
+          exists: false
+        error: agentic.resource.UnknownPool
+        payload:
+          agentic.resource.UnknownPool: {pool_id: input.pool_id}
+      - name: queued
+        creates: agentic.resource.Claim
+        instance: claim_id
+        sets:
+          pool_id: input.pool_id
+          holder: {caller: party}
+          time_limit_seconds: input.time_limit_seconds
+          queued_at: {generated: true}
+        emits: [agentic.resource.ClaimQueued]
+        payload:
+          agentic.resource.ClaimQueued:
+            claim_id: {generated: true}
+            pool_id: input.pool_id
+            holder: {caller: party}
+            time_limit_seconds: input.time_limit_seconds
+
+  - name: agentic.resource.WithdrawClaim
+    naming:
+      wire: withdraw-claim
+      display: Withdraw a queued claim
+      summary: The holder takes a claim back before the pool grants it; the pool is not touched.
+    input:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: holder, type: agentic.channel.PartyId}
+    outcomes:
+      - name: holder-not-the-caller
+        when: holder != caller.party
+        error: agentic.resource.NotTheHolder
+      - name: unknown-claim
+        unknown_instance: true
+        error: agentic.resource.UnknownClaim
+        payload:
+          agentic.resource.UnknownClaim: {claim_id: input.claim_id}
+      - name: not-the-holder
+        when_subject:
+          predicate: holder != input.holder
+        error: agentic.resource.NotTheHolder
+      - name: withdrawn
+        moves: agentic.resource.Claim.withdraw
+        instance: claim_id
+        emits: [agentic.resource.ClaimWithdrawn]
+        payload:
+          agentic.resource.ClaimWithdrawn:
+            claim_id: input.claim_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.resource.ClaimStateConflict
+        payload:
+          agentic.resource.ClaimStateConflict: {state: {subject: state}}
+
+  # The grant and every end of a held claim address the pool, whose count of held units is what
+  # decides; the claim moves as the secondary effect.
+  - name: agentic.resource.GrantClaim
+    naming:
+      wire: grant-claim
+      display: Grant a claim
+      summary: A queued claim takes a free unit of its pool.
+    input:
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: held_until, type: Timestamp}
+    outcomes:
+      - name: unknown-pool
+        unknown_instance: true
+        error: agentic.resource.UnknownPool
+        payload:
+          agentic.resource.UnknownPool: {pool_id: input.pool_id}
+      - name: pool-full
+        when_subject:
+          predicate: held >= capacity
+        error: agentic.resource.PoolFull
+      - name: unknown-claim
+        when_related:
+          via: input.claim_id
+          exists: false
+        error: agentic.resource.UnknownClaim
+        payload:
+          agentic.resource.UnknownClaim: {claim_id: input.claim_id}
+      - name: other-pool
+        when_related:
+          via: input.claim_id
+          predicate: pool_id != input.pool_id
+        error: agentic.resource.OtherPool
+      - name: not-queued
+        when_related:
+          via: input.claim_id
+          predicate: state != Queued
+        error: agentic.resource.ClaimNotQueued
+      - name: granted
+        updates: agentic.resource.Pool
+        instance: pool_id
+        sets:
+          held: {increment: 1}
+        affects:
+          - entity: agentic.resource.Claim
+            where: {all: [claim_id == input.claim_id, state == Queued]}
+            moves: agentic.resource.Claim.grant
+            sets:
+              held_until: input.held_until
+        emits: [agentic.resource.ClaimGranted]
+        payload:
+          agentic.resource.ClaimGranted:
+            claim_id: input.claim_id
+            pool_id: input.pool_id
+            held_until: input.held_until
+
+  - name: agentic.resource.ReleaseClaim
+    naming:
+      wire: release-claim
+      display: Release a claim
+    # The caller names itself as `holder`; its credential decides. ESS reads no caller attribute
+    # in a `when_related` guard (ESS-COMMAND-003).
+    input:
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: holder, type: agentic.channel.PartyId}
+    outcomes:
+      - name: holder-not-the-caller
+        when: holder != caller.party
+        error: agentic.resource.NotTheHolder
+      - name: unknown-pool
+        unknown_instance: true
+        error: agentic.resource.UnknownPool
+        payload:
+          agentic.resource.UnknownPool: {pool_id: input.pool_id}
+      - name: unknown-claim
+        when_related:
+          via: input.claim_id
+          exists: false
+        error: agentic.resource.UnknownClaim
+        payload:
+          agentic.resource.UnknownClaim: {claim_id: input.claim_id}
+      - name: other-pool
+        when_related:
+          via: input.claim_id
+          predicate: pool_id != input.pool_id
+        error: agentic.resource.OtherPool
+      - name: not-the-holder
+        when_related:
+          via: input.claim_id
+          predicate: holder != input.holder
+        error: agentic.resource.NotTheHolder
+      - name: not-held
+        when_related:
+          via: input.claim_id
+          predicate: state != Held
+        error: agentic.resource.ClaimNotHeld
+      - name: released
+        updates: agentic.resource.Pool
+        instance: pool_id
+        sets:
+          held: {increment: -1}
+        affects:
+          - entity: agentic.resource.Claim
+            where: {all: [claim_id == input.claim_id, state == Held]}
+            moves: agentic.resource.Claim.release
+        emits: [agentic.resource.ClaimReleased]
+        payload:
+          agentic.resource.ClaimReleased:
+            claim_id: input.claim_id
+            pool_id: input.pool_id
+
+  - name: agentic.resource.ExpireClaim
+    naming:
+      wire: expire-claim
+      display: Expire a claim
+      summary: The pool ends a held claim whose time limit has passed.
+    input:
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: claim_id, type: agentic.shared.ClaimId}
+    outcomes:
+      - name: unknown-pool
+        unknown_instance: true
+        error: agentic.resource.UnknownPool
+        payload:
+          agentic.resource.UnknownPool: {pool_id: input.pool_id}
+      - name: unknown-claim
+        when_related:
+          via: input.claim_id
+          exists: false
+        error: agentic.resource.UnknownClaim
+        payload:
+          agentic.resource.UnknownClaim: {claim_id: input.claim_id}
+      - name: other-pool
+        when_related:
+          via: input.claim_id
+          predicate: pool_id != input.pool_id
+        error: agentic.resource.OtherPool
+      - name: not-held
+        when_related:
+          via: input.claim_id
+          predicate: state != Held
+        error: agentic.resource.ClaimNotHeld
+      - name: limit-not-reached
+        when_related:
+          via: input.claim_id
+          predicate: held_until > now
+        error: agentic.resource.LimitNotReached
+      - name: expired
+        updates: agentic.resource.Pool
+        instance: pool_id
+        sets:
+          held: {increment: -1}
+        affects:
+          - entity: agentic.resource.Claim
+            where: {all: [claim_id == input.claim_id, state == Held]}
+            moves: agentic.resource.Claim.expire
+        emits: [agentic.resource.ClaimExpired]
+        payload:
+          agentic.resource.ClaimExpired:
+            claim_id: input.claim_id
+            pool_id: input.pool_id
+
+  - name: agentic.resource.KillClaim
+    naming:
+      wire: kill-claim
+      display: Kill a claim
+      summary: The pool ends a held claim by force.
+    input:
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: claim_id, type: agentic.shared.ClaimId}
+    outcomes:
+      - name: unknown-pool
+        unknown_instance: true
+        error: agentic.resource.UnknownPool
+        payload:
+          agentic.resource.UnknownPool: {pool_id: input.pool_id}
+      - name: unknown-claim
+        when_related:
+          via: input.claim_id
+          exists: false
+        error: agentic.resource.UnknownClaim
+        payload:
+          agentic.resource.UnknownClaim: {claim_id: input.claim_id}
+      - name: other-pool
+        when_related:
+          via: input.claim_id
+          predicate: pool_id != input.pool_id
+        error: agentic.resource.OtherPool
+      - name: not-held
+        when_related:
+          via: input.claim_id
+          predicate: state != Held
+        error: agentic.resource.ClaimNotHeld
+      - name: killed
+        updates: agentic.resource.Pool
+        instance: pool_id
+        sets:
+          held: {increment: -1}
+        affects:
+          - entity: agentic.resource.Claim
+            where: {all: [claim_id == input.claim_id, state == Held]}
+            moves: agentic.resource.Claim.kill
+        emits: [agentic.resource.ClaimKilled]
+        payload:
+          agentic.resource.ClaimKilled:
+            claim_id: input.claim_id
+            pool_id: input.pool_id
+
+events:
+  - name: agentic.resource.PoolCreated
+    fields:
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: kind, type: agentic.resource.PoolKind}
+      - {name: capacity, type: Integer}
+
+  - name: agentic.resource.ClaimQueued
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: holder, type: agentic.channel.PartyId}
+      - {name: time_limit_seconds, type: Integer}
+
+  - name: agentic.resource.ClaimGranted
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: held_until, type: Timestamp}
+
+  - name: agentic.resource.ClaimReleased
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: pool_id, type: agentic.shared.PoolId}
+
+  - name: agentic.resource.ClaimExpired
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: pool_id, type: agentic.shared.PoolId}
+
+  - name: agentic.resource.ClaimKilled
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: pool_id, type: agentic.shared.PoolId}
+
+  - name: agentic.resource.ClaimWithdrawn
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+
+views:
+  - name: agentic.resource.Pools
+    source: agentic.resource.Pool
+    consistency: read_your_writes
+    fields:
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.resource.PoolKind}
+      - {name: capacity, type: Integer}
+      - {name: held, type: Integer}
+      - {name: state, type: agentic.resource.Pool.State}
+    naming:
+      wire: pools
+      display: Pools
+
+  - name: agentic.resource.Claims
+    source: agentic.resource.Claim
+    consistency: read_your_writes
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: pool_id, type: agentic.shared.PoolId}
+      - {name: holder, type: agentic.channel.PartyId}
+      - {name: time_limit_seconds, type: Integer}
+      - {name: held_until, type: Optional<Timestamp>}
+      - {name: queued_at, type: Timestamp}
+      - {name: state, type: agentic.resource.Claim.State}
+    naming:
+      wire: claims
+      display: Claims
+
+  - name: agentic.resource.Queue
+    source: agentic.resource.Claim
+    consistency: read_your_writes
+    params:
+      - {name: pool_id, type: agentic.shared.PoolId}
+    filter:
+      all: [pool_id == param.pool_id, state == Queued]
+    fields:
+      - {name: claim_id, type: agentic.shared.ClaimId}
+      - {name: holder, type: agentic.channel.PartyId}
+      - {name: time_limit_seconds, type: Integer}
+      - {name: queued_at, type: Timestamp}
+    naming:
+      wire: queue
+      display: Queue of a pool

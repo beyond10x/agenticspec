@@ -1,0 +1,557 @@
+domain: agentic.delegation
+
+summary: >-
+  One principal acts for another. A delegation names who is acted for, who acts, the one decision
+  the delegate may take (answer a question, approve, merge, publish) and when it expires. A chain
+  of delegations must end at a human: the first link is granted by a human, every later link is
+  granted by the delegate of a link that is still active. A delegation that would not end at a
+  human, that closes a cycle, or that a delegate uses outside its scope is refused. An operator
+  agent acting for its owner is the common case.
+
+naming:
+  wire: delegation
+  display: Delegation
+
+# UNMAPPED: the acting principal of ActUnderDelegation, DelegateOnward and RevokeDelegation is a
+# field of the request (principal_id, delegator), not the caller's credential. ESS reads a caller
+# attribute in a command guard but not in a when_related guard, and synthesis cannot arrange the
+# pair beside the related rows. Establishing who is calling belongs to the layers above
+# (authority, channel). Open question for the owner.
+#
+# UNMAPPED: a delegate is not checked against the principal registry. With the check, the
+# comparison of the stored delegate with the acting principal could not be arranged by synthesis
+# and no outcome of DelegateOnward got a scenario. A delegation to an unregistered principal is
+# accepted. Open question for the owner.
+#
+# UNMAPPED: a cycle is refused only for self-delegation. A chain running back to its root human or
+# to an earlier delegate is not refused: a guard comparing a stored principal with the input, or a
+# row-set over active delegations, could not be arranged by synthesis. Open question: a depth
+# limit, or the guard once ESS can synthesize it.
+#
+# UNMAPPED: the root human cannot revoke a link granted by an agent further down; only the
+# delegator of a link revokes it (the links granted directly from it end with it). Open question.
+
+types:
+  - name: agentic.delegation.DelegatedAction
+    kind: enum
+    variants: [AnswerQuestions, Approve, Merge, Publish]
+    naming:
+      summary: >-
+        What a delegate may decide in the delegator's place. One delegation carries one action;
+        acting for an owner in several ways is several delegations, each revoked on its own.
+
+entities:
+  - name: agentic.delegation.Delegation
+    naming:
+      summary: >-
+        The delegate may take one kind of decision for the delegator, within the chain that ends
+        at the root human. Active until revoked or expired; revoking a link ends the links
+        granted from it.
+    identity:
+      name: delegation_id
+      type: agentic.shared.DelegationId
+    fields:
+      - name: delegator
+        type: agentic.shared.PrincipalId
+        summary: The principal acted for.
+      - name: delegate
+        type: agentic.shared.PrincipalId
+        summary: The principal that acts.
+      - name: action
+        type: agentic.delegation.DelegatedAction
+      - name: root
+        type: agentic.shared.PrincipalId
+        summary: The human the chain ends at; the delegator itself on the first link.
+      - name: parent_delegation_id
+        type: Optional<agentic.shared.DelegationId>
+        summary: The link the delegator acts by; absent on the first link, whose delegator is the human.
+      - name: granted_at
+        type: Timestamp
+      - name: expires_at
+        type: Optional<Timestamp>
+        summary: Absent means no expiry; the delegation then ends only by revocation.
+      - name: last_acted_at
+        type: Optional<Timestamp>
+        summary: The instant of the last decision taken under this delegation; absent until one is.
+      - name: excludes
+        type: List<agentic.shared.Name>
+        summary: >-
+          The rules the delegate cannot lift although the delegator could order around them: a
+          permission block, a rule of an organization. A later link carries the excludes of its
+          parent.
+        # UNMAPPED: a rule is named by text; which rules exist, and that ActUnderDelegation is
+        # refused for an action an excluded rule forbids, is the evaluator's (consumer gap G1).
+    relations:
+      - name: delegator_principal
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: delegator
+      - name: delegate_principal
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: delegate
+      - name: root_principal
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: root
+      - name: parent
+        kind: references
+        target: agentic.delegation.Delegation
+        cardinality: one
+        via: parent_delegation_id
+    lifecycle:
+      initial: Active
+      states: [Active, Revoked, Expired]
+      terminal: [Revoked, Expired]
+      transitions:
+        - name: revoke
+          from: [Active]
+          to: Revoked
+        - name: expire
+          from: [Active]
+          to: Expired
+
+errors:
+  - name: agentic.delegation.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.delegation.PrincipalRetired
+    summary: A retired principal neither grants nor receives a delegation.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.delegation.UnknownDelegation
+    summary: No delegation of this identity was granted.
+    fields:
+      - name: delegation_id
+        type: agentic.shared.DelegationId
+
+  - name: agentic.delegation.DelegationStateConflict
+    summary: The delegation is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.delegation.Delegation.State
+
+  - name: agentic.delegation.ChainDoesNotEndAtHuman
+    summary: >-
+      The delegation would not end at a human: a delegation with no parent link has a delegator
+      that is not a human.
+    fields:
+      - name: delegator
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.delegation.DelegationCycle
+    summary: >-
+      The delegate is the delegator, is the root human, or already holds this action under an
+      active delegation; granting it would close a cycle.
+    fields:
+      - name: delegate
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.delegation.NotTheDelegator
+    summary: The acting principal is not the delegator of this delegation.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.delegation.NotTheDelegate
+    summary: >-
+      The principal is not the delegate of the link: it cannot grant onward from it or act by it.
+    fields:
+      - name: delegation_id
+        type: agentic.shared.DelegationId
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.delegation.ActionOutsideScope
+    summary: The delegation does not carry the requested action.
+    fields:
+      - name: delegation_id
+        type: agentic.shared.DelegationId
+      - name: requested
+        type: agentic.delegation.DelegatedAction
+
+  - name: agentic.delegation.DelegationExpired
+    summary: The delegation's expiry has passed.
+    fields:
+      - name: delegation_id
+        type: agentic.shared.DelegationId
+
+  - name: agentic.delegation.NotYetExpired
+    summary: The delegation has no expiry or its expiry has not passed, so it is not recorded as expired.
+    fields:
+      - name: delegation_id
+        type: agentic.shared.DelegationId
+
+  - name: agentic.delegation.InvalidExpiry
+    summary: The expiry is not after the instant the delegation is granted.
+    fields:
+      - name: delegation_id
+        type: agentic.shared.DelegationId
+
+events:
+  - name: agentic.delegation.DelegationGranted
+    fields:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: delegator, type: agentic.shared.PrincipalId}
+      - {name: delegate, type: agentic.shared.PrincipalId}
+      - {name: action, type: agentic.delegation.DelegatedAction}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: excludes, type: List<agentic.shared.Name>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.delegation.DelegationPassedOn
+    fields:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: parent_delegation_id, type: agentic.shared.DelegationId}
+      - {name: delegate, type: agentic.shared.PrincipalId}
+      - {name: action, type: agentic.delegation.DelegatedAction}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.delegation.DelegationRevoked
+    fields:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.delegation.DelegationExpiredRecorded
+    fields:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.delegation.DelegatedActionTaken
+    fields:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: delegate, type: agentic.shared.PrincipalId}
+      - {name: action, type: agentic.delegation.DelegatedAction}
+      - {name: at, type: Timestamp}
+
+commands:
+  - name: agentic.delegation.GrantDelegation
+    naming:
+      wire: grant-delegation
+      display: Grant a delegation from a human
+      summary: >-
+        The first link of a chain. The delegator must be a human; a delegator
+        that is not a human has no chain that ends at one.
+    input:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: delegator, type: agentic.shared.PrincipalId}
+      - {name: delegate, type: agentic.shared.PrincipalId}
+      - {name: action, type: agentic.delegation.DelegatedAction}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: excludes, type: List<agentic.shared.Name>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: expiry-not-after-grant
+        when:
+          all:
+            - defined(expires_at)
+            - expires_at <= at
+        error: agentic.delegation.InvalidExpiry
+        payload:
+          agentic.delegation.InvalidExpiry: {delegation_id: input.delegation_id}
+      - name: no-such-delegator
+        when_related: {via: input.delegator, exists: false}
+        error: agentic.delegation.UnknownPrincipal
+        payload:
+          agentic.delegation.UnknownPrincipal: {principal_id: input.delegator}
+      - name: delegator-not-human
+        when_related: {via: input.delegator, predicate: kind != Human}
+        error: agentic.delegation.ChainDoesNotEndAtHuman
+        payload:
+          agentic.delegation.ChainDoesNotEndAtHuman: {delegator: input.delegator}
+        summary: A delegation with no parent link must start at a human, or its chain ends nowhere.
+      - name: delegator-retired
+        when_related: {via: input.delegator, predicate: state == Retired}
+        error: agentic.delegation.PrincipalRetired
+        payload:
+          agentic.delegation.PrincipalRetired: {principal_id: input.delegator}
+      - name: granted
+        creates: agentic.delegation.Delegation
+        instance: delegation_id
+        sets:
+          delegator: input.delegator
+          delegate: input.delegate
+          action: input.action
+          root: input.delegator
+          granted_at: input.at
+          expires_at: input.expires_at
+          excludes: input.excludes
+        emits: [agentic.delegation.DelegationGranted]
+        payload:
+          agentic.delegation.DelegationGranted:
+            delegation_id: input.delegation_id
+            delegator: input.delegator
+            delegate: input.delegate
+            action: input.action
+            expires_at: input.expires_at
+            excludes: input.excludes
+            at: input.at
+        summary: The delegate may take the action for the human until the delegation ends.
+
+  - name: agentic.delegation.DelegateOnward
+    naming:
+      wire: delegate-onward
+      display: Delegate onward from a link
+      summary: >-
+        A later link of a chain. The delegator is the delegate of an active link and passes on the
+        same action; the new link keeps the root human of its parent, so every chain still ends
+        at a human.
+    input:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: parent_delegation_id, type: agentic.shared.DelegationId}
+      - {name: delegator, type: agentic.shared.PrincipalId}
+      - {name: delegate, type: agentic.shared.PrincipalId}
+      - {name: action, type: agentic.delegation.DelegatedAction}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: expiry-not-after-grant
+        when:
+          all:
+            - defined(expires_at)
+            - expires_at <= at
+        error: agentic.delegation.InvalidExpiry
+        payload:
+          agentic.delegation.InvalidExpiry: {delegation_id: input.delegation_id}
+      - name: self-delegation
+        when: delegator == delegate
+        error: agentic.delegation.DelegationCycle
+        payload:
+          agentic.delegation.DelegationCycle: {delegate: input.delegate}
+      - name: no-such-parent
+        when_related: {via: input.parent_delegation_id, exists: false}
+        error: agentic.delegation.UnknownDelegation
+        payload:
+          agentic.delegation.UnknownDelegation: {delegation_id: input.parent_delegation_id}
+      - name: parent-not-active
+        when_related: {via: input.parent_delegation_id, predicate: state != Active}
+        error: agentic.delegation.DelegationStateConflict
+        payload:
+          agentic.delegation.DelegationStateConflict:
+            state: {related: {via: input.parent_delegation_id, field: state}}
+      - name: delegator-not-parent-delegate
+        when_related: {via: input.parent_delegation_id, predicate: delegate != input.delegator}
+        error: agentic.delegation.NotTheDelegate
+        payload:
+          agentic.delegation.NotTheDelegate:
+            delegation_id: input.parent_delegation_id
+            principal_id: input.delegator
+      - name: action-outside-parent-scope
+        when_related: {via: input.parent_delegation_id, predicate: action != input.action}
+        error: agentic.delegation.ActionOutsideScope
+        payload:
+          agentic.delegation.ActionOutsideScope:
+            delegation_id: input.parent_delegation_id
+            requested: input.action
+      - name: delegated
+        creates: agentic.delegation.Delegation
+        instance: delegation_id
+        sets:
+          delegator: input.delegator
+          delegate: input.delegate
+          action: input.action
+          root: {related: {via: input.parent_delegation_id, field: root}}
+          parent_delegation_id: input.parent_delegation_id
+          granted_at: input.at
+          expires_at: input.expires_at
+          excludes: {related: {via: input.parent_delegation_id, field: excludes}}
+        emits: [agentic.delegation.DelegationPassedOn]
+        payload:
+          agentic.delegation.DelegationPassedOn:
+            delegation_id: input.delegation_id
+            parent_delegation_id: input.parent_delegation_id
+            delegate: input.delegate
+            action: input.action
+            expires_at: input.expires_at
+            at: input.at
+        summary: The chain is one link longer and still ends at its root human.
+
+  - name: agentic.delegation.RevokeDelegation
+    naming:
+      wire: revoke-delegation
+      display: Revoke a delegation
+      summary: >-
+        The delegator of a link ends it. The links granted
+        directly from it end with it.
+    input:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-delegation
+        unknown_instance: true
+        error: agentic.delegation.UnknownDelegation
+        payload:
+          agentic.delegation.UnknownDelegation: {delegation_id: input.delegation_id}
+      - name: not-the-delegator
+        when_subject:
+          predicate: delegator != input.principal_id
+        error: agentic.delegation.NotTheDelegator
+        payload:
+          agentic.delegation.NotTheDelegator: {principal_id: input.principal_id}
+      - name: revoked
+        moves: agentic.delegation.Delegation.revoke
+        instance: delegation_id
+        emits: [agentic.delegation.DelegationRevoked]
+        payload:
+          agentic.delegation.DelegationRevoked:
+            delegation_id: input.delegation_id
+            at: input.at
+        # UNMAPPED: revoking a link must end every link granted from it, at any depth. ESS has no
+        # transitive closure, so only the links granted directly from this one are revoked here
+        # (`affects:`). A link two steps down stays Active; ActUnderDelegation does not walk the
+        # chain. Open question for the owner: limit chains to depth 2, or accept that a consumer
+        # walks the parents.
+        affects:
+          - entity: agentic.delegation.Delegation
+            where: parent_delegation_id == subject.delegation_id
+            moves: agentic.delegation.Delegation.revoke
+        summary: The delegation and the links granted directly from it have ended.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.delegation.DelegationStateConflict
+        payload:
+          agentic.delegation.DelegationStateConflict: {state: {subject: state}}
+
+  - name: agentic.delegation.ExpireDelegation
+    naming:
+      wire: expire-delegation
+      display: Record that a delegation expired
+    input:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-delegation
+        unknown_instance: true
+        error: agentic.delegation.UnknownDelegation
+        payload:
+          agentic.delegation.UnknownDelegation: {delegation_id: input.delegation_id}
+      - name: no-expiry
+        when_subject:
+          predicate: missing(expires_at)
+        error: agentic.delegation.NotYetExpired
+        payload:
+          agentic.delegation.NotYetExpired: {delegation_id: input.delegation_id}
+        summary: A delegation with no expiry ends only by revocation.
+      - name: not-yet-expired
+        when_subject:
+          predicate: expires_at > input.at
+        error: agentic.delegation.NotYetExpired
+        payload:
+          agentic.delegation.NotYetExpired: {delegation_id: input.delegation_id}
+      - name: expired
+        moves: agentic.delegation.Delegation.expire
+        instance: delegation_id
+        emits: [agentic.delegation.DelegationExpiredRecorded]
+        payload:
+          agentic.delegation.DelegationExpiredRecorded:
+            delegation_id: input.delegation_id
+            at: input.at
+        summary: The delegation's expiry has passed; it carries no further decision.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.delegation.DelegationStateConflict
+        payload:
+          agentic.delegation.DelegationStateConflict: {state: {subject: state}}
+
+  - name: agentic.delegation.ActUnderDelegation
+    naming:
+      wire: act-under-delegation
+      display: Act under a delegation
+      summary: >-
+        The delegate takes one decision for the delegator and names the delegation it relies on.
+        Default deny: no active link that carries this action for this principal, no decision.
+        The event names the delegation, so the decision traces to the root human of its chain.
+    input:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: action, type: agentic.delegation.DelegatedAction}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-delegation
+        unknown_instance: true
+        error: agentic.delegation.UnknownDelegation
+        payload:
+          agentic.delegation.UnknownDelegation: {delegation_id: input.delegation_id}
+      - name: not-active
+        when_subject_state: [Revoked, Expired]
+        error: agentic.delegation.DelegationStateConflict
+        payload:
+          agentic.delegation.DelegationStateConflict: {state: {subject: state}}
+      - name: not-the-delegate
+        when_subject:
+          predicate: delegate != input.principal_id
+        error: agentic.delegation.NotTheDelegate
+        payload:
+          agentic.delegation.NotTheDelegate:
+            delegation_id: input.delegation_id
+            principal_id: input.principal_id
+      - name: outside-scope
+        when_subject:
+          predicate: action != input.action
+        error: agentic.delegation.ActionOutsideScope
+        payload:
+          agentic.delegation.ActionOutsideScope:
+            delegation_id: input.delegation_id
+            requested: input.action
+      - name: past-expiry
+        when_subject:
+          predicate: expires_at <= input.at
+        error: agentic.delegation.DelegationExpired
+        payload:
+          agentic.delegation.DelegationExpired: {delegation_id: input.delegation_id}
+      - name: acted
+        updates: agentic.delegation.Delegation
+        instance: delegation_id
+        sets:
+          last_acted_at: input.at
+        emits: [agentic.delegation.DelegatedActionTaken]
+        payload:
+          agentic.delegation.DelegatedActionTaken:
+            delegation_id: input.delegation_id
+            delegate: input.principal_id
+            action: input.action
+            at: input.at
+        summary: The decision stands and counts as the delegator's, and through the chain the root human's.
+
+views:
+  - name: agentic.delegation.Delegations
+    source: agentic.delegation.Delegation
+    consistency: read_your_writes
+    fields:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: delegator, type: agentic.shared.PrincipalId}
+      - {name: delegate, type: agentic.shared.PrincipalId}
+      - {name: action, type: agentic.delegation.DelegatedAction}
+      - {name: root, type: agentic.shared.PrincipalId}
+      - {name: parent_delegation_id, type: Optional<agentic.shared.DelegationId>}
+      - {name: granted_at, type: Timestamp}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: last_acted_at, type: Optional<Timestamp>}
+      - {name: excludes, type: List<agentic.shared.Name>}
+      - {name: state, type: agentic.delegation.Delegation.State}
+    naming:
+      wire: delegations
+      display: Delegations
+
+  - name: agentic.delegation.ActiveDelegations
+    source: agentic.delegation.Delegation
+    consistency: read_your_writes
+    filter: state == Active
+    fields:
+      - {name: delegation_id, type: agentic.shared.DelegationId}
+      - {name: delegate, type: agentic.shared.PrincipalId}
+      - {name: root, type: agentic.shared.PrincipalId}
+      - {name: action, type: agentic.delegation.DelegatedAction}
+    naming:
+      wire: active-delegations
+      display: Active delegations

@@ -1,0 +1,20 @@
+{
+  "name": "find-harness-kpis",
+  "anchor": true,
+  "card": {
+    "persona": "An engineer who has heard of the harness block and wants to know what it is measured by.",
+    "task": "From the home page, reach the harness block page and read its KPIs."
+  },
+  "start": "/",
+  "steps": [
+    { "click": "link", "name": "Building blocks", "in": "navbar" },
+    { "click": "link", "name": "^harness\\b", "in": "main" },
+    { "click": "link", "name": "KPIs", "in": "toc" }
+  ],
+  "target": { "kind": "section", "heading": "KPIs" },
+  "truth": {
+    "path": "/docs/blocks/4-agent/harness",
+    "kpis": ["limit_overruns", "approvals_in_summaries", "context_size_p90_tokens", "turns", "compactions_per_run"]
+  },
+  "expectations": ["the KPI heading is in view and the section names the five KPIs of the harness", "the navbar, the theme toggle and the sidebar stay in view"]
+}

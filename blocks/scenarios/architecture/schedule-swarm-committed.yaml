@@ -1,0 +1,133 @@
+# A schedule wakes a swarm of workers that coordinate through a shared board (2609.26781: many
+# copies of one agent, a board instead of an orchestrator), their starts 30 s apart. The schedule
+# part links to the worker part carrying Trigger; each worker reaches a model through the gateway
+# and posts to the board. The architecture commits.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: schedule-swarm-committed
+summary: A nightly schedule triggers 16 workers coordinating over a board, started 30 s apart; the architecture commits.
+
+arrange:
+  - instance: sw
+    entity: agentic.architecture.Architecture
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: nightly-swarm}
+    outcome: created
+    capture: {instance: sw, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+
+  # parts
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000101
+      architecture_id: {$instance: sw}
+      name: nightly
+      kind: Schedule
+      count: 1
+      settings: [{name: expression, value: "0 2 * * *"}, {name: timezone, value: Europe/Berlin}]
+    outcome: added
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000102
+      architecture_id: {$instance: sw}
+      name: worker
+      kind: Agent
+      count: 16
+      settings: [{name: harness, value: coding}]
+    outcome: added
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000103
+      architecture_id: {$instance: sw}
+      name: gateway
+      kind: Gateway
+      count: 1
+      settings: [{name: upstreams, value: provider}]
+    outcome: added
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000104
+      architecture_id: {$instance: sw}
+      name: board
+      kind: Channel
+      count: 1
+      settings: [{name: kind, value: board}]
+    outcome: added
+
+  # the swarm
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.architecture.SetSwarm
+    input:
+      architecture_id: {$instance: sw}
+      part_id: 00000000-0000-4000-8000-000000000102
+      coordination: Board
+      start_stagger: PT30S
+    outcome: set
+    events:
+      - event: agentic.architecture.SwarmSet
+        payload:
+          part_id: 00000000-0000-4000-8000-000000000102
+          coordination: Board
+
+  # links
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: sw}
+      from_part_id: 00000000-0000-4000-8000-000000000101
+      to_part_id: 00000000-0000-4000-8000-000000000102
+      carries: Trigger
+    outcome: added
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: sw}
+      from_part_id: 00000000-0000-4000-8000-000000000102
+      to_part_id: 00000000-0000-4000-8000-000000000103
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: sw}
+      from_part_id: 00000000-0000-4000-8000-000000000102
+      to_part_id: 00000000-0000-4000-8000-000000000104
+      carries: Message
+    outcome: added
+
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.architecture.CommitRevision
+    input:
+      architecture_id: {$instance: sw}
+    outcome: committed
+    events:
+      - event: agentic.architecture.RevisionCommitted
+        payload: {architecture_id: {$instance: sw}}
+
+assert:
+  - view: agentic.architecture.Revisions
+    contains:
+      architecture_id: {$instance: sw}
+  - view: agentic.architecture.Reach
+    params:
+      architecture_id: {$instance: sw}
+    contains:
+      from_name: nightly
+      to_name: worker
+      carries: Trigger
+  - view: agentic.architecture.Parts
+    contains:
+      part_id: 00000000-0000-4000-8000-000000000102
+      count: 16
+      coordination: Board
+      start_stagger: PT30S
+  - view: agentic.architecture.Parts
+    contains:
+      part_id: 00000000-0000-4000-8000-000000000103
+      coordination: None

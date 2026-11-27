@@ -1,0 +1,118 @@
+domain: demo.rooms
+
+types:
+  - {name: demo.rooms.RoomId, kind: newtype, of: Uuid}
+  - {name: demo.rooms.BookingId, kind: newtype, of: Uuid}
+
+entities:
+  - name: demo.rooms.Room
+    identity: {name: room_id, type: demo.rooms.RoomId}
+    fields:
+      - {name: label, type: String}
+    lifecycle:
+      initial: Open
+      states: [Open]
+      terminal: [Open]
+
+  - name: demo.rooms.Booking
+    identity: {name: booking_id, type: demo.rooms.BookingId}
+    fields:
+      - {name: room_id, type: demo.rooms.RoomId}
+    relations:
+      - {name: room, kind: references, target: demo.rooms.Room, cardinality: one, via: room_id}
+    lifecycle:
+      initial: Requested
+      states: [Requested, Confirmed]
+      terminal: [Confirmed]
+      transitions:
+        - {name: confirm, from: [Requested], to: Confirmed}
+
+errors:
+  - name: demo.rooms.OtherRoom
+  - name: demo.rooms.UnknownBooking
+  - name: demo.rooms.UnknownRoom
+  - name: demo.rooms.WrongState
+
+commands:
+  - name: demo.rooms.AddRoom
+    input:
+      - {name: label, type: String}
+    outcomes:
+      - name: added
+        creates: demo.rooms.Room
+        instance: room_id
+        sets: {label: input.label}
+        emits: [demo.rooms.RoomAdded]
+        payload:
+          demo.rooms.RoomAdded: {room_id: {generated: true}}
+
+  - name: demo.rooms.RequestBooking
+    input:
+      - {name: room_id, type: demo.rooms.RoomId}
+    outcomes:
+      - name: unknown-room
+        when_related: {via: input.room_id, exists: false}
+        error: demo.rooms.UnknownRoom
+      - name: requested
+        creates: demo.rooms.Booking
+        instance: booking_id
+        sets: {room_id: input.room_id}
+        emits: [demo.rooms.BookingRequested]
+        payload:
+          demo.rooms.BookingRequested: {booking_id: {generated: true}}
+
+  # ESS 0.99.2 synthesis defect. The input names the room again; a booking for another room is
+  # refused first (other-room). Without the unknown-room branch, synthesis refuses other-room and
+  # confirmed (ESS-SYNTH-003, "stored room_id") and emits no wrong scenario. With it, synthesis
+  # emits outcome/confirmed, outcome/unknown-room and transition/confirm/by/.../confirmed with
+  # ConfirmBooking.input.room_id chosen apart from the booking's stored room_id (a second room,
+  # or an id no room holds), so the earlier other-room guard claims the request and the
+  # interpreted target answers other-room: 3 of 7 scenarios fail. unknown-room is unreachable
+  # here at all (a booking is only created for an existing room, nothing deletes a room, and
+  # other-room answers before the related-row step), yet a scenario is emitted for it.
+  # Run: ess verify conform run --target interpreted --path . --format json \
+  #        --report-format 2 --report-out report.json
+  - name: demo.rooms.ConfirmBooking
+    input:
+      - {name: booking_id, type: demo.rooms.BookingId}
+      - {name: room_id, type: demo.rooms.RoomId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: demo.rooms.UnknownBooking
+      - name: other-room
+        when_subject:
+          predicate: room_id != input.room_id
+        error: demo.rooms.OtherRoom
+      - name: unknown-room
+        when_related: {via: input.room_id, exists: false}
+        error: demo.rooms.UnknownRoom
+      - name: confirmed
+        moves: demo.rooms.Booking.confirm
+        instance: booking_id
+        emits: [demo.rooms.BookingConfirmed]
+        payload:
+          demo.rooms.BookingConfirmed: {booking_id: input.booking_id}
+      - name: wrong-state
+        wrong_state: true
+        error: demo.rooms.WrongState
+
+events:
+  - name: demo.rooms.RoomAdded
+    fields:
+      - {name: room_id, type: demo.rooms.RoomId}
+  - name: demo.rooms.BookingRequested
+    fields:
+      - {name: booking_id, type: demo.rooms.BookingId}
+  - name: demo.rooms.BookingConfirmed
+    fields:
+      - {name: booking_id, type: demo.rooms.BookingId}
+
+views:
+  - name: demo.rooms.Bookings
+    source: demo.rooms.Booking
+    consistency: read_your_writes
+    fields:
+      - {name: booking_id, type: demo.rooms.BookingId}
+      - {name: room_id, type: demo.rooms.RoomId}
+      - {name: state, type: demo.rooms.Booking.State}
