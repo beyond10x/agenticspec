@@ -8,6 +8,7 @@ use std::path::PathBuf;
 
 use agenticspec::claude::{Actor, Cmd};
 use agenticspec_server::wire;
+use agenticspec_sim::cli as sim;
 use cli_contract::{Handler, HandlerReply, Invocation};
 use serde_json::{Value, json};
 
@@ -393,8 +394,52 @@ impl Handler for Commands {
                 agenticspec::serve::run(listener, shared, syncer);
                 HandlerReply::Success(json!({ "url": url }))
             }
+            "sim_check" => sim_reply(sim::check(&path_of(&inv.input, "architecture"))),
+            "sim_run" => {
+                let threads = inv
+                    .input
+                    .get("threads")
+                    .and_then(Value::as_i64)
+                    .and_then(|t| usize::try_from(t).ok());
+                let mut err = std::io::stderr().lock();
+                sim_reply(sim::run(
+                    &path_of(&inv.input, "experiment"),
+                    &path_of(&inv.input, "out"),
+                    threads,
+                    &mut err,
+                ))
+            }
+            "sim_render" => sim_reply(sim::render(
+                &path_of(&inv.input, "architecture"),
+                inv.input
+                    .get("result")
+                    .and_then(Value::as_str)
+                    .map(std::path::Path::new),
+                &path_of(&inv.input, "out"),
+            )),
+            "sim_ladder" => sim_reply(sim::ladder(
+                &path_of(&inv.input, "ladder"),
+                &path_of(&inv.input, "out"),
+                inv.input
+                    .get("check")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false),
+            )),
             _ => HandlerReply::Unavailable,
         }
+    }
+}
+
+/// A path field of the input; the parser has made every required one present.
+fn path_of(input: &Value, field: &str) -> PathBuf {
+    PathBuf::from(input.get(field).and_then(Value::as_str).unwrap_or(""))
+}
+
+/// The reply of an `agenticspec sim` command.
+fn sim_reply(outcome: Result<Value, sim::Refusal>) -> HandlerReply {
+    match outcome {
+        Ok(result) => HandlerReply::Success(result),
+        Err(r) => refusal(r.code, r.detail),
     }
 }
 

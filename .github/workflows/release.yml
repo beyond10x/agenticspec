@@ -3,13 +3,53 @@ name: Release
 on:
   push:
     tags: ['[0-9]+.[0-9]+.[0-9]+']
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
+  version:
+    name: Version
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: The version of the tag, or of the release branch
+        id: version
+        env:
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ github.ref_name }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = push ]; then
+            version=$TAG
+          else
+            version=$(awk '/^\[/ { table = $0; next } table == "[workspace.package]" && /^version[ \t]*=/ { sub(/^version[ \t]*=[ \t]*"/, ""); sub(/".*$/, ""); print; exit }' Cargo.toml)
+            if [ "$HEAD_REF" != "release/$version" ]; then
+              echo "::error::the branch $HEAD_REF is not release/$version, the workspace version" >&2
+              exit 1
+            fi
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: The version, the workspace version and the changelog agree
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: sh scripts/release-check.sh "$VERSION"
+
   gate:
     name: Gate
+    needs: version
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -18,8 +58,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: The tag, the workspace version and the changelog agree
-        run: sh scripts/release-check.sh "$GITHUB_REF_NAME"
       - name: Read the rustc pinned in rust-toolchain.toml
         id: rustc
         run: |
@@ -96,11 +134,15 @@ jobs:
 
   package:
     name: Package ${{ matrix.target }}
-    needs: gate
+    needs: [version, gate]
+    if: ${{ !cancelled() && needs.version.result == 'success' && (needs.gate.result == 'success' || (needs.gate.result == 'skipped' && github.event_name == 'pull_request')) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
       contents: read
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -112,7 +154,20 @@ jobs:
           # Static: no glibc of the host, the archive consumers pin.
           - target: x86_64-unknown-linux-musl
             runner: ubuntu-22.04
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
+      - name: Check out with LF line ends on Windows, as on every other runner
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
@@ -139,13 +194,17 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends musl-tools
           echo "CC_${TARGET//-/_}=musl-gcc" >> "$GITHUB_ENV"
+      - name: Install Rosetta 2 to run the x86_64 binary
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: sudo softwareupdate --install-rosetta --agree-to-license
       - name: Build agenticspec and write its archive
         env:
           TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
           cargo build --locked --release --bin agenticspec --target "$TARGET"
-          sh scripts/release-package.sh archive "$GITHUB_REF_NAME" "$TARGET" "target/$TARGET/release/agenticspec" dist
+          case "$TARGET" in *-windows-*) exe=.exe ;; *) exe= ;; esac
+          sh scripts/release-package.sh archive "$VERSION" "$TARGET" "target/$TARGET/release/agenticspec$exe" dist
       - name: The musl binary is static and runs in a plain Alpine container
         if: contains(matrix.target, '-linux-musl')
         env:
@@ -158,20 +217,23 @@ jobs:
           if ldd "$binary" 2>&1 | grep -q '=>'; then echo "::error::$binary loads shared libraries" >&2; exit 1; fi
           printed=$(docker run --rm -v "$PWD/target/$TARGET/release:/b:ro" alpine@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f /b/agenticspec --version)
           echo "alpine: $printed"
-          test "$printed" = "agenticspec $GITHUB_REF_NAME"
+          test "$printed" = "agenticspec $VERSION"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-${{ matrix.target }}
-          path: dist/*.tar.gz
+          path: dist/agenticspec-*
           if-no-files-found: error
 
   bundle:
     name: Bundle the release assets
-    needs: package
+    needs: [version, package]
+    if: ${{ !cancelled() && needs.package.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -184,11 +246,11 @@ jobs:
       - name: Write the checksums and the notes
         run: |
           set -euo pipefail
-          sh scripts/release-package.sh sums "$GITHUB_REF_NAME" dist
-          sh scripts/release-package.sh notes "$GITHUB_REF_NAME" CHANGELOG.md > dist/notes.md
+          sh scripts/release-package.sh sums "$VERSION" dist
+          sh scripts/release-package.sh notes "$VERSION" CHANGELOG.md > dist/notes.md
           cat dist/notes.md
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: agenticspec-${{ github.ref_name }}-release
+          name: agenticspec-${{ needs.version.outputs.version }}-release
           path: dist/*
           if-no-files-found: error

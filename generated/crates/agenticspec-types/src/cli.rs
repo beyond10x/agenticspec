@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest f055d5e2e3c34626a341be77dc04f1863969498b5a228872e28a799be540eb5f
+// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -582,6 +582,94 @@ pub struct SessionSummary {
     pub tools: Vec<ToolFigures>,
     /// `timeline` — `List<agenticspec.cli.TimelineMark>`.
     pub timeline: Vec<TimelineMark>,
+}
+
+/// SimCheckInput — `agenticspec.cli.SimCheckInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimCheckInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+}
+
+/// SimCheckResult — `agenticspec.cli.SimCheckResult`.
+///
+/// The architecture the check accepted, with its counts of parts and links.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimCheckResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `parts` — `Integer`.
+    pub parts: i64,
+    /// `links` — `Integer`.
+    pub links: i64,
+}
+
+/// SimLadderInput — `agenticspec.cli.SimLadderInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimLadderInput {
+    /// `ladder` — `String`.
+    pub ladder: String,
+    /// `out` — `String`.
+    pub out: String,
+    /// `check` — `Boolean`.
+    pub check: bool,
+}
+
+/// SimLadderResult — `agenticspec.cli.SimLadderResult`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimLadderResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `rungs` — `Integer`.
+    pub rungs: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
+}
+
+/// SimRenderInput — `agenticspec.cli.SimRenderInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimRenderInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `result` — `Optional<String>`.
+    pub result: Option<String>,
+    /// `out` — `String`.
+    pub out: String,
+}
+
+/// SimRenderResult — `agenticspec.cli.SimRenderResult`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimRenderResult {
+    /// `out` — `String`.
+    pub out: String,
+}
+
+/// SimRunInput — `agenticspec.cli.SimRunInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimRunInput {
+    /// `experiment` — `String`.
+    pub experiment: String,
+    /// `out` — `String`.
+    pub out: String,
+    /// `threads` — `Optional<Integer>`.
+    pub threads: Option<i64>,
+}
+
+/// SimRunResult — `agenticspec.cli.SimRunResult`.
+///
+/// One run of an experiment. The KPIs of the baseline and the best variant are printed to standard error and written to `result.json`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimRunResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `variants` — `Integer`.
+    pub variants: i64,
+    /// `seeds` — `Integer`.
+    pub seeds: i64,
+    /// `threads` — `Integer`.
+    pub threads: i64,
+    /// `best_written` — `Boolean`.
+    pub best_written: bool,
 }
 
 /// StepKind — `agenticspec.cli.StepKind`: one of a closed set of names.

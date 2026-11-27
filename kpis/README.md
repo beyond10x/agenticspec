@@ -17,6 +17,6 @@ kpis:
     modes: { autonomous: lower, pairing: ignore, review: ignore }   # optional overrides
     gate: false                     # true: must be 0 (or 1 for a share that must be complete) for a variant to count
     reads: [agentic.question.QuestionAsked, agentic.question.QuestionAnswered]
-    status: computed                # computed (agenticspec kpi today) | simulated (agenticspec-sim) | both | planned
+    status: computed                # computed (agenticspec kpi today) | simulated (agenticspec sim) | both | planned
     source: research/2611.07166     # a paper id, docs/kpis.md, or design
 ```

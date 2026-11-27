@@ -1,13 +1,13 @@
 <!--
   generated from agenticspec v1
-  contract digest f055d5e2e3c34626a341be77dc04f1863969498b5a228872e28a799be540eb5f
+  contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-178 capabilities: **175 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+186 capabilities: **183 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -51,6 +51,14 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.ServeInput` |
 | domain type | `agenticspec.cli.ServeResult` |
 | domain type | `agenticspec.cli.SessionSummary` |
+| domain type | `agenticspec.cli.SimCheckInput` |
+| domain type | `agenticspec.cli.SimCheckResult` |
+| domain type | `agenticspec.cli.SimLadderInput` |
+| domain type | `agenticspec.cli.SimLadderResult` |
+| domain type | `agenticspec.cli.SimRenderInput` |
+| domain type | `agenticspec.cli.SimRenderResult` |
+| domain type | `agenticspec.cli.SimRunInput` |
+| domain type | `agenticspec.cli.SimRunResult` |
 | domain type | `agenticspec.cli.StepKind` |
 | domain type | `agenticspec.cli.SyncInput` |
 | domain type | `agenticspec.cli.SyncResult` |

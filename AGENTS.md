@@ -80,7 +80,7 @@ change.
   page changes when the simulator changes.
 - The catalog (`docs/catalog/`, `website/static/catalog/<architecture>/`) is generated the same
   way, one entry per experiment: its full result page, the downloads (the files as written,
-  `best.yaml` from `agenticspec-sim::best`, the experiment pointing at the files beside it,
+  `best.yaml` from `agenticspec_sim::best`, the experiment pointing at the files beside it,
   `result.json`) and the index cards. The results of the experiments at their own budget and seeds
   are committed inputs: `website/static/catalog/<entry>/result.json` with `sources.sha256` beside
   it (the experiment, architecture, profile, the simulator's sources that change a result, its
@@ -119,8 +119,8 @@ change.
 | `agenticspec` | `mine.rs`, `export.rs` | pattern mining, procedure export to canon |
 | `agenticspec` | `serve.rs` | `agenticspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `agenticspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
-| `agenticspec` | `main.rs` | handler behind the generated CLI |
-| `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs` | `agenticspec-sim check\|run\|render`: an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
+| `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
+| `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
 | `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
 | `agenticspec-docs` | `lib.rs`, `main.rs` | the generated docs pages of the blocks, architectures and KPI catalogue (`task docs:generate`, `--check`) |
 
@@ -181,8 +181,9 @@ Beside the crates, `ui/` holds:
 | `.github/workflows/pages.yml` | `Documentation validation`: classifies the changed files with `scripts/change-class.sh`, builds the site, refuses a machine path in it, and on `main` uploads the artifact `b10x-project-site`. Its job `gate` runs `task check` for the class `code`, with `task`, `cargo-nextest` and `ess` downloaded at a pinned version and refused unless their SHA-256 is the one in the step |
 | `.github/workflows/b10x-docs-site.yml` | publishes that artifact to GitHub Pages through `beyond10x/website`'s `project-site.yml`, pinned by commit, for bot-authored pushes to `main` |
 | `.github/workflows/shared-gates.yml` | the organization's shared source gates (`beyond10x/gates`, pinned by commit) |
-| `.github/workflows/release.yml` | `Release`, on a tag `<major>.<minor>.<patch>`, with `contents: read`: `release-check.sh` and `task check`, then the archives of the three Linux targets (the musl one static and run in Alpine), `SHA256SUMS` and `notes.md` as the artifact `agenticspec-<version>-release`. It creates no release and reads no token (§ "Release"). Its job `Gate` installs the tools of the job `gate` of `pages.yml` at the same versions and digests; `release.test.sh` fails when they differ |
-| `scripts/release-check.sh`, `release-package.sh`, `release-verify.sh`, `release.test.sh` | the scripts of a release: the tag, the workspace version and the changelog section agree; targets, archives, `SHA256SUMS` and notes; a published release is what § "Release" makes. `release.test.sh` holds their cases |
+| `.github/workflows/release.yml` | `Release`, with `contents: read`. On a tag `<major>.<minor>.<patch>`: `release-check.sh` and `task check`, then one archive per target of `release-package.sh targets`, each built and its `agenticspec --version` checked on a native runner (Linux gnu on `ubuntu-22.04` and `ubuntu-22.04-arm`, musl on `ubuntu-22.04` and `ubuntu-24.04-arm`, static and run in Alpine, both macOS targets on `macos-latest`, the x86_64 one run under Rosetta 2, Windows on `windows-latest`), then `SHA256SUMS` and `notes.md` as the artifact `agenticspec-<version>-release`. On a pull request from `release/<version>` to `main`: `release-check.sh` on the workspace version, which the branch must name, and the same archives and artifact without the gate (the gate of `pages.yml` runs there), so the release pull request proves every target builds before the tag. It creates no release and reads no token (§ "Release"). Its job `Gate` installs the tools of the job `gate` of `pages.yml` at the same versions and digests; `release.test.sh` fails when they differ, or when the matrix is not the targets of `release-package.sh` on their runners |
+| `.cargo/config.toml` | links the C runtime of `x86_64-pc-windows-msvc` statically, so the Windows binary needs no Visual C++ runtime. It sets nothing for any other target |
+| `scripts/release-check.sh`, `release-package.sh`, `release-verify.sh`, `release.test.sh` | the scripts of a release: the tag, the workspace version and the changelog section agree; targets, archives (`.tar.gz`, a `.zip` for Windows; GNU tar or bsdtar, zip or 7z), `SHA256SUMS` and notes; a published release is what § "Release" makes. `release.test.sh` holds their cases |
 
 ## Local store
 
@@ -225,13 +226,28 @@ publications and wait for the owner's order.
 
 ## Release
 
-A release is the workspace version at a bare tag (`0.1.0`): three Linux archives of the
-`agenticspec` binary (`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu` and the static
-`x86_64-unknown-linux-musl`), each with `LICENSE` and `README.md`, `SHA256SUMS`, and notes cut
-from `CHANGELOG.md`. The tag workflow builds and the bot publishes. The musl archive needs no
-glibc of the host; a consumer of the binary pins it (organization rule for every Rust tool). The
-workflow refuses a musl binary that is not static or whose `--version` is wrong in a plain
-Alpine container. Consumers of `agenticspec-records` pin a released tag.
+A release is the workspace version at a bare tag (`0.1.0`): one archive of the `agenticspec`
+binary per target, each with `LICENSE` and `README.md`, `SHA256SUMS`, and notes cut from
+`CHANGELOG.md`. The simulator is its subcommand `agenticspec sim`; `agenticspec-docs` and
+`agenticspec-cli-contract` are not shipped. The targets (`release-package.sh targets`) and their
+archives:
+
+| target | runner | archive |
+|---|---|---|
+| `x86_64-unknown-linux-gnu` | `ubuntu-22.04` | `agenticspec-<version>-x86_64-unknown-linux-gnu.tar.gz` |
+| `aarch64-unknown-linux-gnu` | `ubuntu-22.04-arm` | `agenticspec-<version>-aarch64-unknown-linux-gnu.tar.gz` |
+| `x86_64-unknown-linux-musl` | `ubuntu-22.04` | `agenticspec-<version>-x86_64-unknown-linux-musl.tar.gz` |
+| `aarch64-unknown-linux-musl` | `ubuntu-24.04-arm` | `agenticspec-<version>-aarch64-unknown-linux-musl.tar.gz` |
+| `aarch64-apple-darwin` | `macos-latest` | `agenticspec-<version>-aarch64-apple-darwin.tar.gz` |
+| `x86_64-apple-darwin` | `macos-latest` (run under Rosetta 2) | `agenticspec-<version>-x86_64-apple-darwin.tar.gz` |
+| `x86_64-pc-windows-msvc` | `windows-latest` | `agenticspec-<version>-x86_64-pc-windows-msvc.zip`, with `agenticspec.exe` |
+
+Every binary prints its `--version` on its runner before it is packed. The tag workflow builds
+and the bot publishes; a pull request from `release/<version>` builds the same archives first.
+The musl archives need no glibc of the host; a consumer of the binary pins the x86_64 one
+(organization rule for every Rust tool). The workflow refuses a musl binary that is not static
+or whose `--version` is wrong in a plain Alpine container. The Windows binary links its C
+runtime statically (`.cargo/config.toml`). Consumers of `agenticspec-records` pin a released tag.
 
 Steps; `<version>` is greater than the newest tag on `origin/main`, and every git command of the
 bot is `b10x-gates bot --repository beyond10x/agenticspec -- <git command>`:
@@ -240,7 +256,8 @@ bot is `b10x-gates bot --repository beyond10x/agenticspec -- <git command>`:
    `version` of `[workspace.package]`, `Cargo.lock` as `cargo build` rewrites it, and in
    `CHANGELOG.md` the line `## [<version>] - <YYYY-MM-DD>` directly below `## [Unreleased]`.
    `sh scripts/release-check.sh <version>` passes and `slot task check` is green on it.
-2. A bot pull request to `main`, merged by the bot with a merge commit when its checks are green.
+2. A bot pull request to `main`, merged by the bot with a merge commit when its checks are green,
+   among them the `Package` job of `Release` for every target.
 3. An annotated tag on that merge commit: `tag -a <version> -m "agenticspec <version>" <commit>`,
    then `push origin refs/tags/<version>`.
 4. The tag starts `Release`. Wait for it in the background; read a red run with
@@ -250,7 +267,7 @@ bot is `b10x-gates bot --repository beyond10x/agenticspec -- <git command>`:
    A green run: `gh run download <run> --repo beyond10x/agenticspec -n
    agenticspec-<version>-release -D target/release-assets`, then `sha256sum -c SHA256SUMS` there.
 5. `b10x-gates gh --repository beyond10x/agenticspec -- release create <version> --verify-tag
-   --title "agenticspec <version>" --notes-file target/release-assets/notes.md` with the three
+   --title "agenticspec <version>" --notes-file target/release-assets/notes.md` with the seven
    archives and `SHA256SUMS` of `target/release-assets/`.
 6. `sh scripts/release-verify.sh <version>` exits 0; only then is the release reported as
    released.

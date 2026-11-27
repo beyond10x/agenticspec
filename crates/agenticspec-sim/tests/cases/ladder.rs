@@ -1,10 +1,9 @@
 //! The agentic ladder: `ladder/ladder.yaml` checked and turned into the data file of its page.
 
 use super::common::{repo_root, scratch};
-use agenticspec_sim::ladder;
+use agenticspec_sim::{cli, ladder};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 const ONE: &str = r#"
 format: agenticspec-architecture/1
@@ -315,55 +314,33 @@ fn the_simulation_gives_each_rung_its_numbers_and_the_same_seed_the_same_numbers
     assert_eq!(a["simulation"]["horizon"], "4h");
 }
 
-fn bin() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_agenticspec-sim"))
-}
-
 #[test]
 fn ladder_writes_the_data_file_and_check_compares_its_bytes() {
     let path = fixture("cli", TESTS_TRUST, "");
     let out_file = path.parent().unwrap().join("out/ladder.json");
-    let run = |check: bool| {
-        let mut c = bin();
-        c.arg("ladder").arg(&path).arg("--out").arg(&out_file);
-        if check {
-            c.arg("--check");
-        }
-        c.output().unwrap()
-    };
-    let out = run(true);
-    assert_eq!(out.status.code(), Some(1), "missing file must fail --check");
-    let out = run(false);
-    assert!(
-        out.status.success(),
-        "{}",
-        String::from_utf8_lossy(&out.stderr)
-    );
-    let out = run(true);
-    assert!(
-        out.status.success(),
-        "{}",
-        String::from_utf8_lossy(&out.stderr)
-    );
+    let err = cli::ladder(&path, &out_file, true).unwrap_err();
+    assert_eq!(err.code, "ladder_stale", "missing file must fail --check");
+    let written = cli::ladder(&path, &out_file, false).unwrap();
+    assert_eq!(written["written"], true);
+    assert_eq!(written["rungs"], 2);
+    let current = cli::ladder(&path, &out_file, true).unwrap();
+    assert_eq!(current["written"], false);
     let mut text = std::fs::read_to_string(&out_file).unwrap();
     text.push(' ');
     std::fs::write(&out_file, text).unwrap();
-    let out = run(true);
-    assert_eq!(out.status.code(), Some(1));
-    assert!(String::from_utf8_lossy(&out.stderr).contains("ladder:generate"));
+    let err = cli::ladder(&path, &out_file, true).unwrap_err();
+    assert_eq!(err.code, "ladder_stale");
+    assert!(err.detail.contains("ladder:generate"), "{}", err.detail);
 }
 
 #[test]
-fn ladder_exits_1_and_names_each_refusal() {
+fn ladder_names_each_refusal() {
     let path = fixture("cli-refused", "", "");
-    let out = bin()
-        .arg("ladder")
-        .arg(&path)
-        .arg("--out")
-        .arg(path.parent().unwrap().join("x.json"))
-        .output()
-        .unwrap();
-    assert_eq!(out.status.code(), Some(1));
-    let stdout = String::from_utf8_lossy(&out.stdout);
-    assert!(stdout.contains("throughput_without_trust"), "{stdout}");
+    let err = cli::ladder(&path, &path.parent().unwrap().join("x.json"), false).unwrap_err();
+    assert_eq!(err.code, "ladder_refused");
+    assert!(
+        err.detail.contains("throughput_without_trust"),
+        "{}",
+        err.detail
+    );
 }

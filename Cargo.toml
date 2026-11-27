@@ -19,6 +19,7 @@ agenticspec-server = { path = "generated/crates/agenticspec-server" }
 agenticspec-cli-contract = { path = "crates/agenticspec-cli-contract" }
 agenticspec-records = { path = "crates/agenticspec-records" }
 agenticspec-render = { path = "crates/agenticspec-render" }
+agenticspec-sim = { path = "crates/agenticspec-sim" }
 serde_json = "1"
 sha2 = "0.10"
 regex = "1"

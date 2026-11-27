@@ -81,7 +81,7 @@ What a human reaches directly: **operator**.
 
 ## Optimization
 
-The experiment [workstation-tuning](https://github.com/beyond10x/agenticspec/blob/main/experiments/workstation-tuning.yaml) searches the marked places of this architecture under a behaviour profile. The figures on this page come from a short run of it: 40 evaluations of 2 seeds each. The experiment file asks for more; `agenticspec-sim run experiments/workstation-tuning.yaml` runs it in full.
+The experiment [workstation-tuning](https://github.com/beyond10x/agenticspec/blob/main/experiments/workstation-tuning.yaml) searches the marked places of this architecture under a behaviour profile. The figures on this page come from a short run of it: 40 evaluations of 2 seeds each. The experiment file asks for more; `agenticspec sim run experiments/workstation-tuning.yaml` runs it in full.
 
 Every KPI of the architecture as built and of its best variant:
 

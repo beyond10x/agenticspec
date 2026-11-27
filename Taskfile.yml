@@ -73,14 +73,14 @@ tasks:
   ladder:generate:
     desc: Check the agentic ladder (ladder/ladder.yaml and its rungs in architectures/ladder/) and write the data file of its page, website/static/ladder/ladder.json.
     cmds:
-      - cargo build --quiet --locked -p agenticspec-sim
-      - target/debug/agenticspec-sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json
 
   check:ladder:
     desc: Fail when the agentic ladder is refused or website/static/ladder/ladder.json differs from a fresh generation.
     cmds:
-      - cargo build --quiet --locked -p agenticspec-sim
-      - target/debug/agenticspec-sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json --check
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json --check
 
   check:scripts:
     desc: Run every script test, scripts/*.test.sh.

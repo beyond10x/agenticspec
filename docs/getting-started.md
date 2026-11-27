@@ -2,7 +2,11 @@
 
 ## Install
 
-You need a Rust toolchain. Install the binary from the repository:
+Each [release](https://github.com/beyond10x/agenticspec/releases) carries the binary for Linux
+(x86_64 and aarch64, static or for glibc), macOS (Apple silicon and Intel) and Windows (x86_64),
+one archive per platform, with `SHA256SUMS` to check it against.
+
+With a Rust toolchain, install the binary from the repository instead:
 
 ```console
 cargo install --locked --git https://github.com/beyond10x/agenticspec agenticspec
