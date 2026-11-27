@@ -919,7 +919,7 @@ The status says where a KPI is computed: by `agenticspec kpi` on observed sessio
     s
 }
 
-pub fn sidebar_json(blocks: &[Block], architectures: &[String]) -> Value {
+pub fn sidebar_json(blocks: &[Block], architectures: &[String], catalog: &[String]) -> Value {
     let mut layers: Vec<Value> = Vec::new();
     let mut by: BTreeMap<u32, Vec<&Block>> = BTreeMap::new();
     for b in blocks {
@@ -937,5 +937,6 @@ pub fn sidebar_json(blocks: &[Block], architectures: &[String]) -> Value {
     json!({
         "blocks": layers,
         "architectures": architectures.iter().map(|a| format!("docs/architectures/{a}")).collect::<Vec<_>>(),
+        "catalog": catalog.iter().map(|c| format!("docs/catalog/{c}")).collect::<Vec<_>>(),
     })
 }

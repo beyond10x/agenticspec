@@ -1,0 +1,35 @@
+format: agenticspec-architecture/1
+architecture: shared-board
+summary: >-
+  A team without an orchestrator on a shared board: the owner posts every task to the board, each
+  post wakes the team, and every idle copy reads it and races to claim it. A team without an
+  orchestrator on one repository resolved 19.31% at 1 agent and 28.78% at 128, with a typed board
+  of length-limited entries (2609.26781); that study started one agent every 30 s, then every 3 s.
+  The simulator charges each read of a post by an idle copy one model call and counts a claim
+  conflict when a reader reads within `claim_window_seconds` of the copy that claims; a start
+  stagger holds copies back so that a burst of posts is claimed one by one. A post that finds the
+  team at its limit is offered again when a run ends. The simulator does not model the board's
+  entry kinds and length limits, entries other than tasks (facts, failures, patch summaries), a
+  reader that is busy while it reads, nor any effect of the team's size on how often a task
+  succeeds.
+
+parts:
+  owner:    { block: principal, kind: human }
+  board:    { block: channel, kind: agent_message, distribution: board }
+  on_entry: { block: trigger, kind: on_message, channel: board, policy: parallel, max_parallel: 16 }
+  team:     { block: agent, harness: coding, coordination: board, count: { value: 8, vary: [4, 8, 12, 16] }, start_stagger: { value: 3s, vary: [0s, 3s, 30s] } }
+  gateway:  { block: gateway, rate_limit_per_minute: 120 }
+  model:    { block: model, route: frontier }
+  builds:   { block: pool, kind: build_slots, capacity: 16, job_limit: 10m }
+  tree:     { block: workspace, sharing: exclusive, per: team }
+
+links:
+  - { from: owner,    to: board,   carries: message }
+  - { from: on_entry, to: team,    carries: trigger }
+  - { from: team,     to: owner,   carries: question }
+  - { from: team,     to: gateway, carries: model_call }
+  - { from: gateway,  to: model,   carries: model_call }
+  - { from: team,     to: builds,  carries: claim }
+
+policies:
+  question_default_after: 15m

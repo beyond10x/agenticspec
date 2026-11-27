@@ -279,16 +279,69 @@ fn run(bin_root: &Path, args: &[&str]) -> (i32, String) {
     (out.status.code().unwrap_or(-1), text)
 }
 
-#[test]
-fn check_fails_after_a_generated_file_is_edited_or_added() {
-    let tmp = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("docs-check");
+/// A copy of the generator's inputs under the target's test directory: the sources, the committed
+/// results of the catalog with their digest files and what those digest, and the fixture catalogue.
+fn copy_inputs(name: &str) -> PathBuf {
+    let tmp = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name);
     let _ = std::fs::remove_dir_all(&tmp);
-    for dir in ["blocks", "architectures", "experiments", "profiles", "kpis"] {
+    for dir in [
+        "blocks",
+        "architectures",
+        "experiments",
+        "profiles",
+        "kpis",
+        "crates/agenticspec-sim/src",
+    ] {
         if root().join(dir).exists() {
             copy_dir(&root().join(dir), &tmp.join(dir));
         }
     }
+    for file in ["Cargo.lock", "rust-toolchain.toml"] {
+        std::fs::copy(root().join(file), tmp.join(file)).unwrap();
+    }
+    for (_, name) in experiments() {
+        let dir = format!("website/static/catalog/{name}");
+        std::fs::create_dir_all(tmp.join(&dir)).unwrap();
+        for f in ["result.json", "sources.sha256"] {
+            std::fs::copy(root().join(&dir).join(f), tmp.join(&dir).join(f)).unwrap();
+        }
+    }
     std::fs::write(tmp.join("kpis/catalogue.yaml"), FIXTURE_CATALOGUE).unwrap();
+    tmp
+}
+
+/// The pages are made from the committed results; a result whose sources changed is refused with
+/// the command that writes it again.
+#[test]
+fn a_result_whose_sources_changed_is_refused() {
+    let tmp = copy_inputs("docs-stale");
+    let exp = tmp.join("experiments/shared-board-tuning.yaml");
+    let text = std::fs::read_to_string(&exp)
+        .unwrap()
+        .replace("seeds: 8", "seeds: 7");
+    std::fs::write(&exp, text).unwrap();
+    let err = generate(&tmp, Some(fixture())).expect_err("a stale result is refused");
+    assert!(
+        err.contains("experiments/shared-board-tuning.yaml"),
+        "{err}"
+    );
+    assert!(err.contains("task catalog:generate"), "{err}");
+
+    let tmp = copy_inputs("docs-stale-sim");
+    let sim = tmp.join("crates/agenticspec-sim/src/search.rs");
+    let mut text = std::fs::read_to_string(&sim).unwrap();
+    text.push_str("\n// changed\n");
+    std::fs::write(&sim, text).unwrap();
+    let err = generate(&tmp, Some(fixture())).expect_err("a change of the simulator is refused");
+    assert!(
+        err.contains("crates/agenticspec-sim/src/search.rs"),
+        "{err}"
+    );
+}
+
+#[test]
+fn check_fails_after_a_generated_file_is_edited_or_added() {
+    let tmp = copy_inputs("docs-check");
 
     let (code, text) = run(&tmp, &[]);
     assert_eq!(code, 0, "{text}");
@@ -324,4 +377,133 @@ fn check_fails_after_a_generated_file_is_edited_or_added() {
     assert_eq!(code, 0);
     assert!(!stray.exists(), "a write removes the stray file");
     assert!(html.exists(), "a write restores the missing file");
+}
+
+/// Each experiment as `(its name, the file stem of the architecture it names)`.
+fn experiments() -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    for entry in std::fs::read_dir(root().join("experiments")).expect("experiments/") {
+        let path = entry.expect("entry").path();
+        if path.extension().is_none_or(|e| e != "yaml") {
+            continue;
+        }
+        let doc = agenticspec_sim::doc::load_yaml(&path).expect("experiment parses");
+        let arch = doc["architecture"].as_str().expect("architecture");
+        let arch = Path::new(arch)
+            .file_stem()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        out.push((
+            doc["experiment"].as_str().expect("experiment").to_string(),
+            arch,
+        ));
+    }
+    out.sort();
+    out
+}
+
+#[test]
+fn every_experiment_has_a_catalog_entry_with_its_downloads() {
+    let g = generated_with_fixture();
+    let index = &g.files["docs/catalog/index.md"];
+    let list = experiments();
+    assert!(!list.is_empty());
+    for (exp, name) in &list {
+        let page = &g.files[&format!("docs/catalog/{name}.md")];
+        let dir = format!("website/static/catalog/{name}");
+        for file in [
+            format!("{name}.yaml"),
+            format!("{name}.best.yaml"),
+            format!("{exp}.yaml"),
+            "coding.yaml".to_string(),
+            "result.json".to_string(),
+        ] {
+            let path = format!("{dir}/{file}");
+            assert!(
+                g.files.contains_key(&path)
+                    || (file == "result.json" && root().join(&path).exists()),
+                "{path} is written or committed"
+            );
+            assert!(
+                page.contains(&format!("\"file\":\"{file}\"")),
+                "{name} offers {file}"
+            );
+        }
+        let html = &g.files[&format!("{dir}/{name}.html")];
+        assert!(
+            html.contains("architecture and optimization"),
+            "{name}: the full result page"
+        );
+        assert!(
+            page.contains(&format!("src={{\"/catalog/{name}/{name}\"}}")),
+            "{name}: the page embeds its result page by the path without .html"
+        );
+        assert!(
+            page.contains(&format!("agenticspec-sim run {exp}.yaml --out out/")),
+            "{name}: the command"
+        );
+        assert!(page.contains("## Deploy\n"), "{name}: the deploy note");
+        assert!(
+            index.contains(&format!("\"to\":\"/docs/catalog/{name}\"")),
+            "{name} has a card"
+        );
+        assert_eq!(
+            g.files[&format!("{dir}/{name}.yaml")],
+            std::fs::read_to_string(root().join(format!("architectures/{name}.yaml"))).unwrap(),
+            "{name}: the architecture as written"
+        );
+    }
+    for entry in std::fs::read_dir(root().join("architectures")).unwrap() {
+        let path = entry.unwrap().path();
+        let name = path.file_stem().unwrap().to_string_lossy().into_owned();
+        if path.extension().is_some_and(|e| e == "yaml") && !list.iter().any(|(_, a)| *a == name) {
+            assert!(
+                index.contains(&format!("[{name}](../architectures/{name}.md)")),
+                "{name} is listed as not optimized yet"
+            );
+        }
+    }
+}
+
+/// The downloaded files alone, read as a user reads them: the experiment names the architecture and
+/// the profile beside it, the optimized architecture passes the check, and with it in place of the
+/// one as written the experiment scores the best fitness of `result.json`.
+#[test]
+fn a_downloaded_optimized_architecture_reproduces_the_best_fitness() {
+    let g = generated_with_fixture();
+    let dir = "website/static/catalog/shared-board";
+    let read =
+        |f: &str| agenticspec_sim::doc::parse_yaml(&g.files[&format!("{dir}/{f}")]).expect(f);
+    let exp = read("shared-board-tuning.yaml");
+    assert_eq!(exp["architecture"], "shared-board.yaml");
+    assert_eq!(exp["profile"], "coding.yaml");
+    let best = read("shared-board.best.yaml");
+    assert!(agenticspec_sim::check::check(&best).is_empty());
+    let e =
+        agenticspec_sim::Experiment::from_docs(exp, read("shared-board.yaml"), read("coding.yaml"))
+            .unwrap();
+    let text = std::fs::read_to_string(root().join(dir).join("result.json")).unwrap();
+    let result: serde_json::Value = serde_json::from_str(&text).unwrap();
+    let want = result["best"]["fitness"].as_f64().unwrap();
+    let got = agenticspec_sim::best::fitness_as_written(&e, best, 2).unwrap();
+    // serde_json reads a float back to within a unit in the last place.
+    assert!(
+        got.to_bits().abs_diff(want.to_bits()) <= 1,
+        "{got} != {want}"
+    );
+}
+
+/// The committed result of the cheapest experiment is the bytes of a fresh run; `task slow:catalog`
+/// checks every one.
+#[test]
+fn a_catalog_result_is_the_bytes_of_a_fresh_run() {
+    let e = agenticspec_sim::Experiment::load(&root().join("experiments/shared-board-tuning.yaml"))
+        .unwrap();
+    let mut fresh = serde_json::to_string_pretty(&agenticspec_sim::run(&e, 2).unwrap()).unwrap();
+    fresh.push('\n');
+    let committed =
+        std::fs::read_to_string(root().join("website/static/catalog/shared-board/result.json"))
+            .unwrap();
+    assert!(committed == fresh, "run `task catalog:generate`");
 }

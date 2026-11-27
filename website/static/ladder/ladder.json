@@ -2280,7 +2280,7 @@
           "count": 1,
           "family": "collab",
           "id": "on_alert",
-          "label": "trigger message",
+          "label": "on message",
           "trust": null
         },
         {
@@ -2895,7 +2895,7 @@
           "count": 1,
           "family": "collab",
           "id": "on_alert",
-          "label": "trigger message",
+          "label": "on message",
           "trust": null
         },
         {

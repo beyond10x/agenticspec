@@ -1,0 +1,30 @@
+format: agenticspec-architecture/1
+architecture: workstation
+summary: One workstation, one owner, an operator agent acting for the owner, coding agents, a shared build pool.
+
+parts:
+  owner:    { block: principal, kind: human }
+  operator: { block: agent, harness: coding, acts_for: owner }
+  worker:   { block: agent, harness: coding, count: { value: 12, vary: { min: 2, max: 24, step: 2 } } }
+  gateway:  { block: gateway, rate_limit_per_minute: { value: 120, vary: [60, 120, 240] } }
+  model:    { block: model, route: frontier }
+  builds:   { block: pool, kind: build_slots, capacity: { value: 16, vary: [8, 16, 24, 32] }, job_limit: 10m }
+  chat:     { block: channel, kind: operator }
+  tree:     { block: workspace, sharing: exclusive, per: worker }
+  box:      { block: sandbox, isolation: process, egress: [gateway], per: worker }
+
+links:
+  - { from: owner,    to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner,    carries: question, over: chat }
+  - { from: worker,   to: operator, carries: question }
+  - { from: operator, to: worker,   carries: order }
+  - { from: operator, to: gateway,  carries: model_call }
+  - { from: worker,   to: gateway,  carries: model_call }
+  - { from: gateway,  to: model,    carries: model_call }
+  - { from: worker,   to: builds,   carries: claim }
+
+border: [operator]
+
+policies:
+  question_default_after: { value: 15m, vary: [5m, 15m, 60m] }
+  operator_answers_alone: { value: false, vary: [false, true] }

@@ -1,3 +1,4 @@
+mod best;
 mod check;
 mod cli;
 mod common;

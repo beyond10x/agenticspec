@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-27T20:12:30Z",
+  "actor": "human:operator",
+  "artifact": "story:consumer-gaps",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "slot task check on f1fc12c (merged as 85ac453)",
+    "reference": "https://github.com/beyond10x/agenticspec/pull/14"
+  }
+}

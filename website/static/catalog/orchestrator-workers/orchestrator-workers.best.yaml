@@ -1,0 +1,35 @@
+format: agenticspec-architecture/1
+architecture: orchestrator-workers
+summary: >-
+  An orchestrator agent takes every task, spends its model calls on handing it out, and dispatches
+  it over an order link to a worker swarm whose copies start one after another. Task-specific
+  sub-agents helped (+5.91, +4.46) and general stage sub-agents hurt (-0.70, -2.31) (2609.32459);
+  sub-agent concurrency helped only on the largest tasks (2610.10263); an author-reviewer loop cost
+  $0.95-1.07 per file against $1.98-2.91 for a multi-agent workflow (2610.09995). The simulator
+  charges the orchestrator the profile role `orchestrator` for every task, counts those calls as
+  coordination calls, and makes it a queue every task passes; the workers take the handed tasks in
+  order. With an orchestrator handing out the work no two copies race for one task, so a start
+  stagger here only holds copies back. The simulator does not model how the orchestrator splits a
+  task, results that come back to it, nor any gain or loss in success from orchestration: workers
+  keep the coding role's pass rates.
+
+parts:
+  owner:        { block: principal, kind: human }
+  orchestrator: { block: agent, harness: orchestrator, count: { value: 2, vary: [1, 2] } }
+  workers:      { block: agent, harness: coding, coordination: orchestrator, count: { value: 12, vary: [4, 8, 12, 16] }, start_stagger: { value: 30s, vary: [0s, 3s, 30s] } }
+  gateway:      { block: gateway, rate_limit_per_minute: { value: 120, vary: [60, 120, 240] } }
+  model:        { block: model, route: frontier }
+  builds:       { block: pool, kind: build_slots, capacity: 16, job_limit: 10m }
+  tree:         { block: workspace, sharing: exclusive, per: workers }
+
+links:
+  - { from: owner, to: orchestrator, carries: prompt }
+  - { from: orchestrator, to: workers, carries: order }
+  - { from: workers, to: owner, carries: question }
+  - { from: orchestrator, to: gateway, carries: model_call }
+  - { from: workers, to: gateway, carries: model_call }
+  - { from: gateway, to: model, carries: model_call }
+  - { from: workers, to: builds, carries: claim }
+
+policies:
+  question_default_after: 15m

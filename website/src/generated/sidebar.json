@@ -112,5 +112,13 @@
       "type": "category"
     },
     "docs/blocks/planned"
+  ],
+  "catalog": [
+    "docs/catalog/orchestrator-workers",
+    "docs/catalog/author-reviewer",
+    "docs/catalog/scheduled-loops",
+    "docs/catalog/scope-partition",
+    "docs/catalog/shared-board",
+    "docs/catalog/workstation"
   ]
 }

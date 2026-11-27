@@ -29,7 +29,7 @@
   ],
   "search": null,
   "search_note": "the site has no search box (no search plugin in website/docusaurus.config.ts); the KPI catalogue's own search field is a control of that page, not an always-visible element",
-  "pages_checked": ["docs/blocks", "docs/architectures", "docs/kpis-catalogue"],
+  "pages_checked": ["docs/blocks", "docs/architectures", "docs/catalog", "docs/kpis-catalogue"],
   "regions": ["navbar", "sidebar", "toc", "main", "layer-map", "kpi-catalogue", "architecture-frame"],
   "moments": ["start", "each action", "completion"],
   "completion": "the scenario's target element is 100 % inside the viewport, not covered at its centre, and shows the scenario's truth; a target taller than the viewport counts as in view when its top is (S-02, T4)",

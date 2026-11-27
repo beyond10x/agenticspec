@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:consumer-gaps
 kind: story
-status: active
+status: implemented
 title: Give the 15 concepts of a consumer's multi-session setup a home in the blocks
 relations:
 - decomposes: epic:building-blocks
@@ -13,10 +13,11 @@ scope:
   path: design/consumer-gaps.md
 - confidence: cited
   path: kpis/catalogue.yaml
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T18:10:25Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-27T18:10:25Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-27T20:12:30Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

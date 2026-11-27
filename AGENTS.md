@@ -78,6 +78,18 @@ change.
   `pages` of `docusaurus.config.ts`, and draw with the components in `website/src/components/blocks/`.
   The short optimization run on an architecture page uses a fixed budget (`DOCS_BUDGET`), so the
   page changes when the simulator changes.
+- The catalog (`docs/catalog/`, `website/static/catalog/<architecture>/`) is generated the same
+  way, one entry per experiment: its full result page, the downloads (the files as written,
+  `best.yaml` from `agenticspec-sim::best`, the experiment pointing at the files beside it,
+  `result.json`) and the index cards. The results of the experiments at their own budget and seeds
+  are committed inputs: `website/static/catalog/<entry>/result.json` with `sources.sha256` beside
+  it (the experiment, architecture, profile, the simulator's sources that change a result, its
+  dependency versions in `Cargo.lock`, `rust-toolchain.toml`). `task docs:generate` never runs a
+  full experiment and refuses a result whose digest file no longer matches; `task catalog:generate`
+  runs them (and refuses a `best.yaml` that does not score the best fitness), then
+  `task docs:generate`; `task slow:catalog` runs them afresh and compares bytes. The catalog
+  components are in `website/src/components/catalog/`; a ladder stage on a card comes from
+  `STAGES` in `catalog.rs`.
 
 ## Layout of the hand-written crates
 

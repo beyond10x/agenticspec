@@ -12,6 +12,7 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     'docs/index',
     'docs/getting-started',
+    'docs/ladder',
     {
       type: 'category',
       label: 'Using agenticspec',
@@ -33,6 +34,13 @@ const sidebars: SidebarsConfig = {
       collapsed: true,
       link: {type: 'doc', id: 'docs/architectures/index'},
       items: generated.architectures,
+    },
+    {
+      type: 'category',
+      label: 'Catalog',
+      collapsed: true,
+      link: {type: 'doc', id: 'docs/catalog/index'},
+      items: generated.catalog,
     },
     'docs/kpis-catalogue',
   ],

@@ -1,0 +1,39 @@
+format: agenticspec-architecture/1
+architecture: author-reviewer
+summary: >-
+  Workers write; a reviewer agent checks every task a worker reports done and sends a rejected one
+  back for rework. An author-reviewer loop cost $0.95-1.07 per file against $1.98-2.91 for a
+  multi-agent workflow (2610.09995); required review sub-agents raised the defects reported from
+  49.9% to 69.6% (2609.20812). The simulator models the reviewer by its false-accept and
+  false-reject rates (2611.02207) and the cost of its model calls; it does not model a reviewer that
+  misses planted harm (2611.00689) apart from those rates, nor a reviewer that teaches a worker.
+
+parts:
+  owner:    { block: principal, kind: human }
+  operator: { block: agent, harness: coding, acts_for: owner }
+  worker:   { block: agent, harness: coding, count: { value: 14, vary: { min: 4, max: 20, step: 2 } } }
+  reviewer: { block: agent, harness: coding, role: reviewer, strictness: { value: strict, vary: [lenient, balanced, strict] } }
+  gateway:  { block: gateway, rate_limit_per_minute: 120 }
+  model:    { block: model, route: frontier }
+  builds:   { block: pool, kind: build_slots, capacity: 16, job_limit: 10m }
+  chat:     { block: channel, kind: operator }
+  tree:     { block: workspace, sharing: exclusive, per: worker }
+  box:      { block: sandbox, isolation: process, egress: [gateway], per: worker }
+
+links:
+  - { from: owner, to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner, carries: question, over: chat }
+  - { from: worker, to: operator, carries: question }
+  - { from: operator, to: worker, carries: order }
+  - { from: worker, to: reviewer, carries: review }
+  - { from: operator, to: gateway, carries: model_call }
+  - { from: worker, to: gateway, carries: model_call }
+  - { from: reviewer, to: gateway, carries: model_call }
+  - { from: gateway, to: model, carries: model_call }
+  - { from: worker, to: builds, carries: claim }
+
+border: [operator]
+
+policies:
+  question_default_after: 15m
+  operator_answers_alone: false

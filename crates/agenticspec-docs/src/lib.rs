@@ -7,10 +7,12 @@
 
 mod arch;
 mod blocks;
+mod catalog;
 mod kpis;
 mod layout;
 mod md;
 mod model;
+mod results;
 
 pub use kpis::{Catalogue, Kpi};
 pub use model::layer_edges;
@@ -29,6 +31,8 @@ pub const OWNED_DIRS: &[&str] = &[
     "docs/blocks",
     "docs/architectures",
     "website/static/architectures",
+    "docs/catalog",
+    "website/static/catalog",
     "website/src/generated",
 ];
 
@@ -38,6 +42,7 @@ pub const OWNED_FILES: &[&str] = &[
     "docs/blocks/index.md",
     "docs/blocks/planned.md",
     "docs/architectures/index.md",
+    "docs/catalog/index.md",
     "website/src/generated/blocks.json",
     "website/src/generated/kpis.json",
     "website/src/generated/sidebar.json",
@@ -81,6 +86,12 @@ fn json_text(v: &Value) -> String {
     let mut s = serde_json::to_string_pretty(v).unwrap_or_default();
     s.push('\n');
     s
+}
+
+/// Runs every experiment of the catalog at its own budget and seeds and writes its committed result
+/// and digest file, or with `check` compares them byte for byte; one line per file that differs.
+pub fn catalog_results(root: &Path, check: bool) -> Result<Vec<String>, String> {
+    results::generate(root, check)
 }
 
 /// Every generated file for the repository at `root`. `catalogue` replaces `kpis/catalogue.yaml`
@@ -155,9 +166,17 @@ pub fn generate(root: &Path, catalogue: Option<Catalogue>) -> Result<Generated, 
         );
     }
     let names: Vec<String> = archs.iter().map(|a| a.name.clone()).collect();
+
+    let cat = catalog::load(root)?;
+    files.insert("docs/catalog/index.md".to_string(), catalog::index(&cat));
+    for e in &cat.entries {
+        files.insert(format!("docs/catalog/{}.md", e.name), catalog::page(e));
+        files.extend(catalog::files(e)?);
+    }
+    let entries: Vec<String> = cat.entries.iter().map(|e| e.name.clone()).collect();
     files.insert(
         "website/src/generated/sidebar.json".to_string(),
-        json_text(&blocks::sidebar_json(&blocks, &names)),
+        json_text(&blocks::sidebar_json(&blocks, &names, &entries)),
     );
     Ok(Generated { ir, files })
 }
@@ -173,7 +192,8 @@ fn walk(dir: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-/// The files on disk under the owned directories, relative to `root`.
+/// The files on disk under the owned directories, relative to `root`, without the committed
+/// results of the catalog, which are inputs (`task catalog:generate`).
 fn on_disk(root: &Path) -> BTreeSet<String> {
     let mut found = Vec::new();
     for d in OWNED_DIRS {
@@ -186,6 +206,7 @@ fn on_disk(root: &Path) -> BTreeSet<String> {
                 .ok()
                 .map(|r| r.to_string_lossy().replace('\\', "/"))
         })
+        .filter(|p| !results::is_input(p))
         .collect()
 }
 

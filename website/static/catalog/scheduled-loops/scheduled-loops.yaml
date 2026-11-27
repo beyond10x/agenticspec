@@ -1,0 +1,40 @@
+format: agenticspec-architecture/1
+architecture: scheduled-loops
+summary: >-
+  Agents woken by schedules instead of a person: a nightly sweep that makes a fresh task from its
+  template every 24 h at 02:00, and a triage loop that wakes on its own clock and works through the
+  backlog until it is empty. Scheduled agent loops went from 2.2 to about 35 merged pull requests
+  per day (2610.36254). The simulator fires each schedule every `every` from `next_fire_at` and
+  applies the trigger's policy: skip drops a firing while a run is going, queue holds it until a
+  run ends, parallel overlaps up to `max_parallel` runs and refuses the rest. A run that finds
+  nothing to take costs one model call. Tasks wait in the backlog between two ticks. The simulator
+  does not model cron expressions or time zones (only a fixed interval), the restriction checks a
+  schedule passes before it is enabled, nor what a sweep finds: a sweep is one task of the coding
+  role, and triage does the tasks rather than sorting them.
+
+parts:
+  owner:   { block: principal, kind: human }
+  nightly: { block: schedule, every: 24h, next_fire_at: 2h }
+  clock:   { block: schedule, every: { value: 1h, vary: [15m, 30m, 1h, 2h] } }
+  sweep:   { block: trigger, kind: on_schedule, schedule: nightly, policy: skip, max_parallel: 1, task_template: nightly-sweep }
+  triage:  { block: trigger, kind: on_schedule, schedule: clock, takes: all, policy: { value: skip, vary: [skip, queue, parallel] }, max_parallel: { value: 1, vary: [1, 4, 8] } }
+  sweeper: { block: agent, harness: coding }
+  triager: { block: agent, harness: coding, count: { value: 2, vary: [2, 4, 8] } }
+  gateway: { block: gateway, rate_limit_per_minute: 120 }
+  model:   { block: model, route: frontier }
+  builds:  { block: pool, kind: build_slots, capacity: 8, job_limit: 10m }
+
+links:
+  - { from: owner,   to: triager, carries: prompt }
+  - { from: sweep,   to: sweeper, carries: trigger }
+  - { from: triage,  to: triager, carries: trigger }
+  - { from: triager, to: owner,   carries: question }
+  - { from: sweeper, to: owner,   carries: question }
+  - { from: sweeper, to: gateway, carries: model_call }
+  - { from: triager, to: gateway, carries: model_call }
+  - { from: gateway, to: model,   carries: model_call }
+  - { from: sweeper, to: builds,  carries: claim }
+  - { from: triager, to: builds,  carries: claim }
+
+policies:
+  question_default_after: 15m
