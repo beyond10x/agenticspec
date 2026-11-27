@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-27T22:19:53Z",
+  "actor": "human:operator",
+  "artifact": "story:architecture-patches",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "review",
+    "source": "review-result:agenticstudio-acceptance-1",
+    "reference": "answers review-result:agenticstudio-acceptance-1 finding 4 (architecture-patches.md:56, experiment with mutations unnamed): fixed, an experiment over architectures/workstation.yaml with the wrap patch as mutation gives variants with and without it, against a search that varied only marked numbers before"
+  }
+}

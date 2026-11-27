@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:architecture-catalog
 kind: story
-status: active
+status: implemented
 title: A catalog of pre-built optimized architectures on the docs site, to download and run
 relations:
 - decomposes: epic:docs-site
@@ -17,10 +17,11 @@ scope:
   path: website/src/components/catalog
 - confidence: cited
   path: website/static/catalog
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T20:12:52Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-27T20:12:52Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-27T21:31:22Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

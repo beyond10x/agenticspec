@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:24:10Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-first-slice",
+  "kind": "story",
+  "revision": 11,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-acceptance-2",
+    "reference": "answers review-result:agenticstudio-acceptance-2 finding 2 (refusal path unchecked): fixed, acceptance line with rule 2 an unknown verb, refused at position 2, revision and digest unchanged",
+    "review": "review-result:agenticstudio-acceptance-2",
+    "outcome": "fixed"
+  }
+}

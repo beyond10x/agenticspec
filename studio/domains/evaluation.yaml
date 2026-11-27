@@ -1,0 +1,195 @@
+# Evaluation: one run of the simulator on a revision of a draft. Source: epic agenticstudio
+# ("Evaluation: run an experiment from the editor; show the KPIs per part, baseline against
+# best"; "Hill climbing and state space visualizations: the search trace, the variants, the
+# space of the marked places"; the tool `simulate(budget)`). The run itself is an experiment of
+# the building blocks (agentic.experiment.Experiment, its variants the points of the search);
+# this entity is the studio's record of which draft and revision it ran on, with what budget,
+# and where its result is.
+domain: studio.evaluation
+
+summary: >-
+  An evaluation runs the simulator on one revision of a draft: a short simulation, or a search
+  over the draft's marked places within a budget of evaluations. It ends done, with the fitness
+  of its best variant and the digest of its result, or failed.
+
+naming:
+  wire: evaluation
+  display: Evaluation
+
+types:
+  # Simulate: the architecture as it is, at its marked values. Search: the marked places
+  # searched within the budget (agenticspec-sim's `search.budget`, a count of evaluations).
+  - name: studio.evaluation.EvaluationKind
+    kind: enum
+    variants: [Simulate, Search]
+
+entities:
+  # UNMAPPED: the behaviour profile, load and seeds of a studio evaluation. An experiment file
+  # names them (`experiments/*.yaml`); the epic does not say whether the studio takes them from
+  # an experiment that names the draft's source, or asks for them. Taken: none here; the
+  # experiment the run made holds them.
+  - name: studio.evaluation.Evaluation
+    naming:
+      summary: One run of the simulator on a revision of a draft, with its budget and its result.
+    identity:
+      name: evaluation_id
+      type: studio.shared.EvaluationId
+    fields:
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: revision, type: studio.shared.RevisionRef}
+      - {name: kind, type: studio.evaluation.EvaluationKind}
+      - {name: budget, type: Integer}
+      - {name: experiment, type: Optional<studio.shared.ExperimentRef>}
+      - {name: best_fitness, type: Optional<Decimal>}
+      # sha256 of the run's result.json, the input of the result page.
+      - {name: result_digest, type: Optional<String>}
+      - {name: failure, type: Optional<String>}
+    invariants:
+      - budget >= 1
+    relations:
+      - {name: draft, kind: references, target: studio.draft.Draft, cardinality: one, via: draft_id}
+    lifecycle:
+      initial: Running
+      states: [Running, Done, Failed]
+      terminal: [Done, Failed]
+      transitions:
+        - {name: finish, from: [Running], to: Done}
+        - {name: fail, from: [Running], to: Failed}
+
+errors:
+  - name: studio.evaluation.InvalidBudget
+    summary: A budget is at least one evaluation, and nothing was started.
+  - name: studio.evaluation.NoSuchDraft
+    summary: No draft has this id, and nothing was started.
+  - name: studio.evaluation.ArchivedDraft
+    summary: The draft is archived, and nothing was started.
+  - name: studio.evaluation.NoSuchEvaluation
+    summary: No evaluation has this id, and nothing changed.
+  - name: studio.evaluation.EvaluationOver
+    summary: The evaluation is already done or failed, and nothing changed.
+
+events:
+  - name: studio.evaluation.EvaluationStarted
+    fields:
+      - {name: evaluation_id, type: studio.shared.EvaluationId}
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: revision, type: studio.shared.RevisionRef}
+      - {name: kind, type: studio.evaluation.EvaluationKind}
+      - {name: budget, type: Integer}
+  - name: studio.evaluation.EvaluationDone
+    fields:
+      - {name: evaluation_id, type: studio.shared.EvaluationId}
+      - {name: best_fitness, type: Decimal}
+      - {name: result_digest, type: String}
+  - name: studio.evaluation.EvaluationFailed
+    fields:
+      - {name: evaluation_id, type: studio.shared.EvaluationId}
+      - {name: failure, type: String}
+
+commands:
+  - name: studio.evaluation.StartEvaluation
+    naming:
+      display: Start an evaluation
+    input:
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: revision, type: studio.shared.RevisionRef}
+      - {name: kind, type: studio.evaluation.EvaluationKind}
+      - {name: budget, type: Integer}
+    outcomes:
+      - name: invalid-budget
+        when: budget < 1
+        error: studio.evaluation.InvalidBudget
+      - name: no-such-draft
+        when_related: {via: input.draft_id, exists: false}
+        error: studio.evaluation.NoSuchDraft
+      - name: archived
+        when_related: {via: input.draft_id, predicate: state == Archived}
+        error: studio.evaluation.ArchivedDraft
+      - name: started
+        creates: studio.evaluation.Evaluation
+        instance: evaluation_id
+        sets:
+          draft_id: input.draft_id
+          revision: input.revision
+          kind: input.kind
+          budget: input.budget
+        emits: [studio.evaluation.EvaluationStarted]
+        payload:
+          studio.evaluation.EvaluationStarted:
+            evaluation_id: {generated: true}
+            draft_id: input.draft_id
+            revision: input.revision
+            kind: input.kind
+            budget: input.budget
+
+  - name: studio.evaluation.CompleteEvaluation
+    naming:
+      display: Complete an evaluation
+    input:
+      - {name: evaluation_id, type: studio.shared.EvaluationId}
+      - {name: experiment, type: studio.shared.ExperimentRef}
+      - {name: best_fitness, type: Decimal}
+      - {name: result_digest, type: String}
+    outcomes:
+      - name: no-such-evaluation
+        unknown_instance: true
+        error: studio.evaluation.NoSuchEvaluation
+      - name: done
+        moves: studio.evaluation.Evaluation.finish
+        instance: evaluation_id
+        sets:
+          experiment: input.experiment
+          best_fitness: input.best_fitness
+          result_digest: input.result_digest
+        emits: [studio.evaluation.EvaluationDone]
+        payload:
+          studio.evaluation.EvaluationDone:
+            evaluation_id: input.evaluation_id
+            best_fitness: input.best_fitness
+            result_digest: input.result_digest
+      - name: over
+        wrong_state: true
+        error: studio.evaluation.EvaluationOver
+
+  - name: studio.evaluation.FailEvaluation
+    naming:
+      display: Fail an evaluation
+    input:
+      - {name: evaluation_id, type: studio.shared.EvaluationId}
+      - {name: failure, type: String}
+    outcomes:
+      - name: no-such-evaluation
+        unknown_instance: true
+        error: studio.evaluation.NoSuchEvaluation
+      - name: failed
+        moves: studio.evaluation.Evaluation.fail
+        instance: evaluation_id
+        sets:
+          failure: input.failure
+        emits: [studio.evaluation.EvaluationFailed]
+        payload:
+          studio.evaluation.EvaluationFailed:
+            evaluation_id: input.evaluation_id
+            failure: input.failure
+      - name: over
+        wrong_state: true
+        error: studio.evaluation.EvaluationOver
+
+views:
+  - name: studio.evaluation.Evaluations
+    source: studio.evaluation.Evaluation
+    consistency: read_your_writes
+    params:
+      - {name: draft_id, type: studio.shared.DraftId}
+    filter: draft_id == param.draft_id
+    fields:
+      - {name: evaluation_id, type: studio.shared.EvaluationId}
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: revision, type: studio.shared.RevisionRef}
+      - {name: kind, type: studio.evaluation.EvaluationKind}
+      - {name: budget, type: Integer}
+      - {name: experiment, type: Optional<studio.shared.ExperimentRef>}
+      - {name: best_fitness, type: Optional<Decimal>}
+      - {name: result_digest, type: Optional<String>}
+      - {name: failure, type: Optional<String>}
+      - {name: state, type: studio.evaluation.Evaluation.State}

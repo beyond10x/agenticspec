@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:19:54Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-first-slice",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-design-1",
+    "reference": "answers review-result:agenticstudio-design-1 finding 2 (studio-first-slice.md:37, fact fields not fixed): fixed, the section Facts of an architecture fixes part, setting, link, marker, policy and kpi from agenticspec-architecture/1; every selector in the set uses those fields",
+    "review": "review-result:agenticstudio-design-1",
+    "outcome": "fixed"
+  }
+}

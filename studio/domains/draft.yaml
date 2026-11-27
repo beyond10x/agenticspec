@@ -1,0 +1,132 @@
+# Draft: a named architecture the studio keeps. Source: epic agenticstudio ("Persistence of
+# drafts: named drafts with revisions, compared side by side"; "Undo, drafts and comparisons are
+# revisions of patches"). The architecture block already holds an editable architecture with
+# immutable revisions and its patch applications; a draft is the studio's named handle on one
+# such architecture, with the document it was opened from. Its revisions are the
+# architecture's revisions (agentic.architecture.Revisions), each committed by a patch
+# application (agentic.architecture.PatchApplications).
+domain: studio.draft
+
+summary: >-
+  A draft is a named architecture of the building blocks that the studio keeps open for change,
+  opened from an architecture document or empty, and archived when no longer worked on. Its
+  revisions are the revisions of its architecture.
+
+naming:
+  wire: draft
+  display: Draft
+
+entities:
+  # UNMAPPED: undo. "Undo ... are revisions of patches" says what undo reads, not what it
+  # writes: the inverse patch applied as a further revision, or a head that points back to an
+  # earlier revision. Taken: no head field; story studio-drafts settles it.
+  - name: studio.draft.Draft
+    naming:
+      summary: A named architecture the studio keeps open for change, with the revisions of its architecture.
+    identity:
+      name: draft_id
+      type: studio.shared.DraftId
+    fields:
+      - {name: name, type: studio.shared.Name}
+      - {name: architecture, type: studio.shared.ArchitectureRef}
+      # The architecture document it was opened from (`architectures/workstation.yaml`), absent
+      # for a draft begun empty.
+      - {name: source, type: Optional<String>}
+      # The revision the draft was opened at, absent for a draft begun empty.
+      - {name: opened_at_revision, type: Optional<studio.shared.RevisionRef>}
+    lifecycle:
+      initial: Open
+      states:
+        - {name: Open, summary: "Takes patches, checks and evaluations."}
+        - {name: Archived, summary: "Takes no change; its revisions and evaluations stay readable."}
+      terminal: [Archived]
+      transitions:
+        - {name: archive, from: [Open], to: Archived}
+
+errors:
+  - name: studio.draft.DraftNameTaken
+    summary: An open draft already has this name, and nothing was opened.
+  - name: studio.draft.NoSuchDraft
+    summary: No draft has this id, and nothing changed.
+  - name: studio.draft.ArchivedDraft
+    summary: The draft is archived, so it takes no change, and nothing changed.
+
+events:
+  - name: studio.draft.DraftOpened
+    fields:
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: name, type: studio.shared.Name}
+      - {name: architecture, type: studio.shared.ArchitectureRef}
+      - {name: source, type: Optional<String>}
+  - name: studio.draft.DraftArchived
+    fields:
+      - {name: draft_id, type: studio.shared.DraftId}
+
+commands:
+  # Open a draft on an architecture of the building blocks. The studio server lowers the source
+  # document to the architecture block's commands first and passes the architecture it made.
+  - name: studio.draft.OpenDraft
+    naming:
+      display: Open a draft
+    input:
+      - {name: name, type: studio.shared.Name}
+      - {name: architecture, type: studio.shared.ArchitectureRef}
+      - {name: source, type: Optional<String>}
+      - {name: opened_at_revision, type: Optional<studio.shared.RevisionRef>}
+    outcomes:
+      - name: name-taken
+        when_related:
+          entity: studio.draft.Draft
+          where:
+            all:
+              - name == input.name
+              - state == Open
+          exists: true
+        error: studio.draft.DraftNameTaken
+      - name: opened
+        creates: studio.draft.Draft
+        instance: draft_id
+        sets:
+          name: input.name
+          architecture: input.architecture
+          source: input.source
+          opened_at_revision: input.opened_at_revision
+        emits: [studio.draft.DraftOpened]
+        payload:
+          studio.draft.DraftOpened:
+            draft_id: {generated: true}
+            name: input.name
+            architecture: input.architecture
+            source: input.source
+
+  - name: studio.draft.ArchiveDraft
+    naming:
+      display: Archive a draft
+    input:
+      - {name: draft_id, type: studio.shared.DraftId}
+    outcomes:
+      - name: no-such-draft
+        unknown_instance: true
+        error: studio.draft.NoSuchDraft
+      - name: archived
+        moves: studio.draft.Draft.archive
+        instance: draft_id
+        emits: [studio.draft.DraftArchived]
+        payload:
+          studio.draft.DraftArchived:
+            draft_id: input.draft_id
+      - name: wrong-state
+        wrong_state: true
+        error: studio.draft.ArchivedDraft
+
+views:
+  - name: studio.draft.Drafts
+    source: studio.draft.Draft
+    consistency: read_your_writes
+    fields:
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: name, type: studio.shared.Name}
+      - {name: architecture, type: studio.shared.ArchitectureRef}
+      - {name: source, type: Optional<String>}
+      - {name: opened_at_revision, type: Optional<studio.shared.RevisionRef>}
+      - {name: state, type: studio.draft.Draft.State}

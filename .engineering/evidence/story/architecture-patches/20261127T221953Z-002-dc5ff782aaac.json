@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-27T22:19:53Z",
+  "actor": "human:operator",
+  "artifact": "story:architecture-patches",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "review",
+    "source": "review-result:agenticstudio-acceptance-1",
+    "reference": "answers review-result:agenticstudio-acceptance-1 finding 3 (architecture-patches.md:55, refusal names no patch, rule or error): fixed, two named refusals: rule 2 with an unknown verb refused at position 2, and a removed worker model_call link refused by check rule agent_without_model_path naming worker; the revision stays"
+  }
+}

@@ -75,6 +75,8 @@ types:
   - {name: agentic.shared.PartId, kind: newtype, of: Uuid}
   - {name: agentic.shared.LinkId, kind: newtype, of: Uuid}
   - {name: agentic.shared.ArchitectureRevisionId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.PatchId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.PatchApplicationId, kind: newtype, of: Uuid}
 
   # 10 evaluation
   - {name: agentic.shared.KpiId, kind: newtype, of: Uuid}

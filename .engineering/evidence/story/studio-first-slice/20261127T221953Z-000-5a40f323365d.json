@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-27T22:19:53Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-first-slice",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "review",
+    "source": "review-result:agenticstudio-acceptance-1",
+    "reference": "answers review-result:agenticstudio-acceptance-1 finding 5 (studio-first-slice.md:58, selector field name): fixed, the selector is part{id: P, block: agent, count: 12}; the fields come from the section Facts of an architecture"
+  }
+}

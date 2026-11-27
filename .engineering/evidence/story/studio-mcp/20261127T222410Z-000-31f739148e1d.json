@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:24:10Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-mcp",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-acceptance-2",
+    "reference": "answers review-result:agenticstudio-acceptance-2 finding 3 (query and check unchecked): fixed, one acceptance line each for query and check",
+    "review": "review-result:agenticstudio-acceptance-2",
+    "outcome": "fixed"
+  }
+}

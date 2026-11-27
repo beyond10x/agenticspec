@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:19:54Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-evaluation",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-scope-1",
+    "reference": "answers review-result:agenticstudio-scope-1 finding 4 (studio-evaluation.md:35, accept narrowed to best): fixed, any variant id of result.json is accepted; acceptance line uses a variant that is not best",
+    "review": "review-result:agenticstudio-scope-1",
+    "outcome": "fixed"
+  }
+}

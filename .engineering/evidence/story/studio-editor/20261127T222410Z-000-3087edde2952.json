@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:24:10Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-editor",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-parallel-safety-2",
+    "reference": "answers review-result:agenticstudio-parallel-safety-2 finding 1 (generated ui/studio types against architecture block changes, unordered): fixed, types committed under ui/studio/src/generated and held by check:generated; studio-editor depends_on guards-and-limits, architecture-patches depends_on studio-editor and regenerates",
+    "review": "review-result:agenticstudio-parallel-safety-2",
+    "outcome": "fixed"
+  }
+}

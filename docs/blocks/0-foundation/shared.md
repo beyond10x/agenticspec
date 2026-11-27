@@ -39,7 +39,7 @@ Nothing: this block is the foundation.
 - [runtime](../8-place/runtime.md) · layer 8 · 7 references
 - [sandbox](../8-place/sandbox.md) · layer 8 · 4 references
 - [workspace](../8-place/workspace.md) · layer 8 · 10 references
-- [architecture](../9-composition/architecture.md) · layer 9 · 9 references
+- [architecture](../9-composition/architecture.md) · layer 9 · 12 references
 - [experiment](../10-evaluation/experiment.md) · layer 10 · 11 references
 - [kpi](../10-evaluation/kpi.md) · layer 10 · 7 references
 
@@ -80,6 +80,8 @@ Nothing: this block is the foundation.
 | `Money` | a record | `micro_usd` integer |
 | `Name` | an identifier or value | `string` |
 | `PartId` | an identifier or value | `uuid` |
+| `PatchApplicationId` | an identifier or value | `uuid` |
+| `PatchId` | an identifier or value | `uuid` |
 | `PoolId` | an identifier or value | `uuid` |
 | `PostId` | an identifier or value | `uuid` |
 | `PrincipalId` | an identifier or value | `uuid` |

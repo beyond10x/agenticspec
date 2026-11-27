@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:agentic-ladder
 kind: story
-status: active
+status: implemented
 title: 'The agentic ladder: a defined model and an animated architecture evolution on the site'
 relations:
 - decomposes: epic:docs-site
@@ -17,10 +17,11 @@ scope:
   path: website/src/components/ladder
 - confidence: cited
   path: website/static/ladder
-revision: 8
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T18:57:01Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-27T18:57:02Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-27T21:31:22Z", actor: "human:operator", revision: 9, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

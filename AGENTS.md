@@ -91,6 +91,16 @@ change.
   components are in `website/src/components/catalog/`; a ladder stage on a card comes from
   `STAGES` in `catalog.rs`.
 
+## agenticstudio nouns (`studio/`)
+
+- A noun that is a building block of agentic development goes into `blocks/` (the patch and its
+  application are `agentic.architecture.Patch` and `PatchApplication`, layer 9).
+- A noun only the studio app has goes into `studio/`, a third ESS system (`studio`): drafts,
+  studio sessions, tool calls, evaluations. Check: `ess specify validate --path studio
+  --strict-requires`.
+- ESS declares no relation across two systems: `studio/` names an entity of `agentic` by its
+  identifier only (`studio/domains/shared.yaml`).
+
 ## Layout of the hand-written crates
 
 `crates/agenticspec-records` is the library the gateway links (`design/interaction-records.md`);

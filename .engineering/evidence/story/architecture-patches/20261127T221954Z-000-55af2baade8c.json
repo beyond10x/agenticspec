@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:19:54Z",
+  "actor": "human:operator",
+  "artifact": "story:architecture-patches",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-parallel-safety-1",
+    "reference": "answers review-result:agenticstudio-parallel-safety-1 finding 2 (architecture-patches.md:47, crates/agenticspec-sim shared with evaluation and state-space unordered): fixed, story:studio-evaluation depends_on story:architecture-patches, state-space follows through evaluation; the three bodies name the shared crate",
+    "review": "review-result:agenticstudio-parallel-safety-1",
+    "outcome": "fixed"
+  }
+}

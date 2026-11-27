@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-27T22:19:53Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-editor",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "review",
+    "source": "review-result:agenticstudio-acceptance-1",
+    "reference": "answers review-result:agenticstudio-acceptance-1 finding 9 (studio-editor.md:43, dry run, apply, stepping unchecked): fixed, acceptance lines for highlight, dry run (revision stays 1), apply (revision 2) and stepping to revision 1; the revision routes are in story:studio-live"
+  }
+}

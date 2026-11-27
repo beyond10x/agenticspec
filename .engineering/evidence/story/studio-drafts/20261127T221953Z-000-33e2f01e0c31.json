@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-27T22:19:53Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-drafts",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "review",
+    "source": "review-result:agenticstudio-acceptance-1",
+    "reference": "answers review-result:agenticstudio-acceptance-1 finding 7 (studio-drafts.md:40, archive, undo, comparison unchecked): fixed, acceptance lines for restart, archive (ArchivedDraft refusal), undo (digest of revision 2), structural comparison and KPI comparison"
+  }
+}

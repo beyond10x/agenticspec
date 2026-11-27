@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:24:10Z",
+  "actor": "human:operator",
+  "artifact": "story:architecture-patches",
+  "kind": "story",
+  "revision": 11,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-acceptance-2",
+    "reference": "answers review-result:agenticstudio-acceptance-2 finding 1 (verbs remove, connect, replicate, prepend, append, mark, unmark unchecked): fixed, one acceptance line per verb on architectures/workstation.yaml, remove shown to succeed on link 7",
+    "review": "review-result:agenticstudio-acceptance-2",
+    "outcome": "fixed"
+  }
+}

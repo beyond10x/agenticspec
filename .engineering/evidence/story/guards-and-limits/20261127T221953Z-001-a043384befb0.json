@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-27T22:19:53Z",
+  "actor": "human:operator",
+  "artifact": "story:guards-and-limits",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "review",
+    "source": "review-result:agenticstudio-acceptance-1",
+    "reference": "answers review-result:agenticstudio-acceptance-1 finding 11 (guards-and-limits.md:24, names no guard, reads the same before and after): fixed, the guards are named (Timeout, Retry, BudgetCap, ApprovalGate in blocks/6-governance/guard.yaml; reviewer and verifier as agent parts) and each line states its before"
+  }
+}

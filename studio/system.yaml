@@ -1,0 +1,17 @@
+format: ess/37
+system: studio
+version: v1
+
+summary: >-
+  agenticstudio, the architecture builder: drafts of architectures that a user and an agent
+  change together through one operation set (query, apply a patch, check, simulate), the studio
+  sessions they work in, the tool calls of those sessions and the evaluation runs of a draft.
+  The architecture, its revisions and its patches are the building blocks of the `agentic`
+  system (blocks/9-composition/architecture.yaml); this system holds only what the studio app
+  adds around them.
+
+domains:
+  - studio.shared
+  - studio.draft
+  - studio.evaluation
+  - studio.session
