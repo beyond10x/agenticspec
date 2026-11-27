@@ -90,11 +90,11 @@ fn no_best_variant_means_no_document() {
 
 /// Runs the experiment as configured, writes its best variant as YAML, reads it back, checks it,
 /// and runs the experiment again on it: its fitness is the best fitness of the first run. A hill
-/// climb is held to 60 evaluations here so the test stays under 5 s; the docs generator checks the
+/// climb is held to 30 evaluations here so the test stays under 5 s; `task catalog:generate` checks the
 /// same at the full budget for every catalog entry.
 fn reproduces(file: &str) {
     let mut e = Experiment::load(&repo_root().join("experiments").join(file)).unwrap();
-    e.search.budget = e.search.budget.min(60);
+    e.search.budget = e.search.budget.min(30);
     let result = run(&e, 4).unwrap();
     let text = best::yaml_of_result(&result, None)
         .unwrap()

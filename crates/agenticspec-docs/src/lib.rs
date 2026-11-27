@@ -7,12 +7,12 @@
 
 mod arch;
 mod blocks;
-mod cache;
 mod catalog;
 mod kpis;
 mod layout;
 mod md;
 mod model;
+mod results;
 
 pub use kpis::{Catalogue, Kpi};
 pub use model::layer_edges;
@@ -86,6 +86,12 @@ fn json_text(v: &Value) -> String {
     let mut s = serde_json::to_string_pretty(v).unwrap_or_default();
     s.push('\n');
     s
+}
+
+/// Runs every experiment of the catalog at its own budget and seeds and writes its committed result
+/// and digest file, or with `check` compares them byte for byte; one line per file that differs.
+pub fn catalog_results(root: &Path, check: bool) -> Result<Vec<String>, String> {
+    results::generate(root, check)
 }
 
 /// Every generated file for the repository at `root`. `catalogue` replaces `kpis/catalogue.yaml`
@@ -186,7 +192,8 @@ fn walk(dir: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-/// The files on disk under the owned directories, relative to `root`.
+/// The files on disk under the owned directories, relative to `root`, without the committed
+/// results of the catalog, which are inputs (`task catalog:generate`).
 fn on_disk(root: &Path) -> BTreeSet<String> {
     let mut found = Vec::new();
     for d in OWNED_DIRS {
@@ -199,6 +206,7 @@ fn on_disk(root: &Path) -> BTreeSet<String> {
                 .ok()
                 .map(|r| r.to_string_lossy().replace('\\', "/"))
         })
+        .filter(|p| !results::is_input(p))
         .collect()
 }
 

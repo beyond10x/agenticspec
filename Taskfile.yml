@@ -51,6 +51,18 @@ tasks:
       - cargo build --quiet --locked -p agenticspec-docs
       - target/debug/agenticspec-docs --root .
 
+  catalog:generate:
+    desc: Run every experiment under experiments/ at its own budget and seeds and write the committed result of its catalog entry, website/static/catalog/<entry>/result.json, with the digest of its sources beside it (sources.sha256). Run task docs:generate after it.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --results
+
+  slow:catalog:
+    desc: Slow lane. Run every experiment of the catalog afresh and compare its result and digest file byte for byte with the committed ones.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --results --check
+
   check:docs:
     desc: Fail when a generated page of the docs site differs from a fresh generation, is missing or is not generated; names the files.
     cmds:
