@@ -1133,6 +1133,288 @@
         }
       }
     },
+    "sim_check": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_check"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimCheckInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimCheckResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "links": {
+              "kind": "integer"
+            },
+            "parts": {
+              "kind": "integer"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sim_ladder": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_ladder"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimLadderInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "check": {
+              "kind": "boolean"
+            },
+            "ladder": {
+              "kind": "string"
+            },
+            "out": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimLadderResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "out": {
+              "kind": "string"
+            },
+            "rungs": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ladder_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ladder_stale": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sim_render": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_render"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimRenderInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "result": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimRenderResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "out": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sim_run": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_run"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimRunInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "experiment": {
+              "kind": "string"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "threads": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimRunResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "best_written": {
+              "kind": "boolean"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "seeds": {
+              "kind": "integer"
+            },
+            "threads": {
+              "kind": "integer"
+            },
+            "variants": {
+              "kind": "integer"
+            }
+          }
+        }
+      },
+      "errors": {
+        "experiment_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "sync": {
       "target": {
         "kind": "local",
@@ -1486,6 +1768,120 @@
     },
     {
       "path": [
+        "sim",
+        "check"
+      ],
+      "aliases": [],
+      "callable": "sim_check",
+      "about": "Check an architecture document against the building blocks and name each refusal",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
+        "ladder"
+      ],
+      "aliases": [],
+      "callable": "sim_ladder",
+      "about": "Check the agentic ladder and write the data file of its page, or compare it with --check",
+      "arguments": [
+        {
+          "field": "ladder",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "flag",
+            "long": "check"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
+        "render"
+      ],
+      "aliases": [],
+      "callable": "sim_render",
+      "about": "Write the page of an architecture, with the result of a run when given",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "result",
+          "source": {
+            "kind": "option",
+            "long": "result"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
+        "run"
+      ],
+      "aliases": [],
+      "callable": "sim_run",
+      "about": "Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml",
+      "arguments": [
+        {
+          "field": "experiment",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "threads",
+          "source": {
+            "kind": "option",
+            "long": "threads"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
         "sync"
       ],
       "aliases": [],
@@ -1518,6 +1914,10 @@
     "handler:procedure: implement the owner-qualified callable and its declared result/error contract",
     "handler:query: implement the owner-qualified callable and its declared result/error contract",
     "handler:serve: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_check: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract"
   ]
 }

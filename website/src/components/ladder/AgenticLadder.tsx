@@ -396,7 +396,7 @@ export default function AgenticLadder(): ReactNode {
                 <a href={sourceUrl(rung.architecture)}>
                   <code>{rung.architecture.split('/').pop()}</code>
                 </a>
-                , accepted by <code>agenticspec-sim check</code>.
+                , accepted by <code>agenticspec sim check</code>.
               </p>
             </div>
             <dl className="ld-facts">

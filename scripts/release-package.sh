@@ -6,11 +6,12 @@
 #   release-package.sh assets <version>
 #       the names of the files a release carries: one archive per target, then SHA256SUMS
 #   release-package.sh archive <version> <target> <binary> <directory>
-#       write <directory>/agenticspec-<version>-<target>.tar.gz. It holds one directory,
-#       agenticspec-<version>-<target>, with the binary as `agenticspec`, LICENSE and README.md, each
-#       with owner 0, the directory and the binary with mode 755, the two files with 644.
-#       Refused unless `<binary> --version` prints `agenticspec <version>`, that line and no
-#       other, and exits 0
+#       write the archive of <target> into <directory>: agenticspec-<version>-<target>.zip for
+#       a Windows target, agenticspec-<version>-<target>.tar.gz for every other. It holds one
+#       directory, agenticspec-<version>-<target>, with the binary as `agenticspec`
+#       (`agenticspec.exe` on Windows), LICENSE and README.md. In a .tar.gz each has owner 0,
+#       the directory and the binary mode 755, the two files 644. Refused unless
+#       `<binary> --version` prints `agenticspec <version>`, that line and no other, and exits 0
 #   release-package.sh sums <version> <directory>
 #       write <directory>/SHA256SUMS over the archive of every target and verify it.
 #       Refused when an archive is not there
@@ -20,16 +21,21 @@
 #       `- ` line under a `### ` heading
 #
 # LICENSE, README.md and the default changelog are those of the repository this script is in.
-# .github/workflows/release.yml calls `archive` once per target, then `sums` and `notes`.
+# .github/workflows/release.yml calls `archive` once per target on the runner of the target,
+# then `sums` and `notes`.
+#
+# `archive` runs on Linux, macOS and Windows (Git Bash). A .tar.gz is written by `tar`, GNU tar
+# or bsdtar, told apart by `tar --version`; RELEASE_TAR names another tar. A .zip is written by
+# `zip` when it is installed, else by `7z`; RELEASE_ZIP names one of the two.
 #
 # Exit 0: done. Exit 1: refused, with one line on standard error. Exit 2: the call is wrong.
-# Needs `tar` and `sha256sum`.
+# `sums` needs `sha256sum`.
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-# x86_64-unknown-linux-musl is a static binary: it needs no glibc of the host and is the archive
-# consumers pin.
-targets='x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-unknown-linux-musl'
+# x86_64-unknown-linux-musl and aarch64-unknown-linux-musl are static binaries: they need no
+# glibc of the host, and the x86_64 one is the archive consumers pin.
+targets='x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-unknown-linux-musl aarch64-unknown-linux-musl aarch64-apple-darwin x86_64-apple-darwin x86_64-pc-windows-msvc'
 
 usage() {
   echo "usage: release-package.sh targets" >&2
@@ -51,6 +57,14 @@ version_of() {
     || refuse "$1 is no version of the form <major>.<minor>.<patch>"
 }
 
+# archive_of <version> <target>: the file name of the archive of <target>.
+archive_of() {
+  case $2 in
+    *-windows-*) echo "agenticspec-$1-$2.zip" ;;
+    *) echo "agenticspec-$1-$2.tar.gz" ;;
+  esac
+}
+
 command=${1-}
 [ $# -gt 0 ] && shift
 
@@ -63,7 +77,7 @@ case $command in
   assets)
     [ $# = 1 ] || usage
     version_of "$1"
-    for target in $targets; do echo "agenticspec-$1-$target.tar.gz"; done
+    for target in $targets; do archive_of "$1" "$target"; done
     echo SHA256SUMS
     ;;
 
@@ -85,16 +99,44 @@ case $command in
     [ "$status" = 0 ] || refuse "\`agenticspec --version\` exits $status"
     [ "$printed" = "agenticspec $version" ] \
       || refuse "the binary prints \"$(printf '%s\n' "$printed" | sed -n 1p)\", not \"agenticspec $version\""
+    case $target in
+      *-windows-*) file=agenticspec.exe ;;
+      *) file=agenticspec ;;
+    esac
     name=agenticspec-$version-$target
-    rm -rf "${directory:?}/$name"
-    mkdir -p "$directory/$name"
-    cp "$binary" "$directory/$name/agenticspec"
+    archive=$(archive_of "$version" "$target")
+    mkdir -p "$directory"
+    rm -rf "${directory:?}/$name" "${directory:?}/$archive"
+    mkdir "$directory/$name"
+    cp "$binary" "$directory/$name/$file"
     cp "$root/LICENSE" "$root/README.md" "$directory/$name/"
-    chmod 755 "$directory/$name" "$directory/$name/agenticspec"
+    chmod 755 "$directory/$name" "$directory/$name/$file"
     chmod 644 "$directory/$name/LICENSE" "$directory/$name/README.md"
-    tar -C "$directory" --owner=0 --group=0 --numeric-owner -czf "$directory/$name.tar.gz" "$name"
+    case $archive in
+      *.zip)
+        zip=${RELEASE_ZIP:-}
+        if [ -z "$zip" ]; then
+          if command -v zip > /dev/null 2>&1; then zip=zip; else zip=7z; fi
+        fi
+        case $zip in
+          zip) (cd "$directory" && zip -q -X -r "$archive" "$name") ;;
+          7z) (cd "$directory" && 7z a -tzip -bd -bso0 -bsp0 "$archive" "$name") ;;
+          *) refuse "RELEASE_ZIP is $zip, neither zip nor 7z" ;;
+        esac || refuse "$zip could not write $archive"
+        ;;
+      *)
+        tar=${RELEASE_TAR:-tar}
+        if "$tar" --version 2> /dev/null | grep -q 'GNU tar'; then
+          "$tar" -C "$directory" --owner=0 --group=0 --numeric-owner -czf "$directory/$archive" "$name"
+        else
+          # bsdtar, the tar of macOS: no AppleDouble `._` members, no extended attributes.
+          COPYFILE_DISABLE=1 "$tar" -C "$directory" --uid 0 --gid 0 --numeric-owner \
+            --no-mac-metadata --no-xattrs --no-acls --no-fflags -czf "$directory/$archive" "$name"
+        fi || refuse "$tar could not write $archive"
+        ;;
+    esac
     rm -rf "${directory:?}/$name"
-    echo "release-package: $name.tar.gz holds agenticspec ($version), LICENSE and README.md"
+    echo "release-package: $archive holds $file ($version), LICENSE and README.md"
     ;;
 
   sums)
@@ -103,9 +145,9 @@ case $command in
     version_of "$version"
     set --
     for target in $targets; do
-      [ -f "$directory/agenticspec-$version-$target.tar.gz" ] \
-        || refuse "no agenticspec-$version-$target.tar.gz in $directory"
-      set -- "$@" "agenticspec-$version-$target.tar.gz"
+      archive=$(archive_of "$version" "$target")
+      [ -f "$directory/$archive" ] || refuse "no $archive in $directory"
+      set -- "$@" "$archive"
     done
     cd "$directory"
     sha256sum "$@" > SHA256SUMS

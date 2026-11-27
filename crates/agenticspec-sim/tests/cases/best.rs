@@ -4,16 +4,11 @@
 use super::common::{ARCH, PROFILE, experiment, experiment_yaml, repo_root, scratch, yaml};
 use agenticspec_sim::best::{self, fitness_as_written};
 use agenticspec_sim::check::check;
+use agenticspec_sim::cli;
 use agenticspec_sim::doc::{load_yaml, parse_yaml};
 use agenticspec_sim::marked::collect;
 use agenticspec_sim::{Experiment, run};
 use serde_json::Value;
-use std::process::Command;
-
-fn bin() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_agenticspec-sim"))
-}
-
 #[test]
 fn apply_sets_each_marker_to_its_best_value_and_keeps_vary() {
     let arch = yaml(ARCH);
@@ -149,28 +144,14 @@ fn run_writes_best_yaml_that_check_accepts() {
     std::fs::write(dir.join("small-profile.yaml"), PROFILE).unwrap();
     std::fs::write(dir.join("exp.yaml"), experiment_yaml("fit", 6, 256)).unwrap();
     let out_dir = dir.join("out");
-    let out = bin()
-        .arg("run")
-        .arg(dir.join("exp.yaml"))
-        .arg("--out")
-        .arg(&out_dir)
-        .args(["--threads", "2"])
-        .output()
-        .unwrap();
-    assert!(
-        out.status.success(),
-        "{}",
-        String::from_utf8_lossy(&out.stderr)
-    );
+    let mut log = Vec::new();
+    let ran = cli::run(&dir.join("exp.yaml"), &out_dir, Some(2), &mut log)
+        .unwrap_or_else(|e| panic!("{e:?}\n{}", String::from_utf8_lossy(&log)));
+    assert_eq!(ran["best_written"], true);
     let best_file = out_dir.join("best.yaml");
     let text = std::fs::read_to_string(&best_file).unwrap();
     assert!(text.contains("vary"), "{text}");
-    let out = bin().arg("check").arg(&best_file).output().unwrap();
-    assert!(
-        out.status.success(),
-        "{}",
-        String::from_utf8_lossy(&out.stdout)
-    );
+    cli::check(&best_file).unwrap();
     let result: Value =
         serde_json::from_str(&std::fs::read_to_string(out_dir.join("result.json")).unwrap())
             .unwrap();

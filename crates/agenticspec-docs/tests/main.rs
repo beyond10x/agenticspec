@@ -440,7 +440,7 @@ fn every_experiment_has_a_catalog_entry_with_its_downloads() {
             "{name}: the page embeds its result page by the path without .html"
         );
         assert!(
-            page.contains(&format!("agenticspec-sim run {exp}.yaml --out out/")),
+            page.contains(&format!("agenticspec sim run {exp}.yaml --out out/")),
             "{name}: the command"
         );
         assert!(page.contains("## Deploy\n"), "{name}: the deploy note");

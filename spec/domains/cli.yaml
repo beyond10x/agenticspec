@@ -488,3 +488,87 @@ types:
     kind: struct
     fields:
       - {name: url, type: String}
+
+  - name: agenticspec.cli.SimCheckInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: An `agenticspec-architecture/1` file.
+
+  - name: agenticspec.cli.SimCheckResult
+    kind: struct
+    naming:
+      summary: The architecture the check accepted, with its counts of parts and links.
+    fields:
+      - {name: architecture, type: String}
+      - {name: parts, type: Integer}
+      - {name: links, type: Integer}
+
+  - name: agenticspec.cli.SimRunInput
+    kind: struct
+    fields:
+      - name: experiment
+        type: String
+        summary: An `agenticspec-experiment/1` file; its architecture and profile are read relative to it.
+      - name: out
+        type: String
+        summary: The directory `result.json`, `index.html` and `best.yaml` are written to.
+      - name: threads
+        type: Optional<Integer>
+        summary: Threads of the search; the available parallelism, at most 8, by default.
+
+  - name: agenticspec.cli.SimRunResult
+    kind: struct
+    naming:
+      summary: >-
+        One run of an experiment. The KPIs of the baseline and the best variant are printed to
+        standard error and written to `result.json`.
+    fields:
+      - {name: out, type: String}
+      - {name: variants, type: Integer}
+      - {name: seeds, type: Integer}
+      - {name: threads, type: Integer}
+      - name: best_written
+        type: Boolean
+        summary: "`best.yaml`, the best variant as an architecture document, was written."
+
+  - name: agenticspec.cli.SimRenderInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: An `agenticspec-architecture/1` file.
+      - name: result
+        type: Optional<String>
+        summary: A `result.json` of `sim run`, drawn on the page.
+      - name: out
+        type: String
+        summary: The HTML page to write.
+
+  - name: agenticspec.cli.SimRenderResult
+    kind: struct
+    fields:
+      - {name: out, type: String}
+
+  - name: agenticspec.cli.SimLadderInput
+    kind: struct
+    fields:
+      - name: ladder
+        type: String
+        summary: The ladder file, `ladder/ladder.yaml`.
+      - name: out
+        type: String
+        summary: The data file of the ladder page.
+      - name: check
+        type: Boolean
+        summary: Compare a fresh generation with the file instead of writing it.
+
+  - name: agenticspec.cli.SimLadderResult
+    kind: struct
+    fields:
+      - {name: out, type: String}
+      - {name: rungs, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The file was written; false with `--check`, where it was found current.

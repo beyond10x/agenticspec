@@ -483,26 +483,27 @@ pub fn page(e: &Entry) -> String {
     s.push_str("## Run it\n\n");
     let _ = writeln!(
         s,
-        "Put the downloaded files in one directory and run the experiment with `agenticspec-sim`, which a checkout of the \
-[repository](https://github.com/beyond10x/agenticspec) builds with `cargo build --release -p agenticspec-sim`. \
+        "Put the downloaded files in one directory and run the experiment with `agenticspec sim`. `agenticspec` is the binary of \
+every [release](https://github.com/beyond10x/agenticspec/releases); a checkout of the \
+[repository](https://github.com/beyond10x/agenticspec) builds it with `cargo build --release -p agenticspec`. \
 The same seeds give the same `result.json`.\n"
     );
     let _ = writeln!(
         s,
-        "```sh\nagenticspec-sim run {exp}.yaml --out out/\n```\n",
+        "```sh\nagenticspec sim run {exp}.yaml --out out/\n```\n",
         exp = e.exp_name
     );
     if e.best.is_some() {
         let _ = writeln!(
             s,
-            "`agenticspec-sim check {name}.best.yaml` accepts the optimized architecture. To search on from it, set \
+            "`agenticspec sim check {name}.best.yaml` accepts the optimized architecture. To search on from it, set \
 `architecture: {name}.best.yaml` in the experiment; its fitness as written is then the best fitness above.\n",
             name = e.name
         );
     }
     let _ = writeln!(
         s,
-        "In a checkout, the same run is `agenticspec-sim run {} --out out/`.\n",
+        "In a checkout, the same run is `agenticspec sim run {} --out out/`.\n",
         e.exp_file
     );
 

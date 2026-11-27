@@ -44,7 +44,7 @@ it.
 The animation follows one owner's journey: a sandboxed session at a workstation, the sandbox
 switched off, sub-agents, background sessions, scheduled agents, experiments, a swarm, a live loop
 and finally a factory of teams. Each rung is an architecture document made of the
-[building blocks](/docs/blocks), and `agenticspec-sim check` accepts every one of them. A part keeps
+[building blocks](/docs/blocks), and `agenticspec sim check` accepts every one of them. A part keeps
 its name from rung to rung, so the picture grows instead of being redrawn.
 
 <RungTable />
@@ -58,6 +58,6 @@ sandbox switched off, is the one that names it.
 To regenerate the data of this page after changing the ladder or a rung:
 
 ```sh
-task ladder:generate   # agenticspec-sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json
+task ladder:generate   # agenticspec sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json
 task check:ladder      # fails when the data file is stale
 ```

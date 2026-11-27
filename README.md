@@ -14,9 +14,32 @@ Field names and formats may still change between 0.x releases.
 
 ## Install
 
-Each release on GitHub carries a static Linux binary that runs on any x86_64 Linux,
-`agenticspec-<version>-x86_64-unknown-linux-musl.tar.gz`, beside builds for glibc on x86_64 and
-aarch64. Or build from source with the Rust toolchain pinned in `rust-toolchain.toml`:
+Each [release](https://github.com/beyond10x/agenticspec/releases) carries one archive per
+platform with the `agenticspec` binary, `LICENSE` and this file:
+
+| platform | archive |
+|---|---|
+| Linux x86_64, static (any distribution) | `agenticspec-<version>-x86_64-unknown-linux-musl.tar.gz` |
+| Linux aarch64, static (any distribution) | `agenticspec-<version>-aarch64-unknown-linux-musl.tar.gz` |
+| Linux x86_64, glibc | `agenticspec-<version>-x86_64-unknown-linux-gnu.tar.gz` |
+| Linux aarch64, glibc | `agenticspec-<version>-aarch64-unknown-linux-gnu.tar.gz` |
+| macOS, Apple silicon | `agenticspec-<version>-aarch64-apple-darwin.tar.gz` |
+| macOS, Intel | `agenticspec-<version>-x86_64-apple-darwin.tar.gz` |
+| Windows x86_64 | `agenticspec-<version>-x86_64-pc-windows-msvc.zip` (`agenticspec.exe`) |
+
+Download an archive and `SHA256SUMS` from the same release into one directory and check the archive
+before you unpack it (on macOS, `shasum -a 256 -c --ignore-missing SHA256SUMS`; on Windows, compare
+`Get-FileHash <archive>` with its line in `SHA256SUMS`):
+
+```console
+sha256sum --check --ignore-missing SHA256SUMS
+tar -xzf agenticspec-<version>-<target>.tar.gz
+```
+
+On Windows, set `HOME` (for example to `%USERPROFILE%`) or pass `--root` and `--state-dir`: the
+default paths below start at `HOME`.
+
+Or build from source with the Rust toolchain pinned in `rust-toolchain.toml`:
 
 ```console
 cargo install --locked --path crates/agenticspec
@@ -42,6 +65,17 @@ in another page: see the dashboard page of the documentation.
 
 `AGENTICSPEC_DELEGATES` names, comma-separated, the sessions that act for you; a message from one
 of them counts as a delegate's prompt, not a peer's.
+
+`agenticspec sim` is the simulator. It reads no session and no store: it checks an architecture
+document, runs an experiment (each entry of the
+[catalog](https://beyond10x.github.io/agenticspec/docs/catalog) has the files to download), and
+writes a page of an architecture:
+
+```console
+agenticspec sim check <architecture.yaml>
+agenticspec sim run <experiment.yaml> --out out/   # result.json, index.html, best.yaml
+agenticspec sim render <architecture.yaml> --out page.html
+```
 
 ## What stays on your machine
 

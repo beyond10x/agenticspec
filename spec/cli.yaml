@@ -73,6 +73,36 @@ callables:
       root_unreadable: agenticspec.cli.Refusal
       store_unavailable: agenticspec.cli.Refusal
       port_unavailable: agenticspec.cli.Refusal
+  sim_check:
+    target: {kind: local, owner: agenticspec.cli, action: sim_check}
+    input: agenticspec.cli.SimCheckInput
+    result: agenticspec.cli.SimCheckResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+  sim_run:
+    target: {kind: local, owner: agenticspec.cli, action: sim_run}
+    input: agenticspec.cli.SimRunInput
+    result: agenticspec.cli.SimRunResult
+    errors:
+      experiment_invalid: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  sim_render:
+    target: {kind: local, owner: agenticspec.cli, action: sim_render}
+    input: agenticspec.cli.SimRenderInput
+    result: agenticspec.cli.SimRenderResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  sim_ladder:
+    target: {kind: local, owner: agenticspec.cli, action: sim_ladder}
+    input: agenticspec.cli.SimLadderInput
+    result: agenticspec.cli.SimLadderResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      ladder_refused: agenticspec.cli.Refusal
+      ladder_stale: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -139,3 +169,29 @@ commands:
       - {field: root, source: {kind: option, long: root}}
       - {field: since_hours, source: {kind: option, long: since-hours}}
       - {field: port, source: {kind: option, long: port}}
+  - path: [sim, check]
+    callable: sim_check
+    about: Check an architecture document against the building blocks and name each refusal
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+  - path: [sim, run]
+    callable: sim_run
+    about: Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml
+    arguments:
+      - {field: experiment, source: {kind: positional, index: 1}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: threads, source: {kind: option, long: threads}}
+  - path: [sim, render]
+    callable: sim_render
+    about: Write the page of an architecture, with the result of a run when given
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: result, source: {kind: option, long: result}}
+      - {field: out, source: {kind: option, long: out}}
+  - path: [sim, ladder]
+    callable: sim_ladder
+    about: Check the agentic ladder and write the data file of its page, or compare it with --check
+    arguments:
+      - {field: ladder, source: {kind: positional, index: 1}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: check, source: {kind: flag, long: check}}

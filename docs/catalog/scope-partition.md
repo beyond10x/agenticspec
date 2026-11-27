@@ -49,15 +49,15 @@ The weighted KPIs that moved, the largest change of the fitness first:
 
 ## Run it
 
-Put the downloaded files in one directory and run the experiment with `agenticspec-sim`, which a checkout of the [repository](https://github.com/beyond10x/agenticspec) builds with `cargo build --release -p agenticspec-sim`. The same seeds give the same `result.json`.
+Put the downloaded files in one directory and run the experiment with `agenticspec sim`. `agenticspec` is the binary of every [release](https://github.com/beyond10x/agenticspec/releases); a checkout of the [repository](https://github.com/beyond10x/agenticspec) builds it with `cargo build --release -p agenticspec`. The same seeds give the same `result.json`.
 
 ```sh
-agenticspec-sim run scope-partition-tuning.yaml --out out/
+agenticspec sim run scope-partition-tuning.yaml --out out/
 ```
 
-`agenticspec-sim check scope-partition.best.yaml` accepts the optimized architecture. To search on from it, set `architecture: scope-partition.best.yaml` in the experiment; its fitness as written is then the best fitness above.
+`agenticspec sim check scope-partition.best.yaml` accepts the optimized architecture. To search on from it, set `architecture: scope-partition.best.yaml` in the experiment; its fitness as written is then the best fitness above.
 
-In a checkout, the same run is `agenticspec-sim run experiments/scope-partition-tuning.yaml --out out/`.
+In a checkout, the same run is `agenticspec sim run experiments/scope-partition-tuning.yaml --out out/`.
 
 ## Deploy
 

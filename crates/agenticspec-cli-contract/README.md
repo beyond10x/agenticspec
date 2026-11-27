@@ -94,6 +94,50 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `sim check`
+
+Check an architecture document against the building blocks and name each refusal
+
+Callable: `sim_check`. Input: `agenticspec.cli.SimCheckInput`. Result: `agenticspec.cli.SimCheckResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+### `sim ladder`
+
+Check the agentic ladder and write the data file of its page, or compare it with --check
+
+Callable: `sim_ladder`. Input: `agenticspec.cli.SimLadderInput`. Result: `agenticspec.cli.SimLadderResult`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `ladder_refused`: `agenticspec.cli.Refusal`.
+
+Error `ladder_stale`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+### `sim render`
+
+Write the page of an architecture, with the result of a run when given
+
+Callable: `sim_render`. Input: `agenticspec.cli.SimRenderInput`. Result: `agenticspec.cli.SimRenderResult`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+### `sim run`
+
+Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml
+
+Callable: `sim_run`. Input: `agenticspec.cli.SimRunInput`. Result: `agenticspec.cli.SimRunResult`.
+
+Error `experiment_invalid`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
 ### `sync`
 
 Lift the new and changed sessions of a window into the local store
@@ -114,4 +158,8 @@ Error `store_unavailable`: `agenticspec.cli.Refusal`.
 - handler:procedure: implement the owner-qualified callable and its declared result/error contract
 - handler:query: implement the owner-qualified callable and its declared result/error contract
 - handler:serve: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_check: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_render: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_run: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract

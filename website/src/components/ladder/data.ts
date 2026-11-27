@@ -1,6 +1,6 @@
 /**
  * The data file of the agentic ladder, website/static/ladder/ladder.json, which
- * `agenticspec-sim ladder` writes from ladder/ladder.yaml and the rung architectures
+ * `agenticspec sim ladder` writes from ladder/ladder.yaml and the rung architectures
  * (task ladder:generate). Never edited by hand.
  */
 import raw from '@site/static/ladder/ladder.json';

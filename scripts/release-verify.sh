@@ -18,16 +18,19 @@
 # 3. the assets of the description are the names of `release-package.sh assets <version>`,
 #    each uploaded, and no other; each is a file of the directory;
 # 4. SHA256SUMS names each archive once, and `sha256sum -c SHA256SUMS` passes there;
-# 5. each archive holds one directory with `agenticspec`, `LICENSE` and `README.md`, nothing else
-#    and no path outside it, and each of the three is a regular file: no link, no directory;
-# 6. `agenticspec --version` of each x86_64 archive (gnu and the static musl one) prints
+# 5. each archive holds one directory, named as the archive without .tar.gz or .zip, with
+#    `agenticspec` (`agenticspec.exe` in the .zip of Windows), `LICENSE` and `README.md`,
+#    nothing else and no path outside it, and each of the three is a regular file: no link, no
+#    directory. A .zip may list the directory itself or not;
+# 6. `agenticspec --version` of each x86_64 Linux archive (gnu and the static musl one) prints
 #    `agenticspec <version>`, that line and no other, and exits 0. No file of an archive is run
-#    before check 5 passed.
+#    before check 5 passed. The binaries of the other targets print their version on their own
+#    runners in .github/workflows/release.yml before they are packed.
 #
 # Exit 0: every check passed, one line each. Exit 1: one line on standard error names the
 # check that failed. Exit 2: the call is wrong.
-# Needs `jq`, `tar` and `sha256sum`; the first form needs `gh`. Files are written under a
-# directory made with `mktemp -d` inside ${TMPDIR:-target} and removed.
+# Needs `jq`, `tar`, `unzip` and `sha256sum`; the first form needs `gh`. Files are written
+# under a directory made with `mktemp -d` inside ${TMPDIR:-target} and removed.
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -61,7 +64,7 @@ if [ -n "$description" ] || [ -n "$directory" ]; then
   [ -n "$description" ] && [ -n "$directory" ] && [ -z "$repository" ] || usage
 fi
 
-for tool in jq tar sha256sum; do
+for tool in jq tar unzip sha256sum; do
   command -v "$tool" > /dev/null 2>&1 || refuse "$tool is not installed"
 done
 assets=$(sh "$package" assets "$version") || exit 1
@@ -148,20 +151,41 @@ fi
 echo "release-verify: sha256sum -c SHA256SUMS passes"
 
 # 5. What each archive holds, read from its listing: nothing is unpacked here. The names are
-# the directory, written with its `/`, and the three files in it; a name twice, a name in
-# another directory and a directory in the place of a file each change the list. The first
-# character of a line of `tar -tv` is the kind of the member: `d` once, for the directory,
-# and `-`, a regular file, for the three. A link (`l`, `h`) is none.
+# the three files in the directory, and in a .tar.gz the directory, written with its `/`; a
+# name twice, a name in another directory and a directory in the place of a file each change
+# the list. The first character of a line of `tar -tv` and of `unzip -Z` is the kind of the
+# member: `d` at most once, for the directory, and `-`, a regular file, for the three. A link
+# (`l`, `h`) is none.
 for archive in $archives; do
-  name=${archive%.tar.gz}
-  printf '%s\n' "$name/" "$name/LICENSE" "$name/README.md" "$name/agenticspec" > "$work/wanted"
-  tar -tzf "$directory/$archive" 2> /dev/null | LC_ALL=C sort > "$work/members"
-  cmp -s "$work/members" "$work/wanted" \
-    || refuse "$archive does not hold agenticspec, LICENSE and README.md in $name, and nothing else"
-  tar -tvzf "$directory/$archive" 2> /dev/null | awk '
-    { kinds[substr($0, 1, 1)]++ }
-    END { exit (NR == 4 && kinds["d"] == 1 && kinds["-"] == 3) ? 0 : 1 }' \
-    || refuse "$archive holds a member that is no regular file"
+  case $archive in
+    *.zip) name=${archive%.zip} file=agenticspec.exe ;;
+    *) name=${archive%.tar.gz} file=agenticspec ;;
+  esac
+  printf '%s\n' "$name/LICENSE" "$name/README.md" "$name/$file" | LC_ALL=C sort > "$work/files"
+  case $archive in
+    *.zip)
+      unzip -Z1 "$directory/$archive" 2> /dev/null | grep -vxF "$name/" | LC_ALL=C sort > "$work/members"
+      cmp -s "$work/members" "$work/files" \
+        || refuse "$archive does not hold $file, LICENSE and README.md in $name, and nothing else"
+      unzip -Z "$directory/$archive" 2> /dev/null | awk -v dir="$name/" '
+        NR <= 2 || /^[0-9]+ files?, / { next }
+        $NF == dir && substr($1, 1, 1) == "d" { dirs++; next }
+        $NF != dir && substr($1, 1, 1) == "-" { regular++; next }
+        { other++ }
+        END { exit (regular == 3 && dirs <= 1 && !other) ? 0 : 1 }' \
+        || refuse "$archive holds a member that is no regular file"
+      ;;
+    *)
+      { echo "$name/"; cat "$work/files"; } | LC_ALL=C sort > "$work/wanted"
+      tar -tzf "$directory/$archive" 2> /dev/null | LC_ALL=C sort > "$work/members"
+      cmp -s "$work/members" "$work/wanted" \
+        || refuse "$archive does not hold $file, LICENSE and README.md in $name, and nothing else"
+      tar -tvzf "$directory/$archive" 2> /dev/null | awk '
+        { kinds[substr($0, 1, 1)]++ }
+        END { exit (NR == 4 && kinds["d"] == 1 && kinds["-"] == 3) ? 0 : 1 }' \
+        || refuse "$archive holds a member that is no regular file"
+      ;;
+  esac
 done
 echo "release-verify: each archive holds agenticspec, LICENSE and README.md"
 

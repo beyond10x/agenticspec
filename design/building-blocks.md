@@ -278,7 +278,7 @@ Checking it:
   tool that needs egress its sandbox does not allow, a question with no party that may answer.
 - weft checks a formation the same way: rows through commands, then `CommitRevision`.
 
-Until the `architecture` domain exists, `agenticspec-sim check <architecture>` applies the
+Until the `architecture` domain exists, `agenticspec sim check <architecture>` applies the
 structural rules directly. It exits 1 and prints one line per refusal. Each rule is also a gate
 KPI, the count of its refusals:
 
@@ -568,7 +568,7 @@ Search:
 
 Commands and output:
 
-- `agenticspec-sim run <experiment> --out <dir> [--threads N]` writes `result.json`, format
+- `agenticspec sim run <experiment> --out <dir> [--threads N]` writes `result.json`, format
   `agenticspec-sim-result/1`: `experiment`, `architecture` (as written, markers included),
   `profile`, `marked` (`path`, `value`, `range`), `baseline` and `best` (`params`, `kpis`,
   `per_part`, `fitness`, `feasible`; `best` is null when no variant is feasible), `variants`
@@ -576,7 +576,7 @@ Commands and output:
   `fitness`, `best_so_far`), and `timeline` (`t_seconds`, `part`, `kind`: at most 2,000 events of
   the best variant's first seed, evenly sampled; one turn is not an event, a rate-limited one is).
   A KPI is `{ value, kind }`. It also writes `index.html` from `agenticspec-render`.
-- `agenticspec-sim render <architecture> [--result result.json] --out page.html`.
+- `agenticspec sim render <architecture> [--result result.json] --out page.html`.
 
 ### Optimization markers
 

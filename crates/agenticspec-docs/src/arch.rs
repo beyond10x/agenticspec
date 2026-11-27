@@ -522,7 +522,7 @@ How the run was made: [Optimization](#optimization).\n",
                 s,
                 "The experiment [{}]({SOURCE_BASE}{}) searches the marked places of this architecture under a behaviour profile. \
 The figures on this page come from a short run of it: {} evaluations of {} seed{} each. The experiment file asks for more; \
-`agenticspec-sim run {}` runs it in full.\n",
+`agenticspec sim run {}` runs it in full.\n",
                 text(&r.name),
                 r.file,
                 r.budget,
