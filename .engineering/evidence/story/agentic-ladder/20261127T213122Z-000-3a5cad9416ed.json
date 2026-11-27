@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-27T21:31:22Z",
+  "actor": "human:operator",
+  "artifact": "story:agentic-ladder",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "forge Repository gate on 7c9fedf (merged as e1fda15)",
+    "reference": "https://github.com/beyond10x/agenticspec/pull/15"
+  }
+}

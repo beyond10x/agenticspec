@@ -1,0 +1,33 @@
+# Identifiers of the studio's entities, and the identifiers of the `agentic` system's entities
+# the studio names.
+domain: studio.shared
+
+summary: >-
+  Identifiers of the studio's entities and the studio's handles on entities of the `agentic`
+  building blocks: an architecture, its revisions, a patch application and an experiment.
+
+naming:
+  wire: shared
+  display: Shared
+
+types:
+  - {name: studio.shared.DraftId, kind: newtype, of: Uuid}
+  - {name: studio.shared.SessionId, kind: newtype, of: Uuid}
+  - {name: studio.shared.ToolCallId, kind: newtype, of: Uuid}
+  - {name: studio.shared.EvaluationId, kind: newtype, of: Uuid}
+
+  - {name: studio.shared.Name, kind: newtype, of: String}
+
+  # UNMAPPED: ESS declares no relation from one system to an entity of another, so each of these
+  # is an identifier of the `agentic` system held by value, with no `references` entry and no
+  # check that the row exists. Each carries the value of the `agentic.shared` identifier it names.
+  # Open question: one system with studio domains above layer 10, or a composition of the two
+  # systems (`ess specify compose`), would let the relation be declared.
+  # agentic.shared.ArchitectureId of agentic.architecture.Architecture
+  - {name: studio.shared.ArchitectureRef, kind: newtype, of: Uuid}
+  # agentic.shared.ArchitectureRevisionId of agentic.architecture.ArchitectureRevision
+  - {name: studio.shared.RevisionRef, kind: newtype, of: Uuid}
+  # agentic.shared.PatchApplicationId of agentic.architecture.PatchApplication
+  - {name: studio.shared.PatchApplicationRef, kind: newtype, of: Uuid}
+  # agentic.shared.ExperimentId of agentic.experiment.Experiment
+  - {name: studio.shared.ExperimentRef, kind: newtype, of: Uuid}

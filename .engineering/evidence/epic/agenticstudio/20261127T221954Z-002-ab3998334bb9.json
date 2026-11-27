@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:19:54Z",
+  "actor": "human:operator",
+  "artifact": "epic:agenticstudio",
+  "kind": "epic",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-scope-1",
+    "reference": "answers review-result:agenticstudio-scope-1 finding 3 (agenticstudio.md:28, explain a KPI unclaimed): fixed in story:studio-mcp (KPI answers carry summary, unit and direction of kpis/catalogue.yaml; acceptance line)",
+    "review": "review-result:agenticstudio-scope-1",
+    "outcome": "fixed"
+  }
+}

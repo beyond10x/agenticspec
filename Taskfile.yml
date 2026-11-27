@@ -17,9 +17,10 @@ tasks:
       - task: test
 
   check:blocks:
-    desc: Validate the building blocks (blocks/), hold their layering, and run their conformance suite, authored scenarios included, on the interpreter. The suite is synthesized once per digest of its sources into target/blocks-conform/ (scripts/check-blocks-conform.sh).
+    desc: Validate the building blocks (blocks/) and the agenticstudio system (studio/), hold their layering, and run their conformance suite, authored scenarios included, on the interpreter. The suite is synthesized once per digest of its sources into target/blocks-conform/ (scripts/check-blocks-conform.sh).
     cmds:
       - ess specify validate --path blocks --strict-requires
+      - ess specify validate --path studio --strict-requires
       - task: check:layers
       - task: check:kpis
       - scripts/check-blocks-conform.sh

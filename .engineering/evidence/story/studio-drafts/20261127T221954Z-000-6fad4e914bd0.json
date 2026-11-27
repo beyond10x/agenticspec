@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:19:54Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-drafts",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-parallel-safety-1",
+    "reference": "answers review-result:agenticstudio-parallel-safety-1 finding 3 (studio-drafts.md:29, shares with mcp, state-space, chat unordered): fixed, drafts depends_on story:studio-mcp, story:studio-state-space depends_on drafts, story:studio-chat depends_on state-space; section Shared surfaces names each",
+    "review": "review-result:agenticstudio-parallel-safety-1",
+    "outcome": "fixed"
+  }
+}

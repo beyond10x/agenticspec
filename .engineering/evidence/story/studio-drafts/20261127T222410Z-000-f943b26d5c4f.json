@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:24:10Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-drafts",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-acceptance-2",
+    "reference": "answers review-result:agenticstudio-acceptance-2 finding 4 (count read as a setting): fixed, the comparison line names the field count of part worker",
+    "review": "review-result:agenticstudio-acceptance-2",
+    "outcome": "fixed"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:24:10Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-first-slice",
+  "kind": "story",
+  "revision": 11,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-parallel-safety-2",
+    "reference": "answers review-result:agenticstudio-parallel-safety-2 finding 2 (generated crate types against guards-and-limits, unordered): fixed, types committed under crates/agenticstudio/src/generated; guards-and-limits depends_on studio-first-slice and regenerates them",
+    "review": "review-result:agenticstudio-parallel-safety-2",
+    "outcome": "fixed"
+  }
+}

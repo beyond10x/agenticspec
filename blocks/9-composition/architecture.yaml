@@ -61,6 +61,27 @@ types:
       - {name: name, type: String}
       - {name: value, type: String}
 
+  # The transform verbs of a patch rule's head (`agenticspec-patch/1`). Source: epic
+  # agenticstudio § "Operations: select, then transform": set a field, add or remove a part or
+  # link, connect two selections, replicate (count), wrap a link or part with a guard part,
+  # prepend or append on a link, mark or unmark a place for optimization.
+  # UNMAPPED: Remove, Wrap, Prepend and Append re-point or drop links and parts, and this domain
+  # declares no command that removes a part or a link. Open question for story
+  # architecture-patches: RemovePart and RemoveLink as commands, or a patch applies to a fresh
+  # architecture rebuilt from the base revision.
+  - name: agentic.architecture.PatchVerb
+    kind: enum
+    variants: [Set, Add, Remove, Connect, Replicate, Wrap, Prepend, Append, Mark, Unmark]
+
+  # One rule of a patch: its head's verb and the rule as written, a selector in the query
+  # language of `queries/*.sq` over the architecture facts (`part`, `link`, `policy`, `marker`,
+  # `kpi`) and the transform. The applier parses the text; this domain keeps it.
+  - name: agentic.architecture.PatchRule
+    kind: struct
+    fields:
+      - {name: verb, type: agentic.architecture.PatchVerb}
+      - {name: text, type: String}
+
 entities:
   # UNMAPPED: the brief names the lifecycle "Draft -> Committed revisions, Retired". An outcome
   # that records a revision creates the revision row, and ESS admits no second effect beside a
@@ -81,6 +102,7 @@ entities:
       - {name: parts, kind: owns, target: agentic.architecture.Part, cardinality: many, via: architecture_id}
       - {name: links, kind: owns, target: agentic.architecture.Link, cardinality: many, via: architecture_id}
       - {name: revisions, kind: owns, target: agentic.architecture.ArchitectureRevision, cardinality: many, via: architecture_id}
+      - {name: patch_applications, kind: owns, target: agentic.architecture.PatchApplication, cardinality: many, via: architecture_id}
     lifecycle:
       initial: Draft
       states:
@@ -174,6 +196,69 @@ entities:
       states: [Recorded]
       terminal: [Recorded]
 
+  # A patch (`agenticspec-patch/1`): an ordered list of selector and transform rules. Source:
+  # epic agenticstudio § "Operations: select, then transform". The user, the studio agent and the
+  # optimizer change an architecture by patches only. A patch names no architecture: its
+  # selectors bind parts and links by their facts, so one patch applies to any architecture
+  # (the optimizer applies one mutation patch to many variants). Immutable once recorded.
+  - name: agentic.architecture.Patch
+    naming:
+      summary: An ordered list of selector and transform rules that changes an architecture as one revision.
+    identity:
+      name: patch_id
+      type: agentic.shared.PatchId
+    fields:
+      - {name: name, type: Optional<agentic.shared.Name>}
+      - {name: rules, type: List<agentic.architecture.PatchRule>}
+      - {name: digest, type: agentic.architecture.Digest}
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+  # One application of a patch to an architecture. The applier compiles the rules to this
+  # domain's commands (AddPart, AddLink, SetPer, SetSwarm, ...) on a copy, and either runs them
+  # with CommitRevision as one revision, or changes nothing and names the refusing rule and its
+  # error. A dry run answers the same way and never commits a revision. Requested is the
+  # application before the applier reports, as an experiment is Running before its variants.
+  # The revision a patch applied on is the one the previous applied application of the same
+  # architecture committed; a stale base is the applier's refusal.
+  # UNMAPPED: the closed list of a patch's own errors (an unparsable rule, an unknown verb, an
+  # unbound variable, a stale base) is not written down anywhere; `error` holds the name of the
+  # error as text, a patch error or the error of the architecture command that refused, until
+  # story architecture-patches settles the list.
+  - name: agentic.architecture.PatchApplication
+    naming:
+      summary: One application of a patch to an architecture, applied as one revision or refused whole with the rule and its error.
+    identity:
+      name: application_id
+      type: agentic.shared.PatchApplicationId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: patch_id, type: agentic.shared.PatchId}
+      - {name: dry_run, type: Boolean}
+      # Applied, not a dry run: the revision the patch committed.
+      - {name: revision_id, type: Optional<agentic.shared.ArchitectureRevisionId>}
+      # Applied: how many rows (parts, links, settings) the patch changed.
+      - {name: changed_rows, type: Optional<Integer>}
+      # Refused: the 1-based position of the refusing rule, absent when the check of the whole
+      # result refused (CommitRevision's refusals), and the error's name.
+      - {name: rule_index, type: Optional<Integer>}
+      - {name: error, type: Optional<String>}
+    relations:
+      - {name: patch, kind: references, target: agentic.architecture.Patch, cardinality: one, via: patch_id}
+      - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
+    lifecycle:
+      initial: Requested
+      states:
+        - {name: Requested, summary: "Submitted; the applier has not reported."}
+        - {name: Applied, summary: "Every rule applied; committed as one revision unless a dry run."}
+        - {name: Refused, summary: "One rule or the check refused; nothing changed."}
+      terminal: [Applied, Refused]
+      transitions:
+        - {name: apply, from: [Requested], to: Applied}
+        - {name: refuse, from: [Requested], to: Refused}
+
 errors:
   - name: agentic.architecture.NoSuchArchitecture
     summary: No architecture has this id, and nothing changed.
@@ -213,6 +298,20 @@ errors:
     summary: An agent part has no link carrying model calls to a model or gateway part, so no revision was recorded.
   - name: agentic.architecture.QuestionWithoutAnswerer
     summary: A link carries questions to an agent part that acts for no principal, so no party may answer and no revision was recorded.
+  - name: agentic.architecture.EmptyPatch
+    summary: A patch has at least one rule, and nothing was recorded.
+  - name: agentic.architecture.NoSuchPatch
+    summary: No patch has this id, and nothing changed.
+  - name: agentic.architecture.NoSuchRevision
+    summary: No architecture revision has this id, and nothing changed.
+  - name: agentic.architecture.NoSuchPatchApplication
+    summary: No patch application has this id, and nothing changed.
+  - name: agentic.architecture.PatchApplicationSettled
+    summary: The patch application was already applied or refused, and nothing changed.
+  - name: agentic.architecture.AppliedWithoutRevision
+    summary: A patch applied outside a dry run names the revision it committed, and nothing changed.
+  - name: agentic.architecture.InvalidRuleIndex
+    summary: A rule's position starts at 1, and nothing changed.
 
 events:
   - name: agentic.architecture.ArchitectureCreated
@@ -259,6 +358,30 @@ events:
   - name: agentic.architecture.ArchitectureRetired
     fields:
       - {name: architecture_id, type: agentic.shared.ArchitectureId}
+  - name: agentic.architecture.PatchRecorded
+    fields:
+      - {name: patch_id, type: agentic.shared.PatchId}
+      - {name: digest, type: agentic.architecture.Digest}
+  - name: agentic.architecture.PatchRequested
+    fields:
+      - {name: application_id, type: agentic.shared.PatchApplicationId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: patch_id, type: agentic.shared.PatchId}
+      - {name: dry_run, type: Boolean}
+  - name: agentic.architecture.PatchApplied
+    fields:
+      - {name: application_id, type: agentic.shared.PatchApplicationId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: changed_rows, type: Integer}
+  - name: agentic.architecture.DryRunApplied
+    fields:
+      - {name: application_id, type: agentic.shared.PatchApplicationId}
+      - {name: changed_rows, type: Integer}
+  - name: agentic.architecture.PatchRefused
+    fields:
+      - {name: application_id, type: agentic.shared.PatchApplicationId}
+      - {name: rule_index, type: Optional<Integer>}
+      - {name: error, type: String}
 
 commands:
   - name: agentic.architecture.CreateArchitecture
@@ -707,6 +830,160 @@ commands:
         wrong_state: true
         error: agentic.architecture.RetiredArchitecture
 
+  # Record a patch. Its digest is over the rules as written, in order.
+  - name: agentic.architecture.RecordPatch
+    naming:
+      display: Record a patch
+    input:
+      - {name: name, type: Optional<agentic.shared.Name>}
+      - {name: rules, type: List<agentic.architecture.PatchRule>}
+    outcomes:
+      - name: empty
+        when: rules.count == 0
+        error: agentic.architecture.EmptyPatch
+      - name: recorded
+        creates: agentic.architecture.Patch
+        instance: patch_id
+        sets:
+          name: input.name
+          rules: input.rules
+          digest: {generated: true}
+        emits: [agentic.architecture.PatchRecorded]
+        payload:
+          agentic.architecture.PatchRecorded:
+            patch_id: {generated: true}
+            digest: {generated: true}
+
+  # Ask for a patch to be applied to an architecture, or tried in a dry run. The applier answers
+  # with RecordPatchApplied, RecordDryRunApplied or RecordPatchRefused.
+  - name: agentic.architecture.ApplyPatch
+    naming:
+      display: Apply a patch
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: patch_id, type: agentic.shared.PatchId}
+      - {name: dry_run, type: Boolean}
+    outcomes:
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: no-such-patch
+        when_related: {via: input.patch_id, exists: false}
+        error: agentic.architecture.NoSuchPatch
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: requested
+        creates: agentic.architecture.PatchApplication
+        instance: application_id
+        sets:
+          architecture_id: input.architecture_id
+          patch_id: input.patch_id
+          dry_run: input.dry_run
+        emits: [agentic.architecture.PatchRequested]
+        payload:
+          agentic.architecture.PatchRequested:
+            application_id: {generated: true}
+            architecture_id: input.architecture_id
+            patch_id: input.patch_id
+            dry_run: input.dry_run
+
+  # The applier reports that every rule applied and names the revision it committed. A dry run
+  # commits none and is reported by RecordDryRunApplied.
+  # ESS limit (0.99.2): a `dry-run-commits` refusal (`when_subject: {predicate: dry_run ==
+  # true}`, error DryRunCommits) beside `no-such-revision` validates, and synthesis arranges the
+  # `no-such-revision` scenario on a dry-run application, where the held-state refusal answers
+  # first by the precedence rule; the interpreted target answers `dry-run-commits` and the
+  # scenario fails. Until synthesis honours the earlier branch, the applier keeps that rule.
+  - name: agentic.architecture.RecordPatchApplied
+    naming:
+      display: Record an applied patch
+    input:
+      - {name: application_id, type: agentic.shared.PatchApplicationId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: changed_rows, type: Integer}
+    outcomes:
+      - name: no-such-application
+        unknown_instance: true
+        error: agentic.architecture.NoSuchPatchApplication
+      - name: no-such-revision
+        when_related: {via: input.revision_id, exists: false}
+        error: agentic.architecture.NoSuchRevision
+      - name: applied
+        moves: agentic.architecture.PatchApplication.apply
+        instance: application_id
+        sets:
+          revision_id: input.revision_id
+          changed_rows: input.changed_rows
+        emits: [agentic.architecture.PatchApplied]
+        payload:
+          agentic.architecture.PatchApplied:
+            application_id: input.application_id
+            revision_id: input.revision_id
+            changed_rows: input.changed_rows
+      - name: settled
+        wrong_state: true
+        error: agentic.architecture.PatchApplicationSettled
+
+  # The applier reports that every rule of a dry run applied; nothing was committed.
+  - name: agentic.architecture.RecordDryRunApplied
+    naming:
+      display: Record an applied dry run
+    input:
+      - {name: application_id, type: agentic.shared.PatchApplicationId}
+      - {name: changed_rows, type: Integer}
+    outcomes:
+      - name: no-such-application
+        unknown_instance: true
+        error: agentic.architecture.NoSuchPatchApplication
+      - name: not-a-dry-run
+        when_subject: {predicate: dry_run == false}
+        error: agentic.architecture.AppliedWithoutRevision
+      - name: applied
+        moves: agentic.architecture.PatchApplication.apply
+        instance: application_id
+        sets:
+          changed_rows: input.changed_rows
+        emits: [agentic.architecture.DryRunApplied]
+        payload:
+          agentic.architecture.DryRunApplied:
+            application_id: input.application_id
+            changed_rows: input.changed_rows
+      - name: settled
+        wrong_state: true
+        error: agentic.architecture.PatchApplicationSettled
+
+  # The applier reports that a rule, or the check of the whole result, refused; nothing changed.
+  - name: agentic.architecture.RecordPatchRefused
+    naming:
+      display: Record a refused patch
+    input:
+      - {name: application_id, type: agentic.shared.PatchApplicationId}
+      - {name: rule_index, type: Optional<Integer>}
+      - {name: error, type: String}
+    outcomes:
+      - name: invalid-rule-index
+        when: rule_index < 1
+        error: agentic.architecture.InvalidRuleIndex
+      - name: no-such-application
+        unknown_instance: true
+        error: agentic.architecture.NoSuchPatchApplication
+      - name: refused
+        moves: agentic.architecture.PatchApplication.refuse
+        instance: application_id
+        sets:
+          rule_index: input.rule_index
+          error: input.error
+        emits: [agentic.architecture.PatchRefused]
+        payload:
+          agentic.architecture.PatchRefused:
+            application_id: input.application_id
+            rule_index: input.rule_index
+            error: input.error
+      - name: settled
+        wrong_state: true
+        error: agentic.architecture.PatchApplicationSettled
+
 views:
   # Who may call whom: one row per link. No row, no reach.
   - name: agentic.architecture.Reach
@@ -763,3 +1040,30 @@ views:
       - {name: architecture_id, type: agentic.shared.ArchitectureId}
       - {name: name, type: agentic.shared.Name}
       - {name: state, type: agentic.architecture.Architecture.State}
+
+  - name: agentic.architecture.Patches
+    source: agentic.architecture.Patch
+    consistency: read_your_writes
+    fields:
+      - {name: patch_id, type: agentic.shared.PatchId}
+      - {name: name, type: Optional<agentic.shared.Name>}
+      - {name: rules, type: List<agentic.architecture.PatchRule>}
+      - {name: digest, type: agentic.architecture.Digest}
+
+  # The patch history of one architecture: undo, drafts and comparisons read it.
+  - name: agentic.architecture.PatchApplications
+    source: agentic.architecture.PatchApplication
+    consistency: read_your_writes
+    params:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+    filter: architecture_id == param.architecture_id
+    fields:
+      - {name: application_id, type: agentic.shared.PatchApplicationId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: patch_id, type: agentic.shared.PatchId}
+      - {name: dry_run, type: Boolean}
+      - {name: revision_id, type: Optional<agentic.shared.ArchitectureRevisionId>}
+      - {name: changed_rows, type: Optional<Integer>}
+      - {name: rule_index, type: Optional<Integer>}
+      - {name: error, type: Optional<String>}
+      - {name: state, type: agentic.architecture.PatchApplication.State}

@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:19:54Z",
+  "actor": "human:operator",
+  "artifact": "epic:agenticstudio",
+  "kind": "epic",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-scope-1",
+    "reference": "answers review-result:agenticstudio-scope-1 finding 2 (agenticstudio.md:31, run an experiment from the editor unclaimed): fixed in story:studio-evaluation (run control in ui/studio, acceptance line on Running)",
+    "review": "review-result:agenticstudio-scope-1",
+    "outcome": "fixed"
+  }
+}

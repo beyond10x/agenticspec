@@ -1,0 +1,294 @@
+# Studio session and tool call. Source: epic agenticstudio ("A user and an agent design an
+# architecture together in one place"; "The agent's tools are four: `query(selector)`,
+# `apply(patch, dry_run)`, `check`, `simulate(budget)`"; "One operation set for the user, the
+# studio agent and the optimizer"). A session is the user and an agent working on one draft; a
+# tool call is one of the four operations on that draft, made by either of them. An apply
+# answers with a patch application of the architecture block; a simulate with an evaluation.
+domain: studio.session
+
+summary: >-
+  A studio session is a user and an agent working on one draft. Each change or question in it is
+  a tool call: query (a selector over the draft's facts), apply (a patch, or its dry run), check
+  or simulate, made by the user or the agent, answered or failed.
+
+naming:
+  wire: session
+  display: Session
+
+types:
+  - name: studio.session.Tool
+    kind: enum
+    variants: [Query, Apply, Check, Simulate]
+
+  # Who made the call: the user in the editor, or the agent through the agent channel.
+  - name: studio.session.Caller
+    kind: enum
+    variants: [User, Agent]
+
+entities:
+  # UNMAPPED: the participants of a session. The epic names a user and an agent; nothing says
+  # whether the user is a principal of the building blocks (agentic.principal.Principal) and the
+  # agent a harness session (agentic.harness.HarnessSession), nor how many agents join one
+  # session. Taken: no participant fields.
+  # UNMAPPED: whether a session moves to another draft. Taken: a session works on the one draft
+  # it was started on; another draft is another session.
+  - name: studio.session.Session
+    naming:
+      summary: A user and an agent working on one draft.
+    identity:
+      name: session_id
+      type: studio.shared.SessionId
+    fields:
+      - {name: draft_id, type: studio.shared.DraftId}
+    relations:
+      - {name: draft, kind: references, target: studio.draft.Draft, cardinality: one, via: draft_id}
+      - {name: tool_calls, kind: owns, target: studio.session.ToolCall, cardinality: many, via: session_id}
+    lifecycle:
+      initial: Open
+      states: [Open, Closed]
+      terminal: [Closed]
+      transitions:
+        - {name: close, from: [Open], to: Closed}
+
+  # One operation on the session's draft. `arguments` is the call's input as JSON text: the
+  # selector of a query, the patch of an apply, the budget of a simulate. `answer` is the
+  # answer as JSON text: the rows of a query, the diff and check result of an apply, the check
+  # result, or the evaluation's summary. An apply that the patch's rules refuse is answered (its
+  # patch application is Refused); a call fails only when it could not be carried out.
+  - name: studio.session.ToolCall
+    naming:
+      summary: One query, apply, check or simulate on the draft of a session, by the user or the agent.
+    identity:
+      name: call_id
+      type: studio.shared.ToolCallId
+    fields:
+      - {name: session_id, type: studio.shared.SessionId}
+      - {name: tool, type: studio.session.Tool}
+      - {name: caller, type: studio.session.Caller}
+      - {name: arguments, type: String}
+      - {name: dry_run, type: Boolean}
+      - {name: application, type: Optional<studio.shared.PatchApplicationRef>}
+      - {name: evaluation_id, type: Optional<studio.shared.EvaluationId>}
+      - {name: answer, type: Optional<String>}
+      - {name: failure, type: Optional<String>}
+    relations:
+      - {name: evaluation, kind: references, target: studio.evaluation.Evaluation, cardinality: one, via: evaluation_id}
+    lifecycle:
+      initial: Running
+      states: [Running, Answered, Failed]
+      terminal: [Answered, Failed]
+      transitions:
+        - {name: answer, from: [Running], to: Answered}
+        - {name: fail, from: [Running], to: Failed}
+
+errors:
+  - name: studio.session.NoSuchDraft
+    summary: No draft has this id, and no session was started.
+  - name: studio.session.ArchivedDraft
+    summary: The draft is archived, and no session was started.
+  - name: studio.session.NoSuchSession
+    summary: No session has this id, and nothing changed.
+  - name: studio.session.ClosedSession
+    summary: The session is closed, and nothing changed.
+  - name: studio.session.DryRunOutsideApply
+    summary: Only an apply runs dry, and no call was made.
+  - name: studio.session.NoSuchToolCall
+    summary: No tool call has this id, and nothing changed.
+  - name: studio.session.ToolCallOver
+    summary: The tool call is already answered or failed, and nothing changed.
+  - name: studio.session.NoSuchEvaluation
+    summary: No evaluation has this id, and nothing changed.
+
+events:
+  - name: studio.session.SessionStarted
+    fields:
+      - {name: session_id, type: studio.shared.SessionId}
+      - {name: draft_id, type: studio.shared.DraftId}
+  - name: studio.session.SessionClosed
+    fields:
+      - {name: session_id, type: studio.shared.SessionId}
+  - name: studio.session.ToolCalled
+    fields:
+      - {name: call_id, type: studio.shared.ToolCallId}
+      - {name: session_id, type: studio.shared.SessionId}
+      - {name: tool, type: studio.session.Tool}
+      - {name: caller, type: studio.session.Caller}
+      - {name: dry_run, type: Boolean}
+  - name: studio.session.ToolCallAnswered
+    fields:
+      - {name: call_id, type: studio.shared.ToolCallId}
+      - {name: application, type: Optional<studio.shared.PatchApplicationRef>}
+      - {name: evaluation_id, type: Optional<studio.shared.EvaluationId>}
+  - name: studio.session.ToolCallFailed
+    fields:
+      - {name: call_id, type: studio.shared.ToolCallId}
+      - {name: failure, type: String}
+
+commands:
+  - name: studio.session.StartSession
+    naming:
+      display: Start a studio session
+    input:
+      - {name: draft_id, type: studio.shared.DraftId}
+    outcomes:
+      - name: no-such-draft
+        when_related: {via: input.draft_id, exists: false}
+        error: studio.session.NoSuchDraft
+      - name: archived
+        when_related: {via: input.draft_id, predicate: state == Archived}
+        error: studio.session.ArchivedDraft
+      - name: started
+        creates: studio.session.Session
+        instance: session_id
+        sets:
+          draft_id: input.draft_id
+        emits: [studio.session.SessionStarted]
+        payload:
+          studio.session.SessionStarted:
+            session_id: {generated: true}
+            draft_id: input.draft_id
+
+  - name: studio.session.CloseSession
+    naming:
+      display: Close a studio session
+    input:
+      - {name: session_id, type: studio.shared.SessionId}
+    outcomes:
+      - name: no-such-session
+        unknown_instance: true
+        error: studio.session.NoSuchSession
+      - name: closed
+        moves: studio.session.Session.close
+        instance: session_id
+        emits: [studio.session.SessionClosed]
+        payload:
+          studio.session.SessionClosed:
+            session_id: input.session_id
+      - name: wrong-state
+        wrong_state: true
+        error: studio.session.ClosedSession
+
+  - name: studio.session.CallTool
+    naming:
+      display: Call a studio tool
+    input:
+      - {name: session_id, type: studio.shared.SessionId}
+      - {name: tool, type: studio.session.Tool}
+      - {name: caller, type: studio.session.Caller}
+      - {name: arguments, type: String}
+      - {name: dry_run, type: Boolean}
+    outcomes:
+      - name: dry-run-outside-apply
+        when:
+          all:
+            - dry_run == true
+            - tool != Apply
+        error: studio.session.DryRunOutsideApply
+      - name: no-such-session
+        when_related: {via: input.session_id, exists: false}
+        error: studio.session.NoSuchSession
+      - name: session-closed
+        when_related: {via: input.session_id, predicate: state == Closed}
+        error: studio.session.ClosedSession
+      - name: called
+        creates: studio.session.ToolCall
+        instance: call_id
+        sets:
+          session_id: input.session_id
+          tool: input.tool
+          caller: input.caller
+          arguments: input.arguments
+          dry_run: input.dry_run
+        emits: [studio.session.ToolCalled]
+        payload:
+          studio.session.ToolCalled:
+            call_id: {generated: true}
+            session_id: input.session_id
+            tool: input.tool
+            caller: input.caller
+            dry_run: input.dry_run
+
+  - name: studio.session.AnswerToolCall
+    naming:
+      display: Answer a tool call
+    input:
+      - {name: call_id, type: studio.shared.ToolCallId}
+      - {name: answer, type: String}
+      - {name: application, type: Optional<studio.shared.PatchApplicationRef>}
+      - {name: evaluation_id, type: Optional<studio.shared.EvaluationId>}
+    outcomes:
+      - name: no-such-call
+        unknown_instance: true
+        error: studio.session.NoSuchToolCall
+      - name: no-such-evaluation
+        when_related: {via: input.evaluation_id, exists: false}
+        error: studio.session.NoSuchEvaluation
+      - name: answered
+        moves: studio.session.ToolCall.answer
+        instance: call_id
+        sets:
+          answer: input.answer
+          application: input.application
+          evaluation_id: input.evaluation_id
+        emits: [studio.session.ToolCallAnswered]
+        payload:
+          studio.session.ToolCallAnswered:
+            call_id: input.call_id
+            application: input.application
+            evaluation_id: input.evaluation_id
+      - name: over
+        wrong_state: true
+        error: studio.session.ToolCallOver
+
+  - name: studio.session.FailToolCall
+    naming:
+      display: Fail a tool call
+    input:
+      - {name: call_id, type: studio.shared.ToolCallId}
+      - {name: failure, type: String}
+    outcomes:
+      - name: no-such-call
+        unknown_instance: true
+        error: studio.session.NoSuchToolCall
+      - name: failed
+        moves: studio.session.ToolCall.fail
+        instance: call_id
+        sets:
+          failure: input.failure
+        emits: [studio.session.ToolCallFailed]
+        payload:
+          studio.session.ToolCallFailed:
+            call_id: input.call_id
+            failure: input.failure
+      - name: over
+        wrong_state: true
+        error: studio.session.ToolCallOver
+
+views:
+  - name: studio.session.Sessions
+    source: studio.session.Session
+    consistency: read_your_writes
+    fields:
+      - {name: session_id, type: studio.shared.SessionId}
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: state, type: studio.session.Session.State}
+
+  # The transcript of a session: every call in it, what it asked and how it was answered.
+  - name: studio.session.ToolCalls
+    source: studio.session.ToolCall
+    consistency: read_your_writes
+    params:
+      - {name: session_id, type: studio.shared.SessionId}
+    filter: session_id == param.session_id
+    fields:
+      - {name: call_id, type: studio.shared.ToolCallId}
+      - {name: session_id, type: studio.shared.SessionId}
+      - {name: tool, type: studio.session.Tool}
+      - {name: caller, type: studio.session.Caller}
+      - {name: arguments, type: String}
+      - {name: dry_run, type: Boolean}
+      - {name: application, type: Optional<studio.shared.PatchApplicationRef>}
+      - {name: evaluation_id, type: Optional<studio.shared.EvaluationId>}
+      - {name: answer, type: Optional<String>}
+      - {name: failure, type: Optional<String>}
+      - {name: state, type: studio.session.ToolCall.State}

@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:19:54Z",
+  "actor": "human:operator",
+  "artifact": "story:studio-chat",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-parallel-safety-1",
+    "reference": "answers review-result:agenticstudio-parallel-safety-1 finding 5 (studio-chat.md:33, shares ui/studio with story:studio-state-space unordered): fixed, depends_on story:studio-state-space added; section Shared surfaces names it",
+    "review": "review-result:agenticstudio-parallel-safety-1",
+    "outcome": "fixed"
+  }
+}

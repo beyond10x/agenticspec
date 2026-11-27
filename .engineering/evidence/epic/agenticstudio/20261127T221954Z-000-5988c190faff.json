@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:19:54Z",
+  "actor": "human:operator",
+  "artifact": "epic:agenticstudio",
+  "kind": "epic",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-scope-1",
+    "reference": "answers review-result:agenticstudio-scope-1 finding 1 (agenticstudio.md:61, KPI change of a dry run unclaimed): fixed in story:studio-evaluation (dry run answers run KPIs of a short simulation before and after; acceptance line) and passed through by story:studio-mcp",
+    "review": "review-result:agenticstudio-scope-1",
+    "outcome": "fixed"
+  }
+}

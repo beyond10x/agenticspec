@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T22:24:10Z",
+  "actor": "human:operator",
+  "artifact": "epic:agenticstudio",
+  "kind": "epic",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:agenticstudio-scope-2",
+    "reference": "answers review-result:agenticstudio-scope-2 finding 1 (layer check on a draft unclaimed): fixed, the epic promises the structural check of agenticspec-sim check live and says the layer check holds blocks/ sources and is not run on a draft",
+    "review": "review-result:agenticstudio-scope-2",
+    "outcome": "fixed"
+  }
+}

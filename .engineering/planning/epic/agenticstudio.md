@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: epic:agenticstudio
 kind: epic
-status: draft
+status: active
 title: 'agenticstudio: an architecture builder with an embedded agent channel'
 summary: A multi-crate app in this repository where a user and an agent design an architecture of building blocks, check it, simulate and hill-climb it, visualize the state space, and keep drafts.
 tags:
@@ -10,7 +10,10 @@ tags:
 relations:
 - depends_on: epic:simulator-and-search
 - depends_on: epic:docs-site
-revision: 2
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-27T21:51:12Z", actor: "human:operator", revision: 3}
+- {from: "proposed", to: "active", at: "2026-11-27T21:51:12Z", actor: "human:operator", revision: 4}
 ---
 ## Outcome
 
@@ -24,7 +27,9 @@ one place, check it, simulate and optimize it, and keep drafts.
   add and remove parts and links, set marked places, run the check, run an experiment, and explain
   a refusal or a KPI.
 - The architecture graph as an editor (the renderer of `crates/agenticspec-render`, made
-  interactive), with the layer check and the structural check live.
+  interactive), with the structural check of `agenticspec-sim check` live. The layer check
+  (`task check:layers`) holds the sources under `blocks/`; a draft changes an architecture and no
+  block, so the layer check is not run on a draft (decided in round 2 of the plan review).
 - Evaluation: run an experiment from the editor; show the KPIs per part, baseline against best.
 - Hill climbing and state space visualizations: the search trace, the variants, the space of the
   marked places, and the states of the specification an experiment reached.
@@ -36,11 +41,13 @@ one place, check it, simulate and optimize it, and keep drafts.
 One operation set for the user, the studio agent and the optimizer.
 
 - An architecture is facts for the query language of `queries/*.sq` (`docs/queries.md`):
-  `part{id, kind, role, count}`, `link{id, from, to, kind}`, `policy{...}`, `marker{...}`, and the
-  KPIs of the last run per part, `kpi{part, id, value}`. The same language then reads transcripts,
-  observed runs and architectures.
-- A selector is a rule body: `part{id: P, role: "worker"}, kpi{part: P, id:
-  "false_completion_claim_share", value: V}, V > 0.5`.
+  `part{id, block, count}`, `setting{part, name, value}`, `link{index, from, to, carries, over}`,
+  `policy{id, value}`, `marker{path, value}`, and the KPIs of the last run per part, `kpi{part,
+  id, value}`. The fields are read from the format `agenticspec-architecture/1` and fixed once in
+  `story:studio-first-slice` § "Facts of an architecture"; every selector of the stories uses
+  those fields only. The same language then reads transcripts, observed runs and architectures.
+- A selector is a rule body: `part{id: P, block: "agent"}, kpi{part: P, id:
+  "false_completions_shipped", value: V}, V > 0`.
 - A transform is a rule head from a small closed set of verbs:
   - `set` a field;
   - `add` / `remove` a part or link;
@@ -49,8 +56,8 @@ One operation set for the user, the studio agent and the optimizer.
   - `wrap` a link or part with a guard part (timeout, retry, budget cap, approval gate,
     reviewer, verifier), and `prepend` / `append` on a link;
   - `mark` / `unmark` a place for optimization with its `vary`.
-- Example: `wrap(L, timeout{after: 10m}) :- link{id: L, kind: "model_call", from: A},
-  part{id: A, role: "worker"}.`
+- Example: `wrap(L, timeout{after: 10m}) :- link{index: L, carries: "model_call", from: A},
+  part{id: A, block: "agent"}.`
 - A patch (`agenticspec-patch/1`) is an ordered list of such rules. It compiles to the commands of
   the `architecture` block (AddPart, AddLink, SetPer, SetSwarm, ...), applies atomically as one
   architecture revision, and is refused as a whole with the rule's named error.
@@ -71,16 +78,63 @@ in `epic:research-blocks` as enforced harness limits), and the architecture fact
 - `blocks/` (the ESS system `agentic`), `architectures/`, `profiles/`, `experiments/`.
 - `crates/agenticspec-sim` (check, simulate, search) and `crates/agenticspec-render` (the page).
 - `crates/agenticspec-docs` (block pages, KPI catalogue).
-- The `serve` command's server and the UI in `ui/app` (Vue), or a new app beside it.
+- The pattern of the `serve` command (std HTTP, SSE channels, the generated route module).
 
-## Before decomposition
+## Shape
 
-The epic introduces nouns no ESS document declares yet: a studio session, a draft with revisions,
-a tool call of the studio agent on a draft. Model them first (an ESS domain of the studio, or the
-`architecture` block's revisions extended with drafts), then decompose.
+- Crates: `crates/agenticspec-patch` (the patch language and its applier, a library the
+  studio, the CLI and the optimizer link), `crates/agenticstudio` (the `agenticstudio` binary:
+  `serve`, the drafts, sessions, tool calls and evaluations), `crates/agenticstudio-mcp` (the
+  agent channel as MCP tools).
+- UI: `ui/studio`, a Vue 3 app beside `ui/app` (same toolchain), served by `agenticstudio serve`.
+
+## Nouns (ESS)
+
+Modelled before decomposition; each validates with `ess specify validate --strict-requires`.
+
+- Building blocks, `blocks/9-composition/architecture.yaml` (system `agentic`, layer 9): a patch
+  is `agentic.architecture.Patch` (ordered `PatchRule`s, verb from `PatchVerb`), its application
+  `agentic.architecture.PatchApplication` (Requested, then Applied with the committed revision or
+  Refused with the rule's position and error; a dry run commits none), with the commands
+  `RecordPatch`, `ApplyPatch`, `RecordPatchApplied`, `RecordDryRunApplied`, `RecordPatchRefused`
+  and the views `Patches`, `PatchApplications`. Identifiers `PatchId`, `PatchApplicationId` in
+  `blocks/0-foundation/shared.yaml`. A draft's revisions are the architecture's
+  `ArchitectureRevision`s.
+- App-only, the ESS system `studio` in `studio/` (`studio/system.yaml`, `studio/ess-inputs.yaml`):
+  - `studio.draft.Draft` (`studio/domains/draft.yaml`): a named handle on an architecture, opened
+    from a document, Open or Archived.
+  - `studio.session.Session` and `studio.session.ToolCall` (`studio/domains/session.yaml`): a
+    user and an agent on one draft; each query, apply (dry run or not), check or simulate is a
+    tool call by the user or the agent, Answered or Failed.
+  - `studio.evaluation.Evaluation` (`studio/domains/evaluation.yaml`): one simulate or search run
+    on a revision of a draft, with its budget, the experiment it made, its best fitness and the
+    digest of its result.
+- The studio names the `agentic` system's architecture, revision, patch application and
+  experiment by identifier only (`studio/domains/shared.yaml`): ESS declares no relation across
+  two systems. Open questions are the `UNMAPPED:` markers in those files.
 
 ## Status
 
-An idea recorded for later. Not scheduled; the building blocks, the simulator and the docs site
-come first.
+Decomposed into draft stories (the stories that decompose this epic). The smallest slice comes
+first: `story:studio-first-slice`.
+
+Which story claims which promise:
+
+| promise | story |
+|---|---|
+| the facts and their fields; open a draft, apply `set` and `add`, see the check | `story:studio-first-slice` |
+| the other verbs, `policy` and `kpi` facts, structural mutations in the search | `story:architecture-patches` |
+| guard parts | `story:guards-and-limits` (of `epic:research-blocks`) |
+| sessions, tool calls, live channel, listing and reading revisions | `story:studio-live` |
+| the graph as an editor: select, dry run, apply, step through revisions | `story:studio-editor` |
+| run an experiment from the editor; KPIs per part, baseline against best; accept a variant; per-part KPIs as `kpi` facts; the KPI change of a dry run | `story:studio-evaluation` |
+| the agent channel; tools that explain a refusal or a KPI | `story:studio-mcp` |
+| named drafts with revisions, archive, undo, side-by-side comparison | `story:studio-drafts` |
+| search trace, variants, landscape, reached states | `story:studio-state-space` |
+| an agent channel embedded in the browser (later) | `story:studio-chat` |
+
+The stories that share `crates/agenticstudio`, `ui/studio`, `docs/studio.md`, `studio` or
+`crates/agenticspec-sim` are ordered by `depends_on` edges; each story's § "Shared surfaces"
+names the others.
+
 
