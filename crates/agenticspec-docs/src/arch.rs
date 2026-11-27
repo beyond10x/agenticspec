@@ -278,7 +278,11 @@ A weight is what the experiment scores a KPI by: above 0 more is better, below 0
             s,
             "| {} | {} | {} | {} | {} |",
             code(name),
-            weight.map_or("–".into(), |w| format!("{}{}", if w < 0.0 { "−" } else { "+" }, w.abs())),
+            weight.map_or("–".into(), |w| format!(
+                "{}{}",
+                if w < 0.0 { "−" } else { "+" },
+                w.abs()
+            )),
             number(&Value::from(a)),
             number(&Value::from(b)),
             change
