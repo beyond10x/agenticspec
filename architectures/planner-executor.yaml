@@ -14,10 +14,10 @@ summary: >-
 
 parts:
   owner:    { block: principal, kind: human }
-  planner:  { block: agent, harness: planner, count: { value: 1, vary: [1, 2] } }
+  planner:  { block: agent, harness: coding, role: planner, count: { value: 1, vary: [1, 2] } }
   plans:    { block: channel, kind: agent_message, distribution: queue }
   on_plan:  { block: trigger, kind: on_message, channel: plans, policy: parallel, max_parallel: { value: 8, vary: [4, 8, 12] } }
-  executor: { block: agent, harness: executor, count: { value: 8, vary: [4, 8, 12] } }
+  executor: { block: agent, harness: coding, role: executor, count: { value: 8, vary: [4, 8, 12] } }
   gateway:  { block: gateway, rate_limit_per_minute: 120 }
   model:    { block: model, route: frontier }
   builds:   { block: pool, kind: build_slots, capacity: 16, job_limit: 10m }

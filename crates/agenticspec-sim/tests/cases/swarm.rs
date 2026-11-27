@@ -58,7 +58,7 @@ format: agenticspec-architecture/1
 architecture: orchestrated
 parts:
   owner:        { block: principal, kind: human }
-  orchestrator: { block: agent, harness: orchestrator }
+  orchestrator: { block: agent, harness: coding, role: orchestrator }
   workers:      { block: agent, harness: coding, count: 4, coordination: orchestrator, start_stagger: 0s }
   model:        { block: model, route: frontier }
 links:
@@ -85,7 +85,7 @@ format: agenticspec-architecture/1
 architecture: planned
 parts:
   owner:    { block: principal, kind: human }
-  planner:  { block: agent, harness: planner }
+  planner:  { block: agent, harness: coding, role: planner }
   plans:    { block: channel, kind: agent_message, distribution: queue }
   on_plan:  { block: trigger, kind: on_message, channel: plans, policy: parallel, max_parallel: 3 }
   executor: { block: agent, harness: coding, count: 3 }

@@ -15,7 +15,7 @@ summary: >-
 
 parts:
   owner:        { block: principal, kind: human }
-  orchestrator: { block: agent, harness: orchestrator, count: { value: 1, vary: [1, 2] } }
+  orchestrator: { block: agent, harness: coding, role: orchestrator, count: { value: 1, vary: [1, 2] } }
   workers:      { block: agent, harness: coding, coordination: orchestrator, count: { value: 8, vary: [4, 8, 12, 16] }, start_stagger: { value: 30s, vary: [0s, 3s, 30s] } }
   gateway:      { block: gateway, rate_limit_per_minute: { value: 120, vary: [60, 120, 240] } }
   model:        { block: model, route: frontier }

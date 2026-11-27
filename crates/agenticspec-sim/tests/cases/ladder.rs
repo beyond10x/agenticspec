@@ -24,7 +24,7 @@ format: agenticspec-architecture/1
 architecture: many
 parts:
   you:   { block: principal, kind: human }
-  one:   { block: agent, harness: coding, acts_for: you }
+  one:   { block: agent, harness: coding, role: operator, acts_for: you }
   many:  { block: agent, harness: coding, count: 3 }
   model: { block: model, route: frontier }
   box:   { block: sandbox, isolation: process, egress: [model], per: one }

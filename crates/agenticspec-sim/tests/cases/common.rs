@@ -9,7 +9,7 @@ format: agenticspec-architecture/1
 architecture: small
 parts:
   owner:    { block: principal, kind: human }
-  operator: { block: agent, harness: coding, acts_for: owner }
+  operator: { block: agent, harness: coding, role: operator, acts_for: owner }
   worker:   { block: agent, harness: coding, count: { value: 2, vary: { min: 2, max: 6, step: 2 } } }
   gateway:  { block: gateway, rate_limit_per_minute: { value: 30, vary: [10, 30, 60] } }
   model:    { block: model, route: frontier }
@@ -44,13 +44,15 @@ roles:
     build_seconds:       { dist: lognormal, median: 60, p90: 200 }
     questions_per_task:  { dist: poisson, mean: 0.5 }
     question_needs_owner: 0.5
+  reviewer:
+    turn_seconds:        { dist: lognormal, median: 10, p90: 30 }
+    tokens_per_turn:     { input: 2000, cache_read: 20000, cache_write: 2000, output: 400 }
+  operator:
+    answer_seconds:      { dist: lognormal, median: 30, p90: 120 }
 principals:
   human:
     answer_seconds:      { dist: lognormal, median: 900, p90: 3600 }
     away:                [{ from: 1h, for: 30m, every: 24h }]
-agents:
-  operator:
-    answer_seconds:      { dist: lognormal, median: 30, p90: 120 }
 load:
   tasks_per_hour: 4
 prices:

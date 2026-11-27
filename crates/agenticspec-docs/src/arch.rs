@@ -592,5 +592,26 @@ Each page shows the result of the structural check and the architecture drawn as
             a.experiment.as_ref().map_or("–".into(), |r| code(&r.name)),
         );
     }
+    let events: Vec<String> = agenticspec_sim::sim::EVENTS
+        .iter()
+        .map(|(name, _)| code(name))
+        .collect();
+    let _ = write!(
+        s,
+        "\nWhat the simulator models:\n\n\
+- **Agents.** Every agent part that does not act for a principal and is not a reviewer takes tasks. \
+Its behaviour is the profile role its `role` names (`coding` when it names none); `harness` names the kind of harness and picks no role.\n\
+- **Questions.** The part a `question` link ends at answers: a principal with the delay of its kind, an agent with the \
+`answer_seconds` of its own role, whatever the part is called. An agent that acts for a principal passes questions that need the owner on to it.\n\
+- **Models.** Each model call goes to one of the model parts the agent reaches over `model_call` links, drawn by the agent's \
+`model_share` (a share per model part; equal shares when it gives none), and is priced by that model's `route` in the profile. \
+A route the profile does not price is refused, by name.\n\
+- **Runtimes.** A runtime part that is given runs (a `run` or `order` link, or a trigger) executes them with the profile role \
+its `role` names: `task_turns` steps a run, each lasting `turn_seconds`, each a model call when the runtime reaches a model. \
+A `question` link to a principal adds person steps, answered with the principal's delay. A runtime is not charged as a live agent.\n\
+- **Triggers.** A trigger fires on its schedule, on a post to a shared channel, or on an event of the simulation: {}. \
+An `on_event` trigger fires on that event at any part, or only at the part its `source` names; it may wake an agent or a runtime.\n",
+        events.join(", ")
+    );
     s
 }

@@ -89,7 +89,8 @@
       "operator": {
         "acts_for": "owner",
         "block": "agent",
-        "harness": "coding"
+        "harness": "coding",
+        "role": "operator"
       },
       "owner": {
         "block": "principal",
@@ -1225,15 +1226,6 @@
     }
   ],
   "profile": {
-    "agents": {
-      "operator": {
-        "answer_seconds": {
-          "dist": "lognormal",
-          "median": 30,
-          "p90": 120
-        }
-      }
-    },
     "coordination": {
       "board_read_seconds": {
         "dist": "exponential",
@@ -1390,6 +1382,13 @@
           "p90": 60
         }
       },
+      "operator": {
+        "answer_seconds": {
+          "dist": "lognormal",
+          "median": 30,
+          "p90": 120
+        }
+      },
       "orchestrator": {
         "task_turns": 3,
         "tokens_per_turn": {
@@ -1406,6 +1405,19 @@
       },
       "planner": {
         "task_turns": 1,
+        "tokens_per_turn": {
+          "cache_read": 60000,
+          "cache_write": 4000,
+          "input": 2000,
+          "output": 600
+        },
+        "turn_seconds": {
+          "dist": "lognormal",
+          "median": 12,
+          "p90": 60
+        }
+      },
+      "reviewer": {
         "tokens_per_turn": {
           "cache_read": 60000,
           "cache_write": 4000,
@@ -1441,11 +1453,13 @@
       "roles.coding.step_turns": "estimate",
       "roles.executor": "as roles.coding apart from step_pass_after_fail",
       "roles.executor.step_pass_after_fail": "2610.29870 and 2611.07166: a plan raised resolved from 50.2% to 65.0% (x1.295); applied to the share of tasks whose last step passes under the coding chain (0.321 to 0.416), which gives 0.212 after a failed step",
+      "roles.operator.answer_seconds": "estimate of how long an agent acting for the owner takes to answer or pass on a question",
       "roles.orchestrator.task_turns": "estimate of the calls an orchestrator spends handing out one task",
       "roles.orchestrator.tokens_per_turn": "estimate, a smaller context than a coding turn",
       "roles.planner.task_turns": "2610.29870: the planner used under 2% of the executor's tokens; one turn against the executor's median of 40",
       "roles.planner.tokens_per_turn": "estimate, as roles.coding",
-      "roles.planner.turn_seconds": "estimate, as roles.coding"
+      "roles.planner.turn_seconds": "estimate, as roles.coding",
+      "roles.reviewer": "as roles.coding; the calls of one review are review.turns"
     },
     "summary": "Behaviour of coding agents and their owner. Values are estimates or come from papers; `sources` names the paper (arXiv id) or says estimate for each value of the failure dynamics. All of them are refitted from the session store."
   },
