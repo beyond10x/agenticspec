@@ -142,7 +142,7 @@ Beside the crates, `ui/` holds:
   `ux/site/scenarios/`, findings `ux/site/findings/SUF-nnn.md`, the baseline
   `ux/site/baseline.json` and rounds `ux/site/rounds/S-nn/` (`task ux:site-round -- S-nn`). Its
   fast loop is `task check:site` (`scripts/check-site.sh`, specs in `website/e2e/`) on the built
-  site, run as `slot --here task check:site` so the outputs stay on this machine. axe-core
+  site, run as `slot task check:site`; only `task docs:generate` runs with `slot --here`. axe-core
   results are cached under `target/site-ux/axe/` by a digest of the built HTML.
 
 ## Repository files
