@@ -1,0 +1,711 @@
+domain: agentic.workspace
+
+summary: >-
+  The files an agent works on: a checkout, a scratch copy or a worktree, at a base revision. A
+  lease names who works in it; it is requested, then granted, and an exclusive workspace has at
+  most one live lease. Only the holder of a live lease writes, and a change leaves the workspace
+  only as a proposal, which is merged, rejected or superseded.
+
+naming:
+  wire: workspace
+  display: Workspace
+
+types:
+  - name: agentic.workspace.WorkspaceKind
+    kind: enum
+    variants: [Checkout, ScratchCopy, Worktree]
+
+  - name: agentic.workspace.Revision
+    kind: newtype
+    of: String
+    naming:
+      summary: A revision of the files, as the version control system names it.
+
+  - name: agentic.workspace.Path
+    kind: newtype
+    of: String
+    naming:
+      summary: A path inside the workspace.
+
+entities:
+  - name: agentic.workspace.Workspace
+    naming:
+      summary: One set of files at a base revision, shared as its sharing says.
+    identity:
+      name: workspace_id
+      type: agentic.shared.WorkspaceId
+    fields:
+      - name: kind
+        type: agentic.workspace.WorkspaceKind
+      - name: sharing
+        type: agentic.shared.Sharing
+      - name: base_revision
+        type: agentic.workspace.Revision
+    # An Exclusive workspace is Held while its one live lease lasts; that state is what refuses a
+    # second exclusive lease. A shared workspace stays Ready under any number of leases.
+    # UNMAPPED: removing a workspace (a checkout deleted, a worktree pruned) is not modelled; the
+    # design names no rule for it.
+    lifecycle:
+      initial: Ready
+      states: [Ready, Held]
+      terminal: []
+      transitions:
+        - name: hold
+          from: [Ready]
+          to: Held
+        - name: free
+          from: [Held]
+          to: Ready
+
+  - name: agentic.workspace.Lease
+    naming:
+      summary: A party's right to work in a workspace until it expires.
+    identity:
+      name: lease_id
+      type: agentic.shared.LeaseId
+    fields:
+      - name: workspace_id
+        type: agentic.shared.WorkspaceId
+      - name: holder
+        type: agentic.channel.PartyId
+      - name: sharing
+        type: agentic.shared.Sharing
+        summary: The workspace's sharing when the lease was requested.
+      - name: expires_at
+        type: Timestamp
+      - name: writes
+        type: Integer
+    invariants:
+      - writes >= 0
+    relations:
+      # UNMAPPED: whether a lease is owned by its workspace (owns: it has no meaning without it)
+      # or only names it (references) is not stated; no command deletes either, so no delete
+      # depends on it yet.
+      - name: workspace
+        kind: references
+        target: agentic.workspace.Workspace
+        cardinality: one
+        via: workspace_id
+    # Requested to Live is the wait on a lease the design's KPI measures. A lease is granted by a
+    # separate command because an outcome that creates a row declares no `affects:`
+    # (unsupported_construct), and the grant must hold the workspace in the same step.
+    lifecycle:
+      initial: Requested
+      states: [Requested, Live, Released, Expired]
+      terminal: [Released, Expired]
+      transitions:
+        - name: grant
+          from: [Requested]
+          to: Live
+        - name: release
+          from: [Live]
+          to: Released
+        - name: expire
+          from: [Live]
+          to: Expired
+
+  - name: agentic.workspace.Proposal
+    naming:
+      summary: A change leaving a workspace, made under a live lease.
+    identity:
+      name: proposal_id
+      type: agentic.shared.ProposalId
+    fields:
+      - name: workspace_id
+        type: agentic.shared.WorkspaceId
+      - name: lease_id
+        type: agentic.shared.LeaseId
+      - name: proposed_by
+        type: agentic.channel.PartyId
+      - name: base_revision
+        type: agentic.workspace.Revision
+      - name: change
+        type: agentic.shared.Content
+      - name: merged_revision
+        type: Optional<agentic.workspace.Revision>
+      - name: superseded_by
+        type: Optional<agentic.shared.ProposalId>
+      - name: branch
+        type: Optional<String>
+        summary: The branch the change was handed back on.
+      - name: head_revision
+        type: Optional<agentic.workspace.Revision>
+        summary: The revision the change ends at when it was proposed.
+      - name: review_ref
+        type: Optional<String>
+        summary: Where the change is reviewed, as the forge names it (a merge or pull request).
+      - name: merged_under
+        type: Optional<agentic.shared.GrantId>
+        summary: The standing grant under which it was merged without asking, when one was.
+    relations:
+      - name: workspace
+        kind: references
+        target: agentic.workspace.Workspace
+        cardinality: one
+        via: workspace_id
+      - name: lease
+        kind: references
+        target: agentic.workspace.Lease
+        cardinality: one
+        via: lease_id
+      - name: successor
+        kind: references
+        target: agentic.workspace.Proposal
+        cardinality: one
+        via: superseded_by
+      - name: merge_grant
+        kind: references
+        target: agentic.authority.Grant
+        cardinality: one
+        via: merged_under
+    lifecycle:
+      initial: Proposed
+      states: [Proposed, Merged, Rejected, Superseded]
+      terminal: [Merged, Rejected, Superseded]
+      transitions:
+        - name: merge
+          from: [Proposed]
+          to: Merged
+        - name: reject
+          from: [Proposed]
+          to: Rejected
+        - name: supersede
+          from: [Proposed]
+          to: Superseded
+
+actors:
+  - name: agentic.workspace.Worker
+    naming:
+      display: Worker
+      summary: A party that works in workspaces; its credential names the party it is.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+    may:
+      - agentic.workspace.CreateWorkspace
+      - agentic.workspace.RequestLease
+      - agentic.workspace.ReleaseLease
+      - agentic.workspace.RecordWrite
+      - agentic.workspace.Propose
+
+  - name: agentic.workspace.Keeper
+    naming:
+      display: Keeper
+      summary: What keeps the workspaces; it grants and expires leases and decides proposals.
+    may:
+      - agentic.workspace.GrantLease
+      - agentic.workspace.ExpireLease
+      - agentic.workspace.MergeProposal
+      - agentic.workspace.RejectProposal
+      - agentic.workspace.SupersedeProposal
+
+errors:
+  - name: agentic.workspace.UnknownWorkspace
+    summary: No workspace has this identity.
+    fields:
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+
+  - name: agentic.workspace.LeaseHeld
+    summary: The workspace is exclusive and another live lease holds it.
+
+  - name: agentic.workspace.LeaseNotRequested
+    summary: The lease is not waiting for a grant.
+
+  - name: agentic.workspace.UnknownLease
+    summary: No lease has this identity.
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+
+  - name: agentic.workspace.NoLease
+    summary: The proposal names no lease that exists.
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+
+  - name: agentic.workspace.LeaseNotLive
+    summary: The lease is not live; it is requested, released or expired.
+
+  - name: agentic.workspace.LeaseStateConflict
+    summary: The lease is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.workspace.Lease.State}
+
+  - name: agentic.workspace.NotTheHolder
+    summary: Only the holder of the lease acts under it.
+
+  - name: agentic.workspace.ReadOnlyWorkspace
+    summary: The workspace is shared read-only; nothing is written in it.
+
+  - name: agentic.workspace.NotExpired
+    summary: The lease has not reached its expiry.
+
+  - name: agentic.workspace.UnknownProposal
+    summary: No proposal has this identity.
+    fields:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+
+  - name: agentic.workspace.ProposalStateConflict
+    summary: The proposal is no longer Proposed.
+    fields:
+      - {name: state, type: agentic.workspace.Proposal.State}
+
+commands:
+  - name: agentic.workspace.CreateWorkspace
+    naming:
+      wire: create-workspace
+      display: Create a workspace
+    input:
+      - {name: kind, type: agentic.workspace.WorkspaceKind}
+      - {name: sharing, type: agentic.shared.Sharing}
+      - {name: base_revision, type: agentic.workspace.Revision}
+    outcomes:
+      - name: created
+        creates: agentic.workspace.Workspace
+        instance: workspace_id
+        sets:
+          kind: input.kind
+          sharing: input.sharing
+          base_revision: input.base_revision
+        emits: [agentic.workspace.WorkspaceCreated]
+        payload:
+          agentic.workspace.WorkspaceCreated:
+            workspace_id: {generated: true}
+            kind: input.kind
+            sharing: input.sharing
+            base_revision: input.base_revision
+
+  - name: agentic.workspace.RequestLease
+    naming:
+      wire: request-lease
+      display: Request a lease
+      summary: The caller asks for a lease on a workspace until it expires.
+    input:
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: expires_at, type: Timestamp}
+    outcomes:
+      - name: unknown-workspace
+        when_related:
+          via: input.workspace_id
+          exists: false
+        error: agentic.workspace.UnknownWorkspace
+        payload:
+          agentic.workspace.UnknownWorkspace: {workspace_id: input.workspace_id}
+      - name: requested
+        creates: agentic.workspace.Lease
+        instance: lease_id
+        sets:
+          workspace_id: input.workspace_id
+          holder: {caller: party}
+          sharing: {related: {via: input.workspace_id, field: sharing}}
+          expires_at: input.expires_at
+          writes: 0
+        emits: [agentic.workspace.LeaseRequested]
+        payload:
+          agentic.workspace.LeaseRequested:
+            lease_id: {generated: true}
+            workspace_id: input.workspace_id
+            holder: {caller: party}
+            expires_at: input.expires_at
+
+  - name: agentic.workspace.GrantLease
+    naming:
+      wire: grant-lease
+      display: Grant a lease
+      summary: A requested lease goes live; an exclusive workspace is held by it.
+    # The workspace is read through the lease's stored reference, not named again in the input.
+    # RequestLease, the only writer of Lease.workspace_id, refuses an unknown workspace and nothing
+    # deletes a workspace, so no missing-workspace branch is declared (ess/30). An input naming the
+    # workspace again, refused when it differs from the lease's, made ESS 0.99.2 synthesize grant
+    # scenarios whose input names another workspace than the lease's, which then failed.
+    input:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.workspace.UnknownLease
+        payload:
+          agentic.workspace.UnknownLease: {lease_id: input.lease_id}
+      - name: exclusive-held
+        when_related:
+          via: workspace_id
+          predicate: state == Held
+        error: agentic.workspace.LeaseHeld
+      - name: granted-exclusive
+        when_related:
+          via: workspace_id
+          predicate: sharing == Exclusive
+        moves: agentic.workspace.Lease.grant
+        instance: lease_id
+        affects:
+          - entity: agentic.workspace.Workspace
+            where: {all: [workspace_id == subject.workspace_id, state == Ready]}
+            moves: agentic.workspace.Workspace.hold
+        emits: [agentic.workspace.LeaseGranted]
+        payload:
+          agentic.workspace.LeaseGranted:
+            lease_id: input.lease_id
+            workspace_id: {subject: workspace_id}
+      - name: granted-shared
+        moves: agentic.workspace.Lease.grant
+        instance: lease_id
+        emits: [agentic.workspace.LeaseGranted]
+        payload:
+          agentic.workspace.LeaseGranted:
+            lease_id: input.lease_id
+            workspace_id: {subject: workspace_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.workspace.LeaseStateConflict
+        payload:
+          agentic.workspace.LeaseStateConflict: {state: {subject: state}}
+
+  - name: agentic.workspace.ReleaseLease
+    naming:
+      wire: release-lease
+      display: Release a lease
+    input:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.workspace.UnknownLease
+        payload:
+          agentic.workspace.UnknownLease: {lease_id: input.lease_id}
+      - name: not-the-holder
+        when_subject:
+          predicate: holder != caller.party
+        error: agentic.workspace.NotTheHolder
+      - name: released
+        moves: agentic.workspace.Lease.release
+        instance: lease_id
+        affects:
+          - entity: agentic.workspace.Workspace
+            where: {all: [workspace_id == subject.workspace_id, state == Held]}
+            moves: agentic.workspace.Workspace.free
+        emits: [agentic.workspace.LeaseReleased]
+        payload:
+          agentic.workspace.LeaseReleased: {lease_id: input.lease_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.workspace.LeaseStateConflict
+        payload:
+          agentic.workspace.LeaseStateConflict: {state: {subject: state}}
+
+  - name: agentic.workspace.ExpireLease
+    naming:
+      wire: expire-lease
+      display: Expire a lease
+    input:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.workspace.UnknownLease
+        payload:
+          agentic.workspace.UnknownLease: {lease_id: input.lease_id}
+      - name: not-expired
+        when_subject:
+          predicate: expires_at > now
+        error: agentic.workspace.NotExpired
+      - name: expired
+        moves: agentic.workspace.Lease.expire
+        instance: lease_id
+        affects:
+          - entity: agentic.workspace.Workspace
+            where: {all: [workspace_id == subject.workspace_id, state == Held]}
+            moves: agentic.workspace.Workspace.free
+        emits: [agentic.workspace.LeaseExpired]
+        payload:
+          agentic.workspace.LeaseExpired: {lease_id: input.lease_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.workspace.LeaseStateConflict
+        payload:
+          agentic.workspace.LeaseStateConflict: {state: {subject: state}}
+
+  # A write is recorded against the lease it is made under; the file content stays out of the
+  # model, as everywhere in the blocks.
+  - name: agentic.workspace.RecordWrite
+    naming:
+      wire: record-write
+      display: Record a write
+      summary: The holder of a live lease writes one path of the workspace.
+    input:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: path, type: agentic.workspace.Path}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.workspace.UnknownLease
+        payload:
+          agentic.workspace.UnknownLease: {lease_id: input.lease_id}
+      - name: not-the-holder
+        when_subject:
+          predicate: holder != caller.party
+        error: agentic.workspace.NotTheHolder
+      - name: read-only
+        when_subject:
+          predicate: sharing == SharedReadOnly
+        error: agentic.workspace.ReadOnlyWorkspace
+      - name: written
+        when_subject_state: Live
+        updates: agentic.workspace.Lease
+        instance: lease_id
+        sets:
+          writes: {increment: 1}
+        emits: [agentic.workspace.PathWritten]
+        payload:
+          agentic.workspace.PathWritten:
+            lease_id: input.lease_id
+            workspace_id: {subject: workspace_id}
+            path: input.path
+      - name: not-live
+        error: agentic.workspace.LeaseNotLive
+
+  - name: agentic.workspace.Propose
+    naming:
+      wire: propose
+      display: Propose a change
+      summary: A change leaves the workspace of a live lease as a proposal.
+    input:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: base_revision, type: agentic.workspace.Revision}
+      - {name: change, type: agentic.shared.Content}
+      - {name: branch, type: Optional<String>}
+      - {name: head_revision, type: Optional<agentic.workspace.Revision>}
+      - {name: review_ref, type: Optional<String>}
+    outcomes:
+      - name: no-lease
+        when_related:
+          via: input.lease_id
+          exists: false
+        error: agentic.workspace.NoLease
+        payload:
+          agentic.workspace.NoLease: {lease_id: input.lease_id}
+      - name: lease-not-live
+        when_related:
+          via: input.lease_id
+          predicate: state != Live
+        error: agentic.workspace.LeaseNotLive
+      - name: proposed
+        creates: agentic.workspace.Proposal
+        instance: proposal_id
+        sets:
+          workspace_id: {related: {via: input.lease_id, field: workspace_id}}
+          lease_id: input.lease_id
+          proposed_by: {caller: party}
+          base_revision: input.base_revision
+          change: input.change
+          branch: input.branch
+          head_revision: input.head_revision
+          review_ref: input.review_ref
+        emits: [agentic.workspace.ChangeProposed]
+        payload:
+          agentic.workspace.ChangeProposed:
+            proposal_id: {generated: true}
+            lease_id: input.lease_id
+            proposed_by: {caller: party}
+            base_revision: input.base_revision
+            branch: input.branch
+            head_revision: input.head_revision
+            review_ref: input.review_ref
+
+  - name: agentic.workspace.MergeProposal
+    naming:
+      wire: merge-proposal
+      display: Merge a proposal
+    input:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+      - {name: merged_revision, type: agentic.workspace.Revision}
+      - {name: merged_under, type: Optional<agentic.shared.GrantId>}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.workspace.UnknownProposal
+        payload:
+          agentic.workspace.UnknownProposal: {proposal_id: input.proposal_id}
+      - name: merged
+        moves: agentic.workspace.Proposal.merge
+        instance: proposal_id
+        sets:
+          merged_revision: input.merged_revision
+          merged_under: input.merged_under
+        emits: [agentic.workspace.ProposalMerged]
+        payload:
+          agentic.workspace.ProposalMerged:
+            proposal_id: input.proposal_id
+            merged_revision: input.merged_revision
+            merged_under: input.merged_under
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.workspace.ProposalStateConflict
+        payload:
+          agentic.workspace.ProposalStateConflict: {state: {subject: state}}
+
+  - name: agentic.workspace.RejectProposal
+    naming:
+      wire: reject-proposal
+      display: Reject a proposal
+    input:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.workspace.UnknownProposal
+        payload:
+          agentic.workspace.UnknownProposal: {proposal_id: input.proposal_id}
+      - name: rejected
+        moves: agentic.workspace.Proposal.reject
+        instance: proposal_id
+        emits: [agentic.workspace.ProposalRejected]
+        payload:
+          agentic.workspace.ProposalRejected: {proposal_id: input.proposal_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.workspace.ProposalStateConflict
+        payload:
+          agentic.workspace.ProposalStateConflict: {state: {subject: state}}
+
+  - name: agentic.workspace.SupersedeProposal
+    naming:
+      wire: supersede-proposal
+      display: Supersede a proposal
+      summary: A newer proposal replaces this one.
+    input:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+      - {name: superseded_by, type: agentic.shared.ProposalId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.workspace.UnknownProposal
+        payload:
+          agentic.workspace.UnknownProposal: {proposal_id: input.proposal_id}
+      - name: unknown-successor
+        when_related:
+          via: input.superseded_by
+          exists: false
+        error: agentic.workspace.UnknownProposal
+        payload:
+          agentic.workspace.UnknownProposal: {proposal_id: input.superseded_by}
+      - name: superseded
+        moves: agentic.workspace.Proposal.supersede
+        instance: proposal_id
+        sets:
+          superseded_by: input.superseded_by
+        emits: [agentic.workspace.ProposalSuperseded]
+        payload:
+          agentic.workspace.ProposalSuperseded:
+            proposal_id: input.proposal_id
+            superseded_by: input.superseded_by
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.workspace.ProposalStateConflict
+        payload:
+          agentic.workspace.ProposalStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.workspace.WorkspaceCreated
+    fields:
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: kind, type: agentic.workspace.WorkspaceKind}
+      - {name: sharing, type: agentic.shared.Sharing}
+      - {name: base_revision, type: agentic.workspace.Revision}
+
+  - name: agentic.workspace.LeaseRequested
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: holder, type: agentic.channel.PartyId}
+      - {name: expires_at, type: Timestamp}
+
+  - name: agentic.workspace.LeaseGranted
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+
+  - name: agentic.workspace.LeaseReleased
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+
+  - name: agentic.workspace.LeaseExpired
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+
+  - name: agentic.workspace.PathWritten
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: path, type: agentic.workspace.Path}
+
+  - name: agentic.workspace.ChangeProposed
+    fields:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: proposed_by, type: agentic.channel.PartyId}
+      - {name: base_revision, type: agentic.workspace.Revision}
+      - {name: branch, type: Optional<String>}
+      - {name: head_revision, type: Optional<agentic.workspace.Revision>}
+      - {name: review_ref, type: Optional<String>}
+
+  - name: agentic.workspace.ProposalMerged
+    fields:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+      - {name: merged_revision, type: agentic.workspace.Revision}
+      - {name: merged_under, type: Optional<agentic.shared.GrantId>}
+
+  - name: agentic.workspace.ProposalRejected
+    fields:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+
+  - name: agentic.workspace.ProposalSuperseded
+    fields:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+      - {name: superseded_by, type: agentic.shared.ProposalId}
+
+views:
+  - name: agentic.workspace.Workspaces
+    source: agentic.workspace.Workspace
+    consistency: read_your_writes
+    fields:
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: kind, type: agentic.workspace.WorkspaceKind}
+      - {name: sharing, type: agentic.shared.Sharing}
+      - {name: base_revision, type: agentic.workspace.Revision}
+      - {name: state, type: agentic.workspace.Workspace.State}
+    naming:
+      wire: workspaces
+      display: Workspaces
+
+  - name: agentic.workspace.Leases
+    source: agentic.workspace.Lease
+    consistency: read_your_writes
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: holder, type: agentic.channel.PartyId}
+      - {name: sharing, type: agentic.shared.Sharing}
+      - {name: expires_at, type: Timestamp}
+      - {name: writes, type: Integer}
+      - {name: state, type: agentic.workspace.Lease.State}
+    naming:
+      wire: leases
+      display: Leases
+
+  - name: agentic.workspace.Proposals
+    source: agentic.workspace.Proposal
+    consistency: read_your_writes
+    fields:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: proposed_by, type: agentic.channel.PartyId}
+      - {name: base_revision, type: agentic.workspace.Revision}
+      - {name: change, type: agentic.shared.Content}
+      - {name: merged_revision, type: Optional<agentic.workspace.Revision>}
+      - {name: superseded_by, type: Optional<agentic.shared.ProposalId>}
+      - {name: branch, type: Optional<String>}
+      - {name: head_revision, type: Optional<agentic.workspace.Revision>}
+      - {name: review_ref, type: Optional<String>}
+      - {name: merged_under, type: Optional<agentic.shared.GrantId>}
+      - {name: state, type: agentic.workspace.Proposal.State}
+    naming:
+      wire: proposals
+      display: Proposals

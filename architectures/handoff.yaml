@@ -1,0 +1,24 @@
+format: agenticspec-architecture/1
+architecture: handoff
+summary: >-
+  A sequential hand-off: agent a works first and hands its result to agent b. In 2611.00314 this
+  solved 54% at the cost of one agent; more alternating turns gave no gain at 1.59 times the cost.
+  The simulator has no hand-off: the `handoff` link is drawn and checked but not simulated, so a and
+  b both take tasks from the backlog as two independent workers.
+
+parts:
+  owner: { block: principal, kind: human }
+  a:     { block: agent, harness: coding }
+  b:     { block: agent, harness: coding }
+  model: { block: model, route: frontier }
+
+links:
+  - { from: owner, to: a, carries: prompt }
+  - { from: a, to: b, carries: handoff }
+  - { from: a, to: owner, carries: question }
+  - { from: b, to: owner, carries: question }
+  - { from: a, to: model, carries: model_call }
+  - { from: b, to: model, carries: model_call }
+
+policies:
+  question_default_after: 15m

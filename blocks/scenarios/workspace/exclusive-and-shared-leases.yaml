@@ -1,0 +1,153 @@
+# An exclusive workspace has at most one live lease; a shared one has any number. Synthesis
+# reaches no refused second grant on an exclusive workspace (GrantLease/exclusive-held,
+# ESS-SYNTH-003) and no outcome scenario of granted-exclusive (ESS-SYNTH-008), so this scenario
+# walks the path by hand: a first lease on an exclusive workspace granted, a second refused while
+# it lives and granted once it is released; two leases on a shared workspace both granted.
+type: ess-scenario/7
+domain: agentic.workspace
+scenario: exclusive-and-shared-leases
+summary: A second lease on an exclusive workspace waits for the first to end; leases on a shared workspace coexist.
+
+arrange:
+  - instance: exclusive
+    entity: agentic.workspace.Workspace
+  - instance: shared
+    entity: agentic.workspace.Workspace
+  - instance: first
+    entity: agentic.workspace.Lease
+  - instance: second
+    entity: agentic.workspace.Lease
+  - instance: reader
+    entity: agentic.workspace.Lease
+  - instance: writer
+    entity: agentic.workspace.Lease
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.workspace.CreateWorkspace
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-0000000000b1}
+    input: {kind: Worktree, sharing: Exclusive, base_revision: rev-1}
+    outcome: created
+    capture: {instance: exclusive, event: agentic.workspace.WorkspaceCreated, field: workspace_id}
+
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.workspace.CreateWorkspace
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-0000000000b1}
+    input: {kind: Checkout, sharing: SharedReadWrite, base_revision: rev-1}
+    outcome: created
+    capture: {instance: shared, event: agentic.workspace.WorkspaceCreated, field: workspace_id}
+
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-0000000000b1}
+    input: {workspace_id: {$instance: exclusive}, expires_at: 2026-11-27T10:00:00Z}
+    outcome: requested
+    capture: {instance: first, event: agentic.workspace.LeaseRequested, field: lease_id}
+
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-0000000000b2}
+    input: {workspace_id: {$instance: exclusive}, expires_at: 2026-11-27T10:00:00Z}
+    outcome: requested
+    capture: {instance: second, event: agentic.workspace.LeaseRequested, field: lease_id}
+
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: first}}
+    outcome: granted-exclusive
+    events:
+      - event: agentic.workspace.LeaseGranted
+        payload: {lease_id: {$instance: first}, workspace_id: {$instance: exclusive}}
+
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: second}}
+    outcome: exclusive-held
+    error:
+      name: agentic.workspace.LeaseHeld
+    no_events: [agentic.workspace.LeaseGranted]
+
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.workspace.ReleaseLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-0000000000b1}
+    input: {lease_id: {$instance: first}}
+    outcome: released
+    events:
+      - event: agentic.workspace.LeaseReleased
+        payload: {lease_id: {$instance: first}}
+
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: second}}
+    outcome: granted-exclusive
+    events:
+      - event: agentic.workspace.LeaseGranted
+        payload: {lease_id: {$instance: second}, workspace_id: {$instance: exclusive}}
+
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-0000000000b1}
+    input: {workspace_id: {$instance: shared}, expires_at: 2026-11-27T10:00:00Z}
+    outcome: requested
+    capture: {instance: reader, event: agentic.workspace.LeaseRequested, field: lease_id}
+
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-0000000000b2}
+    input: {workspace_id: {$instance: shared}, expires_at: 2026-11-27T10:00:00Z}
+    outcome: requested
+    capture: {instance: writer, event: agentic.workspace.LeaseRequested, field: lease_id}
+
+  - at: 2026-11-27T09:00:10Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: reader}}
+    outcome: granted-shared
+    events:
+      - event: agentic.workspace.LeaseGranted
+        payload: {lease_id: {$instance: reader}, workspace_id: {$instance: shared}}
+
+  - at: 2026-11-27T09:00:11Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: writer}}
+    outcome: granted-shared
+    events:
+      - event: agentic.workspace.LeaseGranted
+        payload: {lease_id: {$instance: writer}, workspace_id: {$instance: shared}}
+
+assert:
+  - view: agentic.workspace.Workspaces
+    contains:
+      workspace_id: {$instance: exclusive}
+      state: Held
+  - view: agentic.workspace.Workspaces
+    contains:
+      workspace_id: {$instance: shared}
+      state: Ready
+  - view: agentic.workspace.Leases
+    contains:
+      lease_id: {$instance: first}
+      state: Released
+  - view: agentic.workspace.Leases
+    contains:
+      lease_id: {$instance: second}
+      state: Live
+  - view: agentic.workspace.Leases
+    contains:
+      lease_id: {$instance: reader}
+      state: Live
+  - view: agentic.workspace.Leases
+    contains:
+      lease_id: {$instance: writer}
+      state: Live

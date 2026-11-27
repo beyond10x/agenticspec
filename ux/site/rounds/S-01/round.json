@@ -1,0 +1,2680 @@
+{
+  "round": "S-01",
+  "date": "2026-11-27",
+  "commit": "eec2f8c+dirty",
+  "gating": {
+    "runs": 24,
+    "pass": 24,
+    "complete": 24,
+    "clean": 24
+  },
+  "measured": {
+    "runs": 36,
+    "pass": 2,
+    "complete": 18,
+    "clean": 2
+  },
+  "problems": {
+    "/docs/architectures: scrolls sideways in its box: div.b10x-table-wrap (633 > 511)": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)"
+    ],
+    "/docs: text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"": [
+      "768x1024 dark (measured)",
+      "768x1024 light (measured)"
+    ],
+    "/docs/architectures: scrolls sideways in its box: div.b10x-table-wrap (633 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/architectures/author-reviewer: scrolls sideways in its box: div.b10x-table-wrap (376 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/architectures/author-reviewer: scrolls sideways in its box: div.b10x-table-wrap (431 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/architectures/author-reviewer: scrolls sideways in its box: div.b10x-table-wrap (567 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (525 > 511)": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (540 > 511)": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)"
+    ],
+    "/: text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"": [
+      "768x1024 dark (measured)",
+      "768x1024 light (measured)"
+    ],
+    "/docs/blocks: scrolls sideways in its box: div.as-map__frame (780 > 356)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks: scrolls sideways in its box: div.b10x-table-wrap (460 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.as-life__frame (488 > 356)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (374 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (361 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (395 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (453 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (399 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (416 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (369 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (410 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (525 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: scrolls sideways in its box: div.b10x-table-wrap (540 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/4-agent/harness: axe serious scrollable-region-focusable: n nodes, figure:nth-child(38) > .as-life__frame": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/kpis-catalogue: scrolls sideways in its box: div.as-kpis__scroll (918 > 690)": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)"
+    ],
+    "/docs/kpis-catalogue: scrolls sideways in its box: div.as-kpis__scroll (802 > 690)": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)"
+    ],
+    "/docs/kpis-catalogue: scrolls sideways in its box: div.as-kpis__scroll (918 > 734)": [
+      "768x1024 dark (measured)",
+      "768x1024 light (measured)"
+    ],
+    "/docs/kpis-catalogue: scrolls sideways in its box: div.as-kpis__scroll (802 > 734)": [
+      "768x1024 dark (measured)",
+      "768x1024 light (measured)"
+    ],
+    "/docs/kpis-catalogue: scrolls sideways in its box: div.as-kpis__scroll (918 > 356)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/kpis-catalogue: scrolls sideways in its box: div.as-kpis__scroll (802 > 356)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/kpis-catalogue: scrolls sideways in its box: div.as-kpis__scroll (688 > 356)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/7-collaboration/question: scrolls sideways in its box: div.b10x-table-wrap (603 > 511)": [
+      "1024x768 dark (measured)",
+      "1024x768 light (measured)"
+    ],
+    "/docs/blocks/7-collaboration/question: scrolls sideways in its box: div.as-life__frame (368 > 356)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/7-collaboration/question: scrolls sideways in its box: div.b10x-table-wrap (367 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/7-collaboration/question: scrolls sideways in its box: div.b10x-table-wrap (482 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ],
+    "/docs/blocks/7-collaboration/question: scrolls sideways in its box: div.b10x-table-wrap (603 > 358)": [
+      "390x844 dark (measured)",
+      "390x844 light (measured)"
+    ]
+  },
+  "sweep": {
+    "pages": 39,
+    "axe": {},
+    "layout": {
+      "1024x768": {
+        "/docs/architectures": [
+          "scrolls sideways in its box: div.b10x-table-wrap (633 > 511)"
+        ],
+        "/docs/blocks/1-principals/delegation": [
+          "scrolls sideways in its box: div.b10x-table-wrap (523 > 511)"
+        ],
+        "/docs/blocks/1-principals/principal": [
+          "scrolls sideways in its box: div.b10x-table-wrap (566 > 511)"
+        ],
+        "/docs/blocks/10-evaluation/experiment": [
+          "scrolls sideways in its box: div.b10x-table-wrap (527 > 511)"
+        ],
+        "/docs/blocks/3-capability/knowledge": [
+          "scrolls sideways in its box: div.b10x-table-wrap (563 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (542 > 511)"
+        ],
+        "/docs/blocks/3-capability/tool": [
+          "scrolls sideways in its box: div.b10x-table-wrap (563 > 511)"
+        ],
+        "/docs/blocks/4-agent/harness": [
+          "scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (540 > 511)"
+        ],
+        "/docs/blocks/5-work/work": [
+          "scrolls sideways in its box: div.as-life__frame (537 > 509)",
+          "scrolls sideways in its box: div.b10x-table-wrap (546 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (557 > 511)"
+        ],
+        "/docs/blocks/6-governance/authority": [
+          "scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (568 > 511)"
+        ],
+        "/docs/blocks/7-collaboration/channel": [
+          "scrolls sideways in its box: div.b10x-table-wrap (521 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (550 > 511)"
+        ],
+        "/docs/blocks/7-collaboration/question": [
+          "scrolls sideways in its box: div.b10x-table-wrap (603 > 511)"
+        ],
+        "/docs/blocks/8-place/sandbox": [
+          "scrolls sideways in its box: div.b10x-table-wrap (552 > 511)"
+        ],
+        "/docs/blocks/8-place/workspace": [
+          "scrolls sideways in its box: div.b10x-table-wrap (513 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (536 > 511)"
+        ],
+        "/docs/blocks/planned": [
+          "scrolls sideways in its box: div.b10x-table-wrap (553 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (513 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (550 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (561 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (580 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (567 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (544 > 511)",
+          "scrolls sideways in its box: div.b10x-table-wrap (576 > 511)"
+        ],
+        "/docs/kpis-catalogue": [
+          "scrolls sideways in its box: div.as-kpis__scroll (918 > 690)"
+        ]
+      },
+      "390x844": {
+        "/docs/architectures": [
+          "scrolls sideways in its box: div.b10x-table-wrap (633 > 358)"
+        ],
+        "/docs/architectures/author-reviewer": [
+          "scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (567 > 358)"
+        ],
+        "/docs/architectures/workstation": [
+          "scrolls sideways in its box: div.b10x-table-wrap (472 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (569 > 358)"
+        ],
+        "/docs/blocks": [
+          "scrolls sideways in its box: div.as-map__frame (780 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (460 > 358)"
+        ],
+        "/docs/blocks/1-principals/delegation": [
+          "scrolls sideways in its box: div.b10x-table-wrap (421 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (366 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (378 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (457 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (523 > 358)"
+        ],
+        "/docs/blocks/1-principals/principal": [
+          "scrolls sideways in its box: div.b10x-table-wrap (566 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (466 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (446 > 358)"
+        ],
+        "/docs/blocks/10-evaluation/experiment": [
+          "scrolls sideways in its box: div.as-life__frame (470 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (433 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (459 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (527 > 358)"
+        ],
+        "/docs/blocks/10-evaluation/kpi": [
+          "scrolls sideways in its box: div.b10x-table-wrap (362 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (415 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (461 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (366 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (445 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (440 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (428 > 358)"
+        ],
+        "/docs/blocks/2-intelligence/gateway": [
+          "scrolls sideways in its box: div.as-life__frame (373 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (411 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (457 > 358)"
+        ],
+        "/docs/blocks/2-intelligence/model": [
+          "scrolls sideways in its box: div.b10x-table-wrap (381 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (440 > 358)"
+        ],
+        "/docs/blocks/3-capability/knowledge": [
+          "scrolls sideways in its box: div.b10x-table-wrap (371 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (375 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (419 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (494 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (563 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (542 > 358)"
+        ],
+        "/docs/blocks/3-capability/tool": [
+          "scrolls sideways in its box: div.b10x-table-wrap (398 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (370 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (447 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (563 > 358)"
+        ],
+        "/docs/blocks/4-agent/agent": [
+          "scrolls sideways in its box: div.b10x-table-wrap (377 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (380 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (392 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (378 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (426 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (454 > 358)"
+        ],
+        "/docs/blocks/4-agent/harness": [
+          "scrolls sideways in its box: div.as-life__frame (488 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (540 > 358)"
+        ],
+        "/docs/blocks/5-work/process": [
+          "scrolls sideways in its box: div.b10x-table-wrap (489 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (460 > 358)"
+        ],
+        "/docs/blocks/5-work/work": [
+          "scrolls sideways in its box: div.as-life__frame (537 > 356)",
+          "scrolls sideways in its box: div.as-life__frame (358 > 356)",
+          "scrolls sideways in its box: div.as-life__frame (401 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (364 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (372 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (390 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (546 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (490 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (557 > 358)"
+        ],
+        "/docs/blocks/6-governance/authority": [
+          "scrolls sideways in its box: div.b10x-table-wrap (383 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (382 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (474 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (568 > 358)"
+        ],
+        "/docs/blocks/7-collaboration/channel": [
+          "scrolls sideways in its box: div.as-life__frame (446 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (371 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (382 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (372 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (420 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (365 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (383 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (362 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (400 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (384 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (521 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (550 > 358)"
+        ],
+        "/docs/blocks/7-collaboration/question": [
+          "scrolls sideways in its box: div.as-life__frame (368 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (603 > 358)"
+        ],
+        "/docs/blocks/8-place/resource": [
+          "scrolls sideways in its box: div.as-life__frame (441 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (471 > 358)"
+        ],
+        "/docs/blocks/8-place/runtime": [
+          "scrolls sideways in its box: div.b10x-table-wrap (397 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (499 > 358)"
+        ],
+        "/docs/blocks/8-place/sandbox": [
+          "scrolls sideways in its box: div.b10x-table-wrap (552 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (447 > 358)"
+        ],
+        "/docs/blocks/8-place/workspace": [
+          "scrolls sideways in its box: div.as-life__frame (464 > 356)",
+          "scrolls sideways in its box: div.b10x-table-wrap (362 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (513 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (446 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (536 > 358)"
+        ],
+        "/docs/blocks/9-composition/architecture": [
+          "scrolls sideways in its box: div.b10x-table-wrap (370 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (366 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (475 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (380 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (384 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (370 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (370 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (412 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (461 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (474 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (439 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (447 > 358)"
+        ],
+        "/docs/blocks/planned": [
+          "scrolls sideways in its box: div.b10x-table-wrap (553 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (513 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (550 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (561 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (580 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (503 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (544 > 358)",
+          "scrolls sideways in its box: div.b10x-table-wrap (576 > 358)"
+        ],
+        "/docs/dashboard": [
+          "scrolls sideways in its box: div.b10x-table-wrap (381 > 358)"
+        ],
+        "/docs/getting-started": [
+          "scrolls sideways in its box: div.b10x-table-wrap (453 > 358)"
+        ],
+        "/docs/kpis": [
+          "scrolls sideways in its box: div.b10x-table-wrap (409 > 358)"
+        ],
+        "/docs/kpis-catalogue": [
+          "scrolls sideways in its box: div.as-kpis__scroll (918 > 356)"
+        ]
+      },
+      "768x1024": {
+        "/docs/kpis-catalogue": [
+          "scrolls sideways in its box: div.as-kpis__scroll (918 > 734)"
+        ]
+      }
+    },
+    "console_errors": {},
+    "frames": {
+      "/docs/architectures/author-reviewer dark": [
+        "frame /agenticspec/architectures/author-reviewer.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/author-reviewer.html: shows \"See how your agent sessions actually went. | agenticspec\", not the author-reviewer architecture"
+      ],
+      "/docs/architectures/author-reviewer light": [
+        "frame /agenticspec/architectures/author-reviewer.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/author-reviewer.html: shows \"See how your agent sessions actually went. | agenticspec\", not the author-reviewer architecture"
+      ],
+      "/docs/architectures/handoff dark": [
+        "frame /agenticspec/architectures/handoff.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/handoff.html: shows \"See how your agent sessions actually went. | agenticspec\", not the handoff architecture"
+      ],
+      "/docs/architectures/handoff light": [
+        "frame /agenticspec/architectures/handoff.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/handoff.html: shows \"See how your agent sessions actually went. | agenticspec\", not the handoff architecture"
+      ],
+      "/docs/architectures/parallel-unaware dark": [
+        "frame /agenticspec/architectures/parallel-unaware.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/parallel-unaware.html: shows \"See how your agent sessions actually went. | agenticspec\", not the parallel-unaware architecture"
+      ],
+      "/docs/architectures/parallel-unaware light": [
+        "frame /agenticspec/architectures/parallel-unaware.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/parallel-unaware.html: shows \"See how your agent sessions actually went. | agenticspec\", not the parallel-unaware architecture"
+      ],
+      "/docs/architectures/solo dark": [
+        "frame /agenticspec/architectures/solo.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/solo.html: shows \"See how your agent sessions actually went. | agenticspec\", not the solo architecture"
+      ],
+      "/docs/architectures/solo light": [
+        "frame /agenticspec/architectures/solo.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/solo.html: shows \"See how your agent sessions actually went. | agenticspec\", not the solo architecture"
+      ],
+      "/docs/architectures/workstation dark": [
+        "frame /agenticspec/architectures/workstation.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/workstation.html: shows \"See how your agent sessions actually went. | agenticspec\", not the workstation architecture"
+      ],
+      "/docs/architectures/workstation light": [
+        "frame /agenticspec/architectures/workstation.html: lands on /agenticspec/",
+        "frame /agenticspec/architectures/workstation.html: shows \"See how your agent sessions actually went. | agenticspec\", not the workstation architecture"
+      ]
+    }
+  },
+  "metrics": {
+    "best-variant-of-author-reviewer@1440x900": {
+      "screen_only.actions": 9,
+      "screen_only.looks": 10,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 2,
+      "glance_cost.median": 3,
+      "glance_cost.p95": 3,
+      "reading_load.max": 270,
+      "reading_load.median": 172,
+      "layout_shift.score": 0
+    },
+    "best-variant-of-author-reviewer@1280x800": {
+      "screen_only.actions": 10,
+      "screen_only.looks": 11,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 2,
+      "glance_cost.median": 3,
+      "glance_cost.p95": 3,
+      "reading_load.max": 269,
+      "reading_load.median": 147,
+      "layout_shift.score": 0
+    },
+    "find-harness-kpis@1440x900": {
+      "screen_only.actions": 5,
+      "screen_only.looks": 6,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 3,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 3,
+      "reading_load.max": 403,
+      "reading_load.median": 349.5,
+      "layout_shift.score": 0
+    },
+    "find-harness-kpis@1280x800": {
+      "screen_only.actions": 5,
+      "screen_only.looks": 6,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 3,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 3,
+      "reading_load.max": 421,
+      "reading_load.median": 273.5,
+      "layout_shift.score": 0
+    },
+    "gate-kpis-of-authority@1440x900": {
+      "screen_only.actions": 4,
+      "screen_only.looks": 4,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 2,
+      "reading_load.max": 307,
+      "reading_load.median": 265,
+      "layout_shift.score": 0
+    },
+    "gate-kpis-of-authority@1280x800": {
+      "screen_only.actions": 4,
+      "screen_only.looks": 4,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 3,
+      "reading_load.max": 265,
+      "reading_load.median": 215,
+      "layout_shift.score": 0
+    },
+    "layer-of-workspace@1440x900": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 3,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 2,
+      "reading_load.max": 403,
+      "reading_load.median": 367,
+      "layout_shift.score": 0
+    },
+    "layer-of-workspace@1280x800": {
+      "screen_only.actions": 2,
+      "screen_only.looks": 3,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 1,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 3,
+      "reading_load.max": 397,
+      "reading_load.median": 278,
+      "layout_shift.score": 0
+    },
+    "toolcall-lifecycle@1440x900": {
+      "screen_only.actions": 6,
+      "screen_only.looks": 7,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 3,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 3,
+      "reading_load.max": 403,
+      "reading_load.median": 293,
+      "layout_shift.score": 0
+    },
+    "toolcall-lifecycle@1280x800": {
+      "screen_only.actions": 6,
+      "screen_only.looks": 7,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 3,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 3,
+      "reading_load.max": 421,
+      "reading_load.median": 253,
+      "layout_shift.score": 0
+    },
+    "what-question-depends-on@1440x900": {
+      "screen_only.actions": 4,
+      "screen_only.looks": 5,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 2,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 3,
+      "reading_load.max": 427,
+      "reading_load.median": 185,
+      "layout_shift.score": 0
+    },
+    "what-question-depends-on@1280x800": {
+      "screen_only.actions": 4,
+      "screen_only.looks": 5,
+      "screen_only.steers": 0,
+      "screen_only.time_to_act_steps.max": 2,
+      "glance_cost.median": 1,
+      "glance_cost.p95": 3,
+      "reading_load.max": 419,
+      "reading_load.median": 168,
+      "layout_shift.score": 0
+    }
+  },
+  "runs": [
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Architectures in the sidebar: 2",
+        "scroll 46",
+        "look the link Architectures in the sidebar: 1",
+        "act the link Architectures in the sidebar",
+        "look the link ^author-reviewer\\b in the main: 1",
+        "act the link ^author-reviewer\\b in the main",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 345",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Architectures in the sidebar: 2",
+        "scroll 46",
+        "look the link Architectures in the sidebar: 1",
+        "act the link Architectures in the sidebar",
+        "look the link ^author-reviewer\\b in the main: 1",
+        "act the link ^author-reviewer\\b in the main",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 661",
+        "look the target: 3",
+        "scroll 345",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "1280x800",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Architectures in the sidebar: 3",
+        "scroll 146",
+        "look the link Architectures in the sidebar: 1",
+        "act the link Architectures in the sidebar",
+        "look the link ^author-reviewer\\b in the main: 1",
+        "act the link ^author-reviewer\\b in the main",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "1280x800",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Architectures in the sidebar: 3",
+        "scroll 146",
+        "look the link Architectures in the sidebar: 1",
+        "act the link Architectures in the sidebar",
+        "look the link ^author-reviewer\\b in the main: 1",
+        "act the link ^author-reviewer\\b in the main",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 3",
+        "scroll 581",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link Architectures in the sidebar (/docs/architectures): scrolls sideways in its box: div.b10x-table-wrap (633 > 511)",
+        "scroll toward the link ^author-reviewer\\b in the main (/docs/architectures): scrolls sideways in its box: div.b10x-table-wrap (633 > 511)"
+      ],
+      "log": [
+        "look the link Architectures in the sidebar: 3",
+        "scroll 178",
+        "look the link Architectures in the sidebar: 1",
+        "act the link Architectures in the sidebar",
+        "look the link ^author-reviewer\\b in the main: 3",
+        "scroll 88",
+        "look the link ^author-reviewer\\b in the main: 1",
+        "act the link ^author-reviewer\\b in the main",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 196",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link Architectures in the sidebar (/docs/architectures): scrolls sideways in its box: div.b10x-table-wrap (633 > 511)",
+        "scroll toward the link ^author-reviewer\\b in the main (/docs/architectures): scrolls sideways in its box: div.b10x-table-wrap (633 > 511)"
+      ],
+      "log": [
+        "look the link Architectures in the sidebar: 3",
+        "scroll 178",
+        "look the link Architectures in the sidebar: 1",
+        "act the link Architectures in the sidebar",
+        "look the link ^author-reviewer\\b in the main: 3",
+        "scroll 88",
+        "look the link ^author-reviewer\\b in the main: 1",
+        "act the link ^author-reviewer\\b in the main",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 3",
+        "scroll 196",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "768x1024",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /docs, not /docs/architectures/author-reviewer",
+        "error": "the screen shows no the link Architectures in the sidebar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/docs): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/docs): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "768x1024",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /docs, not /docs/architectures/author-reviewer",
+        "error": "the screen shows no the link Architectures in the sidebar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/docs): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/docs): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 2,
+        "wrong": null,
+        "error": "the target is not fully in view and not covered (glance 2)"
+      },
+      "problems": [
+        "after the link Architectures in the sidebar (/docs/architectures): scrolls sideways in its box: div.b10x-table-wrap (633 > 358)",
+        "scroll toward the link ^author-reviewer\\b in the main (/docs/architectures): scrolls sideways in its box: div.b10x-table-wrap (633 > 358)",
+        "after the link ^author-reviewer\\b in the main (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "after the link ^author-reviewer\\b in the main (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "after the link ^author-reviewer\\b in the main (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "completion (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "completion (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "completion (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Architectures in the sidebar: 3",
+        "scroll 395",
+        "look the link Architectures in the sidebar: 1",
+        "act the link Architectures in the sidebar",
+        "look the link ^author-reviewer\\b in the main: 3",
+        "scroll 127",
+        "look the link ^author-reviewer\\b in the main: 1",
+        "act the link ^author-reviewer\\b in the main",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 345",
+        "look the target: 2"
+      ]
+    },
+    {
+      "scenario": "best-variant-of-author-reviewer",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 2,
+        "wrong": null,
+        "error": "the target is not fully in view and not covered (glance 2)"
+      },
+      "problems": [
+        "after the link Architectures in the sidebar (/docs/architectures): scrolls sideways in its box: div.b10x-table-wrap (633 > 358)",
+        "scroll toward the link ^author-reviewer\\b in the main (/docs/architectures): scrolls sideways in its box: div.b10x-table-wrap (633 > 358)",
+        "after the link ^author-reviewer\\b in the main (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "after the link ^author-reviewer\\b in the main (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "after the link ^author-reviewer\\b in the main (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "scroll toward the target (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)",
+        "completion (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (376 > 358)",
+        "completion (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (431 > 358)",
+        "completion (/docs/architectures/author-reviewer): scrolls sideways in its box: div.b10x-table-wrap (567 > 358)"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Architectures in the sidebar: 3",
+        "scroll 395",
+        "look the link Architectures in the sidebar: 1",
+        "act the link Architectures in the sidebar",
+        "look the link ^author-reviewer\\b in the main: 3",
+        "scroll 127",
+        "look the link ^author-reviewer\\b in the main: 1",
+        "act the link ^author-reviewer\\b in the main",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 3",
+        "scroll 345",
+        "look the target: 2"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 661",
+        "look the link ^harness\\b in the main: 2",
+        "scroll 43",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link KPIs in the toc: 1",
+        "act the link KPIs in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 661",
+        "look the link ^harness\\b in the main: 2",
+        "scroll 43",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link KPIs in the toc: 1",
+        "act the link KPIs in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "1280x800",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 581",
+        "look the link ^harness\\b in the main: 2",
+        "scroll 68",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link KPIs in the toc: 1",
+        "act the link KPIs in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "1280x800",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 581",
+        "look the link ^harness\\b in the main: 2",
+        "scroll 68",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link KPIs in the toc: 1",
+        "act the link KPIs in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "scroll toward the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "scroll toward the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)"
+      ],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 454",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link KPIs in the toc: 3",
+        "scroll 102",
+        "look the link KPIs in the toc: 1",
+        "act the link KPIs in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "scroll toward the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "scroll toward the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)"
+      ],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 454",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link KPIs in the toc: 3",
+        "scroll 102",
+        "look the link KPIs in the toc: 1",
+        "act the link KPIs in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "768x1024",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /, not /docs/blocks/4-agent/harness",
+        "error": "the screen shows no the link Building blocks in the navbar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "768x1024",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /, not /docs/blocks/4-agent/harness",
+        "error": "the screen shows no the link Building blocks in the navbar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "completion (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 518",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "open On this page",
+        "look the link KPIs in the toc: 1",
+        "act the link KPIs in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "find-harness-kpis",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after the link KPIs in the toc (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "completion (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 518",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "open On this page",
+        "look the link KPIs in the toc: 1",
+        "act the link KPIs in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 2",
+        "scroll 278",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 2",
+        "scroll 278",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "1280x800",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 3",
+        "scroll 476",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "1280x800",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 3",
+        "scroll 476",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 2,
+        "wrong": null,
+        "error": "the target is not fully in view and not covered (glance 2)"
+      },
+      "problems": [
+        "start (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (918 > 690)",
+        "after the list Block (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (802 > 690)"
+      ],
+      "log": [
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 2",
+        "scroll 192",
+        "look the target: 2"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 2,
+        "wrong": null,
+        "error": "the target is not fully in view and not covered (glance 2)"
+      },
+      "problems": [
+        "start (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (918 > 690)",
+        "after the list Block (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (802 > 690)"
+      ],
+      "log": [
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 3",
+        "scroll 556",
+        "look the target: 2",
+        "scroll 192",
+        "look the target: 2"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "768x1024",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "start (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (918 > 734)",
+        "after the list Block (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (802 > 734)"
+      ],
+      "log": [
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 2",
+        "scroll 439",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "768x1024",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "start (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (918 > 734)",
+        "after the list Block (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (802 > 734)"
+      ],
+      "log": [
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 2",
+        "scroll 439",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 2,
+        "wrong": null,
+        "error": "the target is not fully in view and not covered (glance 2)"
+      },
+      "problems": [
+        "start (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (918 > 356)",
+        "scroll toward the list Block (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (918 > 356)",
+        "after the list Block (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (802 > 356)",
+        "scroll toward the button ^gate\\s*\\d+$ in the main (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (802 > 356)",
+        "after the button ^gate\\s*\\d+$ in the main (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (688 > 356)",
+        "scroll toward the target (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (688 > 356)",
+        "scroll toward the target (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (688 > 356)",
+        "completion (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (688 > 356)"
+      ],
+      "log": [
+        "look the list Block: 3",
+        "scroll 156",
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 3",
+        "scroll 112",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 2",
+        "scroll 203",
+        "look the target: 2"
+      ]
+    },
+    {
+      "scenario": "gate-kpis-of-authority",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 2,
+        "wrong": null,
+        "error": "the target is not fully in view and not covered (glance 2)"
+      },
+      "problems": [
+        "start (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (918 > 356)",
+        "scroll toward the list Block (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (918 > 356)",
+        "after the list Block (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (802 > 356)",
+        "scroll toward the button ^gate\\s*\\d+$ in the main (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (802 > 356)",
+        "after the button ^gate\\s*\\d+$ in the main (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (688 > 356)",
+        "scroll toward the target (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (688 > 356)",
+        "scroll toward the target (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (688 > 356)",
+        "completion (/docs/kpis-catalogue): scrolls sideways in its box: div.as-kpis__scroll (688 > 356)"
+      ],
+      "log": [
+        "look the list Block: 3",
+        "scroll 156",
+        "look the list Block: 1",
+        "act the list Block",
+        "look the button ^gate\\s*\\d+$ in the main: 3",
+        "scroll 112",
+        "look the button ^gate\\s*\\d+$ in the main: 1",
+        "act the button ^gate\\s*\\d+$ in the main",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 2",
+        "scroll 203",
+        "look the target: 2"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the target: 2",
+        "scroll 75",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the target: 2",
+        "scroll 75",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "1280x800",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the target: 3",
+        "scroll 112",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "1280x800",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the target: 3",
+        "scroll 112",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the target: 2",
+        "scroll 66",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the target: 2",
+        "scroll 66",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "768x1024",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /, not /docs/blocks",
+        "error": "the screen shows no the link Building blocks in the navbar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "768x1024",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /, not /docs/blocks",
+        "error": "the screen shows no the link Building blocks in the navbar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 2,
+        "wrong": null,
+        "error": "the target is not fully in view and not covered (glance 2)"
+      },
+      "problems": [
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the target (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the target (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "completion (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "completion (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the target: 3",
+        "scroll 229",
+        "look the target: 2"
+      ]
+    },
+    {
+      "scenario": "layer-of-workspace",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 2,
+        "wrong": null,
+        "error": "the target is not fully in view and not covered (glance 2)"
+      },
+      "problems": [
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the target (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the target (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "completion (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "completion (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the target: 3",
+        "scroll 229",
+        "look the target: 2"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 661",
+        "look the link ^harness\\b in the main: 2",
+        "scroll 43",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link ToolCall in the toc: 1",
+        "act the link ToolCall in the toc",
+        "look the target: 2",
+        "scroll 79",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 661",
+        "look the link ^harness\\b in the main: 2",
+        "scroll 43",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link ToolCall in the toc: 1",
+        "act the link ToolCall in the toc",
+        "look the target: 2",
+        "scroll 79",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "1280x800",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 581",
+        "look the link ^harness\\b in the main: 2",
+        "scroll 68",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link ToolCall in the toc: 1",
+        "act the link ToolCall in the toc",
+        "look the target: 3",
+        "scroll 251",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "1280x800",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 581",
+        "look the link ^harness\\b in the main: 2",
+        "scroll 68",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link ToolCall in the toc: 1",
+        "act the link ToolCall in the toc",
+        "look the target: 3",
+        "scroll 251",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)"
+      ],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 454",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link ToolCall in the toc: 1",
+        "act the link ToolCall in the toc",
+        "look the target: 3",
+        "scroll 426",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 511)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 511)"
+      ],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 454",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "look the link ToolCall in the toc: 1",
+        "act the link ToolCall in the toc",
+        "look the target: 3",
+        "scroll 426",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "768x1024",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /, not /docs/blocks/4-agent/harness",
+        "error": "the screen shows no the link Building blocks in the navbar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "768x1024",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /, not /docs/blocks/4-agent/harness",
+        "error": "the screen shows no the link Building blocks in the navbar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "completion (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 518",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "open On this page",
+        "look the link ToolCall in the toc: 1",
+        "act the link ToolCall in the toc",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 2",
+        "scroll 81",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "toolcall-lifecycle",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^harness\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after the link ^harness\\b in the main (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after opening On this page (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "after the link ToolCall in the toc (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "scroll toward the target (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.as-life__frame (488 > 356)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (374 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (361 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (395 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (453 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (399 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (416 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (369 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (410 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (525 > 358)",
+        "completion (/docs/blocks/4-agent/harness): scrolls sideways in its box: div.b10x-table-wrap (540 > 358)",
+        "completion (/docs/blocks/4-agent/harness): axe serious scrollable-region-focusable: 1 node(s), figure:nth-child(38) > .as-life__frame"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 616",
+        "look the link ^harness\\b in the main: 3",
+        "scroll 518",
+        "look the link ^harness\\b in the main: 1",
+        "act the link ^harness\\b in the main",
+        "open On this page",
+        "look the link ToolCall in the toc: 1",
+        "act the link ToolCall in the toc",
+        "look the target: 3",
+        "scroll 616",
+        "look the target: 2",
+        "scroll 81",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^question\\b in the main: 3",
+        "scroll 232",
+        "look the link ^question\\b in the main: 1",
+        "act the link ^question\\b in the main",
+        "look the link Depends on in the toc: 1",
+        "act the link Depends on in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "1440x900",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^question\\b in the main: 3",
+        "scroll 232",
+        "look the link ^question\\b in the main: 1",
+        "act the link ^question\\b in the main",
+        "look the link Depends on in the toc: 1",
+        "act the link Depends on in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "1280x800",
+      "theme": "dark",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^question\\b in the main: 3",
+        "scroll 247",
+        "look the link ^question\\b in the main: 1",
+        "act the link ^question\\b in the main",
+        "look the link Depends on in the toc: 1",
+        "act the link Depends on in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "1280x800",
+      "theme": "light",
+      "gating": true,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^question\\b in the main: 3",
+        "scroll 247",
+        "look the link ^question\\b in the main: 1",
+        "act the link ^question\\b in the main",
+        "look the link Depends on in the toc: 1",
+        "act the link Depends on in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "1024x768",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 511)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 511)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 511)"
+      ],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^question\\b in the main: 3",
+        "scroll 163",
+        "look the link ^question\\b in the main: 1",
+        "act the link ^question\\b in the main",
+        "look the link Depends on in the toc: 1",
+        "act the link Depends on in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "1024x768",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 511)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 511)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 511)"
+      ],
+      "log": [
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^question\\b in the main: 3",
+        "scroll 163",
+        "look the link ^question\\b in the main: 1",
+        "act the link ^question\\b in the main",
+        "look the link Depends on in the toc: 1",
+        "act the link Depends on in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "768x1024",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /, not /docs/blocks/7-collaboration/question",
+        "error": "the screen shows no the link Building blocks in the navbar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "768x1024",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 3,
+        "wrong": "on /, not /docs/blocks/7-collaboration/question",
+        "error": "the screen shows no the link Building blocks in the navbar"
+      },
+      "problems": [
+        "after opening Toggle navigation bar (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\"",
+        "completion (/): text cut off without its full value: b.navbar__title.text--truncate \"agenticspec\""
+      ],
+      "log": [
+        "open Toggle navigation bar"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "390x844",
+      "theme": "dark",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.as-life__frame (368 > 356)",
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 358)",
+        "after opening On this page (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.as-life__frame (368 > 356)",
+        "after opening On this page (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+        "after opening On this page (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+        "after opening On this page (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 358)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.as-life__frame (368 > 356)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 358)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.as-life__frame (368 > 356)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 358)"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 603",
+        "look the link ^question\\b in the main: 1",
+        "act the link ^question\\b in the main",
+        "open On this page",
+        "look the link Depends on in the toc: 1",
+        "act the link Depends on in the toc",
+        "look the target: 1"
+      ]
+    },
+    {
+      "scenario": "what-question-depends-on",
+      "viewport": "390x844",
+      "theme": "light",
+      "gating": false,
+      "completion": {
+        "seen": 1,
+        "wrong": null,
+        "error": null
+      },
+      "problems": [
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "after the link Building blocks in the navbar (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.as-map__frame (780 > 356)",
+        "scroll toward the link ^question\\b in the main (/docs/blocks): scrolls sideways in its box: div.b10x-table-wrap (460 > 358)",
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.as-life__frame (368 > 356)",
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+        "after the link ^question\\b in the main (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 358)",
+        "after opening On this page (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.as-life__frame (368 > 356)",
+        "after opening On this page (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+        "after opening On this page (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+        "after opening On this page (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 358)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.as-life__frame (368 > 356)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+        "after the link Depends on in the toc (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 358)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.as-life__frame (368 > 356)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (367 > 358)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (482 > 358)",
+        "completion (/docs/blocks/7-collaboration/question): scrolls sideways in its box: div.b10x-table-wrap (603 > 358)"
+      ],
+      "log": [
+        "open Toggle navigation bar",
+        "look the link Building blocks in the navbar: 1",
+        "act the link Building blocks in the navbar",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 616",
+        "look the link ^question\\b in the main: 3",
+        "scroll 603",
+        "look the link ^question\\b in the main: 1",
+        "act the link ^question\\b in the main",
+        "open On this page",
+        "look the link Depends on in the toc: 1",
+        "act the link Depends on in the toc",
+        "look the target: 1"
+      ]
+    }
+  ]
+}

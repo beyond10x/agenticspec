@@ -1,0 +1,31 @@
+format: agenticspec-architecture/1
+architecture: ladder-03-subagents
+summary: >-
+  Rung 3 of the agentic ladder. The session stops doing the work and hands it to sub-agents; it
+  acts for the owner and answers their questions. Context files tell every agent how the
+  repository works, and the agents prove their work by running the tests.
+
+parts:
+  you:       { block: principal, kind: human }
+  session:   { block: agent, harness: coding, acts_for: you }
+  subagents: { block: agent, harness: coding, count: 3 }
+  model:     { block: model, route: frontier }
+  repo:      { block: workspace, kind: checkout, sharing: exclusive, per: session }
+  context:   { block: knowledge, kind: context_files }
+  tests:     { block: tool, category: execute, kind: test_suite }
+
+links:
+  - { from: you,       to: session,   carries: prompt }
+  - { from: session,   to: you,       carries: question }
+  - { from: session,   to: you,       carries: proposal }
+  - { from: session,   to: model,     carries: model_call }
+  - { from: session,   to: subagents, carries: order }
+  - { from: subagents, to: session,   carries: question }
+  - { from: subagents, to: model,     carries: model_call }
+  - { from: subagents, to: tests,     carries: call }
+  - { from: context,   to: subagents, carries: context }
+
+border: [session]
+
+policies:
+  operator_answers_alone: false

@@ -1,0 +1,84 @@
+# A queued claim is taken back by its holder, as a click queued for a busy route is cancelled
+# (consumer gap G10). Synthesis reaches no grant of a claim (ESS-SYNTH-003) and so no held claim,
+# so this scenario walks the path by hand: a pool of one unit, a first claim granted, a second
+# claim queued behind it and withdrawn, and a withdrawal of the held first claim refused.
+type: ess-scenario/7
+domain: agentic.resource
+scenario: claim-withdrawn-from-queue
+summary: A queued claim is withdrawn by its holder and leaves the queue; a held claim cannot be withdrawn.
+
+arrange:
+  - instance: pool
+    entity: agentic.resource.Pool
+  - instance: first
+    entity: agentic.resource.Claim
+  - instance: second
+    entity: agentic.resource.Claim
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.resource.CreatePool
+    actor: agentic.resource.Scheduler
+    input: {name: route-a, kind: Seats, capacity: 1}
+    outcome: created
+    capture: {instance: pool, event: agentic.resource.PoolCreated, field: pool_id}
+
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.resource.RequestClaim
+    actor: agentic.resource.Claimant
+    caller: {party: 00000000-0000-4000-8000-0000000000a1}
+    input: {pool_id: {$instance: pool}, time_limit_seconds: 600}
+    outcome: queued
+    capture: {instance: first, event: agentic.resource.ClaimQueued, field: claim_id}
+
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.resource.GrantClaim
+    actor: agentic.resource.Scheduler
+    input:
+      pool_id: {$instance: pool}
+      claim_id: {$instance: first}
+      held_until: 2026-11-27T09:10:02Z
+    outcome: granted
+
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.resource.RequestClaim
+    actor: agentic.resource.Claimant
+    caller: {party: 00000000-0000-4000-8000-0000000000a2}
+    input: {pool_id: {$instance: pool}, time_limit_seconds: 600}
+    outcome: queued
+    capture: {instance: second, event: agentic.resource.ClaimQueued, field: claim_id}
+
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.resource.WithdrawClaim
+    actor: agentic.resource.Claimant
+    caller: {party: 00000000-0000-4000-8000-0000000000a2}
+    input: {claim_id: {$instance: second}, holder: 00000000-0000-4000-8000-0000000000a2}
+    outcome: withdrawn
+    events:
+      - event: agentic.resource.ClaimWithdrawn
+        payload: {claim_id: {$instance: second}}
+
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.resource.WithdrawClaim
+    actor: agentic.resource.Claimant
+    caller: {party: 00000000-0000-4000-8000-0000000000a1}
+    input: {claim_id: {$instance: first}, holder: 00000000-0000-4000-8000-0000000000a1}
+    outcome: wrong-state
+    error:
+      name: agentic.resource.ClaimStateConflict
+    no_events: [agentic.resource.ClaimWithdrawn]
+
+assert:
+  - view: agentic.resource.Queue
+    params:
+      pool_id: {$instance: pool}
+    counts:
+      at_most: 0
+  - view: agentic.resource.Claims
+    contains:
+      claim_id: {$instance: second}
+      state: Withdrawn
+  - view: agentic.resource.Claims
+    contains:
+      claim_id: {$instance: first}
+      state: Held

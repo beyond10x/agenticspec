@@ -1,0 +1,113 @@
+format: agenticspec-architecture/1
+architecture: ladder-09-factory
+summary: >-
+  Rung 9 of the agentic ladder. A factory: the owner designs the system that builds the
+  software. A factory orchestrator hands work to teams of agents, the verifier grows with them,
+  budgets on the gateway bound what may be spent, KPIs measure what the factory delivers, and
+  written principles say how truth is established, how goals are pursued and checked, and how
+  evidence earns completion. The simulator models the teams as one worker kind of twelve copies
+  that the orchestrator hands tasks to.
+
+parts:
+  you:         { block: principal, kind: human }
+  session:     { block: agent, harness: coding, acts_for: you }
+  subagents:   { block: agent, harness: coding, count: 3 }
+  sessions:    { block: agent, harness: coding, count: 4 }
+  night:       { block: agent, harness: coding, count: 3 }
+  run_a:       { block: agent, harness: coding, method: a }
+  run_b:       { block: agent, harness: executor, method: b }
+  swarm:       { block: agent, harness: coding, coordination: board, count: 8, start_stagger: 3s }
+  verifier:    { block: agent, harness: coding, role: reviewer, strictness: strict, false_accept: 0.1, false_reject: 0.2, count: 4 }
+  clock:       { block: schedule, every: 30m }
+  board:       { block: channel, kind: agent_message, distribution: board }
+  gateway:     { block: gateway, rate_limit_per_minute: 240 }
+  model:       { block: model, route: frontier }
+  repo:        { block: workspace, kind: checkout, sharing: exclusive, per: session }
+  trees:       { block: workspace, kind: worktree, sharing: exclusive, per: sessions }
+  base:        { block: workspace, kind: snapshot, sharing: shared_read_only }
+  box:         { block: sandbox, isolation: container, egress: [gateway], per: night }
+  grants:      { block: authority, kind: permissions }
+  context:     { block: knowledge, kind: context_files }
+  contract:    { block: knowledge, kind: contract }
+  specs:       { block: work, kind: spec }
+  tests:       { block: tool, category: execute, kind: test_suite }
+  conformance: { block: tool, category: execute, kind: conformance_suite }
+  compare:     { block: experiment, kind: comparison }
+  triage:      { block: agent, harness: coding, count: 2 }
+  alerts:      { block: channel, kind: notification, distribution: topic }
+  on_alert:    { block: trigger, kind: on_message, channel: alerts, policy: parallel, max_parallel: 4 }
+  policy:      { block: authority, kind: triage_policy }
+  evidence:    { block: work, kind: evidence }
+  factory:     { block: agent, harness: orchestrator }
+  teams:       { block: agent, harness: coding, coordination: orchestrator, count: 12, start_stagger: 30s }
+  budgets:     { block: authority, kind: budget }
+  kpis:        { block: kpi, kind: delivery }
+  principles:  { block: knowledge, kind: principles }
+
+links:
+  - { from: you,       to: session,     carries: prompt }
+  - { from: session,   to: you,         carries: question }
+  - { from: session,   to: you,         carries: proposal }
+  - { from: session,   to: gateway,     carries: model_call }
+  - { from: session,   to: subagents,   carries: order }
+  - { from: subagents, to: session,     carries: question }
+  - { from: subagents, to: gateway,     carries: model_call }
+  - { from: subagents, to: tests,       carries: call }
+  - { from: context,   to: subagents,   carries: context }
+  - { from: you,       to: specs,       carries: spec }
+  - { from: specs,     to: sessions,    carries: spec }
+  - { from: sessions,  to: you,         carries: question }
+  - { from: sessions,  to: gateway,     carries: model_call }
+  - { from: sessions,  to: tests,       carries: call }
+  - { from: sessions,  to: verifier,    carries: review }
+  - { from: context,   to: sessions,    carries: context }
+  - { from: clock,     to: night,       carries: trigger }
+  - { from: night,     to: you,         carries: question }
+  - { from: night,     to: gateway,     carries: model_call }
+  - { from: night,     to: tests,       carries: call }
+  - { from: night,     to: verifier,    carries: review }
+  - { from: grants,    to: night,       carries: grant }
+  - { from: grants,    to: sessions,    carries: grant }
+  - { from: verifier,  to: gateway,     carries: model_call }
+  - { from: gateway,   to: model,       carries: model_call }
+  - { from: base,      to: run_a,       carries: checkout }
+  - { from: base,      to: run_b,       carries: checkout }
+  - { from: run_a,     to: gateway,     carries: model_call }
+  - { from: run_b,     to: gateway,     carries: model_call }
+  - { from: run_a,     to: compare,     carries: result }
+  - { from: run_b,     to: compare,     carries: result }
+  - { from: compare,   to: you,         carries: report }
+  - { from: session,   to: board,       carries: message }
+  - { from: swarm,     to: board,       carries: claim }
+  - { from: swarm,     to: session,     carries: question }
+  - { from: swarm,     to: gateway,     carries: model_call }
+  - { from: swarm,     to: conformance, carries: call }
+  - { from: swarm,     to: verifier,    carries: review }
+  - { from: contract,  to: swarm,       carries: context }
+  - { from: contract,  to: conformance, carries: context }
+  - { from: on_alert,  to: triage,      carries: trigger }
+  - { from: triage,    to: session,     carries: question }
+  - { from: triage,    to: gateway,     carries: model_call }
+  - { from: triage,    to: verifier,    carries: review }
+  - { from: triage,    to: tests,       carries: call }
+  - { from: grants,    to: triage,      carries: grant }
+  - { from: policy,    to: triage,      carries: grant }
+  - { from: triage,    to: evidence,    carries: record }
+  - { from: evidence,  to: you,         carries: report }
+  - { from: you,        to: factory,   carries: prompt }
+  - { from: factory,    to: teams,     carries: order }
+  - { from: factory,    to: gateway,   carries: model_call }
+  - { from: teams,      to: session,   carries: question }
+  - { from: teams,      to: gateway,   carries: model_call }
+  - { from: teams,      to: verifier,  carries: review }
+  - { from: teams,      to: evidence,  carries: record }
+  - { from: budgets,    to: gateway,   carries: grant }
+  - { from: principles, to: factory,   carries: context }
+  - { from: evidence,   to: kpis,      carries: record }
+  - { from: kpis,       to: you,       carries: report }
+
+border: [session]
+
+policies:
+  question_default_after: 15m
+  operator_answers_alone: false

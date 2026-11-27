@@ -1,0 +1,98 @@
+{
+  "format": "agenticspec-sim-result/1",
+  "marked": [
+    { "path": "parts.worker.count", "value": 12, "range": { "min": 2, "max": 24, "step": 2 } },
+    { "path": "parts.gateway.rate_limit_per_minute", "value": 120, "range": [60, 120, 240] },
+    { "path": "parts.builds.capacity", "value": 16, "range": [8, 16, 24, 32] },
+    { "path": "policies.question_default_after", "value": "15m", "range": ["5m", "15m", "60m"] },
+    { "path": "policies.operator_answers_alone", "value": false, "range": [false, true] }
+  ],
+  "baseline": {
+    "params": {
+      "parts.worker.count": 12,
+      "parts.gateway.rate_limit_per_minute": 120,
+      "parts.builds.capacity": 16,
+      "policies.question_default_after": "15m",
+      "policies.operator_answers_alone": false
+    },
+    "kpis": {
+      "tasks_done": 141,
+      "owner_wait_share": 0.31,
+      "cost_usd": 212.4,
+      "queue_wait_p90_seconds": 960,
+      "questions_defaulted": 9,
+      "unreachable_parts": 0,
+      "agent_without_model_path": 0
+    },
+    "per_part": {
+      "owner": { "questions_answered": 38, "wait_seconds": 26784 },
+      "operator": { "orders": 141, "questions_asked": 38 },
+      "worker": { "tasks_done": 141, "model_calls": 18234 },
+      "gateway": { "rate_limited_seconds": 412 },
+      "builds": { "utilization": 0.94, "queue_wait_p90_seconds": 960 }
+    },
+    "fitness": 541.88,
+    "feasible": true
+  },
+  "best": {
+    "params": {
+      "parts.worker.count": 14,
+      "parts.gateway.rate_limit_per_minute": 240,
+      "parts.builds.capacity": 24,
+      "policies.question_default_after": "5m",
+      "policies.operator_answers_alone": true
+    },
+    "kpis": {
+      "tasks_done": 188,
+      "owner_wait_share": 0.12,
+      "cost_usd": 276.9,
+      "queue_wait_p90_seconds": 240,
+      "questions_defaulted": 21,
+      "unreachable_parts": 0,
+      "agent_without_model_path": 0
+    },
+    "per_part": {
+      "owner": { "questions_answered": 17, "wait_seconds": 10368 },
+      "operator": { "orders": 188, "questions_asked": 52 },
+      "worker": { "tasks_done": 188, "model_calls": 24310 },
+      "gateway": { "rate_limited_seconds": 0 },
+      "builds": { "utilization": 0.81, "queue_wait_p90_seconds": 240 }
+    },
+    "fitness": 878.75,
+    "feasible": true
+  },
+  "variants": [
+    { "id": "v000", "params": { "parts.worker.count": 12, "parts.builds.capacity": 16, "parts.gateway.rate_limit_per_minute": 120, "policies.question_default_after": "15m", "policies.operator_answers_alone": false }, "kpis": { "tasks_done": 141, "cost_usd": 212.4 }, "fitness": 541.88, "feasible": true },
+    { "id": "v001", "params": { "parts.worker.count": 14, "parts.builds.capacity": 16, "parts.gateway.rate_limit_per_minute": 120, "policies.question_default_after": "15m", "policies.operator_answers_alone": false }, "kpis": { "tasks_done": 150, "cost_usd": 228.1 }, "fitness": 588.6, "feasible": true },
+    { "id": "v002", "params": { "parts.worker.count": 14, "parts.builds.capacity": 24, "parts.gateway.rate_limit_per_minute": 120, "policies.question_default_after": "15m", "policies.operator_answers_alone": false }, "kpis": { "tasks_done": 166, "cost_usd": 241.0 }, "fitness": 702.3, "feasible": true },
+    { "id": "v003", "params": { "parts.worker.count": 24, "parts.builds.capacity": 8, "parts.gateway.rate_limit_per_minute": 60, "policies.question_default_after": "60m", "policies.operator_answers_alone": false }, "kpis": { "tasks_done": 98, "cost_usd": 310.7 }, "fitness": 120.4, "feasible": true },
+    { "id": "v004", "params": { "parts.worker.count": 14, "parts.builds.capacity": 24, "parts.gateway.rate_limit_per_minute": 240, "policies.question_default_after": "15m", "policies.operator_answers_alone": false }, "kpis": { "tasks_done": 176, "cost_usd": 259.2 }, "fitness": 761.0, "feasible": true },
+    { "id": "v005", "params": { "parts.worker.count": 14, "parts.builds.capacity": 24, "parts.gateway.rate_limit_per_minute": 240, "policies.question_default_after": "5m", "policies.operator_answers_alone": false }, "kpis": { "tasks_done": 181, "cost_usd": 266.0 }, "fitness": 812.5, "feasible": true },
+    { "id": "v006", "params": { "parts.worker.count": 2, "parts.builds.capacity": 32, "parts.gateway.rate_limit_per_minute": 60, "policies.question_default_after": "5m", "policies.operator_answers_alone": true }, "kpis": { "tasks_done": 31, "cost_usd": 48.2 }, "fitness": -310.0, "feasible": false },
+    { "id": "v007", "params": { "parts.worker.count": 14, "parts.builds.capacity": 24, "parts.gateway.rate_limit_per_minute": 240, "policies.question_default_after": "5m", "policies.operator_answers_alone": true }, "kpis": { "tasks_done": 188, "cost_usd": 276.9 }, "fitness": 878.75, "feasible": true },
+    { "id": "v008", "params": { "parts.worker.count": 16, "parts.builds.capacity": 32, "parts.gateway.rate_limit_per_minute": 240, "policies.question_default_after": "5m", "policies.operator_answers_alone": true }, "kpis": { "tasks_done": 190, "cost_usd": 301.5 }, "fitness": 861.2, "feasible": false },
+    { "id": "v009", "params": { "parts.worker.count": 18, "parts.builds.capacity": 24, "parts.gateway.rate_limit_per_minute": 240, "policies.question_default_after": "5m", "policies.operator_answers_alone": true }, "kpis": { "tasks_done": 186, "cost_usd": 322.0 }, "fitness": 820.1, "feasible": true }
+  ],
+  "trace": [
+    { "eval": 1, "variant": "v000", "fitness": 541.88, "best_so_far": 541.88 },
+    { "eval": 2, "variant": "v001", "fitness": 588.6, "best_so_far": 588.6 },
+    { "eval": 3, "variant": "v003", "fitness": 120.4, "best_so_far": 588.6 },
+    { "eval": 4, "variant": "v002", "fitness": 702.3, "best_so_far": 702.3 },
+    { "eval": 5, "variant": "v006", "fitness": -310.0, "best_so_far": 702.3 },
+    { "eval": 6, "variant": "v004", "fitness": 761.0, "best_so_far": 761.0 },
+    { "eval": 7, "variant": "v005", "fitness": 812.5, "best_so_far": 812.5 },
+    { "eval": 8, "variant": "v009", "fitness": 820.1, "best_so_far": 820.1 },
+    { "eval": 9, "variant": "v008", "fitness": 861.2, "best_so_far": 820.1 },
+    { "eval": 10, "variant": "v007", "fitness": 878.75, "best_so_far": 878.75 }
+  ],
+  "timeline": [
+    { "t_seconds": 0, "part": "owner", "kind": "prompt" },
+    { "t_seconds": 1800, "part": "worker", "kind": "claim" },
+    { "t_seconds": 7200, "part": "owner", "kind": "away" },
+    { "t_seconds": 9000, "part": "operator", "kind": "question_defaulted" },
+    { "t_seconds": 18000, "part": "owner", "kind": "back" },
+    { "t_seconds": 36000, "part": "builds", "kind": "capacity_drop" },
+    { "t_seconds": 39600, "part": "builds", "kind": "capacity_restored" },
+    { "t_seconds": 72000, "part": "worker", "kind": "claim" }
+  ]
+}

@@ -1,0 +1,466 @@
+domain: agentic.agent
+
+summary: >-
+  The definition of an agent. An agent is a principal of kind Agent with a name. Its behaviour is
+  fixed by an immutable revision: a role, instructions held as content, a model or route for each
+  use, the tools it may call, the knowledge it is given and its budget limits. A change is a new
+  revision, never an edit. A revision is published, may be retired, and a retired revision is
+  refused wherever it would be used.
+
+naming:
+  wire: agent
+  display: Agent
+
+types:
+  - name: agentic.agent.ModelUse
+    kind: enum
+    variants: [Primary, Fast, Review]
+    naming:
+      summary: >-
+        What a model is used for inside the agent: the main loop, cheap side calls such as titles
+        and summaries, or a second opinion on the agent's own work.
+
+  - name: agentic.agent.ModelTarget
+    kind: union
+    tag: kind
+    variants:
+      Model: agentic.shared.ModelId
+      Route: agentic.shared.RouteId
+    naming:
+      summary: >-
+        What a model use points at: one model directly, or a route that resolves to a model at call
+        time. Exactly one, by construction.
+
+  - name: agentic.agent.ModelBinding
+    kind: struct
+    naming:
+      summary: The model an agent uses for one use.
+    fields:
+      - name: use
+        type: agentic.agent.ModelUse
+      - name: target
+        type: agentic.agent.ModelTarget
+
+  - name: agentic.agent.BudgetLimits
+    kind: struct
+    naming:
+      summary: >-
+        Ceilings on one run of the agent. An absent limit is no limit, which a gate or an
+        architecture may refuse.
+    fields:
+      - name: max_turns
+        type: Optional<Integer>
+      - name: max_output_tokens
+        type: Optional<Integer>
+      - name: max_cost
+        type: Optional<agentic.shared.Money>
+      - name: max_subagent_depth
+        type: Optional<Integer>
+
+entities:
+  - name: agentic.agent.Agent
+    naming:
+      summary: >-
+        A named agent and the principal it answers as. Active until retired; retiring it retires
+        every revision.
+    identity:
+      name: agent_id
+      type: agentic.shared.AgentId
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+        summary: The principal of kind Agent this definition stands for.
+      - name: name
+        type: agentic.shared.Name
+      - name: defined_at
+        type: Timestamp
+    relations:
+      - name: principal
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: principal_id
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Active]
+          to: Retired
+
+  - name: agentic.agent.AgentRevision
+    naming:
+      summary: >-
+        One immutable definition of an agent. No command changes its fields after it is
+        published; only its state moves, from Published to Retired.
+    identity:
+      name: agent_revision_id
+      type: agentic.shared.AgentRevisionId
+    fields:
+      - name: agent_id
+        type: agentic.shared.AgentId
+      - name: number
+        type: Integer
+        summary: The revision's place in the agent's history, counted from 1.
+      - name: role
+        type: agentic.shared.Name
+        summary: What the agent is for, for example operator or reviewer.
+      - name: instructions
+        type: agentic.shared.Content
+      - name: models
+        type: List<agentic.agent.ModelBinding>
+      - name: tools
+        type: List<agentic.shared.ToolId>
+        summary: The tools the agent may call; a tool not listed is not granted.
+      - name: knowledge
+        type: List<agentic.shared.KnowledgeId>
+      - name: budget
+        type: agentic.agent.BudgetLimits
+      - name: published_at
+        type: Timestamp
+      - name: last_used_at
+        type: Optional<Timestamp>
+    relations:
+      - name: agent
+        kind: references
+        target: agentic.agent.Agent
+        cardinality: one
+        via: agent_id
+    # UNMAPPED: `models` names ModelId and RouteId, `tools` ToolId and `knowledge` KnowledgeId, and
+    # no `references` relation is declared for them. Their domains (model, tool, knowledge) sit in
+    # layers 2 and 3 and are written separately; the entity names to point at are not known here.
+    # A full-system validate may warn ESS-ENTITY-019 for these identifiers. Open question for the
+    # owner: declare the relations once those domains exist.
+    lifecycle:
+      initial: Published
+      states: [Published, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Published]
+          to: Retired
+
+errors:
+  - name: agentic.agent.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.agent.PrincipalNotAgent
+    summary: The principal is not of kind Agent, so no agent can stand for it.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.agent.PrincipalRetired
+    summary: A retired principal takes no new agent.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.agent.UnknownAgent
+    summary: No agent of this identity is defined.
+    fields:
+      - name: agent_id
+        type: agentic.shared.AgentId
+
+  - name: agentic.agent.AgentStateConflict
+    summary: The agent is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.agent.Agent.State
+
+  - name: agentic.agent.UnknownRevision
+    summary: No revision of this identity is published.
+    fields:
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+
+  - name: agentic.agent.RevisionRetired
+    summary: The revision is retired and is not used.
+    fields:
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+
+  - name: agentic.agent.RevisionStateConflict
+    summary: The revision is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.agent.AgentRevision.State
+
+  - name: agentic.agent.NoModel
+    summary: A revision names at least one model or route; it names none.
+    fields:
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+
+  - name: agentic.agent.InvalidRevisionNumber
+    summary: The revision number is not at least 1.
+    fields:
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+
+events:
+  - name: agentic.agent.AgentDefined
+    fields:
+      - {name: agent_id, type: agentic.shared.AgentId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.agent.AgentRetired
+    fields:
+      - {name: agent_id, type: agentic.shared.AgentId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.agent.AgentRevisionPublished
+    fields:
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: agent_id, type: agentic.shared.AgentId}
+      - {name: number, type: Integer}
+      - {name: role, type: agentic.shared.Name}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.agent.AgentRevisionRetired
+    fields:
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.agent.AgentRevisionUsed
+    fields:
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: at, type: Timestamp}
+
+commands:
+  - name: agentic.agent.DefineAgent
+    naming:
+      wire: define-agent
+      display: Define an agent
+    input:
+      - {name: agent_id, type: agentic.shared.AgentId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-principal
+        when_related: {via: input.principal_id, exists: false}
+        error: agentic.agent.UnknownPrincipal
+        payload:
+          agentic.agent.UnknownPrincipal: {principal_id: input.principal_id}
+      - name: principal-not-agent
+        when_related: {via: input.principal_id, predicate: kind != Agent}
+        error: agentic.agent.PrincipalNotAgent
+        payload:
+          agentic.agent.PrincipalNotAgent: {principal_id: input.principal_id}
+      - name: principal-retired
+        when_related: {via: input.principal_id, predicate: state == Retired}
+        error: agentic.agent.PrincipalRetired
+        payload:
+          agentic.agent.PrincipalRetired: {principal_id: input.principal_id}
+      - name: defined
+        creates: agentic.agent.Agent
+        instance: agent_id
+        sets:
+          principal_id: input.principal_id
+          name: input.name
+          defined_at: input.at
+        emits: [agentic.agent.AgentDefined]
+        payload:
+          agentic.agent.AgentDefined:
+            agent_id: input.agent_id
+            principal_id: input.principal_id
+            name: input.name
+            at: input.at
+        summary: The agent exists, with no revision yet and so nothing to run.
+
+  - name: agentic.agent.PublishRevision
+    naming:
+      wire: publish-revision
+      display: Publish an agent revision
+      summary: >-
+        Fixes one definition of the agent. The revision is never edited afterwards; a change is
+        another revision.
+    input:
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: agent_id, type: agentic.shared.AgentId}
+      - {name: number, type: Integer}
+      - {name: role, type: agentic.shared.Name}
+      - {name: instructions, type: agentic.shared.Content}
+      - {name: models, type: List<agentic.agent.ModelBinding>}
+      - {name: tools, type: List<agentic.shared.ToolId>}
+      - {name: knowledge, type: List<agentic.shared.KnowledgeId>}
+      - {name: budget, type: agentic.agent.BudgetLimits}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: invalid-number
+        when: number < 1
+        error: agentic.agent.InvalidRevisionNumber
+        payload:
+          agentic.agent.InvalidRevisionNumber: {agent_revision_id: input.agent_revision_id}
+      - name: no-model
+        when: models.count == 0
+        error: agentic.agent.NoModel
+        payload:
+          agentic.agent.NoModel: {agent_revision_id: input.agent_revision_id}
+      - name: no-such-agent
+        when_related: {via: input.agent_id, exists: false}
+        error: agentic.agent.UnknownAgent
+        payload:
+          agentic.agent.UnknownAgent: {agent_id: input.agent_id}
+      - name: agent-retired
+        when_related: {via: input.agent_id, predicate: state == Retired}
+        error: agentic.agent.AgentStateConflict
+        payload:
+          agentic.agent.AgentStateConflict:
+            state: {related: {via: input.agent_id, field: state}}
+      - name: published
+        creates: agentic.agent.AgentRevision
+        instance: agent_revision_id
+        sets:
+          agent_id: input.agent_id
+          number: input.number
+          role: input.role
+          instructions: input.instructions
+          models: input.models
+          tools: input.tools
+          knowledge: input.knowledge
+          budget: input.budget
+          published_at: input.at
+        emits: [agentic.agent.AgentRevisionPublished]
+        payload:
+          agentic.agent.AgentRevisionPublished:
+            agent_revision_id: input.agent_revision_id
+            agent_id: input.agent_id
+            number: input.number
+            role: input.role
+            at: input.at
+        summary: The revision is Published and can be used; its fields never change.
+
+  - name: agentic.agent.UseRevision
+    naming:
+      wire: use-revision
+      display: Use an agent revision
+      summary: >-
+        Names a revision as the one a session or an assignment runs. Default deny: a retired
+        revision is refused, and so is one that was never published.
+    input:
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-revision
+        unknown_instance: true
+        error: agentic.agent.UnknownRevision
+        payload:
+          agentic.agent.UnknownRevision: {agent_revision_id: input.agent_revision_id}
+      - name: retired
+        when_subject_state: Retired
+        error: agentic.agent.RevisionRetired
+        payload:
+          agentic.agent.RevisionRetired: {agent_revision_id: input.agent_revision_id}
+      - name: used
+        updates: agentic.agent.AgentRevision
+        instance: agent_revision_id
+        sets:
+          last_used_at: input.at
+        emits: [agentic.agent.AgentRevisionUsed]
+        payload:
+          agentic.agent.AgentRevisionUsed:
+            agent_revision_id: input.agent_revision_id
+            at: input.at
+        summary: The revision may run; nothing in it changed.
+
+  - name: agentic.agent.RetireRevision
+    naming:
+      wire: retire-revision
+      display: Retire an agent revision
+    input:
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-revision
+        unknown_instance: true
+        error: agentic.agent.UnknownRevision
+        payload:
+          agentic.agent.UnknownRevision: {agent_revision_id: input.agent_revision_id}
+      - name: retired
+        moves: agentic.agent.AgentRevision.retire
+        instance: agent_revision_id
+        emits: [agentic.agent.AgentRevisionRetired]
+        payload:
+          agentic.agent.AgentRevisionRetired:
+            agent_revision_id: input.agent_revision_id
+            at: input.at
+        summary: The revision is refused from now on; sessions already running on it are not stopped here.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.agent.RevisionStateConflict
+        payload:
+          agentic.agent.RevisionStateConflict: {state: {subject: state}}
+
+  - name: agentic.agent.RetireAgent
+    naming:
+      wire: retire-agent
+      display: Retire an agent
+    input:
+      - {name: agent_id, type: agentic.shared.AgentId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-agent
+        unknown_instance: true
+        error: agentic.agent.UnknownAgent
+        payload:
+          agentic.agent.UnknownAgent: {agent_id: input.agent_id}
+      - name: retired
+        moves: agentic.agent.Agent.retire
+        instance: agent_id
+        emits: [agentic.agent.AgentRetired]
+        payload:
+          agentic.agent.AgentRetired:
+            agent_id: input.agent_id
+            at: input.at
+        affects:
+          - entity: agentic.agent.AgentRevision
+            where: agent_id == subject.agent_id
+            moves: agentic.agent.AgentRevision.retire
+        summary: The agent and every revision of it are retired.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.agent.AgentStateConflict
+        payload:
+          agentic.agent.AgentStateConflict: {state: {subject: state}}
+
+views:
+  - name: agentic.agent.Agents
+    source: agentic.agent.Agent
+    consistency: read_your_writes
+    fields:
+      - {name: agent_id, type: agentic.shared.AgentId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: defined_at, type: Timestamp}
+      - {name: state, type: agentic.agent.Agent.State}
+    naming:
+      wire: agents
+      display: Agents
+
+  - name: agentic.agent.AgentRevisions
+    source: agentic.agent.AgentRevision
+    consistency: read_your_writes
+    fields:
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: agent_id, type: agentic.shared.AgentId}
+      - {name: number, type: Integer}
+      - {name: role, type: agentic.shared.Name}
+      - {name: instructions, type: agentic.shared.Content}
+      - {name: models, type: List<agentic.agent.ModelBinding>}
+      - {name: tools, type: List<agentic.shared.ToolId>}
+      - {name: knowledge, type: List<agentic.shared.KnowledgeId>}
+      - {name: budget, type: agentic.agent.BudgetLimits}
+      - {name: published_at, type: Timestamp}
+      - {name: last_used_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.agent.AgentRevision.State}
+    naming:
+      wire: agent-revisions
+      display: Agent revisions

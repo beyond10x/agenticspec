@@ -1,0 +1,132 @@
+domain: agentic.principal
+
+summary: >-
+  Who can want something and answer for it. A principal is a human, an organization, a service or
+  an agent. Everything that is asked, approved, delegated or paid for traces back to one. A
+  principal has a name and a kind. How it is reached is the channel block's concern: a channel
+  names its parties, a principal names no channel, so the dependency points down.
+
+naming:
+  wire: principal
+  display: Principal
+
+entities:
+  - name: agentic.principal.Principal
+    naming:
+      summary: >-
+        One party that can want something and answer for it. Active until retired; a retired
+        principal stays on record, because past decisions name it, and takes no new role.
+    identity:
+      name: principal_id
+      type: agentic.shared.PrincipalId
+    fields:
+      - name: kind
+        type: agentic.shared.PrincipalKind
+      - name: name
+        type: agentic.shared.Name
+      - name: registered_at
+        type: Timestamp
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Active]
+          to: Retired
+
+errors:
+  - name: agentic.principal.PrincipalNotFound
+    summary: No principal of this identity is registered.
+    fields:
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+
+  - name: agentic.principal.PrincipalStateConflict
+    summary: The principal is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.principal.Principal.State
+
+events:
+  - name: agentic.principal.PrincipalRegistered
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: kind, type: agentic.shared.PrincipalKind}
+      - {name: name, type: agentic.shared.Name}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.principal.PrincipalRetired
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+commands:
+  - name: agentic.principal.RegisterPrincipal
+    naming:
+      wire: register-principal
+      display: Register a principal
+    input:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: kind, type: agentic.shared.PrincipalKind}
+      - {name: name, type: agentic.shared.Name}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: registered
+        creates: agentic.principal.Principal
+        instance: principal_id
+        sets:
+          kind: input.kind
+          name: input.name
+          registered_at: input.at
+        emits: [agentic.principal.PrincipalRegistered]
+        payload:
+          agentic.principal.PrincipalRegistered:
+            principal_id: input.principal_id
+            kind: input.kind
+            name: input.name
+            at: input.at
+        summary: The principal exists and is Active.
+
+  - name: agentic.principal.RetirePrincipal
+    naming:
+      wire: retire-principal
+      display: Retire a principal
+    input:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-principal
+        unknown_instance: true
+        error: agentic.principal.PrincipalNotFound
+        payload:
+          agentic.principal.PrincipalNotFound: {principal_id: input.principal_id}
+      - name: retired
+        moves: agentic.principal.Principal.retire
+        instance: principal_id
+        emits: [agentic.principal.PrincipalRetired]
+        payload:
+          agentic.principal.PrincipalRetired:
+            principal_id: input.principal_id
+            at: input.at
+        summary: The principal takes no new role or delegation.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.principal.PrincipalStateConflict
+        payload:
+          agentic.principal.PrincipalStateConflict: {state: {subject: state}}
+        summary: The principal had already retired.
+
+views:
+  - name: agentic.principal.Principals
+    source: agentic.principal.Principal
+    consistency: read_your_writes
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: kind, type: agentic.shared.PrincipalKind}
+      - {name: name, type: agentic.shared.Name}
+      - {name: registered_at, type: Timestamp}
+      - {name: state, type: agentic.principal.Principal.State}
+    naming:
+      wire: principals
+      display: Principals

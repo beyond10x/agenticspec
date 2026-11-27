@@ -1,0 +1,2729 @@
+{
+  "format": "agenticspec-docs-kpis/1",
+  "kpis": [
+    {
+      "block": "principal",
+      "direction": "lower",
+      "family": "principal",
+      "gate": false,
+      "how": "Seconds from a main agent's turn end to the owner's next prompt (waits over one hour counted apart as away), divided by working plus waiting seconds. The simulator divides owner wait by instance time.",
+      "id": "owner_wait_share",
+      "kind": "quality",
+      "layer": 1,
+      "modes": [
+        {
+          "direction": "lower",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "ignore",
+          "mode": "pairing"
+        },
+        {
+          "direction": "ignore",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.TurnEnded",
+        "agenticspec.session.PromptSubmitted"
+      ],
+      "route": "/docs/blocks/1-principals/principal#kpis",
+      "source": "docs/kpis.md",
+      "status": "both",
+      "summary": "Share of agent time spent waiting on the human owner.",
+      "unit": "share"
+    },
+    {
+      "block": "principal",
+      "direction": "lower",
+      "family": "principal",
+      "gate": false,
+      "how": "PromptSubmitted events with author Human, divided by all PromptSubmitted events of main agents. Compare the split by author (Human, Delegate, PeerSession, ParentAgent, Harness, Hook).",
+      "id": "human_prompt_share",
+      "kind": "quality",
+      "layer": 1,
+      "modes": [
+        {
+          "direction": "lower",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "ignore",
+          "mode": "pairing"
+        },
+        {
+          "direction": "ignore",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.PromptSubmitted"
+      ],
+      "route": "/docs/blocks/1-principals/principal#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Share of prompts to main agents written by a human.",
+      "unit": "share"
+    },
+    {
+      "block": "principal",
+      "direction": "lower",
+      "family": "principal",
+      "gate": true,
+      "how": "TaskCreated events whose principal does not resolve, through registered principals and delegations, to a human principal. Must be 0.",
+      "id": "work_without_human_principal",
+      "kind": "correctness",
+      "layer": 1,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.TaskCreated",
+        "agentic.principal.PrincipalRegistered"
+      ],
+      "route": "/docs/blocks/1-principals/principal#kpis",
+      "source": "research/2609.07919",
+      "status": "planned",
+      "summary": "Tasks submitted whose principal chain names no human.",
+      "unit": "count"
+    },
+    {
+      "block": "principal",
+      "direction": "higher",
+      "family": "principal",
+      "gate": false,
+      "how": "Questions answered by the principal divided by questions the principal received, per principal part. Questions that took their default count as not answered.",
+      "id": "principal_answered_share",
+      "kind": "completeness",
+      "layer": 1,
+      "modes": [
+        {
+          "direction": "ignore",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "higher",
+          "mode": "pairing"
+        },
+        {
+          "direction": "higher",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agentic.question.QuestionAsked",
+        "agentic.question.QuestionAnswered"
+      ],
+      "route": "/docs/blocks/1-principals/principal#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Share of questions a principal received that the principal answered.",
+      "unit": "share"
+    },
+    {
+      "block": "delegation",
+      "direction": "lower",
+      "family": "principal",
+      "gate": true,
+      "how": "DelegatedActionTaken events whose chain of DelegationGranted and DelegationPassedOn does not reach a human principal. Must be 0.",
+      "id": "delegation_chain_broken",
+      "kind": "correctness",
+      "layer": 1,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.delegation.DelegatedActionTaken",
+        "agentic.delegation.DelegationGranted",
+        "agentic.delegation.DelegationPassedOn"
+      ],
+      "route": "/docs/blocks/1-principals/delegation#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Delegated actions whose chain does not end at a human.",
+      "unit": "count"
+    },
+    {
+      "block": "delegation",
+      "direction": "lower",
+      "family": "principal",
+      "gate": true,
+      "how": "DelegatedActionTaken events timestamped after a DelegationRevoked or DelegationExpiredRecorded of the same delegation. Must be 0.",
+      "id": "action_after_revocation",
+      "kind": "correctness",
+      "layer": 1,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.delegation.DelegatedActionTaken",
+        "agentic.delegation.DelegationRevoked",
+        "agentic.delegation.DelegationExpiredRecorded"
+      ],
+      "route": "/docs/blocks/1-principals/delegation#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Delegated actions taken after the delegation was revoked or expired.",
+      "unit": "count"
+    },
+    {
+      "block": "delegation",
+      "direction": "lower",
+      "family": "principal",
+      "gate": false,
+      "how": "Questions forwarded divided by questions received, per delegate part. A delegate that forwards everything saves the owner nothing.",
+      "id": "delegate_forward_share",
+      "kind": "quality",
+      "layer": 1,
+      "modes": [
+        {
+          "direction": "lower",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "ignore",
+          "mode": "pairing"
+        },
+        {
+          "direction": "ignore",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agentic.question.QuestionAsked",
+        "agentic.delegation.DelegatedActionTaken"
+      ],
+      "route": "/docs/blocks/1-principals/delegation#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Share of questions a delegate received that it forwarded to the owner.",
+      "unit": "share"
+    },
+    {
+      "block": "delegation",
+      "direction": "lower",
+      "family": "principal",
+      "gate": false,
+      "how": "Count of questions addressed to an owner part that were answered by a delegate acting for that owner. A count is a measure, not a fault, so it is not a gate.",
+      "id": "operator_decided_owner_questions",
+      "kind": "quality",
+      "layer": 1,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.question.QuestionAnswered",
+        "agentic.delegation.DelegatedActionTaken"
+      ],
+      "route": "/docs/blocks/1-principals/delegation#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Questions meant for the owner that the delegate decided itself.",
+      "unit": "count"
+    },
+    {
+      "block": "model",
+      "direction": "lower",
+      "family": "intel",
+      "gate": false,
+      "how": "Per message, tokens by class (input, cache read, cache write, output) times the model's price, summed over ModelTurnRecorded events. The simulator sums priced tokens per inference.",
+      "id": "cost_usd",
+      "kind": "quality",
+      "layer": 2,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded",
+        "agentic.model.InferenceFinished"
+      ],
+      "route": "/docs/blocks/2-intelligence/model#kpis",
+      "source": "docs/kpis.md",
+      "status": "both",
+      "summary": "Cost of the model messages at the list price of their model.",
+      "unit": "usd"
+    },
+    {
+      "block": "model",
+      "direction": "lower",
+      "family": "intel",
+      "gate": false,
+      "how": "cost_usd of a window divided by TaskCompleted events of the same window. Tasks not done still cost, so a failing system shows a higher value.",
+      "id": "cost_per_task_usd",
+      "kind": "quality",
+      "layer": 2,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.model.InferenceFinished",
+        "agentic.work.TaskCompleted"
+      ],
+      "route": "/docs/blocks/2-intelligence/model#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Cost of the model messages divided by tasks done.",
+      "unit": "usd"
+    },
+    {
+      "block": "model",
+      "direction": "higher",
+      "family": "intel",
+      "gate": false,
+      "how": "Cache read tokens divided by cache read plus cache write plus uncached input tokens, summed over ModelTurnRecorded events (reported as hit_permille).",
+      "id": "cache_hit_share",
+      "kind": "quality",
+      "layer": 2,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded"
+      ],
+      "route": "/docs/blocks/2-intelligence/model#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Share of input tokens served from the prompt cache.",
+      "unit": "share"
+    },
+    {
+      "block": "model",
+      "direction": "lower",
+      "family": "intel",
+      "gate": false,
+      "how": "Turns that read under half of the previous turn's context from the cache and wrote over half again, contexts over 20,000 tokens only, by cause (compacted, model_changed, ttl_expired, unexplained).",
+      "id": "cache_bust_count",
+      "kind": "quality",
+      "layer": 2,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded",
+        "agenticspec.session.ContextCompacted"
+      ],
+      "route": "/docs/blocks/2-intelligence/model#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Model turns that wrote most of the context to the cache again.",
+      "unit": "count"
+    },
+    {
+      "block": "model",
+      "direction": "higher",
+      "family": "intel",
+      "gate": false,
+      "how": "ModelTurnRecorded events with a priced model divided by all of them. The rest are the unpriced messages left out of the cost, so a cost figure over a low share is incomplete.",
+      "id": "priced_message_share",
+      "kind": "completeness",
+      "layer": 2,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded"
+      ],
+      "route": "/docs/blocks/2-intelligence/model#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Share of model messages whose model has a known price.",
+      "unit": "share"
+    },
+    {
+      "block": "gateway",
+      "direction": "lower",
+      "family": "intel",
+      "gate": false,
+      "how": "Sum over upstreams of the seconds between UpstreamSaturated and the next UpstreamRestored, weighted by the calls held back in that interval.",
+      "id": "rate_limited_seconds",
+      "kind": "quality",
+      "layer": 2,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.gateway.UpstreamSaturated",
+        "agentic.gateway.UpstreamRestored"
+      ],
+      "route": "/docs/blocks/2-intelligence/gateway#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Time requests waited because an upstream was saturated.",
+      "unit": "seconds"
+    },
+    {
+      "block": "gateway",
+      "direction": "higher",
+      "family": "intel",
+      "gate": true,
+      "how": "Inferences started that have a CallDecided and a CallCompleted of the gateway, divided by inferences started. The gateway is the one place calls pass, so it must be 1.",
+      "id": "call_record_share",
+      "kind": "completeness",
+      "layer": 2,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.model.InferenceStarted",
+        "agentic.gateway.CallDecided",
+        "agentic.gateway.CallCompleted"
+      ],
+      "route": "/docs/blocks/2-intelligence/gateway#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of model calls that have a gateway record.",
+      "unit": "share"
+    },
+    {
+      "block": "gateway",
+      "direction": "lower",
+      "family": "intel",
+      "gate": false,
+      "how": "CallDecided events with a refusal divided by all CallDecided events, by reason (budget, route, rate).",
+      "id": "call_denied_share",
+      "kind": "quality",
+      "layer": 2,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.gateway.CallDecided"
+      ],
+      "route": "/docs/blocks/2-intelligence/gateway#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of model calls the gateway refused at admission.",
+      "unit": "share"
+    },
+    {
+      "block": "tool",
+      "direction": "lower",
+      "family": "capability",
+      "gate": false,
+      "how": "ToolCallCompleted events with an error divided by all ToolCallCompleted events, per tool and per category.",
+      "id": "tool_error_rate",
+      "kind": "quality",
+      "layer": 3,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallCompleted"
+      ],
+      "route": "/docs/blocks/3-capability/tool#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of tool calls that ended in an error.",
+      "unit": "share"
+    },
+    {
+      "block": "tool",
+      "direction": "lower",
+      "family": "capability",
+      "gate": false,
+      "how": "Seconds between ToolCallRequested and ToolCallCompleted of the same call, 90th percentile per tool.",
+      "id": "tool_duration_p90_seconds",
+      "kind": "quality",
+      "layer": 3,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallRequested",
+        "agenticspec.session.ToolCallCompleted"
+      ],
+      "route": "/docs/blocks/3-capability/tool#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "90th percentile of the time a tool call took.",
+      "unit": "seconds"
+    },
+    {
+      "block": "tool",
+      "direction": "higher",
+      "family": "capability",
+      "gate": false,
+      "how": "Failed tool calls whose next call by the same agent, within 3 calls, succeeded, divided by failed tool calls. Compare errors that state the next step with errors that do not.",
+      "id": "error_recovery_share",
+      "kind": "quality",
+      "layer": 3,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallCompleted"
+      ],
+      "route": "/docs/blocks/3-capability/tool#kpis",
+      "source": "research/2609.35381",
+      "status": "planned",
+      "summary": "Share of tool errors after which the agent's next call succeeded.",
+      "unit": "share"
+    },
+    {
+      "block": "tool",
+      "direction": "lower",
+      "family": "capability",
+      "gate": true,
+      "how": "ToolCallRequested events whose tool has no ToolPublished before it, or a ToolWithdrawn after the last ToolPublished. Must be 0.",
+      "id": "unpublished_tool_calls",
+      "kind": "correctness",
+      "layer": 3,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallRequested",
+        "agentic.tool.ToolPublished",
+        "agentic.tool.ToolWithdrawn"
+      ],
+      "route": "/docs/blocks/3-capability/tool#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Calls of a tool that is not published or was withdrawn.",
+      "unit": "count"
+    },
+    {
+      "block": "knowledge",
+      "direction": "lower",
+      "family": "capability",
+      "gate": false,
+      "how": "Published entries with a cited path that received a PathWritten after the entry's last KnowledgePublished or KnowledgeRevised, and no revision since. A stale line is corrected, not deleted.",
+      "id": "stale_entries_open",
+      "kind": "correctness",
+      "layer": 3,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.knowledge.KnowledgePublished",
+        "agentic.knowledge.KnowledgeRevised",
+        "agentic.workspace.PathWritten"
+      ],
+      "route": "/docs/blocks/3-capability/knowledge#kpis",
+      "source": "research/2611.09802",
+      "status": "planned",
+      "summary": "Knowledge entries that describe code that has changed since and were not revised.",
+      "unit": "count"
+    },
+    {
+      "block": "knowledge",
+      "direction": "higher",
+      "family": "capability",
+      "gate": false,
+      "how": "In probe tasks where an instruction and the code disagree, runs that followed the instruction divided by probe runs. Run per model, because wording is tested per model.",
+      "id": "precedence_followed_share",
+      "kind": "quality",
+      "layer": 3,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.knowledge.KnowledgePublished",
+        "agentic.knowledge.KnowledgeRevised"
+      ],
+      "route": "/docs/blocks/3-capability/knowledge#kpis",
+      "source": "research/2610.30571",
+      "status": "planned",
+      "summary": "Share of conflicts between a written rule and the code in which the agent followed the rule.",
+      "unit": "share"
+    },
+    {
+      "block": "knowledge",
+      "direction": "higher",
+      "family": "capability",
+      "gate": false,
+      "how": "ProposalMerged events whose proposal writes source paths and also writes a documentation path or revises an entry, divided by merged proposals that write source paths.",
+      "id": "docs_changed_with_code_share",
+      "kind": "completeness",
+      "layer": 3,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.workspace.ProposalMerged",
+        "agentic.workspace.PathWritten",
+        "agentic.knowledge.KnowledgeRevised"
+      ],
+      "route": "/docs/blocks/3-capability/knowledge#kpis",
+      "source": "research/2610.27381",
+      "status": "planned",
+      "summary": "Share of merged code changes that also change the documentation they affect.",
+      "unit": "share"
+    },
+    {
+      "block": "agent",
+      "direction": "lower",
+      "family": "agent",
+      "gate": false,
+      "how": "AgentStarted events with a parent agent, per session. Concurrency helps only on the largest tasks, so compare per task size.",
+      "id": "sub_agents_started",
+      "kind": "quality",
+      "layer": 4,
+      "modes": [
+        {
+          "direction": "ignore",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "lower",
+          "mode": "pairing"
+        },
+        {
+          "direction": "lower",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.AgentStarted"
+      ],
+      "route": "/docs/blocks/4-agent/agent#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Sub-agents started in a window.",
+      "unit": "count"
+    },
+    {
+      "block": "agent",
+      "direction": "lower",
+      "family": "agent",
+      "gate": false,
+      "how": "Longest path of parent_agent_id links over AgentStarted events of one session.",
+      "id": "agent_tree_depth",
+      "kind": "quality",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.AgentStarted"
+      ],
+      "route": "/docs/blocks/4-agent/agent#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Deepest chain of parent and sub-agent in a session.",
+      "unit": "count"
+    },
+    {
+      "block": "agent",
+      "direction": "lower",
+      "family": "agent",
+      "gate": false,
+      "how": "cost_usd of model turns with scope sub divided by cost_usd of all model turns. The report already splits models by scope main and sub.",
+      "id": "subagent_cost_share",
+      "kind": "quality",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded",
+        "agenticspec.session.AgentStarted"
+      ],
+      "route": "/docs/blocks/4-agent/agent#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Share of the cost spent by sub-agents.",
+      "unit": "share"
+    },
+    {
+      "block": "agent",
+      "direction": "lower",
+      "family": "agent",
+      "gate": true,
+      "how": "RunStarted events whose assignment has no AgentRevisionUsed of a published revision. Must be 0.",
+      "id": "unpinned_agent_runs",
+      "kind": "correctness",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.RunStarted",
+        "agentic.agent.AgentRevisionUsed",
+        "agentic.agent.AgentRevisionPublished"
+      ],
+      "route": "/docs/blocks/4-agent/agent#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Runs that started without an immutable agent revision.",
+      "unit": "count"
+    },
+    {
+      "block": "harness",
+      "direction": "lower",
+      "family": "agent",
+      "gate": false,
+      "how": "Input plus cache read plus cache write tokens of each ModelTurnRecorded, 90th percentile per model and scope (the median and the largest are reported too).",
+      "id": "context_size_p90_tokens",
+      "kind": "quality",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded"
+      ],
+      "route": "/docs/blocks/4-agent/harness#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "90th percentile of the context size at a model turn.",
+      "unit": "tokens"
+    },
+    {
+      "block": "harness",
+      "direction": "lower",
+      "family": "agent",
+      "gate": false,
+      "how": "Count of ModelTurnRecorded events in the window. Divide by tasks done for turns per task.",
+      "id": "turns",
+      "kind": "quality",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded",
+        "agentic.harness.TurnRecorded"
+      ],
+      "route": "/docs/blocks/4-agent/harness#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Model turns taken.",
+      "unit": "count"
+    },
+    {
+      "block": "harness",
+      "direction": "lower",
+      "family": "agent",
+      "gate": false,
+      "how": "ContextCompacted events divided by sessions. Each compaction discards most of the context.",
+      "id": "compactions_per_run",
+      "kind": "quality",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ContextCompacted",
+        "agenticspec.session.SessionOpened"
+      ],
+      "route": "/docs/blocks/4-agent/harness#kpis",
+      "source": "research/2609.40303",
+      "status": "planned",
+      "summary": "Context compactions per run.",
+      "unit": "count"
+    },
+    {
+      "block": "harness",
+      "direction": "lower",
+      "family": "agent",
+      "gate": true,
+      "how": "Sessions whose count of TurnRecorded events, wall seconds or spend exceeds the limit named in the assignment. A limit held only in the prompt does not count as enforced. Must be 0.",
+      "id": "limit_overruns",
+      "kind": "correctness",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.harness.TurnRecorded",
+        "agentic.harness.SessionEnded"
+      ],
+      "route": "/docs/blocks/4-agent/harness#kpis",
+      "source": "research/2610.09995",
+      "status": "planned",
+      "summary": "Runs that went past a turn, time or cost limit of their assignment.",
+      "unit": "count"
+    },
+    {
+      "block": "harness",
+      "direction": "lower",
+      "family": "agent",
+      "gate": true,
+      "how": "ToolCallDecided accepts whose only trace of approval is text inside a ContextCompacted summary, with no recorded decision of a decider. Must be 0.",
+      "id": "approvals_in_summaries",
+      "kind": "correctness",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ContextCompacted",
+        "agenticspec.session.ToolCallDecided"
+      ],
+      "route": "/docs/blocks/4-agent/harness#kpis",
+      "source": "research/2610.29869",
+      "status": "planned",
+      "summary": "Tool calls executed on an approval that exists only in a compaction summary.",
+      "unit": "count"
+    },
+    {
+      "block": "work",
+      "direction": "higher",
+      "family": "work",
+      "gate": false,
+      "how": "TaskCompleted events in the window.",
+      "id": "tasks_done",
+      "kind": "quality",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.TaskCompleted"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Tasks that ended done.",
+      "unit": "count"
+    },
+    {
+      "block": "work",
+      "direction": "higher",
+      "family": "work",
+      "gate": false,
+      "how": "TaskCompleted events divided by TaskCreated events of the window. Tasks still open count in the divisor.",
+      "id": "task_completion",
+      "kind": "completeness",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.TaskCreated",
+        "agentic.work.TaskCompleted"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Tasks done of tasks assigned.",
+      "unit": "share"
+    },
+    {
+      "block": "work",
+      "direction": "higher",
+      "family": "work",
+      "gate": false,
+      "how": "Tasks with a DeliverableSubmitted whose run ended with a claim of completion, whether or not the deliverable is correct.",
+      "id": "tasks_claimed_done",
+      "kind": "quality",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.DeliverableSubmitted",
+        "agentic.work.RunEnded"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Tasks an agent reported as done.",
+      "unit": "count"
+    },
+    {
+      "block": "work",
+      "direction": "higher",
+      "family": "work",
+      "gate": false,
+      "how": "Tasks whose deliverable passes the oracle, counted by the oracle and not by the agent's claim. Compare with tasks_claimed_done.",
+      "id": "tasks_correct",
+      "kind": "completeness",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.DeliverableAccepted",
+        "agentic.work.TaskCompleted"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "research/2610.04375",
+      "status": "simulated",
+      "summary": "Tasks whose deliverable is correct against an independent oracle.",
+      "unit": "count"
+    },
+    {
+      "block": "work",
+      "direction": "lower",
+      "family": "work",
+      "gate": true,
+      "how": "Tasks claimed done minus tasks correct, restricted to deliverables that were accepted and merged. Must be 0.",
+      "id": "false_completions_shipped",
+      "kind": "correctness",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.DeliverableSubmitted",
+        "agentic.work.DeliverableAccepted",
+        "agentic.work.TaskCompleted"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "research/2610.04375",
+      "status": "simulated",
+      "summary": "Tasks reported done, incorrect, and accepted.",
+      "unit": "count"
+    },
+    {
+      "block": "work",
+      "direction": "lower",
+      "family": "work",
+      "gate": false,
+      "how": "ModelTurnRecorded events of a run after its DeliverableRejected or after a failed check, up to the next DeliverableSubmitted.",
+      "id": "rework_turns",
+      "kind": "quality",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.DeliverableRejected",
+        "agentic.work.DeliverableSubmitted",
+        "agentic.harness.TurnRecorded"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "research/2610.07832",
+      "status": "simulated",
+      "summary": "Turns spent redoing a deliverable that was rejected or failed a check.",
+      "unit": "count"
+    },
+    {
+      "block": "work",
+      "direction": "lower",
+      "family": "work",
+      "gate": false,
+      "how": "Calls of a reviewer agent or reviewer model between DeliverableSubmitted and its acceptance or rejection. A cost of verification, weighed against false completions shipped.",
+      "id": "review_calls",
+      "kind": "quality",
+      "layer": 5,
+      "modes": [
+        {
+          "direction": "lower",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "ignore",
+          "mode": "pairing"
+        },
+        {
+          "direction": "ignore",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agentic.work.DeliverableSubmitted",
+        "agentic.work.DeliverableAccepted",
+        "agentic.work.DeliverableRejected"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "research/2609.20812",
+      "status": "simulated",
+      "summary": "Reviewer calls made on deliverables.",
+      "unit": "count"
+    },
+    {
+      "block": "work",
+      "direction": "lower",
+      "family": "work",
+      "gate": false,
+      "how": "Seconds between TaskCreated and the first RunStarted of the task, 90th percentile.",
+      "id": "backlog_wait_p90_seconds",
+      "kind": "quality",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.TaskCreated",
+        "agentic.work.RunStarted"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "90th percentile of the time a task waits in the backlog of its worker before starting.",
+      "unit": "seconds"
+    },
+    {
+      "block": "work",
+      "direction": "lower",
+      "family": "work",
+      "gate": false,
+      "how": "Seconds between TaskCreated and the ProposalMerged of the task's deliverable, median and 90th percentile.",
+      "id": "task_to_merge_seconds",
+      "kind": "quality",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.TaskCreated",
+        "agentic.workspace.ProposalMerged"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Time from task start to merge of its change.",
+      "unit": "seconds"
+    },
+    {
+      "block": "work",
+      "direction": "lower",
+      "family": "work",
+      "gate": true,
+      "how": "PathWritten events by a run on a path in the forbidden list of its assignment. Must be 0.",
+      "id": "forbidden_path_writes",
+      "kind": "correctness",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.work.AssignmentActivated",
+        "agentic.workspace.PathWritten"
+      ],
+      "route": "/docs/blocks/5-work/work#kpis",
+      "source": "research/2610.07261",
+      "status": "planned",
+      "summary": "Writes to a path the assignment forbids.",
+      "unit": "count"
+    },
+    {
+      "block": "process",
+      "direction": "higher",
+      "family": "work",
+      "gate": false,
+      "how": "For tasks that name a process, steps with a recorded result divided by steps of the published process. The process is referenced by identifier and evaluated elsewhere.",
+      "id": "process_steps_done_share",
+      "kind": "completeness",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.process.ProcessPublished",
+        "agentic.work.TaskCompleted"
+      ],
+      "route": "/docs/blocks/5-work/process#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of the steps of a task's process that have a recorded result.",
+      "unit": "share"
+    },
+    {
+      "block": "process",
+      "direction": "lower",
+      "family": "work",
+      "gate": true,
+      "how": "TaskCreated events naming a process with a ProcessWithdrawn earlier. Must be 0.",
+      "id": "task_under_withdrawn_process",
+      "kind": "correctness",
+      "layer": 5,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.process.ProcessWithdrawn",
+        "agentic.work.TaskCreated"
+      ],
+      "route": "/docs/blocks/5-work/process#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Tasks created under a process that was withdrawn.",
+      "unit": "count"
+    },
+    {
+      "block": "authority",
+      "direction": "lower",
+      "family": "work",
+      "gate": false,
+      "how": "ToolCallDecided events with decider Human divided by all ToolCallDecided events of main agents. The report splits by decider (PermissionMode, Classifier, Hook, Human, SafetyCheck, Rule).",
+      "id": "human_decided_share",
+      "kind": "quality",
+      "layer": 6,
+      "modes": [
+        {
+          "direction": "lower",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "ignore",
+          "mode": "pairing"
+        },
+        {
+          "direction": "ignore",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallDecided"
+      ],
+      "route": "/docs/blocks/6-governance/authority#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Share of tool-call decisions made by a human.",
+      "unit": "share"
+    },
+    {
+      "block": "authority",
+      "direction": "higher",
+      "family": "work",
+      "gate": false,
+      "how": "ToolCallDecided events with a decider other than NotRecorded divided by all ToolCallDecided events. A low share makes every figure over deciders incomplete.",
+      "id": "decider_recorded_share",
+      "kind": "completeness",
+      "layer": 6,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallDecided"
+      ],
+      "route": "/docs/blocks/6-governance/authority#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Share of tool-call decisions whose decider is recorded.",
+      "unit": "share"
+    },
+    {
+      "block": "authority",
+      "direction": "lower",
+      "family": "work",
+      "gate": false,
+      "how": "ToolCallDecided events with decision Refuse, times 1,000, divided by ToolCallRequested events.",
+      "id": "refusals_per_1000_tool_calls",
+      "kind": "quality",
+      "layer": 6,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallDecided",
+        "agenticspec.session.ToolCallRequested"
+      ],
+      "route": "/docs/blocks/6-governance/authority#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Refused tool calls per 1,000 tool calls.",
+      "unit": "ratio"
+    },
+    {
+      "block": "authority",
+      "direction": "lower",
+      "family": "work",
+      "gate": true,
+      "how": "ApprovalGranted events whose approver is a session acting under a person's account without a delegation, or whose submitter equals the decider. Must be 0.",
+      "id": "approvals_by_session",
+      "kind": "correctness",
+      "layer": 6,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.authority.ApprovalGranted",
+        "agentic.authority.DecisionRecorded"
+      ],
+      "route": "/docs/blocks/6-governance/authority#kpis",
+      "source": "research/2610.28683",
+      "status": "planned",
+      "summary": "Approvals whose submitter and decider are not recorded apart, or that a session submitted under a person's account.",
+      "unit": "count"
+    },
+    {
+      "block": "authority",
+      "direction": "lower",
+      "family": "work",
+      "gate": true,
+      "how": "SpendRecorded events of a budget after its BudgetExhausted. Must be 0.",
+      "id": "spend_after_exhaustion",
+      "kind": "correctness",
+      "layer": 6,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.authority.SpendRecorded",
+        "agentic.authority.BudgetExhausted"
+      ],
+      "route": "/docs/blocks/6-governance/authority#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Spend recorded after its budget was exhausted.",
+      "unit": "count"
+    },
+    {
+      "block": "authority",
+      "direction": "lower",
+      "family": "work",
+      "gate": true,
+      "how": "ToolCallDecided accepts with no GrantIssued covering the tool and agent, or after the grant's GrantRevoked. Must be 0.",
+      "id": "actions_without_grant",
+      "kind": "correctness",
+      "layer": 6,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallDecided",
+        "agentic.authority.GrantIssued",
+        "agentic.authority.GrantRevoked"
+      ],
+      "route": "/docs/blocks/6-governance/authority#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Tool calls accepted with no grant that covers them.",
+      "unit": "count"
+    },
+    {
+      "block": "authority",
+      "direction": "lower",
+      "family": "work",
+      "gate": false,
+      "how": "Approval share (ApprovalGranted over granted plus rejected) in the last third of a reviewer's sequence minus the first third, in percentage points.",
+      "id": "approval_drift_points",
+      "kind": "quality",
+      "layer": 6,
+      "modes": [
+        {
+          "direction": "ignore",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "ignore",
+          "mode": "pairing"
+        },
+        {
+          "direction": "lower",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agentic.authority.ApprovalGranted",
+        "agentic.authority.ApprovalRejected"
+      ],
+      "route": "/docs/blocks/6-governance/authority#kpis",
+      "source": "research/2609.06213",
+      "status": "planned",
+      "summary": "Rise of the human approval share over a review sequence.",
+      "unit": "points"
+    },
+    {
+      "block": "channel",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "MessageSent events per channel part. Divide by tasks done for messages per task.",
+      "id": "messages",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.channel.MessageSent"
+      ],
+      "route": "/docs/blocks/7-collaboration/channel#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Messages sent over a channel.",
+      "unit": "count"
+    },
+    {
+      "block": "channel",
+      "direction": "higher",
+      "family": "collab",
+      "gate": false,
+      "how": "Messages typed as request with an action by the receiver within 4 hours of MessageDelivered, divided by requests sent. Needs the request and inform typing of a message.",
+      "id": "request_actioned_share",
+      "kind": "completeness",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.channel.MessageSent",
+        "agentic.channel.MessageDelivered",
+        "agentic.channel.MessageRead"
+      ],
+      "route": "/docs/blocks/7-collaboration/channel#kpis",
+      "source": "research/2611.00689",
+      "status": "planned",
+      "summary": "Share of requests that got an action within the window.",
+      "unit": "share"
+    },
+    {
+      "block": "channel",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "Messages typed as inform with no action by the receiver within 4 hours of MessageDelivered, divided by informs sent. Wake rules on intake lower it.",
+      "id": "inform_unactioned_share",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.channel.MessageSent",
+        "agentic.channel.MessageDelivered",
+        "agentic.channel.MessageRead"
+      ],
+      "route": "/docs/blocks/7-collaboration/channel#kpis",
+      "source": "research/2611.00689",
+      "status": "planned",
+      "summary": "Share of informs that got no action within the window.",
+      "unit": "share"
+    },
+    {
+      "block": "channel",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "MessageLost events. Not a gate, because a lossy network channel is a legitimate part of an architecture and a fault experiment injects loss on purpose.",
+      "id": "messages_lost",
+      "kind": "correctness",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.channel.MessageLost"
+      ],
+      "route": "/docs/blocks/7-collaboration/channel#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Messages that were lost.",
+      "unit": "count"
+    },
+    {
+      "block": "channel",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "Runs with two agents' PathWritten on one path and no MessageSent naming that scope between the writes, divided by multi-agent runs. A vague warning counts as no notice.",
+      "id": "coordination_failure_share",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.channel.MessageSent",
+        "agentic.workspace.PathWritten"
+      ],
+      "route": "/docs/blocks/7-collaboration/channel#kpis",
+      "source": "research/2610.07261",
+      "status": "planned",
+      "summary": "Share of multi-agent runs in which two agents changed the same path with no notice between them.",
+      "unit": "share"
+    },
+    {
+      "block": "question",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "QuestionAsked events in the window.",
+      "id": "questions_asked",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [
+        {
+          "direction": "lower",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "ignore",
+          "mode": "pairing"
+        },
+        {
+          "direction": "ignore",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agentic.question.QuestionAsked"
+      ],
+      "route": "/docs/blocks/7-collaboration/question#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Questions agents asked.",
+      "unit": "count"
+    },
+    {
+      "block": "question",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "DefaultTaken events in the window. Read with default_taken_wrongly. A default that proceeds is the rule, a wrong one is the fault.",
+      "id": "questions_defaulted",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.question.DefaultTaken"
+      ],
+      "route": "/docs/blocks/7-collaboration/question#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Questions that took their default at the deadline.",
+      "unit": "count"
+    },
+    {
+      "block": "question",
+      "direction": "lower",
+      "family": "collab",
+      "gate": true,
+      "how": "DefaultTaken events whose subject is later decided differently by the principal (a later QuestionAnswered with another option) or whose deliverable was rejected. Must be 0.",
+      "id": "default_taken_wrongly",
+      "kind": "correctness",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.question.DefaultTaken",
+        "agentic.question.QuestionAnswered",
+        "agentic.work.DeliverableRejected"
+      ],
+      "route": "/docs/blocks/7-collaboration/question#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Questions that took their default and the default was later overruled.",
+      "unit": "count"
+    },
+    {
+      "block": "question",
+      "direction": "lower",
+      "family": "collab",
+      "gate": true,
+      "how": "QuestionAsked events with a deadline in the past and none of QuestionAnswered, DefaultTaken, QuestionWithdrawn. Must be 0.",
+      "id": "question_open_past_deadline",
+      "kind": "correctness",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.question.QuestionAsked",
+        "agentic.question.QuestionAnswered",
+        "agentic.question.DefaultTaken",
+        "agentic.question.QuestionWithdrawn"
+      ],
+      "route": "/docs/blocks/7-collaboration/question#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Questions still open after their deadline.",
+      "unit": "count"
+    },
+    {
+      "block": "question",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "Seconds between QuestionAsked and QuestionAnswered of the same question, 90th percentile. Questions that took their default are left out.",
+      "id": "question_round_trip_p90_seconds",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.question.QuestionAsked",
+        "agentic.question.QuestionAnswered"
+      ],
+      "route": "/docs/blocks/7-collaboration/question#kpis",
+      "source": "research/2611.00689",
+      "status": "planned",
+      "summary": "90th percentile of the time from a question to its answer.",
+      "unit": "seconds"
+    },
+    {
+      "block": "workspace",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "Seconds between LeaseRequested and LeaseGranted, median and 90th percentile.",
+      "id": "lease_wait_seconds",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.workspace.LeaseRequested",
+        "agentic.workspace.LeaseGranted"
+      ],
+      "route": "/docs/blocks/8-place/workspace#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Time a run waited for a workspace lease.",
+      "unit": "seconds"
+    },
+    {
+      "block": "workspace",
+      "direction": "higher",
+      "family": "place",
+      "gate": false,
+      "how": "ProposalMerged events divided by ChangeProposed events. Superseded and rejected proposals stay in the divisor.",
+      "id": "proposals_merged_share",
+      "kind": "completeness",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.workspace.ChangeProposed",
+        "agentic.workspace.ProposalMerged",
+        "agentic.workspace.ProposalRejected",
+        "agentic.workspace.ProposalSuperseded"
+      ],
+      "route": "/docs/blocks/8-place/workspace#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Proposals merged of proposals made.",
+      "unit": "share"
+    },
+    {
+      "block": "workspace",
+      "direction": "lower",
+      "family": "place",
+      "gate": true,
+      "how": "PathWritten events whose agent holds no LeaseGranted that is unreleased and unexpired at that moment. Must be 0.",
+      "id": "writes_without_lease",
+      "kind": "correctness",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.workspace.PathWritten",
+        "agentic.workspace.LeaseGranted",
+        "agentic.workspace.LeaseReleased",
+        "agentic.workspace.LeaseExpired"
+      ],
+      "route": "/docs/blocks/8-place/workspace#kpis",
+      "source": "research/2609.00252",
+      "status": "planned",
+      "summary": "Writes to a workspace by a holder with no live lease.",
+      "unit": "count"
+    },
+    {
+      "block": "workspace",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "ProposalMerged events whose changes are undone by a later merged proposal, divided by ProposalMerged events, per author kind (agent, human). A rate, so not a gate.",
+      "id": "revert_rate",
+      "kind": "correctness",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.workspace.ProposalMerged",
+        "agentic.workspace.ChangeProposed"
+      ],
+      "route": "/docs/blocks/8-place/workspace#kpis",
+      "source": "research/2609.17598",
+      "status": "planned",
+      "summary": "Share of merged proposals that a later proposal reverts.",
+      "unit": "share"
+    },
+    {
+      "block": "workspace",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "Seconds between ChangeProposed and ProposalMerged of one proposal, median and 90th percentile.",
+      "id": "open_to_merge_seconds",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.workspace.ChangeProposed",
+        "agentic.workspace.ProposalMerged"
+      ],
+      "route": "/docs/blocks/8-place/workspace#kpis",
+      "source": "research/2610.28683",
+      "status": "planned",
+      "summary": "Time from a proposal to its merge.",
+      "unit": "seconds"
+    },
+    {
+      "block": "sandbox",
+      "direction": "lower",
+      "family": "place",
+      "gate": true,
+      "how": "ExposureDetected events with class Secret, channel ToolInput and verdict Gap, on a tool of category Network, Message or Execute. Must be 0.",
+      "id": "secrets_left_session",
+      "kind": "correctness",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ExposureDetected"
+      ],
+      "route": "/docs/blocks/8-place/sandbox#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Confirmed secrets in the arguments of a tool call whose effect leaves the sandbox.",
+      "unit": "count"
+    },
+    {
+      "block": "sandbox",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "ExposureDetected events with class Secret, channel Prompt and verdict Gap. Not a gate, because the owner pasting a value is not an agent leaking one; it still reaches the model provider.",
+      "id": "secrets_in_prompts",
+      "kind": "correctness",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ExposureDetected"
+      ],
+      "route": "/docs/blocks/8-place/sandbox#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Confirmed secrets in a prompt.",
+      "unit": "count"
+    },
+    {
+      "block": "sandbox",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "ExposureDetected events with class Secret, channel ToolOutput and verdict Gap. Not a gate, because the value entered the context but did not leave. Unconfirmed matches (verdict Unk) are listed apart for review.",
+      "id": "secrets_in_tool_output",
+      "kind": "correctness",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ExposureDetected"
+      ],
+      "route": "/docs/blocks/8-place/sandbox#kpis",
+      "source": "docs/kpis.md",
+      "status": "computed",
+      "summary": "Confirmed secrets in the result of a tool call.",
+      "unit": "count"
+    },
+    {
+      "block": "sandbox",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "ToolCallDecided refusals on tools of category Network or Message, or Execute with an outward effect, per sandbox.",
+      "id": "egress_denied_attempts",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallDecided",
+        "agenticspec.session.ToolCallRequested"
+      ],
+      "route": "/docs/blocks/8-place/sandbox#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Tool calls refused because they reach outside the sandbox.",
+      "unit": "count"
+    },
+    {
+      "block": "sandbox",
+      "direction": "lower",
+      "family": "place",
+      "gate": true,
+      "how": "In a fixed suite of attack cases, ToolCallCompleted of a call that the exec scope should have stopped. Must be 0. Report tasks done under the scope beside it, because a scope that blocks work is no answer.",
+      "id": "attacks_through_exec_scope",
+      "kind": "correctness",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agenticspec.session.ToolCallRequested",
+        "agenticspec.session.ToolCallCompleted"
+      ],
+      "route": "/docs/blocks/8-place/sandbox#kpis",
+      "source": "research/2609.08371",
+      "status": "planned",
+      "summary": "Attack cases that got through the exec scope in an attack suite.",
+      "unit": "count"
+    },
+    {
+      "block": "runtime",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "InstanceFailed events divided by InstanceStarted events, per workload.",
+      "id": "instance_failed_share",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.runtime.InstanceStarted",
+        "agentic.runtime.InstanceFailed"
+      ],
+      "route": "/docs/blocks/8-place/runtime#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of started instances that failed.",
+      "unit": "share"
+    },
+    {
+      "block": "runtime",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "Seconds between InstanceStarted and InstanceRunning of one instance, 90th percentile per workload.",
+      "id": "instance_start_p90_seconds",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.runtime.InstanceStarted",
+        "agentic.runtime.InstanceRunning"
+      ],
+      "route": "/docs/blocks/8-place/runtime#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "90th percentile of the time from start to running.",
+      "unit": "seconds"
+    },
+    {
+      "block": "runtime",
+      "direction": "higher",
+      "family": "place",
+      "gate": false,
+      "how": "Busy seconds of instances divided by instance seconds between InstanceRunning and exit. Low means idle workers, whatever the cause.",
+      "id": "worker_busy_share",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.runtime.InstanceRunning",
+        "agentic.runtime.InstanceExited",
+        "agentic.runtime.InstanceStopped"
+      ],
+      "route": "/docs/blocks/8-place/runtime#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Share of instance time spent doing work.",
+      "unit": "share"
+    },
+    {
+      "block": "resource",
+      "direction": "lower",
+      "family": "resource",
+      "gate": false,
+      "how": "Seconds between ClaimQueued and ClaimGranted, median over a pool.",
+      "id": "queue_wait_p50_seconds",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.resource.ClaimQueued",
+        "agentic.resource.ClaimGranted"
+      ],
+      "route": "/docs/blocks/8-place/resource#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Median time a claim waited in the queue.",
+      "unit": "seconds"
+    },
+    {
+      "block": "resource",
+      "direction": "lower",
+      "family": "resource",
+      "gate": false,
+      "how": "Seconds between ClaimQueued and ClaimGranted, 90th percentile over a pool.",
+      "id": "queue_wait_p90_seconds",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.resource.ClaimQueued",
+        "agentic.resource.ClaimGranted"
+      ],
+      "route": "/docs/blocks/8-place/resource#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "90th percentile of the time a claim waited in the queue.",
+      "unit": "seconds"
+    },
+    {
+      "block": "resource",
+      "direction": "higher",
+      "family": "resource",
+      "gate": false,
+      "how": "Slot-seconds between ClaimGranted and ClaimReleased, ClaimExpired or ClaimKilled, divided by slot-seconds the pool offered, capacity drops included.",
+      "id": "pool_utilization",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.resource.ClaimGranted",
+        "agentic.resource.ClaimReleased",
+        "agentic.resource.ClaimExpired",
+        "agentic.resource.ClaimKilled"
+      ],
+      "route": "/docs/blocks/8-place/resource#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Share of pool slot-seconds that were held.",
+      "unit": "share"
+    },
+    {
+      "block": "resource",
+      "direction": "lower",
+      "family": "resource",
+      "gate": false,
+      "how": "ClaimKilled events in the window. Each is a job that ran past its limit.",
+      "id": "jobs_killed",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.resource.ClaimKilled"
+      ],
+      "route": "/docs/blocks/8-place/resource#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Claims killed at their time limit.",
+      "unit": "count"
+    },
+    {
+      "block": "resource",
+      "direction": "lower",
+      "family": "resource",
+      "gate": false,
+      "how": "Seconds agents wait between ClaimQueued and ClaimGranted, divided by instance seconds.",
+      "id": "slot_wait_share",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.resource.ClaimQueued",
+        "agentic.resource.ClaimGranted"
+      ],
+      "route": "/docs/blocks/8-place/resource#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Share of agent time spent waiting for a pool slot.",
+      "unit": "share"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": true,
+      "how": "Count of links in the architecture document that name a part that does not exist. Must be 0.",
+      "id": "unknown_link_parts",
+      "kind": "correctness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Links whose from, to or over names no part.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": true,
+      "how": "Count of parts with a per that names a part that does not exist. Must be 0.",
+      "id": "per_without_part",
+      "kind": "correctness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartPerSet",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Parts whose per names no part.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": true,
+      "how": "Count of parts with an acts_for that names a part that does not exist. Must be 0.",
+      "id": "acts_for_without_part",
+      "kind": "correctness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.AgentActsFor",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Parts whose acts_for names no part.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": true,
+      "how": "Count of parts with an egress that names a part that does not exist. Must be 0.",
+      "id": "egress_without_part",
+      "kind": "correctness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Parts whose egress names no part.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": true,
+      "how": "Agent parts with no path of model_call links to a model part. Must be 0.",
+      "id": "agent_without_model_path",
+      "kind": "correctness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Agent parts that reach no model part over model_call links.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": true,
+      "how": "Links carrying questions whose target is not a principal or an agent part. Must be 0.",
+      "id": "question_without_answerer",
+      "kind": "correctness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Question links that end at a part that cannot answer.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": true,
+      "how": "Count of names in the border that are not parts. Must be 0.",
+      "id": "border_without_part",
+      "kind": "correctness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartBordered",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Border entries that name no part.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": true,
+      "how": "Parts with no incoming edge of any of those kinds. No link, no reach, so an unreachable part is dead weight or a missing link. Must be 0.",
+      "id": "unreachable_parts",
+      "kind": "correctness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartAdded",
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartBordered"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Parts that no link, per, acts_for, egress or border reaches.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Parts reachable over links from any part that holds a secret grant. Fewer is a smaller blast radius.",
+      "id": "parts_secret_can_reach",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Parts a secret granted to some part can reach over links.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "higher",
+      "family": "composition",
+      "gate": false,
+      "how": "Parts that are the from or to of a link divided by all parts of the revision.",
+      "id": "parts_with_link_share",
+      "kind": "completeness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartAdded",
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.RevisionCommitted"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of parts that have at least one link.",
+      "unit": "share"
+    },
+    {
+      "block": "kpi",
+      "direction": "lower",
+      "family": "evaluation",
+      "gate": true,
+      "how": "KpiDefined events whose KPI has no DirectionSet for one of the created work modes. Must be 0.",
+      "id": "kpi_without_direction",
+      "kind": "correctness",
+      "layer": 10,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.kpi.KpiDefined",
+        "agentic.kpi.DirectionSet",
+        "agentic.kpi.WorkModeCreated"
+      ],
+      "route": "/docs/blocks/10-evaluation/kpi#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Defined KPIs that lack a direction for some work mode.",
+      "unit": "count"
+    },
+    {
+      "block": "kpi",
+      "direction": "higher",
+      "family": "evaluation",
+      "gate": false,
+      "how": "KPIs with a MeasurementRecorded divided by KPIs with a KpiDefined and no KpiRetired.",
+      "id": "kpi_measured_share",
+      "kind": "completeness",
+      "layer": 10,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.kpi.KpiDefined",
+        "agentic.kpi.KpiRetired",
+        "agentic.kpi.MeasurementRecorded"
+      ],
+      "route": "/docs/blocks/10-evaluation/kpi#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of defined, unretired KPIs with at least one measurement.",
+      "unit": "share"
+    },
+    {
+      "block": "experiment",
+      "direction": "higher",
+      "family": "evaluation",
+      "gate": false,
+      "how": "Variants whose gate KPIs are all 0 (or 1 for a complete share) divided by VariantRecorded events. A variant that fails a gate does not count in the ranking.",
+      "id": "variants_feasible_share",
+      "kind": "completeness",
+      "layer": 10,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.experiment.VariantRecorded"
+      ],
+      "route": "/docs/blocks/10-evaluation/experiment#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Share of recorded variants that pass every gate.",
+      "unit": "share"
+    },
+    {
+      "block": "experiment",
+      "direction": "higher",
+      "family": "evaluation",
+      "gate": false,
+      "how": "Pass rate of the variant with the changed harness minus pass rate of the baseline, in percentage points, over the same tasks and seeds.",
+      "id": "harness_effect_points",
+      "kind": "quality",
+      "layer": 10,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.experiment.VariantRecorded"
+      ],
+      "route": "/docs/blocks/10-evaluation/experiment#kpis",
+      "source": "research/2610.35971",
+      "status": "planned",
+      "summary": "Change in pass rate caused by a change of harness at a fixed model.",
+      "unit": "points"
+    },
+    {
+      "block": "experiment",
+      "direction": "lower",
+      "family": "evaluation",
+      "gate": false,
+      "how": "Pairs of models ranked in opposite order under two harnesses divided by pairs compared. A high share means a model ranking holds for one harness only.",
+      "id": "ranking_reversal_share",
+      "kind": "quality",
+      "layer": 10,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.experiment.VariantRecorded"
+      ],
+      "route": "/docs/blocks/10-evaluation/experiment#kpis",
+      "source": "research/2610.35348",
+      "status": "planned",
+      "summary": "Share of model comparisons whose ranking reverses under another harness.",
+      "unit": "share"
+    },
+    {
+      "block": "experiment",
+      "direction": "lower",
+      "family": "evaluation",
+      "gate": false,
+      "how": "Absolute difference between the simulated and the observed value of a KPI, divided by the observed value. A profile whose predictions miss is refitted.",
+      "id": "prediction_error",
+      "kind": "quality",
+      "layer": 10,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.experiment.VariantRecorded",
+        "agentic.kpi.MeasurementRecorded"
+      ],
+      "route": "/docs/blocks/10-evaluation/experiment#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Distance between a simulated KPI and the same KPI measured on a real run.",
+      "unit": "ratio"
+    },
+    {
+      "block": "verification",
+      "direction": "higher",
+      "family": "other",
+      "gate": true,
+      "how": "Checks with a result divided by checks expected for the deliverable. A check that did not run stays in the divisor, so a pass rate counts expected checks. Must be 1.",
+      "id": "expected_checks_ran_share",
+      "kind": "completeness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.DeliverableSubmitted",
+        "agentic.work.DeliverableAccepted"
+      ],
+      "route": "/docs/blocks/planned#verification",
+      "source": "research/2610.08651",
+      "status": "planned",
+      "summary": "Share of expected checks that ran.",
+      "unit": "share"
+    },
+    {
+      "block": "verification",
+      "direction": "higher",
+      "family": "other",
+      "gate": false,
+      "how": "Files touched by the run divided by files the completion report claims or the task requires. Runs that over-claim miss files.",
+      "id": "coverage_vs_claim_share",
+      "kind": "completeness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.DeliverableSubmitted",
+        "agentic.workspace.PathWritten"
+      ],
+      "route": "/docs/blocks/planned#verification",
+      "source": "research/2609.20812",
+      "status": "planned",
+      "summary": "Share of the files a deliverable claims to cover that the run touched.",
+      "unit": "share"
+    },
+    {
+      "block": "verification",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. The shipped count is false_completions_shipped; this rate is not a gate.",
+      "id": "false_completion_claim_share",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.RunEnded",
+        "agentic.work.DeliverableSubmitted"
+      ],
+      "route": "/docs/blocks/planned#verification",
+      "source": "research/2610.04375",
+      "status": "planned",
+      "summary": "Share of failed runs that reported done.",
+      "unit": "share"
+    },
+    {
+      "block": "verification",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Run each accepted check against a commit that does not touch what the check covers; checks that pass divided by checks run. A check needs a negative case.",
+      "id": "vacuous_check_share",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.DeliverableAccepted"
+      ],
+      "route": "/docs/blocks/planned#verification",
+      "source": "research/2611.13709",
+      "status": "planned",
+      "summary": "Share of checks that pass on a change that touches nothing relevant.",
+      "unit": "share"
+    },
+    {
+      "block": "verification",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Verdicts that accept a deliverable the oracle fails, divided by deliverables the oracle fails. Report the false-reject share beside it, since a strict reviewer rejects correct work.",
+      "id": "critic_false_accept_share",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.DeliverableAccepted",
+        "agentic.work.DeliverableRejected"
+      ],
+      "route": "/docs/blocks/planned#verification",
+      "source": "research/2611.02207",
+      "status": "planned",
+      "summary": "Share of wrong deliverables a critic or reviewer accepted.",
+      "unit": "share"
+    },
+    {
+      "block": "verification",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Accepted deliverables with only verdicts and no check that ran, divided by accepted deliverables. Execution beats judgment.",
+      "id": "judged_without_execution_share",
+      "kind": "quality",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.DeliverableAccepted"
+      ],
+      "route": "/docs/blocks/planned#verification",
+      "source": "research/2610.15708",
+      "status": "planned",
+      "summary": "Share of accepted deliverables whose evidence is judgment alone, with no executed check.",
+      "unit": "share"
+    },
+    {
+      "block": "verification",
+      "direction": "lower",
+      "family": "other",
+      "gate": true,
+      "how": "Accepted deliverables whose every passing check was authored by the agent that produced the deliverable. Must be 0.",
+      "id": "oracle_not_independent",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.DeliverableSubmitted",
+        "agentic.work.DeliverableAccepted"
+      ],
+      "route": "/docs/blocks/planned#verification",
+      "source": "research/2611.07166",
+      "status": "planned",
+      "summary": "Deliverables whose only evidence is tests the same agent wrote.",
+      "unit": "count"
+    },
+    {
+      "block": "verification",
+      "direction": "lower",
+      "family": "other",
+      "gate": true,
+      "how": "Receipts accepted that were not signed outside the sandbox, are past their validity, or are bound to another deliverable. Must be 0.",
+      "id": "invalid_receipts_accepted",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.DeliverableAccepted"
+      ],
+      "route": "/docs/blocks/planned#verification",
+      "source": "research/2611.06946",
+      "status": "planned",
+      "summary": "Forged, stale or rebound receipts that were accepted.",
+      "unit": "count"
+    },
+    {
+      "block": "memory",
+      "direction": "lower",
+      "family": "other",
+      "gate": true,
+      "how": "Entries in use that have no approval event of a principal after the agent's proposal. Must be 0.",
+      "id": "memory_kept_unapproved",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.authority.ApprovalGranted"
+      ],
+      "route": "/docs/blocks/planned#memory",
+      "source": "research/2610.08651",
+      "status": "planned",
+      "summary": "Memory entries kept without a principal's approval.",
+      "unit": "count"
+    },
+    {
+      "block": "memory",
+      "direction": "higher",
+      "family": "other",
+      "gate": false,
+      "how": "Entries approved divided by entries proposed. A very low share means the agent proposes noise; a share of 1 means nobody reads the proposals.",
+      "id": "memory_approved_share",
+      "kind": "quality",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.authority.ApprovalGranted",
+        "agentic.authority.ApprovalRejected"
+      ],
+      "route": "/docs/blocks/planned#memory",
+      "source": "research/2611.05094",
+      "status": "planned",
+      "summary": "Share of proposed memory entries that a principal approved.",
+      "unit": "share"
+    },
+    {
+      "block": "memory",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Runs in which the agent acted on an entry whose scope does not cover the task, split by transfer from another task. A count of named failures, so not a gate.",
+      "id": "memory_misapplications",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agenticspec.session.ToolCallRequested"
+      ],
+      "route": "/docs/blocks/planned#memory",
+      "source": "research/2610.27524",
+      "status": "planned",
+      "summary": "Runs in which a memory entry was applied where it does not hold.",
+      "unit": "count"
+    },
+    {
+      "block": "memory",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Pairs of live entries with the same scope and a later one that contradicts the earlier, where the earlier carries no supersedes or stale mark.",
+      "id": "unsuperseded_stale_entries",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [],
+      "route": "/docs/blocks/planned#memory",
+      "source": "research/2610.36188",
+      "status": "planned",
+      "summary": "Entries that a newer entry contradicts and that are not marked superseded or stale.",
+      "unit": "count"
+    },
+    {
+      "block": "plan",
+      "direction": "higher",
+      "family": "other",
+      "gate": false,
+      "how": "Runs whose plan has a timestamp before the first PathWritten of the run, divided by runs. Not a gate, because a trivial task needs no plan.",
+      "id": "plan_before_first_change_share",
+      "kind": "completeness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.workspace.PathWritten",
+        "agentic.work.RunStarted"
+      ],
+      "route": "/docs/blocks/planned#plan",
+      "source": "research/2610.35992",
+      "status": "planned",
+      "summary": "Share of runs with a plan that exists before the first source change.",
+      "unit": "share"
+    },
+    {
+      "block": "plan",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Output tokens of planner calls divided by output tokens of executor calls in the same run.",
+      "id": "planner_token_share",
+      "kind": "quality",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded"
+      ],
+      "route": "/docs/blocks/planned#plan",
+      "source": "research/2610.29870",
+      "status": "planned",
+      "summary": "Share of tokens the planner spends against the executor.",
+      "unit": "share"
+    },
+    {
+      "block": "plan",
+      "direction": "higher",
+      "family": "other",
+      "gate": false,
+      "how": "Plan steps with a result at run end divided by steps in the last plan revision.",
+      "id": "plan_steps_done_share",
+      "kind": "completeness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agentic.work.RunEnded"
+      ],
+      "route": "/docs/blocks/planned#plan",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of plan steps that have a recorded result.",
+      "unit": "share"
+    },
+    {
+      "block": "monitor",
+      "direction": "lower",
+      "family": "other",
+      "gate": true,
+      "how": "Interventions (redirect, pause, repair) of a kind or scope the monitor's authority does not name. An unbounded monitor repeatedly repaired legitimate work. Must be 0.",
+      "id": "monitor_actions_over_bound",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agenticspec.session.ToolCallDecided"
+      ],
+      "route": "/docs/blocks/planned#monitor",
+      "source": "research/2610.08651",
+      "status": "planned",
+      "summary": "Monitor interventions that went beyond the monitor's declared authority.",
+      "unit": "count"
+    },
+    {
+      "block": "monitor",
+      "direction": "lower",
+      "family": "other",
+      "gate": true,
+      "how": "Monitors in use with no stated observed outcome or proxy, or with no recorded last run. Must be 0.",
+      "id": "monitor_without_observable",
+      "kind": "correctness",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [],
+      "route": "/docs/blocks/planned#monitor",
+      "source": "research/2610.08651",
+      "status": "planned",
+      "summary": "Monitors that state no observable or show no last run.",
+      "unit": "count"
+    },
+    {
+      "block": "monitor",
+      "direction": "higher",
+      "family": "other",
+      "gate": false,
+      "how": "Interventions after which the run's outcome improved against its paired run without the intervention, divided by interventions.",
+      "id": "monitor_beneficial_share",
+      "kind": "quality",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [],
+      "route": "/docs/blocks/planned#monitor",
+      "source": "research/2609.39957",
+      "status": "planned",
+      "summary": "Share of monitor interventions that helped.",
+      "unit": "share"
+    },
+    {
+      "block": "monitor",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Cost of the monitored run minus cost of the baseline run, divided by the baseline cost.",
+      "id": "monitor_cost_overhead_share",
+      "kind": "quality",
+      "layer": null,
+      "modes": [],
+      "planned": true,
+      "reads": [
+        "agenticspec.session.ModelTurnRecorded"
+      ],
+      "route": "/docs/blocks/planned#monitor",
+      "source": "research/2609.39957",
+      "status": "planned",
+      "summary": "Extra cost of a run with a monitor against the same run without one.",
+      "unit": "share"
+    },
+    {
+      "block": "trigger",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "FiringSkipped events divided by TriggerFired events per trigger. High means the trigger fires faster than its agent finishes, or its concurrency policy is too tight.",
+      "id": "firing_skip_share",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.trigger.TriggerFired",
+        "agentic.trigger.FiringSkipped"
+      ],
+      "route": "/docs/blocks/7-collaboration/trigger#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Share of firings skipped because a run of the trigger was still going.",
+      "unit": "share"
+    },
+    {
+      "block": "trigger",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Per firing, FiringStarted minus TriggerFired, including the time a queued firing waits; p90 over the window.",
+      "id": "firing_start_wait_p90_seconds",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.trigger.TriggerFired",
+        "agentic.trigger.FiringQueued",
+        "agentic.trigger.FiringStarted"
+      ],
+      "route": "/docs/blocks/7-collaboration/trigger#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Time from a firing to the start of its run, 90th percentile.",
+      "unit": "seconds"
+    },
+    {
+      "block": "trigger",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "FiringFailed events divided by FiringStarted events per trigger.",
+      "id": "firing_failure_share",
+      "kind": "correctness",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.trigger.FiringStarted",
+        "agentic.trigger.FiringFailed"
+      ],
+      "route": "/docs/blocks/7-collaboration/trigger#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Share of started firings whose run failed.",
+      "unit": "share"
+    },
+    {
+      "block": "trigger",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "FiringSkipped events in the window. The simulator counts a firing under policy Skip at its limit.",
+      "id": "firings_skipped",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.trigger.FiringSkipped"
+      ],
+      "route": "/docs/blocks/7-collaboration/trigger#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Firings skipped because the trigger's runs already filled its limit.",
+      "unit": "count"
+    },
+    {
+      "block": "trigger",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "FiringQueued events in the window. The simulator counts a firing under policy Queue at its limit.",
+      "id": "firings_queued",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.trigger.FiringQueued"
+      ],
+      "route": "/docs/blocks/7-collaboration/trigger#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Firings that waited in the trigger's queue for a run to end before they started.",
+      "unit": "count"
+    },
+    {
+      "block": "trigger",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "FiringStarted events whose run took no post and no task before FiringEnded. The simulator counts a started firing with no item on its source; the run still costs one model call.",
+      "id": "firings_empty",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.trigger.FiringStarted",
+        "agentic.trigger.FiringEnded"
+      ],
+      "route": "/docs/blocks/7-collaboration/trigger#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Runs a firing started that found nothing to take, looked once and ended.",
+      "unit": "count"
+    },
+    {
+      "block": "trigger",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate, like false_completions_shipped.",
+      "id": "duplicate_runs",
+      "kind": "correctness",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.trigger.FiringStarted",
+        "agentic.work.DeliverableAccepted"
+      ],
+      "route": "/docs/blocks/7-collaboration/trigger#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Tasks finished a second time from the same origin, so a second run did work already done.",
+      "unit": "count"
+    },
+    {
+      "block": "channel",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "Take attempts that lose to another subscriber's take of the same post (TakePost answered already-taken, which emits no event), counted against PostTaken. The simulator counts a reader whose read lands within claim_window_seconds of the first reader's.",
+      "id": "claim_conflicts",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.channel.Posted",
+        "agentic.channel.PostTaken"
+      ],
+      "route": "/docs/blocks/7-collaboration/channel#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Reads of a queue or board post by a second subscriber while the first one's claim was not yet visible.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Model calls made for a board read or for reading mesh messages. The simulator counts one per board read and mesh_read_calls per message read.",
+      "id": "coordination_calls",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.harness.TurnRecorded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Model calls agents spend coordinating rather than working, reading a board or the messages of a mesh.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "MessageSent events between copies of one mesh part. The simulator counts one per other started copy at each task start.",
+      "id": "coordination_messages",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.channel.MessageSent"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Messages a copy of a mesh sends to the other started copies when it starts a task.",
+      "unit": "count"
+    },
+    {
+      "block": "workspace",
+      "direction": "lower",
+      "family": "place",
+      "gate": false,
+      "how": "ProposalMerged events whose scope another merge touched after the proposal's work began. The simulator counts them per partitioned part; under a mesh the conflict costs a round of rework, without one the merge lands broken.",
+      "id": "merge_conflicts",
+      "kind": "quality",
+      "layer": 8,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.workspace.ChangeProposed",
+        "agentic.workspace.ProposalMerged"
+      ],
+      "route": "/docs/blocks/8-place/workspace#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Merges that touched a scope another merge changed since the work started.",
+      "unit": "count"
+    }
+  ]
+}

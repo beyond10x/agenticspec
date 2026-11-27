@@ -1,0 +1,229 @@
+domain: agentic.tool
+
+summary: >-
+  Something an agent can call. A tool provider supplies tools: built in, a tool server, a shell, a
+  connector or another agent. A tool has a contract (input and output as content digests), a
+  category and whether its effect leaves the sandbox. A withdrawn tool takes no new call. A call of
+  a tool is an act of a harness session and is held by `agentic.harness`.
+
+naming:
+  wire: tool
+  display: Tool
+
+types:
+  - name: agentic.tool.ToolProviderKind
+    kind: enum
+    variants: [BuiltIn, ToolServer, Shell, Connector, Agent]
+    naming:
+      summary: >-
+        Where a tool comes from. BuiltIn ships with the harness, ToolServer is served over a tool
+        protocol, Shell is a command line, Connector is an integration to an outside service, Agent
+        is another agent called as a tool.
+
+entities:
+  - name: agentic.tool.ToolProvider
+    naming:
+      summary: Whatever supplies tools to harnesses.
+    identity:
+      name: tool_provider_id
+      type: agentic.shared.ToolProviderId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: kind
+        type: agentic.tool.ToolProviderKind
+    relations:
+      - name: tools
+        kind: owns
+        target: agentic.tool.Tool
+        cardinality: many
+        via: tool_provider_id
+    lifecycle:
+      initial: Registered
+      states: [Registered]
+      terminal: [Registered]
+
+  - name: agentic.tool.Tool
+    naming:
+      summary: >-
+        One tool of one provider. The contract is held as digests of the input and output schemas,
+        never the schemas.
+    identity:
+      name: tool_id
+      type: agentic.shared.ToolId
+    fields:
+      - name: tool_provider_id
+        type: agentic.shared.ToolProviderId
+      - name: name
+        type: agentic.shared.Name
+      - name: input_contract
+        type: agentic.shared.Content
+      - name: output_contract
+        type: agentic.shared.Content
+      - name: category
+        type: agentic.shared.ToolCategory
+      - name: leaves_sandbox
+        type: Boolean
+        summary: Whether the effect of a call reaches beyond the sandbox the caller runs in.
+    lifecycle:
+      initial: Published
+      states: [Published, Withdrawn]
+      terminal: [Withdrawn]
+      transitions:
+        - name: withdraw
+          from: [Published]
+          to: Withdrawn
+
+actors:
+  - name: agentic.tool.ToolCatalogue
+    naming:
+      display: Tool catalogue
+      summary: Whoever keeps providers and their tools.
+    may:
+      - agentic.tool.RegisterToolProvider
+      - agentic.tool.PublishTool
+      - agentic.tool.WithdrawTool
+
+errors:
+  - name: agentic.tool.UnknownToolProvider
+    summary: No tool provider of this identity is registered.
+    fields:
+      - {name: tool_provider_id, type: agentic.shared.ToolProviderId}
+
+  - name: agentic.tool.ToolStateConflict
+    summary: The tool is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.tool.Tool.State}
+
+commands:
+  - name: agentic.tool.RegisterToolProvider
+    naming:
+      wire: register-tool-provider
+      display: Register a tool provider
+    input:
+      - {name: tool_provider_id, type: agentic.shared.ToolProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.tool.ToolProviderKind}
+    outcomes:
+      - name: registered
+        creates: agentic.tool.ToolProvider
+        instance: tool_provider_id
+        sets:
+          name: input.name
+          kind: input.kind
+        emits: [agentic.tool.ToolProviderRegistered]
+        payload:
+          agentic.tool.ToolProviderRegistered:
+            tool_provider_id: input.tool_provider_id
+            name: input.name
+            kind: input.kind
+        summary: The provider exists and supplies no tool yet.
+
+  - name: agentic.tool.PublishTool
+    naming:
+      wire: publish-tool
+      display: Publish a tool
+    input:
+      - {name: tool_id, type: agentic.shared.ToolId}
+      - {name: tool_provider_id, type: agentic.shared.ToolProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: input_contract, type: agentic.shared.Content}
+      - {name: output_contract, type: agentic.shared.Content}
+      - {name: category, type: agentic.shared.ToolCategory}
+      - {name: leaves_sandbox, type: Boolean}
+    outcomes:
+      - name: unknown-provider
+        when_related: {via: input.tool_provider_id, exists: false}
+        error: agentic.tool.UnknownToolProvider
+        payload:
+          agentic.tool.UnknownToolProvider:
+            tool_provider_id: input.tool_provider_id
+        summary: The provider is not registered, so nothing can supply the tool.
+      - name: published
+        creates: agentic.tool.Tool
+        instance: tool_id
+        sets:
+          tool_provider_id: input.tool_provider_id
+          name: input.name
+          input_contract: input.input_contract
+          output_contract: input.output_contract
+          category: input.category
+          leaves_sandbox: input.leaves_sandbox
+        emits: [agentic.tool.ToolPublished]
+        payload:
+          agentic.tool.ToolPublished:
+            tool_id: input.tool_id
+            tool_provider_id: input.tool_provider_id
+            name: input.name
+            category: input.category
+            leaves_sandbox: input.leaves_sandbox
+        summary: The tool is Published and may be called.
+
+  - name: agentic.tool.WithdrawTool
+    naming:
+      wire: withdraw-tool
+      display: Withdraw a tool
+    input:
+      - {name: tool_id, type: agentic.shared.ToolId}
+    outcomes:
+      - name: withdrawn
+        moves: agentic.tool.Tool.withdraw
+        instance: tool_id
+        emits: [agentic.tool.ToolWithdrawn]
+        payload:
+          agentic.tool.ToolWithdrawn:
+            tool_id: input.tool_id
+        summary: The tool is Withdrawn; a call already requested may still finish, no new call is taken (`agentic.harness` refuses it).
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.tool.ToolStateConflict
+        summary: The tool was already withdrawn.
+
+events:
+  - name: agentic.tool.ToolProviderRegistered
+    fields:
+      - {name: tool_provider_id, type: agentic.shared.ToolProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.tool.ToolProviderKind}
+
+  - name: agentic.tool.ToolPublished
+    fields:
+      - {name: tool_id, type: agentic.shared.ToolId}
+      - {name: tool_provider_id, type: agentic.shared.ToolProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: category, type: agentic.shared.ToolCategory}
+      - {name: leaves_sandbox, type: Boolean}
+
+  - name: agentic.tool.ToolWithdrawn
+    fields:
+      - {name: tool_id, type: agentic.shared.ToolId}
+
+views:
+  - name: agentic.tool.ToolProviders
+    source: agentic.tool.ToolProvider
+    consistency: read_your_writes
+    fields:
+      - {name: tool_provider_id, type: agentic.shared.ToolProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.tool.ToolProviderKind}
+      - {name: state, type: agentic.tool.ToolProvider.State}
+    naming:
+      wire: tool-providers
+      display: Tool providers
+
+  - name: agentic.tool.Tools
+    source: agentic.tool.Tool
+    consistency: read_your_writes
+    fields:
+      - {name: tool_id, type: agentic.shared.ToolId}
+      - {name: tool_provider_id, type: agentic.shared.ToolProviderId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: input_contract, type: agentic.shared.Content}
+      - {name: output_contract, type: agentic.shared.Content}
+      - {name: category, type: agentic.shared.ToolCategory}
+      - {name: leaves_sandbox, type: Boolean}
+      - {name: state, type: agentic.tool.Tool.State}
+    naming:
+      wire: tools
+      display: Tools
+

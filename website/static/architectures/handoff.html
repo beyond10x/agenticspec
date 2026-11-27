@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>handoff — architecture</title>
+<style>
+:root {
+  color-scheme: light;
+  --plane: #f6f6f3;
+  --surface: #fcfcfb;
+  --surface-2: #f1f0ec;
+  --wash: rgba(11, 11, 11, 0.04);
+  --ring: rgba(11, 11, 11, 0.1);
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6b6964;
+  --grid: #e7e6e0;
+  --axis: #c3c2b7;
+  --edge: #9d9b91;
+  --accent: #2a78d6;
+  --accent-wash: rgba(42, 120, 214, 0.1);
+  --accent-text: #1f5fae;
+  --good-text: #006300;
+  --bad-text: #b42f2f;
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --s4: #eda100;
+  --s5: #e87ba4;
+  --s6: #008300;
+  --s7: #6250d6;
+  --s8: #e34948;
+  --other: #b9b7ae;
+  --good: #0ca30c;
+  --critical: #d03b3b;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 1px 1px rgba(11, 11, 11, 0.02);
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) {
+    color-scheme: dark;
+    --plane: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #232321;
+    --wash: rgba(255, 255, 255, 0.05);
+    --ring: rgba(255, 255, 255, 0.1);
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #a3a19a;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --edge: #6e6c66;
+    --accent: #3987e5;
+    --accent-wash: rgba(57, 135, 229, 0.16);
+    --accent-text: #6aa8f0;
+    --good-text: #2fbf2f;
+    --bad-text: #ee7a7a;
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s4: #c98500;
+    --s5: #d55181;
+    --s6: #008300;
+    --s7: #9085e9;
+    --s8: #e66767;
+    --other: #5c5b56;
+    --critical: #e66767;
+    --shadow: none;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --plane: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #232321;
+  --wash: rgba(255, 255, 255, 0.05);
+  --ring: rgba(255, 255, 255, 0.1);
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #a3a19a;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --edge: #6e6c66;
+  --accent: #3987e5;
+  --accent-wash: rgba(57, 135, 229, 0.16);
+  --accent-text: #6aa8f0;
+  --good-text: #2fbf2f;
+  --bad-text: #ee7a7a;
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --s4: #c98500;
+  --s5: #d55181;
+  --s6: #008300;
+  --s7: #9085e9;
+  --s8: #e66767;
+  --other: #5c5b56;
+  --critical: #e66767;
+  --shadow: none;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--plane);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+h1 { font-size: 24px; line-height: 1.25; }
+h2 { font-size: 15px; }
+h3 { font-size: 15px; }
+h4 { font-size: 12px; color: var(--muted); font-weight: 500; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+button { font: inherit; color: inherit; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+header.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 24px 8px;
+}
+.eyebrow { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.summary { margin: 6px 0 0; color: var(--ink-2); max-width: 760px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 12px 0 0; padding: 0; }
+.facts li { font-size: 12.5px; color: var(--ink-2); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); border-radius: 999px; padding: 2px 10px; }
+
+main { max-width: 1440px; margin: 0 auto; padding: 12px 24px 24px; }
+footer { max-width: 1440px; margin: 0 auto; padding: 8px 24px 32px; color: var(--muted); font-size: 12px; }
+
+.card { background: var(--surface); border-radius: var(--radius); box-shadow: 0 0 0 1px var(--ring), var(--shadow); min-width: 0; }
+.card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 16px 20px 0; }
+.card-head .hint { color: var(--muted); font-size: 12.5px; text-align: right; }
+.card-body { padding: 14px 20px 18px; }
+.section-gap { margin-top: 20px; }
+
+.segmented { display: inline-flex; flex: none; padding: 3px; border-radius: 9px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); }
+.segmented button { border: 0; background: transparent; padding: 5px 12px; border-radius: 6px; font-size: 13px; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+.segmented button[aria-pressed='true'] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px var(--ring), 0 1px 2px rgba(0, 0, 0, 0.06); }
+.segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.top-grid { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+.side { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 12px; }
+@media (max-width: 1100px) {
+  .top-grid { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; }
+}
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; margin: 0 0 12px; padding: 0; font-size: 12px; color: var(--ink-2); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--c, var(--other)); flex: none; }
+.swatch.border-sample { width: 16px; background: transparent; border: 1.5px dashed var(--accent); border-radius: 4px; }
+.swatch.per-sample { width: 16px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); border-radius: 4px; }
+.swatch.chip-sample { width: 18px; background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); border-radius: 999px; }
+.swatch.s1, .ev.s1 { --c: var(--s1); } .swatch.s2, .ev.s2 { --c: var(--s2); }
+.swatch.s3, .ev.s3 { --c: var(--s3); } .swatch.s4, .ev.s4 { --c: var(--s4); }
+.swatch.s5, .ev.s5 { --c: var(--s5); } .swatch.s6, .ev.s6 { --c: var(--s6); }
+.swatch.s7, .ev.s7 { --c: var(--s7); } .swatch.s8, .ev.s8 { --c: var(--s8); }
+
+.f-principal { --c: var(--s4); }
+.f-agent { --c: var(--s1); }
+.f-collab { --c: var(--s5); }
+.f-work { --c: var(--s6); }
+.f-intel { --c: var(--s7); }
+.f-capability { --c: var(--s3); }
+.f-place { --c: var(--s2); }
+.f-resource { --c: var(--s8); }
+.f-other { --c: var(--other); }
+
+.graph-wrap { overflow-x: auto; }
+svg.graph { display: block; margin: 0 auto; max-width: 100%; height: auto; font-family: var(--font); }
+svg text { fill: var(--ink); }
+.edge { fill: none; stroke: var(--edge); stroke-width: 1.4; marker-end: url(#arrow); transition: stroke 120ms, opacity 120ms; }
+.arrowhead { fill: var(--edge); }
+.arrowhead.hot { fill: var(--accent); }
+.over { fill: none; stroke: var(--s5); stroke-width: 1.2; stroke-dasharray: 2 3; }
+.pill rect { fill: var(--surface); stroke: var(--ring); }
+.pill text { font-size: 11.5px; fill: var(--ink-2); }
+.card-bg { fill: var(--surface); stroke: var(--ring); stroke-width: 1; }
+.node { cursor: pointer; outline: none; }
+.node > .card-bg { filter: drop-shadow(0 1px 1px rgba(11, 11, 11, 0.05)); }
+.icon-bg { fill: var(--c); fill-opacity: 0.14; }
+.icon { fill: none; stroke: var(--c); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.name { font-size: 13.5px; font-weight: 600; }
+.name.sm { font-size: 13px; }
+.name.xs { font-size: 12px; }
+.sub { font-size: 11.5px; fill: var(--muted); }
+.sub.xs { font-size: 11px; }
+.prop { font-size: 11.5px; fill: var(--ink-2); }
+.prop-k { fill: var(--muted); }
+.per-head { font-size: 10.5px; fill: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.child-bg { fill: var(--surface-2); stroke: var(--ring); }
+.badge rect { fill: var(--ink); }
+.badge text { fill: var(--surface); font-family: var(--mono); font-size: 11px; font-weight: 600; }
+.tag rect { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 0.8; }
+.tag text { fill: var(--accent-text); font-size: 10.5px; font-weight: 500; }
+.border-mark { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 5 4; }
+.chip rect { fill: var(--accent-wash); stroke: var(--accent); stroke-opacity: 0.45; }
+.chip.changed rect { stroke-opacity: 1; stroke-width: 1.3; }
+.chip-k { font-size: 11.5px; fill: var(--ink-2); }
+.chip-v { font-family: var(--mono); font-size: 11.5px; font-weight: 600; fill: var(--ink); }
+.chip-v.was { fill: var(--muted); font-weight: 400; text-decoration: line-through; }
+.chip-v.now { fill: var(--accent-text); }
+.chip-arrow { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); }
+.chip-r { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+
+.node:hover > .card-bg, .node:hover > .child-bg { stroke: var(--c); stroke-width: 1.5; }
+.card-bg:focus, .child-bg:focus { outline: none; }
+.card-bg:focus-visible, .child-bg:focus-visible { stroke: var(--accent); stroke-width: 2.5; }
+.card-bg[aria-pressed='true'], .child-bg[aria-pressed='true'] { stroke: var(--accent); stroke-width: 2; fill: var(--accent-wash); }
+svg.focus .edge { opacity: 0.25; }
+svg.focus .edge.hot { opacity: 1; stroke: var(--accent); stroke-width: 2; marker-end: url(#arrow-hot); }
+
+span.chip { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--accent-wash); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); font-size: 12.5px; white-space: nowrap; }
+span.chip.changed { box-shadow: inset 0 0 0 1.3px var(--accent); }
+span.chip .chip-k { color: var(--ink-2); }
+span.chip .chip-v { font-family: var(--mono); font-weight: 600; font-size: 12px; }
+span.chip .chip-v.was { color: var(--muted); font-weight: 400; text-decoration: line-through; }
+span.chip .chip-v.now { color: var(--accent-text); }
+span.chip .chip-arrow { color: var(--muted); }
+span.chip .chip-r { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.details .card-body { min-height: 120px; }
+.detail p { margin: 0 0 10px; }
+.detail-head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.detail-head .swatch { width: 12px; height: 12px; }
+dl.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 13px; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; overflow-wrap: anywhere; }
+ul.links { list-style: none; margin: 0; padding: 0; font-size: 13px; display: grid; gap: 4px; }
+.carries { display: inline-block; margin-left: 4px; padding: 0 7px; border-radius: 999px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); font-size: 12px; color: var(--ink-2); }
+
+.policy-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.policy-list li { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.policy-name { font-size: 12.5px; color: var(--ink-2); }
+.policy-v { font-family: var(--mono); font-size: 12.5px; }
+
+.result { margin-top: 28px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.tile { padding: 14px 16px; }
+.tile .label { font-size: 12.5px; color: var(--ink-2); }
+.tile .value { margin-top: 6px; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tile .meta { margin-top: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tile .meta.good { color: var(--good-text); font-weight: 600; }
+.tile .meta.bad { color: var(--bad-text); font-weight: 600; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 20px; align-items: start; }
+.result > .two { align-items: stretch; }
+
+.table-wrap { overflow-x: auto; padding: 8px 0 6px; }
+table.data { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 8px 12px; border-bottom: 1px solid var(--grid); text-align: left; vertical-align: middle; white-space: nowrap; }
+table.data thead th { font-weight: 500; font-size: 12px; color: var(--muted); background: var(--surface); }
+table.data tbody th { font-weight: 500; }
+table.data tr:last-child > * { border-bottom: 0; }
+table.data .r { text-align: right; }
+table.data th:first-child, table.data td:first-child { padding-left: 20px; }
+table.data th:last-child, table.data td:last-child { padding-right: 20px; }
+table.data td.best { font-weight: 600; }
+.kpi-name { font-family: var(--mono); font-size: 12.5px; }
+.kind { font-size: 11.5px; color: var(--ink-2); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); padding: 1px 8px; border-radius: 999px; }
+.kind:empty { display: none; }
+.delta { font-weight: 500; }
+.delta.good { color: var(--good-text); }
+.delta.bad { color: var(--bad-text); }
+.delta.changed { color: var(--accent-text); }
+.delta.flat { color: var(--muted); font-weight: 400; }
+tr.changed > * { background: var(--accent-wash); }
+tr.changed td.best { color: var(--accent-text); }
+table.mini { font-size: 12.5px; }
+table.mini { table-layout: auto; }
+table.mini th, table.mini td { padding: 5px 6px; }
+table.mini tbody th { white-space: normal; overflow-wrap: anywhere; min-width: 90px; }
+table.mini th:first-child, table.mini td:first-child { padding-left: 0; }
+table.mini th:last-child, table.mini td:last-child { padding-right: 0; }
+
+.variants td.params { white-space: normal; }
+.param { display: inline-block; margin: 1px 6px 1px 0; padding: 0 7px; border-radius: 999px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); font-family: var(--mono); font-size: 11.5px; }
+.variants tr.out > td { color: var(--muted); }
+.variants tr.out .param { opacity: 0.7; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; }
+.status.good { color: var(--good-text); } .status.good .dot { background: var(--good); }
+.status.ok { color: var(--ink-2); } .status.ok .dot { background: var(--s1); }
+.status.out { color: var(--bad-text); } .status.out .dot { background: transparent; box-shadow: inset 0 0 0 2px var(--critical); }
+
+svg.trace, svg.timeline { display: block; width: 100%; height: auto; font-family: var(--font); }
+.gridline { stroke: var(--grid); }
+.tick { stroke: var(--axis); }
+.axis-t, .lane-t { font-size: 11px; fill: var(--muted); }
+.lane-t { font-size: 12px; fill: var(--ink-2); }
+.best-line { fill: none; stroke: var(--s3); stroke-width: 2.2; }
+.pt circle { fill: var(--s1); fill-opacity: 0.75; stroke: var(--surface); stroke-width: 1; }
+.pt.out path { stroke: var(--critical); stroke-width: 2; stroke-linecap: round; }
+.pt:hover circle { fill-opacity: 1; r: 5; }
+.mark { display: inline-block; width: 12px; height: 12px; }
+.mark.dot { border-radius: 50%; background: var(--s1); transform: scale(0.7); }
+.mark.cross { background: linear-gradient(45deg, transparent 43%, var(--critical) 43% 57%, transparent 57%), linear-gradient(-45deg, transparent 43%, var(--critical) 43% 57%, transparent 57%); }
+.mark.line { height: 3px; width: 16px; background: var(--s3); border-radius: 2px; }
+.ev rect { fill: var(--c); }
+
+/* The views that explain the optimization. */
+:root {
+  --q0: #e3eef9; --q1: #c6dbef; --q2: #9ecae1; --q3: #6baed6; --q4: #4292c6; --q5: #2171b5; --q6: #084594;
+  --qt0: #0b0b0b; --qt1: #0b0b0b; --qt2: #0b0b0b; --qt3: #0b0b0b; --qt4: #0b0b0b; --qt5: #ffffff; --qt6: #ffffff;
+  --pos: #2a78d6;
+  --neg: #eb6834;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) {
+    --q0: #22374d; --q1: #24466a; --q2: #24527e; --q3: #2a69a3; --q4: #3a82c4; --q5: #64a2dc; --q6: #a6cdf2;
+    --qt0: #f0efec; --qt1: #f0efec; --qt2: #f0efec; --qt3: #f0efec; --qt4: #0d0d0d; --qt5: #0d0d0d; --qt6: #0d0d0d;
+    --pos: #3987e5;
+    --neg: #d95926;
+  }
+}
+:root[data-theme='dark'] {
+  --q0: #22374d; --q1: #24466a; --q2: #24527e; --q3: #2a69a3; --q4: #3a82c4; --q5: #64a2dc; --q6: #a6cdf2;
+  --qt0: #f0efec; --qt1: #f0efec; --qt2: #f0efec; --qt3: #f0efec; --qt4: #0d0d0d; --qt5: #0d0d0d; --qt6: #0d0d0d;
+  --pos: #3987e5;
+  --neg: #d95926;
+}
+
+.result > details.card, .result > .two { margin-top: 20px; }
+.formula { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; margin: 0 0 6px; font-size: 13px; }
+.formula .term { font-family: var(--mono); font-size: 12.5px; padding: 1px 8px; border-radius: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); white-space: nowrap; }
+.objective .table-wrap { margin: 0 -20px; }
+table.terms .bar-h { min-width: 216px; }
+table.terms td.bar-cell { width: 216px; padding-top: 4px; padding-bottom: 4px; }
+svg.contrib-bar { display: block; }
+svg.contrib-bar .zero { stroke: var(--axis); }
+svg.contrib-bar .pos { fill: var(--pos); }
+svg.contrib-bar .neg { fill: var(--neg); }
+td.contrib { font-weight: 600; }
+td.contrib.zero { color: var(--muted); font-weight: 400; }
+table.terms tr.total > * { border-top: 1px solid var(--axis); font-weight: 600; }
+details > summary { cursor: pointer; }
+details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+details.gates { margin-top: 12px; font-size: 13px; }
+details.gates > summary { padding: 4px 0; }
+.gate-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 20px; }
+.gate-list li { display: flex; gap: 10px; align-items: baseline; }
+.gate-list li .kpi-name { flex: 1; }
+.gate-list .bad { color: var(--bad-text); font-weight: 600; }
+details.all-kpis > summary { list-style: none; padding-bottom: 16px; }
+details.all-kpis > summary::-webkit-details-marker { display: none; }
+details.all-kpis > summary h2::before { content: '▸'; display: inline-block; width: 16px; color: var(--muted); transition: transform 120ms; }
+details.all-kpis[open] > summary h2::before { transform: rotate(90deg); }
+details.all-kpis[open] > summary { padding-bottom: 0; }
+.role { font-size: 11.5px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.role.weighted { color: var(--accent-text); background: var(--accent-wash); }
+.role.gate { color: var(--ink-2); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); }
+
+.picks { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 10px; }
+.picks label { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.picks select { font: inherit; font-size: 12.5px; font-family: var(--mono); color: var(--ink); background: var(--surface-2); border: 0; box-shadow: inset 0 0 0 1px var(--ring); border-radius: 6px; padding: 4px 8px; max-width: 100%; }
+.picks select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+figure.pair, figure.sens-fig { margin: 0; }
+figure.pair > figcaption { font-size: 12.5px; margin-bottom: 6px; }
+.note { font-size: 12.5px; margin: 8px 0 0; }
+details.as-table { margin-top: 8px; font-size: 12.5px; }
+details.as-table > summary { color: var(--accent-text); width: max-content; }
+details.as-table .table-wrap { padding-top: 4px; }
+
+svg.heatmap, svg.sens, svg.scatter { display: block; width: 100%; height: auto; font-family: var(--font); overflow: visible; }
+.axis-name { font-size: 12px; fill: var(--ink-2); }
+.cell { stroke: var(--surface); stroke-width: 0; }
+.cell.q0 { fill: var(--q0); } .cell.q1 { fill: var(--q1); } .cell.q2 { fill: var(--q2); } .cell.q3 { fill: var(--q3); }
+.cell.q4 { fill: var(--q4); } .cell.q5 { fill: var(--q5); } .cell.q6 { fill: var(--q6); }
+.cell.out { fill: var(--surface-2); stroke: var(--ring); stroke-width: 1; }
+.cell.none { fill: transparent; stroke: var(--axis); stroke-width: 1; stroke-dasharray: 3 3; }
+.cell-t { font-size: 11.5px; font-variant-numeric: tabular-nums; pointer-events: none; }
+.cell-t.q0 { fill: var(--qt0); } .cell-t.q1 { fill: var(--qt1); } .cell-t.q2 { fill: var(--qt2); } .cell-t.q3 { fill: var(--qt3); }
+.cell-t.q4 { fill: var(--qt4); } .cell-t.q5 { fill: var(--qt5); } .cell-t.q6 { fill: var(--qt6); }
+.cell-t.out { fill: var(--bad-text); font-weight: 600; font-size: 13px; }
+.cell-t.none { fill: var(--muted); }
+.cell-t.top { font-weight: 700; }
+.best-ring { fill: none; stroke: var(--ink); stroke-width: 2.5; pointer-events: none; }
+.base-ring { fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-dasharray: 3 2; pointer-events: none; }
+.legend.scale { margin: 10px 0 0; align-items: center; }
+.ramp { display: inline-flex; margin: 0 6px; vertical-align: middle; }
+.ramp .q { width: 14px; height: 10px; }
+.ramp .q0 { background: var(--q0); border-radius: 3px 0 0 3px; } .ramp .q1 { background: var(--q1); } .ramp .q2 { background: var(--q2); }
+.ramp .q3 { background: var(--q3); } .ramp .q4 { background: var(--q4); } .ramp .q5 { background: var(--q5); }
+.ramp .q6 { background: var(--q6); border-radius: 0 3px 3px 0; }
+.swatch.ring-best { background: transparent; box-shadow: inset 0 0 0 2px var(--ink); }
+.swatch.ring-base { background: transparent; border: 1.2px dashed var(--ink); }
+.swatch.cell-out { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); }
+.swatch.cell-none { background: transparent; border: 1px dashed var(--axis); }
+.swatch.round { border-radius: 50%; }
+
+.sens-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px 20px; }
+.sens-fig figcaption { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; margin-bottom: 2px; }
+.sens-fig figcaption .mono { overflow-wrap: break-word; min-width: 0; }
+.sens-fig figcaption .muted { white-space: nowrap; }
+.sens-line { fill: none; stroke: var(--s1); stroke-width: 2; }
+.sens-pt circle { fill: var(--s1); stroke: var(--surface); stroke-width: 1; }
+.sens-pt circle.ring { fill: none; stroke: var(--ink); stroke-width: 2; }
+.sens-pt.out path { stroke: var(--critical); stroke-width: 2; stroke-linecap: round; }
+.gap { stroke: var(--axis); stroke-width: 1; stroke-dasharray: 2 4; }
+.axis-t.gap-t { font-style: italic; }
+.mark.gap { width: 2px; height: 12px; margin: 0 5px; background: repeating-linear-gradient(to bottom, var(--axis) 0 3px, transparent 3px 6px); }
+
+.off { display: none; }
+.front { fill: none; stroke: var(--s1); stroke-width: 1.6; stroke-linejoin: round; opacity: 0.85; }
+.sp circle { fill: var(--other); stroke: var(--surface); stroke-width: 1; }
+.sp.front-pt circle { fill: var(--s1); }
+.sp circle.ring { fill: none; stroke: var(--ink); stroke-width: 2; }
+.sp.out path { stroke: var(--critical); stroke-width: 2; stroke-linecap: round; }
+.sp.base rect { fill: var(--surface); stroke: var(--ink); stroke-width: 1.6; }
+.sp:hover circle:not(.ring) { r: 5.5; }
+.mark.front-dot { background: var(--s1); }
+.mark.other-dot { background: var(--other); }
+.mark.square { width: 10px; height: 10px; margin: 0 1px; background: var(--surface); box-shadow: inset 0 0 0 1.6px var(--ink); }
+
+table.variants thead th.kpi-col { white-space: normal; min-width: 64px; max-width: 104px; vertical-align: bottom; line-height: 1.25; }
+table.data thead th { vertical-align: bottom; }
+</style>
+</head>
+<body>
+<header class="top"><div class="title"><div class="eyebrow">Architecture</div><h1>handoff</h1><p class="summary">A sequential hand-off: agent a works first and hands its result to agent b. In 2611.00314 this solved 54% at the cost of one agent; more alternating turns gave no gain at 1.59 times the cost. The simulator has no hand-off: the `handoff` link is drawn and checked but not simulated, so a and b both take tasks from the backlog as two independent workers.</p><ul class="facts"><li>4 parts</li><li>6 links</li></ul></div><div class="segmented" role="group" aria-label="Theme"><button type="button" data-theme-choice="system" aria-pressed="true">System</button><button type="button" data-theme-choice="light" aria-pressed="false">Light</button><button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button></div></header>
+<main>
+<section class="top-grid" aria-label="Architecture">
+<div class="card graph-card"><div class="card-head"><h2>Parts and links</h2><span class="hint">Select a part for its properties</span></div><div class="card-body"><ul class="legend" aria-label="Legend"><li><span class="swatch f-principal"></span>principal</li><li><span class="swatch f-agent"></span>agent, harness</li><li><span class="swatch f-intel"></span>gateway, model</li></ul><div class="graph-wrap" style="--graph-w:473px"><svg class="graph" viewBox="0 0 473 324" width="473" height="324" role="group" aria-labelledby="graph-title graph-desc"><title id="graph-title">Architecture handoff</title><desc id="graph-desc">4 parts in rows by block layer, 6 links as arrows labelled by what they carry. The list of links follows the graph as text.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead"/></marker><marker id="arrow-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead hot"/></marker></defs><g class="edges"><path class="edge" d="M176 76C176 86 118 86 118 96L118 116C118 125.5 89 125.5 89 135" data-from="owner" data-to="a"><title>owner → a: prompt</title></path><path class="edge" d="M115 135C115 125.5 196 125.5 196 116L196 96C196 86.5 202 86.5 202 77" data-from="a" data-to="owner"><title>a → owner: question</title></path><path class="edge" d="M371 135C371 125.5 291 125.5 291 116L291 96C291 86.5 228 86.5 228 77" data-from="b" data-to="owner"><title>b → owner: question</title></path><path class="edge" d="M102 188C102 198 179 198 179 208L179 228C179 237.5 238 237.5 238 247" data-from="a" data-to="model"><title>a → model: model_call</title></path><path class="edge" d="M371 188C371 198 313 198 313 208L313 228C313 237.5 264 237.5 264 247" data-from="b" data-to="model"><title>b → model: model_call</title></path><path class="edge" d="M187 162L286 162" data-from="a" data-to="b"><title>a → b: handoff</title></path></g><g class="labels"><g class="pill"><rect x="206.2" y="152" width="60.6" height="20" rx="10" data-box="206.2 152 60.6 20"/><text x="236.5" y="166" text-anchor="middle">handoff</text></g><g class="pill"><rect x="89.3" y="96" width="57.3" height="20" rx="10" data-box="89.3 96 57.3 20"/><text x="118" y="110" text-anchor="middle">prompt</text></g><g class="pill"><rect x="163" y="96" width="66.1" height="20" rx="10" data-box="163 96 66.1 20"/><text x="196" y="110" text-anchor="middle">question</text></g><g class="pill"><rect x="258" y="96" width="66.1" height="20" rx="10" data-box="258 96 66.1 20"/><text x="291" y="110" text-anchor="middle">question</text></g><g class="pill"><rect x="139.9" y="208" width="78.1" height="20" rx="10" data-box="139.9 208 78.1 20"/><text x="179" y="222" text-anchor="middle">model_call</text></g><g class="pill"><rect x="273.9" y="208" width="78.1" height="20" rx="10" data-box="273.9 208 78.1 20"/><text x="313" y="222" text-anchor="middle">model_call</text></g></g><g class="nodes"><g class="node f-principal" data-part="owner"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="owner, principal · human" x="118" y="24" width="168" height="52" rx="10" data-box="118 24 168 52"/><rect class="icon-bg" x="130" y="36" width="30" height="30" rx="7"/><path class="icon" transform="translate(138 44) scale(1)" d="M7 6.6a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM2.4 12.6c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2"/><text class="name" x="170" y="48">owner</text><text class="sub" x="170" y="63">principal · human</text></g><g class="node f-agent" data-part="a"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="a, agent · coding" x="18" y="136" width="168" height="52" rx="10" data-box="18 136 168 52"/><rect class="icon-bg" x="30" y="148" width="30" height="30" rx="7"/><path class="icon" transform="translate(38 156) scale(1)" d="M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01"/><text class="name" x="70" y="160">a</text><text class="sub" x="70" y="175">agent · coding</text></g><g class="node f-agent" data-part="b"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="b, agent · coding" x="287" y="136" width="168" height="52" rx="10" data-box="287 136 168 52"/><rect class="icon-bg" x="299" y="148" width="30" height="30" rx="7"/><path class="icon" transform="translate(307 156) scale(1)" d="M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01"/><text class="name" x="339" y="160">b</text><text class="sub" x="339" y="175">agent · coding</text></g><g class="node f-intel" data-part="model"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="model, model · frontier" x="167" y="248" width="168" height="52" rx="10" data-box="167 248 168 52"/><rect class="icon-bg" x="179" y="260" width="30" height="30" rx="7"/><path class="icon" transform="translate(187 268) scale(1)" d="M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5"/><text class="name" x="219" y="272">model</text><text class="sub" x="219" y="287">model · frontier</text></g></g></svg></div><ul class="sr-only" aria-label="Links"><li>owner sends prompt to a</li><li>a sends handoff to b</li><li>a sends question to owner</li><li>b sends question to owner</li><li>a sends model_call to model</li><li>b sends model_call to model</li></ul></div></div>
+<aside class="side"><div class="card details"><div class="card-head"><h2>Part</h2><span class="hint" id="pin-hint">hover or select</span></div><div class="card-body" aria-live="polite"><section class="detail" data-detail=""><p class="muted">Point at a part, or move to it with Tab and press Enter, to see its properties, its links.</p><dl class="kv"><dt>blocks</dt><dd>agent, model, principal</dd></dl></section><section class="detail" data-detail="a" hidden><div class="detail-head"><span class="swatch f-agent"></span><h3>a</h3></div><p class="muted">agent · coding</p><dl class="kv"><dt>block</dt><dd>agent</dd><dt>harness</dt><dd>coding</dd></dl><h4>Links</h4><ul class="links"><li>owner <span class="muted">→</span> a <span class="carries">prompt</span></li><li>a <span class="muted">→</span> b <span class="carries">handoff</span></li><li>a <span class="muted">→</span> owner <span class="carries">question</span></li><li>a <span class="muted">→</span> model <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="b" hidden><div class="detail-head"><span class="swatch f-agent"></span><h3>b</h3></div><p class="muted">agent · coding</p><dl class="kv"><dt>block</dt><dd>agent</dd><dt>harness</dt><dd>coding</dd></dl><h4>Links</h4><ul class="links"><li>a <span class="muted">→</span> b <span class="carries">handoff</span></li><li>b <span class="muted">→</span> owner <span class="carries">question</span></li><li>b <span class="muted">→</span> model <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="model" hidden><div class="detail-head"><span class="swatch f-intel"></span><h3>model</h3></div><p class="muted">model · frontier</p><dl class="kv"><dt>block</dt><dd>model</dd><dt>route</dt><dd>frontier</dd></dl><h4>Links</h4><ul class="links"><li>a <span class="muted">→</span> model <span class="carries">model_call</span></li><li>b <span class="muted">→</span> model <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="owner" hidden><div class="detail-head"><span class="swatch f-principal"></span><h3>owner</h3></div><p class="muted">principal · human</p><dl class="kv"><dt>block</dt><dd>principal</dd><dt>kind</dt><dd>human</dd></dl><h4>Links</h4><ul class="links"><li>owner <span class="muted">→</span> a <span class="carries">prompt</span></li><li>a <span class="muted">→</span> owner <span class="carries">question</span></li><li>b <span class="muted">→</span> owner <span class="carries">question</span></li></ul></section></div></div><div class="card policies"><div class="card-head"><h2>Policies</h2></div><div class="card-body"><ul class="policy-list"><li><span class="policy-name">question default after</span><span class="policy-v">15m</span></li></ul></div></div></aside>
+</section>
+</main>
+<footer>agenticspec-architecture/1 · rendered by agenticspec, self-contained, no network</footer>
+<script id="agenticspec-data" type="application/json">{"architecture":{"architecture":"handoff","format":"agenticspec-architecture/1","links":[{"carries":"prompt","from":"owner","to":"a"},{"carries":"handoff","from":"a","to":"b"},{"carries":"question","from":"a","to":"owner"},{"carries":"question","from":"b","to":"owner"},{"carries":"model_call","from":"a","to":"model"},{"carries":"model_call","from":"b","to":"model"}],"parts":{"a":{"block":"agent","harness":"coding"},"b":{"block":"agent","harness":"coding"},"model":{"block":"model","route":"frontier"},"owner":{"block":"principal","kind":"human"}},"policies":{"question_default_after":"15m"},"summary":"A sequential hand-off: agent a works first and hands its result to agent b. In 2611.00314 this solved 54% at the cost of one agent; more alternating turns gave no gain at 1.59 times the cost. The simulator has no hand-off: the `handoff` link is drawn and checked but not simulated, so a and b both take tasks from the backlog as two independent workers."},"result":null}</script>
+<script>
+"use strict";
+(function () {
+  var root = document.documentElement;
+  var choices = document.querySelectorAll("[data-theme-choice]");
+  function theme(t) {
+    if (t === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", t);
+    choices.forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-choice") === t));
+    });
+  }
+  choices.forEach(function (b) {
+    b.addEventListener("click", function () { theme(b.getAttribute("data-theme-choice")); });
+  });
+  var asked = new URLSearchParams(location.search).get("theme");
+  if (asked === "light" || asked === "dark") theme(asked);
+
+  var svg = document.querySelector("svg.graph");
+  var nodes = document.querySelectorAll("svg.graph .node[data-part]");
+  var edges = document.querySelectorAll("svg.graph .edge");
+  var details = document.querySelectorAll(".detail[data-detail]");
+  var hint = document.getElementById("pin-hint");
+  var pinned = "";
+
+  function show(part) {
+    var found = false;
+    details.forEach(function (d) {
+      var on = d.getAttribute("data-detail") === part;
+      d.hidden = !on;
+      found = found || on;
+    });
+    if (!found) {
+      details.forEach(function (d) { d.hidden = d.getAttribute("data-detail") !== ""; });
+    }
+    if (svg) svg.classList.toggle("focus", part !== "");
+    edges.forEach(function (e) {
+      var hot = part !== "" && (e.getAttribute("data-from") === part || e.getAttribute("data-to") === part || e.getAttribute("data-over") === part);
+      e.classList.toggle("hot", hot);
+    });
+  }
+  function pin(part) {
+    pinned = pinned === part ? "" : part;
+    nodes.forEach(function (n) {
+      var button = n.querySelector(":scope > [role=button]");
+      if (button) button.setAttribute("aria-pressed", String(n.getAttribute("data-part") === pinned));
+    });
+    if (hint) hint.textContent = pinned ? "selected · Esc clears" : "hover or select";
+    show(pinned);
+  }
+  nodes.forEach(function (n) {
+    var part = n.getAttribute("data-part");
+    n.addEventListener("mouseenter", function () { show(part); });
+    n.addEventListener("mouseleave", function () { show(pinned); });
+    // The button of a part is its card's background, so focus arrives from inside the group.
+    n.addEventListener("focusin", function (ev) { ev.stopPropagation(); show(part); });
+    n.addEventListener("focusout", function (ev) { ev.stopPropagation(); show(pinned); });
+    n.addEventListener("click", function (ev) { ev.stopPropagation(); pin(part); });
+    n.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.stopPropagation(); pin(part); }
+    });
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && pinned) pin(pinned);
+  });
+
+  // A table wider than its card scrolls sideways: while it does, its box is a focusable region
+  // named for its card, so a keyboard can reach it and scroll it.
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    var head = w.parentElement && w.parentElement.querySelector("h2");
+    var label = head ? head.textContent : "Table";
+    function measure() {
+      if (w.scrollWidth > w.clientWidth + 1) {
+        w.setAttribute("tabindex", "0");
+        w.setAttribute("role", "region");
+        w.setAttribute("aria-label", label);
+      } else {
+        w.removeAttribute("tabindex");
+        w.removeAttribute("role");
+        w.removeAttribute("aria-label");
+      }
+    }
+    measure();
+    if (typeof ResizeObserver !== "undefined") new ResizeObserver(measure).observe(w);
+  });
+
+  // Landscape: the pair of places shown.
+  document.querySelectorAll("select[data-pick=pair]").forEach(function (s) {
+    var card = s.closest(".card");
+    function pick() {
+      card.querySelectorAll("figure.pair[data-pair]").forEach(function (f) {
+        f.hidden = f.getAttribute("data-pair") !== s.value;
+      });
+    }
+    s.addEventListener("change", pick);
+    pick();
+  });
+
+  // Trade-offs: every position and every Pareto front is in the page; a choice of KPIs shows one.
+  var ax = document.querySelector("select[data-axis=x]");
+  var ay = document.querySelector("select[data-axis=y]");
+  var scatter = document.querySelector("svg.scatter");
+  if (ax && ay && scatter) {
+    var label = document.getElementById("to-t");
+    var plot = function () {
+      var x = ax.value, y = ay.value, front = null;
+      scatter.querySelectorAll(".ax-x").forEach(function (g) { g.classList.toggle("off", g.getAttribute("data-kpi") !== x); });
+      scatter.querySelectorAll(".ax-y").forEach(function (g) { g.classList.toggle("off", g.getAttribute("data-kpi") !== y); });
+      scatter.querySelectorAll("path.front").forEach(function (p) {
+        var on = p.getAttribute("data-pair") === x + "|" + y;
+        p.classList.toggle("off", !on);
+        if (on) front = p;
+      });
+      var ids = front ? front.getAttribute("data-front").split(" ") : [];
+      if (label) label.textContent = front ? front.getAttribute("data-label") : "Trade-offs: " + x + " against itself";
+      scatter.querySelectorAll("g.sp").forEach(function (g) {
+        var px = g.getAttribute("data-x-" + x), py = g.getAttribute("data-y-" + y);
+        var ok = px !== null && py !== null;
+        g.classList.toggle("off", !ok);
+        if (ok) g.setAttribute("transform", "translate(" + px + "," + py + ")");
+        g.classList.toggle("front-pt", ids.indexOf(g.getAttribute("data-v")) >= 0);
+      });
+    };
+    ax.addEventListener("change", plot);
+    ay.addEventListener("change", plot);
+    plot();
+  }
+})();
+</script>
+</body>
+</html>

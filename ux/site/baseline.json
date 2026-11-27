@@ -1,0 +1,545 @@
+{
+  "about": "Lower is better. Written by SITE_UX_RATCHET=write from target/site-ux/metrics (website/e2e/ratchet.spec.ts); one entry per docs task and gating viewport, light theme.\nS-02, 2026-11-27: the tool fixes T3 (a control whose box runs past a box that clips it is judged by its text), T4 (a target taller than the viewport is in view when its top is) and T5 (a run that stops reports null, not 0) change what website/e2e/bot.ts measures; T2, T6 and T9 change the round report only. best-variant-of-author-reviewer is measured with the architecture in its frame (SUF-001) and the search result above it (SUF-002); trigger-block-lifecycle is new.",
+  "tolerances": {
+    "counts": "exact (0), for actions, looks, steers and glances",
+    "steps": "5 % of the value, for time to act in steps and reading load in words",
+    "layout_shift": "0.01"
+  },
+  "scenarios": {
+    "find-harness-kpis@1440x900": {
+      "screen_only.actions": {
+        "value": 5,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 6,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 3,
+        "tolerance": 0.15
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 403,
+        "tolerance": 20.15
+      },
+      "reading_load.median": {
+        "value": 349.5,
+        "tolerance": 17.48
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "find-harness-kpis@1280x800": {
+      "screen_only.actions": {
+        "value": 5,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 6,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 3,
+        "tolerance": 0.15
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 421,
+        "tolerance": 21.05
+      },
+      "reading_load.median": {
+        "value": 273.5,
+        "tolerance": 13.68
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "layer-of-workspace@1440x900": {
+      "screen_only.actions": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 403,
+        "tolerance": 20.15
+      },
+      "reading_load.median": {
+        "value": 367,
+        "tolerance": 18.35
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "layer-of-workspace@1280x800": {
+      "screen_only.actions": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 397,
+        "tolerance": 19.85
+      },
+      "reading_load.median": {
+        "value": 278,
+        "tolerance": 13.9
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "gate-kpis-of-authority@1440x900": {
+      "screen_only.actions": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 2,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 307,
+        "tolerance": 15.35
+      },
+      "reading_load.median": {
+        "value": 265,
+        "tolerance": 13.25
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "gate-kpis-of-authority@1280x800": {
+      "screen_only.actions": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 1,
+        "tolerance": 0.05
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 223,
+        "tolerance": 11.15
+      },
+      "reading_load.median": {
+        "value": 215,
+        "tolerance": 10.75
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "what-question-depends-on@1440x900": {
+      "screen_only.actions": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 5,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 2,
+        "tolerance": 0.1
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 427,
+        "tolerance": 21.35
+      },
+      "reading_load.median": {
+        "value": 185,
+        "tolerance": 9.25
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "what-question-depends-on@1280x800": {
+      "screen_only.actions": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 5,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 2,
+        "tolerance": 0.1
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 419,
+        "tolerance": 20.95
+      },
+      "reading_load.median": {
+        "value": 168,
+        "tolerance": 8.4
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "best-variant-of-author-reviewer@1440x900": {
+      "screen_only.actions": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 5,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 2,
+        "tolerance": 0.1
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 318,
+        "tolerance": 15.9,
+        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; to be acknowledged"
+      },
+      "reading_load.median": {
+        "value": 240,
+        "tolerance": 12,
+        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; to be acknowledged"
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "best-variant-of-author-reviewer@1280x800": {
+      "screen_only.actions": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 5,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 2,
+        "tolerance": 0.1
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 269,
+        "tolerance": 13.45
+      },
+      "reading_load.median": {
+        "value": 210,
+        "tolerance": 10.5,
+        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; to be acknowledged"
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "toolcall-lifecycle@1440x900": {
+      "screen_only.actions": {
+        "value": 6,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 7,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 3,
+        "tolerance": 0.15
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 403,
+        "tolerance": 20.15
+      },
+      "reading_load.median": {
+        "value": 293,
+        "tolerance": 14.65
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "toolcall-lifecycle@1280x800": {
+      "screen_only.actions": {
+        "value": 6,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 7,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 3,
+        "tolerance": 0.15
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 421,
+        "tolerance": 21.05
+      },
+      "reading_load.median": {
+        "value": 253,
+        "tolerance": 12.65
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "trigger-block-lifecycle@1440x900": {
+      "screen_only.actions": {
+        "value": 5,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 6,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 2,
+        "tolerance": 0.1
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 441,
+        "tolerance": 22.05
+      },
+      "reading_load.median": {
+        "value": 203.5,
+        "tolerance": 10.18
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "trigger-block-lifecycle@1280x800": {
+      "screen_only.actions": {
+        "value": 6,
+        "tolerance": 0
+      },
+      "screen_only.looks": {
+        "value": 7,
+        "tolerance": 0
+      },
+      "screen_only.steers": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "screen_only.time_to_act_steps.max": {
+        "value": 2,
+        "tolerance": 0.1
+      },
+      "glance_cost.median": {
+        "value": 1,
+        "tolerance": 0
+      },
+      "glance_cost.p95": {
+        "value": 3,
+        "tolerance": 0
+      },
+      "reading_load.max": {
+        "value": 433,
+        "tolerance": 21.65
+      },
+      "reading_load.median": {
+        "value": 171,
+        "tolerance": 8.55
+      },
+      "layout_shift.score": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    }
+  }
+}

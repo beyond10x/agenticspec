@@ -1,0 +1,33 @@
+format: ess/37
+system: agentic
+version: v1
+
+summary: >-
+  The building blocks of agentic development: principals, models, gateways, tools, agents,
+  harnesses, work, authority, channels, questions, workspaces, sandboxes, runtimes, shared
+  resources, and the architecture that composes them. Each block is a contract; a runtime that
+  implements one proves it against the block's commands, events and views.
+
+domains:
+  - agentic.shared
+  - agentic.principal
+  - agentic.delegation
+  - agentic.model
+  - agentic.gateway
+  - agentic.tool
+  - agentic.knowledge
+  - agentic.agent
+  - agentic.harness
+  - agentic.work
+  - agentic.process
+  - agentic.authority
+  - agentic.channel
+  - agentic.question
+  - agentic.trigger
+  - agentic.workspace
+  - agentic.sandbox
+  - agentic.runtime
+  - agentic.resource
+  - agentic.architecture
+  - agentic.kpi
+  - agentic.experiment

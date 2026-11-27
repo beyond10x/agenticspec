@@ -1,0 +1,19 @@
+{
+  "name": "best-variant-of-author-reviewer",
+  "anchor": false,
+  "card": {
+    "persona": "An operator who wants to tune an author-reviewer setup by what the simulator found.",
+    "task": "On the author-reviewer architecture page, read the best variant of its search: the best value of each marked place."
+  },
+  "start": "/docs/",
+  "steps": [
+    { "click": "link", "name": "Architectures", "in": "sidebar" },
+    { "click": "link", "name": "^author-reviewer\\b", "in": "main" }
+  ],
+  "target": { "kind": "section-table", "heading": "Marked places" },
+  "truth": {
+    "path": "/docs/architectures/author-reviewer",
+    "best": { "parts.reviewer.strictness": "strict", "parts.worker.count": "14" }
+  },
+  "expectations": ["the marked-places table is in view and its best-value column reads strict and 14"]
+}

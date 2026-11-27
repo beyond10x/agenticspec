@@ -1,0 +1,19 @@
+{
+  "name": "layer-of-workspace",
+  "anchor": true,
+  "card": {
+    "persona": "A reader who wants to know where the workspace block sits in the stack.",
+    "task": "Find which layer the workspace block is in, on the layer map."
+  },
+  "start": "/",
+  "steps": [
+    { "click": "link", "name": "Building blocks", "in": "navbar" }
+  ],
+  "target": { "kind": "map-card", "block": "workspace" },
+  "truth": {
+    "path": "/docs/blocks",
+    "layer": "8",
+    "layer_name": "place"
+  },
+  "expectations": ["the workspace card of the layer map and the label of its layer are both in view", "the label reads 8 place"]
+}

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/agenticspec", "crates/agenticspec-records"]
+members = ["crates/agenticspec", "crates/agenticspec-records", "crates/agenticspec-sim", "crates/agenticspec-render", "crates/agenticspec-docs"]
 exclude = ["generated", "crates/agenticspec-cli-contract"]
 
 [workspace.package]
@@ -18,9 +18,11 @@ agenticspec-system = { path = "generated/crates/agenticspec-system" }
 agenticspec-server = { path = "generated/crates/agenticspec-server" }
 agenticspec-cli-contract = { path = "crates/agenticspec-cli-contract" }
 agenticspec-records = { path = "crates/agenticspec-records" }
+agenticspec-render = { path = "crates/agenticspec-render" }
 serde_json = "1"
 sha2 = "0.10"
 regex = "1"
 rayon = "1"
+serde_yaml_ng = "0.10"
 rusqlite = { version = "0.41", features = ["bundled"] }
 zstd = "0.13"

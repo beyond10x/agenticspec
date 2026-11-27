@@ -1,0 +1,188 @@
+# Broken variant: the workstation exactly as design/building-blocks.md § "An architecture
+# document" lists its links. The operator is an agent part with no link carrying ModelCall to a
+# model or gateway part, so the commit is refused.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: workstation-no-model-path
+summary: The workstation with the links as the design lists them is refused at commit, because the operator agent has no path to a model.
+
+arrange:
+  - instance: ws
+    entity: agentic.architecture.Architecture
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: workstation}
+    outcome: created
+    capture: {instance: ws, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+
+  # parts
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000001
+      architecture_id: {$instance: ws}
+      name: owner
+      kind: Principal
+      count: 1
+      settings: [{name: principal_kind, value: human}]
+    outcome: added
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000002
+      architecture_id: {$instance: ws}
+      name: operator
+      kind: Agent
+      count: 1
+      settings: [{name: harness, value: coding}]
+    outcome: added
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000003
+      architecture_id: {$instance: ws}
+      name: worker
+      kind: Agent
+      count: 12
+      settings: [{name: harness, value: coding}]
+    outcome: added
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000004
+      architecture_id: {$instance: ws}
+      name: gateway
+      kind: Gateway
+      count: 1
+      settings: [{name: upstreams, value: provider}]
+    outcome: added
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000005
+      architecture_id: {$instance: ws}
+      name: builds
+      kind: Pool
+      count: 1
+      settings: [{name: slots, value: "16"}]
+    outcome: added
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000006
+      architecture_id: {$instance: ws}
+      name: chat
+      kind: Channel
+      count: 1
+      settings: [{name: kind, value: operator}]
+    outcome: added
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000007
+      architecture_id: {$instance: ws}
+      name: tree
+      kind: Workspace
+      count: 1
+      settings: [{name: sharing, value: exclusive}]
+    outcome: added
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000008
+      architecture_id: {$instance: ws}
+      name: box
+      kind: Sandbox
+      count: 1
+      settings: [{name: egress, value: gateway}]
+    outcome: added
+
+  # per and acts_for
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.architecture.SetActsFor
+    input:
+      architecture_id: {$instance: ws}
+      part_id: 00000000-0000-4000-8000-000000000002
+      principal_part_id: 00000000-0000-4000-8000-000000000001
+    outcome: set
+  - at: 2026-11-27T09:00:10Z
+    command: agentic.architecture.SetPer
+    input:
+      architecture_id: {$instance: ws}
+      part_id: 00000000-0000-4000-8000-000000000007
+      per_part_id: 00000000-0000-4000-8000-000000000003
+    outcome: set
+  - at: 2026-11-27T09:00:11Z
+    command: agentic.architecture.SetPer
+    input:
+      architecture_id: {$instance: ws}
+      part_id: 00000000-0000-4000-8000-000000000008
+      per_part_id: 00000000-0000-4000-8000-000000000003
+    outcome: set
+
+  # links
+  - at: 2026-11-27T09:00:12Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: ws}
+      from_part_id: 00000000-0000-4000-8000-000000000001
+      to_part_id: 00000000-0000-4000-8000-000000000002
+      carries: Prompt
+      over_part_id: 00000000-0000-4000-8000-000000000006
+    outcome: added
+  - at: 2026-11-27T09:00:13Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: ws}
+      from_part_id: 00000000-0000-4000-8000-000000000003
+      to_part_id: 00000000-0000-4000-8000-000000000002
+      carries: Question
+    outcome: added
+  - at: 2026-11-27T09:00:14Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: ws}
+      from_part_id: 00000000-0000-4000-8000-000000000002
+      to_part_id: 00000000-0000-4000-8000-000000000003
+      carries: Order
+    outcome: added
+  - at: 2026-11-27T09:00:15Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: ws}
+      from_part_id: 00000000-0000-4000-8000-000000000003
+      to_part_id: 00000000-0000-4000-8000-000000000004
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-27T09:00:16Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: ws}
+      from_part_id: 00000000-0000-4000-8000-000000000003
+      to_part_id: 00000000-0000-4000-8000-000000000005
+      carries: Claim
+    outcome: added
+
+  # border: [operator]
+  - at: 2026-11-27T09:00:18Z
+    command: agentic.architecture.SetBorder
+    input:
+      architecture_id: {$instance: ws}
+      part_id: 00000000-0000-4000-8000-000000000002
+    outcome: bordered
+
+  - at: 2026-11-27T09:00:19Z
+    command: agentic.architecture.CommitRevision
+    input:
+      architecture_id: {$instance: ws}
+    outcome: agent-without-model
+    error:
+      name: agentic.architecture.AgentWithoutModel
+    no_events: [agentic.architecture.RevisionCommitted]
+
+assert:
+  - view: agentic.architecture.Revisions
+    counts:
+      at_most: 0

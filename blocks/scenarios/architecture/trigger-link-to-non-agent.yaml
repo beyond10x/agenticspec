@@ -1,0 +1,58 @@
+# A trigger wakes an agent; a gateway has nothing to wake. A link from a schedule part to a gateway
+# part carrying Trigger is refused with a named error and adds no link.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: trigger-link-to-non-agent
+summary: A schedule part linked to a gateway part carrying Trigger is refused with TriggerTargetNotAgent.
+
+arrange:
+  - instance: sw
+    entity: agentic.architecture.Architecture
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: misrouted-schedule}
+    outcome: created
+    capture: {instance: sw, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000201
+      architecture_id: {$instance: sw}
+      name: nightly
+      kind: Schedule
+      count: 1
+      settings: [{name: expression, value: "0 2 * * *"}]
+    outcome: added
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000202
+      architecture_id: {$instance: sw}
+      name: gateway
+      kind: Gateway
+      count: 1
+      settings: [{name: upstreams, value: provider}]
+    outcome: added
+
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: sw}
+      from_part_id: 00000000-0000-4000-8000-000000000201
+      to_part_id: 00000000-0000-4000-8000-000000000202
+      carries: Trigger
+    outcome: trigger-target-not-agent
+    error:
+      name: agentic.architecture.TriggerTargetNotAgent
+    no_events: [agentic.architecture.LinkAdded]
+
+assert:
+  - view: agentic.architecture.Reach
+    params:
+      architecture_id: {$instance: sw}
+    counts:
+      at_least: 0
+      at_most: 0

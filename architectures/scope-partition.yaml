@@ -1,0 +1,32 @@
+format: agenticspec-architecture/1
+architecture: scope-partition
+summary: >-
+  An upfront scope partition with a merge order: each copy of `team` owns one scope, every task
+  goes to the owner of its scope, and merges land in the order the tasks finish. In 2610.07261
+  this integrated cleanly in 9 of 9 runs, against 4 of 9 when the agents reacted to each other and
+  1 of 9 without coordination; a vague change notice was no better than none. The simulator draws
+  a task's scope and lets it touch each other scope with the profile's `scope_overlap`, so more
+  scopes mean more tasks that cross one. A merge conflicts when another merge touched one of its
+  scopes after its work started. Under `coordination: mesh` every copy tells the others which task
+  it takes (one model call per reader) and a conflict costs a round of rework; under `none` the
+  conflicting merge ships broken. The simulator does not model how the partition is cut or what
+  cutting it costs, scopes whose load differs, conflicts inside one scope, nor a copy that helps
+  another scope when its own is empty.
+
+parts:
+  owner:   { block: principal, kind: human }
+  team:    { block: agent, harness: coding, partition: scope, count: { value: 4, vary: [4, 8, 12, 16] }, coordination: { value: mesh, vary: [mesh, none] } }
+  gateway: { block: gateway, rate_limit_per_minute: 120 }
+  model:   { block: model, route: frontier }
+  builds:  { block: pool, kind: build_slots, capacity: { value: 8, vary: [4, 8, 16] }, job_limit: 10m }
+  tree:    { block: workspace, sharing: exclusive, per: team }
+
+links:
+  - { from: owner,   to: team,    carries: prompt }
+  - { from: team,    to: owner,   carries: question }
+  - { from: team,    to: gateway, carries: model_call }
+  - { from: gateway, to: model,   carries: model_call }
+  - { from: team,    to: builds,  carries: claim }
+
+policies:
+  question_default_after: 15m

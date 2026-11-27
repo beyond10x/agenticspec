@@ -1,0 +1,58 @@
+format: agenticspec-kpis/1
+kpis:
+  - id: owner_wait_share
+    block: principal
+    kind: quality
+    unit: share
+    summary: Share of agent time spent waiting on the human owner.
+    how: Seconds agents wait on an owner answer, divided by agent wall seconds.
+    direction: lower
+    modes: { autonomous: lower, pairing: ignore, review: ignore }
+    gate: false
+    reads: [agentic.question.QuestionAsked, agentic.question.QuestionAnswered]
+    status: both
+    source: docs/kpis.md
+  - id: questions_defaulted
+    block: question
+    kind: quality
+    unit: count
+    summary: Questions that took their default at the deadline.
+    how: Count of DefaultTaken events.
+    direction: lower
+    gate: false
+    reads: [agentic.question.DefaultTaken]
+    status: simulated
+    source: design
+  - id: question_without_answerer
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Question links that end at a part that cannot answer.
+    how: Count of refusals of the rule in the architecture check.
+    direction: lower
+    gate: true
+    reads: []
+    status: simulated
+    source: design
+  - id: task_completion
+    block: work
+    kind: completeness
+    unit: share
+    summary: Tasks done of tasks arrived.
+    how: Tasks done divided by tasks arrived.
+    direction: higher
+    gate: false
+    reads: [agentic.work.TaskClosed]
+    status: simulated
+    source: design
+  - id: queue_wait_p90_seconds
+    block: resource
+    kind: quality
+    unit: seconds
+    summary: The 90th percentile of the wait of a job for a slot.
+    how: Seconds from claim to held, 90th percentile over every job.
+    direction: lower
+    gate: false
+    reads: [agentic.resource.ClaimQueued, agentic.resource.ClaimHeld]
+    status: planned
+    source: research/2611.07166

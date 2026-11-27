@@ -1,0 +1,457 @@
+domain: agentic.question
+
+summary: >-
+  A message that needs an answer. A question offers lettered options, names the option it takes by
+  default and a deadline; past the deadline the default is taken. Only the addressee, or a delegate
+  acting for it, answers. An approval is a question whose two options are approve and reject.
+
+naming:
+  wire: question
+  display: Question
+
+types:
+  - name: agentic.question.OptionLetter
+    kind: newtype
+    of: String
+    alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    naming:
+      summary: The letter an option is chosen by.
+
+  - name: agentic.question.AnswerOption
+    kind: struct
+    fields:
+      - name: letter
+        type: agentic.question.OptionLetter
+      - name: label
+        type: String
+        summary: What choosing it means, in a few words.
+      - name: meaning
+        type: agentic.question.OptionMeaning
+      - name: binds
+        type: Optional<agentic.shared.Content>
+        summary: >-
+          The exact text choosing this option approves, by digest: a post or message whose content
+          has this digest is the one the pick allowed.
+
+  - name: agentic.question.OptionMeaning
+    kind: enum
+    variants: [Approve, Reject, Choice]
+    naming:
+      summary: An approval's two options mean Approve and Reject; every other option is a Choice.
+
+  - name: agentic.question.QuestionKind
+    kind: enum
+    variants: [Choice, Approval]
+
+entities:
+  - name: agentic.question.Question
+    naming:
+      summary: One question from one party to another.
+    identity:
+      name: question_id
+      type: agentic.shared.QuestionId
+    fields:
+      - name: kind
+        type: agentic.question.QuestionKind
+      - name: asked_by
+        type: agentic.channel.PartyId
+      - name: addressee
+        type: agentic.channel.PartyId
+      - name: text
+        type: agentic.shared.Content
+      - name: options
+        type: List<agentic.question.AnswerOption>
+      - name: default_option
+        type: agentic.question.OptionLetter
+      - name: deadline
+        type: Timestamp
+      - name: chosen
+        type: Optional<agentic.question.OptionLetter>
+        summary: The option answered, or the default once taken.
+      - name: answered_by
+        type: Optional<agentic.channel.PartyId>
+      - name: answered_via
+        type: Optional<agentic.shared.DelegationId>
+        summary: The delegation the answering party acted under, when it is not the addressee.
+      - name: topic
+        type: Optional<agentic.shared.Name>
+        summary: >-
+          What the decision is about (money, architecture, text for outside readers), by which
+          rules choose its addressee. The default option is the option the asker recommends.
+      - name: run_id
+        type: Optional<agentic.shared.RunId>
+        summary: The run that waits on the question, suspended AwaitingAnswer, when a step of a run asks it.
+      # UNMAPPED: the addressee holds the decision. A decision a rule holds is an
+      # agentic.authority Decision with decider Rule, not a question. A question the addressee
+      # only advises on, with the asker deciding, has no field here (consumer gap G7).
+      # UNMAPPED: whether a question travels on a channel (a `channel_id` referencing
+      # agentic.channel.Channel, or the message it was asked in) is not stated by the design;
+      # the protocols name "question with a default" as a message sequence over a channel.
+    relations:
+      - name: run
+        kind: references
+        target: agentic.work.Run
+        cardinality: one
+        via: run_id
+    lifecycle:
+      initial: Open
+      states: [Open, Answered, DefaultTaken, Withdrawn]
+      terminal: [Answered, DefaultTaken, Withdrawn]
+      transitions:
+        - name: answer
+          from: [Open]
+          to: Answered
+        - name: take_default
+          from: [Open]
+          to: DefaultTaken
+        - name: withdraw
+          from: [Open]
+          to: Withdrawn
+
+actors:
+  - name: agentic.question.Asker
+    naming:
+      display: Asker
+      summary: The party that asks; its credential names the party it is.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+    may:
+      - agentic.question.Ask
+      - agentic.question.Withdraw
+
+  - name: agentic.question.Answerer
+    naming:
+      display: Answerer
+      summary: The addressee, or a party acting for it under a delegation.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+    may:
+      - agentic.question.Answer
+
+  - name: agentic.question.Clock
+    naming:
+      display: Clock
+      summary: What takes a question's default once its deadline has passed.
+    may:
+      - agentic.question.TakeDefault
+
+errors:
+  - name: agentic.question.NoOptions
+    summary: The question offers no option.
+
+  - name: agentic.question.DuplicateOption
+    summary: Two options carry the same letter.
+
+  - name: agentic.question.DefaultNotOffered
+    summary: The default option is not one of the options offered.
+    fields:
+      - name: default_option
+        type: agentic.question.OptionLetter
+
+  - name: agentic.question.NotAnApproval
+    summary: An approval offers exactly two options, one meaning Approve and one meaning Reject.
+
+  - name: agentic.question.UnknownQuestion
+    summary: No question has this identity.
+    fields:
+      - name: question_id
+        type: agentic.shared.QuestionId
+
+  - name: agentic.question.NotTheAddressee
+    summary: The caller is not the addressee and names no delegation to act for it.
+
+  - name: agentic.question.OptionNotOffered
+    summary: The option answered is not one the question offers.
+    fields:
+      - name: option
+        type: agentic.question.OptionLetter
+
+  - name: agentic.question.DeadlineNotReached
+    summary: The deadline has not passed; the default is not taken yet.
+
+  - name: agentic.question.NotTheAsker
+    summary: Only the party that asked withdraws a question.
+
+  - name: agentic.question.QuestionStateConflict
+    summary: The question is no longer Open.
+    fields:
+      - name: state
+        type: agentic.question.Question.State
+
+commands:
+  - name: agentic.question.Ask
+    naming:
+      wire: ask
+      display: Ask a question
+      summary: The caller asks the addressee to choose one of the lettered options by the deadline.
+    input:
+      - name: addressee
+        type: agentic.channel.PartyId
+      - name: kind
+        type: agentic.question.QuestionKind
+      - name: text
+        type: agentic.shared.Content
+      - name: options
+        type: List<agentic.question.AnswerOption>
+        example:
+          - {letter: A, label: approve, meaning: Approve}
+          - {letter: B, label: reject, meaning: Reject}
+      - name: default_option
+        type: agentic.question.OptionLetter
+        example: A
+      - name: deadline
+        type: Timestamp
+      - name: topic
+        type: Optional<agentic.shared.Name>
+      - name: run_id
+        type: Optional<agentic.shared.RunId>
+    outcomes:
+      - name: no-options
+        when: options.count == 0
+        error: agentic.question.NoOptions
+      - name: duplicate-option
+        when: {not: {distinct: {in: options, as: o, by: o.letter}}}
+        error: agentic.question.DuplicateOption
+      - name: default-not-offered
+        when: {not: {exists: {in: options, as: o, that: o.letter == default_option}}}
+        error: agentic.question.DefaultNotOffered
+        payload:
+          agentic.question.DefaultNotOffered:
+            default_option: input.default_option
+      - name: approval-not-two-options
+        when: {all: [kind == Approval, options.count != 2]}
+        error: agentic.question.NotAnApproval
+      - name: approval-without-approve
+        when:
+          all:
+            - kind == Approval
+            - {forall: {in: options, as: o, that: o.meaning != Approve}}
+        error: agentic.question.NotAnApproval
+      - name: approval-without-reject
+        when:
+          all:
+            - kind == Approval
+            - {forall: {in: options, as: o, that: o.meaning != Reject}}
+        error: agentic.question.NotAnApproval
+      # A deadline already past is accepted: the question is asked and its default may be taken at
+      # once. A refusal of it would leave TakeDefault without a scenario, since synthesis does not
+      # advance the clock past a stored deadline (ESS-SYNTH-003).
+      - name: asked
+        creates: agentic.question.Question
+        instance: question_id
+        sets:
+          kind: input.kind
+          asked_by: {caller: party}
+          addressee: input.addressee
+          text: input.text
+          options: input.options
+          default_option: input.default_option
+          deadline: input.deadline
+          topic: input.topic
+          run_id: input.run_id
+        emits: [agentic.question.QuestionAsked]
+        payload:
+          agentic.question.QuestionAsked:
+            question_id: {generated: true}
+            kind: input.kind
+            asked_by: {caller: party}
+            addressee: input.addressee
+            default_option: input.default_option
+            deadline: input.deadline
+            topic: input.topic
+            run_id: input.run_id
+        summary: The question is Open until it is answered, withdrawn or its deadline passes.
+
+  - name: agentic.question.Answer
+    naming:
+      wire: answer
+      display: Answer a question
+      summary: The addressee, or a delegate acting for it, chooses one offered option.
+    input:
+      - name: question_id
+        type: agentic.shared.QuestionId
+      - name: option
+        type: agentic.question.OptionLetter
+      # UNMAPPED: that this delegation delegates from the addressee to the caller, and is live, is
+      # a fact of agentic.delegation (layer 1). The guard reading it waits until that domain
+      # exists; until then a caller other than the addressee must name a delegation, and the
+      # question records it in `answered_via`.
+      - name: delegation_id
+        type: Optional<agentic.shared.DelegationId>
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.question.UnknownQuestion
+        payload:
+          agentic.question.UnknownQuestion:
+            question_id: input.question_id
+      - name: not-the-addressee
+        when: not defined(delegation_id)
+        when_subject:
+          predicate: addressee != caller.party
+        error: agentic.question.NotTheAddressee
+      - name: option-not-offered
+        when_subject:
+          predicate: {not: {exists: {in: options, as: o, that: o.letter == input.option}}}
+        error: agentic.question.OptionNotOffered
+        payload:
+          agentic.question.OptionNotOffered:
+            option: input.option
+      - name: answered
+        moves: agentic.question.Question.answer
+        instance: question_id
+        sets:
+          chosen: input.option
+          answered_by: {caller: party}
+          answered_via: input.delegation_id
+        emits: [agentic.question.QuestionAnswered]
+        payload:
+          agentic.question.QuestionAnswered:
+            question_id: input.question_id
+            option: input.option
+            answered_by: {caller: party}
+            answered_via: input.delegation_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.question.QuestionStateConflict
+        payload:
+          agentic.question.QuestionStateConflict:
+            state: {subject: state}
+
+  # An answer that arrives after the deadline and before the default is taken is accepted.
+  # UNMAPPED: whether an answer past the deadline is refused is not stated by the design.
+  - name: agentic.question.TakeDefault
+    naming:
+      wire: take-default
+      display: Take the default
+      summary: Past its deadline an Open question takes its default option.
+    input:
+      - name: question_id
+        type: agentic.shared.QuestionId
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.question.UnknownQuestion
+        payload:
+          agentic.question.UnknownQuestion:
+            question_id: input.question_id
+      - name: not-yet
+        when_subject:
+          predicate: deadline > now
+        error: agentic.question.DeadlineNotReached
+      - name: taken
+        moves: agentic.question.Question.take_default
+        instance: question_id
+        sets:
+          chosen: {subject: default_option}
+        emits: [agentic.question.DefaultTaken]
+        payload:
+          agentic.question.DefaultTaken:
+            question_id: input.question_id
+            option: {subject: default_option}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.question.QuestionStateConflict
+        payload:
+          agentic.question.QuestionStateConflict:
+            state: {subject: state}
+
+  - name: agentic.question.Withdraw
+    naming:
+      wire: withdraw
+      display: Withdraw a question
+    input:
+      - name: question_id
+        type: agentic.shared.QuestionId
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.question.UnknownQuestion
+        payload:
+          agentic.question.UnknownQuestion:
+            question_id: input.question_id
+      - name: not-the-asker
+        when_subject:
+          predicate: asked_by != caller.party
+        error: agentic.question.NotTheAsker
+      - name: withdrawn
+        moves: agentic.question.Question.withdraw
+        instance: question_id
+        emits: [agentic.question.QuestionWithdrawn]
+        payload:
+          agentic.question.QuestionWithdrawn:
+            question_id: input.question_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.question.QuestionStateConflict
+        payload:
+          agentic.question.QuestionStateConflict:
+            state: {subject: state}
+
+events:
+  - name: agentic.question.QuestionAsked
+    fields:
+      - {name: question_id, type: agentic.shared.QuestionId}
+      - {name: kind, type: agentic.question.QuestionKind}
+      - {name: asked_by, type: agentic.channel.PartyId}
+      - {name: addressee, type: agentic.channel.PartyId}
+      - {name: default_option, type: agentic.question.OptionLetter}
+      - {name: deadline, type: Timestamp}
+      - {name: topic, type: Optional<agentic.shared.Name>}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+
+  - name: agentic.question.QuestionAnswered
+    fields:
+      - {name: question_id, type: agentic.shared.QuestionId}
+      - {name: option, type: agentic.question.OptionLetter}
+      - {name: answered_by, type: agentic.channel.PartyId}
+      - {name: answered_via, type: Optional<agentic.shared.DelegationId>}
+
+  - name: agentic.question.DefaultTaken
+    fields:
+      - {name: question_id, type: agentic.shared.QuestionId}
+      - {name: option, type: agentic.question.OptionLetter}
+
+  - name: agentic.question.QuestionWithdrawn
+    fields:
+      - {name: question_id, type: agentic.shared.QuestionId}
+
+views:
+  - name: agentic.question.Questions
+    source: agentic.question.Question
+    consistency: read_your_writes
+    fields:
+      - {name: question_id, type: agentic.shared.QuestionId}
+      - {name: kind, type: agentic.question.QuestionKind}
+      - {name: asked_by, type: agentic.channel.PartyId}
+      - {name: addressee, type: agentic.channel.PartyId}
+      - {name: text, type: agentic.shared.Content}
+      - {name: options, type: List<agentic.question.AnswerOption>}
+      - {name: default_option, type: agentic.question.OptionLetter}
+      - {name: deadline, type: Timestamp}
+      - {name: chosen, type: Optional<agentic.question.OptionLetter>}
+      - {name: answered_by, type: Optional<agentic.channel.PartyId>}
+      - {name: answered_via, type: Optional<agentic.shared.DelegationId>}
+      - {name: topic, type: Optional<agentic.shared.Name>}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: state, type: agentic.question.Question.State}
+    naming:
+      wire: questions
+      display: Questions
+
+  - name: agentic.question.OpenQuestions
+    source: agentic.question.Question
+    consistency: read_your_writes
+    params:
+      - {name: addressee, type: agentic.channel.PartyId}
+    filter:
+      all: [state == Open, addressee == param.addressee]
+    fields:
+      - {name: question_id, type: agentic.shared.QuestionId}
+      - {name: asked_by, type: agentic.channel.PartyId}
+      - {name: kind, type: agentic.question.QuestionKind}
+      - {name: default_option, type: agentic.question.OptionLetter}
+      - {name: deadline, type: Timestamp}
+    naming:
+      wire: open-questions
+      display: Open questions of an addressee

@@ -1,0 +1,3140 @@
+{
+  "barriers": [
+    {
+      "before_rung": 2,
+      "between": [
+        "S1",
+        "S2"
+      ],
+      "decision": "I will never do grunt work again. From now on I organise sessions instead of working in one.",
+      "id": "B1",
+      "name": "Meta yourself up"
+    },
+    {
+      "before_rung": 5,
+      "between": [
+        "S3",
+        "S4"
+      ],
+      "decision": "It is normal to take the repository as it was before a batch of work, redo the work a different way, and have the two compared automatically.",
+      "id": "B2",
+      "name": "Experimentation is normal"
+    },
+    {
+      "before_rung": 8,
+      "between": [
+        "S6",
+        "S7"
+      ],
+      "decision": "I work on the underlying patterns, information, semantics, truth, validation and goal seeking, and build the system that builds the software.",
+      "id": "B3",
+      "name": "The meta level"
+    }
+  ],
+  "format": "agenticspec-ladder-data/1",
+  "ladder": "agentic-ladder",
+  "layout": {
+    "bands": [
+      {
+        "name": "wakes and feeds",
+        "row0": 0,
+        "row1": 0
+      },
+      {
+        "name": "works",
+        "row0": 1,
+        "row1": 2
+      },
+      {
+        "name": "trust",
+        "row0": 3,
+        "row1": 4
+      }
+    ],
+    "cols": 8,
+    "parts": {
+      "alerts": {
+        "col": 6,
+        "row": 0
+      },
+      "base": {
+        "col": 4,
+        "row": 3
+      },
+      "board": {
+        "col": 4,
+        "row": 0
+      },
+      "box": {
+        "col": 0,
+        "row": 3
+      },
+      "budgets": {
+        "col": 7,
+        "row": 3
+      },
+      "clock": {
+        "col": 3,
+        "row": 0
+      },
+      "compare": {
+        "col": 3,
+        "row": 4
+      },
+      "conformance": {
+        "col": 4,
+        "row": 4
+      },
+      "context": {
+        "col": 1,
+        "row": 3
+      },
+      "contract": {
+        "col": 5,
+        "row": 3
+      },
+      "evidence": {
+        "col": 5,
+        "row": 4
+      },
+      "factory": {
+        "col": 4,
+        "row": 1
+      },
+      "gateway": {
+        "col": 2,
+        "row": 3
+      },
+      "grants": {
+        "col": 3,
+        "row": 3
+      },
+      "kpis": {
+        "col": 6,
+        "row": 4
+      },
+      "model": {
+        "col": 0,
+        "row": 0
+      },
+      "night": {
+        "col": 2,
+        "row": 2
+      },
+      "on_alert": {
+        "col": 5,
+        "row": 0
+      },
+      "policy": {
+        "col": 6,
+        "row": 3
+      },
+      "principles": {
+        "col": 7,
+        "row": 4
+      },
+      "repo": {
+        "col": 1,
+        "row": 0
+      },
+      "run_a": {
+        "col": 3,
+        "row": 2
+      },
+      "run_b": {
+        "col": 2,
+        "row": 1
+      },
+      "session": {
+        "col": 0,
+        "row": 2
+      },
+      "sessions": {
+        "col": 1,
+        "row": 2
+      },
+      "specs": {
+        "col": 0,
+        "row": 4
+      },
+      "subagents": {
+        "col": 1,
+        "row": 1
+      },
+      "swarm": {
+        "col": 3,
+        "row": 1
+      },
+      "teams": {
+        "col": 5,
+        "row": 2
+      },
+      "tests": {
+        "col": 1,
+        "row": 4
+      },
+      "trees": {
+        "col": 2,
+        "row": 0
+      },
+      "triage": {
+        "col": 4,
+        "row": 2
+      },
+      "verifier": {
+        "col": 2,
+        "row": 4
+      },
+      "you": {
+        "col": 0,
+        "row": 1
+      }
+    },
+    "rows": 5
+  },
+  "rule": "Each stage of throughput needs its matching trust: a way to establish that the output is correct without reading every line. Throughput without it produces bad output faster.",
+  "rungs": [
+    {
+      "added_links": [
+        "session>model:model_call",
+        "session>you:proposal",
+        "session>you:question",
+        "you>session:prompt"
+      ],
+      "added_parts": [
+        "box",
+        "model",
+        "repo",
+        "session",
+        "you"
+      ],
+      "agents_at_work": 1,
+      "architecture": "../architectures/ladder/01-sandboxed.yaml",
+      "changed": "You sit at your workstation with one agent session. It runs in a sandbox because that is the default, and you read every diff it proposes.",
+      "changed_parts": [],
+      "id": "sandboxed",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "model"
+        }
+      ],
+      "n": 1,
+      "name": "ladder-01-sandboxed",
+      "parts": [
+        {
+          "block": "sandbox",
+          "count": 1,
+          "family": "place",
+          "id": "box",
+          "label": "sandbox, process",
+          "trust": "sandbox: the checkout and the model, nothing else"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": "reads every diff"
+        }
+      ],
+      "removed_links": [],
+      "removed_parts": [],
+      "risk": null,
+      "simulation": {
+        "cost_usd": 136,
+        "false_completions_shipped": 8.5,
+        "owner_wait_share": 0.437,
+        "tasks_correct": 6.8,
+        "tasks_done": 15.3
+      },
+      "stage": "S1",
+      "summary": "Rung 1 of the agentic ladder. One owner at a workstation works with one agent session, in a sandbox because that is the default. The session reaches its checkout and the model, nothing else, and the owner reads every diff it proposes.",
+      "title": "One session, in a sandbox",
+      "trust_added": [
+        "box",
+        "you"
+      ],
+      "trust_parts": 2,
+      "view": {
+        "col0": 0,
+        "col1": 1,
+        "row0": 0,
+        "row1": 3
+      }
+    },
+    {
+      "added_links": [],
+      "added_parts": [],
+      "agents_at_work": 1,
+      "architecture": "../architectures/ladder/02-sandbox-off.yaml",
+      "changed": "You switch the sandbox off. The permission prompts stop, and the session now reaches everything your account reaches.",
+      "changed_parts": [],
+      "id": "sandbox-off",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "model"
+        }
+      ],
+      "n": 2,
+      "name": "ladder-02-sandbox-off",
+      "parts": [
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": "reads every diff"
+        }
+      ],
+      "removed_links": [],
+      "removed_parts": [
+        "box"
+      ],
+      "risk": "More reach, less trust. You reading every diff is now the only guard.",
+      "simulation": {
+        "cost_usd": 136,
+        "false_completions_shipped": 8.5,
+        "owner_wait_share": 0.437,
+        "tasks_correct": 6.8,
+        "tasks_done": 15.3
+      },
+      "stage": "S1",
+      "summary": "Rung 2 of the agentic ladder. The sandbox is switched off: the session reaches everything the owner's account reaches, and the permission prompts stop. The only guard left is the owner reading every diff.",
+      "title": "The sandbox switched off",
+      "trust_added": [],
+      "trust_parts": 1,
+      "view": {
+        "col0": 0,
+        "col1": 1,
+        "row0": 0,
+        "row1": 2
+      }
+    },
+    {
+      "added_links": [
+        "context>subagents:context",
+        "session>subagents:order",
+        "subagents>model:model_call",
+        "subagents>session:question",
+        "subagents>tests:call"
+      ],
+      "added_parts": [
+        "context",
+        "subagents",
+        "tests"
+      ],
+      "agents_at_work": 4,
+      "architecture": "../architectures/ladder/03-subagents.yaml",
+      "changed": "The session stops doing the work itself. It splits a task, hands the parts to sub-agents and answers their questions for you.",
+      "changed_parts": [
+        "session"
+      ],
+      "id": "subagents",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "model"
+        },
+        {
+          "carries": "order",
+          "from": "session",
+          "to": "subagents"
+        },
+        {
+          "carries": "question",
+          "from": "subagents",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "subagents",
+          "to": "model"
+        },
+        {
+          "carries": "call",
+          "from": "subagents",
+          "to": "tests"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "subagents"
+        }
+      ],
+      "n": 3,
+      "name": "ladder-03-subagents",
+      "parts": [
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "context",
+          "label": "context files",
+          "trust": "context files tell every agent how the repository works"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "acts for you",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "subagents",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "tests",
+          "label": "test suite",
+          "trust": "agents prove their work with tests"
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": null
+        }
+      ],
+      "removed_links": [],
+      "removed_parts": [],
+      "risk": null,
+      "simulation": {
+        "cost_usd": 595,
+        "false_completions_shipped": 40,
+        "owner_wait_share": 0.149,
+        "tasks_correct": 30.5,
+        "tasks_done": 70.5
+      },
+      "stage": "S2",
+      "summary": "Rung 3 of the agentic ladder. The session stops doing the work and hands it to sub-agents; it acts for the owner and answers their questions. Context files tell every agent how the repository works, and the agents prove their work by running the tests.",
+      "title": "Sub-agents",
+      "trust_added": [
+        "context",
+        "tests"
+      ],
+      "trust_parts": 2,
+      "view": {
+        "col0": 0,
+        "col1": 1,
+        "row0": 0,
+        "row1": 4
+      }
+    },
+    {
+      "added_links": [
+        "context>sessions:context",
+        "sessions>model:model_call",
+        "sessions>tests:call",
+        "sessions>you:question",
+        "specs>sessions:spec",
+        "you>specs:spec"
+      ],
+      "added_parts": [
+        "sessions",
+        "specs",
+        "trees"
+      ],
+      "agents_at_work": 8,
+      "architecture": "../architectures/ladder/04-background-sessions.yaml",
+      "changed": "Several sessions run in the background, each in its own worktree and each started from a spec you wrote first. You decompose, delegate and review.",
+      "changed_parts": [],
+      "id": "background-sessions",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "model"
+        },
+        {
+          "carries": "order",
+          "from": "session",
+          "to": "subagents"
+        },
+        {
+          "carries": "question",
+          "from": "subagents",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "subagents",
+          "to": "model"
+        },
+        {
+          "carries": "call",
+          "from": "subagents",
+          "to": "tests"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "subagents"
+        },
+        {
+          "carries": "spec",
+          "from": "you",
+          "to": "specs"
+        },
+        {
+          "carries": "spec",
+          "from": "specs",
+          "to": "sessions"
+        },
+        {
+          "carries": "question",
+          "from": "sessions",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "sessions",
+          "to": "model"
+        },
+        {
+          "carries": "call",
+          "from": "sessions",
+          "to": "tests"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "sessions"
+        }
+      ],
+      "n": 4,
+      "name": "ladder-04-background-sessions",
+      "parts": [
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "context",
+          "label": "context files",
+          "trust": "context files tell every agent how the repository works"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "acts for you",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 4,
+          "family": "agent",
+          "id": "sessions",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "work",
+          "count": 1,
+          "family": "work",
+          "id": "specs",
+          "label": "spec",
+          "trust": "specs before sessions"
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "subagents",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "tests",
+          "label": "test suite",
+          "trust": "agents prove their work with tests"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "trees",
+          "label": "worktree",
+          "trust": null
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": null
+        }
+      ],
+      "removed_links": [],
+      "removed_parts": [],
+      "risk": null,
+      "simulation": {
+        "cost_usd": 1176,
+        "false_completions_shipped": 72,
+        "owner_wait_share": 0.298,
+        "tasks_correct": 56,
+        "tasks_done": 128
+      },
+      "stage": "S2",
+      "summary": "Rung 4 of the agentic ladder. Several background sessions run beside the first, each in its own worktree, each started from a spec written before the session. The owner decomposes, delegates and reviews; specs, context files and tests carry the trust.",
+      "title": "Background sessions, one worktree each",
+      "trust_added": [
+        "specs"
+      ],
+      "trust_parts": 3,
+      "view": {
+        "col0": 0,
+        "col1": 2,
+        "row0": 0,
+        "row1": 4
+      }
+    },
+    {
+      "added_links": [
+        "clock>night:trigger",
+        "gateway>model:model_call",
+        "grants>night:grant",
+        "grants>sessions:grant",
+        "night>gateway:model_call",
+        "night>tests:call",
+        "night>verifier:review",
+        "night>you:question",
+        "session>gateway:model_call",
+        "sessions>gateway:model_call",
+        "sessions>verifier:review",
+        "subagents>gateway:model_call",
+        "verifier>gateway:model_call"
+      ],
+      "added_parts": [
+        "box",
+        "clock",
+        "gateway",
+        "grants",
+        "night",
+        "verifier"
+      ],
+      "agents_at_work": 11,
+      "architecture": "../architectures/ladder/05-scheduled.yaml",
+      "changed": "A clock wakes night agents every 30 minutes and they work through the backlog after you log off. Nobody watches them, so a harness does.",
+      "changed_parts": [],
+      "id": "scheduled",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "gateway"
+        },
+        {
+          "carries": "order",
+          "from": "session",
+          "to": "subagents"
+        },
+        {
+          "carries": "question",
+          "from": "subagents",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "subagents",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "subagents",
+          "to": "tests"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "subagents"
+        },
+        {
+          "carries": "spec",
+          "from": "you",
+          "to": "specs"
+        },
+        {
+          "carries": "spec",
+          "from": "specs",
+          "to": "sessions"
+        },
+        {
+          "carries": "question",
+          "from": "sessions",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "sessions",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "sessions",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "sessions",
+          "to": "verifier"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "sessions"
+        },
+        {
+          "carries": "trigger",
+          "from": "clock",
+          "to": "night"
+        },
+        {
+          "carries": "question",
+          "from": "night",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "night",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "night",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "night",
+          "to": "verifier"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "night"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "sessions"
+        },
+        {
+          "carries": "model_call",
+          "from": "verifier",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "to": "model"
+        }
+      ],
+      "n": 5,
+      "name": "ladder-05-scheduled",
+      "parts": [
+        {
+          "block": "sandbox",
+          "count": 1,
+          "family": "place",
+          "id": "box",
+          "label": "sandbox, container",
+          "trust": "sandbox again, for every unattended agent"
+        },
+        {
+          "block": "schedule",
+          "count": 1,
+          "family": "collab",
+          "id": "clock",
+          "label": "every 30m",
+          "trust": null
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "context",
+          "label": "context files",
+          "trust": "context files tell every agent how the repository works"
+        },
+        {
+          "block": "gateway",
+          "count": 1,
+          "family": "intel",
+          "id": "gateway",
+          "label": "gateway",
+          "trust": "every model call passes one gateway and is recorded"
+        },
+        {
+          "block": "authority",
+          "count": 1,
+          "family": "work",
+          "id": "grants",
+          "label": "permissions",
+          "trust": "permissions say what each agent may do"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "night",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "acts for you",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 4,
+          "family": "agent",
+          "id": "sessions",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "work",
+          "count": 1,
+          "family": "work",
+          "id": "specs",
+          "label": "spec",
+          "trust": "specs before sessions"
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "subagents",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "tests",
+          "label": "test suite",
+          "trust": "agents prove their work with tests"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "trees",
+          "label": "worktree",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "verifier",
+          "label": "reviewer agent",
+          "trust": "a verifier checks every finished task"
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": null
+        }
+      ],
+      "removed_links": [
+        "session>model:model_call",
+        "sessions>model:model_call",
+        "subagents>model:model_call"
+      ],
+      "removed_parts": [],
+      "risk": null,
+      "simulation": {
+        "cost_usd": 1957,
+        "false_completions_shipped": 90.8,
+        "owner_wait_share": 0.048,
+        "tasks_correct": 83.8,
+        "tasks_done": 174.5
+      },
+      "stage": "S3",
+      "summary": "Rung 5 of the agentic ladder. Work goes on after the owner logs off: a clock wakes night agents every 30 minutes and they work through the backlog. Nobody reads their diffs as they happen, so a harness takes over: the sandbox is back for the unattended agents, grants say what each may do, every model call passes one gateway, and a verifier checks each finished task.",
+      "title": "Scheduled agents work through the night",
+      "trust_added": [
+        "box",
+        "gateway",
+        "grants",
+        "verifier"
+      ],
+      "trust_parts": 7,
+      "view": {
+        "col0": 0,
+        "col1": 3,
+        "row0": 0,
+        "row1": 4
+      }
+    },
+    {
+      "added_links": [
+        "base>run_a:checkout",
+        "base>run_b:checkout",
+        "compare>you:report",
+        "run_a>compare:result",
+        "run_a>gateway:model_call",
+        "run_b>compare:result",
+        "run_b>gateway:model_call"
+      ],
+      "added_parts": [
+        "base",
+        "compare",
+        "run_a",
+        "run_b"
+      ],
+      "agents_at_work": 13,
+      "architecture": "../architectures/ladder/06-experiments.yaml",
+      "changed": "The same work runs twice from a pinned base, with two different methods, and an experiment compares the results on the same metrics. You change your method on evidence, not opinion.",
+      "changed_parts": [],
+      "id": "experiments",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "gateway"
+        },
+        {
+          "carries": "order",
+          "from": "session",
+          "to": "subagents"
+        },
+        {
+          "carries": "question",
+          "from": "subagents",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "subagents",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "subagents",
+          "to": "tests"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "subagents"
+        },
+        {
+          "carries": "spec",
+          "from": "you",
+          "to": "specs"
+        },
+        {
+          "carries": "spec",
+          "from": "specs",
+          "to": "sessions"
+        },
+        {
+          "carries": "question",
+          "from": "sessions",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "sessions",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "sessions",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "sessions",
+          "to": "verifier"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "sessions"
+        },
+        {
+          "carries": "trigger",
+          "from": "clock",
+          "to": "night"
+        },
+        {
+          "carries": "question",
+          "from": "night",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "night",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "night",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "night",
+          "to": "verifier"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "night"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "sessions"
+        },
+        {
+          "carries": "model_call",
+          "from": "verifier",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "to": "model"
+        },
+        {
+          "carries": "checkout",
+          "from": "base",
+          "to": "run_a"
+        },
+        {
+          "carries": "checkout",
+          "from": "base",
+          "to": "run_b"
+        },
+        {
+          "carries": "model_call",
+          "from": "run_a",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "run_b",
+          "to": "gateway"
+        },
+        {
+          "carries": "result",
+          "from": "run_a",
+          "to": "compare"
+        },
+        {
+          "carries": "result",
+          "from": "run_b",
+          "to": "compare"
+        },
+        {
+          "carries": "report",
+          "from": "compare",
+          "to": "you"
+        }
+      ],
+      "n": 6,
+      "name": "ladder-06-experiments",
+      "parts": [
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "base",
+          "label": "snapshot",
+          "trust": "a reproducible starting state"
+        },
+        {
+          "block": "sandbox",
+          "count": 1,
+          "family": "place",
+          "id": "box",
+          "label": "sandbox, container",
+          "trust": "sandbox again, for every unattended agent"
+        },
+        {
+          "block": "schedule",
+          "count": 1,
+          "family": "collab",
+          "id": "clock",
+          "label": "every 30m",
+          "trust": null
+        },
+        {
+          "block": "experiment",
+          "count": 1,
+          "family": "evaluation",
+          "id": "compare",
+          "label": "comparison",
+          "trust": "evals and an objective comparison metric"
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "context",
+          "label": "context files",
+          "trust": "context files tell every agent how the repository works"
+        },
+        {
+          "block": "gateway",
+          "count": 1,
+          "family": "intel",
+          "id": "gateway",
+          "label": "gateway",
+          "trust": "every model call passes one gateway and is recorded"
+        },
+        {
+          "block": "authority",
+          "count": 1,
+          "family": "work",
+          "id": "grants",
+          "label": "permissions",
+          "trust": "permissions say what each agent may do"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "night",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "run_a",
+          "label": "method A",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "run_b",
+          "label": "method B",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "acts for you",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 4,
+          "family": "agent",
+          "id": "sessions",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "work",
+          "count": 1,
+          "family": "work",
+          "id": "specs",
+          "label": "spec",
+          "trust": "specs before sessions"
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "subagents",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "tests",
+          "label": "test suite",
+          "trust": "agents prove their work with tests"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "trees",
+          "label": "worktree",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "verifier",
+          "label": "reviewer agent",
+          "trust": "a verifier checks every finished task"
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": null
+        }
+      ],
+      "removed_links": [],
+      "removed_parts": [],
+      "risk": null,
+      "simulation": {
+        "cost_usd": 2437,
+        "false_completions_shipped": 116.3,
+        "owner_wait_share": 0.042,
+        "tasks_correct": 103.8,
+        "tasks_done": 220
+      },
+      "stage": "S4",
+      "summary": "Rung 6 of the agentic ladder. Work is cheap enough to do twice: two runs start from the same pinned base, each with a different method, and an experiment compares their results on the same metrics. The owner improves the method from the comparison, not from opinion.",
+      "title": "Replay, vary, compare",
+      "trust_added": [
+        "base",
+        "compare"
+      ],
+      "trust_parts": 9,
+      "view": {
+        "col0": 0,
+        "col1": 4,
+        "row0": 0,
+        "row1": 4
+      }
+    },
+    {
+      "added_links": [
+        "contract>conformance:context",
+        "contract>swarm:context",
+        "session>board:message",
+        "swarm>board:claim",
+        "swarm>conformance:call",
+        "swarm>gateway:model_call",
+        "swarm>session:question",
+        "swarm>verifier:review"
+      ],
+      "added_parts": [
+        "board",
+        "conformance",
+        "contract",
+        "swarm"
+      ],
+      "agents_at_work": 21,
+      "architecture": "../architectures/ladder/07-swarm-rewrite.yaml",
+      "changed": "The session breaks a rewrite into entries on a shared board and a swarm of agents claims them. Code becomes disposable, because parity is proven, not hoped for.",
+      "changed_parts": [
+        "gateway",
+        "verifier"
+      ],
+      "id": "swarm-rewrite",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "gateway"
+        },
+        {
+          "carries": "order",
+          "from": "session",
+          "to": "subagents"
+        },
+        {
+          "carries": "question",
+          "from": "subagents",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "subagents",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "subagents",
+          "to": "tests"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "subagents"
+        },
+        {
+          "carries": "spec",
+          "from": "you",
+          "to": "specs"
+        },
+        {
+          "carries": "spec",
+          "from": "specs",
+          "to": "sessions"
+        },
+        {
+          "carries": "question",
+          "from": "sessions",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "sessions",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "sessions",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "sessions",
+          "to": "verifier"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "sessions"
+        },
+        {
+          "carries": "trigger",
+          "from": "clock",
+          "to": "night"
+        },
+        {
+          "carries": "question",
+          "from": "night",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "night",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "night",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "night",
+          "to": "verifier"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "night"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "sessions"
+        },
+        {
+          "carries": "model_call",
+          "from": "verifier",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "to": "model"
+        },
+        {
+          "carries": "checkout",
+          "from": "base",
+          "to": "run_a"
+        },
+        {
+          "carries": "checkout",
+          "from": "base",
+          "to": "run_b"
+        },
+        {
+          "carries": "model_call",
+          "from": "run_a",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "run_b",
+          "to": "gateway"
+        },
+        {
+          "carries": "result",
+          "from": "run_a",
+          "to": "compare"
+        },
+        {
+          "carries": "result",
+          "from": "run_b",
+          "to": "compare"
+        },
+        {
+          "carries": "report",
+          "from": "compare",
+          "to": "you"
+        },
+        {
+          "carries": "message",
+          "from": "session",
+          "to": "board"
+        },
+        {
+          "carries": "claim",
+          "from": "swarm",
+          "to": "board"
+        },
+        {
+          "carries": "question",
+          "from": "swarm",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "swarm",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "swarm",
+          "to": "conformance"
+        },
+        {
+          "carries": "review",
+          "from": "swarm",
+          "to": "verifier"
+        },
+        {
+          "carries": "context",
+          "from": "contract",
+          "to": "swarm"
+        },
+        {
+          "carries": "context",
+          "from": "contract",
+          "to": "conformance"
+        }
+      ],
+      "n": 7,
+      "name": "ladder-07-swarm-rewrite",
+      "parts": [
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "base",
+          "label": "snapshot",
+          "trust": "a reproducible starting state"
+        },
+        {
+          "block": "channel",
+          "count": 1,
+          "family": "collab",
+          "id": "board",
+          "label": "board channel",
+          "trust": null
+        },
+        {
+          "block": "sandbox",
+          "count": 1,
+          "family": "place",
+          "id": "box",
+          "label": "sandbox, container",
+          "trust": "sandbox again, for every unattended agent"
+        },
+        {
+          "block": "schedule",
+          "count": 1,
+          "family": "collab",
+          "id": "clock",
+          "label": "every 30m",
+          "trust": null
+        },
+        {
+          "block": "experiment",
+          "count": 1,
+          "family": "evaluation",
+          "id": "compare",
+          "label": "comparison",
+          "trust": "evals and an objective comparison metric"
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "conformance",
+          "label": "conformance suite",
+          "trust": "a conformance suite proves parity with the old version"
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "context",
+          "label": "context files",
+          "trust": "context files tell every agent how the repository works"
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "contract",
+          "label": "contract",
+          "trust": "an explicit contract of what the component does"
+        },
+        {
+          "block": "gateway",
+          "count": 1,
+          "family": "intel",
+          "id": "gateway",
+          "label": "gateway",
+          "trust": "every model call passes one gateway and is recorded"
+        },
+        {
+          "block": "authority",
+          "count": 1,
+          "family": "work",
+          "id": "grants",
+          "label": "permissions",
+          "trust": "permissions say what each agent may do"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "night",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "run_a",
+          "label": "method A",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "run_b",
+          "label": "method B",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "acts for you",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 4,
+          "family": "agent",
+          "id": "sessions",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "work",
+          "count": 1,
+          "family": "work",
+          "id": "specs",
+          "label": "spec",
+          "trust": "specs before sessions"
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "subagents",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 8,
+          "family": "agent",
+          "id": "swarm",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "tests",
+          "label": "test suite",
+          "trust": "agents prove their work with tests"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "trees",
+          "label": "worktree",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 2,
+          "family": "agent",
+          "id": "verifier",
+          "label": "reviewer agent",
+          "trust": "rejects what the suite does not pass, with two copies"
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": null
+        }
+      ],
+      "removed_links": [],
+      "removed_parts": [],
+      "risk": null,
+      "simulation": {
+        "cost_usd": 4525,
+        "false_completions_shipped": 127.3,
+        "owner_wait_share": 0.034,
+        "tasks_correct": 256.8,
+        "tasks_done": 384
+      },
+      "stage": "S5",
+      "summary": "Rung 7 of the agentic ladder. A whole component is rewritten, not patched: the session breaks the rewrite into entries on a shared board and the copies of a swarm claim them one by one. An explicit contract says what the component does, and a conformance suite derived from it proves the new version does everything the old one did; the verifier rejects what the suite does not pass, which is why its false-accept rate is low here. The simulator does not route the work through the board: the swarm's copies take tasks from the shared backlog.",
+      "title": "A swarm rewrites a whole component",
+      "trust_added": [
+        "conformance",
+        "contract"
+      ],
+      "trust_parts": 11,
+      "view": {
+        "col0": 0,
+        "col1": 5,
+        "row0": 0,
+        "row1": 4
+      }
+    },
+    {
+      "added_links": [
+        "evidence>you:report",
+        "grants>triage:grant",
+        "on_alert>triage:trigger",
+        "policy>triage:grant",
+        "triage>evidence:record",
+        "triage>gateway:model_call",
+        "triage>session:question",
+        "triage>tests:call",
+        "triage>verifier:review"
+      ],
+      "added_parts": [
+        "alerts",
+        "evidence",
+        "on_alert",
+        "policy",
+        "triage"
+      ],
+      "agents_at_work": 23,
+      "architecture": "../architectures/ladder/08-live-loop.yaml",
+      "changed": "Defects and requirements arrive on a channel. A trigger wakes a triage agent for each one, and a triaged fix candidate comes out within minutes.",
+      "changed_parts": [],
+      "id": "live-loop",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "gateway"
+        },
+        {
+          "carries": "order",
+          "from": "session",
+          "to": "subagents"
+        },
+        {
+          "carries": "question",
+          "from": "subagents",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "subagents",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "subagents",
+          "to": "tests"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "subagents"
+        },
+        {
+          "carries": "spec",
+          "from": "you",
+          "to": "specs"
+        },
+        {
+          "carries": "spec",
+          "from": "specs",
+          "to": "sessions"
+        },
+        {
+          "carries": "question",
+          "from": "sessions",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "sessions",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "sessions",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "sessions",
+          "to": "verifier"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "sessions"
+        },
+        {
+          "carries": "trigger",
+          "from": "clock",
+          "to": "night"
+        },
+        {
+          "carries": "question",
+          "from": "night",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "night",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "night",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "night",
+          "to": "verifier"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "night"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "sessions"
+        },
+        {
+          "carries": "model_call",
+          "from": "verifier",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "to": "model"
+        },
+        {
+          "carries": "checkout",
+          "from": "base",
+          "to": "run_a"
+        },
+        {
+          "carries": "checkout",
+          "from": "base",
+          "to": "run_b"
+        },
+        {
+          "carries": "model_call",
+          "from": "run_a",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "run_b",
+          "to": "gateway"
+        },
+        {
+          "carries": "result",
+          "from": "run_a",
+          "to": "compare"
+        },
+        {
+          "carries": "result",
+          "from": "run_b",
+          "to": "compare"
+        },
+        {
+          "carries": "report",
+          "from": "compare",
+          "to": "you"
+        },
+        {
+          "carries": "message",
+          "from": "session",
+          "to": "board"
+        },
+        {
+          "carries": "claim",
+          "from": "swarm",
+          "to": "board"
+        },
+        {
+          "carries": "question",
+          "from": "swarm",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "swarm",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "swarm",
+          "to": "conformance"
+        },
+        {
+          "carries": "review",
+          "from": "swarm",
+          "to": "verifier"
+        },
+        {
+          "carries": "context",
+          "from": "contract",
+          "to": "swarm"
+        },
+        {
+          "carries": "context",
+          "from": "contract",
+          "to": "conformance"
+        },
+        {
+          "carries": "trigger",
+          "from": "on_alert",
+          "to": "triage"
+        },
+        {
+          "carries": "question",
+          "from": "triage",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "triage",
+          "to": "gateway"
+        },
+        {
+          "carries": "review",
+          "from": "triage",
+          "to": "verifier"
+        },
+        {
+          "carries": "call",
+          "from": "triage",
+          "to": "tests"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "triage"
+        },
+        {
+          "carries": "grant",
+          "from": "policy",
+          "to": "triage"
+        },
+        {
+          "carries": "record",
+          "from": "triage",
+          "to": "evidence"
+        },
+        {
+          "carries": "report",
+          "from": "evidence",
+          "to": "you"
+        }
+      ],
+      "n": 8,
+      "name": "ladder-08-live-loop",
+      "parts": [
+        {
+          "block": "channel",
+          "count": 1,
+          "family": "collab",
+          "id": "alerts",
+          "label": "topic channel",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "base",
+          "label": "snapshot",
+          "trust": "a reproducible starting state"
+        },
+        {
+          "block": "channel",
+          "count": 1,
+          "family": "collab",
+          "id": "board",
+          "label": "board channel",
+          "trust": null
+        },
+        {
+          "block": "sandbox",
+          "count": 1,
+          "family": "place",
+          "id": "box",
+          "label": "sandbox, container",
+          "trust": "sandbox again, for every unattended agent"
+        },
+        {
+          "block": "schedule",
+          "count": 1,
+          "family": "collab",
+          "id": "clock",
+          "label": "every 30m",
+          "trust": null
+        },
+        {
+          "block": "experiment",
+          "count": 1,
+          "family": "evaluation",
+          "id": "compare",
+          "label": "comparison",
+          "trust": "evals and an objective comparison metric"
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "conformance",
+          "label": "conformance suite",
+          "trust": "a conformance suite proves parity with the old version"
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "context",
+          "label": "context files",
+          "trust": "context files tell every agent how the repository works"
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "contract",
+          "label": "contract",
+          "trust": "an explicit contract of what the component does"
+        },
+        {
+          "block": "work",
+          "count": 1,
+          "family": "work",
+          "id": "evidence",
+          "label": "evidence",
+          "trust": "every candidate carries the evidence that earns its completion"
+        },
+        {
+          "block": "gateway",
+          "count": 1,
+          "family": "intel",
+          "id": "gateway",
+          "label": "gateway",
+          "trust": "every model call passes one gateway and is recorded"
+        },
+        {
+          "block": "authority",
+          "count": 1,
+          "family": "work",
+          "id": "grants",
+          "label": "permissions",
+          "trust": "authority boundaries"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "night",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "trigger",
+          "count": 1,
+          "family": "collab",
+          "id": "on_alert",
+          "label": "trigger message",
+          "trust": null
+        },
+        {
+          "block": "authority",
+          "count": 1,
+          "family": "work",
+          "id": "policy",
+          "label": "triage policy",
+          "trust": "a triage policy says what the loop may take on alone"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "run_a",
+          "label": "method A",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "run_b",
+          "label": "method B",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "acts for you",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 4,
+          "family": "agent",
+          "id": "sessions",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "work",
+          "count": 1,
+          "family": "work",
+          "id": "specs",
+          "label": "spec",
+          "trust": "specs before sessions"
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "subagents",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 8,
+          "family": "agent",
+          "id": "swarm",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "tests",
+          "label": "test suite",
+          "trust": "agents prove their work with tests"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "trees",
+          "label": "worktree",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 2,
+          "family": "agent",
+          "id": "triage",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 2,
+          "family": "agent",
+          "id": "verifier",
+          "label": "reviewer agent",
+          "trust": "rejects what the suite does not pass, with two copies"
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": null
+        }
+      ],
+      "removed_links": [],
+      "removed_parts": [],
+      "risk": null,
+      "simulation": {
+        "cost_usd": 4627,
+        "false_completions_shipped": 124.3,
+        "owner_wait_share": 0.029,
+        "tasks_correct": 259,
+        "tasks_done": 383.3
+      },
+      "stage": "S6",
+      "summary": "Rung 8 of the agentic ladder. A live loop: defects and requirements arrive on an alerts channel, a trigger wakes a triage agent for each one, and a triaged fix candidate comes out within minutes. Autonomy is governed: grants draw the authority boundary, a triage policy says what the loop may take on alone, and every candidate carries the evidence that earns its completion. The simulator does not model work that arrives on a channel here, so the triage agent adds no simulated throughput; what this rung gains is minutes from defect to candidate.",
+      "title": "Defects in, fix candidates out",
+      "trust_added": [
+        "evidence",
+        "policy"
+      ],
+      "trust_parts": 13,
+      "view": {
+        "col0": 0,
+        "col1": 6,
+        "row0": 0,
+        "row1": 4
+      }
+    },
+    {
+      "added_links": [
+        "budgets>gateway:grant",
+        "evidence>kpis:record",
+        "factory>gateway:model_call",
+        "factory>teams:order",
+        "kpis>you:report",
+        "principles>factory:context",
+        "teams>evidence:record",
+        "teams>gateway:model_call",
+        "teams>session:question",
+        "teams>verifier:review",
+        "you>factory:prompt"
+      ],
+      "added_parts": [
+        "budgets",
+        "factory",
+        "kpis",
+        "principles",
+        "teams"
+      ],
+      "agents_at_work": 36,
+      "architecture": "../architectures/ladder/09-factory.yaml",
+      "changed": "You stop running the system and design it. A factory orchestrator hands work to teams of agents; budgets bound what they spend, KPIs measure what they deliver, and written principles govern when work counts as done.",
+      "changed_parts": [
+        "verifier"
+      ],
+      "id": "factory",
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "session"
+        },
+        {
+          "carries": "question",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "proposal",
+          "from": "session",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "session",
+          "to": "gateway"
+        },
+        {
+          "carries": "order",
+          "from": "session",
+          "to": "subagents"
+        },
+        {
+          "carries": "question",
+          "from": "subagents",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "subagents",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "subagents",
+          "to": "tests"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "subagents"
+        },
+        {
+          "carries": "spec",
+          "from": "you",
+          "to": "specs"
+        },
+        {
+          "carries": "spec",
+          "from": "specs",
+          "to": "sessions"
+        },
+        {
+          "carries": "question",
+          "from": "sessions",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "sessions",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "sessions",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "sessions",
+          "to": "verifier"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "to": "sessions"
+        },
+        {
+          "carries": "trigger",
+          "from": "clock",
+          "to": "night"
+        },
+        {
+          "carries": "question",
+          "from": "night",
+          "to": "you"
+        },
+        {
+          "carries": "model_call",
+          "from": "night",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "night",
+          "to": "tests"
+        },
+        {
+          "carries": "review",
+          "from": "night",
+          "to": "verifier"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "night"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "sessions"
+        },
+        {
+          "carries": "model_call",
+          "from": "verifier",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "to": "model"
+        },
+        {
+          "carries": "checkout",
+          "from": "base",
+          "to": "run_a"
+        },
+        {
+          "carries": "checkout",
+          "from": "base",
+          "to": "run_b"
+        },
+        {
+          "carries": "model_call",
+          "from": "run_a",
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "run_b",
+          "to": "gateway"
+        },
+        {
+          "carries": "result",
+          "from": "run_a",
+          "to": "compare"
+        },
+        {
+          "carries": "result",
+          "from": "run_b",
+          "to": "compare"
+        },
+        {
+          "carries": "report",
+          "from": "compare",
+          "to": "you"
+        },
+        {
+          "carries": "message",
+          "from": "session",
+          "to": "board"
+        },
+        {
+          "carries": "claim",
+          "from": "swarm",
+          "to": "board"
+        },
+        {
+          "carries": "question",
+          "from": "swarm",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "swarm",
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "swarm",
+          "to": "conformance"
+        },
+        {
+          "carries": "review",
+          "from": "swarm",
+          "to": "verifier"
+        },
+        {
+          "carries": "context",
+          "from": "contract",
+          "to": "swarm"
+        },
+        {
+          "carries": "context",
+          "from": "contract",
+          "to": "conformance"
+        },
+        {
+          "carries": "trigger",
+          "from": "on_alert",
+          "to": "triage"
+        },
+        {
+          "carries": "question",
+          "from": "triage",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "triage",
+          "to": "gateway"
+        },
+        {
+          "carries": "review",
+          "from": "triage",
+          "to": "verifier"
+        },
+        {
+          "carries": "call",
+          "from": "triage",
+          "to": "tests"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "to": "triage"
+        },
+        {
+          "carries": "grant",
+          "from": "policy",
+          "to": "triage"
+        },
+        {
+          "carries": "record",
+          "from": "triage",
+          "to": "evidence"
+        },
+        {
+          "carries": "report",
+          "from": "evidence",
+          "to": "you"
+        },
+        {
+          "carries": "prompt",
+          "from": "you",
+          "to": "factory"
+        },
+        {
+          "carries": "order",
+          "from": "factory",
+          "to": "teams"
+        },
+        {
+          "carries": "model_call",
+          "from": "factory",
+          "to": "gateway"
+        },
+        {
+          "carries": "question",
+          "from": "teams",
+          "to": "session"
+        },
+        {
+          "carries": "model_call",
+          "from": "teams",
+          "to": "gateway"
+        },
+        {
+          "carries": "review",
+          "from": "teams",
+          "to": "verifier"
+        },
+        {
+          "carries": "record",
+          "from": "teams",
+          "to": "evidence"
+        },
+        {
+          "carries": "grant",
+          "from": "budgets",
+          "to": "gateway"
+        },
+        {
+          "carries": "context",
+          "from": "principles",
+          "to": "factory"
+        },
+        {
+          "carries": "record",
+          "from": "evidence",
+          "to": "kpis"
+        },
+        {
+          "carries": "report",
+          "from": "kpis",
+          "to": "you"
+        }
+      ],
+      "n": 9,
+      "name": "ladder-09-factory",
+      "parts": [
+        {
+          "block": "channel",
+          "count": 1,
+          "family": "collab",
+          "id": "alerts",
+          "label": "topic channel",
+          "trust": null
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "base",
+          "label": "snapshot",
+          "trust": "a reproducible starting state"
+        },
+        {
+          "block": "channel",
+          "count": 1,
+          "family": "collab",
+          "id": "board",
+          "label": "board channel",
+          "trust": null
+        },
+        {
+          "block": "sandbox",
+          "count": 1,
+          "family": "place",
+          "id": "box",
+          "label": "sandbox, container",
+          "trust": "sandbox again, for every unattended agent"
+        },
+        {
+          "block": "authority",
+          "count": 1,
+          "family": "work",
+          "id": "budgets",
+          "label": "budget",
+          "trust": "budgets bound what the factory spends"
+        },
+        {
+          "block": "schedule",
+          "count": 1,
+          "family": "collab",
+          "id": "clock",
+          "label": "every 30m",
+          "trust": null
+        },
+        {
+          "block": "experiment",
+          "count": 1,
+          "family": "evaluation",
+          "id": "compare",
+          "label": "comparison",
+          "trust": "evals and an objective comparison metric"
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "conformance",
+          "label": "conformance suite",
+          "trust": "a conformance suite proves parity with the old version"
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "context",
+          "label": "context files",
+          "trust": "context files tell every agent how the repository works"
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "contract",
+          "label": "contract",
+          "trust": "an explicit contract of what the component does"
+        },
+        {
+          "block": "work",
+          "count": 1,
+          "family": "work",
+          "id": "evidence",
+          "label": "evidence",
+          "trust": "every candidate carries the evidence that earns its completion"
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "factory",
+          "label": "orchestrator",
+          "trust": null
+        },
+        {
+          "block": "gateway",
+          "count": 1,
+          "family": "intel",
+          "id": "gateway",
+          "label": "gateway",
+          "trust": "every model call passes one gateway and is recorded"
+        },
+        {
+          "block": "authority",
+          "count": 1,
+          "family": "work",
+          "id": "grants",
+          "label": "permissions",
+          "trust": "authority boundaries"
+        },
+        {
+          "block": "kpi",
+          "count": 1,
+          "family": "evaluation",
+          "id": "kpis",
+          "label": "KPIs",
+          "trust": "KPIs measure what it delivers"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "family": "intel",
+          "id": "model",
+          "label": "model",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "night",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "trigger",
+          "count": 1,
+          "family": "collab",
+          "id": "on_alert",
+          "label": "trigger message",
+          "trust": null
+        },
+        {
+          "block": "authority",
+          "count": 1,
+          "family": "work",
+          "id": "policy",
+          "label": "triage policy",
+          "trust": "a triage policy says what the loop may take on alone"
+        },
+        {
+          "block": "knowledge",
+          "count": 1,
+          "family": "capability",
+          "id": "principles",
+          "label": "principles",
+          "trust": "principles of truth, goals and checking"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "repo",
+          "label": "checkout",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "run_a",
+          "label": "method A",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "run_b",
+          "label": "method B",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "family": "agent",
+          "id": "session",
+          "label": "acts for you",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 4,
+          "family": "agent",
+          "id": "sessions",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "work",
+          "count": 1,
+          "family": "work",
+          "id": "specs",
+          "label": "spec",
+          "trust": "specs before sessions"
+        },
+        {
+          "block": "agent",
+          "count": 3,
+          "family": "agent",
+          "id": "subagents",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 8,
+          "family": "agent",
+          "id": "swarm",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 12,
+          "family": "agent",
+          "id": "teams",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "tool",
+          "count": 1,
+          "family": "capability",
+          "id": "tests",
+          "label": "test suite",
+          "trust": "agents prove their work with tests"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "family": "place",
+          "id": "trees",
+          "label": "worktree",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 2,
+          "family": "agent",
+          "id": "triage",
+          "label": "agent",
+          "trust": null
+        },
+        {
+          "block": "agent",
+          "count": 4,
+          "family": "agent",
+          "id": "verifier",
+          "label": "reviewer agent",
+          "trust": "grows with the teams, four copies"
+        },
+        {
+          "block": "principal",
+          "count": 1,
+          "family": "principal",
+          "id": "you",
+          "label": "human",
+          "trust": null
+        }
+      ],
+      "removed_links": [],
+      "removed_parts": [],
+      "risk": null,
+      "simulation": {
+        "cost_usd": 7692,
+        "false_completions_shipped": 170.8,
+        "owner_wait_share": 0.025,
+        "tasks_correct": 438.8,
+        "tasks_done": 609.5
+      },
+      "stage": "S7",
+      "summary": "Rung 9 of the agentic ladder. A factory: the owner designs the system that builds the software. A factory orchestrator hands work to teams of agents, the verifier grows with them, budgets on the gateway bound what may be spent, KPIs measure what the factory delivers, and written principles say how truth is established, how goals are pursued and checked, and how evidence earns completion. The simulator models the teams as one worker kind of twelve copies that the orchestrator hands tasks to.",
+      "title": "A factory of teams",
+      "trust_added": [
+        "budgets",
+        "kpis",
+        "principles"
+      ],
+      "trust_parts": 16,
+      "view": {
+        "col0": 0,
+        "col1": 7,
+        "row0": 0,
+        "row1": 4
+      }
+    }
+  ],
+  "simulation": {
+    "horizon": "24h",
+    "profile": "../profiles/coding.yaml",
+    "seed": 1,
+    "seeds": 4,
+    "tasks_per_hour_per_worker": 1.5
+  },
+  "stages": [
+    {
+      "id": "S1",
+      "marker": "One agent session at a time. The human still finishes the grunt work the agent cannot; the gain is real but small, about 20 %.",
+      "name": "Paired",
+      "rungs": [
+        0,
+        1
+      ],
+      "trust_need": "The human reads every diff.",
+      "unit_of_work": "a diff"
+    },
+    {
+      "id": "S2",
+      "marker": "Many parallel sessions, agents and sub-agents. Grunt work is always delegated; the human decomposes, delegates and reviews.",
+      "name": "Orchestrator",
+      "rungs": [
+        2,
+        3
+      ],
+      "trust_need": "Specs before sessions, context files, and agents that prove their work with tests.",
+      "unit_of_work": "a task"
+    },
+    {
+      "id": "S3",
+      "marker": "At least one process almost always runs after the working day ends, and unattended runs last hours.",
+      "name": "Always-on",
+      "rungs": [
+        4
+      ],
+      "trust_need": "A harness: sandboxes, permissions and automated checks trusted while you are asleep.",
+      "unit_of_work": "a night"
+    },
+    {
+      "id": "S4",
+      "marker": "The same work runs twice from the same starting state, varied in method, and the two runs are compared automatically.",
+      "name": "Experimenter",
+      "rungs": [
+        5
+      ],
+      "trust_need": "Reproducible starting states, evals and objective comparison metrics.",
+      "unit_of_work": "a method"
+    },
+    {
+      "id": "S5",
+      "marker": "Whole components and systems are written and rewritten routinely, with parity guaranteed. Language round-trips have been done.",
+      "name": "Wholesale writer and rewriter",
+      "rungs": [
+        6
+      ],
+      "trust_need": "Explicit contracts, and self-validation strong enough to prove parity across a whole component.",
+      "unit_of_work": "a component"
+    },
+    {
+      "id": "S6",
+      "marker": "Requirements and live defect data go in; a triaged fix candidate comes out within minutes.",
+      "name": "Live loop",
+      "rungs": [
+        7
+      ],
+      "trust_need": "Governed autonomy: authority boundaries, a triage policy, evidence and earned completion.",
+      "unit_of_work": "a defect stream"
+    },
+    {
+      "id": "S7",
+      "marker": "Builds the frameworks and tools that change how other people work.",
+      "name": "Factory builder",
+      "rungs": [
+        8
+      ],
+      "trust_need": "Principles: how truth is established, how goals are pursued and checked, how evidence earns completion.",
+      "unit_of_work": "other people's ladders"
+    }
+  ],
+  "summary": "Seven stages of agentic engineering, measured by throughput: how much work runs through one person, as opposed to the work that person does by hand. Between some stages sits a barrier, a change of mental model rather than of tooling, where people stall.",
+  "title": "The agentic ladder"
+}

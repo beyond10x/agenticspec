@@ -1,0 +1,1510 @@
+format: agenticspec-kpis/1
+kpis:
+  - id: owner_wait_share
+    block: principal
+    kind: quality
+    unit: share
+    summary: Share of agent time spent waiting on the human owner.
+    how: Seconds from a main agent's turn end to the owner's next prompt (waits over one hour counted apart as away), divided by working plus waiting seconds. The simulator divides owner wait by instance time.
+    direction: lower
+    modes: { autonomous: lower, pairing: ignore, review: ignore }
+    gate: false
+    reads: [agenticspec.session.TurnEnded, agenticspec.session.PromptSubmitted]
+    status: both
+    source: docs/kpis.md
+
+  - id: human_prompt_share
+    block: principal
+    kind: quality
+    unit: share
+    summary: Share of prompts to main agents written by a human.
+    how: PromptSubmitted events with author Human, divided by all PromptSubmitted events of main agents. Compare the split by author (Human, Delegate, PeerSession, ParentAgent, Harness, Hook).
+    direction: lower
+    modes: { autonomous: lower, pairing: ignore, review: ignore }
+    gate: false
+    reads: [agenticspec.session.PromptSubmitted]
+    status: computed
+    source: docs/kpis.md
+
+  - id: work_without_human_principal
+    block: principal
+    kind: correctness
+    unit: count
+    summary: Tasks submitted whose principal chain names no human.
+    how: TaskCreated events whose principal does not resolve, through registered principals and delegations, to a human principal. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.work.TaskCreated, agentic.principal.PrincipalRegistered]
+    status: planned
+    source: research/2609.07919
+
+  - id: principal_answered_share
+    block: principal
+    kind: completeness
+    unit: share
+    summary: Share of questions a principal received that the principal answered.
+    how: Questions answered by the principal divided by questions the principal received, per principal part. Questions that took their default count as not answered.
+    direction: higher
+    modes: { autonomous: ignore, pairing: higher, review: higher }
+    gate: false
+    reads: [agentic.question.QuestionAsked, agentic.question.QuestionAnswered]
+    status: simulated
+    source: design
+
+  - id: delegation_chain_broken
+    block: delegation
+    kind: correctness
+    unit: count
+    summary: Delegated actions whose chain does not end at a human.
+    how: DelegatedActionTaken events whose chain of DelegationGranted and DelegationPassedOn does not reach a human principal. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.delegation.DelegatedActionTaken, agentic.delegation.DelegationGranted, agentic.delegation.DelegationPassedOn]
+    status: planned
+    source: design
+
+  - id: action_after_revocation
+    block: delegation
+    kind: correctness
+    unit: count
+    summary: Delegated actions taken after the delegation was revoked or expired.
+    how: DelegatedActionTaken events timestamped after a DelegationRevoked or DelegationExpiredRecorded of the same delegation. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.delegation.DelegatedActionTaken, agentic.delegation.DelegationRevoked, agentic.delegation.DelegationExpiredRecorded]
+    status: planned
+    source: design
+
+  - id: delegate_forward_share
+    block: delegation
+    kind: quality
+    unit: share
+    summary: Share of questions a delegate received that it forwarded to the owner.
+    how: Questions forwarded divided by questions received, per delegate part. A delegate that forwards everything saves the owner nothing.
+    direction: lower
+    modes: { autonomous: lower, pairing: ignore, review: ignore }
+    gate: false
+    reads: [agentic.question.QuestionAsked, agentic.delegation.DelegatedActionTaken]
+    status: simulated
+    source: design
+
+  - id: operator_decided_owner_questions
+    block: delegation
+    kind: quality
+    unit: count
+    summary: Questions meant for the owner that the delegate decided itself.
+    how: Count of questions addressed to an owner part that were answered by a delegate acting for that owner. A count is a measure, not a fault, so it is not a gate.
+    direction: lower
+    gate: false
+    reads: [agentic.question.QuestionAnswered, agentic.delegation.DelegatedActionTaken]
+    status: simulated
+    source: design
+
+  - id: cost_usd
+    block: model
+    kind: quality
+    unit: usd
+    summary: Cost of the model messages at the list price of their model.
+    how: Per message, tokens by class (input, cache read, cache write, output) times the model's price, summed over ModelTurnRecorded events. The simulator sums priced tokens per inference.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded, agentic.model.InferenceFinished]
+    status: both
+    source: docs/kpis.md
+
+  - id: cost_per_task_usd
+    block: model
+    kind: quality
+    unit: usd
+    summary: Cost of the model messages divided by tasks done.
+    how: cost_usd of a window divided by TaskCompleted events of the same window. Tasks not done still cost, so a failing system shows a higher value.
+    direction: lower
+    gate: false
+    reads: [agentic.model.InferenceFinished, agentic.work.TaskCompleted]
+    status: simulated
+    source: design
+
+  - id: cache_hit_share
+    block: model
+    kind: quality
+    unit: share
+    summary: Share of input tokens served from the prompt cache.
+    how: Cache read tokens divided by cache read plus cache write plus uncached input tokens, summed over ModelTurnRecorded events (reported as hit_permille).
+    direction: higher
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded]
+    status: computed
+    source: docs/kpis.md
+
+  - id: cache_bust_count
+    block: model
+    kind: quality
+    unit: count
+    summary: Model turns that wrote most of the context to the cache again.
+    how: Turns that read under half of the previous turn's context from the cache and wrote over half again, contexts over 20,000 tokens only, by cause (compacted, model_changed, ttl_expired, unexplained).
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded, agenticspec.session.ContextCompacted]
+    status: computed
+    source: docs/kpis.md
+
+  - id: priced_message_share
+    block: model
+    kind: completeness
+    unit: share
+    summary: Share of model messages whose model has a known price.
+    how: ModelTurnRecorded events with a priced model divided by all of them. The rest are the unpriced messages left out of the cost, so a cost figure over a low share is incomplete.
+    direction: higher
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded]
+    status: computed
+    source: docs/kpis.md
+
+  - id: rate_limited_seconds
+    block: gateway
+    kind: quality
+    unit: seconds
+    summary: Time requests waited because an upstream was saturated.
+    how: Sum over upstreams of the seconds between UpstreamSaturated and the next UpstreamRestored, weighted by the calls held back in that interval.
+    direction: lower
+    gate: false
+    reads: [agentic.gateway.UpstreamSaturated, agentic.gateway.UpstreamRestored]
+    status: simulated
+    source: design
+
+  - id: call_record_share
+    block: gateway
+    kind: completeness
+    unit: share
+    summary: Share of model calls that have a gateway record.
+    how: Inferences started that have a CallDecided and a CallCompleted of the gateway, divided by inferences started. The gateway is the one place calls pass, so it must be 1.
+    direction: higher
+    gate: true
+    reads: [agentic.model.InferenceStarted, agentic.gateway.CallDecided, agentic.gateway.CallCompleted]
+    status: planned
+    source: design
+
+  - id: call_denied_share
+    block: gateway
+    kind: quality
+    unit: share
+    summary: Share of model calls the gateway refused at admission.
+    how: CallDecided events with a refusal divided by all CallDecided events, by reason (budget, route, rate).
+    direction: lower
+    gate: false
+    reads: [agentic.gateway.CallDecided]
+    status: planned
+    source: design
+
+  - id: tool_error_rate
+    block: tool
+    kind: quality
+    unit: share
+    summary: Share of tool calls that ended in an error.
+    how: ToolCallCompleted events with an error divided by all ToolCallCompleted events, per tool and per category.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ToolCallCompleted]
+    status: planned
+    source: design
+
+  - id: tool_duration_p90_seconds
+    block: tool
+    kind: quality
+    unit: seconds
+    summary: 90th percentile of the time a tool call took.
+    how: Seconds between ToolCallRequested and ToolCallCompleted of the same call, 90th percentile per tool.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ToolCallRequested, agenticspec.session.ToolCallCompleted]
+    status: planned
+    source: design
+
+  - id: error_recovery_share
+    block: tool
+    kind: quality
+    unit: share
+    summary: Share of tool errors after which the agent's next call succeeded.
+    how: Failed tool calls whose next call by the same agent, within 3 calls, succeeded, divided by failed tool calls. Compare errors that state the next step with errors that do not.
+    direction: higher
+    gate: false
+    reads: [agenticspec.session.ToolCallCompleted]
+    status: planned
+    source: research/2609.35381
+
+  - id: unpublished_tool_calls
+    block: tool
+    kind: correctness
+    unit: count
+    summary: Calls of a tool that is not published or was withdrawn.
+    how: ToolCallRequested events whose tool has no ToolPublished before it, or a ToolWithdrawn after the last ToolPublished. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agenticspec.session.ToolCallRequested, agentic.tool.ToolPublished, agentic.tool.ToolWithdrawn]
+    status: planned
+    source: design
+
+  - id: stale_entries_open
+    block: knowledge
+    kind: correctness
+    unit: count
+    summary: Knowledge entries that describe code that has changed since and were not revised.
+    how: Published entries with a cited path that received a PathWritten after the entry's last KnowledgePublished or KnowledgeRevised, and no revision since. A stale line is corrected, not deleted.
+    direction: lower
+    gate: false
+    reads: [agentic.knowledge.KnowledgePublished, agentic.knowledge.KnowledgeRevised, agentic.workspace.PathWritten]
+    status: planned
+    source: research/2611.09802
+
+  - id: precedence_followed_share
+    block: knowledge
+    kind: quality
+    unit: share
+    summary: Share of conflicts between a written rule and the code in which the agent followed the rule.
+    how: In probe tasks where an instruction and the code disagree, runs that followed the instruction divided by probe runs. Run per model, because wording is tested per model.
+    direction: higher
+    gate: false
+    reads: [agentic.knowledge.KnowledgePublished, agentic.knowledge.KnowledgeRevised]
+    status: planned
+    source: research/2610.30571
+
+  - id: docs_changed_with_code_share
+    block: knowledge
+    kind: completeness
+    unit: share
+    summary: Share of merged code changes that also change the documentation they affect.
+    how: ProposalMerged events whose proposal writes source paths and also writes a documentation path or revises an entry, divided by merged proposals that write source paths.
+    direction: higher
+    gate: false
+    reads: [agentic.workspace.ProposalMerged, agentic.workspace.PathWritten, agentic.knowledge.KnowledgeRevised]
+    status: planned
+    source: research/2610.27381
+
+  - id: sub_agents_started
+    block: agent
+    kind: quality
+    unit: count
+    summary: Sub-agents started in a window.
+    how: AgentStarted events with a parent agent, per session. Concurrency helps only on the largest tasks, so compare per task size.
+    direction: lower
+    modes: { autonomous: ignore, pairing: lower, review: lower }
+    gate: false
+    reads: [agenticspec.session.AgentStarted]
+    status: computed
+    source: docs/kpis.md
+
+  - id: agent_tree_depth
+    block: agent
+    kind: quality
+    unit: count
+    summary: Deepest chain of parent and sub-agent in a session.
+    how: Longest path of parent_agent_id links over AgentStarted events of one session.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.AgentStarted]
+    status: planned
+    source: design
+
+  - id: subagent_cost_share
+    block: agent
+    kind: quality
+    unit: share
+    summary: Share of the cost spent by sub-agents.
+    how: cost_usd of model turns with scope sub divided by cost_usd of all model turns. The report already splits models by scope main and sub.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded, agenticspec.session.AgentStarted]
+    status: computed
+    source: docs/kpis.md
+
+  - id: unpinned_agent_runs
+    block: agent
+    kind: correctness
+    unit: count
+    summary: Runs that started without an immutable agent revision.
+    how: RunStarted events whose assignment has no AgentRevisionUsed of a published revision. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.work.RunStarted, agentic.agent.AgentRevisionUsed, agentic.agent.AgentRevisionPublished]
+    status: planned
+    source: design
+
+  - id: context_size_p90_tokens
+    block: harness
+    kind: quality
+    unit: tokens
+    summary: 90th percentile of the context size at a model turn.
+    how: Input plus cache read plus cache write tokens of each ModelTurnRecorded, 90th percentile per model and scope (the median and the largest are reported too).
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded]
+    status: computed
+    source: docs/kpis.md
+
+  - id: turns
+    block: harness
+    kind: quality
+    unit: count
+    summary: Model turns taken.
+    how: Count of ModelTurnRecorded events in the window. Divide by tasks done for turns per task.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded, agentic.harness.TurnRecorded]
+    status: simulated
+    source: design
+
+  - id: compactions_per_run
+    block: harness
+    kind: quality
+    unit: count
+    summary: Context compactions per run.
+    how: ContextCompacted events divided by sessions. Each compaction discards most of the context.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ContextCompacted, agenticspec.session.SessionOpened]
+    status: planned
+    source: research/2609.40303
+
+  - id: limit_overruns
+    block: harness
+    kind: correctness
+    unit: count
+    summary: Runs that went past a turn, time or cost limit of their assignment.
+    how: Sessions whose count of TurnRecorded events, wall seconds or spend exceeds the limit named in the assignment. A limit held only in the prompt does not count as enforced. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.harness.TurnRecorded, agentic.harness.SessionEnded]
+    status: planned
+    source: research/2610.09995
+
+  - id: approvals_in_summaries
+    block: harness
+    kind: correctness
+    unit: count
+    summary: Tool calls executed on an approval that exists only in a compaction summary.
+    how: ToolCallDecided accepts whose only trace of approval is text inside a ContextCompacted summary, with no recorded decision of a decider. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agenticspec.session.ContextCompacted, agenticspec.session.ToolCallDecided]
+    status: planned
+    source: research/2610.29869
+
+  - id: tasks_done
+    block: work
+    kind: quality
+    unit: count
+    summary: Tasks that ended done.
+    how: TaskCompleted events in the window.
+    direction: higher
+    gate: false
+    reads: [agentic.work.TaskCompleted]
+    status: simulated
+    source: design
+
+  - id: task_completion
+    block: work
+    kind: completeness
+    unit: share
+    summary: Tasks done of tasks assigned.
+    how: TaskCompleted events divided by TaskCreated events of the window. Tasks still open count in the divisor.
+    direction: higher
+    gate: false
+    reads: [agentic.work.TaskCreated, agentic.work.TaskCompleted]
+    status: simulated
+    source: design
+
+  - id: tasks_claimed_done
+    block: work
+    kind: quality
+    unit: count
+    summary: Tasks an agent reported as done.
+    how: Tasks with a DeliverableSubmitted whose run ended with a claim of completion, whether or not the deliverable is correct.
+    direction: higher
+    gate: false
+    reads: [agentic.work.DeliverableSubmitted, agentic.work.RunEnded]
+    status: simulated
+    source: design
+
+  - id: tasks_correct
+    block: work
+    kind: completeness
+    unit: count
+    summary: Tasks whose deliverable is correct against an independent oracle.
+    how: Tasks whose deliverable passes the oracle, counted by the oracle and not by the agent's claim. Compare with tasks_claimed_done.
+    direction: higher
+    gate: false
+    reads: [agentic.work.DeliverableAccepted, agentic.work.TaskCompleted]
+    status: simulated
+    source: research/2610.04375
+
+  - id: false_completions_shipped
+    block: work
+    kind: correctness
+    unit: count
+    summary: Tasks reported done, incorrect, and accepted.
+    how: Tasks claimed done minus tasks correct, restricted to deliverables that were accepted and merged. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.work.DeliverableSubmitted, agentic.work.DeliverableAccepted, agentic.work.TaskCompleted]
+    status: simulated
+    source: research/2610.04375
+
+  - id: rework_turns
+    block: work
+    kind: quality
+    unit: count
+    summary: Turns spent redoing a deliverable that was rejected or failed a check.
+    how: ModelTurnRecorded events of a run after its DeliverableRejected or after a failed check, up to the next DeliverableSubmitted.
+    direction: lower
+    gate: false
+    reads: [agentic.work.DeliverableRejected, agentic.work.DeliverableSubmitted, agentic.harness.TurnRecorded]
+    status: simulated
+    source: research/2610.07832
+
+  - id: review_calls
+    block: work
+    kind: quality
+    unit: count
+    summary: Reviewer calls made on deliverables.
+    how: Calls of a reviewer agent or reviewer model between DeliverableSubmitted and its acceptance or rejection. A cost of verification, weighed against false completions shipped.
+    direction: lower
+    modes: { autonomous: lower, pairing: ignore, review: ignore }
+    gate: false
+    reads: [agentic.work.DeliverableSubmitted, agentic.work.DeliverableAccepted, agentic.work.DeliverableRejected]
+    status: simulated
+    source: research/2609.20812
+
+  - id: backlog_wait_p90_seconds
+    block: work
+    kind: quality
+    unit: seconds
+    summary: 90th percentile of the time a task waits in the backlog of its worker before starting.
+    how: Seconds between TaskCreated and the first RunStarted of the task, 90th percentile.
+    direction: lower
+    gate: false
+    reads: [agentic.work.TaskCreated, agentic.work.RunStarted]
+    status: simulated
+    source: design
+
+  - id: task_to_merge_seconds
+    block: work
+    kind: quality
+    unit: seconds
+    summary: Time from task start to merge of its change.
+    how: Seconds between TaskCreated and the ProposalMerged of the task's deliverable, median and 90th percentile.
+    direction: lower
+    gate: false
+    reads: [agentic.work.TaskCreated, agentic.workspace.ProposalMerged]
+    status: planned
+    source: design
+
+  - id: forbidden_path_writes
+    block: work
+    kind: correctness
+    unit: count
+    summary: Writes to a path the assignment forbids.
+    how: PathWritten events by a run on a path in the forbidden list of its assignment. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.work.AssignmentActivated, agentic.workspace.PathWritten]
+    status: planned
+    source: research/2610.07261
+
+  - id: process_steps_done_share
+    block: process
+    kind: completeness
+    unit: share
+    summary: Share of the steps of a task's process that have a recorded result.
+    how: For tasks that name a process, steps with a recorded result divided by steps of the published process. The process is referenced by identifier and evaluated elsewhere.
+    direction: higher
+    gate: false
+    reads: [agentic.process.ProcessPublished, agentic.work.TaskCompleted]
+    status: planned
+    source: design
+
+  - id: task_under_withdrawn_process
+    block: process
+    kind: correctness
+    unit: count
+    summary: Tasks created under a process that was withdrawn.
+    how: TaskCreated events naming a process with a ProcessWithdrawn earlier. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.process.ProcessWithdrawn, agentic.work.TaskCreated]
+    status: planned
+    source: design
+
+  - id: human_decided_share
+    block: authority
+    kind: quality
+    unit: share
+    summary: Share of tool-call decisions made by a human.
+    how: ToolCallDecided events with decider Human divided by all ToolCallDecided events of main agents. The report splits by decider (PermissionMode, Classifier, Hook, Human, SafetyCheck, Rule).
+    direction: lower
+    modes: { autonomous: lower, pairing: ignore, review: ignore }
+    gate: false
+    reads: [agenticspec.session.ToolCallDecided]
+    status: computed
+    source: docs/kpis.md
+
+  - id: decider_recorded_share
+    block: authority
+    kind: completeness
+    unit: share
+    summary: Share of tool-call decisions whose decider is recorded.
+    how: ToolCallDecided events with a decider other than NotRecorded divided by all ToolCallDecided events. A low share makes every figure over deciders incomplete.
+    direction: higher
+    gate: false
+    reads: [agenticspec.session.ToolCallDecided]
+    status: computed
+    source: docs/kpis.md
+
+  - id: refusals_per_1000_tool_calls
+    block: authority
+    kind: quality
+    unit: ratio
+    summary: Refused tool calls per 1,000 tool calls.
+    how: ToolCallDecided events with decision Refuse, times 1,000, divided by ToolCallRequested events.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ToolCallDecided, agenticspec.session.ToolCallRequested]
+    status: planned
+    source: design
+
+  - id: approvals_by_session
+    block: authority
+    kind: correctness
+    unit: count
+    summary: Approvals whose submitter and decider are not recorded apart, or that a session submitted under a person's account.
+    how: ApprovalGranted events whose approver is a session acting under a person's account without a delegation, or whose submitter equals the decider. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.authority.ApprovalGranted, agentic.authority.DecisionRecorded]
+    status: planned
+    source: research/2610.28683
+
+  - id: spend_after_exhaustion
+    block: authority
+    kind: correctness
+    unit: count
+    summary: Spend recorded after its budget was exhausted.
+    how: SpendRecorded events of a budget after its BudgetExhausted. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.authority.SpendRecorded, agentic.authority.BudgetExhausted]
+    status: planned
+    source: design
+
+  - id: actions_without_grant
+    block: authority
+    kind: correctness
+    unit: count
+    summary: Tool calls accepted with no grant that covers them.
+    how: ToolCallDecided accepts with no GrantIssued covering the tool and agent, or after the grant's GrantRevoked. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agenticspec.session.ToolCallDecided, agentic.authority.GrantIssued, agentic.authority.GrantRevoked]
+    status: planned
+    source: design
+
+  - id: approval_drift_points
+    block: authority
+    kind: quality
+    unit: points
+    summary: Rise of the human approval share over a review sequence.
+    how: Approval share (ApprovalGranted over granted plus rejected) in the last third of a reviewer's sequence minus the first third, in percentage points.
+    direction: lower
+    modes: { autonomous: ignore, pairing: ignore, review: lower }
+    gate: false
+    reads: [agentic.authority.ApprovalGranted, agentic.authority.ApprovalRejected]
+    status: planned
+    source: research/2609.06213
+
+  - id: messages
+    block: channel
+    kind: quality
+    unit: count
+    summary: Messages sent over a channel.
+    how: MessageSent events per channel part. Divide by tasks done for messages per task.
+    direction: lower
+    gate: false
+    reads: [agentic.channel.MessageSent]
+    status: simulated
+    source: design
+
+  - id: request_actioned_share
+    block: channel
+    kind: completeness
+    unit: share
+    summary: Share of requests that got an action within the window.
+    how: Messages typed as request with an action by the receiver within 4 hours of MessageDelivered, divided by requests sent. Needs the request and inform typing of a message.
+    direction: higher
+    gate: false
+    reads: [agentic.channel.MessageSent, agentic.channel.MessageDelivered, agentic.channel.MessageRead]
+    status: planned
+    source: research/2611.00689
+
+  - id: inform_unactioned_share
+    block: channel
+    kind: quality
+    unit: share
+    summary: Share of informs that got no action within the window.
+    how: Messages typed as inform with no action by the receiver within 4 hours of MessageDelivered, divided by informs sent. Wake rules on intake lower it.
+    direction: lower
+    gate: false
+    reads: [agentic.channel.MessageSent, agentic.channel.MessageDelivered, agentic.channel.MessageRead]
+    status: planned
+    source: research/2611.00689
+
+  - id: messages_lost
+    block: channel
+    kind: correctness
+    unit: count
+    summary: Messages that were lost.
+    how: MessageLost events. Not a gate, because a lossy network channel is a legitimate part of an architecture and a fault experiment injects loss on purpose.
+    direction: lower
+    gate: false
+    reads: [agentic.channel.MessageLost]
+    status: planned
+    source: design
+
+  - id: coordination_failure_share
+    block: channel
+    kind: quality
+    unit: share
+    summary: Share of multi-agent runs in which two agents changed the same path with no notice between them.
+    how: Runs with two agents' PathWritten on one path and no MessageSent naming that scope between the writes, divided by multi-agent runs. A vague warning counts as no notice.
+    direction: lower
+    gate: false
+    reads: [agentic.channel.MessageSent, agentic.workspace.PathWritten]
+    status: planned
+    source: research/2610.07261
+
+  - id: questions_asked
+    block: question
+    kind: quality
+    unit: count
+    summary: Questions agents asked.
+    how: QuestionAsked events in the window.
+    direction: lower
+    modes: { autonomous: lower, pairing: ignore, review: ignore }
+    gate: false
+    reads: [agentic.question.QuestionAsked]
+    status: simulated
+    source: design
+
+  - id: questions_defaulted
+    block: question
+    kind: quality
+    unit: count
+    summary: Questions that took their default at the deadline.
+    how: DefaultTaken events in the window. Read with default_taken_wrongly. A default that proceeds is the rule, a wrong one is the fault.
+    direction: lower
+    gate: false
+    reads: [agentic.question.DefaultTaken]
+    status: simulated
+    source: design
+
+  - id: default_taken_wrongly
+    block: question
+    kind: correctness
+    unit: count
+    summary: Questions that took their default and the default was later overruled.
+    how: DefaultTaken events whose subject is later decided differently by the principal (a later QuestionAnswered with another option) or whose deliverable was rejected. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.question.DefaultTaken, agentic.question.QuestionAnswered, agentic.work.DeliverableRejected]
+    status: planned
+    source: design
+
+  - id: question_open_past_deadline
+    block: question
+    kind: correctness
+    unit: count
+    summary: Questions still open after their deadline.
+    how: QuestionAsked events with a deadline in the past and none of QuestionAnswered, DefaultTaken, QuestionWithdrawn. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.question.QuestionAsked, agentic.question.QuestionAnswered, agentic.question.DefaultTaken, agentic.question.QuestionWithdrawn]
+    status: planned
+    source: design
+
+  - id: question_round_trip_p90_seconds
+    block: question
+    kind: quality
+    unit: seconds
+    summary: 90th percentile of the time from a question to its answer.
+    how: Seconds between QuestionAsked and QuestionAnswered of the same question, 90th percentile. Questions that took their default are left out.
+    direction: lower
+    gate: false
+    reads: [agentic.question.QuestionAsked, agentic.question.QuestionAnswered]
+    status: planned
+    source: research/2611.00689
+
+  - id: lease_wait_seconds
+    block: workspace
+    kind: quality
+    unit: seconds
+    summary: Time a run waited for a workspace lease.
+    how: Seconds between LeaseRequested and LeaseGranted, median and 90th percentile.
+    direction: lower
+    gate: false
+    reads: [agentic.workspace.LeaseRequested, agentic.workspace.LeaseGranted]
+    status: planned
+    source: design
+
+  - id: proposals_merged_share
+    block: workspace
+    kind: completeness
+    unit: share
+    summary: Proposals merged of proposals made.
+    how: ProposalMerged events divided by ChangeProposed events. Superseded and rejected proposals stay in the divisor.
+    direction: higher
+    gate: false
+    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged, agentic.workspace.ProposalRejected, agentic.workspace.ProposalSuperseded]
+    status: planned
+    source: design
+
+  - id: writes_without_lease
+    block: workspace
+    kind: correctness
+    unit: count
+    summary: Writes to a workspace by a holder with no live lease.
+    how: PathWritten events whose agent holds no LeaseGranted that is unreleased and unexpired at that moment. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.workspace.PathWritten, agentic.workspace.LeaseGranted, agentic.workspace.LeaseReleased, agentic.workspace.LeaseExpired]
+    status: planned
+    source: research/2609.00252
+
+  - id: revert_rate
+    block: workspace
+    kind: correctness
+    unit: share
+    summary: Share of merged proposals that a later proposal reverts.
+    how: ProposalMerged events whose changes are undone by a later merged proposal, divided by ProposalMerged events, per author kind (agent, human). A rate, so not a gate.
+    direction: lower
+    gate: false
+    reads: [agentic.workspace.ProposalMerged, agentic.workspace.ChangeProposed]
+    status: planned
+    source: research/2609.17598
+
+  - id: open_to_merge_seconds
+    block: workspace
+    kind: quality
+    unit: seconds
+    summary: Time from a proposal to its merge.
+    how: Seconds between ChangeProposed and ProposalMerged of one proposal, median and 90th percentile.
+    direction: lower
+    gate: false
+    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged]
+    status: planned
+    source: research/2610.28683
+
+  - id: secrets_left_session
+    block: sandbox
+    kind: correctness
+    unit: count
+    summary: Confirmed secrets in the arguments of a tool call whose effect leaves the sandbox.
+    how: ExposureDetected events with class Secret, channel ToolInput and verdict Gap, on a tool of category Network, Message or Execute. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agenticspec.session.ExposureDetected]
+    status: computed
+    source: docs/kpis.md
+
+  - id: secrets_in_prompts
+    block: sandbox
+    kind: correctness
+    unit: count
+    summary: Confirmed secrets in a prompt.
+    how: ExposureDetected events with class Secret, channel Prompt and verdict Gap. Not a gate, because the owner pasting a value is not an agent leaking one; it still reaches the model provider.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ExposureDetected]
+    status: computed
+    source: docs/kpis.md
+
+  - id: secrets_in_tool_output
+    block: sandbox
+    kind: correctness
+    unit: count
+    summary: Confirmed secrets in the result of a tool call.
+    how: ExposureDetected events with class Secret, channel ToolOutput and verdict Gap. Not a gate, because the value entered the context but did not leave. Unconfirmed matches (verdict Unk) are listed apart for review.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ExposureDetected]
+    status: computed
+    source: docs/kpis.md
+
+  - id: egress_denied_attempts
+    block: sandbox
+    kind: quality
+    unit: count
+    summary: Tool calls refused because they reach outside the sandbox.
+    how: ToolCallDecided refusals on tools of category Network or Message, or Execute with an outward effect, per sandbox.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ToolCallDecided, agenticspec.session.ToolCallRequested]
+    status: planned
+    source: design
+
+  - id: attacks_through_exec_scope
+    block: sandbox
+    kind: correctness
+    unit: count
+    summary: Attack cases that got through the exec scope in an attack suite.
+    how: In a fixed suite of attack cases, ToolCallCompleted of a call that the exec scope should have stopped. Must be 0. Report tasks done under the scope beside it, because a scope that blocks work is no answer.
+    direction: lower
+    gate: true
+    reads: [agenticspec.session.ToolCallRequested, agenticspec.session.ToolCallCompleted]
+    status: planned
+    source: research/2609.08371
+
+  - id: instance_failed_share
+    block: runtime
+    kind: quality
+    unit: share
+    summary: Share of started instances that failed.
+    how: InstanceFailed events divided by InstanceStarted events, per workload.
+    direction: lower
+    gate: false
+    reads: [agentic.runtime.InstanceStarted, agentic.runtime.InstanceFailed]
+    status: planned
+    source: design
+
+  - id: instance_start_p90_seconds
+    block: runtime
+    kind: quality
+    unit: seconds
+    summary: 90th percentile of the time from start to running.
+    how: Seconds between InstanceStarted and InstanceRunning of one instance, 90th percentile per workload.
+    direction: lower
+    gate: false
+    reads: [agentic.runtime.InstanceStarted, agentic.runtime.InstanceRunning]
+    status: planned
+    source: design
+
+  - id: worker_busy_share
+    block: runtime
+    kind: quality
+    unit: share
+    summary: Share of instance time spent doing work.
+    how: Busy seconds of instances divided by instance seconds between InstanceRunning and exit. Low means idle workers, whatever the cause.
+    direction: higher
+    gate: false
+    reads: [agentic.runtime.InstanceRunning, agentic.runtime.InstanceExited, agentic.runtime.InstanceStopped]
+    status: simulated
+    source: design
+
+  - id: queue_wait_p50_seconds
+    block: resource
+    kind: quality
+    unit: seconds
+    summary: Median time a claim waited in the queue.
+    how: Seconds between ClaimQueued and ClaimGranted, median over a pool.
+    direction: lower
+    gate: false
+    reads: [agentic.resource.ClaimQueued, agentic.resource.ClaimGranted]
+    status: simulated
+    source: design
+
+  - id: queue_wait_p90_seconds
+    block: resource
+    kind: quality
+    unit: seconds
+    summary: 90th percentile of the time a claim waited in the queue.
+    how: Seconds between ClaimQueued and ClaimGranted, 90th percentile over a pool.
+    direction: lower
+    gate: false
+    reads: [agentic.resource.ClaimQueued, agentic.resource.ClaimGranted]
+    status: simulated
+    source: design
+
+  - id: pool_utilization
+    block: resource
+    kind: quality
+    unit: share
+    summary: Share of pool slot-seconds that were held.
+    how: Slot-seconds between ClaimGranted and ClaimReleased, ClaimExpired or ClaimKilled, divided by slot-seconds the pool offered, capacity drops included.
+    direction: higher
+    gate: false
+    reads: [agentic.resource.ClaimGranted, agentic.resource.ClaimReleased, agentic.resource.ClaimExpired, agentic.resource.ClaimKilled]
+    status: simulated
+    source: design
+
+  - id: jobs_killed
+    block: resource
+    kind: quality
+    unit: count
+    summary: Claims killed at their time limit.
+    how: ClaimKilled events in the window. Each is a job that ran past its limit.
+    direction: lower
+    gate: false
+    reads: [agentic.resource.ClaimKilled]
+    status: simulated
+    source: design
+
+  - id: slot_wait_share
+    block: resource
+    kind: quality
+    unit: share
+    summary: Share of agent time spent waiting for a pool slot.
+    how: Seconds agents wait between ClaimQueued and ClaimGranted, divided by instance seconds.
+    direction: lower
+    gate: false
+    reads: [agentic.resource.ClaimQueued, agentic.resource.ClaimGranted]
+    status: simulated
+    source: design
+
+  - id: unknown_link_parts
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Links whose from, to or over names no part.
+    how: Count of links in the architecture document that name a part that does not exist. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: per_without_part
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Parts whose per names no part.
+    how: Count of parts with a per that names a part that does not exist. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.architecture.PartPerSet, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: acts_for_without_part
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Parts whose acts_for names no part.
+    how: Count of parts with an acts_for that names a part that does not exist. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.architecture.AgentActsFor, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: egress_without_part
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Parts whose egress names no part.
+    how: Count of parts with an egress that names a part that does not exist. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: agent_without_model_path
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Agent parts that reach no model part over model_call links.
+    how: Agent parts with no path of model_call links to a model part. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: question_without_answerer
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Question links that end at a part that cannot answer.
+    how: Links carrying questions whose target is not a principal or an agent part. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: border_without_part
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Border entries that name no part.
+    how: Count of names in the border that are not parts. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.architecture.PartBordered, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: unreachable_parts
+    block: architecture
+    kind: correctness
+    unit: count
+    summary: Parts that no link, per, acts_for, egress or border reaches.
+    how: Parts with no incoming edge of any of those kinds. No link, no reach, so an unreachable part is dead weight or a missing link. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.architecture.PartAdded, agentic.architecture.LinkAdded, agentic.architecture.PartBordered]
+    status: simulated
+    source: design
+
+  - id: parts_secret_can_reach
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Parts a secret granted to some part can reach over links.
+    how: Parts reachable over links from any part that holds a secret grant. Fewer is a smaller blast radius.
+    direction: lower
+    gate: false
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: planned
+    source: design
+
+  - id: parts_with_link_share
+    block: architecture
+    kind: completeness
+    unit: share
+    summary: Share of parts that have at least one link.
+    how: Parts that are the from or to of a link divided by all parts of the revision.
+    direction: higher
+    gate: false
+    reads: [agentic.architecture.PartAdded, agentic.architecture.LinkAdded, agentic.architecture.RevisionCommitted]
+    status: planned
+    source: design
+
+  - id: kpi_without_direction
+    block: kpi
+    kind: correctness
+    unit: count
+    summary: Defined KPIs that lack a direction for some work mode.
+    how: KpiDefined events whose KPI has no DirectionSet for one of the created work modes. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.kpi.KpiDefined, agentic.kpi.DirectionSet, agentic.kpi.WorkModeCreated]
+    status: planned
+    source: design
+
+  - id: kpi_measured_share
+    block: kpi
+    kind: completeness
+    unit: share
+    summary: Share of defined, unretired KPIs with at least one measurement.
+    how: KPIs with a MeasurementRecorded divided by KPIs with a KpiDefined and no KpiRetired.
+    direction: higher
+    gate: false
+    reads: [agentic.kpi.KpiDefined, agentic.kpi.KpiRetired, agentic.kpi.MeasurementRecorded]
+    status: planned
+    source: design
+
+  - id: variants_feasible_share
+    block: experiment
+    kind: completeness
+    unit: share
+    summary: Share of recorded variants that pass every gate.
+    how: Variants whose gate KPIs are all 0 (or 1 for a complete share) divided by VariantRecorded events. A variant that fails a gate does not count in the ranking.
+    direction: higher
+    gate: false
+    reads: [agentic.experiment.VariantRecorded]
+    status: simulated
+    source: design
+
+  - id: harness_effect_points
+    block: experiment
+    kind: quality
+    unit: points
+    summary: Change in pass rate caused by a change of harness at a fixed model.
+    how: Pass rate of the variant with the changed harness minus pass rate of the baseline, in percentage points, over the same tasks and seeds.
+    direction: higher
+    gate: false
+    reads: [agentic.experiment.VariantRecorded]
+    status: planned
+    source: research/2610.35971
+
+  - id: ranking_reversal_share
+    block: experiment
+    kind: quality
+    unit: share
+    summary: Share of model comparisons whose ranking reverses under another harness.
+    how: Pairs of models ranked in opposite order under two harnesses divided by pairs compared. A high share means a model ranking holds for one harness only.
+    direction: lower
+    gate: false
+    reads: [agentic.experiment.VariantRecorded]
+    status: planned
+    source: research/2610.35348
+
+  - id: prediction_error
+    block: experiment
+    kind: quality
+    unit: ratio
+    summary: Distance between a simulated KPI and the same KPI measured on a real run.
+    how: Absolute difference between the simulated and the observed value of a KPI, divided by the observed value. A profile whose predictions miss is refitted.
+    direction: lower
+    gate: false
+    reads: [agentic.experiment.VariantRecorded, agentic.kpi.MeasurementRecorded]
+    status: planned
+    source: design
+
+  - id: expected_checks_ran_share
+    block: verification
+    kind: completeness
+    unit: share
+    summary: Share of expected checks that ran.
+    how: Checks with a result divided by checks expected for the deliverable. A check that did not run stays in the divisor, so a pass rate counts expected checks. Must be 1.
+    direction: higher
+    gate: true
+    reads: [agentic.work.DeliverableSubmitted, agentic.work.DeliverableAccepted]
+    status: planned
+    source: research/2610.08651
+
+  - id: coverage_vs_claim_share
+    block: verification
+    kind: completeness
+    unit: share
+    summary: Share of the files a deliverable claims to cover that the run touched.
+    how: Files touched by the run divided by files the completion report claims or the task requires. Runs that over-claim miss files.
+    direction: higher
+    gate: false
+    reads: [agentic.work.DeliverableSubmitted, agentic.workspace.PathWritten]
+    status: planned
+    source: research/2609.20812
+
+  - id: false_completion_claim_share
+    block: verification
+    kind: correctness
+    unit: share
+    summary: Share of failed runs that reported done.
+    how: Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. The shipped count is false_completions_shipped; this rate is not a gate.
+    direction: lower
+    gate: false
+    reads: [agentic.work.RunEnded, agentic.work.DeliverableSubmitted]
+    status: planned
+    source: research/2610.04375
+
+  - id: vacuous_check_share
+    block: verification
+    kind: correctness
+    unit: share
+    summary: Share of checks that pass on a change that touches nothing relevant.
+    how: Run each accepted check against a commit that does not touch what the check covers; checks that pass divided by checks run. A check needs a negative case.
+    direction: lower
+    gate: false
+    reads: [agentic.work.DeliverableAccepted]
+    status: planned
+    source: research/2611.13709
+
+  - id: critic_false_accept_share
+    block: verification
+    kind: correctness
+    unit: share
+    summary: Share of wrong deliverables a critic or reviewer accepted.
+    how: Verdicts that accept a deliverable the oracle fails, divided by deliverables the oracle fails. Report the false-reject share beside it, since a strict reviewer rejects correct work.
+    direction: lower
+    gate: false
+    reads: [agentic.work.DeliverableAccepted, agentic.work.DeliverableRejected]
+    status: planned
+    source: research/2611.02207
+
+  - id: judged_without_execution_share
+    block: verification
+    kind: quality
+    unit: share
+    summary: Share of accepted deliverables whose evidence is judgment alone, with no executed check.
+    how: Accepted deliverables with only verdicts and no check that ran, divided by accepted deliverables. Execution beats judgment.
+    direction: lower
+    gate: false
+    reads: [agentic.work.DeliverableAccepted]
+    status: planned
+    source: research/2610.15708
+
+  - id: oracle_not_independent
+    block: verification
+    kind: correctness
+    unit: count
+    summary: Deliverables whose only evidence is tests the same agent wrote.
+    how: Accepted deliverables whose every passing check was authored by the agent that produced the deliverable. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.work.DeliverableSubmitted, agentic.work.DeliverableAccepted]
+    status: planned
+    source: research/2611.07166
+
+  - id: invalid_receipts_accepted
+    block: verification
+    kind: correctness
+    unit: count
+    summary: Forged, stale or rebound receipts that were accepted.
+    how: Receipts accepted that were not signed outside the sandbox, are past their validity, or are bound to another deliverable. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.work.DeliverableAccepted]
+    status: planned
+    source: research/2611.06946
+
+  - id: memory_kept_unapproved
+    block: memory
+    kind: correctness
+    unit: count
+    summary: Memory entries kept without a principal's approval.
+    how: Entries in use that have no approval event of a principal after the agent's proposal. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.authority.ApprovalGranted]
+    status: planned
+    source: research/2610.08651
+
+  - id: memory_approved_share
+    block: memory
+    kind: quality
+    unit: share
+    summary: Share of proposed memory entries that a principal approved.
+    how: Entries approved divided by entries proposed. A very low share means the agent proposes noise; a share of 1 means nobody reads the proposals.
+    direction: higher
+    gate: false
+    reads: [agentic.authority.ApprovalGranted, agentic.authority.ApprovalRejected]
+    status: planned
+    source: research/2611.05094
+
+  - id: memory_misapplications
+    block: memory
+    kind: correctness
+    unit: count
+    summary: Runs in which a memory entry was applied where it does not hold.
+    how: Runs in which the agent acted on an entry whose scope does not cover the task, split by transfer from another task. A count of named failures, so not a gate.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ToolCallRequested]
+    status: planned
+    source: research/2610.27524
+
+  - id: unsuperseded_stale_entries
+    block: memory
+    kind: correctness
+    unit: count
+    summary: Entries that a newer entry contradicts and that are not marked superseded or stale.
+    how: Pairs of live entries with the same scope and a later one that contradicts the earlier, where the earlier carries no supersedes or stale mark.
+    direction: lower
+    gate: false
+    reads: []
+    status: planned
+    source: research/2610.36188
+
+  - id: plan_before_first_change_share
+    block: plan
+    kind: completeness
+    unit: share
+    summary: Share of runs with a plan that exists before the first source change.
+    how: Runs whose plan has a timestamp before the first PathWritten of the run, divided by runs. Not a gate, because a trivial task needs no plan.
+    direction: higher
+    gate: false
+    reads: [agentic.workspace.PathWritten, agentic.work.RunStarted]
+    status: planned
+    source: research/2610.35992
+
+  - id: planner_token_share
+    block: plan
+    kind: quality
+    unit: share
+    summary: Share of tokens the planner spends against the executor.
+    how: Output tokens of planner calls divided by output tokens of executor calls in the same run.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded]
+    status: planned
+    source: research/2610.29870
+
+  - id: plan_steps_done_share
+    block: plan
+    kind: completeness
+    unit: share
+    summary: Share of plan steps that have a recorded result.
+    how: Plan steps with a result at run end divided by steps in the last plan revision.
+    direction: higher
+    gate: false
+    reads: [agentic.work.RunEnded]
+    status: planned
+    source: design
+
+  - id: monitor_actions_over_bound
+    block: monitor
+    kind: correctness
+    unit: count
+    summary: Monitor interventions that went beyond the monitor's declared authority.
+    how: Interventions (redirect, pause, repair) of a kind or scope the monitor's authority does not name. An unbounded monitor repeatedly repaired legitimate work. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agenticspec.session.ToolCallDecided]
+    status: planned
+    source: research/2610.08651
+
+  - id: monitor_without_observable
+    block: monitor
+    kind: correctness
+    unit: count
+    summary: Monitors that state no observable or show no last run.
+    how: Monitors in use with no stated observed outcome or proxy, or with no recorded last run. Must be 0.
+    direction: lower
+    gate: true
+    reads: []
+    status: planned
+    source: research/2610.08651
+
+  - id: monitor_beneficial_share
+    block: monitor
+    kind: quality
+    unit: share
+    summary: Share of monitor interventions that helped.
+    how: Interventions after which the run's outcome improved against its paired run without the intervention, divided by interventions.
+    direction: higher
+    gate: false
+    reads: []
+    status: planned
+    source: research/2609.39957
+
+  - id: monitor_cost_overhead_share
+    block: monitor
+    kind: quality
+    unit: share
+    summary: Extra cost of a run with a monitor against the same run without one.
+    how: Cost of the monitored run minus cost of the baseline run, divided by the baseline cost.
+    direction: lower
+    gate: false
+    reads: [agenticspec.session.ModelTurnRecorded]
+    status: planned
+    source: research/2609.39957
+
+  - id: firing_skip_share
+    block: trigger
+    kind: quality
+    unit: share
+    summary: Share of firings skipped because a run of the trigger was still going.
+    how: FiringSkipped events divided by TriggerFired events per trigger. High means the trigger fires faster than its agent finishes, or its concurrency policy is too tight.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.TriggerFired, agentic.trigger.FiringSkipped]
+    status: simulated
+    source: design
+
+  - id: firing_start_wait_p90_seconds
+    block: trigger
+    kind: quality
+    unit: seconds
+    summary: Time from a firing to the start of its run, 90th percentile.
+    how: Per firing, FiringStarted minus TriggerFired, including the time a queued firing waits; p90 over the window.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.TriggerFired, agentic.trigger.FiringQueued, agentic.trigger.FiringStarted]
+    status: simulated
+    source: design
+
+  - id: firing_failure_share
+    block: trigger
+    kind: correctness
+    unit: share
+    summary: Share of started firings whose run failed.
+    how: FiringFailed events divided by FiringStarted events per trigger.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.FiringStarted, agentic.trigger.FiringFailed]
+    status: simulated
+    source: design
+
+  - id: firings_skipped
+    block: trigger
+    kind: quality
+    unit: count
+    summary: Firings skipped because the trigger's runs already filled its limit.
+    how: FiringSkipped events in the window. The simulator counts a firing under policy Skip at its limit.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.FiringSkipped]
+    status: simulated
+    source: design
+
+  - id: firings_queued
+    block: trigger
+    kind: quality
+    unit: count
+    summary: Firings that waited in the trigger's queue for a run to end before they started.
+    how: FiringQueued events in the window. The simulator counts a firing under policy Queue at its limit.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.FiringQueued]
+    status: simulated
+    source: design
+
+  - id: firings_empty
+    block: trigger
+    kind: quality
+    unit: count
+    summary: Runs a firing started that found nothing to take, looked once and ended.
+    how: FiringStarted events whose run took no post and no task before FiringEnded. The simulator counts a started firing with no item on its source; the run still costs one model call.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.FiringStarted, agentic.trigger.FiringEnded]
+    status: simulated
+    source: design
+
+  - id: duplicate_runs
+    block: trigger
+    kind: correctness
+    unit: count
+    summary: Tasks finished a second time from the same origin, so a second run did work already done.
+    how: Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate, like false_completions_shipped.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.FiringStarted, agentic.work.DeliverableAccepted]
+    status: simulated
+    source: design
+
+  - id: claim_conflicts
+    block: channel
+    kind: quality
+    unit: count
+    summary: Reads of a queue or board post by a second subscriber while the first one's claim was not yet visible.
+    how: Take attempts that lose to another subscriber's take of the same post (TakePost answered already-taken, which emits no event), counted against PostTaken. The simulator counts a reader whose read lands within claim_window_seconds of the first reader's.
+    direction: lower
+    gate: false
+    reads: [agentic.channel.Posted, agentic.channel.PostTaken]
+    status: simulated
+    source: design
+
+  - id: coordination_calls
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Model calls agents spend coordinating rather than working, reading a board or the messages of a mesh.
+    how: Model calls made for a board read or for reading mesh messages. The simulator counts one per board read and mesh_read_calls per message read.
+    direction: lower
+    gate: false
+    reads: [agentic.harness.TurnRecorded]
+    status: simulated
+    source: design
+
+  - id: coordination_messages
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Messages a copy of a mesh sends to the other started copies when it starts a task.
+    how: MessageSent events between copies of one mesh part. The simulator counts one per other started copy at each task start.
+    direction: lower
+    gate: false
+    reads: [agentic.channel.MessageSent]
+    status: simulated
+    source: design
+
+  - id: merge_conflicts
+    block: workspace
+    kind: quality
+    unit: count
+    summary: Merges that touched a scope another merge changed since the work started.
+    how: ProposalMerged events whose scope another merge touched after the proposal's work began. The simulator counts them per partitioned part; under a mesh the conflict costs a round of rework, without one the merge lands broken.
+    direction: lower
+    gate: false
+    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged]
+    status: simulated
+    source: design

@@ -1,0 +1,1388 @@
+domain: agentic.channel
+
+summary: >-
+  How parties exchange messages. A direct channel joins exactly two parties, each a principal or a
+  harness session, and carries messages from one to the other. A shared channel (a topic, a queue
+  or a board) has the parties that subscribe to it, and carries posts. A channel says how it
+  delivers: in order or not, and whether it may lose a message. Only a party sends, only while the
+  channel is open, and every message and post says whether it requests an action or informs, how
+  its sender is proven, and the delegation it is sent under when it is sent for another party. A
+  subscription may relay a principal's posts into a session and carries a heartbeat. The
+  message sequences over a channel are protocols of their own; this block is the contract they
+  run on.
+
+naming:
+  wire: channel
+  display: Channel
+
+types:
+  # A party is a principal or a harness session. ESS compares no union (`==` does not admit an
+  # aggregate, ESS-COMMAND-002), so a party is held as one comparable identifier and its kind:
+  # `PartyId` carries the PrincipalId or the HarnessSessionId value, as `PartyKind` says. Declared
+  # here because channel is the lowest block that names a party; question, workspace and resource
+  # use it too. Both belong in agentic.shared (see the report).
+  - name: agentic.channel.PartyId
+    kind: newtype
+    of: Uuid
+    naming:
+      summary: >-
+        One party: the value of an agentic.shared.PrincipalId or of an
+        agentic.shared.HarnessSessionId, as the party's kind says.
+
+  - name: agentic.channel.PartyKind
+    kind: enum
+    variants: [Principal, Session]
+
+  - name: agentic.channel.ChannelKind
+    kind: enum
+    variants: [Prompt, Operator, AgentMessage, AgentToAgent, Chat, Notification, Control]
+    naming:
+      summary: >-
+        Prompt is a human typing into a session; Operator a human's private channel to the agent
+        that acts for it; AgentMessage a message between agents on one host; AgentToAgent the same
+        over a network; Chat a chat adapter; Notification one-way news to a party; Control a page
+        or panel outside any session where a human acts by a button (send, pick, run, retry), each
+        act one Request message or post.
+
+  # The kinds Topic, Queue and Board (design/research-findings.md, `channel`) are held beside the
+  # medium, not in ChannelKind: a board between agents on one host is an AgentMessage channel
+  # distributed as a Board. One comparison (`distribution == Direct`) tells a direct channel from
+  # a shared one; three (`kind != Topic and kind != Queue and kind != Board`) left synthesis
+  # unable to arrange a shared channel (ESS-SYNTH-003, "2 bounded arrangements").
+  - name: agentic.channel.Distribution
+    kind: enum
+    variants: [Direct, Topic, Queue, Board]
+    naming:
+      summary: >-
+        Direct joins two fixed parties. Topic delivers each post to every subscriber; Queue gives
+        each post to the one subscriber that takes it; Board holds typed entries every subscriber
+        reads, each entry kind with a length limit.
+
+  - name: agentic.channel.Proof
+    kind: enum
+    variants: [None, ClientRecord, ProcessIdentity, Passkey]
+    naming:
+      summary: >-
+        How a message or post is shown to come from the party it names. None: nothing beyond the
+        channel. ClientRecord: the record carries marks only the party's own client writes (a user
+        and a client message id, and no application or bot id). ProcessIdentity: the sending
+        process was checked to be the party's session. Passkey: the party confirmed the act with
+        a passkey.
+        UNMAPPED: the four kinds come from one consumer's setup (consumer gap G1); other kinds
+        (a signature) may be needed.
+
+  - name: agentic.channel.Audience
+    kind: enum
+    variants: [Internal, External, Private, Unknown]
+    naming:
+      summary: >-
+        Who reads what is sent on a channel: only parties of the owner's organization, readers
+        outside it, one person alone, or not known.
+
+  # 2611.00689: 12-16% of informs got no action within 4 h, at most 3% of requests.
+  - name: agentic.channel.Act
+    kind: enum
+    variants: [Request, Inform]
+    naming:
+      summary: Request asks the recipient to act; Inform only tells it something.
+
+  # 2609.26781: a typed board (observed, fact, fail, claim, patch summary) with length limits
+  # serves a team without an orchestrator.
+  - name: agentic.channel.EntryKind
+    kind: enum
+    variants: [Observed, Fact, Fail, Claim, PatchSummary]
+
+  # UNMAPPED: 2609.26781 gives each entry kind a length limit; the numbers are in no code,
+  # contract or artifact of this repository. Taken: a board is opened with its limits, and no
+  # default is written here. Open question for the owner: the default limits.
+  - name: agentic.channel.EntryLimits
+    kind: struct
+    naming:
+      summary: The longest content, in the unit of agentic.shared.Content.length, each entry kind of a board admits.
+    fields:
+      - {name: observed, type: Integer}
+      - {name: fact, type: Integer}
+      - {name: fail, type: Integer}
+      - {name: claim, type: Integer}
+      - {name: patch_summary, type: Integer}
+    invariants:
+      - observed >= 1
+      - fact >= 1
+      - fail >= 1
+      - claim >= 1
+      - patch_summary >= 1
+
+entities:
+  - name: agentic.channel.Channel
+    naming:
+      summary: A channel between two parties, or a shared channel its subscribers read.
+    identity:
+      name: channel_id
+      type: agentic.shared.ChannelId
+    fields:
+      - name: kind
+        type: agentic.channel.ChannelKind
+      - name: distribution
+        type: agentic.channel.Distribution
+      - name: party_a
+        type: agentic.channel.PartyId
+        summary: The party that opened the channel.
+      - name: party_a_kind
+        type: agentic.channel.PartyKind
+      - name: party_b
+        type: Optional<agentic.channel.PartyId>
+        summary: The other party of a direct channel; absent on a shared channel.
+      - name: party_b_kind
+        type: Optional<agentic.channel.PartyKind>
+      - name: ordered
+        type: Boolean
+        summary: Messages arrive in the order they were sent.
+      - name: may_lose
+        type: Boolean
+        summary: A sent message may never arrive; it then ends Lost.
+      - name: entry_limits
+        type: Optional<agentic.channel.EntryLimits>
+        summary: The length limit of each entry kind; required on a board, and read on no other channel.
+      # An Operator channel is owned by one human and the delegate acting for that human.
+      # UNMAPPED: whether `owner` is a Human principal and whether `delegation_id` delegates from
+      # it to the other party are facts of agentic.principal and agentic.delegation (layer 1). The
+      # relations are declared; the guard that reads those facts (`when_related` into those
+      # domains) is not written yet. Until then the channel stores the two identifiers and
+      # refuses an Operator channel without them.
+      - name: owner
+        type: Optional<agentic.shared.PrincipalId>
+      - name: delegation_id
+        type: Optional<agentic.shared.DelegationId>
+      - name: audience
+        type: Optional<agentic.channel.Audience>
+        summary: Who reads what is sent on the channel; absent when nobody said.
+    relations:
+      - {name: owner, kind: references, target: agentic.principal.Principal, cardinality: one, via: owner}
+      - {name: delegation, kind: references, target: agentic.delegation.Delegation, cardinality: one, via: delegation_id}
+    lifecycle:
+      initial: Open
+      states: [Open, Closed]
+      terminal: [Closed]
+      transitions:
+        - name: close
+          from: [Open]
+          to: Closed
+
+  - name: agentic.channel.Message
+    naming:
+      summary: One message sent over a direct channel from one party to the other.
+    identity:
+      name: message_id
+      type: agentic.shared.MessageId
+    fields:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+      - name: from
+        type: agentic.channel.PartyId
+      - name: to
+        type: agentic.channel.PartyId
+      - name: act
+        type: agentic.channel.Act
+      - name: content
+        type: agentic.shared.Content
+      - name: in_reply_to
+        type: Optional<agentic.shared.MessageId>
+      - name: sent_at
+        type: Timestamp
+      - name: delivered_at
+        type: Optional<Timestamp>
+      - name: read_at
+        type: Optional<Timestamp>
+      - name: delegation_id
+        type: Optional<agentic.shared.DelegationId>
+        summary: >-
+          The delegation under which the sender sends for its delegator; the message then counts as
+          the delegator's, and absent it counts as the sender's own.
+      - name: proof
+        type: Optional<agentic.channel.Proof>
+      - name: sent_by_call
+        type: Optional<agentic.shared.ToolCallId>
+        summary: The tool call of the sending session that sent the message, so the two records join.
+    relations:
+      - name: channel
+        kind: references
+        target: agentic.channel.Channel
+        cardinality: one
+        via: channel_id
+      - name: reply_to
+        kind: references
+        target: agentic.channel.Message
+        cardinality: one
+        via: in_reply_to
+      - name: on_behalf
+        kind: references
+        target: agentic.delegation.Delegation
+        cardinality: one
+        via: delegation_id
+      - name: send_call
+        kind: references
+        target: agentic.harness.ToolCall
+        cardinality: one
+        via: sent_by_call
+    lifecycle:
+      initial: Sent
+      states: [Sent, Delivered, Read, Lost]
+      terminal: [Read, Lost]
+      transitions:
+        - name: deliver
+          from: [Sent]
+          to: Delivered
+        - name: read
+          from: [Delivered]
+          to: Read
+        - name: lose
+          from: [Sent]
+          to: Lost
+
+  # A party's standing interest in a shared channel. A trigger (agentic.trigger) wakes an agent
+  # when its subscription receives a matching post. A party may hold several subscriptions to one
+  # channel, each with its own filter (one per trigger that wakes it). Closing a shared channel
+  # ends every subscription to it.
+  # UNMAPPED: the brief says the filter is "message kind or scope text". Taken: three optional
+  # parts, all of which must match when present: the act, the board entry kind, and a scope text.
+  # How a scope text matches a post (equal, prefix, contained) is in no source; the matching runs
+  # where posts are delivered, not in this contract. Open question for the owner.
+  - name: agentic.channel.Subscription
+    naming:
+      summary: One party subscribed to one shared channel, with an optional filter.
+    identity:
+      name: subscription_id
+      type: agentic.shared.SubscriptionId
+    fields:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+      - name: party
+        type: agentic.channel.PartyId
+      - name: party_kind
+        type: agentic.channel.PartyKind
+      - name: filter_act
+        type: Optional<agentic.channel.Act>
+      - name: filter_entry
+        type: Optional<agentic.channel.EntryKind>
+      - name: filter_scope
+        type: Optional<String>
+      - name: subscribed_at
+        type: Timestamp
+      - name: relays_for
+        type: Optional<agentic.shared.PrincipalId>
+        summary: >-
+          The principal whose posts this subscription carries into the subscribed session, as a
+          watcher relays a human's chat: a turn they start counts as the principal's, and waiting
+          for them is waiting on that principal.
+      - name: last_beat_at
+        type: Optional<Timestamp>
+        summary: >-
+          The last heartbeat of the subscribed party. Whether it is online is a reader's threshold
+          over this instant, not stored.
+    relations:
+      - name: channel
+        kind: references
+        target: agentic.channel.Channel
+        cardinality: one
+        via: channel_id
+      - name: relayed
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: relays_for
+    lifecycle:
+      initial: Active
+      states: [Active, Ended]
+      terminal: [Ended]
+      transitions:
+        - name: end
+          from: [Active]
+          to: Ended
+
+  # A message on a shared channel. It has no single recipient: every subscriber whose filter
+  # matches receives it; on a queue, the one subscriber that takes it.
+  # Held apart from Message: with two commands creating Message rows, one requiring a direct and
+  # one a shared channel, synthesis could no longer arrange the channel a message references and
+  # dropped existing Message scenarios (ESS-SYNTH-001).
+  # UNMAPPED: delivery and reading of a topic or board post per subscriber (one receipt per
+  # subscription) is in no source. Taken: not modelled; a trigger's firing records which post
+  # woke it.
+  - name: agentic.channel.Post
+    naming:
+      summary: One post on a topic, a queue or a board, by a party subscribed to it.
+    identity:
+      name: post_id
+      type: agentic.shared.PostId
+    fields:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+      - name: from
+        type: agentic.channel.PartyId
+      - name: act
+        type: agentic.channel.Act
+      - name: entry
+        type: Optional<agentic.channel.EntryKind>
+        summary: The entry kind of a board post; absent on a topic or a queue.
+      - name: content
+        type: agentic.shared.Content
+      - name: in_reply_to
+        type: Optional<agentic.shared.PostId>
+      - name: posted_at
+        type: Timestamp
+      - name: taken_by
+        type: Optional<agentic.channel.PartyId>
+        summary: The subscriber that took a queue post.
+      - name: taken_at
+        type: Optional<Timestamp>
+      - name: delegation_id
+        type: Optional<agentic.shared.DelegationId>
+        summary: >-
+          The delegation under which the poster posts for its delegator: in the delegator's name, a
+          person's own account for instance. Absent, it posts in its own name.
+      - name: proof
+        type: Optional<agentic.channel.Proof>
+    relations:
+      - name: channel
+        kind: references
+        target: agentic.channel.Channel
+        cardinality: one
+        via: channel_id
+      - name: reply_to
+        kind: references
+        target: agentic.channel.Post
+        cardinality: one
+        via: in_reply_to
+      - name: on_behalf
+        kind: references
+        target: agentic.delegation.Delegation
+        cardinality: one
+        via: delegation_id
+    lifecycle:
+      initial: Posted
+      states: [Posted, Taken]
+      terminal: [Taken]
+      transitions:
+        - name: take
+          from: [Posted]
+          to: Taken
+
+actors:
+  - name: agentic.channel.Participant
+    naming:
+      display: Participant
+      summary: A party of a channel; its credential names the party it is.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+      - {name: party_kind, type: agentic.channel.PartyKind}
+    may:
+      - agentic.channel.OpenChannel
+      - agentic.channel.OpenSharedChannel
+      - agentic.channel.CloseChannel
+      - agentic.channel.CloseSharedChannel
+      - agentic.channel.SendMessage
+      - agentic.channel.MarkRead
+      - agentic.channel.Subscribe
+      - agentic.channel.EndSubscription
+      - agentic.channel.Beat
+      - agentic.channel.PostMessage
+      - agentic.channel.TakePost
+
+  - name: agentic.channel.Transport
+    naming:
+      display: Transport
+      summary: What carries messages; it reports a delivery or a loss.
+    may:
+      - agentic.channel.MarkDelivered
+      - agentic.channel.MarkLost
+
+errors:
+  - name: agentic.channel.SameParty
+    summary: Both ends of the channel are the same party.
+
+  - name: agentic.channel.OperatorWithoutOwner
+    summary: An Operator channel names no owner or no delegation; it is owned by one human and its delegate.
+
+  - name: agentic.channel.DirectIsNotShared
+    summary: A shared channel is a topic, a queue or a board; a direct channel is opened with its other party.
+
+  - name: agentic.channel.BoardWithoutLimits
+    summary: A board names the length limit of each entry kind when it is opened.
+
+  - name: agentic.channel.NotAParty
+    summary: The party is not one of the two parties of this channel.
+    fields:
+      - name: party
+        type: agentic.channel.PartyId
+
+  - name: agentic.channel.NotTheOpener
+    summary: Only the party that opened a shared channel closes it.
+
+  - name: agentic.channel.NotTheSender
+    summary: The message names a sender other than the caller.
+
+  - name: agentic.channel.NotTheCaller
+    summary: The request names a party other than the caller.
+
+  - name: agentic.channel.ChannelIsClosed
+    summary: The channel is closed; nothing is sent over it and nobody subscribes to it.
+
+  - name: agentic.channel.NotADirectChannel
+    summary: The channel is a shared channel; it is posted to, and closed with CloseSharedChannel.
+
+  - name: agentic.channel.NotASharedChannel
+    summary: The channel joins two fixed parties; nobody subscribes or posts to it.
+
+  - name: agentic.channel.NotSubscribed
+    summary: The party holds no active subscription to this channel.
+
+  - name: agentic.channel.NotTheSubscriber
+    summary: Only the subscribed party posts through or ends its subscription.
+
+  - name: agentic.channel.EntryKindMissing
+    summary: A post on a board names its entry kind.
+
+  - name: agentic.channel.EntryTooLong
+    summary: The content is longer than the board admits for this entry kind.
+
+  - name: agentic.channel.NotAQueue
+    summary: Only a post on a queue is taken by one reader.
+
+  - name: agentic.channel.UnknownChannel
+    summary: No channel has this identity.
+    fields:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+
+  - name: agentic.channel.UnknownMessage
+    summary: No message has this identity.
+    fields:
+      - name: message_id
+        type: agentic.shared.MessageId
+
+  - name: agentic.channel.UnknownSubscription
+    summary: No subscription has this identity.
+    fields:
+      - name: subscription_id
+        type: agentic.shared.SubscriptionId
+
+  - name: agentic.channel.UnknownPost
+    summary: No post has this identity.
+    fields:
+      - name: post_id
+        type: agentic.shared.PostId
+
+  - name: agentic.channel.ChannelStateConflict
+    summary: The channel is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.channel.Channel.State
+
+  - name: agentic.channel.MessageStateConflict
+    summary: The message is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.channel.Message.State
+
+  - name: agentic.channel.SubscriptionStateConflict
+    summary: The subscription is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.channel.Subscription.State
+
+  - name: agentic.channel.PostAlreadyTaken
+    summary: Another subscriber already took this queue post.
+    fields:
+      - name: state
+        type: agentic.channel.Post.State
+
+  - name: agentic.channel.NotTheRecipient
+    summary: Only the party a message is addressed to marks it read.
+
+  - name: agentic.channel.LosslessChannel
+    summary: The message travels on a channel that does not lose messages.
+
+commands:
+  - name: agentic.channel.OpenChannel
+    naming:
+      wire: open-channel
+      display: Open a channel
+      summary: Open a direct channel between the caller and one other party.
+    input:
+      - name: kind
+        type: agentic.channel.ChannelKind
+      - name: peer
+        type: agentic.channel.PartyId
+      - name: peer_kind
+        type: agentic.channel.PartyKind
+      - name: ordered
+        type: Boolean
+      - name: may_lose
+        type: Boolean
+      - name: owner
+        type: Optional<agentic.shared.PrincipalId>
+      - name: delegation_id
+        type: Optional<agentic.shared.DelegationId>
+      - name: audience
+        type: Optional<agentic.channel.Audience>
+    outcomes:
+      - name: same-party
+        when: peer == caller.party
+        error: agentic.channel.SameParty
+      - name: operator-without-owner
+        when:
+          all:
+            - kind == Operator
+            - any: [not defined(owner), not defined(delegation_id)]
+        error: agentic.channel.OperatorWithoutOwner
+      - name: opened
+        creates: agentic.channel.Channel
+        instance: channel_id
+        sets:
+          kind: input.kind
+          distribution: Direct
+          party_a: {caller: party}
+          party_a_kind: {caller: party_kind}
+          party_b: input.peer
+          party_b_kind: input.peer_kind
+          ordered: input.ordered
+          may_lose: input.may_lose
+          owner: input.owner
+          delegation_id: input.delegation_id
+          audience: input.audience
+        emits: [agentic.channel.ChannelOpened]
+        payload:
+          agentic.channel.ChannelOpened:
+            channel_id: {generated: true}
+            kind: input.kind
+            party_a: {caller: party}
+            party_b: input.peer
+        summary: The channel is open between the caller and the peer.
+
+  - name: agentic.channel.OpenSharedChannel
+    naming:
+      wire: open-shared-channel
+      display: Open a shared channel
+      summary: Open a topic, a queue or a board; parties join it by subscribing.
+    input:
+      - name: kind
+        type: agentic.channel.ChannelKind
+      - name: distribution
+        type: agentic.channel.Distribution
+      - name: ordered
+        type: Boolean
+      - name: may_lose
+        type: Boolean
+      - name: entry_limits
+        type: Optional<agentic.channel.EntryLimits>
+      - name: audience
+        type: Optional<agentic.channel.Audience>
+    outcomes:
+      - name: direct
+        when: distribution == Direct
+        error: agentic.channel.DirectIsNotShared
+      - name: board-without-limits
+        when:
+          all: [distribution == Board, not defined(entry_limits)]
+        error: agentic.channel.BoardWithoutLimits
+      - name: opened
+        creates: agentic.channel.Channel
+        instance: channel_id
+        sets:
+          kind: input.kind
+          distribution: input.distribution
+          party_a: {caller: party}
+          party_a_kind: {caller: party_kind}
+          ordered: input.ordered
+          may_lose: input.may_lose
+          entry_limits: input.entry_limits
+          audience: input.audience
+        emits: [agentic.channel.SharedChannelOpened]
+        payload:
+          agentic.channel.SharedChannelOpened:
+            channel_id: {generated: true}
+            kind: input.kind
+            distribution: input.distribution
+            party_a: {caller: party}
+        summary: The shared channel is open; the caller opened it and subscribes like any other party.
+
+  - name: agentic.channel.CloseChannel
+    naming:
+      wire: close-channel
+      display: Close a channel
+      summary: A party closes a direct channel; nothing more is sent over it.
+    input:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.channel.UnknownChannel
+        payload:
+          agentic.channel.UnknownChannel:
+            channel_id: input.channel_id
+      - name: shared-channel
+        when_subject:
+          predicate: distribution != Direct
+        error: agentic.channel.NotADirectChannel
+      - name: not-a-party
+        when_subject:
+          predicate:
+            all: [party_a != caller.party, party_b != caller.party]
+        error: agentic.channel.NotAParty
+        payload:
+          agentic.channel.NotAParty:
+            party: {caller: party}
+      - name: closed
+        moves: agentic.channel.Channel.close
+        instance: channel_id
+        emits: [agentic.channel.ChannelClosed]
+        payload:
+          agentic.channel.ChannelClosed:
+            channel_id: input.channel_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.channel.ChannelStateConflict
+        payload:
+          agentic.channel.ChannelStateConflict:
+            state: {subject: state}
+
+  # The party that opened a shared channel closes it, and every subscription to it ends.
+  - name: agentic.channel.CloseSharedChannel
+    naming:
+      wire: close-shared-channel
+      display: Close a shared channel
+      summary: The opener closes a topic, a queue or a board; its subscriptions end and nothing more is posted.
+    input:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.channel.UnknownChannel
+        payload:
+          agentic.channel.UnknownChannel:
+            channel_id: input.channel_id
+      - name: direct-channel
+        when_subject:
+          predicate: distribution == Direct
+        error: agentic.channel.NotASharedChannel
+      - name: not-the-opener
+        when_subject:
+          predicate: party_a != caller.party
+        error: agentic.channel.NotTheOpener
+      - name: closed
+        moves: agentic.channel.Channel.close
+        instance: channel_id
+        affects:
+          - entity: agentic.channel.Subscription
+            where: channel_id == input.channel_id
+            moves: agentic.channel.Subscription.end
+        emits: [agentic.channel.ChannelClosed]
+        payload:
+          agentic.channel.ChannelClosed:
+            channel_id: input.channel_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.channel.ChannelStateConflict
+        payload:
+          agentic.channel.ChannelStateConflict:
+            state: {subject: state}
+
+  # The caller names itself as `from`; its credential decides. ESS reads no caller attribute in a
+  # `when_related` guard (ESS-COMMAND-003), so the sender is first matched to the caller, then to
+  # the channel's parties.
+  - name: agentic.channel.SendMessage
+    naming:
+      wire: send-message
+      display: Send a message
+      summary: The caller sends one message to the other party of an open direct channel.
+    input:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+      - name: from
+        type: agentic.channel.PartyId
+      - name: to
+        type: agentic.channel.PartyId
+      - name: act
+        type: agentic.channel.Act
+      - name: content
+        type: agentic.shared.Content
+      - name: in_reply_to
+        type: Optional<agentic.shared.MessageId>
+      - name: delegation_id
+        type: Optional<agentic.shared.DelegationId>
+      - name: proof
+        type: Optional<agentic.channel.Proof>
+      - name: sent_by_call
+        type: Optional<agentic.shared.ToolCallId>
+    outcomes:
+      - name: not-the-sender
+        when: from != caller.party
+        error: agentic.channel.NotTheSender
+      # A send to oneself (`to == from`) is not refused: with that refusal synthesis sends the
+      # message and marks it read as one caller, and no MarkRead scenario can be arranged
+      # (ESS-SYNTH-003). The two parties of a channel differ (OpenChannel), and `to` must be one.
+      - name: unknown-channel
+        when_related:
+          via: input.channel_id
+          exists: false
+        error: agentic.channel.UnknownChannel
+        payload:
+          agentic.channel.UnknownChannel:
+            channel_id: input.channel_id
+      - name: shared-channel
+        when_related:
+          via: input.channel_id
+          predicate: distribution != Direct
+        error: agentic.channel.NotADirectChannel
+      - name: sender-not-a-party
+        when_related:
+          via: input.channel_id
+          predicate:
+            all: [party_a != input.from, party_b != input.from]
+        error: agentic.channel.NotAParty
+        payload:
+          agentic.channel.NotAParty:
+            party: input.from
+      - name: recipient-not-a-party
+        when_related:
+          via: input.channel_id
+          predicate:
+            all: [party_a != input.to, party_b != input.to]
+        error: agentic.channel.NotAParty
+        payload:
+          agentic.channel.NotAParty:
+            party: input.to
+      - name: channel-closed
+        when_related:
+          via: input.channel_id
+          predicate: state == Closed
+        error: agentic.channel.ChannelIsClosed
+      - name: sent
+        creates: agentic.channel.Message
+        instance: message_id
+        sets:
+          channel_id: input.channel_id
+          from: input.from
+          to: input.to
+          act: input.act
+          content: input.content
+          in_reply_to: input.in_reply_to
+          sent_at: {generated: true}
+          delegation_id: input.delegation_id
+          proof: input.proof
+          sent_by_call: input.sent_by_call
+        emits: [agentic.channel.MessageSent]
+        payload:
+          agentic.channel.MessageSent:
+            message_id: {generated: true}
+            channel_id: input.channel_id
+            from: input.from
+            to: input.to
+            act: input.act
+            content: input.content
+            in_reply_to: input.in_reply_to
+            delegation_id: input.delegation_id
+            proof: input.proof
+            sent_by_call: input.sent_by_call
+
+  - name: agentic.channel.MarkDelivered
+    naming:
+      wire: mark-delivered
+      display: Mark a message delivered
+    input:
+      - name: message_id
+        type: agentic.shared.MessageId
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.channel.UnknownMessage
+        payload:
+          agentic.channel.UnknownMessage:
+            message_id: input.message_id
+      - name: delivered
+        moves: agentic.channel.Message.deliver
+        instance: message_id
+        sets:
+          delivered_at: {generated: true}
+        emits: [agentic.channel.MessageDelivered]
+        payload:
+          agentic.channel.MessageDelivered:
+            message_id: input.message_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.channel.MessageStateConflict
+        payload:
+          agentic.channel.MessageStateConflict:
+            state: {subject: state}
+
+  - name: agentic.channel.MarkRead
+    naming:
+      wire: mark-read
+      display: Mark a message read
+    input:
+      - name: message_id
+        type: agentic.shared.MessageId
+      - name: reader
+        type: agentic.channel.PartyId
+    outcomes:
+      - name: reader-not-the-caller
+        when: reader != caller.party
+        error: agentic.channel.NotTheRecipient
+      - name: unknown
+        unknown_instance: true
+        error: agentic.channel.UnknownMessage
+        payload:
+          agentic.channel.UnknownMessage:
+            message_id: input.message_id
+      - name: not-the-recipient
+        when_subject:
+          predicate: to != input.reader
+        error: agentic.channel.NotTheRecipient
+      - name: read
+        moves: agentic.channel.Message.read
+        instance: message_id
+        sets:
+          read_at: {generated: true}
+        emits: [agentic.channel.MessageRead]
+        payload:
+          agentic.channel.MessageRead:
+            message_id: input.message_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.channel.MessageStateConflict
+        payload:
+          agentic.channel.MessageStateConflict:
+            state: {subject: state}
+
+  - name: agentic.channel.MarkLost
+    naming:
+      wire: mark-lost
+      display: Mark a message lost
+    input:
+      - name: message_id
+        type: agentic.shared.MessageId
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.channel.UnknownMessage
+        payload:
+          agentic.channel.UnknownMessage:
+            message_id: input.message_id
+      - name: lossless
+        when_related:
+          via: channel_id
+          predicate: may_lose == false
+        error: agentic.channel.LosslessChannel
+      - name: lost
+        moves: agentic.channel.Message.lose
+        instance: message_id
+        emits: [agentic.channel.MessageLost]
+        payload:
+          agentic.channel.MessageLost:
+            message_id: input.message_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.channel.MessageStateConflict
+        payload:
+          agentic.channel.MessageStateConflict:
+            state: {subject: state}
+
+  # A party may hold several subscriptions to one channel, each with its own filter (one per
+  # trigger that wakes it). A row-set refusal of a second one also kept synthesis from arranging
+  # any subscription for the commands that read one (ESS-SYNTH-004).
+  - name: agentic.channel.Subscribe
+    naming:
+      wire: subscribe
+      display: Subscribe to a shared channel
+      summary: The caller subscribes to an open topic, queue or board, with an optional filter.
+    input:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+      - name: party
+        type: agentic.channel.PartyId
+      - name: filter_act
+        type: Optional<agentic.channel.Act>
+      - name: filter_entry
+        type: Optional<agentic.channel.EntryKind>
+      - name: filter_scope
+        type: Optional<String>
+      - name: relays_for
+        type: Optional<agentic.shared.PrincipalId>
+    outcomes:
+      - name: party-not-the-caller
+        when: party != caller.party
+        error: agentic.channel.NotTheCaller
+      - name: unknown-channel
+        when_related:
+          via: input.channel_id
+          exists: false
+        error: agentic.channel.UnknownChannel
+        payload:
+          agentic.channel.UnknownChannel:
+            channel_id: input.channel_id
+      - name: direct-channel
+        when_related:
+          via: input.channel_id
+          predicate: distribution == Direct
+        error: agentic.channel.NotASharedChannel
+      - name: channel-closed
+        when_related:
+          via: input.channel_id
+          predicate: state == Closed
+        error: agentic.channel.ChannelIsClosed
+      - name: subscribed
+        creates: agentic.channel.Subscription
+        instance: subscription_id
+        sets:
+          channel_id: input.channel_id
+          party: input.party
+          party_kind: {caller: party_kind}
+          filter_act: input.filter_act
+          filter_entry: input.filter_entry
+          filter_scope: input.filter_scope
+          subscribed_at: {generated: true}
+          relays_for: input.relays_for
+        emits: [agentic.channel.Subscribed]
+        payload:
+          agentic.channel.Subscribed:
+            subscription_id: {generated: true}
+            channel_id: input.channel_id
+            party: input.party
+            relays_for: input.relays_for
+
+  - name: agentic.channel.EndSubscription
+    naming:
+      wire: end-subscription
+      display: End a subscription
+      summary: The subscribed party ends its subscription; it receives nothing more from the channel.
+    input:
+      - name: subscription_id
+        type: agentic.shared.SubscriptionId
+      - name: party
+        type: agentic.channel.PartyId
+    outcomes:
+      - name: party-not-the-caller
+        when: party != caller.party
+        error: agentic.channel.NotTheCaller
+      - name: unknown
+        unknown_instance: true
+        error: agentic.channel.UnknownSubscription
+        payload:
+          agentic.channel.UnknownSubscription:
+            subscription_id: input.subscription_id
+      - name: not-the-subscriber
+        when_subject:
+          predicate: party != input.party
+        error: agentic.channel.NotTheSubscriber
+      - name: ended
+        moves: agentic.channel.Subscription.end
+        instance: subscription_id
+        emits: [agentic.channel.SubscriptionEnded]
+        payload:
+          agentic.channel.SubscriptionEnded:
+            subscription_id: input.subscription_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.channel.SubscriptionStateConflict
+        payload:
+          agentic.channel.SubscriptionStateConflict:
+            state: {subject: state}
+
+  - name: agentic.channel.Beat
+    naming:
+      wire: beat
+      display: Record a heartbeat
+      summary: The subscribed party says it is still watching its channel.
+    input:
+      - name: subscription_id
+        type: agentic.shared.SubscriptionId
+      - name: party
+        type: agentic.channel.PartyId
+    outcomes:
+      - name: party-not-the-caller
+        when: party != caller.party
+        error: agentic.channel.NotTheCaller
+      - name: unknown
+        unknown_instance: true
+        error: agentic.channel.UnknownSubscription
+        payload:
+          agentic.channel.UnknownSubscription:
+            subscription_id: input.subscription_id
+      - name: not-the-subscriber
+        when_subject:
+          predicate: party != input.party
+        error: agentic.channel.NotTheSubscriber
+      - name: ended
+        when_subject_state: [Ended]
+        error: agentic.channel.SubscriptionStateConflict
+        payload:
+          agentic.channel.SubscriptionStateConflict:
+            state: {subject: state}
+      - name: beat
+        updates: agentic.channel.Subscription
+        instance: subscription_id
+        sets:
+          last_beat_at: {generated: true}
+        emits: [agentic.channel.HeartbeatRecorded]
+        payload:
+          agentic.channel.HeartbeatRecorded:
+            subscription_id: input.subscription_id
+
+  # A post on an open shared channel by a party that holds an active subscription to it. On a
+  # board the post names its entry kind and stays within that kind's length limit.
+  # An entry kind on a topic or queue post is recorded and means nothing there. A refusal of it
+  # made synthesis build every post scenario on a wrong input: it fills an optional input with its
+  # first variant, so each post on a topic carried `Observed` and was refused (ESS-SYNTH-019).
+  - name: agentic.channel.PostMessage
+    naming:
+      wire: post-message
+      display: Post to a shared channel
+      summary: The caller posts once to a topic, a queue or a board it subscribes to.
+    input:
+      - name: channel_id
+        type: agentic.shared.ChannelId
+      - name: from
+        type: agentic.channel.PartyId
+      - name: act
+        type: agentic.channel.Act
+      - name: entry
+        type: Optional<agentic.channel.EntryKind>
+      - name: content
+        type: agentic.shared.Content
+      - name: in_reply_to
+        type: Optional<agentic.shared.PostId>
+      - name: delegation_id
+        type: Optional<agentic.shared.DelegationId>
+      - name: proof
+        type: Optional<agentic.channel.Proof>
+    outcomes:
+      - name: not-the-sender
+        when: from != caller.party
+        error: agentic.channel.NotTheSender
+      - name: unknown-channel
+        when_related:
+          via: input.channel_id
+          exists: false
+        error: agentic.channel.UnknownChannel
+        payload:
+          agentic.channel.UnknownChannel:
+            channel_id: input.channel_id
+      - name: direct-channel
+        when_related:
+          via: input.channel_id
+          predicate: distribution == Direct
+        error: agentic.channel.NotASharedChannel
+      - name: channel-closed
+        when_related:
+          via: input.channel_id
+          predicate: state == Closed
+        error: agentic.channel.ChannelIsClosed
+      # The input test stands beside the row test: inside the row predicate, synthesis filled the
+      # entry and the scenario contradicted its own outcome.
+      - name: entry-missing
+        when: not defined(entry)
+        when_related:
+          via: input.channel_id
+          predicate: distribution == Board
+        error: agentic.channel.EntryKindMissing
+      - name: entry-too-long
+        when_related:
+          via: input.channel_id
+          predicate:
+            all:
+              - distribution == Board
+              - defined(input.entry)
+              - any:
+                  - all: [input.entry == Observed, input.content.length > entry_limits.observed]
+                  - all: [input.entry == Fact, input.content.length > entry_limits.fact]
+                  - all: [input.entry == Fail, input.content.length > entry_limits.fail]
+                  - all: [input.entry == Claim, input.content.length > entry_limits.claim]
+                  - all: [input.entry == PatchSummary, input.content.length > entry_limits.patch_summary]
+        error: agentic.channel.EntryTooLong
+      - name: not-subscribed
+        when_related:
+          entity: agentic.channel.Subscription
+          where:
+            all:
+              - channel_id == input.channel_id
+              - party == input.from
+              - state == Active
+          exists: false
+        error: agentic.channel.NotSubscribed
+      - name: posted
+        creates: agentic.channel.Post
+        instance: post_id
+        sets:
+          channel_id: input.channel_id
+          from: input.from
+          act: input.act
+          entry: input.entry
+          content: input.content
+          in_reply_to: input.in_reply_to
+          posted_at: {generated: true}
+          delegation_id: input.delegation_id
+          proof: input.proof
+        emits: [agentic.channel.Posted]
+        payload:
+          agentic.channel.Posted:
+            post_id: {generated: true}
+            channel_id: input.channel_id
+            from: input.from
+            act: input.act
+            entry: input.entry
+            content: input.content
+            in_reply_to: input.in_reply_to
+            delegation_id: input.delegation_id
+            proof: input.proof
+
+  # Each queue post goes to one reader: the first subscriber of that queue that takes it. A post
+  # on a topic or a board, or one taken already, is not taken.
+  - name: agentic.channel.TakePost
+    naming:
+      wire: take-post
+      display: Take a post from a queue
+      summary: A subscriber of a queue takes one post; it goes to that subscriber alone.
+    input:
+      - name: post_id
+        type: agentic.shared.PostId
+      - name: reader
+        type: agentic.channel.PartyId
+    outcomes:
+      - name: reader-not-the-caller
+        when: reader != caller.party
+        error: agentic.channel.NotTheCaller
+      - name: unknown
+        unknown_instance: true
+        error: agentic.channel.UnknownPost
+        payload:
+          agentic.channel.UnknownPost:
+            post_id: input.post_id
+      - name: not-a-queue
+        when_related:
+          via: channel_id
+          predicate: distribution != Queue
+        error: agentic.channel.NotAQueue
+      - name: not-subscribed
+        when_related:
+          entity: agentic.channel.Subscription
+          where:
+            all:
+              - channel_id == subject.channel_id
+              - party == input.reader
+              - state == Active
+          exists: false
+        error: agentic.channel.NotSubscribed
+      - name: taken
+        moves: agentic.channel.Post.take
+        instance: post_id
+        sets:
+          taken_by: input.reader
+          taken_at: {generated: true}
+        emits: [agentic.channel.PostTaken]
+        payload:
+          agentic.channel.PostTaken:
+            post_id: input.post_id
+            reader: input.reader
+      - name: already-taken
+        wrong_state: true
+        error: agentic.channel.PostAlreadyTaken
+        payload:
+          agentic.channel.PostAlreadyTaken:
+            state: {subject: state}
+
+events:
+  - name: agentic.channel.ChannelOpened
+    fields:
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: kind, type: agentic.channel.ChannelKind}
+      - {name: party_a, type: agentic.channel.PartyId}
+      - {name: party_b, type: agentic.channel.PartyId}
+
+  - name: agentic.channel.SharedChannelOpened
+    fields:
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: kind, type: agentic.channel.ChannelKind}
+      - {name: distribution, type: agentic.channel.Distribution}
+      - {name: party_a, type: agentic.channel.PartyId}
+
+  - name: agentic.channel.ChannelClosed
+    fields:
+      - {name: channel_id, type: agentic.shared.ChannelId}
+
+  - name: agentic.channel.MessageSent
+    fields:
+      - {name: message_id, type: agentic.shared.MessageId}
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: from, type: agentic.channel.PartyId}
+      - {name: to, type: agentic.channel.PartyId}
+      - {name: act, type: agentic.channel.Act}
+      - {name: content, type: agentic.shared.Content}
+      - {name: in_reply_to, type: Optional<agentic.shared.MessageId>}
+      - {name: delegation_id, type: Optional<agentic.shared.DelegationId>}
+      - {name: proof, type: Optional<agentic.channel.Proof>}
+      - {name: sent_by_call, type: Optional<agentic.shared.ToolCallId>}
+
+  - name: agentic.channel.MessageDelivered
+    fields:
+      - {name: message_id, type: agentic.shared.MessageId}
+
+  - name: agentic.channel.MessageRead
+    fields:
+      - {name: message_id, type: agentic.shared.MessageId}
+
+  - name: agentic.channel.MessageLost
+    fields:
+      - {name: message_id, type: agentic.shared.MessageId}
+
+  - name: agentic.channel.Subscribed
+    fields:
+      - {name: subscription_id, type: agentic.shared.SubscriptionId}
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: party, type: agentic.channel.PartyId}
+      - {name: relays_for, type: Optional<agentic.shared.PrincipalId>}
+
+  - name: agentic.channel.SubscriptionEnded
+    fields:
+      - {name: subscription_id, type: agentic.shared.SubscriptionId}
+
+  - name: agentic.channel.HeartbeatRecorded
+    fields:
+      - {name: subscription_id, type: agentic.shared.SubscriptionId}
+
+  - name: agentic.channel.Posted
+    fields:
+      - {name: post_id, type: agentic.shared.PostId}
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: from, type: agentic.channel.PartyId}
+      - {name: act, type: agentic.channel.Act}
+      - {name: entry, type: Optional<agentic.channel.EntryKind>}
+      - {name: content, type: agentic.shared.Content}
+      - {name: in_reply_to, type: Optional<agentic.shared.PostId>}
+      - {name: delegation_id, type: Optional<agentic.shared.DelegationId>}
+      - {name: proof, type: Optional<agentic.channel.Proof>}
+
+  - name: agentic.channel.PostTaken
+    fields:
+      - {name: post_id, type: agentic.shared.PostId}
+      - {name: reader, type: agentic.channel.PartyId}
+
+views:
+  - name: agentic.channel.Channels
+    source: agentic.channel.Channel
+    consistency: read_your_writes
+    fields:
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: kind, type: agentic.channel.ChannelKind}
+      - {name: distribution, type: agentic.channel.Distribution}
+      - {name: party_a, type: agentic.channel.PartyId}
+      - {name: party_a_kind, type: agentic.channel.PartyKind}
+      - {name: party_b, type: Optional<agentic.channel.PartyId>}
+      - {name: party_b_kind, type: Optional<agentic.channel.PartyKind>}
+      - {name: ordered, type: Boolean}
+      - {name: may_lose, type: Boolean}
+      - {name: entry_limits, type: Optional<agentic.channel.EntryLimits>}
+      - {name: owner, type: Optional<agentic.shared.PrincipalId>}
+      - {name: delegation_id, type: Optional<agentic.shared.DelegationId>}
+      - {name: audience, type: Optional<agentic.channel.Audience>}
+      - {name: state, type: agentic.channel.Channel.State}
+    naming:
+      wire: channels
+      display: Channels
+
+  - name: agentic.channel.Messages
+    source: agentic.channel.Message
+    consistency: read_your_writes
+    fields:
+      - {name: message_id, type: agentic.shared.MessageId}
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: from, type: agentic.channel.PartyId}
+      - {name: to, type: agentic.channel.PartyId}
+      - {name: act, type: agentic.channel.Act}
+      - {name: content, type: agentic.shared.Content}
+      - {name: in_reply_to, type: Optional<agentic.shared.MessageId>}
+      - {name: sent_at, type: Timestamp}
+      - {name: delivered_at, type: Optional<Timestamp>}
+      - {name: read_at, type: Optional<Timestamp>}
+      - {name: delegation_id, type: Optional<agentic.shared.DelegationId>}
+      - {name: proof, type: Optional<agentic.channel.Proof>}
+      - {name: sent_by_call, type: Optional<agentic.shared.ToolCallId>}
+      - {name: state, type: agentic.channel.Message.State}
+    naming:
+      wire: messages
+      display: Messages
+
+  - name: agentic.channel.ChannelMessages
+    source: agentic.channel.Message
+    consistency: read_your_writes
+    params:
+      - {name: channel_id, type: agentic.shared.ChannelId}
+    filter: channel_id == param.channel_id
+    fields:
+      - {name: message_id, type: agentic.shared.MessageId}
+      - {name: from, type: agentic.channel.PartyId}
+      - {name: to, type: agentic.channel.PartyId}
+      - {name: act, type: agentic.channel.Act}
+      - {name: sent_at, type: Timestamp}
+      - {name: state, type: agentic.channel.Message.State}
+    naming:
+      wire: channel-messages
+      display: Messages of a channel
+
+  - name: agentic.channel.Subscriptions
+    source: agentic.channel.Subscription
+    consistency: read_your_writes
+    fields:
+      - {name: subscription_id, type: agentic.shared.SubscriptionId}
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: party, type: agentic.channel.PartyId}
+      - {name: party_kind, type: agentic.channel.PartyKind}
+      - {name: filter_act, type: Optional<agentic.channel.Act>}
+      - {name: filter_entry, type: Optional<agentic.channel.EntryKind>}
+      - {name: filter_scope, type: Optional<String>}
+      - {name: subscribed_at, type: Timestamp}
+      - {name: relays_for, type: Optional<agentic.shared.PrincipalId>}
+      - {name: last_beat_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.channel.Subscription.State}
+    naming:
+      wire: subscriptions
+      display: Subscriptions
+
+  - name: agentic.channel.Posts
+    source: agentic.channel.Post
+    consistency: read_your_writes
+    fields:
+      - {name: post_id, type: agentic.shared.PostId}
+      - {name: channel_id, type: agentic.shared.ChannelId}
+      - {name: from, type: agentic.channel.PartyId}
+      - {name: act, type: agentic.channel.Act}
+      - {name: entry, type: Optional<agentic.channel.EntryKind>}
+      - {name: content, type: agentic.shared.Content}
+      - {name: in_reply_to, type: Optional<agentic.shared.PostId>}
+      - {name: posted_at, type: Timestamp}
+      - {name: taken_by, type: Optional<agentic.channel.PartyId>}
+      - {name: taken_at, type: Optional<Timestamp>}
+      - {name: delegation_id, type: Optional<agentic.shared.DelegationId>}
+      - {name: proof, type: Optional<agentic.channel.Proof>}
+      - {name: state, type: agentic.channel.Post.State}
+    naming:
+      wire: posts
+      display: Posts
+
+  - name: agentic.channel.ChannelPosts
+    source: agentic.channel.Post
+    consistency: read_your_writes
+    params:
+      - {name: channel_id, type: agentic.shared.ChannelId}
+    filter: channel_id == param.channel_id
+    fields:
+      - {name: post_id, type: agentic.shared.PostId}
+      - {name: from, type: agentic.channel.PartyId}
+      - {name: act, type: agentic.channel.Act}
+      - {name: entry, type: Optional<agentic.channel.EntryKind>}
+      - {name: posted_at, type: Timestamp}
+      - {name: taken_by, type: Optional<agentic.channel.PartyId>}
+      - {name: state, type: agentic.channel.Post.State}
+    naming:
+      wire: channel-posts
+      display: Posts of a channel

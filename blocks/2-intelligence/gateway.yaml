@@ -1,0 +1,626 @@
+domain: agentic.gateway
+
+summary: >-
+  The one place model calls pass. A gateway holds upstreams, each an endpoint of `agentic.model`
+  behind it. Every call by a caller principal on a route is decided once and recorded under its
+  InferenceId: admitted, over-budget, rate-limited or no-upstream. An admitted call is completed
+  with its usage and outcome; a refused call stays on record and cannot complete. A gateway that
+  drains admits no new call.
+
+naming:
+  wire: gateway
+  display: Gateway
+
+types:
+  - name: agentic.gateway.Admission
+    kind: enum
+    variants: [Admitted, OverBudget, RateLimited, NoUpstream]
+    naming:
+      summary: How the gateway decided one call.
+
+entities:
+  - name: agentic.gateway.Gateway
+    naming:
+      summary: One gateway. Serving admits calls, Draining finishes what runs and admits nothing, Stopped is final.
+    identity:
+      name: gateway_id
+      type: agentic.shared.GatewayId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+    relations:
+      - name: upstreams
+        kind: owns
+        target: agentic.gateway.Upstream
+        cardinality: many
+        via: gateway_id
+      # Decision taken, reversible: `owns`. The record of a call is part of the gateway that
+      # decided it; no command deletes a gateway, so no record is orphaned.
+      - name: calls
+        kind: owns
+        target: agentic.gateway.Call
+        cardinality: many
+        via: gateway_id
+    lifecycle:
+      initial: Serving
+      states: [Serving, Draining, Stopped]
+      terminal: [Stopped]
+      transitions:
+        - name: drain
+          from: [Serving]
+          to: Draining
+        - name: stop
+          from: [Serving, Draining]
+          to: Stopped
+
+  - name: agentic.gateway.Upstream
+    naming:
+      summary: >-
+        An endpoint behind one gateway. Attached takes calls, Saturated has reached its rate limit
+        and takes none until it recovers, Detached is gone.
+    identity:
+      name: upstream_id
+      type: agentic.shared.UpstreamId
+    fields:
+      - name: gateway_id
+        type: agentic.shared.GatewayId
+      - name: endpoint_id
+        type: agentic.shared.EndpointId
+    relations:
+      - name: endpoint
+        kind: references
+        target: agentic.model.Endpoint
+        cardinality: one
+        via: endpoint_id
+    lifecycle:
+      initial: Attached
+      states: [Attached, Saturated, Detached]
+      terminal: [Detached]
+      transitions:
+        - name: saturate
+          from: [Attached]
+          to: Saturated
+        - name: restore
+          from: [Saturated]
+          to: Attached
+        - name: detach
+          from: [Attached, Saturated]
+          to: Detached
+
+  - name: agentic.gateway.Call
+    naming:
+      summary: >-
+        The record of one call, under the InferenceId it carries into `agentic.model`. Every call
+        has one, whether it was admitted or not. Recorded until a call that was admitted completes;
+        a refused call stays Recorded.
+    identity:
+      name: inference_id
+      type: agentic.shared.InferenceId
+    fields:
+      - name: gateway_id
+        type: agentic.shared.GatewayId
+      - name: caller
+        type: agentic.shared.PrincipalId
+      - name: route_id
+        type: agentic.shared.RouteId
+      - name: admission
+        type: agentic.gateway.Admission
+      - name: budget_left
+        type: agentic.shared.Money
+        summary: What the caller's budget held when the call was decided.
+      - name: upstream_id
+        type: agentic.shared.UpstreamId
+        summary: The upstream the gateway named for the route; for a no-upstream call it may name nothing that exists.
+      - name: usage
+        type: Optional<agentic.shared.Usage>
+      - name: outcome
+        type: Optional<agentic.model.InferenceOutcome>
+    relations:
+      - name: route
+        kind: references
+        target: agentic.model.Route
+        cardinality: one
+        via: route_id
+      # Decision taken, reversible: `references`. A no-upstream call names an upstream that may
+      # not exist, so the relation does not say the target is there.
+      - name: upstream
+        kind: references
+        target: agentic.gateway.Upstream
+        cardinality: one
+        via: upstream_id
+      # UNMAPPED: the caller is a principal of `agentic.principal` (layer 1)
+      # and the budget is one of `agentic.authority` (layer 6): the record holds the caller as a
+      # PrincipalId and the budget left as a value the caller of AdmitCall reads from the authority
+      # block. Open question for the owner: who debits the budget after an admitted call, the
+      # gateway (a command of authority) or authority from the CallCompleted event.
+    lifecycle:
+      initial: Recorded
+      states: [Recorded, Completed]
+      terminal: [Completed]
+      transitions:
+        - name: complete
+          from: [Recorded]
+          to: Completed
+
+actors:
+  - name: agentic.gateway.GatewayOperator
+    naming:
+      display: Gateway operator
+    may:
+      - agentic.gateway.OpenGateway
+      - agentic.gateway.DrainGateway
+      - agentic.gateway.StopGateway
+      - agentic.gateway.AttachUpstream
+      - agentic.gateway.DetachUpstream
+
+  - name: agentic.gateway.GatewayProcess
+    naming:
+      display: Gateway
+      summary: The running gateway itself, which admits calls, observes upstream saturation and completes calls.
+    may:
+      - agentic.gateway.AdmitCall
+      - agentic.gateway.CompleteCall
+      - agentic.gateway.SaturateUpstream
+      - agentic.gateway.RestoreUpstream
+
+errors:
+  - name: agentic.gateway.UnknownGateway
+    summary: No gateway of this identity was opened.
+    fields:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+
+  - name: agentic.gateway.GatewayNotServing
+    summary: The gateway is draining or stopped, so it admits no new call and takes no new upstream.
+    fields:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+
+  - name: agentic.gateway.UnknownEndpoint
+    summary: No endpoint of this identity is declared in `agentic.model`.
+    fields:
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+
+  - name: agentic.gateway.CallNotAdmitted
+    summary: The call was refused at admission, so there is nothing to complete.
+    fields:
+      - {name: admission, type: agentic.gateway.Admission}
+
+  - name: agentic.gateway.GatewayStateConflict
+    summary: The gateway is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.gateway.Gateway.State}
+
+  - name: agentic.gateway.UpstreamStateConflict
+    summary: The upstream is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.gateway.Upstream.State}
+
+  - name: agentic.gateway.CallStateConflict
+    summary: The call is not in a state this command acts from; it had already completed.
+    fields:
+      - {name: state, type: agentic.gateway.Call.State}
+
+commands:
+  - name: agentic.gateway.OpenGateway
+    naming:
+      wire: open-gateway
+      display: Open a gateway
+    input:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: name, type: agentic.shared.Name}
+    outcomes:
+      - name: opened
+        creates: agentic.gateway.Gateway
+        instance: gateway_id
+        sets:
+          name: input.name
+        emits: [agentic.gateway.GatewayOpened]
+        payload:
+          agentic.gateway.GatewayOpened:
+            gateway_id: input.gateway_id
+            name: input.name
+        summary: The gateway is Serving and holds no upstream; every call is refused no-upstream until one is attached.
+
+  - name: agentic.gateway.DrainGateway
+    naming:
+      wire: drain-gateway
+      display: Drain a gateway
+    input:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+    outcomes:
+      - name: draining
+        moves: agentic.gateway.Gateway.drain
+        instance: gateway_id
+        emits: [agentic.gateway.GatewayDrained]
+        payload:
+          agentic.gateway.GatewayDrained:
+            gateway_id: input.gateway_id
+        summary: The gateway admits no new call; admitted calls may still complete.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.gateway.GatewayStateConflict
+        summary: The gateway was already draining or stopped.
+
+  - name: agentic.gateway.StopGateway
+    naming:
+      wire: stop-gateway
+      display: Stop a gateway
+    input:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+    outcomes:
+      - name: stopped
+        moves: agentic.gateway.Gateway.stop
+        instance: gateway_id
+        emits: [agentic.gateway.GatewayStopped]
+        payload:
+          agentic.gateway.GatewayStopped:
+            gateway_id: input.gateway_id
+        summary: The gateway is Stopped.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.gateway.GatewayStateConflict
+        summary: The gateway was already stopped.
+
+  - name: agentic.gateway.AttachUpstream
+    naming:
+      wire: attach-upstream
+      display: Attach an upstream
+    input:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+    outcomes:
+      - name: unknown-gateway
+        when_related: {via: input.gateway_id, exists: false}
+        error: agentic.gateway.UnknownGateway
+        payload:
+          agentic.gateway.UnknownGateway:
+            gateway_id: input.gateway_id
+        summary: The gateway was never opened.
+      - name: unknown-endpoint
+        when_related: {via: input.endpoint_id, exists: false}
+        error: agentic.gateway.UnknownEndpoint
+        payload:
+          agentic.gateway.UnknownEndpoint:
+            endpoint_id: input.endpoint_id
+        summary: The endpoint is not declared, so there is nothing to put behind the gateway.
+      - name: gateway-not-serving
+        when_related: {via: input.gateway_id, predicate: state != Serving}
+        error: agentic.gateway.GatewayNotServing
+        payload:
+          agentic.gateway.GatewayNotServing:
+            gateway_id: input.gateway_id
+        summary: A draining or stopped gateway takes no new upstream.
+      - name: attached
+        creates: agentic.gateway.Upstream
+        instance: upstream_id
+        sets:
+          gateway_id: input.gateway_id
+          endpoint_id: input.endpoint_id
+        emits: [agentic.gateway.UpstreamAttached]
+        payload:
+          agentic.gateway.UpstreamAttached:
+            upstream_id: input.upstream_id
+            gateway_id: input.gateway_id
+            endpoint_id: input.endpoint_id
+        summary: The upstream is Attached and takes calls.
+
+  - name: agentic.gateway.DetachUpstream
+    naming:
+      wire: detach-upstream
+      display: Detach an upstream
+    input:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+    outcomes:
+      - name: detached
+        moves: agentic.gateway.Upstream.detach
+        instance: upstream_id
+        emits: [agentic.gateway.UpstreamDetached]
+        payload:
+          agentic.gateway.UpstreamDetached:
+            upstream_id: input.upstream_id
+        summary: The upstream is Detached; a call that names it is refused no-upstream.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.gateway.UpstreamStateConflict
+        summary: The upstream was already detached.
+
+  - name: agentic.gateway.SaturateUpstream
+    naming:
+      wire: saturate-upstream
+      display: Mark an upstream saturated
+    input:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+    outcomes:
+      - name: saturated
+        moves: agentic.gateway.Upstream.saturate
+        instance: upstream_id
+        emits: [agentic.gateway.UpstreamSaturated]
+        payload:
+          agentic.gateway.UpstreamSaturated:
+            upstream_id: input.upstream_id
+        summary: The upstream has reached its rate limit; a call on it is refused rate-limited.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.gateway.UpstreamStateConflict
+        summary: The upstream was not Attached.
+
+  - name: agentic.gateway.RestoreUpstream
+    naming:
+      wire: restore-upstream
+      display: Restore an upstream
+    input:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+    outcomes:
+      - name: restored
+        moves: agentic.gateway.Upstream.restore
+        instance: upstream_id
+        emits: [agentic.gateway.UpstreamRestored]
+        payload:
+          agentic.gateway.UpstreamRestored:
+            upstream_id: input.upstream_id
+        summary: The upstream takes calls again.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.gateway.UpstreamStateConflict
+        summary: The upstream was not Saturated.
+
+  - name: agentic.gateway.AdmitCall
+    naming:
+      wire: admit-call
+      display: Admit a call
+      summary: >-
+        Decide one call and record it. The gateway names the upstream it picked for the route and
+        reports what the caller's budget holds; the answers are admitted, over-budget,
+        rate-limited and no-upstream, and each leaves a record. A call on an unknown gateway, or
+        on one that does not serve, is an error and leaves no record. UNMAPPED: how the gateway
+        picks an upstream for a route is not modelled.
+    input:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: caller, type: agentic.shared.PrincipalId}
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+      - {name: budget_left, type: agentic.shared.Money}
+    outcomes:
+      - name: unknown-gateway
+        when_related: {via: input.gateway_id, exists: false}
+        error: agentic.gateway.UnknownGateway
+        payload:
+          agentic.gateway.UnknownGateway:
+            gateway_id: input.gateway_id
+        summary: The gateway was never opened; nothing is recorded.
+      - name: no-upstream
+        when_related: {via: input.upstream_id, exists: false}
+        creates: agentic.gateway.Call
+        instance: inference_id
+        sets:
+          gateway_id: input.gateway_id
+          caller: input.caller
+          route_id: input.route_id
+          admission: NoUpstream
+          budget_left: input.budget_left
+          upstream_id: input.upstream_id
+        emits: [agentic.gateway.CallDecided]
+        payload:
+          agentic.gateway.CallDecided:
+            inference_id: input.inference_id
+            gateway_id: input.gateway_id
+            caller: input.caller
+            route_id: input.route_id
+            admission: NoUpstream
+            upstream_id: input.upstream_id
+        summary: The named upstream does not exist; the call is recorded NoUpstream.
+      - name: gateway-not-serving
+        when_related: {via: input.gateway_id, predicate: state != Serving}
+        error: agentic.gateway.GatewayNotServing
+        payload:
+          agentic.gateway.GatewayNotServing:
+            gateway_id: input.gateway_id
+        summary: The gateway is draining or stopped; the call is not admitted and not recorded.
+      - name: no-upstream-detached
+        when_related: {via: input.upstream_id, predicate: state == Detached}
+        creates: agentic.gateway.Call
+        instance: inference_id
+        sets:
+          gateway_id: input.gateway_id
+          caller: input.caller
+          route_id: input.route_id
+          admission: NoUpstream
+          budget_left: input.budget_left
+          upstream_id: input.upstream_id
+        emits: [agentic.gateway.CallDecided]
+        payload:
+          agentic.gateway.CallDecided:
+            inference_id: input.inference_id
+            gateway_id: input.gateway_id
+            caller: input.caller
+            route_id: input.route_id
+            admission: NoUpstream
+            upstream_id: input.upstream_id
+        summary: The upstream is detached; the call is recorded NoUpstream.
+      - name: rate-limited
+        when_related: {via: input.upstream_id, predicate: state == Saturated}
+        creates: agentic.gateway.Call
+        instance: inference_id
+        sets:
+          gateway_id: input.gateway_id
+          caller: input.caller
+          route_id: input.route_id
+          admission: RateLimited
+          budget_left: input.budget_left
+          upstream_id: input.upstream_id
+        emits: [agentic.gateway.CallDecided]
+        payload:
+          agentic.gateway.CallDecided:
+            inference_id: input.inference_id
+            gateway_id: input.gateway_id
+            caller: input.caller
+            route_id: input.route_id
+            admission: RateLimited
+            upstream_id: input.upstream_id
+        summary: The upstream is saturated; the call is recorded RateLimited.
+      - name: over-budget
+        when: budget_left.micro_usd == 0
+        creates: agentic.gateway.Call
+        instance: inference_id
+        sets:
+          gateway_id: input.gateway_id
+          caller: input.caller
+          route_id: input.route_id
+          admission: OverBudget
+          budget_left: input.budget_left
+          upstream_id: input.upstream_id
+        emits: [agentic.gateway.CallDecided]
+        payload:
+          agentic.gateway.CallDecided:
+            inference_id: input.inference_id
+            gateway_id: input.gateway_id
+            caller: input.caller
+            route_id: input.route_id
+            admission: OverBudget
+            upstream_id: input.upstream_id
+        summary: The caller's budget is spent and the gateway and upstream are fine; the call is recorded OverBudget and goes nowhere.
+      - name: admitted
+        creates: agentic.gateway.Call
+        instance: inference_id
+        sets:
+          gateway_id: input.gateway_id
+          caller: input.caller
+          route_id: input.route_id
+          admission: Admitted
+          budget_left: input.budget_left
+          upstream_id: input.upstream_id
+        emits: [agentic.gateway.CallDecided]
+        payload:
+          agentic.gateway.CallDecided:
+            inference_id: input.inference_id
+            gateway_id: input.gateway_id
+            caller: input.caller
+            route_id: input.route_id
+            admission: Admitted
+            upstream_id: input.upstream_id
+        summary: The call is Admitted on the upstream and awaits its completion.
+
+  - name: agentic.gateway.CompleteCall
+    naming:
+      wire: complete-call
+      display: Complete a call
+    input:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: outcome, type: agentic.model.InferenceOutcome}
+      - {name: usage, type: agentic.shared.Usage}
+    outcomes:
+      - name: not-admitted
+        when_subject:
+          predicate: admission != Admitted
+        error: agentic.gateway.CallNotAdmitted
+        payload:
+          agentic.gateway.CallNotAdmitted:
+            admission: {subject: admission}
+        summary: The call was refused at admission and cannot complete.
+      - name: completed
+        moves: agentic.gateway.Call.complete
+        instance: inference_id
+        sets:
+          outcome: input.outcome
+          usage: input.usage
+        emits: [agentic.gateway.CallCompleted]
+        payload:
+          agentic.gateway.CallCompleted:
+            inference_id: input.inference_id
+            outcome: input.outcome
+            usage: input.usage
+        summary: The call is Completed with its usage and how it ended.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.gateway.CallStateConflict
+        summary: The call had already completed.
+
+events:
+  - name: agentic.gateway.GatewayOpened
+    fields:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: name, type: agentic.shared.Name}
+
+  - name: agentic.gateway.GatewayDrained
+    fields:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+
+  - name: agentic.gateway.GatewayStopped
+    fields:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+
+  - name: agentic.gateway.UpstreamAttached
+    fields:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+
+  - name: agentic.gateway.UpstreamDetached
+    fields:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+
+  - name: agentic.gateway.UpstreamSaturated
+    fields:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+
+  - name: agentic.gateway.UpstreamRestored
+    fields:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+
+  - name: agentic.gateway.CallDecided
+    fields:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: caller, type: agentic.shared.PrincipalId}
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: admission, type: agentic.gateway.Admission}
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+
+  - name: agentic.gateway.CallCompleted
+    fields:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: outcome, type: agentic.model.InferenceOutcome}
+      - {name: usage, type: agentic.shared.Usage}
+
+views:
+  - name: agentic.gateway.Gateways
+    source: agentic.gateway.Gateway
+    consistency: read_your_writes
+    fields:
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: state, type: agentic.gateway.Gateway.State}
+    naming:
+      wire: gateways
+      display: Gateways
+
+  - name: agentic.gateway.Upstreams
+    source: agentic.gateway.Upstream
+    consistency: read_your_writes
+    fields:
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: endpoint_id, type: agentic.shared.EndpointId}
+      - {name: state, type: agentic.gateway.Upstream.State}
+    naming:
+      wire: upstreams
+      display: Upstreams
+
+  - name: agentic.gateway.Calls
+    source: agentic.gateway.Call
+    consistency: read_your_writes
+    fields:
+      - {name: inference_id, type: agentic.shared.InferenceId}
+      - {name: gateway_id, type: agentic.shared.GatewayId}
+      - {name: caller, type: agentic.shared.PrincipalId}
+      - {name: route_id, type: agentic.shared.RouteId}
+      - {name: admission, type: agentic.gateway.Admission}
+      - {name: budget_left, type: agentic.shared.Money}
+      - {name: upstream_id, type: agentic.shared.UpstreamId}
+      - {name: usage, type: Optional<agentic.shared.Usage>}
+      - {name: outcome, type: Optional<agentic.model.InferenceOutcome>}
+      - {name: state, type: agentic.gateway.Call.State}
+    naming:
+      wire: calls
+      display: Calls

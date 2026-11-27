@@ -1,0 +1,40 @@
+format: agenticspec-architecture/1
+architecture: ladder-04-background-sessions
+summary: >-
+  Rung 4 of the agentic ladder. Several background sessions run beside the first, each in its own
+  worktree, each started from a spec written before the session. The owner decomposes, delegates
+  and reviews; specs, context files and tests carry the trust.
+
+parts:
+  you:       { block: principal, kind: human }
+  session:   { block: agent, harness: coding, acts_for: you }
+  subagents: { block: agent, harness: coding, count: 3 }
+  sessions:  { block: agent, harness: coding, count: 4 }
+  model:     { block: model, route: frontier }
+  repo:      { block: workspace, kind: checkout, sharing: exclusive, per: session }
+  trees:     { block: workspace, kind: worktree, sharing: exclusive, per: sessions }
+  context:   { block: knowledge, kind: context_files }
+  specs:     { block: work, kind: spec }
+  tests:     { block: tool, category: execute, kind: test_suite }
+
+links:
+  - { from: you,       to: session,   carries: prompt }
+  - { from: session,   to: you,       carries: question }
+  - { from: session,   to: you,       carries: proposal }
+  - { from: session,   to: model,     carries: model_call }
+  - { from: session,   to: subagents, carries: order }
+  - { from: subagents, to: session,   carries: question }
+  - { from: subagents, to: model,     carries: model_call }
+  - { from: subagents, to: tests,     carries: call }
+  - { from: context,   to: subagents, carries: context }
+  - { from: you,       to: specs,     carries: spec }
+  - { from: specs,     to: sessions,  carries: spec }
+  - { from: sessions,  to: you,       carries: question }
+  - { from: sessions,  to: model,     carries: model_call }
+  - { from: sessions,  to: tests,     carries: call }
+  - { from: context,   to: sessions,  carries: context }
+
+border: [session]
+
+policies:
+  operator_answers_alone: false

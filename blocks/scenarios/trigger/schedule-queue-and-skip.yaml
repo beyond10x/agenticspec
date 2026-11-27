@@ -1,0 +1,162 @@
+# The concurrency policies of a trigger, walked by hand: synthesis cannot reach a trigger whose runs
+# fill its limit, because that takes a recorded start. A checked and enabled schedule wakes one agent
+# revision through two triggers, each allowing one run at a time. While a run goes, the Queue
+# trigger records its next firing as waiting and starts it after the run ended; the Skip trigger
+# records its next firing as skipped.
+type: ess-scenario/7
+domain: agentic.trigger
+scenario: schedule-queue-and-skip
+summary: With one run going, a Queue trigger queues its next firing and starts it after the run ends; a Skip trigger skips it.
+
+arrange:
+  - instance: sched
+    entity: agentic.trigger.Schedule
+  - instance: queue
+    entity: agentic.trigger.Trigger
+  - instance: skip
+    entity: agentic.trigger.Trigger
+  - instance: f1
+    entity: agentic.trigger.Firing
+  - instance: f2
+    entity: agentic.trigger.Firing
+  - instance: g1
+    entity: agentic.trigger.Firing
+
+timeline:
+  # the agent revision a trigger wakes
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-0000000003a1, kind: Agent, name: nightly-worker, at: 2026-11-27T09:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.agent.DefineAgent
+    input: {agent_id: 00000000-0000-4000-8000-0000000003a2, principal_id: 00000000-0000-4000-8000-0000000003a1, name: nightly-worker, at: 2026-11-27T09:00:01Z}
+    outcome: defined
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.agent.PublishRevision
+    input:
+      agent_revision_id: 00000000-0000-4000-8000-0000000003a3
+      agent_id: 00000000-0000-4000-8000-0000000003a2
+      number: 1
+      role: worker
+      instructions: {digest: sha256-instructions, length: 400, class: prompt}
+      models: [{use: Primary, target: {kind: Model, value: 00000000-0000-4000-8000-0000000003a4}}]
+      tools: []
+      knowledge: []
+      budget: {}
+      at: 2026-11-27T09:00:02Z
+    outcome: published
+
+  # the schedule: created, checked, enabled
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.trigger.CreateSchedule
+    input: {expression: "0 2 * * *", timezone: Europe/Berlin, next_fire_at: 2026-11-28T01:00:00Z}
+    outcome: created
+    capture: {instance: sched, event: agentic.trigger.ScheduleCreated, field: schedule_id}
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.trigger.PassScheduleChecks
+    input: {schedule_id: {$instance: sched}}
+    outcome: passed
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.trigger.EnableSchedule
+    input: {schedule_id: {$instance: sched}}
+    outcome: enabled
+
+  # two triggers on it, one run at a time each
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.trigger.CreateTrigger
+    input:
+      kind: OnSchedule
+      schedule_id: {$instance: sched}
+      agent_revision_id: 00000000-0000-4000-8000-0000000003a3
+      policy: Queue
+      max_parallel: 1
+    outcome: created
+    capture: {instance: queue, event: agentic.trigger.TriggerCreated, field: trigger_id}
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.trigger.EnableTrigger
+    input: {trigger_id: {$instance: queue}}
+    outcome: enabled
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.trigger.CreateTrigger
+    input:
+      kind: OnSchedule
+      schedule_id: {$instance: sched}
+      agent_revision_id: 00000000-0000-4000-8000-0000000003a3
+      policy: Skip
+      max_parallel: 1
+    outcome: created
+    capture: {instance: skip, event: agentic.trigger.TriggerCreated, field: trigger_id}
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.trigger.EnableTrigger
+    input: {trigger_id: {$instance: skip}}
+    outcome: enabled
+
+  # Queue: fire, start, fire again while the run goes (queued), end, start the queued firing
+  - at: 2026-11-28T01:00:00Z
+    command: agentic.trigger.FireTrigger
+    input: {trigger_id: {$instance: queue}, tick: 2026-11-28T01:00:00Z}
+    outcome: fired
+    capture: {instance: f1, event: agentic.trigger.TriggerFired, field: firing_id}
+  - at: 2026-11-28T01:00:01Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: queue}, firing_id: {$instance: f1}, run_id: 00000000-0000-4000-8000-0000000003b1}
+    outcome: started
+  - at: 2026-11-29T01:00:00Z
+    command: agentic.trigger.FireTrigger
+    input: {trigger_id: {$instance: queue}, tick: 2026-11-29T01:00:00Z}
+    outcome: queued
+    capture: {instance: f2, event: agentic.trigger.FiringQueued, field: firing_id}
+    no_events: [agentic.trigger.TriggerFired]
+  - at: 2026-11-29T01:30:00Z
+    command: agentic.trigger.RecordEnd
+    input: {trigger_id: {$instance: queue}, firing_id: {$instance: f1}}
+    outcome: ended
+  - at: 2026-11-29T01:30:01Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: queue}, firing_id: {$instance: f2}, run_id: 00000000-0000-4000-8000-0000000003b2}
+    outcome: started
+
+  # Skip: fire, start, fire again while the run goes (skipped)
+  - at: 2026-11-29T02:00:00Z
+    command: agentic.trigger.FireTrigger
+    input: {trigger_id: {$instance: skip}, tick: 2026-11-29T02:00:00Z}
+    outcome: fired
+    capture: {instance: g1, event: agentic.trigger.TriggerFired, field: firing_id}
+  - at: 2026-11-29T02:00:01Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: skip}, firing_id: {$instance: g1}, harness_session_id: 00000000-0000-4000-8000-0000000003c1}
+    outcome: started
+  - at: 2026-11-30T02:00:00Z
+    command: agentic.trigger.FireTrigger
+    input: {trigger_id: {$instance: skip}, tick: 2026-11-30T02:00:00Z}
+    outcome: skipped
+    no_events: [agentic.trigger.TriggerFired]
+
+assert:
+  - view: agentic.trigger.RecentFirings
+    params:
+      trigger_id: {$instance: queue}
+    contains:
+      firing_id: {$instance: f1}
+      state: Ended
+  - view: agentic.trigger.RecentFirings
+    params:
+      trigger_id: {$instance: queue}
+    contains:
+      firing_id: {$instance: f2}
+      state: Started
+      run_id: 00000000-0000-4000-8000-0000000003b2
+  - view: agentic.trigger.RecentFirings
+    params:
+      trigger_id: {$instance: skip}
+    contains:
+      state: Skipped
+  - view: agentic.trigger.Triggers
+    contains:
+      trigger_id: {$instance: queue}
+      running: 1
+  - view: agentic.trigger.Triggers
+    contains:
+      trigger_id: {$instance: skip}
+      running: 1

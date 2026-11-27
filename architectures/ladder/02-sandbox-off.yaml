@@ -1,0 +1,20 @@
+format: agenticspec-architecture/1
+architecture: ladder-02-sandbox-off
+summary: >-
+  Rung 2 of the agentic ladder. The sandbox is switched off: the session reaches everything the
+  owner's account reaches, and the permission prompts stop. The only guard left is the owner
+  reading every diff.
+
+parts:
+  you:     { block: principal, kind: human }
+  session: { block: agent, harness: coding }
+  model:   { block: model, route: frontier }
+  repo:    { block: workspace, kind: checkout, sharing: exclusive, per: session }
+
+links:
+  - { from: you,     to: session, carries: prompt }
+  - { from: session, to: you,     carries: question }
+  - { from: session, to: you,     carries: proposal }
+  - { from: session, to: model,   carries: model_call }
+
+border: [session]

@@ -10,6 +10,10 @@ import {withProductSite} from '@beyond10x/docs-system/product-site';
 // theme draws over it (lede, status, source link); the files themselves stay as they are on
 // GitHub. The landing page is src/pages/index.tsx, which draws product.json with the docs-system
 // product template.
+//
+// docs/blocks/, docs/architectures/ and docs/kpis-catalogue.md are written by agenticspec-docs
+// (task docs:generate) from blocks/, architectures/ and kpis/catalogue.yaml; each carries its route,
+// title and header in its own front matter, and draws with the components of src/theme/MDXComponents.tsx.
 
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(siteDir, '..');
@@ -108,10 +112,15 @@ const config: Config = {
       {
         docs: {
           path: '..',
-          include: ['docs/*.md'],
+          include: ['docs/*.md', 'docs/blocks/**/*.md', 'docs/architectures/*.md'],
+          numberPrefixParser: false,
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
-          editUrl: 'https://github.com/beyond10x/agenticspec/tree/main/',
+          // A generated page is changed through its sources, so it has no edit link.
+          editUrl: ({docPath}) =>
+            /^docs\/(blocks\/|architectures\/|kpis-catalogue\.md$)/.test(docPath)
+              ? undefined
+              : `https://github.com/beyond10x/agenticspec/tree/main/${docPath}`,
         },
         blog: false,
       } satisfies Preset.Options,
@@ -125,6 +134,7 @@ const config: Config = {
         {to: '/docs/getting-started', label: 'Getting started', position: 'left'},
         {to: '/docs/kpis', label: 'KPIs', position: 'left'},
         {to: '/docs/queries', label: 'Queries', position: 'left'},
+        {to: '/docs/blocks', label: 'Building blocks', position: 'left'},
         {to: '/docs/privacy', label: 'Privacy', position: 'left'},
         {href: 'https://github.com/beyond10x/agenticspec', label: 'GitHub', position: 'right'},
       ],
@@ -142,6 +152,14 @@ const config: Config = {
             {label: 'Patterns and procedures', to: '/docs/patterns'},
             {label: 'Privacy', to: '/docs/privacy'},
             {label: 'Records library', to: '/docs/library'},
+          ],
+        },
+        {
+          title: 'Building blocks',
+          items: [
+            {label: 'Layer map', to: '/docs/blocks'},
+            {label: 'Architectures', to: '/docs/architectures'},
+            {label: 'KPI catalogue', to: '/docs/kpis-catalogue'},
           ],
         },
         {

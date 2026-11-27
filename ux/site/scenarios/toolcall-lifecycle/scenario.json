@@ -1,0 +1,20 @@
+{
+  "name": "toolcall-lifecycle",
+  "anchor": false,
+  "card": {
+    "persona": "An engineer who writes a gateway and must know every way a tool call can end.",
+    "task": "On the harness block page, read the lifecycle of a tool call and the states it ends in."
+  },
+  "start": "/",
+  "steps": [
+    { "click": "link", "name": "Building blocks", "in": "navbar" },
+    { "click": "link", "name": "^harness\\b", "in": "main" },
+    { "click": "link", "name": "ToolCall", "in": "toc" }
+  ],
+  "target": { "kind": "lifecycle", "entity": "ToolCall" },
+  "truth": {
+    "path": "/docs/blocks/4-agent/harness",
+    "terminal": ["Completed", "Denied", "Failed"]
+  },
+  "expectations": ["the lifecycle diagram of ToolCall is in view and marks Completed, Denied and Failed as the end states"]
+}
