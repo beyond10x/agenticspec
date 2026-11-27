@@ -7,6 +7,8 @@
 
 mod arch;
 mod blocks;
+mod cache;
+mod catalog;
 mod kpis;
 mod layout;
 mod md;
@@ -29,6 +31,8 @@ pub const OWNED_DIRS: &[&str] = &[
     "docs/blocks",
     "docs/architectures",
     "website/static/architectures",
+    "docs/catalog",
+    "website/static/catalog",
     "website/src/generated",
 ];
 
@@ -38,6 +42,7 @@ pub const OWNED_FILES: &[&str] = &[
     "docs/blocks/index.md",
     "docs/blocks/planned.md",
     "docs/architectures/index.md",
+    "docs/catalog/index.md",
     "website/src/generated/blocks.json",
     "website/src/generated/kpis.json",
     "website/src/generated/sidebar.json",
@@ -155,9 +160,17 @@ pub fn generate(root: &Path, catalogue: Option<Catalogue>) -> Result<Generated, 
         );
     }
     let names: Vec<String> = archs.iter().map(|a| a.name.clone()).collect();
+
+    let cat = catalog::load(root)?;
+    files.insert("docs/catalog/index.md".to_string(), catalog::index(&cat));
+    for e in &cat.entries {
+        files.insert(format!("docs/catalog/{}.md", e.name), catalog::page(e));
+        files.extend(catalog::files(e)?);
+    }
+    let entries: Vec<String> = cat.entries.iter().map(|e| e.name.clone()).collect();
     files.insert(
         "website/src/generated/sidebar.json".to_string(),
-        json_text(&blocks::sidebar_json(&blocks, &names)),
+        json_text(&blocks::sidebar_json(&blocks, &names, &entries)),
     );
     Ok(Generated { ir, files })
 }

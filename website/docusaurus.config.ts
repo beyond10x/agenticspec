@@ -112,13 +112,13 @@ const config: Config = {
       {
         docs: {
           path: '..',
-          include: ['docs/*.md', 'docs/blocks/**/*.md', 'docs/architectures/*.md'],
+          include: ['docs/*.md', 'docs/ladder.mdx', 'docs/blocks/**/*.md', 'docs/architectures/*.md', 'docs/catalog/*.md'],
           numberPrefixParser: false,
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
           // A generated page is changed through its sources, so it has no edit link.
           editUrl: ({docPath}) =>
-            /^docs\/(blocks\/|architectures\/|kpis-catalogue\.md$)/.test(docPath)
+            /^docs\/(blocks\/|architectures\/|catalog\/|kpis-catalogue\.md$)/.test(docPath)
               ? undefined
               : `https://github.com/beyond10x/agenticspec/tree/main/${docPath}`,
         },
@@ -135,6 +135,7 @@ const config: Config = {
         {to: '/docs/kpis', label: 'KPIs', position: 'left'},
         {to: '/docs/queries', label: 'Queries', position: 'left'},
         {to: '/docs/blocks', label: 'Building blocks', position: 'left'},
+        {to: '/docs/catalog', label: 'Catalog', position: 'left'},
         {to: '/docs/privacy', label: 'Privacy', position: 'left'},
         {href: 'https://github.com/beyond10x/agenticspec', label: 'GitHub', position: 'right'},
       ],

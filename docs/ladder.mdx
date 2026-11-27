@@ -1,0 +1,63 @@
+---
+title: The agentic ladder
+sidebar_label: The agentic ladder
+slug: /ladder
+description: "Seven stages of agentic engineering, measured by throughput, with the trust each one needs: one architecture grows rung by rung from a sandboxed agent session to a factory of teams."
+lede: "How much work runs through one person, and what that person needs to trust it. One architecture grows rung by rung, from one sandboxed agent session to a factory of teams."
+kicker: Model
+source: "ladder/ladder.yaml"
+source_url: "https://github.com/beyond10x/agenticspec/blob/main/ladder/ladder.yaml"
+hide_table_of_contents: true
+---
+
+import AgenticLadder from '@site/src/components/ladder/AgenticLadder';
+import {StageTable, BarrierTable, RungTable, SimulationNote} from '@site/src/components/ladder/LadderModel';
+
+Press play, or step with the arrow keys. Each rung adds parts to the same architecture. Parts with a
+shield are **trust parts**: a way to know the output is correct without reading every line of it.
+
+<AgenticLadder />
+
+<SimulationNote />
+
+## The model
+
+**Throughput** is the amount of work that runs through a person per unit of time, as opposed to the
+work that person does by hand. **Trust** is that person's ability to establish that the output is
+correct without reading every line.
+
+The ladder has seven stages. Each stage is a band of throughput with one **marker**, what is
+observably true at that stage, and one **trust need**, what must be in place for that throughput to
+be safe. **The rule:** each stage of throughput needs its matching trust. Throughput without it
+produces bad output faster.
+
+<StageTable />
+
+A **barrier** is a change of mental model, not of tooling. It sits between two stages, and it is
+where people stall. It is crossed only by what someone does on the far side, never by talking about
+it.
+
+<BarrierTable />
+
+## The rungs
+
+The animation follows one owner's journey: a sandboxed session at a workstation, the sandbox
+switched off, sub-agents, background sessions, scheduled agents, experiments, a swarm, a live loop
+and finally a factory of teams. Each rung is an architecture document made of the
+[building blocks](/docs/blocks), and `agenticspec-sim check` accepts every one of them. A part keeps
+its name from rung to rung, so the picture grows instead of being redrawn.
+
+<RungTable />
+
+The ladder itself, `ladder/ladder.yaml`, is checked too. Every stage has a rung, every barrier sits
+between two neighbouring stages, a part keeps its block across rungs, and every trust part exists in
+its rung's architecture. A rung that raises the number of agent copies at work, or drops a trust
+part, without adding a trust part is refused unless it names the risk it takes. The second rung, the
+sandbox switched off, is the one that names it.
+
+To regenerate the data of this page after changing the ladder or a rung:
+
+```sh
+task ladder:generate   # agenticspec-sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json
+task check:ladder      # fails when the data file is stale
+```

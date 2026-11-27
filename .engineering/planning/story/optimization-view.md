@@ -2,17 +2,18 @@
 format: aep.planning-md/3
 id: story:optimization-view
 kind: story
-status: active
+status: implemented
 title: Explain the optimization on the experiment result page
 relations:
 - decomposes: epic:simulator-and-search
 scope:
 - confidence: cited
   path: crates/agenticspec-render
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T18:53:20Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-27T18:53:20Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-27T20:12:30Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

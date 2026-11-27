@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:triggers-schedules-swarms
 kind: story
-status: active
+status: implemented
 title: Triggers, schedules, multi-party channels and swarms
 summary: A trigger block wakes agents on messages, time or events; channels get topics, queues and boards; architectures get swarms.
 relations:
@@ -22,10 +22,11 @@ scope:
   path: blocks/scenarios/architecture
 - confidence: cited
   path: blocks/system.yaml
-revision: 10
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T15:14:28Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-27T15:14:28Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-27T20:12:30Z", actor: "human:operator", revision: 11, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

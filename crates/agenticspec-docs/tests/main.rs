@@ -325,3 +325,122 @@ fn check_fails_after_a_generated_file_is_edited_or_added() {
     assert!(!stray.exists(), "a write removes the stray file");
     assert!(html.exists(), "a write restores the missing file");
 }
+
+/// Each experiment as `(its name, the file stem of the architecture it names)`.
+fn experiments() -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    for entry in std::fs::read_dir(root().join("experiments")).expect("experiments/") {
+        let path = entry.expect("entry").path();
+        if path.extension().is_none_or(|e| e != "yaml") {
+            continue;
+        }
+        let doc = agenticspec_sim::doc::load_yaml(&path).expect("experiment parses");
+        let arch = doc["architecture"].as_str().expect("architecture");
+        let arch = Path::new(arch)
+            .file_stem()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        out.push((
+            doc["experiment"].as_str().expect("experiment").to_string(),
+            arch,
+        ));
+    }
+    out.sort();
+    out
+}
+
+#[test]
+fn every_experiment_has_a_catalog_entry_with_its_downloads() {
+    let g = generated_with_fixture();
+    let index = &g.files["docs/catalog/index.md"];
+    let list = experiments();
+    assert!(!list.is_empty());
+    for (exp, name) in &list {
+        let page = &g.files[&format!("docs/catalog/{name}.md")];
+        let dir = format!("website/static/catalog/{name}");
+        for file in [
+            format!("{name}.yaml"),
+            format!("{name}.best.yaml"),
+            format!("{exp}.yaml"),
+            "coding.yaml".to_string(),
+            "result.json".to_string(),
+        ] {
+            assert!(
+                g.files.contains_key(&format!("{dir}/{file}")),
+                "{dir}/{file} is written"
+            );
+            assert!(
+                page.contains(&format!("\"file\":\"{file}\"")),
+                "{name} offers {file}"
+            );
+        }
+        let html = &g.files[&format!("{dir}/{name}.html")];
+        assert!(
+            html.contains("architecture and optimization"),
+            "{name}: the full result page"
+        );
+        assert!(
+            page.contains(&format!("src={{\"/catalog/{name}/{name}\"}}")),
+            "{name}: the page embeds its result page by the path without .html"
+        );
+        assert!(
+            page.contains(&format!("agenticspec-sim run {exp}.yaml --out out/")),
+            "{name}: the command"
+        );
+        assert!(page.contains("## Deploy\n"), "{name}: the deploy note");
+        assert!(
+            index.contains(&format!("\"to\":\"/docs/catalog/{name}\"")),
+            "{name} has a card"
+        );
+        assert_eq!(
+            g.files[&format!("{dir}/{name}.yaml")],
+            std::fs::read_to_string(root().join(format!("architectures/{name}.yaml"))).unwrap(),
+            "{name}: the architecture as written"
+        );
+    }
+    for entry in std::fs::read_dir(root().join("architectures")).unwrap() {
+        let path = entry.unwrap().path();
+        let name = path.file_stem().unwrap().to_string_lossy().into_owned();
+        if path.extension().is_some_and(|e| e == "yaml") && !list.iter().any(|(_, a)| *a == name) {
+            assert!(
+                index.contains(&format!("[{name}](../architectures/{name}.md)")),
+                "{name} is listed as not optimized yet"
+            );
+        }
+    }
+}
+
+/// The downloaded files alone, read as a user reads them: the experiment names the architecture and
+/// the profile beside it, the optimized architecture passes the check, and with it in place of the
+/// one as written the experiment scores the best fitness of `result.json`.
+#[test]
+fn a_downloaded_optimized_architecture_reproduces_the_best_fitness() {
+    let g = generated_with_fixture();
+    let dir = "website/static/catalog/shared-board";
+    let read =
+        |f: &str| agenticspec_sim::doc::parse_yaml(&g.files[&format!("{dir}/{f}")]).expect(f);
+    let exp = read("shared-board-tuning.yaml");
+    assert_eq!(exp["architecture"], "shared-board.yaml");
+    assert_eq!(exp["profile"], "coding.yaml");
+    let best = read("shared-board.best.yaml");
+    assert!(agenticspec_sim::check::check(&best).is_empty());
+    let e =
+        agenticspec_sim::Experiment::from_docs(exp, read("shared-board.yaml"), read("coding.yaml"))
+            .unwrap();
+    let result: serde_json::Value =
+        serde_json::from_str(&g.files[&format!("{dir}/result.json")]).unwrap();
+    let got = agenticspec_sim::best::fitness_as_written(&e, best, 2).unwrap();
+    assert_eq!(Some(got), result["best"]["fitness"].as_f64());
+}
+
+/// A generation reads the experiment results from a cache; the bytes are those of a fresh run.
+#[test]
+fn a_catalog_result_is_the_bytes_of_a_fresh_run() {
+    let g = generated_with_fixture();
+    let e = agenticspec_sim::Experiment::load(&root().join("experiments/shared-board-tuning.yaml"))
+        .unwrap();
+    let mut fresh = serde_json::to_string_pretty(&agenticspec_sim::run(&e, 2).unwrap()).unwrap();
+    fresh.push('\n');
+    assert!(g.files["website/static/catalog/shared-board/result.json"] == fresh);
+}

@@ -1,0 +1,109 @@
+/*
+ * The catalog of optimized architectures: the cards of the index and the download list of an
+ * entry. Colours come from the building-block pages (blocks.css), light and dark.
+ */
+
+.as-cat {
+  list-style: none;
+  margin: 1rem 0 2rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 14px;
+}
+.as-cat > li { margin: 0; }
+
+.as-cat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--as-line);
+  border-radius: 12px;
+  background: var(--as-card);
+  color: var(--as-text);
+}
+.as-cat-card p { margin: 0; }
+.as-cat-card__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 10px; }
+.as-cat-card .as-cat-card__name { margin: 0; font: 650 1.05rem/1.25 var(--b10x-font-mono, ui-monospace, monospace); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.as-cat-card__name a { color: var(--as-ink); text-decoration: underline; text-decoration-color: var(--as-line); text-underline-offset: 3px; }
+.as-cat-card__name a:hover, .as-cat-card__name a:focus-visible { text-decoration-color: currentColor; }
+.as-cat-card__purpose { font-size: 0.95rem; line-height: 1.5; }
+
+.as-cat-stage {
+  flex: none;
+  padding: 0 0.5em;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--as-edge-on);
+  background: color-mix(in srgb, var(--as-edge-on) 9%, transparent);
+}
+.as-cat-stage:hover { text-decoration: none; background: color-mix(in srgb, var(--as-edge-on) 16%, transparent); }
+
+.as-cat-fit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--as-band);
+  font-variant-numeric: tabular-nums;
+}
+.as-cat-fit__label { font-size: 0.8125rem; font-weight: 600; color: var(--as-muted); }
+.as-cat-fit__vals { font-size: 1.05rem; color: var(--as-ink); }
+.as-cat-fit__gain { font-weight: 700; color: var(--as-good); }
+
+.as-cat-moves { display: flex; flex-direction: column; gap: 4px; }
+.as-cat-moves ul { list-style: none; margin: 0 0 4px; padding: 0; }
+.as-cat-moves__label { font-size: 0.8125rem; font-weight: 600; color: var(--as-muted); }
+/* A KPI name on its line, its values below it, the change of the fitness at the right. */
+.as-cat-move {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 1px 10px;
+  margin: 0;
+  padding: 3px 0;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.as-cat-move + .as-cat-move { border-top: 1px solid var(--as-line); }
+.as-cat-move code { grid-column: 1; font-size: 0.8125rem; overflow-wrap: anywhere; justify-self: start; }
+.as-cat-move__vals { grid-column: 1; grid-row: 2; color: var(--as-muted); }
+.as-cat-move__fit { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-weight: 700; white-space: nowrap; text-align: right; }
+.as-cat-move--gain .as-cat-move__fit { color: var(--as-good); }
+.as-cat-move--tradeoff .as-cat-move__fit { color: var(--as-bad); }
+
+.as-cat-card__meta { margin-top: auto !important; font-size: 0.8125rem; color: var(--as-muted); overflow-wrap: anywhere; }
+
+/* The downloads of an entry. */
+.as-cat-dl { list-style: none; margin: 0.6rem 0 1.6rem; padding: 0; border: 1px solid var(--as-line); border-radius: 12px; overflow: hidden; }
+.as-cat-dl > li {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: 2px 14px;
+  margin: 0;
+  padding: 10px 14px;
+  border-top: 1px solid var(--as-line);
+  background: var(--as-card);
+}
+.as-cat-dl > li:first-child { border-top: 0; }
+.as-cat-dl__label { grid-row: span 2; font-weight: 600; color: var(--as-ink); }
+.as-cat-dl__file { font-family: var(--b10x-font-mono, ui-monospace, monospace); font-size: 0.9rem; font-weight: 600; overflow-wrap: anywhere; justify-self: start; }
+.as-cat-dl__about { font-size: 0.875rem; color: var(--as-muted); line-height: 1.45; }
+
+@media (max-width: 600px) {
+  .as-cat-dl > li { grid-template-columns: minmax(0, 1fr); }
+  .as-cat-dl__label { grid-row: auto; }
+}
+
+/* The generated table of the index reads like those of the architecture pages. */
+.markdown:has(.as-cat) table { font-size: 0.875rem; }
+.markdown:has(.as-cat) table th { font-size: 0.875rem; letter-spacing: 0; text-transform: none; }
+.markdown:has(.as-cat) table td, .markdown:has(.as-cat) table th { vertical-align: top; padding: 0.45rem 0.65rem; }

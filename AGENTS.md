@@ -78,6 +78,15 @@ change.
   `pages` of `docusaurus.config.ts`, and draw with the components in `website/src/components/blocks/`.
   The short optimization run on an architecture page uses a fixed budget (`DOCS_BUDGET`), so the
   page changes when the simulator changes.
+- The catalog (`docs/catalog/`, `website/static/catalog/<architecture>/`) is generated the same
+  way, one entry per experiment, run at the experiment's own budget and seeds: its full result
+  page, the downloads (the files as written, `best.yaml` from `agenticspec-sim::best`, the
+  experiment pointing at the files beside it, `result.json`) and the index cards. The generator
+  refuses an entry whose `best.yaml` does not score the best fitness. The results are cached under
+  `target/<profile>/…/catalog-cache/`, keyed by the running executable and the input texts
+  (`crates/agenticspec-docs/src/cache.rs`), so the tests run each experiment once per build; a
+  cold generation takes about 9 s. The catalog components are in `website/src/components/catalog/`;
+  a ladder stage on a card comes from `STAGES` in `catalog.rs`.
 
 ## Layout of the hand-written crates
 

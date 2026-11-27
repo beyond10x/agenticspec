@@ -6,8 +6,10 @@ use std::process::ExitCode;
 use std::time::Instant;
 
 const USAGE: &str = "usage: agenticspec-docs [--root DIR] [--check]
-  writes docs/blocks/, docs/architectures/, docs/kpis-catalogue.md, website/static/architectures/
-  and website/src/generated/ from blocks/, kpis/catalogue.yaml, architectures/ and experiments/;
+  writes docs/blocks/, docs/architectures/, docs/catalog/, docs/kpis-catalogue.md,
+  website/static/architectures/, website/static/catalog/
+  and website/src/generated/ from blocks/, kpis/catalogue.yaml, architectures/, experiments/
+  and profiles/;
   --check writes nothing and exits 1 when a file differs, is missing or is not generated";
 
 fn main() -> ExitCode {

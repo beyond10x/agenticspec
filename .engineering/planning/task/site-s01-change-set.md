@@ -2,14 +2,15 @@
 format: aep.planning-md/3
 id: task:site-s01-change-set
 kind: task
-status: active
+status: implemented
 title: Build the change set of docs-site round S-01
 relations:
 - decomposes: story:site-ui-loop
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T18:31:46Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-27T18:31:46Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-27T20:12:25Z", actor: "human:operator", revision: 4}
 ---
 ## Outcome
 

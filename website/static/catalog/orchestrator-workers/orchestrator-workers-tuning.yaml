@@ -1,0 +1,30 @@
+format: agenticspec-experiment/1
+experiment: orchestrator-workers-tuning
+architecture: orchestrator-workers.yaml
+profile: coding.yaml
+horizon: 24h
+seeds: 8
+seed: 1
+
+bursts:
+  - { at: 0s, tasks: 40 }
+
+faults:
+  - { kind: principal_away, part: owner, from: 2h, for: 3h }
+
+optimize: marked
+
+search:
+  mode: fit
+  budget: 60
+  restarts: 2
+  weights:
+    tasks_correct: 10
+    false_completions_shipped: -5
+    owner_wait_share: -200
+    cost_usd: -0.05
+    queue_wait_p90_seconds: -0.01
+    backlog_wait_p90_seconds: -0.001
+    questions_defaulted: -1
+    operator_decided_owner_questions: -1
+  gates: [unreachable_parts, agent_without_model_path, swarm_needs_agent]

@@ -298,7 +298,7 @@ fn label(arch: &Value, name: &str, p: &Value) -> String {
         "agent" => "agent".into(),
         "principal" => kind,
         "schedule" => format!("every {}", text(p, "every")),
-        "trigger" => format!("trigger {}", kind.trim_start_matches("on ")),
+        "trigger" => kind,
         "channel" => format!("{} channel", text(p, "distribution")),
         "sandbox" => format!("sandbox, {}", text(p, "isolation")),
         "kpi" => "KPIs".into(),

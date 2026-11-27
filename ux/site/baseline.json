@@ -302,8 +302,9 @@
         "tolerance": 20.95
       },
       "reading_load.median": {
-        "value": 168,
-        "tolerance": 8.4
+        "value": 178,
+        "tolerance": 8.9,
+        "decision": "story architecture-catalog: the navbar entry Catalog and the sidebar entries Catalog and The agentic ladder add their words to every look of this task (measured 175 and 178 on two runs); decision D3, 2026-11-27: taken, the owner asked for the catalog and the ladder in the navigation"
       },
       "layout_shift.score": {
         "value": 0,
@@ -338,12 +339,12 @@
       "reading_load.max": {
         "value": 318,
         "tolerance": 15.9,
-        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; to be acknowledged"
+        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; decision D4, 2026-11-27: taken, the owner asked for the search result to lead the page"
       },
       "reading_load.median": {
         "value": 240,
         "tolerance": 12,
-        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; to be acknowledged"
+        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; decision D4, 2026-11-27: taken, the owner asked for the search result to lead the page"
       },
       "layout_shift.score": {
         "value": 0,
@@ -382,7 +383,7 @@
       "reading_load.median": {
         "value": 210,
         "tolerance": 10.5,
-        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; to be acknowledged"
+        "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; decision D4, 2026-11-27: taken, the owner asked for the search result to lead the page"
       },
       "layout_shift.score": {
         "value": 0,

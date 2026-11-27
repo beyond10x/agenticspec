@@ -12,6 +12,7 @@ use std::time::Instant;
 const USAGE: &str = "usage:
   agenticspec-sim check <architecture.yaml>
   agenticspec-sim run <experiment.yaml> --out <dir> [--threads N]
+    writes result.json, index.html and best.yaml (the best variant as an architecture)
   agenticspec-sim render <architecture.yaml> [--result result.json] --out <page.html>
   agenticspec-sim ladder <ladder.yaml> --out <ladder.json> [--check]";
 
@@ -121,6 +122,12 @@ fn cmd_run(a: &Args) -> Result<ExitCode, String> {
         &out.join("index.html"),
         &agenticspec_render::page(&result["architecture"], Some(&result)),
     )?;
+    let source = e.doc["architecture"].as_str().and_then(|p| {
+        std::fs::read_to_string(path.parent().unwrap_or(Path::new(".")).join(p)).ok()
+    });
+    if let Some(best) = agenticspec_sim::best::yaml_of_result(&result, source.as_deref())? {
+        write(&out.join("best.yaml"), &best)?;
+    }
     let n = result["variants"].as_array().map_or(0, |v| v.len());
     eprintln!(
         "agenticspec-sim: {n} variants x {} seeds in {:.1} s on {threads} threads; fitness baseline {} best {}",
