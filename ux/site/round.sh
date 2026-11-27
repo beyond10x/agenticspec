@@ -3,7 +3,7 @@
 # changed, plays every docs task at every viewport of ux/site/adapter.json in both themes, sweeps
 # every page of the sitemap, and writes ux/site/rounds/<round>/ (report.md, round.json, shots/)
 # and a row of ux/site/rounds/trend.md. The review agents and the triage follow by hand.
-# Through slot where the host has it (scripts/pool.sh), with its outputs here (--here).
+# Through slot where the host has it (scripts/pool.sh); the build node returns new and ignored outputs.
 # Usage: sh ux/site/round.sh S-nn
 set -eu
 round=${1:?usage: sh ux/site/round.sh S-nn}
@@ -14,5 +14,5 @@ sh scripts/check-site.sh --build-only
 rm -rf target/site-ux/measure
 cd website
 npx playwright install --only-shell chromium >/dev/null
-SITE_UX_ROUND=$round pool --here --timeout 15m npx playwright test --project=report --workers=4
+SITE_UX_ROUND=$round pool --timeout 15m npx playwright test --project=report --workers=4
 echo "round.sh: ux/site/rounds/$round/report.md"

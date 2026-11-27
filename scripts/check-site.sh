@@ -50,7 +50,7 @@ cd website
 if [ "$build" != no ]; then
   echo "check-site: building the site: $build"
   started=$(date +%s)
-  pool --here --timeout 15m npm run build
+  pool --timeout 15m npm run build
   echo "check-site: site built in $(($(date +%s) - started)) s"
 else
   echo "check-site: the build in website/build is current"
@@ -60,5 +60,5 @@ echo "$digest" > "../$stamp"
 
 npx playwright install --only-shell chromium >/dev/null
 started=$(date +%s)
-pool --here npx playwright test --project=ratchet --workers=4
+pool npx playwright test --project=ratchet --workers=4
 echo "check-site: gates and ratchet in $(($(date +%s) - started)) s"
