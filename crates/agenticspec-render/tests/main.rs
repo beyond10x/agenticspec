@@ -1,5 +1,6 @@
 //! The page of the workstation architecture, with and without a simulation result.
 
+mod graph;
 mod optim;
 
 use agenticspec_render::page;
@@ -151,8 +152,8 @@ fn no_two_boxes_of_the_graph_overlap() {
             boxes.push((text.to_string(), [v[0], v[1], v[2], v[3]]));
         }
         assert!(
-            boxes.len() >= 9 + 6,
-            "nodes and edge labels carry a box: {}",
+            boxes.len() >= 9 + 4,
+            "nodes and edge labels carry a box (links with one label into one part share one): {}",
             boxes.len()
         );
         for (i, (a, ra)) in boxes.iter().enumerate() {

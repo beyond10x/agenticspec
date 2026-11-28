@@ -4,6 +4,12 @@
 //! crosses it passes through an item of its own width: its label, a channel card, or a narrow
 //! gap. Items are ordered by barycentre sweeps and placed by isotonic regression, so no two items
 //! of a row overlap and every edge label has the room its text needs.
+//!
+//! A large architecture stays legible at its natural size: links with one label into or out of
+//! one card form a fan, with one label beside the card and one trunk through the rows between,
+//! which each link joins on a track of its own label row; a card that several cards of its row
+//! send to drops to a row of its own; the passing items of a long line take one x where they fit,
+//! and a line leaves a card shorter than its row straight, so no line crosses a card.
 
 use crate::fmt::{self, esc, mono_w, px, text_w};
 use crate::model::{Architecture, Outcome, Part, Place};
@@ -128,7 +134,7 @@ impl Chip {
             w += 6.0 + mono_w("→", 11.5) + 6.0 + mono_w(b, 11.5) + 4.0;
         }
         if !self.range.is_empty() {
-            w += 7.0 + mono_w(&format!("[{}]", self.range), 10.5);
+            w += 7.0 + mono_w(&format!("[{}]", self.range), 11.0);
         }
         w + 9.0
     }
@@ -390,7 +396,7 @@ impl Card {
                 inner = inner.max(ch.width() + 16.0);
             }
         }
-        inner = inner.max(text_w(&format!("per {}", p.name), 10.5, false));
+        inner = inner.max(text_w(&format!("per {}", p.name), 11.0, false));
         let w = (inner + 2.0 * PAD).max(MIN_W).ceil();
         let mut h = HEAD;
         h += props.len() as f64 * PROP;
@@ -423,7 +429,7 @@ fn badge_w(count: &str) -> f64 {
 }
 
 fn tag_w() -> f64 {
-    text_w("border", 10.5, false) + 14.0
+    text_w("border", 11.0, false) + 14.0
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -431,6 +437,8 @@ enum ItemKind {
     Node(usize),
     Dummy(usize),
     Label(usize),
+    Fan(usize),
+    Trunk(usize),
 }
 
 struct Item {
@@ -453,7 +461,34 @@ struct Bundle {
     /// For a channel bundle: which links pass left of the card.
     left: Vec<usize>,
     right: Vec<usize>,
+    /// The fan this single link shares its label with.
+    fan: Option<usize>,
 }
+
+/// Single links with one label at one side of one card. They share one label beside the card
+/// and one trunk from there through every row between: each link joins the trunk on a track of
+/// the label row next to its other card, so the links draw as a comb, not as parallel lines.
+struct Fan {
+    card: usize,
+    at_lower: bool,
+    label: String,
+    /// The label row next to the card, where the label sits.
+    layer: usize,
+    /// The shared item of each layer the trunk crosses: the label at `layer`, a trunk elsewhere.
+    items: Vec<(usize, usize)>,
+}
+
+impl Fan {
+    fn item(&self, layer: usize) -> Option<usize> {
+        self.items
+            .iter()
+            .find(|(l, _)| *l == layer)
+            .map(|(_, it)| *it)
+    }
+}
+
+/// Track spacing of the combs in a label row.
+const TRACK: f64 = 6.0;
 
 impl Bundle {
     fn label_size(&self, arch: &Architecture) -> (f64, f64) {
@@ -614,14 +649,35 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
             order.push(i);
         }
     }
-    let cards: Vec<Card> = order
+    let mut cards: Vec<Card> = order
         .iter()
         .map(|&i| {
             let children = (0..n).filter(|&c| host[c] == Some(i)).collect();
             Card::new(arch, i, children, outcome)
         })
         .collect();
-    let card_of = |part: usize| cards.iter().position(|c| c.part == part);
+    let card_of = |part: usize| order.iter().position(|&c| c == part);
+
+    // A card that two or more cards of its own row send to moves to a row of its own just
+    // below: its links then cross rows, where they share a label, instead of arching over the
+    // cards between.
+    let ends: Vec<(usize, usize)> = arch
+        .links
+        .iter()
+        .filter_map(|l| Some((card_of(resolve(&l.from)?)?, card_of(resolve(&l.to)?)?)))
+        .filter(|(a, b)| a != b && cards[*a].row == cards[*b].row)
+        .collect();
+    let sinks: Vec<bool> = (0..cards.len())
+        .map(|c| {
+            let mut from: Vec<usize> = ends.iter().filter(|e| e.1 == c).map(|e| e.0).collect();
+            from.sort_unstable();
+            from.dedup();
+            from.len() >= 2
+        })
+        .collect();
+    for (c, card) in cards.iter_mut().enumerate() {
+        card.row = 2 * card.row + usize::from(sinks[c]);
+    }
 
     let mut rows: Vec<usize> = cards.iter().map(|c| c.row).collect();
     rows.sort_unstable();
@@ -687,8 +743,58 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
                     items: Vec::new(),
                     left: Vec::new(),
                     right: Vec::new(),
+                    fan: None,
                 });
             }
+        }
+    }
+
+    // Fans: two or more single links with one label that end at, or start from, one side of one
+    // card share one label beside that card, and their lines meet there.
+    let mut fans: Vec<Fan> = Vec::new();
+    for at_end in [true, false] {
+        let mut keys: Vec<(usize, bool, String, usize)> = Vec::new();
+        for (bi, bd) in bundles.iter().enumerate() {
+            if bd.channel.is_some() || bd.fan.is_some() {
+                continue;
+            }
+            let l = &arch.links[bd.links[0]];
+            let Some(c) = resolve(if at_end { &l.to } else { &l.from }).and_then(card_of) else {
+                continue;
+            };
+            keys.push((c, c == bd.lower, edge_label(arch, l, false), bi));
+        }
+        for &(c, at_lower, ref label, _) in &keys {
+            if fans
+                .iter()
+                .any(|f| f.card == c && f.at_lower == at_lower && f.label == *label)
+            {
+                continue;
+            }
+            let members: Vec<usize> = keys
+                .iter()
+                .filter(|k| k.0 == c && k.1 == at_lower && k.2 == *label)
+                .map(|k| k.3)
+                .filter(|&bi| bundles[bi].fan.is_none())
+                .collect();
+            if members.len() < 2 {
+                continue;
+            }
+            let layer = if at_lower {
+                layer_of_card[c] - 1
+            } else {
+                layer_of_card[c] + 1
+            };
+            for &bi in &members {
+                bundles[bi].fan = Some(fans.len());
+            }
+            fans.push(Fan {
+                card: c,
+                at_lower,
+                label: label.clone(),
+                layer,
+                items: Vec::new(),
+            });
         }
     }
     for bd in &mut bundles {
@@ -720,7 +826,34 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     for (bi, bd) in bundles.iter_mut().enumerate() {
         let (lu, ll) = (layer_of_card[bd.upper], layer_of_card[bd.lower]);
         for (layer, members) in layers.iter_mut().enumerate().take(ll).skip(lu + 1) {
-            let (kind, w, h) = if layer == bd.label_layer {
+            if let Some(f) = bd.fan {
+                let it = match fans[f].item(layer) {
+                    Some(it) => it,
+                    None => {
+                        let it = items.len();
+                        fans[f].items.push((layer, it));
+                        members.push(it);
+                        let (kind, w, h) = if layer == fans[f].layer {
+                            let w = text_w(&fans[f].label, 11.5, false) + 18.0 + 8.0;
+                            (ItemKind::Fan(f), w, PILL_H)
+                        } else {
+                            (ItemKind::Trunk(f), LINE_GAP + 4.0, 0.0)
+                        };
+                        items.push(Item {
+                            kind,
+                            layer,
+                            w,
+                            h,
+                            x: 0.0,
+                            y: 0.0,
+                        });
+                        it
+                    }
+                };
+                bd.items.push(it);
+                continue;
+            }
+            let (kind, w, h) = if layer == bd.label_layer && bd.fan.is_none() {
                 let (w, h) = bd.label_size(arch);
                 (ItemKind::Label(bi), w, h)
             } else {
@@ -859,6 +992,29 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         }
     }
     layers = best_layers;
+    // In a group of three or more cards joined within a row, the card with the most links in the
+    // row goes to the middle, so a star of links draws between neighbours rather than as arcs.
+    let degree = |c: usize| levels.iter().filter(|v| v.a == c || v.b == c).count();
+    for layer in &mut layers {
+        let mut done: Vec<usize> = Vec::new();
+        let mut k = 0;
+        while k < layer.len() {
+            let g = groups[layer[k]];
+            let len = layer[k..].iter().take_while(|&&m| groups[m] == g).count();
+            if len >= 3 && !done.contains(&g) {
+                let members = &mut layer[k..k + len];
+                let hub = (0..len)
+                    .max_by(|&a, &b| degree(members[a]).cmp(&degree(members[b])).then(b.cmp(&a)))
+                    .unwrap_or(0);
+                let card = members[hub];
+                let mut rest: Vec<usize> = members.iter().copied().filter(|&m| m != card).collect();
+                rest.insert(len / 2, card);
+                members.copy_from_slice(&rest);
+            }
+            done.push(g);
+            k += len.max(1);
+        }
+    }
 
     // Horizontal placement.
     let kinds: Vec<ItemKind> = items.iter().map(|it| it.kind).collect();
@@ -903,8 +1059,8 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
             .iter()
             .map(|&it| match items[it].kind {
                 ItemKind::Node(_) => 1.0,
-                ItemKind::Label(_) => 1.5,
-                ItemKind::Dummy(_) => 2.0,
+                ItemKind::Label(_) | ItemKind::Fan(_) => 1.5,
+                ItemKind::Dummy(_) | ItemKind::Trunk(_) => 2.0,
             })
             .collect();
         let y = pava(&target, &weight);
@@ -930,6 +1086,67 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
             place(&layer, &mut items, &desired);
         }
     }
+    // Straighten: the passing items of one bundle or trunk (a run of dummies) take one x where
+    // every layer they cross has room for it, so a long line runs straight, not as a staircase.
+    let slot_of: Vec<(usize, usize)> = {
+        let mut s = vec![(0, 0); items.len()];
+        for (li, layer) in layers.iter().enumerate() {
+            for (k, &it) in layer.iter().enumerate() {
+                s[it] = (li, k);
+            }
+        }
+        s
+    };
+    let passing = |it: usize| matches!(kinds[it], ItemKind::Dummy(_) | ItemKind::Trunk(_));
+    let mut runs: Vec<Vec<usize>> = Vec::new();
+    let mut seen = vec![false; items.len()];
+    for bd in &bundles {
+        let mut run: Vec<usize> = Vec::new();
+        for &it in bd.items.iter().chain(std::iter::once(&usize::MAX)) {
+            if it != usize::MAX && passing(it) && !seen[it] {
+                seen[it] = true;
+                run.push(it);
+            } else if !run.is_empty() {
+                runs.push(std::mem::take(&mut run));
+            }
+        }
+    }
+    runs.sort_by_key(|r| std::cmp::Reverse(r.len()));
+    for run in runs.iter().filter(|r| r.len() >= 2) {
+        let fits = |x: f64, items: &Vec<Item>| {
+            run.iter().all(|&it| {
+                let (li, k) = slot_of[it];
+                let layer = &layers[li];
+                let w = items[it].w / 2.0;
+                let left_ok = k == 0 || {
+                    let a = layer[k - 1];
+                    items[a].x + items[a].w / 2.0 + gap(a, it) <= x - w + 0.01
+                };
+                let right_ok = k + 1 == layer.len() || {
+                    let b = layer[k + 1];
+                    x + w + gap(it, b) <= items[b].x - items[b].w / 2.0 + 0.01
+                };
+                left_ok && right_ok
+            })
+        };
+        let cost =
+            |x: f64, items: &Vec<Item>| run.iter().map(|&it| (items[it].x - x).abs()).sum::<f64>();
+        let mut best: Option<(f64, f64)> = None;
+        for &c in run {
+            let x = items[c].x;
+            if fits(x, &items) {
+                let cst = cost(x, &items);
+                if best.is_none_or(|(_, b)| cst < b) {
+                    best = Some((x, cst));
+                }
+            }
+        }
+        if let Some((x, _)) = best {
+            for &it in run {
+                items[it].x = x;
+            }
+        }
+    }
     let left = items
         .iter()
         .map(|it| it.x - it.w / 2.0)
@@ -948,18 +1165,60 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     // Vertical placement.
     let mut layer_top = vec![0.0; layers_n];
     let mut layer_h = vec![0.0; layers_n];
+    // A label row holds, top to bottom: the tracks of the combs that join a trunk going down,
+    // the labels, the tracks of the combs that join a trunk going up.
+    let join_of = |bd: &Bundle| -> Option<usize> {
+        let f = bd.fan?;
+        if fans[f].at_lower {
+            bd.items.first().copied()
+        } else {
+            bd.items.last().copied()
+        }
+    };
+    let mut combs: Vec<(usize, bool, usize)> = Vec::new(); // layer, going up, fan
+    for bd in &bundles {
+        if let (Some(it), Some(f)) = (join_of(bd), bd.fan) {
+            let key = (items[it].layer, !fans[f].at_lower, f);
+            if !combs.contains(&key) {
+                combs.push(key);
+            }
+        }
+    }
+    combs.sort_unstable();
+    let band = |li: usize, up: bool| -> f64 {
+        let n = combs.iter().filter(|c| c.0 == li && c.1 == up).count();
+        if n == 0 { 0.0 } else { n as f64 * TRACK + 4.0 }
+    };
+    let mut mid_top = vec![0.0; layers_n];
+    let mut mid_h = vec![0.0; layers_n];
     let mut y = MARGIN + 6.0;
     for li in 0..layers_n {
         let h = layers[li].iter().map(|&it| items[it].h).fold(0.0, f64::max);
         let h = if li % 2 == 1 { h.max(16.0) } else { h };
         layer_top[li] = y;
-        layer_h[li] = h;
-        y += h + ROW_GAP;
+        mid_top[li] = y + band(li, false);
+        mid_h[li] = h;
+        layer_h[li] = band(li, false) + h + band(li, true);
+        y += layer_h[li] + ROW_GAP;
     }
     let height = (y - ROW_GAP + MARGIN + 6.0).ceil().max(80.0);
     for it in &mut items {
-        it.y = layer_top[it.layer] + layer_h[it.layer] / 2.0;
+        it.y = mid_top[it.layer] + mid_h[it.layer] / 2.0;
     }
+    let track_y = |li: usize, f: usize| -> f64 {
+        let up = !fans[f].at_lower;
+        let k = combs
+            .iter()
+            .filter(|c| c.0 == li && c.1 == up)
+            .position(|c| c.2 == f)
+            .unwrap_or(0) as f64;
+        let start = if up {
+            mid_top[li] + mid_h[li] + 2.0
+        } else {
+            layer_top[li] + 2.0
+        };
+        start + (k + 0.5) * TRACK
+    };
 
     // Edge geometry: each link of a bundle as a list of points from the upper card down.
     struct Route {
@@ -972,8 +1231,28 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         let n_links = bd.links.len();
         for (k, &l) in bd.links.iter().enumerate() {
             let mut pts = Vec::new();
+            let join = join_of(bd);
             for &it in &bd.items {
                 let item = &items[it];
+                if let ItemKind::Fan(f) | ItemKind::Trunk(f) = item.kind {
+                    let (top, bottom) = match item.kind {
+                        ItemKind::Fan(_) => (item.y, item.y),
+                        _ => (
+                            layer_top[item.layer],
+                            layer_top[item.layer] + layer_h[item.layer],
+                        ),
+                    };
+                    let (top, bottom) = match (join == Some(it), fans[f].at_lower) {
+                        (true, true) => (track_y(item.layer, f), bottom),
+                        (true, false) => (top, track_y(item.layer, f)),
+                        _ => (top, bottom),
+                    };
+                    pts.push((item.x, top));
+                    if bottom != top {
+                        pts.push((item.x, bottom));
+                    }
+                    continue;
+                }
                 let x = match item.kind {
                     ItemKind::Label(_) if bd.channel.is_some() => {
                         let (wl, _) = bd.side_widths(arch);
@@ -1008,15 +1287,28 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         }
     }
     // Ports: the ends of edges on one side of a card, spread in the order of where they go.
-    let mut ports: Vec<(usize, bool, usize, f64)> = Vec::new(); // card, bottom side, route, toward x
+    // The links of a fan share one port at the fan's card: its key is past the routes'.
+    let port_key = |ri: usize, upper_end: bool| -> usize {
+        let bd = &bundles[routes[ri].bundle];
+        let card = if upper_end { bd.upper } else { bd.lower };
+        match bd.fan {
+            Some(f) if fans[f].card == card => routes.len() + f,
+            _ => ri,
+        }
+    };
+    let mut ports: Vec<(usize, bool, usize, f64)> = Vec::new(); // card, bottom side, key, toward x
     for (ri, r) in routes.iter().enumerate() {
         let bd = &bundles[r.bundle];
         let first = r.pts.first().map(|p| p.0).unwrap_or(items[bd.lower].x);
         let last = r.pts.last().map(|p| p.0).unwrap_or(items[bd.upper].x);
-        ports.push((bd.upper, true, ri, first));
-        ports.push((bd.lower, false, ri, last));
+        for (card, side, toward) in [(bd.upper, true, first), (bd.lower, false, last)] {
+            let key = port_key(ri, side);
+            if !ports.iter().any(|p| p.2 == key && p.1 == side) {
+                ports.push((card, side, key, toward));
+            }
+        }
     }
-    let mut port_x: Vec<(usize, bool, f64)> = Vec::new(); // route, upper end, x
+    let mut port_x: Vec<(usize, bool, f64)> = Vec::new(); // port key, upper end, x
     for ci in 0..cards.len() {
         for side in [true, false] {
             let mut ends: Vec<&(usize, bool, usize, f64)> =
@@ -1048,7 +1340,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     );
     let _ = write!(
         svg,
-        "<title id=\"graph-title\">Architecture {}</title><desc id=\"graph-desc\">{} parts in rows by block layer, {} links as arrows labelled by what they carry. The list of links follows the graph as text.</desc>",
+        "<title id=\"graph-title\">Architecture {}</title><desc id=\"graph-desc\">{} parts in rows by block layer, {} links as arrows labelled by what they carry. The tables of parts and links beside the graph list every part and every link as text.</desc>",
         esc(&arch.name),
         arch.parts.len(),
         arch.links.len()
@@ -1064,17 +1356,41 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         let link = &arch.links[r.link];
         let ux = port_x
             .iter()
-            .find(|p| p.0 == ri && p.1)
+            .find(|p| p.0 == port_key(ri, true) && p.1)
             .map(|p| p.2)
             .unwrap_or(items[bd.upper].x);
         let lx = port_x
             .iter()
-            .find(|p| p.0 == ri && !p.1)
+            .find(|p| p.0 == port_key(ri, false) && !p.1)
             .map(|p| p.2)
             .unwrap_or(items[bd.lower].x);
-        let mut pts = vec![(ux, items[bd.upper].y + items[bd.upper].h / 2.0)];
+        // A card shorter than its row leaves it straight down (or up), so the line bends only
+        // between rows, never beside a taller card of the same row.
+        let (lu, ll) = (items[bd.upper].layer, items[bd.lower].layer);
+        let row_bottom = layer_top[lu] + layer_h[lu];
+        let upper_bottom = items[bd.upper].y + items[bd.upper].h / 2.0;
+        let mut pts = vec![(ux, upper_bottom)];
+        if row_bottom - upper_bottom > 0.5 {
+            pts.push((ux, row_bottom));
+        }
+        // A link of a fan runs straight to its track, then along it to the trunk.
+        let comb = bd.fan.map(|f| fans[f].at_lower);
+        if comb == Some(true)
+            && let Some(&(_, ty)) = r.pts.first()
+        {
+            pts.push((ux, ty));
+        }
         pts.extend(r.pts.iter().copied());
-        pts.push((lx, items[bd.lower].y - items[bd.lower].h / 2.0 - 1.0));
+        if comb == Some(false)
+            && let Some(&(_, ty)) = r.pts.last()
+        {
+            pts.push((lx, ty));
+        }
+        let lower_top = items[bd.lower].y - items[bd.lower].h / 2.0 - 1.0;
+        if lower_top - layer_top[ll] > 0.5 {
+            pts.push((lx, layer_top[ll]));
+        }
+        pts.push((lx, lower_top));
         let from_upper = resolve(&link.from).and_then(card_of) == Some(bd.upper);
         if !from_upper {
             pts[0].1 += 1.0;
@@ -1083,7 +1399,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         let mut d = format!("M{} {}", px(pts[0].0), px(pts[0].1));
         for w in pts.windows(2) {
             let ((x1, y1), (x2, y2)) = (w[0], w[1]);
-            if (x1 - x2).abs() < 0.5 {
+            if (x1 - x2).abs() < 0.5 || (y1 - y2).abs() < 0.5 {
                 let _ = write!(d, "L{} {}", px(x2), px(y2));
             } else {
                 let ym = (y1 + y2) / 2.0;
@@ -1103,6 +1419,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     }
     // Edges within a row.
     let mut row_labels: Vec<(f64, f64, String)> = Vec::new();
+    let mut arcs = vec![0usize; layers_n];
     for v in &levels {
         let (a, b) = (v.a, v.b);
         let (l, r) = if items[a].x <= items[b].x {
@@ -1129,7 +1446,9 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
                 row_labels.push(((x1 + x2) / 2.0, y, label));
             } else {
                 let top = items[l].y - items[l].h / 2.0;
-                let lift = 46.0 + 22.0 * k as f64;
+                let j = arcs[items[a].layer];
+                arcs[items[a].layer] += 1;
+                let lift = 46.0 + 28.0 * j as f64;
                 let (sx, ex) = if from_left {
                     (items[l].x, items[r].x)
                 } else {
@@ -1157,6 +1476,11 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     svg.push_str("<g class=\"labels\">");
     for (cx, cy, label) in &row_labels {
         pill(&mut svg, *cx, *cy, label, None);
+    }
+    for fan in &fans {
+        if let Some(it) = fan.item(fan.layer) {
+            pill(&mut svg, items[it].x, items[it].y, &fan.label, None);
+        }
     }
     for bd in &bundles {
         let Some(&it) = bd

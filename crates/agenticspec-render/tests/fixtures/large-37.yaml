@@ -1,0 +1,142 @@
+format: agenticspec-architecture/1
+architecture: large-37
+summary: >-
+  A test fixture, not an architecture to copy: 37 parts and 90 links, wider than any page, so the
+  renderer's large-graph view (natural size, pan, zoom, fit, the parts and links tables) has
+  something to hold.
+
+parts:
+  owner:       { block: principal, kind: human }
+  maintainer:  { block: principal, kind: human }
+  operator:    { block: agent, harness: coding, role: operator, acts_for: owner }
+  planner:     { block: agent, harness: coding, role: planner }
+  architect:   { block: agent, harness: coding, role: architect }
+  builders:    { block: agent, harness: coding, role: executor, count: 6 }
+  testers:     { block: agent, harness: coding, role: tester, count: 3 }
+  reviewers:   { block: agent, harness: coding, role: reviewer, count: 2 }
+  writer:      { block: agent, harness: coding, role: writer }
+  release:     { block: agent, harness: coding, role: release }
+  triage:      { block: agent, harness: coding, role: triage, count: 2 }
+  night:       { block: agent, harness: coding, count: 3 }
+  harness:     { block: harness, kind: coding }
+  board:       { block: channel, kind: agent_message, distribution: board }
+  alerts:      { block: channel, kind: notification, distribution: topic }
+  approvals:   { block: question, kind: approval }
+  backlog:     { block: work, kind: backlog }
+  specs:       { block: work, kind: spec }
+  evidence:    { block: work, kind: evidence }
+  grants:      { block: authority, kind: permissions }
+  budgets:     { block: authority, kind: budget }
+  gateway:     { block: gateway, rate_limit_per_minute: 240 }
+  frontier:    { block: model, route: frontier }
+  small:       { block: model, route: small }
+  tests:       { block: tool, category: execute, kind: test_suite }
+  lint:        { block: tool, category: execute, kind: linter }
+  search:      { block: tool, category: read, kind: code_search }
+  context:     { block: knowledge, kind: context_files }
+  contract:    { block: knowledge, kind: contract }
+  runbook:     { block: knowledge, kind: runbook }
+  repo:        { block: workspace, kind: checkout, sharing: exclusive, per: operator }
+  trees:       { block: workspace, kind: worktree, sharing: exclusive, per: builders }
+  box:         { block: sandbox, isolation: container, per: night }
+  ci:          { block: runtime, kind: ci }
+  slots:       { block: pool, kind: build_slots, capacity: 16 }
+  clock:       { block: schedule, every: 30m }
+  kpis:        { block: kpi, kind: delivery }
+
+links:
+  - { from: owner,      to: operator,   carries: prompt }
+  - { from: operator,   to: owner,      carries: question }
+  - { from: operator,   to: owner,      carries: proposal }
+  - { from: maintainer, to: reviewers,  carries: prompt }
+  - { from: reviewers,  to: maintainer, carries: question }
+  - { from: owner,      to: specs,      carries: spec }
+  - { from: maintainer, to: backlog,    carries: story }
+  - { from: operator,   to: planner,    carries: order }
+  - { from: operator,   to: gateway,    carries: model_call }
+  - { from: operator,   to: board,      carries: message }
+  - { from: operator,   to: approvals,  carries: question }
+  - { from: approvals,  to: owner,      carries: question }
+  - { from: planner,    to: backlog,    carries: story }
+  - { from: planner,    to: architect,  carries: order }
+  - { from: planner,    to: gateway,    carries: model_call }
+  - { from: planner,    to: board,      carries: message }
+  - { from: specs,      to: planner,    carries: spec }
+  - { from: specs,      to: architect,  carries: spec }
+  - { from: architect,  to: contract,   carries: record }
+  - { from: architect,  to: gateway,    carries: model_call }
+  - { from: architect,  to: board,      carries: message }
+  - { from: architect,  to: search,     carries: call }
+  - { from: backlog,    to: builders,   carries: task }
+  - { from: board,      to: builders,   carries: claim }
+  - { from: builders,   to: gateway,    carries: model_call }
+  - { from: builders,   to: tests,      carries: call }
+  - { from: builders,   to: lint,       carries: call }
+  - { from: builders,   to: search,     carries: call }
+  - { from: builders,   to: reviewers,  carries: review }
+  - { from: builders,   to: operator,   carries: question }
+  - { from: builders,   to: ci,         carries: build }
+  - { from: builders,   to: slots,      carries: request }
+  - { from: context,    to: builders,   carries: context }
+  - { from: contract,   to: builders,   carries: context }
+  - { from: grants,     to: builders,   carries: grant }
+  - { from: testers,    to: gateway,    carries: model_call }
+  - { from: testers,    to: tests,      carries: call }
+  - { from: testers,    to: ci,         carries: build }
+  - { from: testers,    to: evidence,   carries: record }
+  - { from: testers,    to: board,      carries: message }
+  - { from: board,      to: testers,    carries: claim }
+  - { from: contract,   to: testers,    carries: context }
+  - { from: grants,     to: testers,    carries: grant }
+  - { from: reviewers,  to: gateway,    carries: model_call }
+  - { from: reviewers,  to: evidence,   carries: record }
+  - { from: reviewers,  to: board,      carries: verdict }
+  - { from: reviewers,  to: search,     carries: call }
+  - { from: context,    to: reviewers,  carries: context }
+  - { from: writer,     to: gateway,    carries: model_call }
+  - { from: writer,     to: search,     carries: call }
+  - { from: board,      to: writer,     carries: claim }
+  - { from: context,    to: writer,     carries: context }
+  - { from: writer,     to: reviewers,  carries: review }
+  - { from: release,    to: ci,         carries: build }
+  - { from: release,    to: approvals,  carries: question }
+  - { from: release,    to: gateway,    carries: model_call }
+  - { from: evidence,   to: release,    carries: record }
+  - { from: grants,     to: release,    carries: grant }
+  - { from: runbook,    to: release,    carries: context }
+  - { from: alerts,     to: triage,     carries: notice }
+  - { from: ci,         to: alerts,     carries: notice }
+  - { from: triage,     to: gateway,    carries: model_call }
+  - { from: triage,     to: backlog,    carries: story }
+  - { from: triage,     to: operator,   carries: question }
+  - { from: triage,     to: search,     carries: call }
+  - { from: runbook,    to: triage,     carries: context }
+  - { from: grants,     to: triage,     carries: grant }
+  - { from: clock,      to: night,      carries: trigger }
+  - { from: night,      to: gateway,    carries: model_call }
+  - { from: night,      to: tests,      carries: call }
+  - { from: night,      to: lint,       carries: call }
+  - { from: night,      to: reviewers,  carries: review }
+  - { from: night,      to: approvals,  carries: question }
+  - { from: backlog,    to: night,      carries: task }
+  - { from: grants,     to: night,      carries: grant }
+  - { from: harness,    to: builders,   carries: session }
+  - { from: harness,    to: testers,    carries: session }
+  - { from: harness,    to: night,      carries: session }
+  - { from: budgets,    to: gateway,    carries: grant }
+  - { from: gateway,    to: frontier,   carries: model_call }
+  - { from: gateway,    to: small,      carries: model_call }
+  - { from: tests,      to: slots,      carries: request }
+  - { from: lint,       to: slots,      carries: request }
+  - { from: ci,         to: slots,      carries: request }
+  - { from: ci,         to: evidence,   carries: record }
+  - { from: evidence,   to: kpis,       carries: record }
+  - { from: kpis,       to: owner,      carries: report }
+  - { from: kpis,       to: maintainer, carries: report }
+  - { from: evidence,   to: owner,      carries: report }
+  - { from: release,    to: owner,      carries: report }
+
+border: [operator, reviewers]
+
+policies:
+  question_default_after: 15m

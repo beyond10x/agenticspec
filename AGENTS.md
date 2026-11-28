@@ -189,7 +189,7 @@ change.
 | `agenticspec-docs` | `lib.rs`, `main.rs`, `packs.rs` | the generated docs pages of the blocks, architectures and KPI catalogue, and of the packs and fields (`packs.rs`, from the root `ess-inputs.yaml`) (`task docs:generate`, `--check`) |
 | `agenticspec-views` | `lib.rs`, `panels.rs`, `values.rs` | the library of `agenticspec ui panels`: from the compiled `blocks/`, one `ess-ui/1` widget per view (`panels.rs`, naming no block, view or command), the synthetic fixture rows and script payloads (`values.rs`), the digest of the inputs and `--check` (`lib.rs`) |
 | `agenticspec-docs` | `contract.rs` | the "Contract" section of an architecture page and a catalog entry |
-| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result; a nested architecture (resolved beside its part as `inner`) is one box with its border parts as ports; `graph(architecture)`: the graph alone (SVG, size, parts with their properties, links) for agenticstudio to draw inline |
+| `agenticspec-render` | `lib.rs`, `graph.rs` | `page(architecture, result)`: one HTML page with the architecture graph (at natural size, with pan, zoom and fit), the tables of its parts and links and, when given, the search result; a nested architecture (resolved beside its part as `inner`) is one box with its border parts as ports; `graph(architecture)`: the graph alone (SVG, size, parts with their properties, links) for agenticstudio to draw inline. `graph.rs` lays the graph out in rows by block layer; links with one label into or out of one card share one label and a trunk |
 | `agenticspec-records` | `sq/architecture.rs` | the fact base of an architecture (`part`, `setting`, `link`, `marker`), compiled apart from the session relations |
 | `agenticspec-patch` | `lib.rs`, `facts.rs`, `text.rs`, `diff.rs` | `agenticspec-patch/1`: the facts of an architecture document, the verbs `set` and `add`, atomic application checked by `agenticspec-sim`'s check, refusals by rule position and error name (`ErrorName`, each listed in `docs/studio.md`) |
 | `agenticspec-ui` | `doc.rs`, `check.rs`, `emit.rs`, `runtime.ts` | `agenticspec ui generate --path --out`: an `ess-ui/1` document to Vue pages, a hash router, a typed client and a runtime over `ui/kit` components and host slots only, byte for byte the same each run. A construct it cannot draw is refused by its node path; the look is never generated. Golden tests in `tests/cases/` (`UPDATE_GOLDEN=1` rewrites them) |
@@ -253,6 +253,10 @@ Beside the crates, `ui/` holds:
   fast loop is `task check:site` (`scripts/check-site.sh`, specs in `website/e2e/`) on the built
   site, run as `slot task check:site`; only `task docs:generate` runs with `slot --here`. axe-core
   results are cached under `target/site-ux/axe/` by a digest of the built HTML.
+- `website/e2e/graph.spec.ts` checks the rendered page of a large architecture on the 37-part fixture
+  `crates/agenticspec-render/tests/fixtures/large-37.yaml`, which `scripts/check-site.sh` renders
+  into `target/site-ux/large-37.html` with `agenticspec sim render`. The fixture is not under
+  `architectures/`, so it is neither a docs page nor a catalog entry.
 
 ## Repository files
 
