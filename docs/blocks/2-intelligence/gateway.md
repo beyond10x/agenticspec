@@ -289,7 +289,7 @@ Called by: Gateway operator.
 
 ## Settings
 
-The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes. What no setting here types (a file, a path, an audience, the use of a model) goes into the part's `notes`, a map with free keys and values that the check takes as written and nothing reads.
 
 A part `gateway`:
 
@@ -298,4 +298,5 @@ A part `gateway`:
 | `rate_limit_per_minute` | number of at least 0 | calls per minute |  | `gateway.call` | The model calls the gateway admits per minute; without it, no limit. |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+| `notes` | notes |  |  |  | Free notes on the part, a map with keys and values of any kind: what no setting of its block types. The check takes any map; the simulator, the search and the contract never read it. |
 

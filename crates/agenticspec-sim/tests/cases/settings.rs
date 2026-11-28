@@ -468,3 +468,299 @@ fn the_simulator_reads_a_part_only_through_setting() {
         "listed in PART_READS, never read: {stale:?}"
     );
 }
+
+/// The settings refusals of `arch` alone, as (rule, part, setting).
+fn setting_refusals(arch: &Value) -> Vec<(String, String, String)> {
+    check(arch)
+        .into_iter()
+        .filter_map(|r| match r {
+            Refusal::SettingUnknown { part, setting, .. } => {
+                Some(("setting_unknown".to_string(), part, setting))
+            }
+            Refusal::SettingInvalid { part, setting, .. } => {
+                Some(("setting_invalid".to_string(), part, setting))
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// The small architecture with part `name` added as `part`.
+fn with_part(name: &str, part: Value) -> Value {
+    let mut a = yaml(ARCH);
+    a["parts"][name] = part;
+    a
+}
+
+#[test]
+fn a_part_carries_notes_the_check_does_not_type() {
+    let notes = json!({
+        "file": "screens/inbox.vue",
+        "audience": ["owner", "reviewer"],
+        "seats": 5,
+        "model": {"use": "triage", "fallback": null},
+        "vary": [1, 2],
+    });
+    // On a part of a core block, of a block whose settings are few, and of a pack block.
+    fine("model", "notes", notes.clone());
+    fine("chat", "notes", json!({}));
+    let a = with_part(
+        "forge",
+        json!({"block": "scm.forge", "notes": notes.clone()}),
+    );
+    assert_eq!(setting_refusals(&a), Vec::new());
+    // Notes are a map; any other value is refused as a value outside its type.
+    let r = one("model", "notes", json!("free text"), "setting_invalid");
+    assert!(r.to_string().contains("a map"), "{r}");
+    // A number in the notes is no place of the search, even under `optimize: all`, and a `vary`
+    // key in them marks nothing.
+    let mut a = yaml(ARCH);
+    a["parts"]["model"]["notes"] = notes;
+    let places = agenticspec_sim::marked::collect(&a, true).unwrap();
+    assert!(
+        places.iter().all(|m| !m.path.contains(".notes")),
+        "{:?}",
+        places.iter().map(|m| &m.path).collect::<Vec<_>>()
+    );
+    let resolved = agenticspec_sim::marked::resolve(&a, &Default::default()).unwrap();
+    assert_eq!(resolved["parts"]["model"]["notes"]["vary"], json!([1, 2]));
+    // The simulator reads no note.
+    assert!(
+        agenticspec_sim::sim::PART_READS
+            .iter()
+            .all(|(_, keys)| !keys.contains(&"notes"))
+    );
+    // Every part takes them, so every block page lists them.
+    let s = settings::table().setting("question", "notes").unwrap();
+    assert_eq!(s.ty.name(), "notes");
+    assert_eq!(s.narrows, Narrows::None);
+}
+
+/// The typed settings of story R97, each accepted on a part of its block.
+#[test]
+fn the_r97_settings_are_accepted_on_their_blocks() {
+    let cases: &[(&str, Value, &str, Value)] = &[
+        ("chat", json!({"block": "channel"}), "kind", json!("screen")),
+        ("builds", json!({"block": "pool"}), "kind", json!("queue")),
+        ("builds", json!({"block": "pool"}), "order", json!("fifo")),
+        (
+            "builds",
+            json!({"block": "pool"}),
+            "order",
+            json!("priority"),
+        ),
+        (
+            "model",
+            json!({"block": "model"}),
+            "hosting",
+            json!("vendor"),
+        ),
+        (
+            "model",
+            json!({"block": "model"}),
+            "hosting",
+            json!("local"),
+        ),
+        (
+            "model",
+            json!({"block": "model"}),
+            "billing",
+            json!("subscription"),
+        ),
+        (
+            "model",
+            json!({"block": "model"}),
+            "billing",
+            json!("metered"),
+        ),
+        ("model", json!({"block": "model"}), "billing", json!("none")),
+        (
+            "guard",
+            json!({"block": "authority"}),
+            "per_day_usd",
+            json!(20),
+        ),
+        (
+            "guard",
+            json!({"block": "authority"}),
+            "per_month_usd",
+            json!(400.5),
+        ),
+        (
+            "guard",
+            json!({"block": "authority"}),
+            "route",
+            json!("stop"),
+        ),
+        ("host", json!({"block": "runtime"}), "per_day_usd", json!(0)),
+        (
+            "host",
+            json!({"block": "runtime"}),
+            "per_month_usd",
+            json!(100),
+        ),
+        ("host", json!({"block": "runtime"}), "route", json!("ask")),
+        (
+            "host",
+            json!({"block": "runtime"}),
+            "route",
+            json!("notify"),
+        ),
+        (
+            "ask",
+            json!({"block": "question"}),
+            "default",
+            json!("approve"),
+        ),
+        (
+            "ask",
+            json!({"block": "question"}),
+            "default_after",
+            json!("15m"),
+        ),
+        (
+            "ask",
+            json!({"block": "question"}),
+            "default_after",
+            json!(900),
+        ),
+    ];
+    for (name, part, setting, v) in cases {
+        let mut p = part.clone();
+        p[*setting] = v.clone();
+        let mut a = yaml(ARCH);
+        let base = &a["parts"][*name];
+        if base["block"] == p["block"] {
+            a["parts"][*name][*setting] = v.clone();
+        } else {
+            a["parts"][*name] = p;
+        }
+        assert_eq!(setting_refusals(&a), Vec::new(), "{name}.{setting} = {v}");
+    }
+}
+
+/// A wrong value of each new typed setting is refused with what was expected.
+#[test]
+fn the_r97_settings_refuse_a_value_outside_their_type() {
+    let cases: &[(&str, Value, &str, Value, &str)] = &[
+        (
+            "chat",
+            json!({"block": "channel"}),
+            "kind",
+            json!("page"),
+            "screen",
+        ),
+        (
+            "builds",
+            json!({"block": "pool"}),
+            "kind",
+            json!("line"),
+            "queue",
+        ),
+        (
+            "builds",
+            json!({"block": "pool"}),
+            "order",
+            json!("random"),
+            "one of fifo, lifo, priority",
+        ),
+        (
+            "model",
+            json!({"block": "model"}),
+            "hosting",
+            json!("self"),
+            "one of vendor, managed, local",
+        ),
+        (
+            "model",
+            json!({"block": "model"}),
+            "billing",
+            json!("free"),
+            "one of subscription, metered, none",
+        ),
+        (
+            "guard",
+            json!({"block": "authority"}),
+            "per_day_usd",
+            json!(-1),
+            "a number of at least 0 (USD)",
+        ),
+        (
+            "host",
+            json!({"block": "runtime"}),
+            "per_month_usd",
+            json!("lots"),
+            "a number of at least 0 (USD)",
+        ),
+        (
+            "guard",
+            json!({"block": "authority"}),
+            "route",
+            json!("explode"),
+            "one of stop, ask, notify",
+        ),
+        (
+            "host",
+            json!({"block": "runtime"}),
+            "route",
+            json!(3),
+            "one of stop, ask, notify",
+        ),
+        (
+            "ask",
+            json!({"block": "question"}),
+            "default",
+            json!(1),
+            "a text",
+        ),
+        (
+            "ask",
+            json!({"block": "question"}),
+            "default_after",
+            json!("later"),
+            "a duration of at least 0s",
+        ),
+    ];
+    for (name, part, setting, v, expected) in cases {
+        let mut a = yaml(ARCH);
+        if a["parts"][*name]["block"] == part["block"] {
+            a["parts"][*name][*setting] = v.clone();
+        } else {
+            let mut p = part.clone();
+            p[*setting] = v.clone();
+            a["parts"][*name] = p;
+        }
+        assert_eq!(
+            setting_refusals(&a),
+            vec![(
+                "setting_invalid".to_string(),
+                name.to_string(),
+                setting.to_string()
+            )],
+            "{name}.{setting} = {v}"
+        );
+        let line = check(&a)
+            .iter()
+            .find(|r| r.rule() == "setting_invalid")
+            .unwrap()
+            .to_string();
+        assert!(line.contains(expected), "{name}.{setting} = {v}: {line}");
+    }
+    // A spend cap is no setting of a model part, nor a pool order one of a channel.
+    let mut a = yaml(ARCH);
+    a["parts"]["model"]["per_day_usd"] = json!(5);
+    a["parts"]["chat"]["order"] = json!("fifo");
+    let mut got = setting_refusals(&a);
+    got.sort();
+    assert_eq!(
+        got,
+        vec![
+            ("setting_unknown".into(), "chat".into(), "order".into()),
+            (
+                "setting_unknown".into(),
+                "model".into(),
+                "per_day_usd".into()
+            ),
+        ]
+    );
+}

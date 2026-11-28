@@ -17,6 +17,11 @@ pub const SOURCE: &str = include_str!("../../../blocks/settings.yaml");
 /// architecture (`nest::INNER`).
 pub const NOT_SETTINGS: &[&str] = &["block", crate::nest::INNER];
 
+/// The setting every part may carry whose keys and values are free: what a document records about
+/// a part beyond its typed settings. The check takes it as written (a map) and the simulator and
+/// the search never read it.
+pub const NOTES: &str = "notes";
+
 /// What values a setting takes.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Kind {
@@ -36,6 +41,8 @@ pub enum Kind {
     },
     /// A map from the name of a part to a number of at least 0.
     Shares,
+    /// A map with keys and values of any kind, never typed further and never read.
+    Notes,
 }
 
 /// The type of a setting.
@@ -172,6 +179,7 @@ fn setting(at: &str, v: &Value) -> Result<Setting, String> {
         Some("duration") => Kind::Duration,
         Some("string") => Kind::String,
         Some("shares") => Kind::Shares,
+        Some("notes") => Kind::Notes,
         Some("part") => Kind::Part {
             list: v["list"] == true,
         },
@@ -318,6 +326,7 @@ impl Type {
             Kind::Part { list: false } => "the name of a part".to_string(),
             Kind::Part { list: true } => "a list of names of parts".to_string(),
             Kind::Shares => "a map from model parts to shares of at least 0".to_string(),
+            Kind::Notes => "a map of free keys and values, never read".to_string(),
         };
         if let Some(u) = &self.unit {
             let _ = write!(s, " ({u})");
@@ -337,6 +346,7 @@ impl Type {
             Kind::Part { list: false } => "part",
             Kind::Part { list: true } => "part list",
             Kind::Shares => "shares",
+            Kind::Notes => "notes",
         }
     }
 
@@ -374,6 +384,7 @@ impl Type {
                 o.values()
                     .all(|x| num(crate::check::value(x)).is_some_and(|x| x >= 0.0))
             }),
+            Kind::Notes => v.is_object(),
         };
         if ok { Ok(()) } else { Err(self.describe()) }
     }

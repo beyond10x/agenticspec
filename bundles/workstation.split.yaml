@@ -120,7 +120,7 @@ architecture:
   sha256: sha256:9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99
 nested: {}
 contract:
-  digest: sha256:ce5938c88532bcaafc39c9a3d4412c67ac32148013ec6ed7c16a808e5f037bb1
+  digest: sha256:ecaebf22b0393c095a7562cab2be5b6a5ae0104881246589b715b617675fdb84
   document:
     architecture: workstation
     border:
@@ -514,7 +514,7 @@ contract:
       port: resource.claim
       protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
       settings: {}
-    ports_digest: b257c8de9607627a0d6f6d4b6786198c766bb2811aee55627f8a1c1c1b09e99e
+    ports_digest: 645138bee76982e5b23d9cadbf0fef35f297060505fa9fc1ff779eeae8c624f6
 binding:
   digest: sha256:60262f82a7224f467a6b7c470ce13662691942fc39e2e15bd26687777a76da51
   document:
@@ -1039,4 +1039,4 @@ runtimes:
   sha256:0000000000000000000000000000000000000000000000000000000000000001:
     image: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
     name: core
-digest: sha256:c822d594fdc8ab28e465fe8fb08224e4e46da2218143a451b49c667a5f6c7d44
+digest: sha256:24e71487823cc6b6fa6a36f157d39e28c7a405048f48e3b257f1d7c80bc74d7a

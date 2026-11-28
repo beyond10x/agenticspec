@@ -2,10 +2,10 @@ domain: agentic.resource
 
 summary: >-
   What agents share and wait for: a pool of a fixed capacity (build slots, a rate limit, a cache,
-  seats) and the claims on it. A claim waits in the queue until the pool grants it, holds for at
-  most its time limit, and ends released, expired or killed; its holder may withdraw it while it
-  is queued. A claim over capacity waits; it is never refused for that. The queue publishes when
-  each claim joined it (queued_at), the order the pool grants in.
+  seats, a work queue) and the claims on it. A claim waits in the queue until the pool grants it,
+  holds for at most its time limit, and ends released, expired or killed; its holder may withdraw
+  it while it is queued. A claim over capacity waits; it is never refused for that. The queue
+  publishes when each claim joined it (queued_at), the order the pool grants in.
 
 # UNMAPPED: a grant out of queue order is not refused; it needs a row-set guard over the queued
 # claims of the pool. The scheduler keeps the order (consumer gap G10).
@@ -17,7 +17,11 @@ naming:
 types:
   - name: agentic.resource.PoolKind
     kind: enum
-    variants: [BuildSlots, RateLimit, Cache, Seats]
+    variants: [BuildSlots, RateLimit, Cache, Seats, Queue]
+    naming:
+      summary: >-
+        What a pool hands out: build slots, calls under a rate limit, cache entries, seats of a
+        licence, or the places of a work queue whose claims are the items waiting to be taken.
 
 entities:
   - name: agentic.resource.Pool

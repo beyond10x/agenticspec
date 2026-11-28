@@ -9,11 +9,15 @@ summary: >-
   `15m`, `24h`, `1d`, or a number of seconds; `min` and `max` in seconds), string, part (the name
   of another part; `list: true` takes a list of names) and shares (a map from the name of a part
   to a number of at least 0). `default` is the value a part takes without the setting; `narrows`
-  names the contract ports it narrows, `all` every port the part uses.
+  names the contract ports it narrows, `all` every port the part uses. `notes` (type notes) is a
+  map with free keys and values: what a document records about a part that no setting types
+  (a file, a path, an audience, the use of a model). The check takes any map, and the simulator,
+  the search and the contract never read it.
 
 every_part:
   - {name: count, type: integer, min: 0, default: 1, summary: "How many copies of the part run."}
   - {name: per, type: part, summary: "One copy of the part for each copy of the named part."}
+  - {name: notes, type: notes, summary: "Free notes on the part, a map with keys and values of any kind: what no setting of its block types. The check takes any map; the simulator, the search and the contract never read it."}
 
 blocks:
   - kind: principal
@@ -45,6 +49,8 @@ blocks:
     domain: agentic.model
     settings:
       - {name: route, type: string, narrows: [model.inference], summary: "The route of the model, priced by the behaviour profile."}
+      - {name: hosting, type: enum, enum: agentic.model.Hosting, default: vendor, summary: "Who runs what serves the model: a provider's API (vendor), a server the owner runs on rented compute (managed) or on its own machine (local). With billing, where the model's price comes from."}
+      - {name: billing, type: enum, values: [subscription, metered, none], default: metered, summary: "How the model is paid for: a fixed subscription, metered per token at the route's price, or none (nothing per call, as a local model)."}
 
   - kind: gateway
     domain: agentic.gateway
@@ -87,6 +93,9 @@ blocks:
       - {name: role, type: string, summary: "The role of the behaviour profile the runtime's runs play."}
       - {name: durable_state, type: boolean, default: false, summary: "Whether the runtime keeps durable state of its own, records it writes and reads back after a restart; in a deployment bundle its unit claims an exclusive volume for it, `<part>-state`."}
       - {name: model_share, type: shares, summary: "The share of the runtime's model calls each model part it reaches gets; without it, equal shares."}
+      - {name: per_day_usd, type: number, unit: USD, min: 0, summary: "The spend cap of the runtime's runs per calendar day; without it, no cap."}
+      - {name: per_month_usd, type: number, unit: USD, min: 0, summary: "The spend cap of the runtime's runs per calendar month; without it, no cap."}
+      - {name: route, type: enum, values: [stop, ask, notify], default: stop, summary: "What happens at a spend cap: further spending stops (stop), a question goes to the principal the runtime acts for (ask), or spending goes on and a notification is sent (notify)."}
 
   - kind: pool
     domain: agentic.resource
@@ -94,6 +103,7 @@ blocks:
       - {name: kind, type: enum, enum: agentic.resource.PoolKind, narrows: [resource.claim], summary: "What the pool hands out."}
       - {name: capacity, type: integer, unit: slots, min: 0, narrows: [resource.claim], summary: "How many claims the pool holds at once; without it, no limit."}
       - {name: job_limit, type: duration, min: 0, narrows: [resource.claim], summary: "How long one claim may hold a slot; without it, no limit."}
+      - {name: order, type: enum, values: [fifo, lifo, priority], default: fifo, summary: "The order the pool grants waiting claims in: first come first served (fifo), newest first (lifo), or by the claim's priority."}
 
   - kind: trigger
     domain: agentic.trigger
@@ -121,6 +131,9 @@ blocks:
       - {name: action_class, type: enum, enum: agentic.shared.ToolCategory, summary: "The category of actions a grant permits."}
       - {name: scope, type: string, summary: "What a grant covers."}
       - {name: expires_after, type: duration, min: 0, summary: "How long a grant holds after it is issued."}
+      - {name: per_day_usd, type: number, unit: USD, min: 0, summary: "The spend cap a budget holds per calendar day; without it, no cap."}
+      - {name: per_month_usd, type: number, unit: USD, min: 0, summary: "The spend cap a budget holds per calendar month; without it, no cap."}
+      - {name: route, type: enum, values: [stop, ask, notify], default: stop, summary: "What happens at a spend cap: further spending stops (stop), a question goes to a principal (ask), or spending goes on and a notification is sent (notify)."}
 
   - kind: work
     domain: agentic.work
@@ -139,7 +152,9 @@ blocks:
 
   - kind: question
     domain: agentic.question
-    settings: []
+    settings:
+      - {name: default, type: string, summary: "The option a question of this part takes when no answer comes in time."}
+      - {name: default_after, type: duration, min: 0, summary: "How long a question waits for an answer before its default is taken; without it, it waits until answered."}
 
   - kind: process
     domain: agentic.process

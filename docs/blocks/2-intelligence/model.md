@@ -340,13 +340,16 @@ Called by: Caller.
 
 ## Settings
 
-The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes. What no setting here types (a file, a path, an audience, the use of a model) goes into the part's `notes`, a map with free keys and values that the check takes as written and nothing reads.
 
 A part `model`:
 
 | setting | type | unit | default | contract | what |
 |---|---|---|---|---|---|
 | `route` | string |  |  | `model.inference` | The route of the model, priced by the behaviour profile. |
+| `hosting` | enum `Hosting`: `vendor`, `managed`, `local` |  | `vendor` |  | Who runs what serves the model: a provider's API (vendor), a server the owner runs on rented compute (managed) or on its own machine (local). With billing, where the model's price comes from. |
+| `billing` | enum: `subscription`, `metered`, `none` |  | `metered` |  | How the model is paid for: a fixed subscription, metered per token at the route's price, or none (nothing per call, as a local model). |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+| `notes` | notes |  |  |  | Free notes on the part, a map with keys and values of any kind: what no setting of its block types. The check takes any map; the simulator, the search and the contract never read it. |
 

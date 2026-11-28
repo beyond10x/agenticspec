@@ -259,7 +259,7 @@ Called by: Operator.
 
 ## Settings
 
-The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes. What no setting here types (a file, a path, an audience, the use of a model) goes into the part's `notes`, a map with free keys and values that the check takes as written and nothing reads.
 
 A part `runtime`:
 
@@ -269,6 +269,10 @@ A part `runtime`:
 | `role` | string |  |  |  | The role of the behaviour profile the runtime's runs play. |
 | `durable_state` | boolean |  | `false` |  | Whether the runtime keeps durable state of its own, records it writes and reads back after a restart; in a deployment bundle its unit claims an exclusive volume for it, `<part>-state`. |
 | `model_share` | shares |  |  |  | The share of the runtime's model calls each model part it reaches gets; without it, equal shares. |
+| `per_day_usd` | number of at least 0 | USD |  |  | The spend cap of the runtime's runs per calendar day; without it, no cap. |
+| `per_month_usd` | number of at least 0 | USD |  |  | The spend cap of the runtime's runs per calendar month; without it, no cap. |
+| `route` | enum: `stop`, `ask`, `notify` |  | `stop` |  | What happens at a spend cap: further spending stops (stop), a question goes to the principal the runtime acts for (ask), or spending goes on and a notification is sent (notify). |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+| `notes` | notes |  |  |  | Free notes on the part, a map with keys and values of any kind: what no setting of its block types. The check takes any map; the simulator, the search and the contract never read it. |
 

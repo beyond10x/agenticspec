@@ -263,7 +263,7 @@ components:
       x-ess-kind: enum
       x-ess-name: agentic.channel.Channel.State
     agentic.channel.ChannelKind:
-      description: Prompt is a human typing into a session; Operator a human's private channel to the agent that acts for it; AgentMessage a message between agents on one host; AgentToAgent the same over a network; Chat a chat adapter; Notification one-way news to a party; Control a page or panel outside any session where a human acts by a button (send, pick, run, retry), each act one Request message or post.
+      description: Prompt is a human typing into a session; Operator a human's private channel to the agent that acts for it; AgentMessage a message between agents on one host; AgentToAgent the same over a network; Chat a chat adapter; Notification one-way news to a party; Control a page or panel outside any session where a human acts by a button (send, pick, run, retry), each act one Request message or post; Screen a page of a user interface that shows a party what the system holds, each page shown one post.
       enum:
       - Prompt
       - Operator
@@ -272,6 +272,7 @@ components:
       - Chat
       - Notification
       - Control
+      - Screen
       title: ChannelKind
       type: string
       x-ess-kind: enum
@@ -2122,7 +2123,7 @@ info:
     authenticated: true
     ingress: user
   x-ess-provenance:
-    contract_digest: slice-sha256/2:d7b596de78ada4dd7aa520cd67356d53d5a76ee2ebf2907144ecc735362a7f8d
+    contract_digest: slice-sha256/2:dc5c4640fab4704043a5186d3c3cd4d0c218eb5f623243fd72269bd865d8c597
     specification_version: v1
     system: agentic
   x-ess-reached-by: network

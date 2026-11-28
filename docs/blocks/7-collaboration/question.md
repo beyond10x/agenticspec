@@ -209,12 +209,15 @@ Called by: Asker.
 
 ## Settings
 
-The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes. What no setting here types (a file, a path, an audience, the use of a model) goes into the part's `notes`, a map with free keys and values that the check takes as written and nothing reads.
 
 A part `question`:
 
 | setting | type | unit | default | contract | what |
 |---|---|---|---|---|---|
+| `default` | string |  |  |  | The option a question of this part takes when no answer comes in time. |
+| `default_after` | duration of at least 0s |  |  |  | How long a question waits for an answer before its default is taken; without it, it waits until answered. |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+| `notes` | notes |  |  |  | Free notes on the part, a map with keys and values of any kind: what no setting of its block types. The check takes any map; the simulator, the search and the contract never read it. |
 

@@ -1,6 +1,6 @@
 format: agenticspec-contract/1
 architecture: workstation
-ports_digest: b257c8de9607627a0d6f6d4b6786198c766bb2811aee55627f8a1c1c1b09e99e
+ports_digest: 645138bee76982e5b23d9cadbf0fef35f297060505fa9fc1ff779eeae8c624f6
 ports:
   - port: sandbox.sandbox
     part: box

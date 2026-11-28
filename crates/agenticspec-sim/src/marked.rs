@@ -148,6 +148,9 @@ fn walk(v: &Value, path: &str, all: bool, out: &mut Vec<Marked>) -> Result<(), S
                 if path.is_empty() && k == crate::requirements::KEY {
                     continue;
                 }
+                if is_notes(o, k) {
+                    continue;
+                }
                 walk(x, &join(path, k), all, out)?;
             }
         }
@@ -184,10 +187,21 @@ fn replace_markers(v: &mut Value) {
         return;
     }
     match v {
-        Value::Object(o) => o.values_mut().for_each(replace_markers),
+        Value::Object(o) => {
+            let part = o.contains_key("block");
+            o.iter_mut()
+                .filter(|(k, _)| !(part && k.as_str() == crate::settings::NOTES))
+                .for_each(|(_, x)| replace_markers(x));
+        }
         Value::Array(xs) => xs.iter_mut().for_each(replace_markers),
         _ => {}
     }
+}
+
+/// Whether key `k` of object `o` is the notes of a part (`settings::NOTES`): free text the search
+/// neither varies nor resolves.
+fn is_notes(o: &Map<String, Value>, k: &str) -> bool {
+    k == crate::settings::NOTES && o.contains_key("block")
 }
 
 /// The architecture with `params` set at their paths and every marker replaced by its value.
