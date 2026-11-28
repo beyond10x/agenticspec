@@ -9,7 +9,7 @@ const hosts = useHosts();
 const page = usePage({ params: ['draft_id'], state: { architecture: { store: 'url', initial: '' }, part_search: { store: 'memory', initial: '' } } });
 const r_bar_architecture = useRead('studio.Architectures', () => ({}));
 const c_bar_open = useCommand('studio.draft.OpenDraft', () => ({ source: page.state['architecture'] }));
-const r_graph = useRead('studio.DraftGraph', () => ({ draft_id: page.params['draft_id'] }));
+const r_graph = useRead('studio.DraftGraph', () => ({ draft_id: page.params['draft_id'] }), { channel: 'draft_events', on: ['studio.draft.DraftRevised'] });
 const f_patch = useForm('studio.session.CallTool', { arguments: '', dry_run: false }, () => ({ draft_id: page.params['draft_id'] }));
 const fields_patch_outcome: FieldDef[] = [
   { field: 'outcome', label: 'Outcome', as: 'badge', labels: { 'Applied': 'Applied', 'DryRun': 'Dry run', 'Refused': 'Refused' }, tones: { 'Applied': 'success', 'DryRun': 'info', 'Refused': 'danger' } },
@@ -18,20 +18,20 @@ const fields_patch_outcome: FieldDef[] = [
   { field: 'error', label: 'Error', as: 'text' },
   { field: 'diff', label: 'Changes', as: 'list' },
 ];
-const r_summary = useRead('studio.DraftSummary', () => ({ draft_id: page.params['draft_id'] }));
+const r_summary = useRead('studio.DraftSummary', () => ({ draft_id: page.params['draft_id'] }), { channel: 'draft_events', on: ['studio.draft.DraftRevised'] });
 const fields_summary: FieldDef[] = [
   { field: 'revision', label: 'Revision', as: 'number' },
   { field: 'digest', label: 'Digest', as: 'text' },
   { field: 'passed', label: 'Check', as: 'badge', labels: { 'false': 'refuses', 'true': 'passes' }, tones: { 'false': 'danger', 'true': 'success' } },
   { field: 'description', label: 'Description', as: 'text' },
 ];
-const r_refusals = useRead('studio.DraftRefusals', () => ({ draft_id: page.params['draft_id'] }));
+const r_refusals = useRead('studio.DraftRefusals', () => ({ draft_id: page.params['draft_id'] }), { channel: 'draft_events', on: ['studio.draft.DraftRevised'] });
 const fields_refusals: FieldDef[] = [
   { field: 'rule', label: 'Rule', as: 'text' },
   { field: 'part', label: 'Part', as: 'text' },
   { field: 'message', label: 'Refusal', as: 'text' },
 ];
-const r_parts = useRead('studio.DraftParts', () => ({ draft_id: page.params['draft_id'] }));
+const r_parts = useRead('studio.DraftParts', () => ({ draft_id: page.params['draft_id'] }), { channel: 'draft_events', on: ['studio.draft.DraftRevised'] });
 const fields_parts: FieldDef[] = [
   { field: 'id', label: 'Part', as: 'text' },
   { field: 'block', label: 'Block', as: 'text' },

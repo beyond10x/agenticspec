@@ -49,15 +49,16 @@ export interface Commands {
 
 /** Every channel of the document and the events it carries. */
 export interface Channels {
+  draft_events: { events: 'studio.draft.DraftRevised' | 'studio.session.ToolCallAnswered' | 'studio.session.ToolCallFailed'; per: 'draft_id' };
 }
 
 export type ChannelName = keyof Channels;
 
 export const READS = ['studio.Architectures', 'studio.DraftGraph', 'studio.DraftParts', 'studio.DraftRefusals', 'studio.DraftSummary', 'studio.draft.Drafts'] as const;
 export const COMMANDS = ['studio.draft.OpenDraft', 'studio.session.CallTool'] as const;
-export const CHANNELS = [] as const;
+export const CHANNELS = ['draft_events'] as const;
 
-const CHANNEL_EVENTS: Record<ChannelName, readonly string[]> = {};
+const CHANNEL_EVENTS: Record<ChannelName, readonly string[]> = { draft_events: ['studio.draft.DraftRevised', 'studio.session.ToolCallAnswered', 'studio.session.ToolCallFailed'] };
 
 /** What a command answered: carried out (`ok`) or refused as the command declares, with its row. */
 export interface CommandAnswer {
@@ -100,7 +101,12 @@ async function body(r: Response): Promise<Record<string, Value>> {
   }
 }
 
+type Listener = (event: string, data: Value) => void;
+
 export function createClient(base = '', fetcher: typeof fetch = (input, init) => fetch(input, init)): Client {
+  // One stream per channel and parameters, however many reads listen to it: a browser keeps few
+  // connections open to one host.
+  const streams = new Map<string, { source: EventSource; listeners: Set<Listener> }>();
   return {
     async read(view, params) {
       const r = await fetcher(`${base}/api/views/${view}${query(params)}`);
@@ -120,19 +126,35 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
       throw new Refused(r.status, String(b.error ?? r.status), String(b.message ?? ''));
     },
     subscribe(channel, params, onEvent) {
-      const source = new EventSource(`${base}/api/channels/${channel}${query(params)}`);
-      const handler = (e: MessageEvent<string>) => {
-        let data: Value;
-        try {
-          data = JSON.parse(e.data) as Value;
-        } catch {
-          data = e.data;
+      const url = `${base}/api/channels/${channel}${query(params)}`;
+      let stream = streams.get(url);
+      if (!stream) {
+        const source = new EventSource(url);
+        const listeners = new Set<Listener>();
+        const handler = (e: MessageEvent<string>) => {
+          let data: Value;
+          try {
+            data = JSON.parse(e.data) as Value;
+          } catch {
+            data = e.data;
+          }
+          for (const l of [...listeners]) l(e.type, data);
+        };
+        for (const ev of (CHANNEL_EVENTS as Record<string, readonly string[]>)[channel] ?? []) source.addEventListener(ev, handler as EventListener);
+        source.onmessage = handler;
+        stream = { source, listeners };
+        streams.set(url, stream);
+      }
+      const mine = stream;
+      const listener: Listener = (event, data) => onEvent(event, data);
+      mine.listeners.add(listener);
+      return () => {
+        mine.listeners.delete(listener);
+        if (mine.listeners.size === 0) {
+          mine.source.close();
+          streams.delete(url);
         }
-        onEvent(e.type, data);
       };
-      for (const ev of (CHANNEL_EVENTS as Record<string, readonly string[]>)[channel] ?? []) source.addEventListener(ev, handler as EventListener);
-      source.onmessage = handler;
-      return () => source.close();
     },
   };
 }

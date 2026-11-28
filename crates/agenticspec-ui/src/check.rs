@@ -457,7 +457,7 @@ fn compile(e: &str, scope: &Scope, path: &str) -> Result<Compiled, Refusal> {
 /// The properties a node of each kind takes besides `name`, `title`, `collapsed` and `states`.
 fn allowed(component: Option<Component>, host: bool) -> &'static [&'static str] {
     if host {
-        return &["host", "reason", "stands_in_for", "reads"];
+        return &["host", "reason", "stands_in_for", "reads", "live"];
     }
     match component {
         Some(Component::Collection) => &[

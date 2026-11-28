@@ -7,22 +7,23 @@
 //! | POST | `/api/commands/<command>` | `{"row": ...}`; a refused patch is status 422 with its row |
 //! | GET | any other path | a file of the www directory; `/` is its `index.html` |
 //!
-//! The views beside `studio.draft.Drafts` are placeholders of the document until the studio
-//! model holds them; their rows are the fields the document reads.
+//! `studio.draft.Drafts`, `studio.session.Sessions` and `studio.session.ToolCalls` are views of
+//! the studio model. The others are placeholders of the document until the studio model holds
+//! them; their rows are the fields the document reads.
 
 use std::path::{Component, Path};
 use std::sync::Mutex;
 
-use agenticspec_patch::{Change, Patch, Refused};
 use agenticspec_sim::check::{self, Refusal};
 use serde_json::{Value, json};
 
 use crate::http::{HTML, Request, Response, TEXT};
 use crate::routes::{error, lock, studio_error, to_json, val};
 use crate::studio::{Draft, Studio};
+use crate::types::session::{StudioSessionCaller as Caller, StudioSessionTool as Tool};
 
 /// The value of `key` in a query string, percent-decoded.
-fn param(query: &str, key: &str) -> Option<String> {
+pub(crate) fn param(query: &str, key: &str) -> Option<String> {
     query.split('&').find_map(|pair| {
         let (k, v) = pair.split_once('=').unwrap_or((pair, ""));
         (decode(k) == key).then(|| decode(v))
@@ -30,7 +31,7 @@ fn param(query: &str, key: &str) -> Option<String> {
 }
 
 /// `%xx` and `+` decoded; a broken escape is kept as written.
-fn decode(s: &str) -> String {
+pub(crate) fn decode(s: &str) -> String {
     let b = s.as_bytes();
     let mut out = Vec::with_capacity(b.len());
     let mut i = 0;
@@ -92,6 +93,16 @@ pub fn view(studio: &Mutex<Studio>, name: &str, request: &Request) -> Response {
                 .collect(),
         ),
         "studio.draft.Drafts" => rows(s.drafts().iter().map(|d| to_json(&d.row)).collect()),
+        "studio.session.Sessions" => rows(s.sessions().iter().map(to_json).collect()),
+        "studio.session.ToolCalls" => {
+            let Some(id) = param(&request.query, "session_id").filter(|id| !id.is_empty()) else {
+                return error(400, "InvalidRequest", "this view takes session_id");
+            };
+            match s.calls(&id) {
+                Ok(calls) => rows(calls.into_iter().map(to_json).collect()),
+                Err(e) => studio_error(&e),
+            }
+        }
         "studio.DraftSummary"
         | "studio.DraftParts"
         | "studio.DraftRefusals"
@@ -131,52 +142,62 @@ pub fn view(studio: &Mutex<Studio>, name: &str, request: &Request) -> Response {
     }
 }
 
-fn shown(v: Option<&Value>) -> String {
+fn shown(v: &Value) -> String {
     match v {
-        None => "(none)".into(),
-        Some(Value::String(s)) => s.clone(),
-        Some(v) => v.to_string(),
+        Value::Null => "(none)".into(),
+        Value::String(s) => s.clone(),
+        v => v.to_string(),
     }
 }
 
-fn diff_lines(diff: &[Change]) -> Vec<String> {
-    diff.iter()
+/// The changes of an apply's answer, one line each.
+fn diff_lines(diff: &Value) -> Vec<String> {
+    diff.as_array()
+        .into_iter()
+        .flatten()
         .map(|c| {
             format!(
                 "{}: {} → {}",
-                c.path,
-                shown(c.before.as_ref()),
-                shown(c.after.as_ref())
+                c["path"].as_str().unwrap_or_default(),
+                shown(&c["before"]),
+                shown(&c["after"])
             )
         })
         .collect()
 }
 
-fn refused_row(r: &Refused, diff: &[Change]) -> Value {
-    let head = match r.rule {
-        Some(n) => format!("Refused at rule {n}: {} — {}", r.error.name(), r.message),
-        None => format!("Refused: {} — {}", r.error.name(), r.message),
-    };
-    let check: Vec<String> = r
-        .check
-        .iter()
-        .map(|c| format!("{}: {c}", c.rule()))
-        .collect();
-    let message = if check.is_empty() {
-        head
-    } else {
-        format!("{head}; {}", check.join("; "))
-    };
-    json!({
-        "outcome": "Refused",
-        "rule": r.rule,
-        "error": r.error.name(),
-        "message": message,
-        "diff": diff_lines(diff),
-    })
+/// The row the patch form shows for an apply's answer (`tools::apply`).
+fn outcome_row(answer: &Value) -> Value {
+    let outcome = answer["outcome"].as_str().unwrap_or_default();
+    let mut row = json!({
+        "outcome": outcome,
+        "message": answer["summary"],
+        "diff": diff_lines(&answer["diff"]),
+    });
+    match outcome {
+        "Applied" => row["revision"] = answer["revision"]["number"].clone(),
+        "Refused" => {
+            row["rule"] = answer["refusal"]["rule"].clone();
+            row["error"] = answer["refusal"]["error"].clone();
+        }
+        _ => {}
+    }
+    row
 }
 
+/// `studio.session.CallTool`. With a `session_id`: the call `{"session_id", "tool", "caller"?,
+/// "arguments"?, "dry_run"?}` of that session, answered as the call's row. Without one, from
+/// the patch form: `{"draft_id", "arguments": "<patch rules>", "dry_run"?}`, an apply in the
+/// draft's editor session, answered as the row the form shows (status 422 when refused).
 fn call_tool(studio: &Mutex<Studio>, input: &Value) -> Response {
+    if let Some(session) = input["session_id"].as_str() {
+        let r = crate::routes::call(studio, session, input);
+        if r.status != 200 {
+            return r;
+        }
+        let mut v: Value = serde_json::from_slice(&r.body).unwrap_or(Value::Null);
+        return Response::json(200, &json!({"row": v["call"].take()}));
+    }
     let (Some(id), Some(text)) = (input["draft_id"].as_str(), input["arguments"].as_str()) else {
         return error(
             400,
@@ -186,36 +207,29 @@ fn call_tool(studio: &Mutex<Studio>, input: &Value) -> Response {
     };
     let dry_run = input["dry_run"].as_bool().unwrap_or(false);
     let mut s = lock(studio);
-    if let Err(e) = s.draft(id) {
-        return studio_error(&e);
-    }
-    let patch = match Patch::from_text(text) {
-        Ok(p) => p,
-        Err(r) => return Response::json(422, &json!({"row": refused_row(&r, &[])})),
-    };
-    let outcome = match s.apply(id, &patch, dry_run) {
-        Ok(o) => o,
+    let session = match s.editor_session(id) {
+        Ok(session) => session,
         Err(e) => return studio_error(&e),
     };
-    if let Some(r) = &outcome.refusal {
-        return Response::json(422, &json!({"row": refused_row(r, &outcome.diff)}));
-    }
-    let n = outcome.changed_rows;
-    let rows = if n == 1 { "row" } else { "rows" };
-    let row = match &outcome.revision {
-        Some(rev) => json!({
-            "outcome": "Applied",
-            "revision": rev.number,
-            "message": format!("Applied as revision {}, {n} {rows} changed.", rev.number),
-            "diff": diff_lines(&outcome.diff),
-        }),
-        None => json!({
-            "outcome": "DryRun",
-            "message": format!("Dry run: {n} {rows} would change; the draft keeps its revision."),
-            "diff": diff_lines(&outcome.diff),
-        }),
+    let call = match s.call(
+        &session,
+        Tool::Apply,
+        Caller::User,
+        &json!({"patch": text}),
+        dry_run,
+    ) {
+        Ok(c) => c,
+        Err(e) => return studio_error(&e),
     };
-    Response::json(200, &json!({ "row": row }))
+    let Some(answer) = call.answer else {
+        return error(422, "CallFailed", "the apply could not be carried out");
+    };
+    let status = if answer["outcome"] == "Refused" {
+        422
+    } else {
+        200
+    };
+    Response::json(status, &json!({ "row": outcome_row(&answer) }))
 }
 
 /// One command.
@@ -239,6 +253,24 @@ pub fn command(studio: &Mutex<Studio>, name: &str, request: &Request) -> Respons
             }
         }
         "studio.session.CallTool" => call_tool(studio, &input),
+        "studio.session.StartSession" => {
+            let Some(draft) = input["draft_id"].as_str() else {
+                return error(400, "InvalidRequest", "StartSession takes {\"draft_id\"}");
+            };
+            match lock(studio).start_session(draft) {
+                Ok(row) => Response::json(201, &json!({"row": to_json(row)})),
+                Err(e) => studio_error(&e),
+            }
+        }
+        "studio.session.CloseSession" => {
+            let Some(session) = input["session_id"].as_str() else {
+                return error(400, "InvalidRequest", "CloseSession takes {\"session_id\"}");
+            };
+            match lock(studio).close_session(session) {
+                Ok(row) => Response::json(200, &json!({"row": to_json(row)})),
+                Err(e) => studio_error(&e),
+            }
+        }
         _ => error(
             404,
             "NoSuchCommand",

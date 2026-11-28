@@ -141,6 +141,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "agenticstudio-mcp"
+version = "0.4.0"
+dependencies = [
+ "agenticspec-sim",
+ "agenticstudio",
+ "serde_json",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

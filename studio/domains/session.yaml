@@ -301,4 +301,14 @@ actors:
       summary: Whoever designs an architecture in the studio, in the browser.
     may:
       - studio.draft.OpenDraft
+      - studio.session.StartSession
+      - studio.session.CloseSession
+      - studio.session.CallTool
+  - name: studio.session.Agent
+    naming:
+      display: Agent
+      summary: An agent harness that drives a draft through the agent channel (MCP).
+    may:
+      - studio.session.StartSession
+      - studio.session.CloseSession
       - studio.session.CallTool

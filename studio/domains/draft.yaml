@@ -16,6 +16,13 @@ naming:
   wire: draft
   display: Draft
 
+types:
+  # What made a new revision of a draft: an applied patch, or a change of the document the draft
+  # was opened from, read again from disk.
+  - name: studio.draft.RevisionCause
+    kind: enum
+    variants: [Patch, SourceChanged]
+
 entities:
   # UNMAPPED: undo. "Undo ... are revisions of patches" says what undo reads, not what it
   # writes: the inverse patch applied as a further revision, or a head that points back to an
@@ -61,6 +68,14 @@ events:
   - name: studio.draft.DraftArchived
     fields:
       - {name: draft_id, type: studio.shared.DraftId}
+  # The draft moved to a new revision of its architecture; every client open on the draft
+  # reads it from the draft's event channel.
+  - name: studio.draft.DraftRevised
+    fields:
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: revision, type: studio.shared.RevisionRef}
+      - {name: number, type: Integer}
+      - {name: cause, type: studio.draft.RevisionCause}
 
 commands:
   # Open a draft on an architecture of the building blocks. The studio server lowers the source
@@ -118,6 +133,32 @@ commands:
       - name: wrong-state
         wrong_state: true
         error: studio.draft.ArchivedDraft
+
+  # The studio server records that a draft moved to a revision its architecture committed: by
+  # an applied patch, or by its source document changed on disk.
+  - name: studio.draft.ReviseDraft
+    naming:
+      display: Record a new revision of a draft
+    input:
+      - {name: draft_id, type: studio.shared.DraftId}
+      - {name: revision, type: studio.shared.RevisionRef}
+      - {name: number, type: Integer}
+      - {name: cause, type: studio.draft.RevisionCause}
+    outcomes:
+      - name: no-such-draft
+        when_related: {via: input.draft_id, exists: false}
+        error: studio.draft.NoSuchDraft
+      - name: archived
+        when_related: {via: input.draft_id, predicate: state == Archived}
+        error: studio.draft.ArchivedDraft
+      - name: revised
+        emits: [studio.draft.DraftRevised]
+        payload:
+          studio.draft.DraftRevised:
+            draft_id: input.draft_id
+            revision: input.revision
+            number: input.number
+            cause: input.cause
 
 views:
   - name: studio.draft.Drafts

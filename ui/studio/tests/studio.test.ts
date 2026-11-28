@@ -1,5 +1,6 @@
 // Unit tests of the studio's host code: the patch tokens, the graph card's facts, the hook after
-// OpenDraft, and the graph slot's selection.
+// OpenDraft, the graph slot's selection, and the one event stream per draft the generated client
+// keeps.
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick, reactive } from 'vue';
@@ -7,6 +8,7 @@ import { tokens } from '../src/slots/patch';
 import { asGraph, facts, linksOf, type GraphRow } from '../src/slots/graph';
 import { hooks } from '../src/hooks';
 import DraftGraph from '../src/slots/DraftGraph.vue';
+import { createClient } from '../src/generated/client';
 
 const graph: GraphRow = {
   draft_id: 'd1',
@@ -84,5 +86,47 @@ describe('hooks', () => {
     const navigate = vi.fn();
     hooks['studio.draft.OpenDraft']?.({ draft_id: 'd1' }, { navigate, toast: vi.fn() });
     expect(navigate).toHaveBeenCalledWith('draft', { draft_id: 'd1' });
+  });
+});
+
+describe('event channel', () => {
+  it('every read of one draft shares one stream, closed when the last read stops', () => {
+    const opened: FakeSource[] = [];
+    class FakeSource {
+      url: string;
+      closed = false;
+      onmessage: ((e: MessageEvent<string>) => void) | null = null;
+      handlers = new Map<string, (e: MessageEvent<string>) => void>();
+      constructor(url: string) {
+        this.url = url;
+        opened.push(this);
+      }
+      addEventListener(name: string, h: (e: MessageEvent<string>) => void) {
+        this.handlers.set(name, h);
+      }
+      close() {
+        this.closed = true;
+      }
+    }
+    vi.stubGlobal('EventSource', FakeSource);
+    const client = createClient();
+    const seen: string[] = [];
+    const stopA = client.subscribe('draft_events', { draft_id: 'd1' }, (e) => seen.push(`a:${e}`));
+    const stopB = client.subscribe('draft_events', { draft_id: 'd1' }, (e) => seen.push(`b:${e}`));
+    const stopC = client.subscribe('draft_events', { draft_id: 'd2' }, (e) => seen.push(`c:${e}`));
+    expect(opened.map((s) => s.url)).toEqual([
+      '/api/channels/draft_events?draft_id=d1',
+      '/api/channels/draft_events?draft_id=d2',
+    ]);
+    const revised = { type: 'studio.draft.DraftRevised', data: '{"number":2}' } as MessageEvent<string>;
+    opened[0].handlers.get('studio.draft.DraftRevised')!(revised);
+    expect(seen).toEqual(['a:studio.draft.DraftRevised', 'b:studio.draft.DraftRevised']);
+    stopA();
+    expect(opened[0].closed).toBe(false);
+    stopB();
+    expect(opened[0].closed).toBe(true);
+    stopC();
+    expect(opened[1].closed).toBe(true);
+    vi.unstubAllGlobals();
   });
 });
