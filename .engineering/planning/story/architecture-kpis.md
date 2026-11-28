@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:architecture-kpis
 kind: story
-status: draft
+status: implemented
 title: KPIs of an architecture as a whole, read from its document
 summary: Size, autonomy, exposure, weak points and fixed limits of an architecture, computed by agenticspec sim check and shown on every architecture page and catalog entry
 relations:
@@ -24,7 +24,11 @@ scope:
   path: website/src/generated
 - confidence: inferred
   path: website/static/catalog
-revision: 4
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:12Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:12Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:12Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

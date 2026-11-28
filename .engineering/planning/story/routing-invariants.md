@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:routing-invariants
 kind: story
-status: draft
+status: implemented
 title: Check a contract's routing invariants against a simulated trace
 summary: agenticspec sim trace records a port-level trace of one run and agenticspec sim contract --trace checks every routing invariant on it, naming the link and event of a violation.
 relations:
@@ -40,7 +40,11 @@ scope:
   path: spec/domains/cli.yaml
 - confidence: cited
   path: website/static/catalog
-revision: 8
+revision: 11
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 ## Outcome
 

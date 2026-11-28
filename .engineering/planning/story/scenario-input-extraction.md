@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:scenario-input-extraction
 kind: story
-status: draft
+status: implemented
 title: Extract scenario inputs from a lifted session, joined to what they caused
 summary: Outside inputs of a lifted session become when entries of a draft scenario, joined through the receiving turn to the rows they caused; a message names the turn that received it (consumer gap M8)
 relations:
@@ -30,7 +30,11 @@ scope:
   path: spec/domains/cli.yaml
 - confidence: inferred
   path: website/src/generated
-revision: 11
+revision: 14
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:17Z", actor: "human:operator", revision: 12, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:17Z", actor: "human:operator", revision: 13, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:17Z", actor: "human:operator", revision: 14, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:block-bindings
 kind: story
-status: active
+status: implemented
 title: Declare the cross-block causation of the blocks as ESS bindings
 summary: blocks/ gets ESS bindings for the commands one block causes in another; every binding ESS cannot express is a named gap with a reproduction.
 relations:
@@ -22,10 +22,11 @@ scope:
   path: scripts/fixtures/layers
 - confidence: cited
   path: website/src/generated
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:33:36Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-11-27T23:33:36Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"review_outcome":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:11Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Outcome
 

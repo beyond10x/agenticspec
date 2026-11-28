@@ -30,7 +30,7 @@ scope:
   path: scenarios
 - confidence: inferred
   path: website/src/generated
-revision: 14
+revision: 15
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 13}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 14}
@@ -119,3 +119,7 @@ says whether `agenticspec-scenario/1` maps to `eval-case/1` or why it cannot.
 Running a scenario (`story:scenario-simulator-run`); corpus tasks as inputs (`story:task-corpus`);
 scenarios extracted from sessions (`story:scenario-input-extraction`); a runtime running a
 scenario (the epic after `epic:architecture-contract`).
+
+## Remaining at 9bb5998
+
+Missing: then matches simulator event names instead of qualified block events; unknown_event, input_not_at_border and architecture_digest_mismatch do not exist (crates/agenticspec-sim/src/scenario.rs).

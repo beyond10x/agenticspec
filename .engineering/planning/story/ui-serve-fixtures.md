@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ui-serve-fixtures
 kind: story
-status: draft
+status: implemented
 title: 'agenticspec ui serve: the default control plane on block fixtures'
 summary: agenticspec ui serve <architecture> derives the default and answers R1 from block fixtures, R2 from channel scripts, R4 by a recording fixture and R5 allowing every action, on 127.0.0.1.
 relations:
@@ -27,7 +27,11 @@ scope:
   path: ui/fixtures/scripts
 - confidence: inferred
   path: ui/views/fixtures
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:19Z", actor: "human:operator", revision: 3, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

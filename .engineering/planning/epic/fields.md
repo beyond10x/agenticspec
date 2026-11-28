@@ -2,13 +2,14 @@
 format: aep.planning-md/3
 id: epic:fields
 kind: epic
-status: active
+status: implemented
 title: 'Fields of work: a neutral core and field packs'
 summary: Keep the blocks field-neutral; coding and later fields supply rows, profiles, KPIs, corpora and protocol references
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:40:30Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-27T23:40:30Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:22Z", actor: "human:operator", revision: 4}
 ---
 ## Outcome
 

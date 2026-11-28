@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:views-package
 kind: story
-status: draft
+status: implemented
 title: 'The panel as the unit of reuse: a Vue package and custom elements from one source'
 summary: The generated panels, part pages and overviews ship as a Vue package and as custom elements branded by --kit-* tokens; agenticstudio's draft view shows the same panels (O2).
 relations:
@@ -22,7 +22,11 @@ scope:
   path: ui/studio
 - confidence: inferred
   path: ui/views
-revision: 4
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

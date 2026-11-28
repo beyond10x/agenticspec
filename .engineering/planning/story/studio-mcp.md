@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:studio-mcp
 kind: story
-status: draft
+status: implemented
 title: 'The agent channel: query, apply, check and simulate as MCP tools on a draft'
 summary: crates/agenticstudio-mcp lets any agent harness drive a draft through four tools whose answers explain refusals and KPIs, while every client on the draft sees each change live.
 relations:
@@ -18,7 +18,11 @@ scope:
   path: crates/agenticstudio-mcp
 - confidence: cited
   path: docs/studio.md
-revision: 9
+revision: 12
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 10, decided_on: {"recorded":{"test_result":1,"review":1,"review_outcome":3}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 11, decided_on: {"recorded":{"test_result":1,"review":1,"review_outcome":3}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 12, decided_on: {"recorded":{"test_result":1,"review":1,"review_outcome":3}}}
 ---
 ## Outcome
 

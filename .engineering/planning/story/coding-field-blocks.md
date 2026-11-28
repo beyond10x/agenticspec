@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:coding-field-blocks
 kind: story
-status: active
+status: implemented
 title: 'Coding field blocks: repository, forge, change request, issue, board, work queue, file tools'
 summary: Vendor-neutral coding concepts as field blocks that depend on the core only
 relations:
@@ -16,10 +16,11 @@ scope:
   path: fields/coding/blocks
 - confidence: cited
   path: scripts/check-layers.sh
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:40:30Z", actor: "human:operator", revision: 3}
 - {from: "proposed", to: "active", at: "2026-11-27T23:40:30Z", actor: "human:operator", revision: 4}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:12Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

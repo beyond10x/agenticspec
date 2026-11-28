@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-28T08:40:13Z",
+  "actor": "human:operator",
+  "artifact": "story:contract-conformance",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "CI of PR #43 at c4a0427 (merged as 9bb5998); slot task check 604 passed",
+    "reference": "https://github.com/beyond10x/agenticspec/actions/runs/46123756056"
+  }
+}

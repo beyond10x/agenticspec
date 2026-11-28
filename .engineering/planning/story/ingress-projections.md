@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ingress-projections
 kind: story
-status: draft
+status: active
 title: 'Generated projections per export: OpenAPI, streams, CLI, tool list, agent card, metric list'
 summary: Each export's projection generated from the compiled model and committed with sources.sha256, held by a digest check and a slow byte comparison; an ess-http/1 subset gap is filed in ESS.
 relations:
@@ -27,7 +27,10 @@ scope:
   path: spec/cli.yaml
 - confidence: inferred
   path: spec/domains/cli.yaml
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 3}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
 ---
 ## Outcome
 
@@ -73,3 +76,7 @@ Q7 A. Epic: `epic:ingress`.
 
 Serving any projection (`story:ingress-admission`, `story:first-runtime`); the UI export
 (`story:view-layer-per-ingress`).
+
+## Remaining at 9bb5998
+
+Delivered in a6f7440 for http only (crates/agenticspec-sim/src/contract/projection.rs:93). Missing: event_stream, cli, tool, agent and metrics_scrape projections.

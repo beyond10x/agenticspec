@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:bundle-fixtures
 kind: story
-status: draft
+status: active
 title: Fixture bundles, their digests and the copy of cloudspec's accepted list
 summary: bundles/<architecture>.<binding>.yaml per catalog architecture with bundles/sources.sha256, a fast digest check and a slow byte comparison, and bundles/cloudspec-accepts.yaml enforced by bundle and admission.
 relations:
@@ -19,7 +19,10 @@ scope:
   path: crates/agenticspec-runtime
 - confidence: inferred
   path: scripts/check-generated.sh
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 5}
 ---
 ## Outcome
 
@@ -57,3 +60,7 @@ cloudspec vendors the fixtures with a lock and a coverage test (request C7). Des
 ## Not in this story
 
 The vendoring and coverage test in cloudspec (request C7); cloudspec's published list (request C4).
+
+## Remaining at 9bb5998
+
+Delivered in 43047c2. Missing: cloudspec_commit is null in bundles/cloudspec-accepts.yaml:2; waits on cloudspec C4.
