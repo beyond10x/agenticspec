@@ -1,0 +1,18 @@
+format: agenticspec-architecture/1
+architecture: ingress-small
+summary: "Refused: a part takes the reserved path control of the implied audiences."
+
+parts:
+  owner:    { block: principal, kind: human }
+  operator: { block: agent, harness: coding, acts_for: owner }
+  control:  { block: gateway }
+  model:    { block: model }
+  chat:     { block: channel }
+
+links:
+  - { from: owner,    to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner,    carries: question, over: chat }
+  - { from: operator, to: control,  carries: model_call }
+  - { from: control,  to: model,    carries: model_call }
+
+border: [operator]

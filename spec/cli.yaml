@@ -223,10 +223,32 @@ callables:
       document_unreadable: agenticspec.cli.Refusal
       architecture_refused: agenticspec.cli.Refusal
       ports_unreadable: agenticspec.cli.Refusal
+      kpis_unreadable: agenticspec.cli.Refusal
       contract_refused: agenticspec.cli.Refusal
       binding_invalid: agenticspec.cli.Refusal
       accepts_unreadable: agenticspec.cli.Refusal
       not_admitted: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  ingress_default:
+    target: {kind: local, owner: agenticspec.cli, action: ingress_default}
+    input: agenticspec.cli.IngressDefaultInput
+    result: agenticspec.cli.IngressDefaultResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+  ingress_project:
+    target: {kind: local, owner: agenticspec.cli, action: ingress_project}
+    input: agenticspec.cli.IngressProjectInput
+    result: agenticspec.cli.IngressProjectResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      ports_unreadable: agenticspec.cli.Refusal
+      kpis_unreadable: agenticspec.cli.Refusal
+      contract_refused: agenticspec.cli.Refusal
+      blocks_unreadable: agenticspec.cli.Refusal
+      projection_refused: agenticspec.cli.Refusal
+      projections_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
@@ -419,3 +441,19 @@ commands:
       - {field: out, source: {kind: option, long: out}}
       - {field: ports, source: {kind: option, long: ports}}
       - {field: accepts, source: {kind: option, long: accepts}}
+      - {field: kpis, source: {kind: option, long: kpis}}
+  - path: [ingress, default]
+    callable: ingress_default
+    about: Print the default ingresses an architecture has, as the ingress section to paste into it and change
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+  - path: [ingress, project]
+    callable: ingress_project
+    about: Write the ess-http/1 protocol binding and the OpenAPI document of each http export of an architecture, or compare them with --check
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: check, source: {kind: option, long: check}}
+      - {field: blocks, source: {kind: option, long: blocks}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: kpis, source: {kind: option, long: kpis}}

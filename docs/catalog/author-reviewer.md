@@ -100,6 +100,16 @@ Routing invariants, one per link whose value travels in a port:
 
 Border: **operator**.
 
+Ingresses: who reaches the architecture from outside, what each audience may use, and over which protocols.
+
+| ingress | audience | authenticated | exports | commands | views | feeds | metrics |
+|---|---|---|---|---|---|---|---|
+| **metrics** | `control.monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 12 |
+| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 5 | 29 | 70 | 0 |
+
+- **metrics**: `cache_bust_count`, `cache_hit_share`, `context_size_p90_tokens`, `cost_usd`, `human_prompt_share`, `owner_wait_share`, `priced_message_share`, `secrets_in_prompts`, `secrets_in_tool_output`, `secrets_left_session`, `sub_agents_started`, `subagent_cost_share`
+- **operator**: `agentic.gateway.DetachUpstream`, `agentic.gateway.DrainGateway`, `agentic.gateway.StopGateway`, `agentic.question.Answer`, `agentic.sandbox.RetireSandbox`
+
 ## Download
 
 <CatalogDownloads dir={"/catalog/author-reviewer/"} files={[{"about":"the parts, links and policies, with the marked places at their values as written","file":"author-reviewer.yaml","label":"Architecture as written"},{"about":"the ports a runtime implements to run the architecture as written, with their protocols, settings, instances and routing invariants","file":"author-reviewer.contract.yaml","label":"Contract"},{"about":"every marked place at the value of the best variant; its vary ranges are kept, so it can be searched again","file":"author-reviewer.best.yaml","label":"Optimized architecture"},{"about":"seeds, horizon, faults, the search and its weights; it names the two files beside it","file":"reviewer-tuning.yaml","label":"Experiment"},{"about":"how long turns, builds and answers take, and what model calls cost","file":"coding.yaml","label":"Behaviour profile"},{"about":"every variant with its KPIs, the best one and the timeline, as the result page draws it","file":"result.json","label":"Result"}]} />

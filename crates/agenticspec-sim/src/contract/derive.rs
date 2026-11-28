@@ -53,8 +53,9 @@ pub struct Contract {
     pub ports: Vec<ContractPort>,
     pub invariants: Vec<Invariant>,
     pub border: Vec<String>,
-    /// The document's ingresses, each interface resolved into operations; empty when the
-    /// document declares none, and then not written.
+    /// The document's ingresses and the default ingresses in effect, each interface resolved
+    /// into operations; empty only when the document opts out of all of them, and then not
+    /// written.
     pub ingress: Vec<ContractIngress>,
 }
 
@@ -450,8 +451,9 @@ pub fn check(contract: &Contract, doc: &Value, ports: &PortsFile) -> Vec<String>
             out.push(format!("border part {b} is not in the document"));
         }
     }
+    let (in_effect, _) = super::ingress::effective(doc);
     for i in &contract.ingress {
-        let declared = &doc["ingress"][&i.name];
+        let declared = in_effect.get(&i.name).unwrap_or(&Value::Null);
         if !declared.is_object() {
             out.push(format!("ingress {}: not declared in the document", i.name));
             continue;
@@ -483,11 +485,11 @@ pub fn check(contract: &Contract, doc: &Value, ports: &PortsFile) -> Vec<String>
             ));
         }
     }
-    let declared = doc["ingress"].as_object().map_or(0, |m| m.len());
-    if declared != contract.ingress.len() {
+    if in_effect.len() != contract.ingress.len() {
         out.push(format!(
-            "the contract has {} ingresses, the document declares {declared}",
-            contract.ingress.len()
+            "the contract has {} ingresses, the document has {} (its own and the defaults in effect)",
+            contract.ingress.len(),
+            in_effect.len()
         ));
     }
     out

@@ -58,6 +58,7 @@ fn bundle_with(
         out,
         ports: Some(&ports),
         accepts: Some(accepts.unwrap_or(&default_accepts)),
+        kpis: Some(&root.join("kpis/catalogue.yaml")),
     })
 }
 

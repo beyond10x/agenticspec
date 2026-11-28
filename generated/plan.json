@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "0c997ee56cb6b6e4a7c334869b5b0bccf1966a13eb7cedb2ecd8b07ae0270243",
-    "contract_digest": "4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39"
+    "source_digest": "35c0658e87991121e60fa07800601e6fc208dc8845ed92efd25e9f7aa6b6f294",
+    "contract_digest": "b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -173,6 +173,34 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.ExposureFigures",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.IngressDefaultInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.IngressDefaultResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.IngressProjectInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.IngressProjectResult",
       "disposition": {
         "disposition": "generated"
       }

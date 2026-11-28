@@ -1,6 +1,6 @@
 format: agenticspec-contract/1
 architecture: solo
-ports_digest: 1fd7870a3fac38ea3ab9fd288724a732bdc422a140fc1b42e3e1bc132e93df1c
+ports_digest: 1a4d28dd95f5ce8ffe4197fe9ac0f07f8c33a8b954b9668b5f0b6461e56f7457
 ports:
   - port: harness.session
     part: agent
@@ -35,3 +35,67 @@ invariants:
     port: model.inference
     predicate: "every model.inference@agent to model"
 border: []
+ingress:
+  - name: metrics
+    audience: control.monitor
+    authenticated: false
+    exports: [metrics_scrape]
+    operations:
+      - {kind: metric, name: cache_bust_count}
+      - {kind: metric, name: cache_hit_share}
+      - {kind: metric, name: context_size_p90_tokens}
+      - {kind: metric, name: cost_usd}
+      - {kind: metric, name: human_prompt_share}
+      - {kind: metric, name: owner_wait_share}
+      - {kind: metric, name: priced_message_share}
+      - {kind: metric, name: sub_agents_started}
+      - {kind: metric, name: subagent_cost_share}
+  - name: operator
+    audience: control.operator
+    authenticated: true
+    exports: [http, event_stream, ui, tool]
+    operations:
+      - {kind: command, name: agentic.question.Answer}
+      - {kind: view, name: agentic.agent.AgentRevisions}
+      - {kind: view, name: agentic.agent.Agents}
+      - {kind: view, name: agentic.harness.HarnessSessions}
+      - {kind: view, name: agentic.harness.Harnesses}
+      - {kind: view, name: agentic.harness.ToolCalls}
+      - {kind: view, name: agentic.harness.Turns}
+      - {kind: view, name: agentic.model.Endpoints}
+      - {kind: view, name: agentic.model.Inferences}
+      - {kind: view, name: agentic.model.Models}
+      - {kind: view, name: agentic.model.Routes}
+      - {kind: view, name: agentic.principal.Principals}
+      - {kind: view, name: agentic.question.OpenQuestions}
+      - {kind: view, name: agentic.question.Questions}
+      - {kind: feed, name: agentic.agent.AgentDefined}
+      - {kind: feed, name: agentic.agent.AgentRetired}
+      - {kind: feed, name: agentic.agent.AgentRevisionPublished}
+      - {kind: feed, name: agentic.agent.AgentRevisionRetired}
+      - {kind: feed, name: agentic.agent.AgentRevisionUsed}
+      - {kind: feed, name: agentic.harness.ContextCompacted}
+      - {kind: feed, name: agentic.harness.HarnessRegistered}
+      - {kind: feed, name: agentic.harness.HarnessRetired}
+      - {kind: feed, name: agentic.harness.SessionEnded}
+      - {kind: feed, name: agentic.harness.SessionOpened}
+      - {kind: feed, name: agentic.harness.SubAgentSpawned}
+      - {kind: feed, name: agentic.harness.ToolCallCompleted}
+      - {kind: feed, name: agentic.harness.ToolCallDecided}
+      - {kind: feed, name: agentic.harness.ToolCallRequested}
+      - {kind: feed, name: agentic.harness.TurnRecorded}
+      - {kind: feed, name: agentic.model.EndpointClosed}
+      - {kind: feed, name: agentic.model.EndpointOpened}
+      - {kind: feed, name: agentic.model.InferenceFinished}
+      - {kind: feed, name: agentic.model.InferenceStarted}
+      - {kind: feed, name: agentic.model.ModelDeclared}
+      - {kind: feed, name: agentic.model.ModelRetired}
+      - {kind: feed, name: agentic.model.ProviderRegistered}
+      - {kind: feed, name: agentic.model.RouteDefined}
+      - {kind: feed, name: agentic.model.RouteRetired}
+      - {kind: feed, name: agentic.principal.PrincipalRegistered}
+      - {kind: feed, name: agentic.principal.PrincipalRetired}
+      - {kind: feed, name: agentic.question.DefaultTaken}
+      - {kind: feed, name: agentic.question.QuestionAnswered}
+      - {kind: feed, name: agentic.question.QuestionAsked}
+      - {kind: feed, name: agentic.question.QuestionWithdrawn}

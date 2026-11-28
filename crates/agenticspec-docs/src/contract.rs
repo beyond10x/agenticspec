@@ -27,18 +27,16 @@ pub fn derive(root: &Path, doc: &Value) -> Result<Shown, String> {
     }
     let ports = PortsFile::load(&root.join("blocks/ports.json"))?;
     let mut contract = derive::derive(doc, &ports).map_err(|r| r.join("; "))?;
-    if ingress::declares(doc) {
-        let kpis = ingress::Kpis::load(&root.join("kpis/catalogue.yaml"))?;
-        let (resolved, refusals) = ingress::resolve(doc, &contract, &ports, &kpis);
-        if !refusals.is_empty() {
-            let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
-            return Err(format!(
-                "the check of its ingresses refuses it: {}",
-                names.join("; ")
-            ));
-        }
-        contract.ingress = resolved;
+    let kpis = ingress::Kpis::load(&root.join("kpis/catalogue.yaml"))?;
+    let (resolved, refusals) = ingress::resolve(doc, &contract, &ports, &kpis);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(format!(
+            "the check of its ingresses refuses it: {}",
+            names.join("; ")
+        ));
     }
+    contract.ingress = resolved;
     Ok(Shown { contract, ports })
 }
 

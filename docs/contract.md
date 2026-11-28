@@ -85,9 +85,10 @@ protocol of a direct message.
 from the document and `blocks/ports.json`, checks it, and prints it (`jq -r .contract`) or writes
 it with `--out <file>`. A document `agenticspec sim check` refuses gets no contract: the command
 exits 1 with the check's refusals and writes nothing. `--check <file>` reads a written contract
-and checks it against the document and the ports. For a document with [ingresses](#ingresses),
-`--kpis <file>` names the KPI catalogue its metrics are resolved against
-(`kpis/catalogue.yaml` by default).
+and checks it against the document and the ports. `--kpis <file>` names the KPI catalogue the
+metrics of its [ingresses](#ingresses) are resolved against (`kpis/catalogue.yaml` by default);
+every document has the [default ingresses](#the-default-control-plane), so every derivation
+reads it.
 
 Each [architecture page](architectures/index.md) and [catalog entry](catalog/index.md) shows its
 contract in a section "Contract", with the contract file to download
@@ -213,8 +214,9 @@ ingress:
 ```
 
 Ports are ordered by part, then port; invariants follow the document's links; ingresses by name,
-their operations by kind (command, view, feed, metric), then name. `ingress` is written only for
-a document that declares one. The same document, ports file and KPI catalogue give the same bytes.
+their operations by kind (command, view, feed, metric), then name. `ingress` lists the document's
+ingresses and the default ingresses it has; it is left out only for a document that opts out of
+every ingress. The same document, ports file and KPI catalogue give the same bytes.
 The contract is the content of `agentic.architecture.Contract` in the building blocks.
 
 ### The check
@@ -222,14 +224,16 @@ The contract is the content of `agentic.architecture.Contract` in the building b
 A contract passes when its `ports_digest` is the ports file's digest, every port it names is in
 the ports file with the same protocol, every part, link and border part is in the document, and
 every invariant names a port its link's `from` part uses and has a predicate that parses and
-starts with that use. Its ingresses are the document's, with the same audience, `authenticated`
-and exports. `sim contract` checks every contract it derives before printing it.
+starts with that use. Its ingresses are the document's and the defaults it has, with the same
+audience, `authenticated` and exports. `sim contract` checks every contract it derives before
+printing it.
 
 ## Ingresses
 
 The border says which parts take input from outside. An **ingress** says who reaches the
 architecture from outside, what that audience may use, and over which protocols. A document
-declares its ingresses under a top-level `ingress:` key; without one it declares none.
+declares its ingresses under a top-level `ingress:` key; beside them it has the two
+[default ingresses](#the-default-control-plane) unless it replaces or opts out of them.
 
 ```yaml
 ingress:
@@ -267,7 +271,7 @@ in full.
 
 | key | meaning |
 |---|---|
-| `audience` | the principal part the ingress serves. A part only an ingress reaches is not refused as unreachable |
+| `audience` | the principal part the ingress serves, or one of the implied audiences `control.operator` and `control.monitor`. A part only an ingress reaches is not refused as unreachable |
 | `authenticated` | whether callers authenticate; `true` by default. `false` only for an interface without commands |
 | `interface` | what the audience may use (below) |
 | `exports` | one or more `{protocol: …}`, each protocol at most once |
@@ -282,10 +286,10 @@ operation come from the building blocks.
 | key | values | selects |
 |---|---|---|
 | `scope` | `linked`: the parts the audience links to (`to` and `over` of its links); `all`; or a list of parts | the domains the rules below read: each part's own block's domain and the domains of the ports it uses in the contract |
-| `commands` | `principal`; `{plays: [<actor>]}`; `{except: [<command>]}`; or a list of these | `principal`: the answers of the principal ports the audience uses (the reports the actor `agentic.architecture.Principal` may issue: `Answer`) and the intent of each input the audience sends into the border (`owner -> operator carries prompt over chat`: `SendMessage`). `plays`: the `administration` commands in the actor's `may:` |
+| `commands` | `principal`; `{principal: all}`; `{plays: [<actor>]}`; `{plays: administration}`; `{except: [<command>]}`; or a list of these | `principal`: the answers of the principal ports the audience uses (the reports the actor `agentic.architecture.Principal` may issue: `Answer`) and the intent of each input the audience sends into the border (`owner -> operator carries prompt over chat`: `SendMessage`). `principal: all`: the answers of the principal ports of every principal part in scope; the grant decides for whom a caller answers. `plays`: the `administration` commands in the actor's `may:`. `plays: administration`: the same for every actor of a domain in scope whose `may:` holds no report of a port |
 | `views` | `true`, `false` (default), or `{except: [<view>]}` | every view of the scope's domains |
 | `feeds` | `true`, `false` (default), or `{except: [<event>]}` | every event of the scope's domains |
-| `metrics` | KPI ids of `kpis/catalogue.yaml` | each KPI, whose block is a block of the scope |
+| `metrics` | KPI ids of `kpis/catalogue.yaml`, or `computed` | each KPI, whose block is a block of the scope. `computed`: every KPI of a block of the scope whose status is `computed` or `both`, which a runtime computes from the events it observes |
 
 Configuration commands never enter an interface: the document, through a new revision, is their
 only source.
@@ -307,12 +311,16 @@ another protocol is another ingress.
 
 ### The check of ingresses
 
-`agenticspec sim check` reads `blocks/ports.json` (`--ports`) and `kpis/catalogue.yaml`
-(`--kpis`) for a document with `ingress:`, and refuses, naming the rule:
+`agenticspec sim check` refuses a part on the reserved path `control` in every document. For a
+document with `ingress:` it reads `blocks/ports.json` (`--ports`) and `kpis/catalogue.yaml`
+(`--kpis`), and refuses, naming the rule:
 
 | rule | refused |
 |---|---|
 | `ingress_malformed` | a key, value or shape the format does not have |
+| `ingress_reserved_part` | a part named `control`, or under it: the path of the implied audiences |
+| `ingress_none_not_default` | `none` for an ingress that is no default (`operator`, `metrics`) |
+| `ingress_reserved_audience` | an audience under `control.` other than `control.operator` and `control.monitor` |
 | `ingress_audience_not_principal` | an audience that names no principal part |
 | `ingress_without_export` | an ingress with no export |
 | `ingress_unknown_protocol` | a protocol outside the table above |
@@ -325,10 +333,63 @@ another protocol is another ingress.
 | `ingress_ui_without_wire` | a `ui` export without `http` and `event_stream` beside it |
 | `ingress_unauthenticated_command` | `authenticated: false` beside a command |
 | `ingress_agent_without_channel` | an `agent` export whose audience sends no input into the border, or one over no channel part |
-| `principal_port_without_ingress` | a principal port a principal part uses that no ingress of that part answers over an export that carries commands |
+| `principal_port_without_ingress` | a principal port a principal part uses that no ingress answers over an export that carries commands: none of that part's audience with `principal`, none with `principal: all` over a scope that holds it. The default `operator` answers every one, so this bites once it is opted out or narrowed |
 
 A document refused here gets no contract. The contract's `ingress` lists each interface resolved
 into operations, `{kind, name}`.
+
+### The default control plane
+
+Every architecture brings what its operator needs to watch and steer it: two ingresses, by name.
+
+```yaml
+ingress:
+  operator:
+    audience: control.operator
+    interface:
+      scope: all
+      commands: { principal: all, plays: administration }
+      views: true
+      feeds: true
+    exports: [{ protocol: http }, { protocol: event_stream }, { protocol: ui }, { protocol: tool }]
+  metrics:
+    audience: control.monitor
+    authenticated: false
+    interface: { scope: all, metrics: computed }
+    exports: [{ protocol: metrics_scrape }]
+```
+
+- A document has each of them unless it declares an ingress of that name, which replaces it, or
+  sets it to `none` (`operator: none`). `ingress: none` removes both.
+- Their audiences, `control.operator` (a human) and `control.monitor` (a service), are implied:
+  principal parts of the contract only, never of the document, so they change no digest and no
+  simulation result. A runtime binds them to identities like any principal part. No part of a
+  document may take the path `control`.
+- The operator answers every principal port, issues every administration command of the scope
+  and reads every view and event of it; configuration commands never enter. The metrics ingress
+  carries the KPIs a runtime computes.
+
+`agenticspec ingress default <architecture.yaml>` prints the `ingress:` section of the defaults a
+document has (`jq -r .ingress`): paste it into the document and change it. Pasted unchanged, the
+document has the same contract. A document that takes a reserved name is refused
+(`architecture_refused`).
+
+### Projections of an http export
+
+`agenticspec ingress project <architecture.yaml> --out <dir>` writes, for each ingress with an
+`http` export, two files:
+
+| file | what |
+|---|---|
+| `<ingress>.http.yaml` | the `ess-http/1` protocol binding over exactly the interface's commands (`post`) and views (`get`), pinned to the compiled blocks by their source digest. Every path is open: a server binding that `refines:` it fills them in |
+| `<ingress>.openapi.yaml` | the OpenAPI document of those operations: ESS's document of the component that serves the blocks, narrowed to them and the schemas they reference. Its paths are the ones ESS derives |
+
+It calls `ess` to compile the blocks (`--blocks`, `blocks` by default), to write their OpenAPI
+document and to validate each binding, and gives the same bytes on every run. `--check <dir>`
+compares the files in `<dir>` with a fresh projection and writes nothing: it exits 1
+(`projections_stale`) naming each changed, missing or extra file. The projections of
+[`workstation-ingress`](architectures/workstation-ingress.md) are kept in the repository and
+checked by the gate.
 
 ### Nested architectures
 

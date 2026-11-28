@@ -26,6 +26,7 @@ pub const REGENERATE: &str = "task bundles:generate";
 /// The generator's own sources, relative to the repository root.
 const GENERATOR: &[&str] = &[
     "crates/agenticspec-sim/src/contract/derive.rs",
+    "crates/agenticspec-sim/src/contract/ingress.rs",
     "crates/agenticspec-sim/src/deploy/admit.rs",
     "crates/agenticspec-sim/src/deploy/binding.rs",
     "crates/agenticspec-sim/src/deploy/bundle.rs",
@@ -134,6 +135,7 @@ pub fn sources(root: &Path, f: &Fixture) -> Result<Vec<PathBuf>, String> {
     out.extend(binding::load(&f.binding)?.agent_files.into_values());
     out.push(root.join("blocks/ports.json"));
     out.push(root.join("bundles/cloudspec-accepts.yaml"));
+    out.push(root.join("kpis/catalogue.yaml"));
     Ok(out)
 }
 
@@ -185,6 +187,7 @@ pub fn build(root: &Path, f: &Fixture) -> Result<String, String> {
         out: None,
         ports: Some(&ports),
         accepts: Some(&accepts),
+        kpis: Some(&root.join("kpis/catalogue.yaml")),
     })
     .map_err(|r| format!("{}: {}: {}", f.file, r.code, r.detail))?;
     Ok(answer["bundle"].as_str().unwrap_or("").to_owned())

@@ -60,6 +60,8 @@ Error `contract_refused`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+Error `kpis_unreadable`: `agenticspec.cli.Refusal`.
+
 Error `not_admitted`: `agenticspec.cli.Refusal`.
 
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
@@ -75,6 +77,40 @@ Callable: `export`. Input: `agenticspec.cli.ExportInput`. Result: `agenticspec.c
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 Error `procedure_invalid`: `agenticspec.cli.Refusal`.
+
+### `ingress default`
+
+Print the default ingresses an architecture has, as the ingress section to paste into it and change
+
+Callable: `ingress_default`. Input: `agenticspec.cli.IngressDefaultInput`. Result: `agenticspec.cli.IngressDefaultResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+### `ingress project`
+
+Write the ess-http/1 protocol binding and the OpenAPI document of each http export of an architecture, or compare them with --check
+
+Callable: `ingress_project`. Input: `agenticspec.cli.IngressProjectInput`. Result: `agenticspec.cli.IngressProjectResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `contract_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `kpis_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `projection_refused`: `agenticspec.cli.Refusal`.
+
+Error `projections_stale`: `agenticspec.cli.Refusal`.
 
 ### `kpi`
 
@@ -353,6 +389,8 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract
 - handler:deploy_bundle: implement the owner-qualified callable and its declared result/error contract
 - handler:export: implement the owner-qualified callable and its declared result/error contract
+- handler:ingress_default: implement the owner-qualified callable and its declared result/error contract
+- handler:ingress_project: implement the owner-qualified callable and its declared result/error contract
 - handler:kpi: implement the owner-qualified callable and its declared result/error contract
 - handler:lift: implement the owner-qualified callable and its declared result/error contract
 - handler:mine: implement the owner-qualified callable and its declared result/error contract

@@ -7,6 +7,7 @@ Commands:
   blocks       
   deploy       
   export       Export a procedure as a canon protocol and loom bindings
+  ingress      
   kpi          Evaluate the KPIs over every Claude Code session in a time window
   lift         Lift one Claude Code session and its sub-agents into session IR commands and replay them
   mine         Find runs of tool calls that recur in agent turns across sessions

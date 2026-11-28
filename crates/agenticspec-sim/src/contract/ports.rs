@@ -852,7 +852,8 @@ pub fn sources_digest(blocks: &Path, ess: &str) -> Result<String, String> {
     Ok(hex(text.as_bytes()))
 }
 
-fn ess(args: &[&str]) -> Result<String, String> {
+/// Run `ess` with these arguments: its standard output, or its standard error as the refusal.
+pub fn ess(args: &[&str]) -> Result<String, String> {
     let out = Command::new("ess")
         .args(args)
         .output()

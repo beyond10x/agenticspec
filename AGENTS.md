@@ -106,6 +106,11 @@ change.
   domain on the command's, and `scripts/check-blocks-conform.sh` fails when a binding has no
   `<binding>/binding/...` scenario. A causation ESS cannot express gets a reproduction under
   `design/ess-repro/<gap>/` (a header comment says what `ess specify validate` answers).
+- That component is `reached_by: network` and `accepts` each entry command an ingress may export:
+  every command whose role in `blocks/ports.json` is intent or administration, or that the
+  actor `agentic.architecture.Principal` may issue, and that some actor may issue (a test in
+  `tests/cases/control_plane.rs` holds the list). A new such command goes into `accepts` in the
+  same change.
 - `blocks/ports.json` (`agenticspec-ports/1`) holds the ports derived from the compiled blocks
   and the surface an ingress selects from: each command's role, each domain's views and events,
   each actor's `may:` (`agenticspec sim ports`, `docs/contract.md`). A change of a file
@@ -214,6 +219,8 @@ change.
 | `agenticspec-views` | `lib.rs`, `panels.rs`, `values.rs` | the library of `agenticspec ui panels`: from the compiled `blocks/`, one `ess-ui/1` widget per view (`panels.rs`, naming no block, view or command), the synthetic fixture rows and script payloads (`values.rs`), the digest of the inputs and `--check` (`lib.rs`) |
 | `agenticspec-sim` | `deploy/binding.rs`, `deploy/packing.rs`, `deploy/admit.rs`, `deploy/bundle.rs` | `agenticspec packing default` and `agenticspec deploy bundle`: the binding (`agenticspec-binding/1`, its `refines:` chain), its `packing:` section and strategies, admission with its named refusals, and the deployment bundle (`agenticspec-deployment/1`); `docs/deployment.md`. Left out of the catalog digest |
 | `agenticspec-sim` | `deploy/fixtures.rs` | the fixture bundles of `bundles/` and `bundles/sources.sha256` (`agenticspec-docs --bundles`, `task bundles:generate`, `check:bundles`, `slow:bundles`) |
+| `agenticspec-sim` | `contract/ingress.rs` (defaults) | the default control plane: the ingresses `operator` and `metrics` every document has by name (`DEFAULTS`), `none`, the reserved path `control` of the implied audiences, `agenticspec ingress default` |
+| `agenticspec-sim` | `contract/projection.rs` | `agenticspec ingress project`: per `http` export the `ess-http/1` protocol binding and the narrowed OpenAPI document; the committed projections of the worked example are in `architectures/projections/workstation-ingress/` (`task projections:generate`, `task check:projections`) |
 | `agenticspec-docs` | `contract.rs` | the "Contract" section of an architecture page and a catalog entry |
 | `agenticspec-render` | `lib.rs`, `graph.rs` | `page(architecture, result)`: one HTML page with the architecture graph (at natural size, with pan, zoom and fit), the tables of its parts and links and, when given, the search result; a nested architecture (resolved beside its part as `inner`) is one box with its border parts as ports; `graph(architecture)`: the graph alone (SVG, size, parts with their properties, links) for agenticstudio to draw inline. `graph.rs` lays the graph out in rows by block layer; links with one label into or out of one card share one label and a trunk |
 | `agenticspec-records` | `sq/architecture.rs` | the fact base of an architecture (`part`, `setting`, `link`, `marker`), compiled apart from the session relations |

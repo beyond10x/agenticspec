@@ -1,13 +1,13 @@
 <!--
   generated from agenticspec v1
-  contract digest 4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39
+  contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-221 capabilities: **218 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+225 capabilities: **222 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -37,6 +37,10 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.ExportInput` |
 | domain type | `agenticspec.cli.ExportResult` |
 | domain type | `agenticspec.cli.ExposureFigures` |
+| domain type | `agenticspec.cli.IngressDefaultInput` |
+| domain type | `agenticspec.cli.IngressDefaultResult` |
+| domain type | `agenticspec.cli.IngressProjectInput` |
+| domain type | `agenticspec.cli.IngressProjectResult` |
 | domain type | `agenticspec.cli.InvariantStatus` |
 | domain type | `agenticspec.cli.KpiInput` |
 | domain type | `agenticspec.cli.KpiReport` |

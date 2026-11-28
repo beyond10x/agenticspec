@@ -30,7 +30,7 @@ fn check(architecture: &Path, trace: &Path) -> Result<Value, Refusal> {
             check: None,
             suite: None,
             trace: Some(trace),
-            kpis: None,
+            kpis: Some(&repo_root().join("kpis/catalogue.yaml")),
         },
         &mut std::io::sink(),
     )

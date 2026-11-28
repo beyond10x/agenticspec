@@ -1,6 +1,6 @@
 format: agenticspec-architecture/1
 architecture: ingress-small
-summary: "Refused: no ingress of the owner carries the answer to the operator's questions."
+summary: "Refused: the default operator ingress is opted out, and no ingress of the owner carries the answer to the operator's questions."
 
 parts:
   owner:    { block: principal, kind: human }
@@ -19,6 +19,7 @@ links:
 border: [operator]
 
 ingress:
+  operator: none
   user:
     audience: owner
     interface: { views: true }

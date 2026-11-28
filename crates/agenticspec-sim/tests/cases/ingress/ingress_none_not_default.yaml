@@ -1,0 +1,21 @@
+format: agenticspec-architecture/1
+architecture: ingress-small
+summary: "Refused: none opts out of a default ingress, and user is none."
+
+parts:
+  owner:    { block: principal, kind: human }
+  operator: { block: agent, harness: coding, acts_for: owner }
+  gateway:  { block: gateway }
+  model:    { block: model }
+  chat:     { block: channel }
+
+links:
+  - { from: owner,    to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner,    carries: question, over: chat }
+  - { from: operator, to: gateway,  carries: model_call }
+  - { from: gateway,  to: model,    carries: model_call }
+
+border: [operator]
+
+ingress:
+  user: none

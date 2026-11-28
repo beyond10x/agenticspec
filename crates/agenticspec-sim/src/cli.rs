@@ -1,14 +1,10 @@
-//! The commands of `agenticspec sim`: check, digest, run, render, ladder, ports, contract and
-//! trace. Each returns the result the command line prints, a JSON value of the shape
-//! `spec/domains/cli.yaml` declares (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of
-//! the error codes `spec/cli.yaml` binds to the command. The parser and the process adapter are
-//! the generated `agenticspec-cli-contract` of the `agenticspec` crate.
 //! The commands of `agenticspec sim` (check, digest, run, render, ladder, ports, contract and
-//! trace) and of the deploy side (`agenticspec packing default`, `agenticspec deploy bundle`).
-//! Each returns the result the command line prints, a JSON value of the shape
-//! `spec/domains/cli.yaml` declares (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of
-//! the error codes `spec/cli.yaml` binds to the command. The parser and the process adapter are
-//! the generated `agenticspec-cli-contract` of the `agenticspec` crate.
+//! trace), of `agenticspec ingress` (default, project) and of the deploy side (`agenticspec
+//! packing default`, `agenticspec deploy bundle`). Each returns the result the command line
+//! prints, a JSON value of the shape `spec/domains/cli.yaml` declares
+//! (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of the error codes `spec/cli.yaml`
+//! binds to the command. The parser and the process adapter are the generated
+//! `agenticspec-cli-contract` of the `agenticspec` crate.
 
 use crate::check::{GATE_KPIS, Refusal as ArchRefusal, check as check_architecture};
 use crate::doc::load_yaml;
@@ -70,9 +66,9 @@ pub fn check(path: &Path) -> Result<Value, Refusal> {
     })
 }
 
-/// The contract of a document the structural check accepts, its ingresses resolved: refused
-/// with every refusal of the check of `ingress:` (`architecture_refused`). A document without
-/// `ingress:` reads no KPI catalogue.
+/// The contract of a document the structural check accepts, its ingresses (the declared ones
+/// and the defaults in effect) resolved: refused with every refusal of the check of `ingress:`
+/// (`architecture_refused`).
 fn derive_contract(
     arch: &Value,
     ports: &crate::contract::ports::PortsFile,
@@ -81,24 +77,34 @@ fn derive_contract(
     use crate::contract::{derive as d, ingress};
     let mut contract =
         d::derive(arch, ports).map_err(|r| refused("contract_refused", r.join("; ")))?;
-    if ingress::declares(arch) {
-        let kpis = ingress::Kpis::load(kpis.unwrap_or(Path::new("kpis/catalogue.yaml")))
-            .map_err(|e| refused("kpis_unreadable", e))?;
-        let (resolved, refusals) = ingress::resolve(arch, &contract, ports, &kpis);
-        if !refusals.is_empty() {
-            let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
-            return Err(refused("architecture_refused", names.join("; ")));
-        }
-        contract.ingress = resolved;
+    let kpis = ingress::Kpis::load(kpis.unwrap_or(Path::new("kpis/catalogue.yaml")))
+        .map_err(|e| refused("kpis_unreadable", e))?;
+    let (resolved, refusals) = ingress::resolve(arch, &contract, ports, &kpis);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
     }
+    contract.ingress = resolved;
     Ok(contract)
+}
+
+/// The refusals of the reserved names of the default control plane, as the error of a command.
+fn refuse_reserved(arch: &Value) -> Result<(), Refusal> {
+    let refusals = crate::contract::ingress::reserved(arch);
+    if refusals.is_empty() {
+        return Ok(());
+    }
+    let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+    Err(refused("architecture_refused", names.join("; ")))
 }
 
 /// `sim check <architecture> [--ports <file>] [--kpis <file>]`: the architecture with its
 /// counts, the KPIs of the architecture as a whole (`whole.rs`) and its nested architectures,
 /// or every refusal of the check. The references are resolved first; the check and the KPIs
-/// then read the document flattened. A document with `ingress:` is checked against the ports
-/// file and the KPI catalogue too.
+/// then read the document flattened. Every document is checked for the reserved names of the
+/// default control plane; a document with `ingress:` is checked against the ports file and the
+/// KPI catalogue too. Without `ingress:` it has the two default ingresses, which the check never
+/// refuses.
 pub fn check_with(o: &CheckOptions) -> Result<Value, Refusal> {
     let arch = load_nested(o.architecture)?;
     let flat = nest::flatten(&arch);
@@ -112,13 +118,15 @@ pub fn check_with(o: &CheckOptions) -> Result<Value, Refusal> {
 
 /// The result of `sim check` for a document (`arch`, `flat` flattened) the structural check
 /// accepted: its counts, the KPIs of the architecture as a whole, its single points, its nested
-/// architectures and its ingresses, or the refusal of its `ingress:`.
+/// architectures and its ingresses (the declared ones and the defaults in effect), or the
+/// refusal of a reserved name or of its `ingress:`.
 fn accepted(arch: &Value, flat: &Value, o: &CheckOptions) -> Result<Value, Refusal> {
+    refuse_reserved(flat)?;
     let kpis: serde_json::Map<String, Value> = crate::whole::measure(flat)
         .into_iter()
         .map(|(k, v)| (k.to_string(), crate::doc::number(v)))
         .collect();
-    let mut ingresses = 0;
+    let mut ingresses = crate::contract::ingress::effective(flat).0.len();
     if crate::contract::ingress::declares(flat) {
         let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
         let ports = crate::contract::ports::PortsFile::load(ports_path)
@@ -643,8 +651,8 @@ pub struct ContractOptions<'a> {
     pub suite: Option<&'a Path>,
     /// A trace (`agenticspec-trace/1`) to check the contract's routing invariants on.
     pub trace: Option<&'a Path>,
-    /// The KPI catalogue; `kpis/catalogue.yaml` when absent. Read only for a document with
-    /// `ingress:`.
+    /// The KPI catalogue; `kpis/catalogue.yaml` when absent. The metrics of the default
+    /// `metrics` ingress are resolved against it, so every derivation reads it.
     pub kpis: Option<&'a Path>,
 }
 
@@ -874,12 +882,16 @@ pub struct BundleOptions<'a> {
     pub ports: Option<&'a Path>,
     /// The copy of cloudspec's accepted list; `bundles/cloudspec-accepts.yaml` when absent.
     pub accepts: Option<&'a Path>,
+    /// The KPI catalogue the default `metrics` ingress is resolved against;
+    /// `kpis/catalogue.yaml` when absent.
+    pub kpis: Option<&'a Path>,
 }
 
 /// `deploy bundle <architecture> --binding <file> [--out <file>] [--ports <file>]
-/// [--accepts <file>]`: admit the architecture, its contract, the binding and its packing, and
-/// only then write the bundle (`agenticspec-deployment/1`), or print it when no `--out` is
-/// given. A refusal writes nothing and names every finding.
+/// [--accepts <file>] [--kpis <file>]`: admit the architecture, its contract (its ingresses
+/// resolved), the binding and its packing, and only then write the bundle
+/// (`agenticspec-deployment/1`), or print it when no `--out` is given. A refusal writes nothing
+/// and names every finding.
 pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
     use crate::contract::derive as d;
     use crate::contract::ports::PortsFile;
@@ -898,8 +910,7 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
     }
     let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
     let ports = PortsFile::load(ports_path).map_err(|e| refused("ports_unreadable", e))?;
-    let contract =
-        d::derive(&arch, &ports).map_err(|r| refused("contract_refused", r.join("; ")))?;
+    let contract = derive_contract(&arch, &ports, o.kpis)?;
     let problems = d::check(&contract, &arch, &ports);
     if !problems.is_empty() {
         return Err(refused("contract_refused", problems.join("; ")));
@@ -958,4 +969,191 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
         None => answer["bundle"] = json!(built.text),
     }
     Ok(answer)
+}
+
+/// `ingress default <architecture>`: the `ingress:` section of the default ingresses the
+/// document has (those it neither declares nor sets to `none`), to paste into it and change;
+/// pasted unchanged, it gives the same contract. Refused when the document takes a reserved
+/// name.
+pub fn ingress_default(path: &Path) -> Result<Value, Refusal> {
+    use crate::contract::ingress;
+    let arch = load_yaml(path).map_err(|e| refused("document_unreadable", e))?;
+    refuse_reserved(&arch)?;
+    Ok(json!({
+        "architecture": arch["architecture"].as_str().unwrap_or("architecture"),
+        "defaults": ingress::defaults_in_effect(&arch),
+        "ingress": ingress::default_text(&arch),
+    }))
+}
+
+/// The options of `ingress project`.
+#[derive(Debug, Clone)]
+pub struct ProjectOptions<'a> {
+    pub architecture: &'a Path,
+    /// The directory the projections are written to.
+    pub out: Option<&'a Path>,
+    /// A directory of written projections compared with a fresh generation, writing nothing.
+    pub check: Option<&'a Path>,
+    /// The blocks directory, an ESS system; `blocks` when absent.
+    pub blocks: Option<&'a Path>,
+    /// The ports file; `blocks/ports.json` when absent.
+    pub ports: Option<&'a Path>,
+    /// The KPI catalogue; `kpis/catalogue.yaml` when absent.
+    pub kpis: Option<&'a Path>,
+}
+
+/// Whether a file name is one `ingress project` writes.
+fn is_projection(name: &str) -> bool {
+    name.ends_with(".http.yaml") || name.ends_with(".openapi.yaml")
+}
+
+/// The projections of an architecture's `http` exports, by file name: ESS compiles the blocks
+/// and writes their OpenAPI document into a scratch directory, and validates each binding.
+fn projections(
+    contract: &crate::contract::derive::Contract,
+    blocks: &Path,
+) -> Result<std::collections::BTreeMap<String, String>, Refusal> {
+    use crate::contract::ports::ess;
+    use crate::contract::projection as pr;
+    let mut files = std::collections::BTreeMap::new();
+    let http = pr::http_ingresses(contract);
+    if http.is_empty() {
+        return Ok(files);
+    }
+    let unreadable = |e: String| refused("blocks_unreadable", e);
+    let b = blocks.display().to_string();
+    let ir = ess(&["specify", "compile", "--path", &b, "--format", "json"]).map_err(unreadable)?;
+    let pin = pr::Pin::of_ir(&ir).map_err(unreadable)?;
+    let work = std::env::temp_dir().join(format!("agenticspec-ingress-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&work);
+    let result = (|| {
+        let oa = work.join("openapi");
+        let oa_text = oa.display().to_string();
+        ess(&[
+            "generate", "--path", &b, "--kind", "openapi", "--out", &oa_text,
+        ])
+        .map_err(unreadable)?;
+        let docs: Vec<std::path::PathBuf> = std::fs::read_dir(oa.join("openapi"))
+            .map_err(|e| unreadable(format!("{}: {e}", oa.display())))?
+            .filter_map(Result::ok)
+            .map(|e| e.path())
+            .collect();
+        let [doc] = docs.as_slice() else {
+            return Err(unreadable(format!(
+                "ess wrote {} OpenAPI documents for {b}; one component reached by network serves the blocks",
+                docs.len()
+            )));
+        };
+        let full = load_yaml(doc).map_err(unreadable)?;
+        for i in http {
+            let [binding_name, openapi_name] = pr::file_names(&i.name);
+            let binding = pr::http_binding(contract, i, &pin);
+            let at = work.join(&binding_name);
+            std::fs::write(&at, &binding)
+                .map_err(|e| unreadable(format!("{}: {e}", at.display())))?;
+            let at_text = at.display().to_string();
+            ess(&[
+                "specify",
+                "http",
+                "validate",
+                "--path",
+                &b,
+                "--binding",
+                &at_text,
+            ])
+            .map_err(|e| refused("projection_refused", format!("ingress {}: {e}", i.name)))?;
+            let narrowed =
+                pr::openapi(&full, contract, i).map_err(|e| refused("projection_refused", e))?;
+            let text = pr::openapi_text(contract, i, &narrowed)
+                .map_err(|e| refused("projection_refused", e))?;
+            files.insert(binding_name, binding);
+            files.insert(openapi_name, text);
+        }
+        Ok(())
+    })();
+    let _ = std::fs::remove_dir_all(&work);
+    result.map(|()| files)
+}
+
+/// `ingress project <architecture> (--out <dir> | --check <dir>) [--blocks <dir>] [--ports
+/// <file>] [--kpis <file>]`: per ingress with an `http` export, its `ess-http/1` protocol binding
+/// (`<ingress>.http.yaml`) and OpenAPI document (`<ingress>.openapi.yaml`), the same bytes on
+/// every run; written into `--out`, removing projections of ingresses the document no longer
+/// has, or compared with the files in `--check`.
+pub fn ingress_project(o: &ProjectOptions) -> Result<Value, Refusal> {
+    let (dir, check) = match (o.out, o.check) {
+        (Some(d), None) => (d, false),
+        (None, Some(d)) => (d, true),
+        _ => {
+            return Err(refused(
+                "projection_refused",
+                "name one of --out <dir> and --check <dir>",
+            ));
+        }
+    };
+    let arch = load_yaml(o.architecture).map_err(|e| refused("document_unreadable", e))?;
+    let refusals = check_architecture(&arch);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
+    let ports = crate::contract::ports::PortsFile::load(ports_path)
+        .map_err(|e| refused("ports_unreadable", e))?;
+    let contract = derive_contract(&arch, &ports, o.kpis)?;
+    let files = projections(&contract, o.blocks.unwrap_or(Path::new("blocks")))?;
+    let on_disk: Vec<String> = std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .filter_map(Result::ok)
+        .filter_map(|e| e.file_name().to_str().map(str::to_owned))
+        .filter(|n| is_projection(n))
+        .collect();
+    let answer = |written: bool| {
+        json!({
+            "architecture": contract.architecture,
+            "exports": files.len() / 2,
+            "files": files.keys().collect::<Vec<_>>(),
+            "written": written,
+        })
+    };
+    if check {
+        let mut stale: Vec<String> = Vec::new();
+        for (name, text) in &files {
+            match std::fs::read(dir.join(name)) {
+                Ok(bytes) if bytes == text.as_bytes() => {}
+                Ok(_) => stale.push(format!("changed: {name}")),
+                Err(_) => stale.push(format!("missing: {name}")),
+            }
+        }
+        for name in &on_disk {
+            if !files.contains_key(name) {
+                stale.push(format!("not generated: {name}"));
+            }
+        }
+        if !stale.is_empty() {
+            return Err(refused(
+                "projections_stale",
+                format!(
+                    "{} differs from a fresh projection of {} ({}): run agenticspec ingress project {} --out {}",
+                    dir.display(),
+                    o.architecture.display(),
+                    stale.join(", "),
+                    o.architecture.display(),
+                    dir.display()
+                ),
+            ));
+        }
+        return Ok(answer(false));
+    }
+    for (name, text) in &files {
+        write(&dir.join(name), text)?;
+    }
+    for name in &on_disk {
+        if !files.contains_key(name) {
+            std::fs::remove_file(dir.join(name))
+                .map_err(|e| refused("out_unwritable", format!("{}: {e}", dir.display())))?;
+        }
+    }
+    Ok(answer(true))
 }

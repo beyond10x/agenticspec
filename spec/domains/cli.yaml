@@ -1096,6 +1096,9 @@ types:
       - name: accepts
         type: Optional<String>
         summary: The copy of cloudspec's accepted unit kinds and roles; `bundles/cloudspec-accepts.yaml` by default.
+      - name: kpis
+        type: Optional<String>
+        summary: The KPI catalogue (`agenticspec-kpis/1`) the metrics of the default `metrics` ingress are resolved against; `kpis/catalogue.yaml` by default.
 
   - name: agenticspec.cli.DeployBundleResult
     kind: struct
@@ -1116,3 +1119,61 @@ types:
       - name: bundle
         type: Optional<String>
         summary: The bundle as written, when no `--out` was given.
+
+  - name: agenticspec.cli.IngressDefaultInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document whose default ingresses are printed.
+
+  - name: agenticspec.cli.IngressDefaultResult
+    kind: struct
+    naming:
+      summary: The default ingresses an architecture has, as the `ingress:` section to paste into it and change.
+    fields:
+      - {name: architecture, type: String}
+      - name: defaults
+        type: List<String>
+        summary: The names of the default ingresses in effect, those the document neither declares nor sets to `none`.
+      - name: ingress
+        type: String
+        summary: The `ingress:` section of those defaults; pasted unchanged, the document has the same contract.
+
+  - name: agenticspec.cli.IngressProjectInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document whose exports are projected.
+      - name: out
+        type: Optional<String>
+        summary: The directory the projections are written to.
+      - name: check
+        type: Optional<String>
+        summary: A directory of written projections compared with a fresh projection, writing nothing.
+      - name: blocks
+        type: Optional<String>
+        summary: The directory of the building blocks, an ESS system; `blocks` by default.
+      - name: ports
+        type: Optional<String>
+        summary: The ports file (`agenticspec-ports/1`); `blocks/ports.json` by default.
+      - name: kpis
+        type: Optional<String>
+        summary: The KPI catalogue (`agenticspec-kpis/1`); `kpis/catalogue.yaml` by default.
+
+  - name: agenticspec.cli.IngressProjectResult
+    kind: struct
+    naming:
+      summary: The projections of the http exports of an architecture, and whether they were written.
+    fields:
+      - {name: architecture, type: String}
+      - name: exports
+        type: Integer
+        summary: The http exports projected, one per ingress that has one.
+      - name: files
+        type: List<String>
+        summary: The projection files, `<ingress>.http.yaml` and `<ingress>.openapi.yaml` per http export.
+      - name: written
+        type: Boolean
+        summary: The files were written; false with `--check`, where they were found current.

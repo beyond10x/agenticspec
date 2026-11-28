@@ -20,7 +20,18 @@ fn document(path: &str) -> Value {
 }
 
 fn contract_of(path: &str) -> Contract {
-    derive::derive(&document(path), &ports()).unwrap()
+    let doc = document(path);
+    with_ingresses(&doc, derive::derive(&doc, &ports()).unwrap())
+}
+
+/// A derived contract with the ingresses of its document resolved (the defaults included), as
+/// `agenticspec sim contract` writes it.
+fn with_ingresses(doc: &Value, mut c: Contract) -> Contract {
+    let kpis = ingress::Kpis::load(&repo_root().join("kpis/catalogue.yaml")).unwrap();
+    let (resolved, refusals) = ingress::resolve(doc, &c, &ports(), &kpis);
+    assert_eq!(refusals, Vec::new());
+    c.ingress = resolved;
+    c
 }
 
 fn workstation() -> Contract {
@@ -279,7 +290,7 @@ fn the_command_writes_the_contract_and_refuses_a_refused_document_writing_nothin
             check: None,
             suite: None,
             trace: None,
-            kpis: None,
+            kpis: Some(&root.join("kpis/catalogue.yaml")),
         },
         &mut std::io::sink(),
     )
@@ -294,7 +305,7 @@ fn the_command_writes_the_contract_and_refuses_a_refused_document_writing_nothin
             check: None,
             suite: None,
             trace: None,
-            kpis: None,
+            kpis: Some(&root.join("kpis/catalogue.yaml")),
         },
         &mut std::io::sink(),
     )
@@ -314,7 +325,7 @@ fn the_command_writes_the_contract_and_refuses_a_refused_document_writing_nothin
             check: None,
             suite: None,
             trace: None,
-            kpis: None,
+            kpis: Some(&root.join("kpis/catalogue.yaml")),
         },
         &mut std::io::sink(),
     )
@@ -345,7 +356,7 @@ fn a_contract_whose_predicate_does_not_parse_is_refused_naming_the_link_and_offs
         check: Some(&file),
         suite: None,
         trace: None,
-        kpis: None,
+        kpis: Some(&root.join("kpis/catalogue.yaml")),
     };
     std::fs::write(&file, &good).unwrap();
     assert_eq!(
@@ -454,7 +465,7 @@ fn each_carried_value_maps_to_the_port_its_from_part_uses_or_to_none() {
             "links": [{ "from": from, "to": to, "carries": carries }],
             "border": [from],
         });
-        let c = derive::derive(&doc, &ports).unwrap();
+        let c = with_ingresses(&doc, derive::derive(&doc, &ports).unwrap());
         let link = format!("{from} -> {to} carries {carries}");
         let inv = c.invariants.iter().find(|i| i.link == link);
         match want {
@@ -514,7 +525,7 @@ fn a_runtimes_model_call_nests_in_the_gateway_and_an_on_event_trigger_keeps_its_
         "border": ["a"],
     });
     let ports = ports();
-    let c = derive::derive(&doc, &ports).unwrap();
+    let c = with_ingresses(&doc, derive::derive(&doc, &ports).unwrap());
     let inv = c
         .invariants
         .iter()

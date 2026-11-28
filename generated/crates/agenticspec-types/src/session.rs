@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39
+// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
 // do not edit: regenerate with `ess synthesize`
 
 //! Session — `agenticspec.session`.

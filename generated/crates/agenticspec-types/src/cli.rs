@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39
+// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -253,6 +253,8 @@ pub struct DeployBundleInput {
     pub ports: Option<String>,
     /// `accepts` — `Optional<String>`.
     pub accepts: Option<String>,
+    /// `kpis` — `Optional<String>`.
+    pub kpis: Option<String>,
 }
 
 /// DeployBundleResult — `agenticspec.cli.DeployBundleResult`.
@@ -322,6 +324,58 @@ pub struct ExposureFigures {
     pub count: i64,
     /// `sessions` — `Integer`.
     pub sessions: i64,
+}
+
+/// IngressDefaultInput — `agenticspec.cli.IngressDefaultInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IngressDefaultInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+}
+
+/// IngressDefaultResult — `agenticspec.cli.IngressDefaultResult`.
+///
+/// The default ingresses an architecture has, as the `ingress:` section to paste into it and change.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IngressDefaultResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `defaults` — `List<String>`.
+    pub defaults: Vec<String>,
+    /// `ingress` — `String`.
+    pub ingress: String,
+}
+
+/// IngressProjectInput — `agenticspec.cli.IngressProjectInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IngressProjectInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `check` — `Optional<String>`.
+    pub check: Option<String>,
+    /// `blocks` — `Optional<String>`.
+    pub blocks: Option<String>,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `kpis` — `Optional<String>`.
+    pub kpis: Option<String>,
+}
+
+/// IngressProjectResult — `agenticspec.cli.IngressProjectResult`.
+///
+/// The projections of the http exports of an architecture, and whether they were written.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IngressProjectResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `exports` — `Integer`.
+    pub exports: i64,
+    /// `files` — `List<String>`.
+    pub files: Vec<String>,
+    /// `written` — `Boolean`.
+    pub written: bool,
 }
 
 /// InvariantStatus — `agenticspec.cli.InvariantStatus`: one of a closed set of names.

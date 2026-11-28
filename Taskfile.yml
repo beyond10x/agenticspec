@@ -9,6 +9,7 @@ tasks:
       - task: check:fields
       - task: check:ports
       - task: check:bundles
+      - task: check:projections
       - task: check:ui
       - task: check:app
       - task: check:ui-kit
@@ -103,6 +104,18 @@ tasks:
     cmds:
       - cargo build --quiet --locked -p agenticspec-docs
       - target/debug/agenticspec-docs --root . --bundles --slow
+
+  projections:generate:
+    desc: Write the projections of the http exports of the worked example architectures/workstation-ingress.yaml (per ingress its ess-http/1 protocol binding and OpenAPI document) into architectures/projections/workstation-ingress/.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec ingress project architectures/workstation-ingress.yaml --out architectures/projections/workstation-ingress
+
+  check:projections:
+    desc: Fail when a committed projection of the worked example differs from a fresh one (ess compiles the blocks and writes their OpenAPI document, about a second), naming the command that writes them again.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec ingress project architectures/workstation-ingress.yaml --check architectures/projections/workstation-ingress
 
   check:kpis:
     desc: Check kpis/catalogue.yaml, every packs/<pack>/kpis.yaml and every fields/<field>/kpis.yaml against their format, their blocks and the events they may read.

@@ -607,13 +607,41 @@ impl Handler for Commands {
                         .and_then(Value::as_str)
                         .map(PathBuf::from)
                 };
-                let (out, ports, accepts) = (path("out"), path("ports"), path("accepts"));
+                let (out, ports, accepts, kpis) =
+                    (path("out"), path("ports"), path("accepts"), path("kpis"));
                 sim_reply(sim::deploy_bundle(&sim::BundleOptions {
                     architecture: &path_of(&inv.input, "architecture"),
                     binding: &path_of(&inv.input, "binding"),
                     out: out.as_deref(),
                     ports: ports.as_deref(),
                     accepts: accepts.as_deref(),
+                    kpis: kpis.as_deref(),
+                }))
+            }
+            "ingress_default" => {
+                sim_reply(sim::ingress_default(&path_of(&inv.input, "architecture")))
+            }
+            "ingress_project" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (out, check, blocks, ports, kpis) = (
+                    path("out"),
+                    path("check"),
+                    path("blocks"),
+                    path("ports"),
+                    path("kpis"),
+                );
+                sim_reply(sim::ingress_project(&sim::ProjectOptions {
+                    architecture: &path_of(&inv.input, "architecture"),
+                    out: out.as_deref(),
+                    check: check.as_deref(),
+                    blocks: blocks.as_deref(),
+                    ports: ports.as_deref(),
+                    kpis: kpis.as_deref(),
                 }))
             }
             _ => HandlerReply::Unavailable,

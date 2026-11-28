@@ -35,7 +35,7 @@ fn json_of(path: &Path) -> Result<cli::Checked, cli::Refusal> {
     cli::check_json(&cli::CheckOptions {
         architecture: path,
         ports: None,
-        kpis: None,
+        kpis: Some(&repo_root().join("kpis/catalogue.yaml")),
     })
 }
 

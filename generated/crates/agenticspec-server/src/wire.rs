@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39
+// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -858,6 +858,10 @@ pub fn encode_agenticspec_cli_deploy_bundle_input(value: &agenticspec_types::cli
         json::member(out, "accepts");
         json::push_text(out, &*held0);
     }
+    if let Some(held0) = &value.kpis {
+        json::member(out, "kpis");
+        json::push_text(out, &*held0);
+    }
     out.push('}');
 }
 
@@ -867,7 +871,7 @@ pub fn encode_agenticspec_cli_deploy_bundle_input(value: &agenticspec_types::cli
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_deploy_bundle_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployBundleInput, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "binding", "out", "ports", "accepts"])?;
+    json::closed_at(value, at, &["architecture", "binding", "out", "ports", "accepts", "kpis"])?;
     Ok(agenticspec_types::cli::DeployBundleInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -898,6 +902,13 @@ pub fn decode_agenticspec_cli_deploy_bundle_input(value: &json::Value, at: &str)
             Some(member4) => {
                 let at4 = json::nested(at, "accepts");
                 Some(json::text_at(member4, &at4, "a string")?.to_owned())
+            }
+        },
+        kpis: match value.member("kpis") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "kpis");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
             }
         },
     })
@@ -1139,6 +1150,220 @@ pub fn decode_agenticspec_cli_exposure_figures(value: &json::Value, at: &str) ->
             let at5 = json::nested(at, "sessions");
             let member5 = json::member_at(value, at, "sessions")?;
             json::integer_at(member5, &at5, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.IngressDefaultInput` as JSON.
+pub fn encode_agenticspec_cli_ingress_default_input(value: &agenticspec_types::cli::IngressDefaultInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.IngressDefaultInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ingress_default_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressDefaultInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture"])?;
+    Ok(agenticspec_types::cli::IngressDefaultInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.IngressDefaultResult` as JSON.
+pub fn encode_agenticspec_cli_ingress_default_result(value: &agenticspec_types::cli::IngressDefaultResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "defaults");
+    out.push('[');
+    for (index0, item0) in value.defaults.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    json::member(out, "ingress");
+    json::push_text(out, &value.ingress);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.IngressDefaultResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ingress_default_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressDefaultResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "defaults", "ingress"])?;
+    Ok(agenticspec_types::cli::IngressDefaultResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        defaults: {
+            let at1 = json::nested(at, "defaults");
+            let member1 = json::member_at(value, at, "defaults")?;
+            {
+                let mut items1 = Vec::new();
+                for (index1, element1) in json::items_at(member1, &at1, "an array")?.iter().enumerate() {
+                    let nested1 = json::nested(&at1, &index1.to_string());
+                    items1.push(json::text_at(element1, &nested1, "a string")?.to_owned());
+                }
+                items1
+            }
+        },
+        ingress: {
+            let at2 = json::nested(at, "ingress");
+            let member2 = json::member_at(value, at, "ingress")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.IngressProjectInput` as JSON.
+pub fn encode_agenticspec_cli_ingress_project_input(value: &agenticspec_types::cli::IngressProjectInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    if let Some(held0) = &value.out {
+        json::member(out, "out");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.check {
+        json::member(out, "check");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.blocks {
+        json::member(out, "blocks");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.ports {
+        json::member(out, "ports");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.kpis {
+        json::member(out, "kpis");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.IngressProjectInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ingress_project_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressProjectInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "out", "check", "blocks", "ports", "kpis"])?;
+    Ok(agenticspec_types::cli::IngressProjectInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        out: match value.member("out") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "out");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        check: match value.member("check") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "check");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+        blocks: match value.member("blocks") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "blocks");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        ports: match value.member("ports") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "ports");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
+            }
+        },
+        kpis: match value.member("kpis") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "kpis");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.IngressProjectResult` as JSON.
+pub fn encode_agenticspec_cli_ingress_project_result(value: &agenticspec_types::cli::IngressProjectResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "exports");
+    json::push_integer(out, value.exports);
+    json::member(out, "files");
+    out.push('[');
+    for (index0, item0) in value.files.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.IngressProjectResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ingress_project_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressProjectResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "exports", "files", "written"])?;
+    Ok(agenticspec_types::cli::IngressProjectResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        exports: {
+            let at1 = json::nested(at, "exports");
+            let member1 = json::member_at(value, at, "exports")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        files: {
+            let at2 = json::nested(at, "files");
+            let member2 = json::member_at(value, at, "files")?;
+            {
+                let mut items2 = Vec::new();
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
+                    let nested2 = json::nested(&at2, &index2.to_string());
+                    items2.push(json::text_at(element2, &nested2, "a string")?.to_owned());
+                }
+                items2
+            }
+        },
+        written: {
+            let at3 = json::nested(at, "written");
+            let member3 = json::member_at(value, at, "written")?;
+            json::bool_at(member3, &at3, "a boolean")?
         },
     })
 }

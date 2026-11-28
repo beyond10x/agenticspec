@@ -120,9 +120,11 @@ another.
 ## The bundle
 
 `agenticspec deploy bundle <architecture> --binding <file> [--out <file>] [--ports <file>]
-[--accepts <file>]` writes one YAML file, `agenticspec-deployment/1`, with every member inline, or
-prints it (`jq -r .bundle`) without `--out`. The same inputs give the same bytes. A digest is
-`sha256:` and the SHA-256 of the canonical JSON of what it covers (keys sorted, no space).
+[--accepts <file>] [--kpis <file>]` writes one YAML file, `agenticspec-deployment/1`, with every
+member inline, or prints it (`jq -r .bundle`) without `--out`. Its contract has the ingresses
+resolved, the default `metrics` ingress against the KPI catalogue (`kpis/catalogue.yaml` unless
+`--kpis` names another). The same inputs give the same bytes. A digest is `sha256:` and the
+SHA-256 of the canonical JSON of what it covers (keys sorted, no space).
 
 | member | holds |
 |---|---|

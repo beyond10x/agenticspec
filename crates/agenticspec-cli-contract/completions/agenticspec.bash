@@ -34,6 +34,9 @@ _agenticspec() {
             agenticspec,help)
                 cmd="agenticspec__subcmd__help"
                 ;;
+            agenticspec,ingress)
+                cmd="agenticspec__subcmd__ingress"
+                ;;
             agenticspec,kpi)
                 cmd="agenticspec__subcmd__kpi"
                 ;;
@@ -112,6 +115,9 @@ _agenticspec() {
             agenticspec__subcmd__help,help)
                 cmd="agenticspec__subcmd__help__subcmd__help"
                 ;;
+            agenticspec__subcmd__help,ingress)
+                cmd="agenticspec__subcmd__help__subcmd__ingress"
+                ;;
             agenticspec__subcmd__help,kpi)
                 cmd="agenticspec__subcmd__help__subcmd__kpi"
                 ;;
@@ -150,6 +156,12 @@ _agenticspec() {
                 ;;
             agenticspec__subcmd__help__subcmd__deploy,bundle)
                 cmd="agenticspec__subcmd__help__subcmd__deploy__subcmd__bundle"
+                ;;
+            agenticspec__subcmd__help__subcmd__ingress,default)
+                cmd="agenticspec__subcmd__help__subcmd__ingress__subcmd__default"
+                ;;
+            agenticspec__subcmd__help__subcmd__ingress,project)
+                cmd="agenticspec__subcmd__help__subcmd__ingress__subcmd__project"
                 ;;
             agenticspec__subcmd__help__subcmd__packing,default)
                 cmd="agenticspec__subcmd__help__subcmd__packing__subcmd__default"
@@ -192,6 +204,24 @@ _agenticspec() {
                 ;;
             agenticspec__subcmd__help__subcmd__ui,panels)
                 cmd="agenticspec__subcmd__help__subcmd__ui__subcmd__panels"
+                ;;
+            agenticspec__subcmd__ingress,default)
+                cmd="agenticspec__subcmd__ingress__subcmd__default"
+                ;;
+            agenticspec__subcmd__ingress,help)
+                cmd="agenticspec__subcmd__ingress__subcmd__help"
+                ;;
+            agenticspec__subcmd__ingress,project)
+                cmd="agenticspec__subcmd__ingress__subcmd__project"
+                ;;
+            agenticspec__subcmd__ingress__subcmd__help,default)
+                cmd="agenticspec__subcmd__ingress__subcmd__help__subcmd__default"
+                ;;
+            agenticspec__subcmd__ingress__subcmd__help,help)
+                cmd="agenticspec__subcmd__ingress__subcmd__help__subcmd__help"
+                ;;
+            agenticspec__subcmd__ingress__subcmd__help,project)
+                cmd="agenticspec__subcmd__ingress__subcmd__help__subcmd__project"
                 ;;
             agenticspec__subcmd__packing,default)
                 cmd="agenticspec__subcmd__packing__subcmd__default"
@@ -302,7 +332,7 @@ _agenticspec() {
 
     case "${cmd}" in
         agenticspec)
-            opts="-h --config --state-dir --output --help analyze blocks deploy export kpi lift mine packing procedure query serve sim sync ui completions help"
+            opts="-h --config --state-dir --output --help analyze blocks deploy export ingress kpi lift mine packing procedure query serve sim sync ui completions help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -572,7 +602,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__deploy__subcmd__bundle)
-            opts="-h --binding --out --ports --accepts --config --state-dir --output --help"
+            opts="-h --binding --out --ports --accepts --kpis --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -591,6 +621,10 @@ _agenticspec() {
                     return 0
                     ;;
                 --accepts)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --kpis)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
@@ -686,7 +720,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__help)
-            opts="analyze blocks deploy export kpi lift mine packing procedure query serve sim sync ui completions help"
+            opts="analyze blocks deploy export ingress kpi lift mine packing procedure query serve sim sync ui completions help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -814,6 +848,48 @@ _agenticspec() {
         agenticspec__subcmd__help__subcmd__help)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__ingress)
+            opts="default project"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__ingress__subcmd__default)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__ingress__subcmd__project)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
@@ -1154,6 +1230,160 @@ _agenticspec() {
                 return 0
             fi
             case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ingress)
+            opts="-h --config --state-dir --output --help default project help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ingress__subcmd__default)
+            opts="-h --config --state-dir --output --help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ingress__subcmd__help)
+            opts="default project help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ingress__subcmd__help__subcmd__default)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ingress__subcmd__help__subcmd__help)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ingress__subcmd__help__subcmd__project)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ingress__subcmd__project)
+            opts="-h --out --check --blocks --ports --kpis --config --state-dir --output --help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --out)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --check)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --blocks)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --ports)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --kpis)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
                 *)
                     COMPREPLY=()
                     ;;

@@ -90,7 +90,8 @@ fn every_rule_has_a_fixture_that_sim_check_refuses_by_that_rule_alone() {
 #[test]
 fn the_small_document_with_two_ingresses_is_accepted() {
     let ok = sim_check(&fixture("accepted")).unwrap();
-    assert_eq!(ok["ingresses"], 2);
+    // Its two, and the default operator and metrics ingresses.
+    assert_eq!(ok["ingresses"], 4);
     let (resolved, refusals) = resolve(&load(&fixture("accepted")));
     assert_eq!(refusals, Vec::new());
     let ops = ingress(&resolved, "ops");
@@ -176,7 +177,7 @@ fn the_contract_writes_its_ingresses_with_the_same_bytes_and_reads_them_back() {
 }
 
 #[test]
-fn sim_contract_resolves_the_ingresses_and_a_document_without_ingress_writes_none() {
+fn sim_contract_resolves_the_ingresses_and_a_document_without_ingress_has_the_defaults() {
     let root = repo_root();
     let (ports, kpis) = (
         root.join("blocks/ports.json"),
@@ -210,13 +211,29 @@ fn sim_contract_resolves_the_ingresses_and_a_document_without_ingress_writes_non
             check: None,
             suite: None,
             trace: None,
-            kpis: Some(&root.join("no-such-catalogue.yaml")),
+            kpis: Some(&kpis),
         },
         &mut std::io::sink(),
     )
     .unwrap();
-    assert_eq!(plain["ingresses"], 0);
-    assert!(!plain["contract"].as_str().unwrap().contains("ingress"));
+    assert_eq!(plain["ingresses"], 2);
+    let text = plain["contract"].as_str().unwrap();
+    assert!(text.contains("\n  - name: metrics\n    audience: control.monitor\n    authenticated: false\n    exports: [metrics_scrape]\n"), "{text}");
+    assert!(text.contains("\n  - name: operator\n    audience: control.operator\n    authenticated: true\n    exports: [http, event_stream, ui, tool]\n"), "{text}");
+    let err = cli::contract(
+        &ContractOptions {
+            architecture: &root.join("architectures/workstation.yaml"),
+            ports: Some(&ports),
+            out: None,
+            check: None,
+            suite: None,
+            trace: None,
+            kpis: Some(&root.join("no-such-catalogue.yaml")),
+        },
+        &mut std::io::sink(),
+    )
+    .unwrap_err();
+    assert_eq!(err.code, "kpis_unreadable");
     let err = cli::contract(
         &ContractOptions {
             architecture: &fixture("ingress_without_export"),

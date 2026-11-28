@@ -1,6 +1,6 @@
 format: agenticspec-contract/1
 architecture: workstation-ingress
-ports_digest: 1fd7870a3fac38ea3ab9fd288724a732bdc422a140fc1b42e3e1bc132e93df1c
+ports_digest: 1a4d28dd95f5ce8ffe4197fe9ac0f07f8c33a8b954b9668b5f0b6461e56f7457
 ports:
   - port: sandbox.sandbox
     part: box

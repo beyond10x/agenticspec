@@ -91,6 +91,9 @@ pub struct ContractIngress {
 /// Every rule of the check of `ingress:`, in the order it applies them.
 pub const RULES: &[&str] = &[
     "ingress_malformed",
+    "ingress_reserved_part",
+    "ingress_none_not_default",
+    "ingress_reserved_audience",
     "ingress_audience_not_principal",
     "ingress_without_export",
     "ingress_unknown_protocol",
@@ -161,6 +164,157 @@ impl Kpis {
 /// Whether the document declares an `ingress:` key.
 pub fn declares(doc: &Value) -> bool {
     !doc["ingress"].is_null()
+}
+
+/// The reserved part path of the implied audiences of the default control plane. No part of a
+/// document may take it.
+pub const CONTROL: &str = "control";
+
+/// The implied audiences: principal parts of the contract only, never of the document, each with
+/// its principal kind.
+pub const IMPLIED: &[(&str, &str)] = &[
+    ("control.operator", "human"),
+    ("control.monitor", "service"),
+];
+
+/// The default ingresses, by name, as a document writes them (the entries of `ingress:`): every
+/// architecture has each one unless it declares an ingress of that name or sets it to `none`.
+/// [`default_text`] prints them; [`default_ingress`] reads them.
+pub const DEFAULTS: &[(&str, &str)] = &[
+    (
+        "operator",
+        "  operator:
+    audience: control.operator
+    interface:
+      scope: all
+      commands: { principal: all, plays: administration }
+      views: true
+      feeds: true
+    exports: [{ protocol: http }, { protocol: event_stream }, { protocol: ui }, { protocol: tool }]
+",
+    ),
+    (
+        "metrics",
+        "  metrics:
+    audience: control.monitor
+    authenticated: false
+    interface: { scope: all, metrics: computed }
+    exports: [{ protocol: metrics_scrape }]
+",
+    ),
+];
+
+/// The default ingress of that name, as the document would declare it.
+pub fn default_ingress(name: &str) -> Option<Value> {
+    let (_, text) = DEFAULTS.iter().find(|(n, _)| *n == name)?;
+    let doc = crate::doc::parse_yaml(text).ok()?;
+    doc.get(name).cloned()
+}
+
+/// The names of the defaults in effect: those the document neither declares nor sets to `none`.
+pub fn defaults_in_effect(doc: &Value) -> Vec<&'static str> {
+    let ingress = &doc["ingress"];
+    if ingress.as_str() == Some("none") {
+        return Vec::new();
+    }
+    DEFAULTS
+        .iter()
+        .map(|(n, _)| *n)
+        .filter(|n| ingress.get(*n).is_none())
+        .collect()
+}
+
+/// The `ingress:` section of the defaults in effect, to paste into the document and change:
+/// pasted, it gives the same contract. A comment line when no default is in effect.
+pub fn default_text(doc: &Value) -> String {
+    let names = defaults_in_effect(doc);
+    if names.is_empty() {
+        return "# no default ingress is in effect: the document declares or opts out of each\n"
+            .into();
+    }
+    let mut s = String::from("ingress:\n");
+    for (n, text) in DEFAULTS {
+        if names.contains(n) {
+            s.push_str(text);
+        }
+    }
+    s
+}
+
+/// The ingresses in effect: the declared ones, and each default the document neither declares
+/// nor sets to `none` (`ingress: none` removes both), by name; with the refusals of a key
+/// `ingress:` that has no such shape.
+pub fn effective(doc: &Value) -> (Map<String, Value>, Vec<Refusal>) {
+    let mut out = Map::new();
+    let mut refusals = Vec::new();
+    let ingress = &doc["ingress"];
+    if ingress.as_str() == Some("none") {
+        return (out, refusals);
+    }
+    for (n, _) in DEFAULTS {
+        if let Some(v) = default_ingress(n) {
+            out.insert((*n).to_owned(), v);
+        }
+    }
+    match ingress {
+        Value::Null => {}
+        Value::Object(m) => {
+            for (name, v) in m {
+                if v.as_str() == Some("none") {
+                    if DEFAULTS.iter().any(|(n, _)| n == name) {
+                        out.remove(name);
+                    } else {
+                        refusals.push(Refusal {
+                            rule: "ingress_none_not_default",
+                            subject: format!("ingress `{name}`"),
+                            detail: format!(
+                                "`none` opts out of a default ingress ({}), and `{name}` is none",
+                                DEFAULTS
+                                    .iter()
+                                    .map(|(n, _)| *n)
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            ),
+                        });
+                    }
+                } else {
+                    out.insert(name.clone(), v.clone());
+                }
+            }
+        }
+        _ => refusals.push(Refusal {
+            rule: "ingress_malformed",
+            subject: "ingress".into(),
+            detail: "`ingress` maps a name to each ingress, or is none".into(),
+        }),
+    }
+    (out, refusals)
+}
+
+/// The refusals of the reserved names that need neither the ports file nor the KPI catalogue:
+/// a part on the reserved path `control`, `none` for an ingress that is no default, and a key
+/// `ingress:` of no known shape.
+pub fn reserved(doc: &Value) -> Vec<Refusal> {
+    let mut out: Vec<Refusal> = doc["parts"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter(|(name, _)| *name == CONTROL || name.starts_with(&format!("{CONTROL}.")))
+        .map(|(name, _)| Refusal {
+            rule: "ingress_reserved_part",
+            subject: format!("part `{name}`"),
+            detail: format!(
+                "the path `{CONTROL}` is reserved for the implied audiences ({})",
+                IMPLIED
+                    .iter()
+                    .map(|(p, _)| *p)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        })
+        .collect();
+    out.extend(effective(doc).1);
+    out
 }
 
 /// The domain of the blocks a part's block belongs to (`pool` is the resource block's).
@@ -263,11 +417,15 @@ fn selection(v: &Value) -> Option<(bool, Vec<String>)> {
 }
 
 /// The `commands:` rules: `principal`, a list of `principal` and `{plays, except}` mappings, or
-/// one mapping with `principal`, `plays` and `except`.
+/// one mapping with `principal`, `plays` and `except`. `principal: all` answers the principal
+/// ports of every principal part in scope; `plays: administration` plays every actor of the
+/// scope an audience may play.
 #[derive(Default)]
 struct CommandRules {
     principal: bool,
+    principal_all: bool,
     plays: Vec<String>,
+    plays_administration: bool,
     except: Vec<String>,
 }
 
@@ -278,10 +436,14 @@ fn command_rules(v: &Value) -> Option<CommandRules> {
             Value::String(s) if s == "principal" => out.principal = true,
             Value::Object(m) => {
                 for (k, x) in m {
-                    match k.as_str() {
-                        "principal" => out.principal |= x.as_bool()?,
-                        "plays" => out.plays.extend(strings(x)?),
-                        "except" => out.except.extend(strings(x)?),
+                    match (k.as_str(), x) {
+                        ("principal", Value::String(s)) if s == "all" => out.principal_all = true,
+                        ("principal", x) => out.principal |= x.as_bool()?,
+                        ("plays", Value::String(s)) if s == "administration" => {
+                            out.plays_administration = true
+                        }
+                        ("plays", x) => out.plays.extend(strings(x)?),
+                        ("except", x) => out.except.extend(strings(x)?),
                         _ => return None,
                     }
                 }
@@ -322,10 +484,28 @@ struct Ctx<'a> {
 }
 
 impl Ctx<'_> {
+    /// A principal part of the document, or an implied audience.
     fn is_principal(&self, part: &str) -> bool {
+        self.is_document_principal(part) || IMPLIED.iter().any(|(p, _)| *p == part)
+    }
+
+    fn is_document_principal(&self, part: &str) -> bool {
         self.parts
             .get(part)
             .is_some_and(|p| p["block"] == "principal")
+    }
+
+    /// Whether an actor's `may:` holds the report of a port that is no principal port: the
+    /// implementation's to issue, so no audience plays it.
+    fn implementation<'a>(&self, may: &'a [String]) -> Vec<&'a String> {
+        may.iter()
+            .filter(|c| {
+                self.ports
+                    .ports
+                    .iter()
+                    .any(|p| p.kind != Kind::Principal && p.reports.contains(c))
+            })
+            .collect()
     }
 
     /// The links from `audience` whose value travels in a port of it, with the intent commands
@@ -345,9 +525,9 @@ impl Ctx<'_> {
     }
 }
 
-/// Resolve every ingress of a document into its operations, with every refusal of the check of
-/// `ingress:`. The contract is the document's (for the ports each part uses); a document
-/// without `ingress:` resolves to none and is never refused here.
+/// Resolve every ingress in effect (the declared ones and the defaults, [`effective`]) into its
+/// operations, with every refusal of the check of `ingress:`. The contract is the document's
+/// (for the ports each part uses).
 pub fn resolve(
     doc: &Value,
     contract: &Contract,
@@ -355,10 +535,8 @@ pub fn resolve(
     kpis: &Kpis,
 ) -> (Vec<ContractIngress>, Vec<Refusal>) {
     let mut out = Vec::new();
-    let mut refusals = Vec::new();
-    if !declares(doc) {
-        return (out, refusals);
-    }
+    let mut refusals = reserved(doc);
+    let (ingresses, _) = effective(doc);
     let empty = Map::new();
     let ctx = Ctx {
         doc,
@@ -373,15 +551,8 @@ pub fn resolve(
             .filter_map(|b| b.as_str().map(str::to_owned))
             .collect(),
     };
-    let Some(ingresses) = doc["ingress"].as_object() else {
-        refusals.push(Refusal {
-            rule: "ingress_malformed",
-            subject: "ingress".into(),
-            detail: "`ingress` maps a name to each ingress".into(),
-        });
-        return (out, refusals);
-    };
-    for (name, ingress) in ingresses {
+    let mut answering: Vec<BTreeSet<String>> = Vec::new();
+    for (name, ingress) in &ingresses {
         let mut refuse = |rule: &'static str, detail: String| {
             refusals.push(Refusal {
                 rule,
@@ -389,11 +560,13 @@ pub fn resolve(
                 detail,
             })
         };
-        if let Some(r) = one(&ctx, name, ingress, &mut refuse) {
+        if let Some((r, answers_for)) = one(&ctx, name, ingress, &mut refuse) {
             out.push(r);
+            answering.push(answers_for);
         }
     }
-    // Every principal port of the contract is answered through an ingress of its principal.
+    // Every principal port of the contract is answered through an ingress that answers for its
+    // principal: one of its audience, or one with `principal: all` over a scope that holds it.
     for cp in &contract.ports {
         if !ctx.is_principal(&cp.part) {
             continue;
@@ -402,8 +575,8 @@ pub fn resolve(
         if answer.is_empty() {
             continue;
         }
-        let served = out.iter().any(|i| {
-            i.audience == cp.part
+        let served = out.iter().zip(&answering).any(|(i, answers_for)| {
+            answers_for.contains(&cp.part)
                 && i.exports
                     .iter()
                     .any(|e| carries(e).is_some_and(|k| k.contains(&OpKind::Command)))
@@ -416,7 +589,7 @@ pub fn resolve(
                 rule: "principal_port_without_ingress",
                 subject: format!("part `{}`", cp.part),
                 detail: format!(
-                    "no ingress of `{}` carries an answer of its principal port {} ({})",
+                    "no ingress that answers for `{}` carries an answer of its principal port {} ({})",
                     cp.part,
                     cp.port,
                     answer.join(", ")
@@ -433,12 +606,13 @@ pub fn check(doc: &Value, contract: &Contract, ports: &PortsFile, kpis: &Kpis) -
     resolve(doc, contract, ports, kpis).1
 }
 
+/// One ingress resolved, with the principal parts whose principal ports it answers for.
 fn one(
     ctx: &Ctx,
     name: &str,
     ingress: &Value,
     refuse: &mut dyn FnMut(&'static str, String),
-) -> Option<ContractIngress> {
+) -> Option<(ContractIngress, BTreeSet<String>)> {
     let Some(m) = ingress.as_object() else {
         refuse("ingress_malformed", "an ingress is a mapping".into());
         return None;
@@ -488,7 +662,19 @@ fn one(
     // The audience.
     let audience = ingress["audience"].as_str().unwrap_or_default().to_owned();
     let audience_ok = ctx.is_principal(&audience);
-    if !audience_ok {
+    if !audience_ok && audience.starts_with(&format!("{CONTROL}.")) {
+        refuse(
+            "ingress_reserved_audience",
+            format!(
+                "audience `{audience}` is on the reserved path `{CONTROL}`, which holds only {}",
+                IMPLIED
+                    .iter()
+                    .map(|(p, _)| *p)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        );
+    } else if !audience_ok {
         refuse(
             "ingress_audience_not_principal",
             format!("audience `{audience}` names no principal part"),
@@ -583,7 +769,19 @@ fn one(
     } else {
         Vec::new()
     };
+    let mut answers_for = BTreeSet::new();
+    if rules.principal_all {
+        for part in scope_parts.iter().filter(|p| ctx.is_document_principal(p)) {
+            for cp in ctx.contract.ports.iter().filter(|p| &p.part == part) {
+                for a in answers(ctx.ports, &cp.port) {
+                    ops.insert((OpKind::Command, a));
+                }
+            }
+            answers_for.insert(part.clone());
+        }
+    }
     if rules.principal && audience_ok {
+        answers_for.insert(audience.clone());
         for cp in ctx.contract.ports.iter().filter(|p| p.part == audience) {
             for a in answers(ctx.ports, &cp.port) {
                 ops.insert((OpKind::Command, a));
@@ -613,15 +811,7 @@ fn one(
             );
             continue;
         };
-        let implementation: Vec<&String> = may
-            .iter()
-            .filter(|c| {
-                ctx.ports
-                    .ports
-                    .iter()
-                    .any(|p| p.kind != Kind::Principal && p.reports.contains(c))
-            })
-            .collect();
+        let implementation = ctx.implementation(may);
         if !implementation.is_empty() {
             refuse(
                 "ingress_actor_is_implementation",
@@ -647,6 +837,20 @@ fn one(
         for c in may {
             if surface.role(c) == Some(Role::Administration) {
                 ops.insert((OpKind::Command, c.clone()));
+            }
+        }
+    }
+    if rules.plays_administration {
+        // Every actor of a domain in scope that an audience may play (I4).
+        for (actor, may) in &surface.actors {
+            let domain = actor.rsplit_once('.').map_or("", |x| x.0);
+            if !domains.contains(domain) || !ctx.implementation(may).is_empty() {
+                continue;
+            }
+            for c in may {
+                if surface.role(c) == Some(Role::Administration) {
+                    ops.insert((OpKind::Command, c.clone()));
+                }
             }
         }
     }
@@ -708,29 +912,18 @@ fn one(
         }
     }
 
-    // Metrics.
-    match strings(&interface["metrics"]) {
-        None => refuse("ingress_malformed", "`metrics` is a list of KPI ids".into()),
-        Some(ids) => {
-            for id in ids {
-                match ctx.kpis.0.get(&id) {
-                    None => refuse(
-                        "ingress_unknown_operation",
-                        format!("metrics names `{id}`, which is no KPI of the catalogue"),
-                    ),
-                    Some(k) if !domains.contains(&block_domain(&k.block)) => refuse(
-                        "ingress_outside_scope",
-                        format!(
-                            "metric `{id}` is of block {}, which no part of the scope is",
-                            k.block
-                        ),
-                    ),
-                    Some(_) => {
-                        ops.insert((OpKind::Metric, id));
-                    }
-                }
+    // Metrics: `computed`, every KPI of a block in scope that a runtime computes from observed
+    // events, or a list of KPI ids.
+    if interface["metrics"].as_str() == Some("computed") {
+        for (id, k) in &ctx.kpis.0 {
+            if matches!(k.status.as_str(), "computed" | "both")
+                && domains.contains(&block_domain(&k.block))
+            {
+                ops.insert((OpKind::Metric, id.clone()));
             }
         }
+    } else {
+        metric_list(ctx, &interface["metrics"], &domains, &mut ops, refuse);
     }
 
     // What the exports carry.
@@ -753,6 +946,69 @@ fn one(
             );
         }
     }
+    finish(
+        ctx,
+        name,
+        ingress,
+        audience,
+        authenticated,
+        exports,
+        ops,
+        &inputs,
+        refuse,
+    )
+    .map(|i| (i, answers_for))
+}
+
+/// The KPIs of a `metrics:` list, each of a block in scope.
+fn metric_list(
+    ctx: &Ctx,
+    list: &Value,
+    domains: &BTreeSet<String>,
+    ops: &mut BTreeSet<(OpKind, String)>,
+    refuse: &mut dyn FnMut(&'static str, String),
+) {
+    match strings(list) {
+        None => refuse(
+            "ingress_malformed",
+            "`metrics` is computed or a list of KPI ids".into(),
+        ),
+        Some(ids) => {
+            for id in ids {
+                match ctx.kpis.0.get(&id) {
+                    None => refuse(
+                        "ingress_unknown_operation",
+                        format!("metrics names `{id}`, which is no KPI of the catalogue"),
+                    ),
+                    Some(k) if !domains.contains(&block_domain(&k.block)) => refuse(
+                        "ingress_outside_scope",
+                        format!(
+                            "metric `{id}` is of block {}, which no part of the scope is",
+                            k.block
+                        ),
+                    ),
+                    Some(_) => {
+                        ops.insert((OpKind::Metric, id));
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The checks of an ingress over its resolved operations and exports, and the ingress.
+#[allow(clippy::too_many_arguments)]
+fn finish(
+    ctx: &Ctx,
+    name: &str,
+    ingress: &Value,
+    audience: String,
+    authenticated: bool,
+    exports: Vec<String>,
+    ops: BTreeSet<(OpKind, String)>,
+    inputs: &[(&Value, Vec<String>)],
+    refuse: &mut dyn FnMut(&'static str, String),
+) -> Option<ContractIngress> {
     let has = |p: &str| exports.iter().any(|e| e == p);
     if has("ui") && !(has("http") && has("event_stream")) {
         refuse(
