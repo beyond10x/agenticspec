@@ -3,9 +3,9 @@
 //! A [`Page`] is a graph in neutral terms: nodes in groups, ports on nodes, edges between them,
 //! regions that hold nodes, marks (a refusal or a piece of information) on a node or a port, and
 //! panels of plain tables. [`render`] draws it as one complete HTML page in this crate's visual
-//! language: the graph at its natural size with pan, zoom and fit, its legend, and the panels
-//! beside it. The page holds its CSS, its script and its SVG inline, embeds the page document as
-//! JSON, and loads nothing from the network. The output is a function of the page only.
+//! language: the graph whole (fitted to its view when larger, else at its natural size) with pan,
+//! zoom and fit, its legend, and the panels beside it. The page holds its CSS, its script and its
+//! SVG inline, embeds the page document as JSON, and loads nothing from the network. The output is a function of the page only.
 //!
 //! The JSON Schema of the format is `schema/render-model.schema.json` in this crate. Unknown
 //! fields are refused, by the schema and by the types.
@@ -749,20 +749,22 @@ pub(crate) fn render_with(page: &Page, shell: &Shell) -> String {
         esc(&shell.graph_hint)
     );
     h.push_str(&shell.legend);
-    // The graph is drawn at its natural size; the script shows the zoom tools when it is wider
-    // than its card, and the card then pans by drag, wheel and arrow keys.
+    // The graph is drawn at its natural size. `data-initial="fit"` tells the script to open it at
+    // Fit (whole in its view) when it is wider than its card or taller than the view's highest;
+    // the script then shows the zoom tools, and the card pans by drag, wheel and arrow keys
+    // whenever the graph overflows it.
     h.push_str(
         "<div class=\"graph-tools\" hidden role=\"toolbar\" aria-label=\"Zoom\">\
 <button type=\"button\" data-zoom=\"out\" aria-label=\"Zoom out\">−</button>\
 <output class=\"zoom-level\" aria-live=\"polite\">100 %</output>\
 <button type=\"button\" data-zoom=\"in\" aria-label=\"Zoom in\">+</button>\
-<button type=\"button\" data-zoom=\"fit\" aria-label=\"Fit to width\">Fit</button>\
+<button type=\"button\" data-zoom=\"fit\" aria-label=\"Fit the whole graph\">Fit</button>\
 <button type=\"button\" data-zoom=\"actual\" aria-label=\"Actual size\">Actual size</button>\
 <span class=\"hint\">drag, scroll or use the arrow keys to move around</span></div>",
     );
     let _ = write!(
         h,
-        "<div class=\"graph-view\" style=\"--graph-w:{}px\">{}</div>",
+        "<div class=\"graph-view\" data-initial=\"fit\" style=\"--graph-w:{}px\">{}</div>",
         fmt::px(g.width),
         g.svg
     );

@@ -129,6 +129,43 @@ fn a_minimal_page_renders_every_node_edge_mark_and_panel_cell() {
     assert_eq!(html, render(&page), "deterministic");
 }
 
+/// The page and the architecture page share one viewer: its view asks to open at Fit, and its
+/// script fits a graph larger than the view (wider than its card or taller than its highest)
+/// and leaves one that fits at its natural size.
+#[test]
+fn the_graph_opens_fitted_when_larger_than_its_view() {
+    let arch = serde_json::from_str::<Value>(
+        r#"{"architecture":"a","parts":{"x":{"block":"agent"}},"links":[]}"#,
+    )
+    .expect("JSON");
+    for html in [
+        render(&minimal()),
+        agenticspec_render::architecture::page(&arch, None),
+    ] {
+        assert_eq!(
+            html.matches("<div class=\"graph-view\" data-initial=\"fit\"")
+                .count(),
+            1,
+            "the view asks to open at Fit"
+        );
+        let script = &html[html.rfind("<script>").expect("the viewer script")..];
+        for rule in [
+            "var initial = view ? view.getAttribute(\"data-initial\") : null;",
+            "return r.w > 0 && (natural.width > r.w || natural.height > r.h);",
+            "return Math.min(1, r.w / natural.width, r.h / natural.height);",
+            "if (initial === \"fit\" && natural && larger()) setZoom(fitZoom());",
+            "else if (initial === \"fit\" && zoom !== 1) setZoom(1);",
+            "new ResizeObserver(opening).observe(view);",
+        ] {
+            assert!(script.contains(rule), "the script holds {rule}");
+        }
+        assert!(
+            html.contains("data-zoom=\"fit\" aria-label=\"Fit the whole graph\""),
+            "Fit is the same view the page opens at"
+        );
+    }
+}
+
 /// The opening tag of the group of the card of node `id`.
 fn card_of(html: &str, id: &str) -> String {
     let start = html

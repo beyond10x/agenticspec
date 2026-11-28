@@ -1,5 +1,6 @@
-// The rendered page of a large architecture: the graph at its natural size, panned by keyboard and
-// zoomed with tools a keyboard reaches, the parts table on the first screen, and a page that does
+// The rendered page of a large architecture: the graph opens fitted, whole in its view; at its
+// natural size it is panned by keyboard; it is zoomed with tools a keyboard reaches; a small one
+// opens at its natural size; the parts table on the first screen, and a page that does
 // not overflow a phone. The 37-part fixture's page is rendered by scripts/check-site.sh into
 // target/site-ux/large-37.html (agenticspec sim render), from
 // crates/agenticspec-render/tests/fixtures/large-37.yaml; the other pages are the site's own.
@@ -46,8 +47,34 @@ async function tabTo(page: Page, label: string, key = 'Tab'): Promise<void> {
   throw new Error(`Tab never reaches ${label}`);
 }
 
-test('the 37-part graph is drawn at its natural size and pans to its last part', async ({page}) => {
+/** Whether the drawn graph lies whole inside its view, and how much of the view's room it fills
+ * in the dimension that binds (1: it touches the card's width or the view's highest). */
+async function whole(page: Page | Frame): Promise<{inside: boolean; fill: number}> {
+  return page.evaluate(() => {
+    const view = document.querySelector('.graph-view') as HTMLElement;
+    const v = view.getBoundingClientRect();
+    const s = (document.querySelector('svg.graph') as SVGSVGElement).getBoundingClientRect();
+    const inside = s.left >= v.left - 0.5 && s.right <= v.right + 0.5 && s.top >= v.top - 0.5 && s.bottom <= v.bottom + 0.5;
+    const high = parseFloat(getComputedStyle(view).maxHeight);
+    return {inside, fill: Math.max(s.width / v.width, s.height / high)};
+  });
+}
+
+test('the 37-part graph opens fitted: whole in its view, the zoom tools shown', async ({page}) => {
   await fixture(page, 1280, 800);
+  const g = await graph(page);
+  expect(g.natural).toBeGreaterThan(g.view);
+  expect(g.drawn).toBeLessThan(g.natural);
+  const w = await whole(page);
+  expect(w.inside, 'the whole graph is in its view').toBe(true);
+  expect(w.fill).toBeGreaterThan(0.9);
+  await expect(page.locator('.graph-tools')).toBeVisible();
+  await expect(page.locator('.zoom-level')).not.toHaveText('100 %');
+});
+
+test('at actual size the 37-part graph is drawn at its natural size and pans to its last part', async ({page}) => {
+  await fixture(page, 1280, 800);
+  await page.getByRole('button', {name: 'Actual size'}).click();
   const g = await graph(page);
   expect(g.natural).toBeGreaterThan(g.view);
   expect(Math.abs(g.drawn - g.natural)).toBeLessThan(1);
@@ -66,20 +93,21 @@ test('the 37-part graph is drawn at its natural size and pans to its last part',
   expect(last.right).toBeLessThanOrEqual(last.edge + 1);
 });
 
-test('fit scales the graph to its card and actual size restores it, by Tab and Enter', async ({page}) => {
+test('actual size, fit and zoom in work by Tab and Enter', async ({page}) => {
   await fixture(page, 1280, 800);
-  await tabTo(page, 'Fit to width');
+  await tabTo(page, 'Actual size');
   await page.keyboard.press('Enter');
   let g = await graph(page);
-  expect(g.drawn).toBeLessThanOrEqual(g.view);
-  expect(g.drawn).toBeGreaterThan(g.view * 0.9);
+  expect(Math.abs(g.drawn - g.natural)).toBeLessThan(1);
+  await tabTo(page, 'Fit the whole graph', 'Shift+Tab');
+  await page.keyboard.press('Enter');
+  g = await graph(page);
+  const w = await whole(page);
+  expect(w.inside).toBe(true);
+  expect(w.fill).toBeGreaterThan(0.9);
   await tabTo(page, 'Zoom in', 'Shift+Tab');
   await page.keyboard.press('Enter');
   expect((await graph(page)).drawn).toBeGreaterThan(g.drawn);
-  await tabTo(page, 'Actual size');
-  await page.keyboard.press('Enter');
-  g = await graph(page);
-  expect(Math.abs(g.drawn - g.natural)).toBeLessThan(1);
 });
 
 test('at 1366x768 the parts table is on the first screen and a part opens from it', async ({page}) => {
@@ -96,7 +124,7 @@ test('at 1366x768 the parts table is on the first screen and a part opens from i
   expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
 });
 
-test('a small architecture is drawn at its natural size with no zoom tools', async ({page}) => {
+test('a small architecture opens at its natural size with no zoom tools', async ({page}) => {
   await page.setViewportSize({width: 1280, height: 800});
   await open(page, '/docs/architectures/solo', 'light');
   const frame = await architecture(page);
