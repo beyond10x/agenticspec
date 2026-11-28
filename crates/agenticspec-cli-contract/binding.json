@@ -1352,6 +1352,9 @@
         "shape": {
           "kind": "struct",
           "fields": {
+            "events": {
+              "kind": "boolean"
+            },
             "experiment": {
               "kind": "string"
             },
@@ -1374,6 +1377,12 @@
           "fields": {
             "best_written": {
               "kind": "boolean"
+            },
+            "events": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
             },
             "out": {
               "kind": "string"
@@ -1855,7 +1864,7 @@
       ],
       "aliases": [],
       "callable": "sim_run",
-      "about": "Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml",
+      "about": "Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml, with --events also events.jsonl",
       "arguments": [
         {
           "field": "experiment",
@@ -1876,6 +1885,13 @@
           "source": {
             "kind": "option",
             "long": "threads"
+          }
+        },
+        {
+          "field": "events",
+          "source": {
+            "kind": "flag",
+            "long": "events"
           }
         }
       ]

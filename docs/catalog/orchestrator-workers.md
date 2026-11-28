@@ -59,6 +59,8 @@ agenticspec sim run orchestrator-workers-tuning.yaml --out out/
 
 In a checkout, the same run is `agenticspec sim run experiments/orchestrator-workers-tuning.yaml --out out/`.
 
+With `--events`, the run also writes `out/events.jsonl`: the run of the result's timeline as an event log, one line per building-block event (`agentic.work.TaskCreated`, `agentic.resource.ClaimQueued`, ...) with its sequence number, time, part, copy and subject key (`task-3`). The same seed writes the same lines, and `result.json` does not change.
+
 ## Deploy
 
 Later. An entry runs in the simulator today; the agent runtime and the compute that implement the building blocks come later, and with them a way to deploy an entry.

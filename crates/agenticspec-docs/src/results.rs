@@ -22,8 +22,8 @@ pub const REGENERATE: &str = "task catalog:generate";
 
 /// Files of the simulator that do not change a result: the commands of `agenticspec sim`, the
 /// module list, the ladder, the best variant as a document (derived from the result by the docs
-/// generator).
-const SIM_EXCLUDED: &[&str] = &["cli.rs", "lib.rs", "ladder.rs", "best.rs"];
+/// generator), the event log of a recorded run (written beside the result, never into it).
+const SIM_EXCLUDED: &[&str] = &["cli.rs", "lib.rs", "ladder.rs", "best.rs", "events.rs"];
 
 /// The simulator's dependencies from crates.io whose versions a result depends on.
 const SIM_DEPS: &[&str] = &["rayon", "serde_json", "serde_yaml_ng"];

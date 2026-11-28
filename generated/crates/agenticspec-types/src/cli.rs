@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest 8764a7e4a2c954cdf68fec3a1a5ecaa5de423d1349bbdcf9c033ff55b691f9c2
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -653,6 +653,8 @@ pub struct SimRunInput {
     pub out: String,
     /// `threads` — `Optional<Integer>`.
     pub threads: Option<i64>,
+    /// `events` — `Boolean`.
+    pub events: bool,
 }
 
 /// SimRunResult — `agenticspec.cli.SimRunResult`.
@@ -670,6 +672,8 @@ pub struct SimRunResult {
     pub threads: i64,
     /// `best_written` — `Boolean`.
     pub best_written: bool,
+    /// `events` — `Optional<Integer>`.
+    pub events: Option<i64>,
 }
 
 /// StepKind — `agenticspec.cli.StepKind`: one of a closed set of names.

@@ -506,6 +506,12 @@ The same seeds give the same `result.json`.\n"
         "In a checkout, the same run is `agenticspec sim run {} --out out/`.\n",
         e.exp_file
     );
+    s.push_str(
+        "With `--events`, the run also writes `out/events.jsonl`: the run of the result's timeline as an event log, \
+one line per building-block event (`agentic.work.TaskCreated`, `agentic.resource.ClaimQueued`, ...) with its \
+sequence number, time, part, copy and subject key (`task-3`). The same seed writes the same lines, and \
+`result.json` does not change.\n\n",
+    );
 
     s.push_str("## Deploy\n\n");
     s.push_str(

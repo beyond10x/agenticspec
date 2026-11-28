@@ -927,7 +927,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__sim__subcmd__run)
-            opts="-h --out --threads --config --state-dir --output --help"
+            opts="-h --out --threads --events --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

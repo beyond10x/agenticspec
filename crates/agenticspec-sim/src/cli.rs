@@ -6,7 +6,8 @@
 
 use crate::check::check as check_architecture;
 use crate::doc::load_yaml;
-use crate::{Experiment, ladder as ladder_doc, run as run_experiment};
+use crate::events::{FILE as EVENTS_FILE, jsonl, log as event_log};
+use crate::{Experiment, ladder as ladder_doc, run_shown};
 use serde_json::{Value, json};
 use std::io::Write;
 use std::path::Path;
@@ -89,13 +90,16 @@ fn kpi(r: &Value, which: &str, name: &str) -> String {
         .map_or("-".into(), |v| format!("{v:.4}"))
 }
 
-/// `sim run <experiment> --out <dir> [--threads N]`: writes `result.json`, `index.html` and,
-/// when the result has a best variant, `best.yaml` into `out`. Refusals of the architecture and
-/// the KPIs of the baseline and the best variant go to `log`.
+/// `sim run <experiment> --out <dir> [--threads N] [--events]`: writes `result.json`,
+/// `index.html` and, when the result has a best variant, `best.yaml` into `out`; with `events`,
+/// also `events.jsonl`, the run the result's timeline samples as block events
+/// ([`crate::events`]). Refusals of the architecture and the KPIs of the baseline and the best
+/// variant go to `log`.
 pub fn run(
     path: &Path,
     out: &Path,
     threads: Option<usize>,
+    events: bool,
     log: &mut dyn Write,
 ) -> Result<Value, Refusal> {
     let invalid = |e: String| refused("experiment_invalid", e);
@@ -107,10 +111,17 @@ pub fn run(
     for r in check_architecture(&e.architecture) {
         let _ = writeln!(log, "agenticspec sim: refused: {r}");
     }
-    let result = run_experiment(&e, threads).map_err(invalid)?;
+    let (result, shown) = run_shown(&e, threads).map_err(invalid)?;
     let mut text = serde_json::to_string_pretty(&result).map_err(|e| invalid(e.to_string()))?;
     text.push('\n');
     write(&out.join("result.json"), &text)?;
+    let written = if events {
+        let log = event_log(&shown.architecture, &shown.run.timeline).map_err(invalid)?;
+        write(&out.join(EVENTS_FILE), &jsonl(&log))?;
+        Some(log.len())
+    } else {
+        None
+    };
     write(
         &out.join("index.html"),
         &agenticspec_render::page(&result["architecture"], Some(&result)),
@@ -144,13 +155,17 @@ pub fn run(
         );
     }
     let _ = writeln!(log, "  best params {}", result["best"]["params"]);
-    Ok(json!({
+    let mut answer = json!({
         "out": out.display().to_string(),
         "variants": variants,
         "seeds": e.seeds,
         "threads": threads,
         "best_written": best.is_some(),
-    }))
+    });
+    if let Some(n) = written {
+        answer["events"] = json!(n);
+    }
+    Ok(answer)
 }
 
 /// `sim render <architecture> [--result result.json] --out <page.html>`.

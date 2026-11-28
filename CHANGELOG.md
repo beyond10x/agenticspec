@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
+- `agenticspec sim run --events` also writes `events.jsonl`, the run the result's timeline samples as an event log: one line per moment that is a block event (`agentic.work.TaskCreated`, `agentic.resource.ClaimQueued`, ...), with its sequence number, time, architecture, part path, copy and subject key (`task-3`, `claim-5`), the same bytes for the same seed. `result.json` stays byte for byte the same with or without it
 
 ### Changed
 

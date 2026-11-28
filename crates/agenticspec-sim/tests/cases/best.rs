@@ -145,7 +145,7 @@ fn run_writes_best_yaml_that_check_accepts() {
     std::fs::write(dir.join("exp.yaml"), experiment_yaml("fit", 6, 256)).unwrap();
     let out_dir = dir.join("out");
     let mut log = Vec::new();
-    let ran = cli::run(&dir.join("exp.yaml"), &out_dir, Some(2), &mut log)
+    let ran = cli::run(&dir.join("exp.yaml"), &out_dir, Some(2), false, &mut log)
         .unwrap_or_else(|e| panic!("{e:?}\n{}", String::from_utf8_lossy(&log)));
     assert_eq!(ran["best_written"], true);
     let best_file = out_dir.join("best.yaml");

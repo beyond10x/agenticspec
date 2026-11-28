@@ -121,6 +121,7 @@ change.
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
 | `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
 | `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
+| `agenticspec-sim` | `events.rs` | the event log of a recorded run (`sim run --events`, `events.jsonl`): each timeline kind written as the block event of its table `LOG` (or listed in `SILENT`), with part path, copy and subject key. Not an input of a catalog result (`SIM_EXCLUDED` in `crates/agenticspec-docs/src/results.rs`); a new timeline kind needs a row in `LOG` or `SILENT`, and `tests/cases/events.rs` checks each row against `blocks/` |
 | `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
 | `agenticspec-docs` | `lib.rs`, `main.rs` | the generated docs pages of the blocks, architectures and KPI catalogue (`task docs:generate`, `--check`) |
 

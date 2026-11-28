@@ -176,11 +176,12 @@ commands:
       - {field: architecture, source: {kind: positional, index: 1}}
   - path: [sim, run]
     callable: sim_run
-    about: Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml
+    about: Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml, with --events also events.jsonl
     arguments:
       - {field: experiment, source: {kind: positional, index: 1}}
       - {field: out, source: {kind: option, long: out}}
       - {field: threads, source: {kind: option, long: threads}}
+      - {field: events, source: {kind: flag, long: events}}
   - path: [sim, render]
     callable: sim_render
     about: Write the page of an architecture, with the result of a run when given

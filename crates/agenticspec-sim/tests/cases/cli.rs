@@ -41,7 +41,7 @@ fn run_writes_the_result_and_the_page() {
     std::fs::write(dir.join("exp.yaml"), experiment_yaml("fit", 4, 256)).unwrap();
     let out_dir = dir.join("out");
     let mut log = Vec::new();
-    let ran = cli::run(&dir.join("exp.yaml"), &out_dir, Some(2), &mut log)
+    let ran = cli::run(&dir.join("exp.yaml"), &out_dir, Some(2), false, &mut log)
         .unwrap_or_else(|e| panic!("{e:?}\n{}", String::from_utf8_lossy(&log)));
     assert_eq!(ran["threads"], 2);
     assert_eq!(ran["seeds"], 2);
@@ -66,6 +66,7 @@ fn run_refuses_an_experiment_it_cannot_load() {
         &dir.join("missing.yaml"),
         &dir.join("out"),
         None,
+        false,
         &mut Vec::new(),
     )
     .unwrap_err();

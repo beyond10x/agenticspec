@@ -4,6 +4,7 @@ mod cli;
 mod common;
 mod determinism;
 mod dynamics;
+mod events;
 mod fidelity;
 mod ladder;
 mod marked;

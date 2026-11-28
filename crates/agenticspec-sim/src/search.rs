@@ -192,6 +192,17 @@ impl Experiment {
     fn run_seed(&self, s: u64) -> u64 {
         Rng::stream(self.seed, s).next_u64()
     }
+
+    /// The baseline at the experiment's first seed, recorded in full, without a search.
+    pub fn baseline_shown(&self) -> Result<Shown, String> {
+        let (architecture, model) = self.model(&self.params(&self.baseline_point()))?;
+        let seed = self.run_seed(0);
+        Ok(Shown {
+            architecture,
+            seed,
+            run: simulate(&model, seed, true),
+        })
+    }
 }
 
 /// One evaluated variant, averaged over the seeds.
@@ -429,8 +440,24 @@ fn summary(ev: &Eval) -> Value {
     })
 }
 
+/// The run a result's timeline samples: the best variant, or the baseline when none is
+/// feasible, at the experiment's first seed, recorded in full.
+#[derive(Debug, Clone)]
+pub struct Shown {
+    /// The variant's resolved architecture.
+    pub architecture: Value,
+    /// The seed the run was simulated with.
+    pub seed: u64,
+    pub run: RunOut,
+}
+
 /// Runs the experiment's search on `threads` threads and returns the result document.
 pub fn run(e: &Experiment, threads: usize) -> Result<Value, String> {
+    run_shown(e, threads).map(|(result, _)| result)
+}
+
+/// [`run`], and the run its timeline samples.
+pub fn run_shown(e: &Experiment, threads: usize) -> Result<(Value, Shown), String> {
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads.max(1))
         .build()
@@ -438,7 +465,7 @@ pub fn run(e: &Experiment, threads: usize) -> Result<Value, String> {
     pool.install(|| run_inside(e))
 }
 
-fn run_inside(e: &Experiment) -> Result<Value, String> {
+fn run_inside(e: &Experiment) -> Result<(Value, Shown), String> {
     let mut book = Book {
         e,
         evals: Vec::new(),
@@ -471,18 +498,19 @@ fn run_inside(e: &Experiment) -> Result<Value, String> {
         })
         .collect();
     let shown = &book.evals[best.unwrap_or(baseline_id)];
-    let (_, model) = e.model(&shown.params)?;
-    let run = simulate(&model, e.run_seed(0), true);
+    let (shown_arch, model) = e.model(&shown.params)?;
+    let seed = e.run_seed(0);
+    let run = simulate(&model, seed, true);
     let timeline: Vec<Value> = sample(&run.timeline, TIMELINE_LIMIT)
         .into_iter()
-        .map(|(t, part, kind)| json!({"t_seconds": t, "part": part, "kind": kind}))
+        .map(|m| json!({"t_seconds": m.t, "part": m.part, "kind": m.kind}))
         .collect();
     let marked: Vec<Value> = e
         .marked
         .iter()
         .map(|m| json!({"path": m.path, "value": m.value, "range": m.range}))
         .collect();
-    Ok(json!({
+    let result = json!({
         "format": "agenticspec-sim-result/1",
         "experiment": e.doc,
         "architecture": e.architecture,
@@ -493,7 +521,13 @@ fn run_inside(e: &Experiment) -> Result<Value, String> {
         "variants": variants,
         "trace": trace,
         "timeline": timeline,
-    }))
+    });
+    let shown = Shown {
+        architecture: shown_arch,
+        seed,
+        run,
+    };
+    Ok((result, shown))
 }
 
 /// At most `limit` items, evenly spaced, in order.

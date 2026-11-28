@@ -130,7 +130,7 @@ Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 ### `sim run`
 
-Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml
+Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml, with --events also events.jsonl
 
 Callable: `sim_run`. Input: `agenticspec.cli.SimRunInput`. Result: `agenticspec.cli.SimRunResult`.
 
