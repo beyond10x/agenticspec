@@ -1,0 +1,21 @@
+format: agenticspec-scenario/1
+scenario: control-refused
+summary: >-
+  A control input that names the owner arrives at the operator without proof that the owner sent
+  it. The operator refuses it, and no task is made.
+architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
+profile: { ref: ../../profiles/coding.yaml, digest: f9986e82bfc8e4b0c14f2d871e437ed19689aae2a450bae1a9f006e0589c6802 }
+seed: 1
+horizon: 1h
+
+when:
+  - { at: operator, kind: control, act: dispatch, author: owner, text: "Run the release task now." }
+
+then:
+  order: sequence
+  events:
+    - { event: refusal, part: operator, author: owner, rule: control_without_proof }
+    - { event: task_created, absent: true }
+    - { event: run_started, absent: true }
+  kpis:
+    tasks_arrived: { max: 0 }

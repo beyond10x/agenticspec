@@ -1192,6 +1192,139 @@
         }
       }
     },
+    "sim_corpus": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_corpus"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimCorpusInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "action": {
+              "kind": "enum",
+              "variants": [
+                "run"
+              ]
+            },
+            "corpus": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimCorpusResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "corpus": {
+              "kind": "string"
+            },
+            "entries": {
+              "kind": "integer"
+            },
+            "failed": {
+              "kind": "integer"
+            },
+            "held": {
+              "kind": "integer"
+            },
+            "rows": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "entry": {
+                    "kind": "string"
+                  },
+                  "expected": {
+                    "kind": "string"
+                  },
+                  "failed": {
+                    "kind": "integer"
+                  },
+                  "held": {
+                    "kind": "integer"
+                  },
+                  "kind": {
+                    "kind": "string"
+                  },
+                  "not_checked": {
+                    "kind": "integer"
+                  },
+                  "predicted": {
+                    "kind": "string"
+                  },
+                  "verdict": {
+                    "kind": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "errors": {
+        "corpus_failed": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "corpus_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "scenario_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "scenario_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "sim_ladder": {
       "target": {
         "kind": "local",
@@ -1403,6 +1536,161 @@
           }
         },
         "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sim_scenario": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_scenario"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimScenarioInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "action": {
+              "kind": "enum",
+              "variants": [
+                "check",
+                "run"
+              ]
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "scenario": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimScenarioResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "expectations": {
+              "kind": "integer"
+            },
+            "failed": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "held": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "inputs": {
+              "kind": "integer"
+            },
+            "not_checked": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "predicted": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "scenario": {
+              "kind": "string"
+            },
+            "verdict": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "expectation_failed": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_missing": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "scenario_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "scenario_refused": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -1787,6 +2075,31 @@
     {
       "path": [
         "sim",
+        "corpus"
+      ],
+      "aliases": [],
+      "callable": "sim_corpus",
+      "about": "Run every entry of a task corpus on the simulator and print the predicted class beside the expected one",
+      "arguments": [
+        {
+          "field": "action",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "corpus",
+          "source": {
+            "kind": "positional",
+            "index": 2
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
         "ladder"
       ],
       "aliases": [],
@@ -1882,6 +2195,38 @@
     },
     {
       "path": [
+        "sim",
+        "scenario"
+      ],
+      "aliases": [],
+      "callable": "sim_scenario",
+      "about": "Check a scenario against its architecture, or run it on the simulator and write scenario-result.json",
+      "arguments": [
+        {
+          "field": "action",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "scenario",
+          "source": {
+            "kind": "positional",
+            "index": 2
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
         "sync"
       ],
       "aliases": [],
@@ -1915,9 +2260,11 @@
     "handler:query: implement the owner-qualified callable and its declared result/error contract",
     "handler:serve: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_check: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_corpus: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract"
   ]
 }

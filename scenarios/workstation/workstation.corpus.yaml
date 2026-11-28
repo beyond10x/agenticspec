@@ -1,0 +1,17 @@
+format: agenticspec-corpus/1
+corpus: workstation-examples
+summary: The three example scenarios of the workstation, each with the outcome class it should end in.
+
+entries:
+  - scenario: { ref: prompt-starts-run.scenario.yaml, digest: c43a93ca3b58989b0eedde6179c218d969d34b9c902979fb7944d142217e0b82 }
+    kind: prompt
+    input_digest: bf6389fc47f5000b0eb3eca4c2f69587652763cc1470f35f41905fd20d91f8aa
+    expected: correct
+  - scenario: { ref: question-answered.scenario.yaml, digest: b3308e370fbc4042ab6da7f240873b17903f5fa917ee360d0c5fc30311ddb75a }
+    kind: prompt
+    input_digest: 674bead15a2e6fe07d6bffb0d9e6c35e414ddeb8701cd9b3521840636b2d3d62
+    expected: question
+  - scenario: { ref: control-refused.scenario.yaml, digest: b5c9559ea2f169f523965308381b10bc15d71741dd0998ae37c50a0cd06ac5c4 }
+    kind: control
+    input_digest: 30c100fc28b40e6128c414cf0d212ffe1de6554a456e952020749b0eb0fc3071
+    expected: refused

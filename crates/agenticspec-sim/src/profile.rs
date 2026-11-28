@@ -1,9 +1,11 @@
 //! The behaviour profile (`agenticspec-profile/1`): distributions the simulation draws from.
 
+use crate::corpus::Class;
 use crate::doc::num;
 use crate::rng::Rng;
 use serde_json::Value;
 use std::collections::BTreeMap;
+use std::path::Path;
 
 /// The z-score of the 90th percentile of a standard normal distribution.
 const Z90: f64 = 1.281_551_565_5;
@@ -188,6 +190,10 @@ pub struct Profile {
     pub agent_hour_usd: f64,
     pub review: Review,
     pub coordination: Coordination,
+    /// `load.corpus`: a corpus file, relative to the profile, whose entries the arrivals draw.
+    pub corpus_ref: Option<String>,
+    /// The entries of that corpus by weight and expected class, once read ([`Profile::read_corpus`]).
+    pub corpus: Vec<(f64, Class)>,
 }
 
 /// Where tasks come from.
@@ -422,6 +428,15 @@ impl Profile {
             },
             scope_overlap: share("coordination.scope_overlap", &c["scope_overlap"], 0.0)?,
         };
+        let corpus_ref = match &doc["load"]["corpus"] {
+            Value::Null => None,
+            Value::String(s) if !s.is_empty() => Some(s.clone()),
+            _ => {
+                return Err(
+                    "load.corpus: expected the path of an agenticspec-corpus/1 file".into(),
+                );
+            }
+        };
         Ok(Profile {
             roles,
             principals,
@@ -430,6 +445,22 @@ impl Profile {
             agent_hour_usd,
             review,
             coordination,
+            corpus_ref,
+            corpus: Vec::new(),
         })
+    }
+
+    /// Reads the corpus `load.corpus` names, relative to `dir`, the directory of the profile.
+    pub fn read_corpus(&mut self, dir: &Path) -> Result<(), String> {
+        if let Some(r) = &self.corpus_ref {
+            let corpus =
+                crate::corpus::load(&dir.join(r)).map_err(|e| format!("load.corpus: {e}"))?;
+            self.corpus = corpus
+                .entries
+                .iter()
+                .map(|e| (e.weight, e.expected))
+                .collect();
+        }
+        Ok(())
     }
 }

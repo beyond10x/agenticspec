@@ -592,8 +592,7 @@ Each page shows the result of the structural check and the architecture drawn as
             a.experiment.as_ref().map_or("–".into(), |r| code(&r.name)),
         );
     }
-    let events: Vec<String> = agenticspec_sim::sim::EVENTS
-        .iter()
+    let events: Vec<String> = agenticspec_sim::events::triggers()
         .map(|(name, _)| code(name))
         .collect();
     let _ = write!(

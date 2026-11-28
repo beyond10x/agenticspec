@@ -11,6 +11,7 @@ tasks:
       - task: check:generated
       - task: check:docs
       - task: check:ladder
+      - task: check:scenarios
       - task: check:site
       - task: check:scripts
       - task: check:rust
@@ -81,6 +82,26 @@ tasks:
     cmds:
       - cargo build --quiet --locked -p agenticspec
       - target/debug/agenticspec sim ladder ladder/ladder.yaml --out website/static/ladder/ladder.json --check
+
+  check:scenarios:
+    desc: Run every scenario under scenarios/ (scenarios/*/*.scenario.yaml) on the simulator, which checks it against its architecture first and fails on an expectation that fails, then every corpus there (scenarios/*/*.corpus.yaml), which fails on an entry that predicts another class than it expects.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - |
+        set -eu
+        n=0
+        for s in scenarios/*/*.scenario.yaml; do
+          [ -f "$s" ] || { echo "check:scenarios: no scenarios/*/*.scenario.yaml"; exit 1; }
+          target/debug/agenticspec sim scenario run "$s" --out "target/scenarios/$(basename "$s" .scenario.yaml)" > /dev/null
+          n=$((n + 1))
+        done
+        c=0
+        for f in scenarios/*/*.corpus.yaml; do
+          [ -f "$f" ] || continue
+          target/debug/agenticspec sim corpus run "$f" > /dev/null
+          c=$((c + 1))
+        done
+        echo "check:scenarios: $n scenario(s) and $c corpus file(s) held"
 
   check:scripts:
     desc: Run every script test, scripts/*.test.sh.

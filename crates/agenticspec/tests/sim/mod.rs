@@ -126,3 +126,59 @@ fn ladder_check_accepts_the_committed_data_file_and_refuses_a_missing_one() {
     assert!(stderr.contains("ladder_stale"), "{stderr}");
     assert!(stderr.contains("ladder:generate"), "{stderr}");
 }
+
+#[test]
+fn scenario_check_and_run_print_their_results() {
+    let scenario = repo().join("scenarios/workstation/question-answered.scenario.yaml");
+    let checked = result(&sim(&[
+        "scenario".as_ref(),
+        "check".as_ref(),
+        scenario.as_os_str(),
+    ]));
+    assert_eq!(checked["scenario"], "question-answered");
+    let out = scratch("scenario-run");
+    let ran = result(&sim(&[
+        "scenario".as_ref(),
+        "run".as_ref(),
+        scenario.as_os_str(),
+        "--out".as_ref(),
+        out.as_os_str(),
+    ]));
+    assert_eq!(ran["verdict"], "held");
+    assert_eq!(ran["predicted"], "question");
+    assert!(out.join("scenario-result.json").is_file());
+}
+
+#[test]
+fn scenario_run_exits_1_on_a_failed_expectation() {
+    let dir = scratch("scenario-failed");
+    let source = repo().join("scenarios/workstation/control-refused.scenario.yaml");
+    let text = std::fs::read_to_string(&source)
+        .unwrap()
+        .replace("../../", &format!("{}/", repo().display()))
+        .replace("rule: control_without_proof", "rule: input_without_link");
+    let scenario = dir.join("failed.scenario.yaml");
+    std::fs::write(&scenario, text).unwrap();
+    let out = sim(&[
+        "scenario".as_ref(),
+        "run".as_ref(),
+        scenario.as_os_str(),
+        "--out".as_ref(),
+        dir.join("out").as_os_str(),
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(stderr.starts_with("expectation_failed: "), "{stderr}");
+    assert!(dir.join("out/scenario-result.json").is_file());
+}
+
+#[test]
+fn corpus_run_prints_the_table_and_the_rows() {
+    let corpus = repo().join("scenarios/workstation/workstation.corpus.yaml");
+    let out = sim(&["corpus".as_ref(), "run".as_ref(), corpus.as_os_str()]);
+    let rows = result(&out);
+    assert_eq!(rows["entries"], 3);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(stderr.contains("predicted"), "{stderr}");
+    assert!(stderr.contains("control-refused"), "{stderr}");
+}

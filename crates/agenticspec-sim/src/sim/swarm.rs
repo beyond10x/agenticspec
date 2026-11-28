@@ -2,9 +2,11 @@
 //! their concurrency policies, shared channels (topic, queue, board), an orchestrator, mesh
 //! messages, a scope partition with its merges, and a start stagger.
 
-use super::{Sim, Task, Who, WorkerKind, position, span};
+use super::{Sim, Task, TaskScript, Who, WorkerKind, position, span};
 use crate::check;
+use crate::corpus::Class;
 use crate::doc::num;
+use crate::events;
 use crate::rng::Rng;
 use serde_json::Value;
 use std::collections::VecDeque;
@@ -62,24 +64,11 @@ pub(super) enum Policy {
 pub(super) enum Source {
     Schedule(usize),
     Channel(usize),
-    /// An event of the simulation, by its place in `EVENTS`.
-    Event(usize),
+    /// An event of the simulation, by its simulator kind (a `trigger` row of `events::TABLE`).
+    Event(&'static str),
     /// A source the check refuses: it never fires.
     Never,
 }
-
-/// The events of other blocks the simulation emits, each with the moment of the run it is:
-/// `(event_name, kind of the timeline)`. An `on_event` trigger names one of them.
-pub const EVENTS: &[(&str, &str)] = &[
-    ("agentic.work.TaskCreated", "task_arrived"),
-    ("agentic.work.TaskCompleted", "task_done"),
-    ("agentic.work.DeliverableRejected", "task_rejected"),
-    ("agentic.question.QuestionAsked", "question_asked"),
-    ("agentic.question.QuestionAnswered", "question_answered"),
-    ("agentic.question.DefaultTaken", "question_defaulted"),
-    ("agentic.resource.ClaimKilled", "build_killed"),
-    ("agentic.trigger.FiringFailed", "firing_failed"),
-];
 
 #[derive(Debug, Clone)]
 pub(super) struct Schedule {
@@ -108,9 +97,7 @@ impl Trigger {
     /// Whether an event of timeline kind `kind` at part `part` fires this trigger.
     pub(super) fn fires_on(&self, kind: &str, part: &str) -> bool {
         match self.source {
-            Source::Event(e) => {
-                EVENTS[e].1 == kind && self.on.as_deref().is_none_or(|on| on == part)
-            }
+            Source::Event(e) => e == kind && self.on.as_deref().is_none_or(|on| on == part),
             _ => false,
         }
     }
@@ -232,10 +219,10 @@ pub(super) fn wire(
                 .map_or(Source::Never, Source::Channel),
             Some("on_event") => match p["event_name"].as_str().filter(|e| !e.is_empty()) {
                 None => Source::Never,
-                Some(e) => match EVENTS.iter().position(|(n, _)| *n == e) {
-                    Some(i) => Source::Event(i),
+                Some(e) => match events::trigger_kind(e) {
+                    Some(k) => Source::Event(k),
                     None => {
-                        let known: Vec<&str> = EVENTS.iter().map(|(n, _)| *n).collect();
+                        let known: Vec<&str> = events::triggers().map(|(n, _)| n).collect();
                         return Err(format!(
                             "part `{name}`: event_name `{e}` is not an event the simulation emits ({})",
                             known.join(", ")
@@ -346,6 +333,9 @@ impl Sim<'_> {
             scope: None,
             work_started: now,
             waited: false,
+            script: None,
+            arrival: None,
+            fixture: None,
         });
         self.shipped.push(false);
         if origin.is_none() {
@@ -356,11 +346,71 @@ impl Sim<'_> {
 
     /// A task arrives: posted to the intake channel, routed to its scope's owner, or put in the
     /// backlog.
+    /// With a corpus in the profile, each arrival draws an entry by weight: its class decides how
+    /// the task's first run ends, and an entry that was refused makes no task.
     pub(super) fn arrive(&mut self, t: f64) {
         let m = self.m;
+        let part = m.workers.first().map(|w| w.exec.part.as_str());
+        let script = match self.draw_class() {
+            None | Some(Class::Open) => None,
+            Some(Class::Refused) => {
+                if let Some(p) = part {
+                    self.rec(t, p, "corpus_refused");
+                }
+                return;
+            }
+            Some(c) => Some(TaskScript {
+                outcome: c.outcome(),
+                ..TaskScript::default()
+            }),
+        };
+        self.arrive_as(t, part, script, None);
+    }
+
+    /// Arrival `a` of the script arrives at its part.
+    pub(super) fn arrive_scripted(&mut self, a: usize, t: f64) {
+        let m = self.m;
+        let Some(arrival) = m.script.as_ref().map(|s| &s.arrivals[a]) else {
+            return;
+        };
+        self.arrive_as(
+            t,
+            Some(arrival.part.as_str()),
+            arrival.script.clone(),
+            Some(a),
+        );
+    }
+
+    /// The class of the next corpus entry, drawn by weight; `None` without a corpus.
+    fn draw_class(&mut self) -> Option<Class> {
+        let corpus = &self.m.corpus;
+        let total: f64 = corpus.iter().map(|(w, _)| w).sum();
+        if corpus.is_empty() || total <= 0.0 {
+            return None;
+        }
+        let mut x = self.corpus.unit() * total;
+        for (w, c) in corpus {
+            if x < *w {
+                return Some(*c);
+            }
+            x -= w;
+        }
+        corpus.last().map(|(_, c)| *c)
+    }
+
+    fn arrive_as(
+        &mut self,
+        t: f64,
+        part: Option<&str>,
+        script: Option<TaskScript>,
+        arrival: Option<usize>,
+    ) {
+        let m = self.m;
         let id = self.new_task(t, None);
-        if let Some(w) = m.workers.first() {
-            self.rec(t, &w.exec.part, "task_arrived");
+        self.tasks[id].script = script;
+        self.tasks[id].arrival = arrival;
+        if let Some(p) = part {
+            self.rec_task(t, p, "task_arrived", Some(id));
         }
         if let Some(c) = m.intake {
             return self.post(c, id, t);
@@ -400,7 +450,7 @@ impl Sim<'_> {
     pub(super) fn post(&mut self, c: usize, id: usize, now: f64) {
         let m = self.m;
         self.posted[c] += 1.0;
-        self.rec(now, &m.channels[c], "posted");
+        self.rec_task(now, &m.channels[c], "posted", Some(id));
         let subs: Vec<usize> = (0..m.triggers.len())
             .filter(|tr| m.triggers[*tr].source == Source::Channel(c))
             .collect();
@@ -555,7 +605,7 @@ impl Sim<'_> {
         match t.source {
             Source::Schedule(_) | Source::Event(_) if t.template => {
                 let id = self.new_task(now, None);
-                self.rec(now, &t.part, "task_arrived");
+                self.rec_task(now, &t.part, "task_arrived", Some(id));
                 Some(id)
             }
             Source::Schedule(_) | Source::Event(_) => self.backlog.pop_front(),
@@ -681,7 +731,7 @@ impl Sim<'_> {
         if conflict {
             let m = self.m;
             self.kinds[k].merge_conflicts += 1.0;
-            self.rec(now, &m.workers[k].exec.part, "merge_conflict");
+            self.rec_task(now, &m.workers[k].exec.part, "merge_conflict", Some(id));
             if m.workers[k].coordination == Coordination::Mesh {
                 return false;
             }

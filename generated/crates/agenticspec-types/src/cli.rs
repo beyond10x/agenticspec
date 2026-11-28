@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -147,6 +147,15 @@ pub struct ConcurrencyFigures {
     pub p90: i64,
     /// `max` — `Integer`.
     pub max: i64,
+}
+
+/// CorpusAction — `agenticspec.cli.CorpusAction`: one of a closed set of names.
+///
+/// run: every entry of the corpus on the simulator.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CorpusAction {
+    /// `run`.
+    Run,
 }
 
 /// Dashboard — `agenticspec.cli.Dashboard`.
@@ -543,6 +552,17 @@ pub struct Refusal {
     pub detail: String,
 }
 
+/// ScenarioAction — `agenticspec.cli.ScenarioAction`: one of a closed set of names.
+///
+/// check: the scenario against its architecture and profile. run: the scenario on the simulator, with its expectations evaluated.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScenarioAction {
+    /// `check`.
+    Check,
+    /// `run`.
+    Run,
+}
+
 /// ServeInput — `agenticspec.cli.ServeInput`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServeInput {
@@ -602,6 +622,55 @@ pub struct SimCheckResult {
     pub parts: i64,
     /// `links` — `Integer`.
     pub links: i64,
+}
+
+/// SimCorpusInput — `agenticspec.cli.SimCorpusInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimCorpusInput {
+    /// `action` — `agenticspec.cli.CorpusAction`.
+    pub action: CorpusAction,
+    /// `corpus` — `String`.
+    pub corpus: String,
+}
+
+/// SimCorpusResult — `agenticspec.cli.SimCorpusResult`.
+///
+/// Every entry of a corpus held. The table of the rows is printed to standard error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimCorpusResult {
+    /// `corpus` — `String`.
+    pub corpus: String,
+    /// `entries` — `Integer`.
+    pub entries: i64,
+    /// `held` — `Integer`.
+    pub held: i64,
+    /// `failed` — `Integer`.
+    pub failed: i64,
+    /// `rows` — `List<agenticspec.cli.SimCorpusRow>`.
+    pub rows: Vec<SimCorpusRow>,
+}
+
+/// SimCorpusRow — `agenticspec.cli.SimCorpusRow`.
+///
+/// One entry of a corpus run, the class it expects beside the class its run predicts.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimCorpusRow {
+    /// `entry` — `String`.
+    pub entry: String,
+    /// `kind` — `String`.
+    pub kind: String,
+    /// `expected` — `String`.
+    pub expected: String,
+    /// `predicted` — `String`.
+    pub predicted: String,
+    /// `held` — `Integer`.
+    pub held: i64,
+    /// `failed` — `Integer`.
+    pub failed: i64,
+    /// `not_checked` — `Integer`.
+    pub not_checked: i64,
+    /// `verdict` — `String`.
+    pub verdict: String,
 }
 
 /// SimLadderInput — `agenticspec.cli.SimLadderInput`.
@@ -670,6 +739,44 @@ pub struct SimRunResult {
     pub threads: i64,
     /// `best_written` — `Boolean`.
     pub best_written: bool,
+}
+
+/// SimScenarioInput — `agenticspec.cli.SimScenarioInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimScenarioInput {
+    /// `action` — `agenticspec.cli.ScenarioAction`.
+    pub action: ScenarioAction,
+    /// `scenario` — `String`.
+    pub scenario: String,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+}
+
+/// SimScenarioResult — `agenticspec.cli.SimScenarioResult`.
+///
+/// The scenario checked, with its counts; after `run` also the verdict, the outcome class the run predicts and the count of expectations held, failed and not checked.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimScenarioResult {
+    /// `scenario` — `String`.
+    pub scenario: String,
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `inputs` — `Integer`.
+    pub inputs: i64,
+    /// `expectations` — `Integer`.
+    pub expectations: i64,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `verdict` — `Optional<String>`.
+    pub verdict: Option<String>,
+    /// `predicted` — `Optional<String>`.
+    pub predicted: Option<String>,
+    /// `held` — `Optional<Integer>`.
+    pub held: Option<i64>,
+    /// `failed` — `Optional<Integer>`.
+    pub failed: Option<i64>,
+    /// `not_checked` — `Optional<Integer>`.
+    pub not_checked: Option<i64>,
 }
 
 /// StepKind — `agenticspec.cli.StepKind`: one of a closed set of names.

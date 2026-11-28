@@ -103,6 +103,27 @@ callables:
       ladder_refused: agenticspec.cli.Refusal
       ladder_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+  sim_scenario:
+    target: {kind: local, owner: agenticspec.cli, action: sim_scenario}
+    input: agenticspec.cli.SimScenarioInput
+    result: agenticspec.cli.SimScenarioResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      scenario_invalid: agenticspec.cli.Refusal
+      scenario_refused: agenticspec.cli.Refusal
+      out_missing: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+      expectation_failed: agenticspec.cli.Refusal
+  sim_corpus:
+    target: {kind: local, owner: agenticspec.cli, action: sim_corpus}
+    input: agenticspec.cli.SimCorpusInput
+    result: agenticspec.cli.SimCorpusResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      corpus_invalid: agenticspec.cli.Refusal
+      scenario_invalid: agenticspec.cli.Refusal
+      scenario_refused: agenticspec.cli.Refusal
+      corpus_failed: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -195,3 +216,16 @@ commands:
       - {field: ladder, source: {kind: positional, index: 1}}
       - {field: out, source: {kind: option, long: out}}
       - {field: check, source: {kind: flag, long: check}}
+  - path: [sim, scenario]
+    callable: sim_scenario
+    about: Check a scenario against its architecture, or run it on the simulator and write scenario-result.json
+    arguments:
+      - {field: action, source: {kind: positional, index: 1}}
+      - {field: scenario, source: {kind: positional, index: 2}}
+      - {field: out, source: {kind: option, long: out}}
+  - path: [sim, corpus]
+    callable: sim_corpus
+    about: Run every entry of a task corpus on the simulator and print the predicted class beside the expected one
+    arguments:
+      - {field: action, source: {kind: positional, index: 1}}
+      - {field: corpus, source: {kind: positional, index: 2}}

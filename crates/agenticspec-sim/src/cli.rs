@@ -200,3 +200,102 @@ pub fn ladder(path: &Path, out: &Path, check: bool) -> Result<Value, Refusal> {
     write(out, &text)?;
     Ok(answer(true))
 }
+
+/// `sim scenario check <scenario>`: the scenario checked against its architecture and profile,
+/// or every problem; `sim scenario run <scenario> --out <dir>`: runs it, writes
+/// `scenario-result.json` into `out`, and refuses with `expectation_failed` when an expectation
+/// or a KPI bound failed.
+pub fn scenario(action: &str, path: &Path, out: Option<&Path>) -> Result<Value, Refusal> {
+    let l = crate::scenario::load_checked(path)?;
+    let s = &l.scenario;
+    let mut answer = json!({
+        "scenario": s.name,
+        "architecture": l.architecture["architecture"].as_str().unwrap_or("architecture"),
+        "inputs": s.when.len(),
+        "expectations": s.then.events.len() + s.then.kpis.len(),
+    });
+    match action {
+        "check" => return Ok(answer),
+        "run" => {}
+        other => {
+            return Err(refused(
+                "scenario_invalid",
+                format!("action `{other}`, expected check or run"),
+            ));
+        }
+    }
+    let Some(out) = out else {
+        return Err(refused(
+            "out_missing",
+            "sim scenario run writes scenario-result.json into the directory --out names",
+        ));
+    };
+    let ran = crate::scenario::run(&l)?;
+    let doc = crate::scenario::result_json(&l, &ran);
+    let mut text =
+        serde_json::to_string_pretty(&doc).map_err(|e| refused("out_unwritable", e.to_string()))?;
+    text.push('\n');
+    let file = out.join("scenario-result.json");
+    write(&file, &text)?;
+    use crate::scenario::Status;
+    let (held, failed, not_checked) = (
+        ran.count(Status::Held),
+        ran.count(Status::Failed),
+        ran.count(Status::NotChecked),
+    );
+    if failed > 0 {
+        return Err(refused(
+            "expectation_failed",
+            format!(
+                "{}: {failed} failed, {held} held, {not_checked} not checked; see {}",
+                s.name,
+                file.display()
+            ),
+        ));
+    }
+    answer["out"] = json!(out.display().to_string());
+    answer["verdict"] = json!("held");
+    answer["predicted"] = json!(ran.predicted.name());
+    answer["held"] = json!(held);
+    answer["failed"] = json!(failed);
+    answer["not_checked"] = json!(not_checked);
+    Ok(answer)
+}
+
+/// `sim corpus run <corpus>`: runs every entry, prints the table to `log`, and refuses with
+/// `corpus_failed` when an entry's expectations failed or it predicts another class than it
+/// expects.
+pub fn corpus(action: &str, path: &Path, log: &mut dyn Write) -> Result<Value, Refusal> {
+    if action != "run" {
+        return Err(refused(
+            "corpus_invalid",
+            format!("action `{action}`, expected run"),
+        ));
+    }
+    let (c, rows) = crate::corpus::run(path)?;
+    let _ = write!(log, "{}", crate::corpus::table(&rows));
+    let failed: Vec<&str> = rows
+        .iter()
+        .filter(|r| !r.holds())
+        .map(|r| r.entry.as_str())
+        .collect();
+    if !failed.is_empty() {
+        return Err(refused(
+            "corpus_failed",
+            format!(
+                "{}: {} of {} entries failed: {}",
+                c.name,
+                failed.len(),
+                rows.len(),
+                failed.join(", ")
+            ),
+        ));
+    }
+    Ok(json!({
+        "corpus": c.name,
+        "entries": rows.len(),
+        "held": rows.len(),
+        "failed": 0,
+        "rows": rows.iter().map(crate::corpus::Row::json).collect::<Vec<_>>(),
+    }))
+}
