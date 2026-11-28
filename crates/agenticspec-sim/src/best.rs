@@ -82,6 +82,7 @@ const TOP: &[&str] = &[
     "links",
     "border",
     "ingress",
+    "requirements",
     "policies",
     "view",
 ];

@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 00fb71ae170fbec426a26c46270451dd7c59b5683dc2c912b0f53ea80bf7d891
+// contract digest 3032732dfbc6d8e3dbadc3ff119b18f57e81eca30033e27897262c039411e410
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -835,7 +835,7 @@ pub struct SimCheckInput {
 
 /// SimCheckResult — `agenticspec.cli.SimCheckResult`.
 ///
-/// The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs of the architecture as a whole and the architectures it nests. With `--json`, the `agenticspec-check/1` document, which carries `format`, `valid`, `violations` and `counts` too; a refused architecture prints the document of the check alone before its refusal.
+/// The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs of the architecture as a whole, the architectures it nests and its requirements, each met, missed or undecided. With `--json`, the `agenticspec-check/1` document, which carries `format`, `valid`, `violations` and `counts` too; a refused architecture prints the document of the check alone before its refusal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCheckResult {
     /// `architecture` — `String`.
@@ -852,6 +852,8 @@ pub struct SimCheckResult {
     pub nested: Vec<SimNested>,
     /// `ingresses` — `Integer`.
     pub ingresses: i64,
+    /// `requirements` — `Json`.
+    pub requirements: crate::json::Value,
     /// `format` — `Optional<String>`.
     pub format: Option<String>,
     /// `valid` — `Optional<Boolean>`.

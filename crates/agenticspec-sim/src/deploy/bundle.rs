@@ -13,10 +13,13 @@ use super::ui;
 use super::{digest, sha256};
 use crate::check::value;
 use crate::contract::derive::{Contract, link_name};
+use crate::contract::ingress::Kpis;
 use crate::doc::parse_yaml;
+use crate::nest;
+use crate::requirements as req;
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub const FORMAT: &str = "agenticspec-deployment/1";
 
@@ -62,14 +65,122 @@ pub const DEFAULT_MEMORY_MIB: u64 = 512;
 
 /// What a bundle is built from.
 pub struct Inputs<'a> {
-    /// The architecture's file, which a UI's build reads; the document as written, and as data.
+    /// The architecture's file, which a UI's build reads; its bytes and the document they parse
+    /// to, as written.
     pub architecture: &'a Path,
     pub arch_bytes: &'a [u8],
+    pub written: &'a Value,
+    /// The document flattened, its nested architectures as parts of its own (`nest::flatten`):
+    /// what the packing, the units and admission read. A document that nests none is `written`.
     pub arch: &'a Value,
+    /// Every document the architecture references, by canonical digest ([`nested_documents`]).
+    pub nested: &'a BTreeMap<String, Carried>,
+    /// The KPI catalogue the requirements are checked against.
+    pub kpis: &'a Kpis,
     pub contract: &'a Contract,
     pub binding: &'a Binding,
     pub packing: &'a Packing,
     pub accepts: &'a Accepts,
+}
+
+/// One nested document a bundle carries: the parts that refer to it (dotted from the outermost
+/// document, `console`, `console.vault`), the file it was read from, its exact bytes and the
+/// document they parse to.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Carried {
+    pub parts: Vec<String>,
+    pub file: PathBuf,
+    pub bytes: Vec<u8>,
+    pub document: Value,
+}
+
+/// Every document the architecture `doc`, read from `path`, references, and the documents those
+/// reference, keyed by the canonical digest a referring part pins (`nest::digest`). A document
+/// referred to from several parts is one entry. Read after `nest::load` resolved the chain, so a
+/// reference is readable and leads to no cycle; a read that fails is an error all the same.
+pub fn nested_documents(path: &Path, doc: &Value) -> Result<BTreeMap<String, Carried>, String> {
+    fn walk(
+        dir: &Path,
+        doc: &Value,
+        prefix: &str,
+        depth: usize,
+        out: &mut BTreeMap<String, Carried>,
+    ) -> Result<(), String> {
+        if depth > 64 {
+            return Err(format!("{prefix}: nested deeper than 64 documents"));
+        }
+        for (name, p) in doc["parts"].as_object().into_iter().flatten() {
+            if p["block"] != nest::BLOCK {
+                continue;
+            }
+            let reference = p["ref"].as_str().ok_or(format!("part {name}: no `ref`"))?;
+            let file = dir.join(reference);
+            let bytes = std::fs::read(&file).map_err(|e| format!("{}: {e}", file.display()))?;
+            let document = std::str::from_utf8(&bytes)
+                .map_err(|e| e.to_string())
+                .and_then(parse_yaml)
+                .map_err(|e| format!("{}: {e}", file.display()))?;
+            let part = if prefix.is_empty() {
+                name.clone()
+            } else {
+                format!("{prefix}.{name}")
+            };
+            let inner_dir = file.parent().unwrap_or(Path::new(".")).to_path_buf();
+            let entry = out.entry(nest::digest(&document)).or_insert(Carried {
+                parts: Vec::new(),
+                file,
+                bytes,
+                document: document.clone(),
+            });
+            entry.parts.push(part.clone());
+            walk(&inner_dir, &document, &part, depth + 1, out)?;
+        }
+        Ok(())
+    }
+    let mut out = BTreeMap::new();
+    walk(
+        path.parent().unwrap_or(Path::new(".")),
+        doc,
+        "",
+        0,
+        &mut out,
+    )?;
+    Ok(out)
+}
+
+/// The `nested` member of a bundle: per canonical digest the nested document's name, the parts
+/// that refer to it, the SHA-256 of its bytes, the parsed `document` and `content_base64`, the
+/// file's exact bytes.
+fn nested_member(nested: &BTreeMap<String, Carried>) -> Value {
+    let mut out = Map::new();
+    for (d, c) in nested {
+        out.insert(
+            d.clone(),
+            json!({
+                "architecture": text(&c.document["architecture"]),
+                "parts": c.parts,
+                "sha256": sha256(&c.bytes),
+                "document": c.document,
+                "content_base64": ui::base64(&c.bytes),
+            }),
+        );
+    }
+    Value::Object(out)
+}
+
+/// The requirements of the architecture as the bundle carries them: each as written with its
+/// stage, its state and the value it was decided on (`crate::requirements::at_check`); or a
+/// finding per refusal of its `requirements:` (`requirement_kpi_unknown`, `requirement_invalid`).
+fn requirements(arch: &Value, kpis: &Kpis, findings: &mut Vec<Finding>) -> Vec<Value> {
+    let refusals = req::refusals(arch, kpis);
+    if refusals.is_empty() {
+        return req::at_check(arch, kpis);
+    }
+    findings.extend(refusals.into_iter().map(|r| Finding {
+        refusal: r.rule,
+        detail: format!("{}: {}", r.subject, r.detail),
+    }));
+    Vec::new()
 }
 
 /// A built bundle.
@@ -199,6 +310,7 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         inputs.packing,
     ));
     findings.extend(addresses(inputs.arch));
+    let requirements = requirements(inputs.arch, inputs.kpis, &mut findings);
     let contract = inputs.contract.to_value();
     let ingress = ingress(&contract["ingress"], &inputs.binding.doc, inputs.packing);
     findings.extend(ui::findings(
@@ -272,12 +384,12 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         "format": FORMAT,
         "generator": format!("agenticspec {}", env!("CARGO_PKG_VERSION")),
         "architecture": {
-            "name": text(&inputs.arch["architecture"]),
-            "revision": revision_digest(inputs.arch),
+            "name": text(&inputs.written["architecture"]),
+            "revision": revision_digest(inputs.written),
             "sha256": sha256(inputs.arch_bytes),
-            "document": inputs.arch,
+            "document": inputs.written,
         },
-        "nested": {},
+        "nested": nested_member(inputs.nested),
         "contract": { "digest": digest(&contract), "document": contract },
         "binding": {
             "name": text(&binding["binding"]),
@@ -291,7 +403,7 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         },
         "units": units,
         "ingress": ingress,
-        "requirements": inputs.arch.get("requirements").cloned().unwrap_or(json!([])),
+        "requirements": requirements,
         "agents": agents,
         "runtimes": runtimes,
     });
@@ -456,7 +568,119 @@ pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> 
 }
 
 /// The refusals only `deploy check` gives, beside those of [`super::ui::CHECK_REFUSALS`].
-pub const CHECK_REFUSALS: &[&str] = &["agent_document_mismatch"];
+pub const CHECK_REFUSALS: &[&str] = &[
+    "agent_document_mismatch",
+    "nested_document_mismatch",
+    "nested_document_missing",
+];
+
+/// The `nested_document_mismatch` findings of the `nested` member of a written bundle: an entry
+/// whose `content_base64` is missing or not standard base64, whose bytes are not its `sha256`,
+/// do not parse to its `document`, or whose document's canonical digest (`nest::digest`) is not
+/// the digest it is keyed by.
+fn nested_contents(nested: &Map<String, Value>) -> Vec<Finding> {
+    let mut out = Vec::new();
+    for (d, n) in nested {
+        let detail = match n["content_base64"].as_str().and_then(ui::unbase64) {
+            None => Some(format!(
+                "nested: {d}: carries no `content_base64` in standard base64"
+            )),
+            Some(bytes) => {
+                let parsed = std::str::from_utf8(&bytes)
+                    .map_err(|e| e.to_string())
+                    .and_then(parse_yaml)
+                    .ok();
+                let canonical = parsed.as_ref().map(nest::digest);
+                if n["sha256"].as_str() != Some(sha256(&bytes).as_str()) {
+                    Some(format!(
+                        "nested: {d}: its content_base64 is {}, and `sha256` says {}",
+                        sha256(&bytes),
+                        n["sha256"].as_str().unwrap_or("nothing")
+                    ))
+                } else if canonical.as_deref() != Some(d.as_str()) {
+                    Some(format!(
+                        "nested: {d}: its content_base64 holds a document of digest {}",
+                        canonical.as_deref().unwrap_or("none (it does not parse)")
+                    ))
+                } else if parsed.as_ref() != Some(&n["document"]) {
+                    Some(format!(
+                        "nested: {d}: `document` is not the document its content_base64 holds"
+                    ))
+                } else {
+                    None
+                }
+            }
+        };
+        if let Some(detail) = detail {
+            out.push(Finding {
+                refusal: "nested_document_mismatch",
+                detail,
+            });
+        }
+    }
+    out
+}
+
+/// `doc` with the carried document of each of its nested architectures under the key `inner` of
+/// its part, recursively, as `nest::load` resolves them from files: each found by the digest
+/// its part pins, its marked places at their values. A reference whose digest the bundle carries
+/// no document of is a `nested_document_missing` finding.
+fn resolve_carried(
+    doc: &Value,
+    nested: &Map<String, Value>,
+    prefix: &str,
+    depth: usize,
+) -> Result<Value, Vec<Finding>> {
+    let mut out = doc.clone();
+    let mut missing = Vec::new();
+    let names: Vec<String> = doc["parts"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter(|(_, p)| p["block"] == nest::BLOCK)
+        .map(|(n, _)| n.clone())
+        .collect();
+    for name in names {
+        let part = if prefix.is_empty() {
+            name.clone()
+        } else {
+            format!("{prefix}.{name}")
+        };
+        let p = &doc["parts"][&name];
+        let pin = text(&p["digest"]);
+        let Some(entry) = nested.get(pin).filter(|_| depth < 64) else {
+            missing.push(Finding {
+                refusal: "nested_document_missing",
+                detail: format!(
+                    "part {part}: references `{}` pinned {pin}, and the bundle carries no nested document of that digest",
+                    text(&p["ref"])
+                ),
+            });
+            continue;
+        };
+        let inner = match crate::marked::resolve(&entry["document"], &Map::new()) {
+            Ok(v) => v,
+            Err(e) => {
+                missing.push(Finding {
+                    refusal: "nested_document_missing",
+                    detail: format!(
+                        "part {part}: the carried document {pin} does not resolve: {e}"
+                    ),
+                });
+                continue;
+            }
+        };
+        match resolve_carried(&inner, nested, &part, depth + 1) {
+            Ok(inner) => out["parts"][&name][nest::INNER] = inner,
+            Err(f) => missing.extend(f),
+        }
+    }
+    if missing.is_empty() {
+        Ok(out)
+    } else {
+        Err(missing)
+    }
+}
 
 /// The `agent_document_mismatch` findings of the `agents` of a written bundle: an entry whose
 /// `content_base64` is missing or not standard base64, whose bytes are not the digest it is keyed
@@ -604,8 +828,9 @@ pub enum Refused {
 }
 
 /// Admit a written bundle again from what it carries, for a reader that did not write it: its
-/// form and digests, then admission of its architecture under its binding and packing
-/// ([`admit`]), its agent documents against the parts that need them and the digests the
+/// form and digests; its architecture resolved from the nested documents it carries, each found
+/// by the digest its part pins and its bytes recomputed, then flattened; admission of that
+/// architecture under its binding and packing ([`admit`]), its agent documents against the parts that need them and the digests the
 /// binding pins, the bytes each agent document carries ([`CHECK_REFUSALS`]), the cron rule of
 /// each scheduled unit ([`packing::schedule_of`]), and the secrets and
 /// egress of the binding and of each unit
@@ -627,10 +852,25 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     if bundle["digest"].as_str() != Some(recompute(bundle).as_str()) {
         problems.push("`digest` is not the digest of the other members".into());
     }
-    let arch = &bundle["architecture"]["document"];
-    if bundle["architecture"]["revision"].as_str() != Some(revision_digest(arch).as_str()) {
+    let written = &bundle["architecture"]["document"];
+    if bundle["architecture"]["revision"].as_str() != Some(revision_digest(written).as_str()) {
         problems.push("architecture: `revision` is not the digest of its document".into());
     }
+    let nested = bundle["nested"].as_object().cloned().unwrap_or_default();
+    let mut nested_findings = nested_contents(&nested);
+    let flat = match resolve_carried(written, &nested, "", 0) {
+        Ok(doc) => nest::flatten(&doc),
+        Err(missing) => {
+            if !problems.is_empty() {
+                return Err(Refused::Invalid(problems));
+            }
+            nested_findings.extend(missing);
+            sort(&mut nested_findings);
+            nested_findings.dedup();
+            return Err(Refused::NotAdmitted(nested_findings));
+        }
+    };
+    let arch = &flat;
     for m in ["contract", "binding", "packing"] {
         if bundle[m]["digest"].as_str() != Some(digest(&bundle[m]["document"]).as_str()) {
             problems.push(format!("{m}: `digest` is not the digest of its document"));
@@ -706,6 +946,7 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
         }
     }
     findings.extend(agent_contents(&agents));
+    findings.extend(nested_findings);
     findings.extend(unit_schedules(bundle, arch, &packing));
     findings.extend(served(arch, binding, &packing));
     findings.extend(unit_volumes(bundle));

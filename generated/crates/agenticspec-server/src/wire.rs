@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 00fb71ae170fbec426a26c46270451dd7c59b5683dc2c912b0f53ea80bf7d891
+// contract digest 3032732dfbc6d8e3dbadc3ff119b18f57e81eca30033e27897262c039411e410
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -3240,6 +3240,8 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
     out.push(']');
     json::member(out, "ingresses");
     json::push_integer(out, value.ingresses);
+    json::member(out, "requirements");
+    json::push_value(out, &value.requirements);
     if let Some(held0) = &value.format {
         json::member(out, "format");
         json::push_text(out, &*held0);
@@ -3281,7 +3283,7 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckResult, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "parts", "links", "kpis", "single_points", "nested", "ingresses", "format", "valid", "violations", "counts"])?;
+    json::closed_at(value, at, &["architecture", "parts", "links", "kpis", "single_points", "nested", "ingresses", "requirements", "format", "valid", "violations", "counts"])?;
     Ok(agenticspec_types::cli::SimCheckResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -3332,45 +3334,50 @@ pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) ->
             let member6 = json::member_at(value, at, "ingresses")?;
             json::integer_at(member6, &at6, "an integer")?
         },
+        requirements: {
+            let at7 = json::nested(at, "requirements");
+            let member7 = json::member_at(value, at, "requirements")?;
+            json::value_at(member7, &at7)
+        },
         format: match value.member("format") {
             None | Some(json::Value::Null) => None,
-            Some(member7) => {
-                let at7 = json::nested(at, "format");
-                Some(json::text_at(member7, &at7, "a string")?.to_owned())
+            Some(member8) => {
+                let at8 = json::nested(at, "format");
+                Some(json::text_at(member8, &at8, "a string")?.to_owned())
             }
         },
         valid: match value.member("valid") {
             None | Some(json::Value::Null) => None,
-            Some(member8) => {
-                let at8 = json::nested(at, "valid");
-                Some(json::bool_at(member8, &at8, "a boolean")?)
+            Some(member9) => {
+                let at9 = json::nested(at, "valid");
+                Some(json::bool_at(member9, &at9, "a boolean")?)
             }
         },
         violations: match value.member("violations") {
             None | Some(json::Value::Null) => None,
-            Some(member9) => {
-                let at9 = json::nested(at, "violations");
+            Some(member10) => {
+                let at10 = json::nested(at, "violations");
                 Some({
-                let mut items9 = Vec::new();
-                for (index9, element9) in json::items_at(member9, &at9, "an array")?.iter().enumerate() {
-                    let nested9 = json::nested(&at9, &index9.to_string());
-                    items9.push(decode_agenticspec_cli_sim_check_violation(element9, &nested9)?);
+                let mut items10 = Vec::new();
+                for (index10, element10) in json::items_at(member10, &at10, "an array")?.iter().enumerate() {
+                    let nested10 = json::nested(&at10, &index10.to_string());
+                    items10.push(decode_agenticspec_cli_sim_check_violation(element10, &nested10)?);
                 }
-                items9
+                items10
             })
             }
         },
         counts: match value.member("counts") {
             None | Some(json::Value::Null) => None,
-            Some(member10) => {
-                let at10 = json::nested(at, "counts");
+            Some(member11) => {
+                let at11 = json::nested(at, "counts");
                 Some({
-                let mut entries10 = std::collections::BTreeMap::new();
-                for (key10, element10) in json::members_at(member10, &at10, "an object")? {
-                    let nested10 = json::nested(&at10, key10);
-                    entries10.insert(key10.clone(), json::integer_at(element10, &nested10, "an integer")?);
+                let mut entries11 = std::collections::BTreeMap::new();
+                for (key11, element11) in json::members_at(member11, &at11, "an object")? {
+                    let nested11 = json::nested(&at11, key11);
+                    entries11.insert(key11.clone(), json::integer_at(element11, &nested11, "an integer")?);
                 }
-                entries10
+                entries11
             })
             }
         },

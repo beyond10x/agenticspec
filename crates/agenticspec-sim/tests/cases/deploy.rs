@@ -920,7 +920,14 @@ fn deploy_check_refuses_an_agent_document_whose_bytes_do_not_hold() {
             r.detail
         );
     }
-    assert_eq!(bundle::CHECK_REFUSALS, ["agent_document_mismatch"]);
+    assert_eq!(
+        bundle::CHECK_REFUSALS,
+        [
+            "agent_document_mismatch",
+            "nested_document_mismatch",
+            "nested_document_missing"
+        ]
+    );
 }
 
 #[test]
@@ -979,8 +986,8 @@ fn the_fixture_bundles_are_current_and_hold_only_accepted_kinds_and_roles() {
     let all = fixtures::fixtures(&root).unwrap();
     assert_eq!(
         all.len(),
-        9,
-        "six catalog architectures under `local`, three named bindings"
+        10,
+        "six catalog architectures under `local`, four named bindings"
     );
     let accepts = accepts();
     for f in all {
@@ -1706,6 +1713,143 @@ fn deploy_check_refuses_a_volume_without_a_mount_an_unpinned_local_image_and_unm
     ];
     for (name, edit) in cases {
         let r = check_text(&dir, &tampered(edit)).unwrap_err();
+        assert_eq!(r.code, "not_admitted", "{name}: {}", r.detail);
+        assert_eq!(
+            refusal_names(&r.detail),
+            BTreeSet::from([name.to_owned()]),
+            "{name}: {}",
+            r.detail
+        );
+    }
+}
+
+/// The pin of the nested console in `architectures/team-with-console.yaml`.
+fn console_pin() -> String {
+    load_yaml(&arch("team-with-console")).unwrap()["parts"]["console"]["digest"]
+        .as_str()
+        .unwrap()
+        .to_owned()
+}
+
+#[test]
+fn a_nested_document_travels_by_its_canonical_digest_with_its_exact_bytes() {
+    let v = fixture("team-with-console.local.yaml");
+    let pin = console_pin();
+    let nested = v["nested"].as_object().unwrap();
+    assert_eq!(nested.keys().collect::<Vec<_>>(), [&pin]);
+    let entry = &nested[&pin];
+    let bytes = std::fs::read(arch("console")).unwrap();
+    let carried =
+        agenticspec_sim::deploy::ui::unbase64(entry["content_base64"].as_str().unwrap()).unwrap();
+    assert_eq!(carried, bytes);
+    let doc = parse_yaml(std::str::from_utf8(&bytes).unwrap()).unwrap();
+    assert_eq!(entry["document"], doc);
+    assert_eq!(agenticspec_sim::nest::digest(&doc), pin);
+    assert_eq!(
+        entry["sha256"],
+        json!(agenticspec_sim::deploy::sha256(&bytes))
+    );
+    assert_eq!(entry["parts"], json!(["console"]));
+    assert_eq!(entry["architecture"], "console");
+    // The architecture member is the document as written; the units hold its flattened parts.
+    assert_eq!(
+        v["architecture"]["document"],
+        load_yaml(&arch("team-with-console")).unwrap()
+    );
+    let core = unit_of(&v, "core");
+    for p in ["console.steward", "console.helper", "console.gateway"] {
+        assert!(
+            core["parts"].as_array().unwrap().iter().any(|x| x == p),
+            "{p} in {}",
+            core["parts"]
+        );
+    }
+    assert!(
+        v["packing"]["document"]["external"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|e| e["part"] == "console.model"),
+        "a hosted model route stays outside, nested or not"
+    );
+}
+
+#[test]
+fn every_document_of_a_nesting_chain_is_carried_under_the_parts_that_refer_to_it() {
+    let dir = scratch("deploy-nested-chain");
+    let console = std::fs::read(arch("console")).unwrap();
+    std::fs::write(dir.join("console.yaml"), &console).unwrap();
+    let pin = console_pin();
+    let middle = format!(
+        "format: agenticspec-architecture/1\narchitecture: middle\nparts:\n  console: {{ block: architecture, ref: console.yaml, digest: {pin} }}\nborder: [console.steward]\n"
+    );
+    std::fs::write(dir.join("middle.yaml"), &middle).unwrap();
+    let middle_pin = agenticspec_sim::nest::digest(&parse_yaml(&middle).unwrap());
+    let outer = format!(
+        "format: agenticspec-architecture/1\narchitecture: outer\nparts:\n  owner: {{ block: principal, kind: human }}\n  inner: {{ block: architecture, ref: middle.yaml, digest: {middle_pin} }}\n  extra: {{ block: architecture, ref: console.yaml, digest: {pin} }}\nlinks:\n  - {{ from: owner, to: inner.console.steward, carries: prompt }}\n  - {{ from: owner, to: extra.steward, carries: prompt }}\nborder: [inner.console.steward]\n"
+    );
+    let path = dir.join("outer.yaml");
+    std::fs::write(&path, &outer).unwrap();
+    agenticspec_sim::nest::load(&path).unwrap_or_else(|e| panic!("{e}"));
+    let carried = bundle::nested_documents(&path, &parse_yaml(&outer).unwrap()).unwrap();
+    assert_eq!(carried.len(), 2);
+    assert_eq!(carried[&middle_pin].parts, ["inner"]);
+    assert_eq!(carried[&pin].parts, ["extra", "inner.console"]);
+    assert_eq!(carried[&pin].bytes, console);
+}
+
+/// The team-with-console fixture bundle changed by `edit`, its bundle digest recomputed.
+fn tampered_nested(edit: impl FnOnce(&mut Value)) -> String {
+    let mut v = fixture("team-with-console.local.yaml");
+    edit(&mut v);
+    v["digest"] = json!(bundle::recompute(&v));
+    bundle::write(&v)
+}
+
+#[test]
+fn deploy_check_refuses_a_nested_document_that_does_not_hold_or_is_not_carried() {
+    let dir = scratch("deploy-check-nested");
+    let pin = console_pin();
+    let other = std::fs::read(arch("solo")).unwrap();
+    let (p1, p2, p3, p4, p5) = (pin.clone(), pin.clone(), pin.clone(), pin.clone(), pin);
+    let cases: [(&str, Edit); 5] = [
+        (
+            "nested_document_mismatch",
+            Box::new(move |v| {
+                v["nested"][&p1]["content_base64"] =
+                    json!(agenticspec_sim::deploy::ui::base64(&other));
+            }),
+        ),
+        (
+            "nested_document_mismatch",
+            Box::new(move |v| {
+                v["nested"][&p2]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("content_base64");
+            }),
+        ),
+        (
+            "nested_document_mismatch",
+            Box::new(move |v| {
+                v["nested"][&p3]["document"]["summary"] = json!("another summary");
+            }),
+        ),
+        (
+            "nested_document_mismatch",
+            Box::new(move |v| {
+                v["nested"][&p4]["sha256"] = json!(format!("sha256:{}", "0".repeat(64)));
+            }),
+        ),
+        (
+            "nested_document_missing",
+            Box::new(move |v| {
+                v["nested"].as_object_mut().unwrap().remove(&p5);
+            }),
+        ),
+    ];
+    for (name, edit) in cases {
+        let r = check_text(&dir, &tampered_nested(edit)).unwrap_err();
         assert_eq!(r.code, "not_admitted", "{name}: {}", r.detail);
         assert_eq!(
             refusal_names(&r.detail),

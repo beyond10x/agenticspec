@@ -805,9 +805,55 @@ An `on_event` trigger fires on that event at any part, or only at the part its `
     );
     s.push('\n');
     s.push_str(NESTING);
+    s.push('\n');
+    s.push_str(REQUIREMENTS);
     s.push_str(VIEW_KEY_DOC);
     s
 }
+
+/// The sections of the index on the top-level keys and the `requirements:` key.
+const REQUIREMENTS: &str = r#"## Top-level keys
+
+An architecture document has the keys `format`, `architecture`, `summary`, `parts`, `links`, `border`, `ingress` (who reaches it from outside, [the contract](../contract.md)), `requirements` (below), `policies` and `view` (how its operator UI looks, below).
+
+## Requirements
+
+An architecture states what it must achieve as KPIs with a target, under the top-level key `requirements:`:
+
+```yaml
+requirements:
+  - { kpi: agents_total, at_most: 16 }
+  - { kpi: cost_usd, at_most: 40 }
+  - { kpi: tasks_done, at_least: 5, part: worker }
+  - { kpi: cache_hit_share, at_least: 0.7, window: 1h }
+  - { kpi: "cloudspec:node_count", at_most: 3 }
+```
+
+- `kpi` is the id of a KPI of the [KPI catalogue](../kpis-catalogue.md) or of the simulator, or `cloudspec:<id>` for a KPI cloudspec evaluates (node count, cost per hour).
+- Exactly one target, a number: `at_least`, `at_most` or `equals`.
+- `part` (optional) is a part the KPI is read for, a nested one as `<part>.<inner part>`; a KPI of the architecture as a whole takes none.
+- `window` (optional) is a duration (`1h`) the KPI is read over in operation; the check and a simulated run read the whole document or horizon.
+
+The key is outside the digest a nesting part pins and outside the revision digest of a bundle, like `ingress:`: a requirement changes no pin. A nested document's requirements do not apply in the document that nests it.
+
+A requirement is decided when its KPI can be read, its stage:
+
+| stage | KPIs | decided by |
+|---|---|---|
+| `check` | the KPIs of the architecture as a whole (`agents_total`, `capacity_ratio`, ...) and the gate counts of the check | `agenticspec sim check` and `agenticspec deploy bundle` |
+| `evaluation` | the KPIs the simulator measures (`cost_usd`, `tasks_done`, ...) | `agenticspec sim run`: each variant's result |
+| `operation` | KPIs the catalogue computes from records or plans | not yet decided: carried as `undecided` |
+| `cloud` | `cloudspec:<id>` | cloudspec: carried as `undecided` |
+
+`agenticspec sim check` prints each requirement under `requirements` with its `stage`, its `state` (`met`, `missed` or `undecided`) and the `value` it was decided on. A missed requirement is reported there and the check still accepts the document: admission asks only that every requirement names a known KPI and a well-formed target, and no target enforces a requirement yet. The check refuses:
+
+| rule | refused |
+|---|---|
+| `requirement_kpi_unknown` | a KPI id that is in neither the KPI catalogue nor the simulator and is not `cloudspec:<id>` |
+| `requirement_invalid` | `requirements:` that is not a list of maps; an entry without `kpi`, without exactly one number of `at_least`, `at_most`, `equals`, with a `part` the document does not have or on a KPI of the architecture as a whole, with a `window` that is no duration, or with another key |
+
+The search of an experiment treats requirements as constraints before weights: a feasible variant that misses fewer requirements ranks above one that misses more, whatever their fitness, and `fit` stops after the round in which a variant first meets every requirement it can decide. The result carries each requirement's state under `requirements` (of the variant shown) and under `baseline` and `best`, and each variant's `requirements_missed`. A target is never searched, also under `optimize: all`. A bundle carries the requirements with their state ([the bundle](../deployment.md#the-bundle)).
+"#;
 
 /// The section of the index on nested architectures.
 const NESTING: &str = r#"## Nesting an architecture

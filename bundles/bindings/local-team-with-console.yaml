@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: local
+architecture: team-with-console
+refines: local.yaml
+parts:
+  console.steward: {egress: [owner]}
+  console.gateway: {egress: [console.model]}
+  gateway: {egress: [model]}

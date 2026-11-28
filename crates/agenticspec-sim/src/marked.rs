@@ -144,6 +144,10 @@ fn walk(v: &Value, path: &str, all: bool, out: &mut Vec<Marked>) -> Result<(), S
                 if nested && k == crate::nest::INNER {
                     continue;
                 }
+                // A requirement's target is a constraint of the search, never a place of it.
+                if path.is_empty() && k == crate::requirements::KEY {
+                    continue;
+                }
                 walk(x, &join(path, k), all, out)?;
             }
         }

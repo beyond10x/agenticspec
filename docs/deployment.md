@@ -172,6 +172,8 @@ order of the table, and writes nothing.
 | `egress_undeclared` | a link leaves its unit, for an external part or a part of another unit, and the part it starts at does not declare that destination in its `egress` |
 | `address_in_architecture` | the architecture names an address: a key `address`, `host`, `hostname` or `url` anywhere in it (see [the bundle](#the-bundle)) |
 | `ui_upstream_unknown` | the UI the binding asks for reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have |
+| `requirement_kpi_unknown` | a requirement names a KPI that is in neither the KPI catalogue nor the simulator and is not a cloud KPI (`cloudspec:<id>`) |
+| `requirement_invalid` | a requirement of the wrong form: no `kpi`, not exactly one number of `at_least`, `at_most`, `equals`, a `part` the architecture does not have or on a KPI of the architecture as a whole, a `window` that is no duration, an unknown key |
 
 The **accepted list** (`bundles/cloudspec-accepts.yaml`, `agenticspec-cloudspec-accepts/1`) is
 the copy of the unit kinds and roles the translator accepts, with the commit it was copied from
@@ -191,13 +193,13 @@ SHA-256 of the canonical JSON of what it covers (keys sorted, no space).
 |---|---|
 | `format`, `generator` | `agenticspec-deployment/1`; the agenticspec version that wrote it |
 | `architecture` | the document, its name, its revision digest (of its `parts`, `links` and `border`) and the digest of its bytes (`sha256`) |
-| `nested` | the documents the architecture names, by digest; empty while architectures do not nest |
+| `nested` | every document the architecture nests, and every document those nest, keyed by its canonical digest, the pin its part writes (`agenticspec sim digest`): its `architecture` name, the `parts` that refer to it (dotted from the outermost document, `console`, `console.vault`), `sha256`, the digest of its file's bytes, `content_base64`, those exact bytes in standard base64, and `document`, the same document parsed. Empty when the architecture nests none. The units, the packing and the contract read the architecture flattened (`console.steward`) |
 | `contract` | the contract (`agenticspec-contract/1`, see [the contract](contract.md)) and its digest |
 | `binding` | the binding with its `refines:` chain resolved, its name and digest |
 | `packing` | the resolved packing, its strategy and digest; its `external` lists each part outside as `{part, kind, reach}`, `kind` the part's block and `reach` the binding's or `{name: <part>}` |
 | `units` | one entry per unit, below |
 | `ingress` | one entry per export of each ingress of the contract: `ingress`, `protocol`, `audience`, `authenticated`, the `unit` and `part` that serve it (`control`, the control plane in the core unit, unless the binding names a part), `bind` (`loopback` unless the binding says `all`), and `port` and `address` when the binding gives them. An entry without `port` has no entry point on the target |
-| `requirements` | the architecture's `requirements:`, empty when it has none |
+| `requirements` | each entry of the architecture's `requirements:` as written, with its `stage` (`check`, `evaluation`, `operation` or `cloud`), its `state` and, when decided, the `value` it was decided on: a KPI of the architecture as a whole or a gate count is `met` or `missed` here, every other one `undecided`. A missed requirement does not refuse the bundle. Empty when it has none. See [requirements](architectures/index.md#requirements) |
 | `agents` | each agent document the binding names, keyed by the digest of its file's bytes: the parts it plays, `content_base64`, those exact bytes in standard base64, and `document`, the same document parsed |
 | `runtimes` | each runtime image the binding pins. From a registry: keyed by its digest, with its name and its image reference `<image>@sha256:<digest>`. From the target's local store: what the binding gave, its name, `image`, and `tag`, `digest` or both, keyed by the digest, else by `<image>:<tag>` |
 | `files` | only when the binding asks for a UI: each file a unit names, by its file name, with its `digest`, its `size` in bytes and its bytes in `base64`. A UI unit's archive is carried here |
@@ -238,8 +240,12 @@ carries, for a reader that did not write it. It refuses with `bundle_invalid` a 
 `agenticspec-deployment/1`, lacks a member, whose digests do not hold (the bundle's, the
 architecture's revision, the contract's, the binding's, the packing's) or whose binding or packing
 is of the wrong form (a check, a claim or an ingress export the packing or the contract does not
-have among them). Otherwise it admits the architecture under the binding and packing the bundle
-carries, checks that each agent unit carries the agent documents of its agent parts at the digests
+have among them). It resolves a nested architecture from the documents the bundle carries, each
+found by the digest its part pins: it refuses a reference whose digest the bundle carries no
+document of (`nested_document_missing`), and a carried document whose `content_base64` does not
+decode to bytes whose SHA-256 is its `sha256`, which parse to its `document` and whose canonical
+digest is its key (`nested_document_mismatch`). Otherwise it admits the architecture, flattened,
+under the binding and packing the bundle carries, checks that each agent unit carries the agent documents of its agent parts at the digests
 the binding pins and that each agent document's `content_base64` decodes to bytes whose SHA-256 is
 its key and which parse to its `document` (`agent_document_mismatch`), and checks the secrets and egress of the binding and of every unit: a unit's
 secret or an egress entry's secret that no part of the unit declares, an egress entry whose part

@@ -132,6 +132,9 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `volume_mount_missing` | a volume a unit claims that no part of the unit mounts (`parts.<p>.volumes[].mount`, matched by name), or mounts at a relative path; there is no default path |
 | `ui_upstream_unknown` | a UI unit (K17) reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have; in a written bundle, a UI unit's `upstream.unit` that is no other unit of the bundle |
 | `ui_archive_mismatch` | in a written bundle (`deploy check`) only: a UI unit's archive is not in `files`, or its SHA-256 is not the unit's `code.digest` |
+| `nested_document_missing` | in a written bundle (`deploy check`) only: a part of block `architecture`, at any depth, pins a digest the bundle's `nested` carries no document of |
+| `nested_document_mismatch` | in a written bundle (`deploy check`) only: a carried nested document whose `content_base64` is not its `sha256`, does not parse to its `document`, or whose canonical digest is not its key |
+| `requirement_kpi_unknown`, `requirement_invalid` | a requirement (K12) names a KPI no stage knows, or is not `{kpi, at_least \| at_most \| equals, part?, window?}` with one number; `sim check` refuses both as `architecture_refused` |
 
 ## K6 The bundle: `agenticspec-deployment/1`
 
@@ -145,13 +148,13 @@ with every member inline, each document keyed by its digest (Q2). Same inputs, s
 |---|---|---|
 | `format`, `generator` | `agenticspec-deployment/1`; the agenticspec version | inside the bundle digest |
 | `architecture` | the released document as written, its name | revision digest: SHA-256 of the canonical JSON of `parts`, `links`, `border` (`agentic.architecture.Digest`); and the digest of its bytes |
-| `nested` | every document the architecture references, as written | its canonical digest, the pin `crates/agenticspec-sim/src/nest.rs` checks |
+| `nested` | every document the architecture references, the nesting chain resolved: per document its name, the parts that refer to it (dotted), `document` parsed and `content_base64`, its exact bytes, with their `sha256`. `deploy check` resolves the architecture from these by the pins, recomputes each digest (`nested_document_mismatch`) and refuses a pin with no document (`nested_document_missing`); units, packing and contract read the architecture flattened | its canonical digest, the pin `crates/agenticspec-sim/src/nest.rs` checks |
 | `contract` | `agenticspec-contract/1`: ports, routing invariants, multiplicities, ingress | `Contract.digest` |
 | `binding` | `agenticspec-binding/1`, its `refines:` chain resolved into one document. Its `target` says what the target gives: `isolation`, `images` (`registry` or `local`), `network_policy` (`enforced` or `not_enforced`; absent, unknown), which a part marked `parts.<p>.network: isolated` needs enforced (`network_isolation_unmet`) | binding digest |
 | `packing` | the resolved packing, the default applied (K4); its `external` a list of `{part, kind, reach}`: the part, its block, and where the target reaches it, `{address: <text>}` or `{name: <text>}` from the binding (`packing.external` entries `<part>` or `{part, reach}` beside `units:`, `packing.parts.<p>.reach` beside a strategy), `{name: <part>}` when it gives none. Any part may be external | packing digest |
 | `units` | one entry per unit with the fields of K7 | inside the bundle digest |
 | `ingress` | one entry per export of each ingress of the contract: `ingress`, `protocol`, `audience`, `authenticated`; `unit` and `part` that serve it (the binding's `part`, else `control`, the control plane in the core unit; the UI unit for the export a UI serves, K17); `bind` (`loopback` or `all`, `loopback` when the binding names none); `port` (an integer) and `address` when the binding gives them, from `ingress.<name>.exports.<protocol>`. Without a port the entry has no entry point on the target, and nothing is refused | operations inside the contract digest; unit, part, port, bind and address in the binding digest |
-| `requirements` | the `requirements:` of K12, each with the stage it is decided at | inside the bundle digest |
+| `requirements` | the `requirements:` of K12, each as written with the stage it is decided at (`check`, `evaluation`, `operation`, `cloud`), its state (`met`, `missed`, `undecided`) and the value where known; checked like `sim check` does, a refusal a finding of K14 | inside the bundle digest |
 | `agents` | each `loom.agent/1` document the binding names: `document`, parsed, and `content_base64`, the file's exact bytes (K18) | the SHA-256 of those bytes (Q12) |
 | `runtimes` | each runtime artifact the binding pins: the core runtime image (`core`); an agent runtime image (`agent-runtime`, K18) only where the binding pins one (Q8). With `target.images: registry` (the default) by OCI repository digest, `<image>@sha256:<digest>`; with `local`, what the binding gave, `{image, tag, digest}` with a tag, a digest (the image's config id) or both | the image digest, or `<image>:<tag>` for a local image without one |
 | `files` | only with a UI unit (K17): each file a unit names, by file name: `{digest, size, base64}`, the bytes inline | its `digest`, the unit's `code.digest` |
@@ -264,6 +267,21 @@ requirements as constraints before weights and stops when all are met. The Metri
 shows each with its target, met or missed, predicted beside observed. A cloud KPI (node count,
 cost per hour) is named by its cloudspec id and evaluated by cloudspec. The bundle carries the
 requirements; the translator keeps them with the revision and no target enforces them yet.
+
+As built (`crates/agenticspec-sim/src/requirements.rs`):
+
+- Entry: `{kpi, at_least | at_most | equals, part?, window?}`, exactly one number as target;
+  anything else is `requirement_invalid`, an id no stage knows `requirement_kpi_unknown`. A cloud
+  KPI is written `cloudspec:<id>`. A design KPI takes no `part`.
+- Stages: `check` for the KPIs of `whole.rs` and the gate counts; `evaluation` for what the
+  simulator measures or the catalogue marks `simulated`; `operation` for the rest of the
+  catalogue; `cloud` for `cloudspec:<id>`.
+- A missed requirement is a finding the check reports (`sim check` prints each with its state),
+  never a refusal: K14 admits on a known KPI and a well-formed target, the Metrics page shows met
+  or missed, and no target enforces a requirement yet. The same holds in the bundle.
+- The search ranks a feasible variant by requirements missed, then by fitness; `fit` stops after
+  the round in which a variant first meets every requirement it can decide. A target is never
+  searched, also under `optimize: all`.
 
 ## K13 Translation, in cloudspec
 
