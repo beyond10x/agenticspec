@@ -214,3 +214,16 @@ Lifecycle: one state, `Recorded`; a recorded Variant does not change.
 | `ranking_reversal_share`<br/>Share of model comparisons whose ranking reverses under another harness.<br/><small>How: Pairs of models ranked in opposite order under two harnesses divided by pairs compared. A high share means a model ranking holds for one harness only.</small> | share | lower | – | planned<br/><small>source: research/2610.35348</small> |
 | `prediction_error`<br/>Distance between a simulated KPI and the same KPI measured on a real run.<br/><small>How: Absolute difference between the simulated and the observed value of a KPI, divided by the observed value. A profile whose predictions miss is refitted.</small> | ratio | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `experiment`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  |  | What the experiment compares. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

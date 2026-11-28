@@ -1,0 +1,332 @@
+//! The settings table (`blocks/settings.yaml`): one refusal case per rule and per type kind, the
+//! table against the part kinds, and every committed architecture checked clean.
+
+use super::common::{ARCH, repo_root, yaml};
+use agenticspec_sim::check::{GATE_KPIS, Refusal, check};
+use agenticspec_sim::settings::{self, Kind, Narrows};
+use serde_json::{Value, json};
+use std::path::{Path, PathBuf};
+
+fn refused(arch: &Value) -> Vec<(String, String)> {
+    check(arch)
+        .iter()
+        .map(|r| (r.rule().to_string(), r.part().to_string()))
+        .collect()
+}
+
+/// `part.setting = v` on the small architecture, and its one refusal, which must be of `rule`.
+fn one(part: &str, setting: &str, v: Value, rule: &str) -> Refusal {
+    let mut a = yaml(ARCH);
+    a["parts"][part][setting] = v.clone();
+    let r = check(&a);
+    assert_eq!(
+        r.iter().map(|r| (r.rule(), r.part())).collect::<Vec<_>>(),
+        vec![(rule, part)],
+        "{part}.{setting} = {v}: {r:?}"
+    );
+    r.into_iter().next().unwrap()
+}
+
+/// `part.setting = v` on the small architecture is accepted.
+fn fine(part: &str, setting: &str, v: Value) {
+    let mut a = yaml(ARCH);
+    a["parts"][part][setting] = v.clone();
+    assert_eq!(check(&a), Vec::<Refusal>::new(), "{part}.{setting} = {v}");
+}
+
+#[test]
+fn the_settings_rules_are_gate_kpis() {
+    for rule in ["setting_unknown", "setting_invalid"] {
+        assert!(GATE_KPIS.contains(&rule), "{rule} is not a gate KPI");
+    }
+}
+
+#[test]
+fn a_setting_the_block_does_not_declare_is_refused() {
+    let r = one("box", "flavour", json!("strong"), "setting_unknown");
+    let line = r.to_string();
+    for want in [
+        "box",
+        "flavour",
+        "sandbox",
+        "isolation",
+        "egress",
+        "count",
+        "per",
+    ] {
+        assert!(line.contains(want), "{want} missing in {line}");
+    }
+    // A setting of another block is no setting of this one.
+    one("model", "capacity", json!(4), "setting_unknown");
+    // A part of a pack block takes only the settings of every part.
+    let mut a = yaml(ARCH);
+    a["parts"]["forge"] = json!({"block": "scm.forge", "kind": "hosted"});
+    a["links"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"from": "operator", "to": "forge", "carries": "push"}));
+    assert_eq!(
+        refused(&a),
+        vec![("setting_unknown".into(), "forge".into())]
+    );
+}
+
+/// The refusal names the part, the setting and the expected type.
+fn invalid(part: &str, setting: &str, v: Value, expected: &str) {
+    let r = one(part, setting, v.clone(), "setting_invalid");
+    let line = r.to_string();
+    for want in [part, setting, expected] {
+        assert!(
+            line.contains(want),
+            "{part}.{setting} = {v}: `{want}` missing in {line}"
+        );
+    }
+}
+
+#[test]
+fn an_integer_setting_takes_a_whole_number_in_range() {
+    invalid(
+        "builds",
+        "capacity",
+        json!("many"),
+        "an integer of at least 0 (slots)",
+    );
+    invalid("builds", "capacity", json!(2.5), "an integer");
+    invalid("builds", "capacity", json!(-1), "an integer of at least 0");
+    invalid("worker", "count", json!(-2), "an integer of at least 0");
+    fine("builds", "capacity", json!(0));
+}
+
+#[test]
+fn a_number_setting_takes_a_number_in_range() {
+    invalid(
+        "gateway",
+        "rate_limit_per_minute",
+        json!("fast"),
+        "a number of at least 0 (calls per minute)",
+    );
+    invalid(
+        "gateway",
+        "rate_limit_per_minute",
+        json!(-5),
+        "a number of at least 0",
+    );
+    invalid(
+        "worker",
+        "false_accept",
+        json!(1.5),
+        "a number from 0 to 1 (share)",
+    );
+    fine("worker", "false_accept", json!(0.25));
+}
+
+#[test]
+fn an_enum_setting_takes_one_of_its_words() {
+    invalid(
+        "box",
+        "isolation",
+        json!("airtight"),
+        "one of none, process, container, user_kernel, micro_vm",
+    );
+    invalid(
+        "chat",
+        "distribution",
+        json!(3),
+        "one of direct, topic, queue, board",
+    );
+    fine("box", "isolation", json!("micro_vm"));
+    // A block's enum may also be written as the block writes the variant.
+    fine("box", "isolation", json!("MicroVm"));
+    // Words of `values` are taken as written only.
+    invalid("worker", "partition", json!("Scope"), "one of scope");
+}
+
+#[test]
+fn a_duration_setting_takes_a_duration_or_seconds() {
+    invalid(
+        "builds",
+        "job_limit",
+        json!("soon"),
+        "a duration of at least 0s",
+    );
+    invalid(
+        "builds",
+        "job_limit",
+        json!("-10m"),
+        "a duration of at least 0s",
+    );
+    fine("builds", "job_limit", json!("1h"));
+    fine("builds", "job_limit", json!(600));
+}
+
+#[test]
+fn a_string_setting_takes_a_text() {
+    invalid("model", "route", json!(5), "a text");
+    invalid("operator", "role", json!(["operator"]), "a text");
+}
+
+#[test]
+fn a_part_setting_takes_the_name_of_a_part() {
+    invalid("tree", "per", json!(3), "the name of a part");
+    invalid(
+        "operator",
+        "acts_for",
+        json!(["owner"]),
+        "the name of a part",
+    );
+    invalid("box", "egress", json!([1]), "a list of names of parts");
+    fine("box", "egress", json!("gateway"));
+}
+
+#[test]
+fn a_shares_setting_maps_parts_to_shares() {
+    invalid(
+        "worker",
+        "model_share",
+        json!({"model": -1}),
+        "a map from model parts to shares",
+    );
+    invalid(
+        "worker",
+        "model_share",
+        json!(0.5),
+        "a map from model parts to shares",
+    );
+    fine("worker", "model_share", json!({"model": 1}));
+}
+
+#[test]
+fn a_boolean_setting_takes_true_or_false() {
+    // No block declares a boolean setting yet: the type is read from a table of its own.
+    let t = settings::parse(
+        "format: agenticspec-settings/1\nevery_part: []\nblocks:\n  - kind: gate\n    domain: agentic.gate\n    settings:\n      - {name: open, type: boolean, default: false, summary: Whether the gate is open.}\n",
+    )
+    .unwrap();
+    let open = t.setting("gate", "open").unwrap();
+    assert_eq!(open.ty.kind, Kind::Boolean);
+    assert!(open.ty.accepts(&json!(true)).is_ok());
+    assert_eq!(open.ty.accepts(&json!("yes")), Err("true or false".into()));
+}
+
+#[test]
+fn a_marked_place_is_judged_by_its_value() {
+    invalid(
+        "builds",
+        "capacity",
+        json!({"value": "many", "vary": [1, 2]}),
+        "an integer",
+    );
+}
+
+#[test]
+fn a_table_that_does_not_hold_is_refused() {
+    let head = "format: agenticspec-settings/1\nevery_part: []\nblocks:\n  - kind: k\n    domain: agentic.k\n    settings:\n";
+    for (body, want) in [
+        ("      - {name: a, type: colour}\n", "unknown type"),
+        (
+            "      - {name: a, type: enum, enum: agentic.nowhere.Kind}\n",
+            "no block declares",
+        ),
+        (
+            "      - {name: a, type: integer, min: 0, default: -1}\n",
+            "default",
+        ),
+        (
+            "      - {name: a, type: string, colour: red}\n",
+            "unknown key",
+        ),
+        (
+            "      - {name: a, type: string}\n      - {name: a, type: string}\n",
+            "twice",
+        ),
+    ] {
+        let e = settings::parse(&format!("{head}{body}")).unwrap_err();
+        assert!(e.contains(want), "{body}: {e}");
+    }
+}
+
+#[test]
+fn every_part_kind_has_its_settings_and_every_entry_is_a_part_kind() {
+    let t = settings::table();
+    let kinds = agenticspec_sim::check::part_kinds();
+    for k in kinds {
+        assert!(
+            t.block(k).is_some(),
+            "part kind `{k}` has no entry in blocks/settings.yaml"
+        );
+    }
+    for b in &t.blocks {
+        assert!(kinds.contains(&b.kind), "`{}` is no part kind", b.kind);
+    }
+    // The contract copies what the table marks: a pool's claim port takes its three settings.
+    assert_eq!(
+        t.narrowing("pool", "resource.claim"),
+        vec!["kind", "capacity", "job_limit"]
+    );
+    assert_eq!(t.narrowing("agent", "model.inference"), Vec::<&str>::new());
+    assert!(
+        t.blocks
+            .iter()
+            .flat_map(|b| &b.settings)
+            .any(|s| s.narrows == Narrows::All)
+    );
+}
+
+fn yaml_files(dir: &Path) -> Vec<PathBuf> {
+    let mut out: Vec<PathBuf> = std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .filter_map(Result::ok)
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == "yaml"))
+        .collect();
+    out.sort();
+    out
+}
+
+/// Every committed architecture document: under `architectures/` and its ladder, the
+/// architectures the fields list and the catalog's downloads.
+fn committed() -> Vec<PathBuf> {
+    let root = repo_root();
+    let mut out = yaml_files(&root.join("architectures"));
+    out.extend(yaml_files(&root.join("architectures/ladder")));
+    for field in std::fs::read_dir(root.join("fields")).unwrap().flatten() {
+        let manifest = field.path().join("field.yaml");
+        let Ok(text) = std::fs::read_to_string(&manifest) else {
+            continue;
+        };
+        for a in yaml(&text)["architectures"]
+            .as_array()
+            .into_iter()
+            .flatten()
+        {
+            out.push(field.path().join(a.as_str().unwrap()));
+        }
+    }
+    for entry in std::fs::read_dir(root.join("website/static/catalog"))
+        .unwrap()
+        .flatten()
+    {
+        out.extend(
+            yaml_files(&entry.path())
+                .into_iter()
+                .filter(|p| std::fs::read_to_string(p).is_ok_and(|t| t.contains("\nparts:"))),
+        );
+    }
+    out
+}
+
+#[test]
+fn every_committed_architecture_checks_clean() {
+    let files = committed();
+    assert!(files.len() > 30, "{}", files.len());
+    for path in files {
+        let a = agenticspec_sim::nest::load(&path)
+            .unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+        let refusals: Vec<String> = check(&agenticspec_sim::nest::flatten(&a))
+            .iter()
+            .map(ToString::to_string)
+            .collect();
+        assert!(refusals.is_empty(), "{}: {refusals:?}", path.display());
+    }
+}

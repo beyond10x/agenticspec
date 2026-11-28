@@ -209,3 +209,26 @@ Relations:
 | `agent_tree_depth`<br/>Deepest chain of parent and sub-agent in a session.<br/><small>How: Longest path of parent_agent_id links over AgentStarted events of one session.</small> | count | lower | – | planned<br/><small>source: design</small> |
 | `subagent_cost_share`<br/>Share of the cost spent by sub-agents.<br/><small>How: cost_usd of model turns with scope sub divided by cost_usd of all model turns. The report already splits models by scope main and sub.</small> | share | lower | – | computed today<br/><small>source: docs/kpis.md</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `agent`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `harness` | string |  |  | `harness.session`, `harness.tool-call` | The kind of harness the agent runs in, a row a field registers. |
+| `role` | string |  |  | `harness.session` | The role of the behaviour profile the agent plays; without one, the profile's default role. |
+| `acts_for` | part |  |  | `harness.session` | The principal the agent acts for. |
+| `coordination` | enum `Coordination`: `orchestrator`, `board`, `mesh`, `none` |  | `none` |  | How the copies of the agent coordinate. |
+| `start_stagger` | duration of at least 0s |  | `0s` |  | The time between the starts of two copies. |
+| `partition` | enum: `scope` |  |  |  | `scope`: each copy works on its own part of the scope, so copies do not collide. |
+| `strictness` | string |  | `balanced` |  | The entry of the profile's review strictness a reviewer agent judges with. |
+| `false_accept` | number from 0 to 1 | share |  |  | The share of wrong results a reviewer agent accepts; with false_reject, replaces the strictness entry. |
+| `false_reject` | number from 0 to 1 | share |  |  | The share of right results a reviewer agent sends back. |
+| `method` | string |  |  |  | The label of the method the agent follows, when an experiment compares methods. |
+| `model_share` | shares |  |  |  | The share of the agent's model calls each model part it reaches gets; without it, equal shares. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

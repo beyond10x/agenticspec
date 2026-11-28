@@ -22,6 +22,7 @@ mod projection;
 mod rows;
 mod scenario;
 mod search;
+mod settings;
 mod sim;
 mod suite;
 mod swarm;

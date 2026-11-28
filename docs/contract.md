@@ -142,15 +142,15 @@ Every other value (`order` to an agent, `review`, `result`, `handoff`, `report`,
 
 ### Settings, instances, border
 
-- **Settings.** Per block and port a fixed list of setting names is copied from the using part,
-  the value of a marked place (`{value: 12, vary: …}`) taken: agent `harness`, `role`,
-  `acts_for`; model `route`; gateway `rate_limit_per_minute`; pool `kind`, `capacity`,
-  `job_limit`; channel `kind`, `distribution`; principal (question port) `kind`; trigger and
-  schedule (firing port) `kind`, `every`, `schedule`, `channel`, `policy`, `max_parallel`,
-  `event_name`, `source`; schedule (schedule port) `every`, `next_fire_at`; workspace `kind`,
-  `sharing`; sandbox `isolation`, `egress`; harness, authority and runtime `kind`. A port used
-  through a link takes no setting of its part (an agent's `model_share` among them), except a
-  principal's `kind`.
+- **Settings.** A port takes the settings of the using part that narrow it, the value of a marked
+  place (`{value: 12, vary: …}`) taken. The "Settings" section of each block page lists, in its
+  column "contract", the ports each setting narrows: agent `harness`, `role`, `acts_for`; model
+  `route`; gateway `rate_limit_per_minute`; pool `kind`, `capacity`, `job_limit`; channel `kind`,
+  `distribution`; principal (question port) `kind`; trigger (firing port) `kind`, `schedule`,
+  `channel`, `policy`, `max_parallel`, `event_name`, `source`; schedule `every` (firing and
+  schedule port) and `next_fire_at` (schedule port); workspace `kind`, `sharing`; sandbox
+  `isolation`, `egress`; harness, authority and runtime `kind`. A port used through a link takes
+  no setting of its part (an agent's `model_share` among them), except a principal's `kind`.
 - **Instances.** The part's `count` (1 when absent) times the count of the part it is `per`,
   along that chain: in `architectures/workstation.yaml`, `tree: { per: worker }` with 12 workers
   provides 12 workspaces.

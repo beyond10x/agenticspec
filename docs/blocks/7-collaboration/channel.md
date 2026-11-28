@@ -484,3 +484,17 @@ Called by: Participant.
 | `coordination_failure_share`<br/>Share of multi-agent runs in which two agents changed the same path with no notice between them.<br/><small>How: Runs with two agents' PathWritten on one path and no MessageSent naming that scope between the writes, divided by multi-agent runs. A vague warning counts as no notice.</small> | share | lower | – | planned<br/><small>source: research/2610.07261</small> |
 | `claim_conflicts`<br/>Reads of a queue or board post by a second subscriber while the first one's claim was not yet visible.<br/><small>How: Take attempts that lose to another subscriber's take of the same post (TakePost answered already-taken, which emits no event), counted against PostTaken. The simulator counts a reader whose read lands within claim_window_seconds of the first reader's.</small> | count | lower | – | simulated<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `channel`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | enum `ChannelKind`: `prompt`, `operator`, `agent_message`, `agent_to_agent`, `chat`, `notification`, `control` |  |  | every port | What the channel carries. |
+| `distribution` | enum `Distribution`: `direct`, `topic`, `queue`, `board` |  | `direct` | every port | Who receives a message; on a topic, queue or board a trigger can listen. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

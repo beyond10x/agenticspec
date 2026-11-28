@@ -220,3 +220,15 @@ Called by: Board keeper.
 | `card_cycle_seconds`<br/>Seconds from a card being added to the board to it reaching the board's last column.<br/><small>How: Median of the time of the first CardMoved to the board's last column (by BoardCreated columns) minus CardAdded time, per card.</small> | seconds | lower | – | planned<br/><small>source: design</small> |
 | `backward_move_share`<br/>Share of card moves to an earlier column.<br/><small>How: CardMoved events whose target column comes before the source column in the board's columns, divided by all CardMoved events between columns.</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `tracking.board`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

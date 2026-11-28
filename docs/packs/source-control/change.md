@@ -315,3 +315,15 @@ Called by: Reviewer.
 | `change_request_cycle_seconds`<br/>Seconds from a change request being opened to it being merged.<br/><small>How: Median of ChangeRequestMerged time minus ChangeRequestOpened time over merged change requests; closed ones are counted apart.</small> | seconds | lower | – | planned<br/><small>source: design</small> |
 | `approval_invalidated_share`<br/>Share of approvals left behind by a later push to the change request.<br/><small>How: HeadApproved events followed by a HeadPushed of the same change request before it merged, divided by all HeadApproved events. Each one costs a second review.</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `scm.change`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

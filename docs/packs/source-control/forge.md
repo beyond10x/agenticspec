@@ -204,3 +204,15 @@ Called by: Forge administrator.
 |---|---|---|---|---|
 | `agent_maintainer_share`<br/>Share of forge memberships at Maintainer or Administrator held by agent principals.<br/><small>How: Live RoleGranted and RoleChanged memberships whose role is Maintainer or Administrator and whose principal is registered with kind Agent, divided by all such memberships.</small><br/><small>By work mode: autonomous: ignore, pairing: lower, review: lower</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `scm.forge`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

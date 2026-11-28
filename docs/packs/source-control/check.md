@@ -165,3 +165,15 @@ Called by: Check runner.
 | `check_queue_seconds`<br/>Seconds a check run waits between being queued and starting.<br/><small>How: Median of CheckStarted time minus CheckQueued time per check run.</small> | seconds | lower | – | planned<br/><small>source: design</small> |
 | `check_flaky_share`<br/>Share of checks that both passed and failed on the same revision.<br/><small>How: Pairs of check name and revision with at least one CheckCompleted Passed and one CheckCompleted Failed, divided by all pairs with a completed run.</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `scm.check`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

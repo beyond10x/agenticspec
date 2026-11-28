@@ -5,6 +5,7 @@ use crate::kpis::{Catalogue, KINDS, Kpi, status_words};
 use crate::layout::Map;
 use crate::md::{attr, code, condition, first_sentence, predicate, text, type_ref, yaml};
 use crate::model::{Block, members, short};
+use agenticspec_sim::settings::{Kind, Narrows, Setting};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -481,6 +482,69 @@ pub(crate) fn kpi_table(s: &mut String, kpis: &[&Kpi]) {
     s.push('\n');
 }
 
+fn setting_rows<'a>(s: &mut String, settings: impl Iterator<Item = &'a Setting>) {
+    s.push_str(
+        "| setting | type | unit | default | contract | what |\n|---|---|---|---|---|---|\n",
+    );
+    for x in settings {
+        let ty = match &x.ty.kind {
+            Kind::Enum { values, from } => {
+                let words: Vec<String> = values.iter().map(|v| code(v)).collect();
+                match from {
+                    Some(e) => format!("enum {}: {}", code(short(e)), words.join(", ")),
+                    None => format!("enum: {}", words.join(", ")),
+                }
+            }
+            _ => format!("{}{}", x.ty.name(), x.ty.range()),
+        };
+        let default = x.default.as_ref().map_or_else(String::new, |d| match d {
+            Value::String(t) => code(t),
+            other => code(&other.to_string()),
+        });
+        let narrows = match &x.narrows {
+            Narrows::None => String::new(),
+            Narrows::All => "every port".to_string(),
+            Narrows::Ports(ps) => ps.iter().map(|p| code(p)).collect::<Vec<_>>().join(", "),
+        };
+        let _ = writeln!(
+            s,
+            "| {} | {ty} | {} | {default} | {narrows} | {} |",
+            code(&x.name),
+            x.ty.unit.as_deref().map(text).unwrap_or_default(),
+            text(&x.summary)
+        );
+    }
+}
+
+/// The settings a part of block `b` may carry, from the settings table, with type, unit, default
+/// and the contract ports each narrows. A part of a pack block takes only the settings of every
+/// part.
+fn settings_section(s: &mut String, b: &Block) {
+    let table = agenticspec_sim::settings::table();
+    let mut kinds: Vec<(String, &[Setting])> = table
+        .of_domain(&b.domain)
+        .map(|k| (k.kind.clone(), k.settings.as_slice()))
+        .collect();
+    if kinds.is_empty() && b.in_pack() {
+        let kind = b.domain.strip_prefix("agentic.").unwrap_or(&b.domain);
+        kinds.push((kind.to_string(), &[]));
+    }
+    if kinds.is_empty() {
+        return;
+    }
+    s.push_str(
+        "\n## Settings\n\nThe settings a part of this block carries in an architecture document. \
+         `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside \
+         its type (`setting_invalid`); the contract copies a setting into the ports it narrows. \
+         The last rows of each table are the settings every part takes.\n\n",
+    );
+    for (kind, settings) in kinds {
+        let _ = writeln!(s, "A part `{kind}`:\n");
+        setting_rows(s, settings.iter().chain(&table.every_part));
+        s.push('\n');
+    }
+}
+
 pub fn page(ctx: &Ctx, b: &Block) -> String {
     let ir = ctx.ir;
     let mut s = String::new();
@@ -837,6 +901,7 @@ pub fn page(ctx: &Ctx, b: &Block) -> String {
         );
         kpi_sections(&mut s, &kpis, 3);
     }
+    settings_section(&mut s, b);
     s
 }
 

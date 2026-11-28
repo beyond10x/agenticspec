@@ -479,3 +479,16 @@ Called by: Worker.
 | `review_calls`<br/>Reviewer calls made on deliverables.<br/><small>How: Calls of a reviewer agent or reviewer model between DeliverableSubmitted and its acceptance or rejection. A cost of verification, weighed against false completions shipped.</small><br/><small>By work mode: autonomous: lower, pairing: ignore, review: ignore</small> | count | lower | – | simulated<br/><small>source: research/2609.20812</small> |
 | `backlog_wait_p90_seconds`<br/>90th percentile of the time a task waits in the backlog of its worker before starting.<br/><small>How: Seconds between TaskCreated and the first RunStarted of the task, 90th percentile.</small> | seconds | lower | – | simulated<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `work`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  |  | What the work is. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

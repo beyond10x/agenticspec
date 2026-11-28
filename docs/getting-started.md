@@ -106,6 +106,12 @@ blocks. It exits 0 and prints the architecture with its counts of parts and link
 architecture as a whole, the parts it cannot lose (`single_points`), the architectures it nests and
 the count of its ingresses, or exits 1 and names each refusal on standard error.
 
+Every key of a part other than `block` is a setting, and the part's block declares which settings
+it takes and of what type: the "Settings" section of each block page lists them with type, unit and
+default. The check refuses a setting the block does not declare (`setting_unknown`) and a value
+outside its type or range (`setting_invalid`, for example `capacity: many` on a pool), each naming
+the part, the setting and what was expected.
+
 With `--json` it prints one JSON document on standard output, also when it refuses the
 architecture, for a program to read. The exit code stays the same. A file it cannot read prints
 no document.

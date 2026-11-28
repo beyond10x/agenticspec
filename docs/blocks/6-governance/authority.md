@@ -344,3 +344,19 @@ Called by: Steward.
 | `refusals_per_1000_tool_calls`<br/>Refused tool calls per 1,000 tool calls.<br/><small>How: ToolCallDecided events with decision Refuse, times 1,000, divided by ToolCallRequested events.</small> | ratio | lower | – | planned<br/><small>source: design</small> |
 | `approval_drift_points`<br/>Rise of the human approval share over a review sequence.<br/><small>How: Approval share (ApprovalGranted over granted plus rejected) in the last third of a reviewer's sequence minus the first third, in percentage points.</small><br/><small>By work mode: autonomous: ignore, pairing: ignore, review: lower</small> | points | lower | – | planned<br/><small>source: research/2609.06213</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `authority`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  | every port | What the authority is; a budget uses the budget port. |
+| `action_class` | enum `ToolCategory`: `read`, `search`, `edit`, `execute`, `network`, `spawn`, `message`, `plan`, `other` |  |  |  | The category of actions a grant permits. |
+| `scope` | string |  |  |  | What a grant covers. |
+| `expires_after` | duration of at least 0s |  |  |  | How long a grant holds after it is issued. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

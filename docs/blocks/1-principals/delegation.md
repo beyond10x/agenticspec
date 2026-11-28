@@ -199,3 +199,15 @@ Relations:
 | `delegate_forward_share`<br/>Share of questions a delegate received that it forwarded to the owner.<br/><small>How: Questions forwarded divided by questions received, per delegate part. A delegate that forwards everything saves the owner nothing.</small><br/><small>By work mode: autonomous: lower, pairing: ignore, review: ignore</small> | share | lower | – | simulated<br/><small>source: design</small> |
 | `operator_decided_owner_questions`<br/>Questions meant for the owner that the delegate decided itself.<br/><small>How: Count of questions addressed to an owner part that were answered by a delegate acting for that owner. A count is a measure, not a fault, so it is not a gate.</small> | count | lower | – | simulated<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `delegation`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

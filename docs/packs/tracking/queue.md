@@ -246,3 +246,15 @@ Called by: Dispatcher.
 | `claim_release_share`<br/>Share of claims given back without finishing the item.<br/><small>How: ItemReleased events divided by ItemClaimed events. A released claim is work started and dropped.</small> | share | lower | – | planned<br/><small>source: design</small> |
 | `claim_out_of_order`<br/>Claims of an item while an older item of the same queue was waiting.<br/><small>How: ItemClaimed events where an item of the same queue with an earlier ItemEnqueued was waiting (enqueued, not claimed, withdrawn or finished). Whether this is an error depends on the queue's order rule, which the pack leaves open.</small> | count | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `tracking.queue`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+
