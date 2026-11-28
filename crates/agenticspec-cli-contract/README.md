@@ -428,7 +428,7 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 
 ### `ui serve`
 
-Serve the operator UI of an architecture at / and its control-plane UI at /control/ over its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures
+Serve the operator UI of an architecture at / and its control-plane UI at /control/ over its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures; with --sim <profile> R1 and R2 answer a simulator run of the architecture instead, its state and its event log replayed in order
 
 Callable: `ui_serve`. Input: `agenticspec.cli.UiServeInput`. Result: `agenticspec.cli.UiServeResult`.
 
@@ -439,6 +439,10 @@ Error `document_unreadable`: `agenticspec.cli.Refusal`.
 Error `fixtures_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `port_unavailable`: `agenticspec.cli.Refusal`.
+
+Error `simulation_refused`: `agenticspec.cli.Refusal`.
+
+Error `sources_conflict`: `agenticspec.cli.Refusal`.
 
 ## Runtime obligations
 

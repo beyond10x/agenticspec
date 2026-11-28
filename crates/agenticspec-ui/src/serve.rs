@@ -19,6 +19,13 @@
 //! binary serves with no checkout ([`Fixtures::embedded`]); `--fixtures <dir>` reads a consumer's
 //! own directory instead ([`Fixtures::from_dir`]).
 //!
+//! With `--sim <profile>` it answers a simulator run instead ([`Fixtures::replay`], built by
+//! `agenticspec_sim::replay`): R1 answers each view from the state the run's events left, each
+//! row only at the scopes of the parts its events happened at, and an empty list for a view the
+//! run says nothing about; R2 replays the run's event log in order, each event at the scopes of
+//! its part, with the log's `seq` as the cursor; R4 and R5 stay as on fixtures, with no
+//! scripted outcome.
+//!
 //! It listens on 127.0.0.1 only and answers only a request whose `Host` is `127.0.0.1` or
 //! `localhost`. Every request of the interface carries the token, as `Authorization: Bearer` or
 //! the session cookie, which the server sets when it serves the app's page.
@@ -117,12 +124,67 @@ struct BundleFile {
 }
 
 /// What the server answers from: the panels' rows by view, the channel scripts in the order of
-/// their files, and the scripted outcomes.
+/// their files, and the scripted outcomes; or a simulator run.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Fixtures {
     views: BTreeMap<String, Vec<Ordered>>,
     scripts: Vec<Script>,
     outcomes: Vec<Outcome>,
+    replay: Option<Replay>,
+}
+
+/// Where an event of a replayed run happened: a part by its path, and the copy of the part
+/// (1 for the first) when a copy made it.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct At {
+    pub part: String,
+    pub instance: Option<u32>,
+}
+
+impl At {
+    /// Whether a scope holds what happened here: the architecture holds everything, a part what
+    /// happened at it or at a part nested in it, a copy what that copy made.
+    fn within(&self, part: Option<&str>, instance: Option<u32>) -> bool {
+        match (part, instance) {
+            (None, _) => true,
+            (Some(p), None) => {
+                self.part == p
+                    || self
+                        .part
+                        .strip_prefix(p)
+                        .is_some_and(|rest| rest.starts_with('.'))
+            }
+            (Some(p), Some(i)) => self.part == p && self.instance == Some(i),
+        }
+    }
+}
+
+/// One event of a replayed run, as R2 sends it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReplayEvent {
+    /// The cursor: the event's `seq` in the run's event log.
+    pub seq: u64,
+    /// The block event's qualified name.
+    pub event: String,
+    pub payload: Value,
+    pub at: At,
+}
+
+/// One row of a view of a replayed run, with every place an event of its entity happened.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReplayRow {
+    pub row: Ordered,
+    pub at: Vec<At>,
+}
+
+/// A simulator run as the server answers it: the rows the run's events leave in each view, its
+/// events in the order of the log, and the channels of the blocks (a block's channel carries the
+/// events of its domain).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Replay {
+    pub views: BTreeMap<String, Vec<ReplayRow>>,
+    pub events: Vec<ReplayEvent>,
+    pub channels: std::collections::BTreeSet<String>,
 }
 
 /// The JSON files of the view fixtures and of the channel scripts below the repository root,
@@ -344,7 +406,19 @@ impl Fixtures {
             views,
             scripts,
             outcomes: file.outcomes,
+            replay: None,
         })
+    }
+
+    /// A simulator run to answer from instead of fixtures (`ui serve --sim`), with no scripted
+    /// outcome.
+    pub fn replay(replay: Replay) -> Fixtures {
+        Fixtures {
+            views: BTreeMap::new(),
+            scripts: Vec::new(),
+            outcomes: Vec::new(),
+            replay: Some(replay),
+        }
     }
 }
 
@@ -689,8 +763,8 @@ impl Shared {
         let mut words = rest.splitn(2, '/');
         let (kind, name) = (words.next().unwrap_or(""), words.next().unwrap_or(""));
         let (status, body) = match (r.method.as_str(), kind) {
-            ("GET", "views") if !name.is_empty() => self.read(name),
-            ("GET", "channels") if !name.is_empty() => return self.stream(r, name, out),
+            ("GET", "views") if !name.is_empty() => self.read(&scope, name),
+            ("GET", "channels") if !name.is_empty() => return self.stream(r, &scope, name, out),
             ("POST", "commands") if !name.is_empty() => self.command(r, &scope, name),
             ("GET", "actions") if name.is_empty() => self.actions(),
             (_, "views" | "channels" | "commands" | "actions") => {
@@ -759,20 +833,35 @@ impl Shared {
         ))
     }
 
-    fn read(&self, view: &str) -> (u16, String) {
-        let rows = self
-            .fixtures
-            .views
-            .get(view)
-            .filter(|_| self.plane.views.contains(view));
-        let Some(rows) = rows else {
+    /// The rows of a view at a scope: the fixture's at every scope, or a replayed run's at the
+    /// scopes of the places its events happened.
+    fn rows(&self, scope: &Scope, view: &str) -> Option<Vec<Ordered>> {
+        if !self.plane.views.contains(view) {
+            return None;
+        }
+        let Some(replay) = &self.fixtures.replay else {
+            return self.fixtures.views.get(view).cloned();
+        };
+        let rows = replay.views.get(view).map_or_else(Vec::new, |rows| {
+            rows.iter()
+                .filter(|r| {
+                    r.at.iter()
+                        .any(|a| a.within(scope.part.as_deref(), scope.instance))
+                })
+                .map(|r| r.row.clone())
+                .collect()
+        });
+        Some(rows)
+    }
+
+    fn read(&self, scope: &Scope, view: &str) -> (u16, String) {
+        let Some(mut rows) = self.rows(scope, view) else {
             return error(
                 404,
                 "NoSuchView",
                 format!("{view} is no view of the control plane"),
             );
         };
-        let mut rows = rows.clone();
         if self.faults.undeclared_field.as_deref() == Some(view) {
             for r in &mut rows {
                 r.0.push((
@@ -785,9 +874,27 @@ impl Shared {
         (200, format!("{{\"rows\":{text}}}"))
     }
 
-    /// The events of a channel, each the operator ingress carries, in order.
-    fn events(&self, channel: &str) -> Option<Vec<&(String, Value)>> {
+    /// The events of a channel at a scope, each the operator ingress carries, in order, each with
+    /// its cursor: its position on fixtures, its `seq` in a replayed run's log.
+    fn events(&self, scope: &Scope, channel: &str) -> Option<Vec<(u64, &String, &Value)>> {
         let level = self.plane.channels.iter().any(|c| c == channel);
+        let feeds = &self.plane.feeds;
+        if let Some(replay) = &self.fixtures.replay {
+            if !level && !replay.channels.contains(channel) {
+                return None;
+            }
+            let domain = |e: &str| e.split('.').nth(1).map(str::to_string);
+            return Some(
+                replay
+                    .events
+                    .iter()
+                    .filter(|e| level || domain(&e.event).as_deref() == Some(channel))
+                    .filter(|e| feeds.is_empty() || feeds.contains(&e.event))
+                    .filter(|e| e.at.within(scope.part.as_deref(), scope.instance))
+                    .map(|e| (e.seq, &e.event, &e.payload))
+                    .collect(),
+            );
+        }
         let scripts: Vec<_> = self
             .fixtures
             .scripts
@@ -797,18 +904,25 @@ impl Shared {
         if scripts.is_empty() {
             return None;
         }
-        let feeds = &self.plane.feeds;
         Some(
             scripts
                 .into_iter()
                 .flat_map(|(_, events)| events.iter())
                 .filter(|(event, _)| feeds.is_empty() || feeds.contains(event))
+                .zip(1u64..)
+                .map(|((event, payload), cursor)| (cursor, event, payload))
                 .collect(),
         )
     }
 
-    fn stream(&self, r: &Request, channel: &str, out: &mut TcpStream) -> io::Result<()> {
-        let Some(events) = self.events(channel) else {
+    fn stream(
+        &self,
+        r: &Request,
+        scope: &Scope,
+        channel: &str,
+        out: &mut TcpStream,
+    ) -> io::Result<()> {
+        let Some(events) = self.events(scope, channel) else {
             let (s, b) = error(
                 404,
                 "NoSuchChannel",
@@ -818,12 +932,11 @@ impl Shared {
         };
         let after = r
             .header(&interface::cursor_header())
-            .and_then(|v| v.trim().parse::<usize>().ok());
+            .and_then(|v| v.trim().parse::<u64>().ok());
         out.write_all(
             b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n",
         )?;
-        for (i, (event, payload)) in events.into_iter().enumerate() {
-            let cursor = i + 1;
+        for (cursor, event, payload) in events {
             let skip = match after {
                 Some(c) if self.faults.resend_on_resume => cursor < c,
                 Some(c) => cursor <= c,

@@ -912,6 +912,15 @@ types:
           `<view>.json` per view (`{view, rows}`), the channel scripts in `scripts/`
           (`{channel, events}`) and the scripted outcomes in `outcomes.json`
           (`agenticspec-command-outcomes/1`); the last two may be absent.
+      - name: sim
+        type: Optional<String>
+        summary: >-
+          A behaviour profile (`agenticspec-profile/1`) to answer a simulator run from instead of
+          fixtures: the architecture simulated once at the values it is built with, seed 1, one
+          day. R1 answers each view from the state the run's events left, each row at the scopes
+          of the parts its events happened at; R2 replays the run's event log (the lines of
+          `sim run --events`) in order, with each event's `seq` as its cursor; the Metrics page
+          shows the run's KPIs. Not with `--fixtures`.
 
   - name: agenticspec.cli.UiServeResult
     kind: struct

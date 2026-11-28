@@ -22,7 +22,7 @@ pub struct Refusal {
     pub detail: String,
 }
 
-fn refused(code: &'static str, detail: impl Into<String>) -> Refusal {
+pub(crate) fn refused(code: &'static str, detail: impl Into<String>) -> Refusal {
     Refusal {
         code,
         detail: detail.into(),
@@ -857,6 +857,36 @@ fn check_trace(
     Ok(Value::Array(checks.iter().map(|c| c.to_json()).collect()))
 }
 
+/// The architecture at `architecture` as read (nested architectures resolved beside their
+/// parts), the flattened document at the values it is built with, and its simulation model under
+/// the profile at `profile` for `horizon` seconds: what `sim trace` and `ui serve --sim` run.
+///
+/// # Errors
+///
+/// A document cannot be read, the check refuses the architecture, or the simulator refuses the
+/// pair.
+pub fn built_model(
+    architecture: &Path,
+    profile: &Path,
+    horizon: f64,
+) -> Result<(Value, Value, crate::sim::Model), Refusal> {
+    use crate::profile::Profile;
+    let document = load_nested(architecture)?;
+    let arch = nest::flatten(&document);
+    let refusals = check_architecture(&arch);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    let profile_doc = load_yaml(profile).map_err(|e| refused("document_unreadable", e))?;
+    let profile = Profile::parse(&profile_doc).map_err(|e| refused("simulation_refused", e))?;
+    let built = crate::marked::resolve(&arch, &serde_json::Map::new())
+        .map_err(|e| refused("simulation_refused", e))?;
+    let model = crate::sim::Model::build(&built, &profile, horizon, &[], &[])
+        .map_err(|e| refused("simulation_refused", e))?;
+    Ok((document, built, model))
+}
+
 /// The options of `sim trace`.
 #[derive(Debug, Clone)]
 pub struct TraceOptions<'a> {
@@ -874,16 +904,7 @@ pub struct TraceOptions<'a> {
 /// write the port uses of the run as a trace (`agenticspec-trace/1`), or print it.
 pub fn trace(o: &TraceOptions) -> Result<Value, Refusal> {
     use crate::contract::trace::Trace;
-    use crate::profile::Profile;
-    use crate::sim::{Model, RECORDED, simulate};
-    let arch = nest::flatten(&load_nested(o.architecture)?);
-    let refusals = check_architecture(&arch);
-    if !refusals.is_empty() {
-        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
-        return Err(refused("architecture_refused", names.join("; ")));
-    }
-    let profile_doc = load_yaml(o.profile).map_err(|e| refused("document_unreadable", e))?;
-    let profile = Profile::parse(&profile_doc).map_err(|e| refused("simulation_refused", e))?;
+    use crate::sim::{RECORDED, simulate};
     let horizon = match o.horizon {
         None => 86400.0,
         Some(h) => crate::doc::parse_duration(h)
@@ -896,12 +917,10 @@ pub fn trace(o: &TraceOptions) -> Result<Value, Refusal> {
             })?,
     };
     let seed = o.seed.unwrap_or(1);
-    let built = crate::marked::resolve(&arch, &serde_json::Map::new())
-        .map_err(|e| refused("simulation_refused", e))?;
-    let model = Model::build(&built, &profile, horizon, &[], &[])
-        .map_err(|e| refused("simulation_refused", e))?;
+    let (_, built, model) = built_model(o.architecture, o.profile, horizon)?;
+    let profile_doc = load_yaml(o.profile).map_err(|e| refused("document_unreadable", e))?;
     let run = simulate(&model, seed, true);
-    let name = arch["architecture"].as_str().unwrap_or("architecture");
+    let name = built["architecture"].as_str().unwrap_or("architecture");
     let source = json!({
         "simulator": "agenticspec-sim",
         "profile": profile_doc["profile"],

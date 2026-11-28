@@ -19,8 +19,8 @@ const ARCH: &str = "architectures/workstation.yaml";
 /// An empty directory outside the checkout, the current directory of a released binary: `ui
 /// serve` and `ui conform` read no file of the repository but the architecture named.
 /// Removed again when the server of the test is dropped.
-fn outside() -> PathBuf {
-    let dir = outside_path();
+fn outside(tag: &str) -> PathBuf {
+    let dir = outside_path(tag);
     std::fs::create_dir_all(&dir).unwrap();
     assert!(
         !dir.join("ui").exists() && !dir.join("blocks").exists(),
@@ -30,32 +30,35 @@ fn outside() -> PathBuf {
     dir
 }
 
-fn outside_path() -> PathBuf {
-    std::env::temp_dir().join(format!("agenticspec-ui-serve-{}", std::process::id()))
+fn outside_path(tag: &str) -> PathBuf {
+    std::env::temp_dir().join(format!("agenticspec-ui-serve-{tag}-{}", std::process::id()))
 }
 
 /// A running `agenticspec ui serve`; dropping it kills it.
 struct Server {
     child: Child,
     url: String,
+    tag: &'static str,
 }
 
 impl Drop for Server {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
-        let _ = std::fs::remove_dir(outside_path());
+        let _ = std::fs::remove_dir(outside_path(self.tag));
     }
 }
 
 impl Server {
     /// `ui serve` of the workstation on a port the system picks, the contract derived, started
-    /// outside the checkout with the architecture named by its path.
-    fn start() -> Server {
+    /// outside the checkout (a directory of its own per `tag`) with the architecture named by its
+    /// path and `extra` after it.
+    fn start(tag: &'static str, extra: &[&std::ffi::OsStr]) -> Server {
         let mut child = Command::new(env!("CARGO_BIN_EXE_agenticspec"))
-            .current_dir(outside())
+            .current_dir(outside(tag))
             .args(["ui", "serve", "--port", "0"])
             .arg(repo().join(ARCH))
+            .args(extra)
             .env("AGENTICSPEC_UI_TOKEN", TOKEN)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
@@ -81,6 +84,7 @@ impl Server {
                 return Server {
                     child,
                     url: url.to_string(),
+                    tag,
                 };
             }
             seen.push(line);
@@ -192,7 +196,7 @@ fn operator(kind: &str) -> Vec<String> {
 /// `ui conform --architecture`, run outside the checkout too, passes against the same server.
 #[test]
 fn ui_serve_answers_the_default_control_plane_on_fixtures_and_passes_ui_conform() {
-    let server = Server::start();
+    let server = Server::start("fixtures", &[]);
     let iface = server.interface();
     assert!(
         server.url.starts_with("http://127.0.0.1:"),
@@ -336,7 +340,7 @@ fn ui_serve_answers_the_default_control_plane_on_fixtures_and_passes_ui_conform(
 
     // The conformance mode passes against the same server, run outside the checkout too.
     let out = Command::new(env!("CARGO_BIN_EXE_agenticspec"))
-        .current_dir(outside())
+        .current_dir(outside("fixtures"))
         .args(["--output", "json", "ui", "conform", "--architecture"])
         .arg(repo().join(ARCH))
         .arg("--source")
@@ -412,4 +416,159 @@ fn ui_serve_refuses_a_fixtures_directory_with_no_view() {
     let text = String::from_utf8_lossy(&out.stderr);
     assert!(text.contains("fixtures_unreadable"), "{text}");
     assert!(text.contains("holds no view fixture"), "{text}");
+}
+
+const PROFILE: &str = "fields/coding/profiles/coding.yaml";
+
+/// The story's acceptance against one `ui serve --sim` of the workstation under the coding
+/// profile, started outside the checkout: the operator feed sends the run's events in the order
+/// of its log, each event the operator ingress carries, with the log's `seq` as the cursor, and a
+/// reconnect from a cursor gets the events after it; the Activity view `Claims` read after them
+/// holds the claims they opened, at the architecture and at the part each claim's events
+/// happened at; the Metrics page shows the run's KPIs. Then `ui conform --architecture` passes
+/// against the same server.
+#[test]
+fn ui_serve_sim_replays_a_simulator_run_and_passes_ui_conform() {
+    let profile = repo().join(PROFILE);
+    let server = Server::start("sim", &["--sim".as_ref(), profile.as_os_str()]);
+    let iface = server.interface();
+    let run = agenticspec_sim::replay::run(&repo().join(ARCH), &profile).unwrap();
+    let feeds = operator("feed");
+    let carried: Vec<&agenticspec_ui::serve::ReplayEvent> = run
+        .replay
+        .events
+        .iter()
+        .filter(|e| feeds.contains(&e.event))
+        .collect();
+    assert!(carried.len() >= 5, "{} events carried", carried.len());
+
+    // R2: the run's events in order, the cursor each event's seq.
+    let url = format!("{iface}/scopes/workstation/api/channels/level");
+    let first = events(&url, None, carried.len());
+    let want: Vec<(String, String, Value)> = carried
+        .iter()
+        .map(|e| (e.seq.to_string(), e.event.clone(), e.payload.clone()))
+        .collect();
+    assert_eq!(first, want);
+    let again = events(&url, Some(&first[2].0), 2);
+    assert_eq!(again, first[3..5].to_vec());
+
+    // R1 after them: the Activity view of the claims holds every claim the feed named, in a
+    // state of the claim's lifecycle, and a part's scope only the claims of its events.
+    let claims_of = |scope: &str| -> Vec<(String, String)> {
+        let (status, body) = authed(
+            "GET",
+            &format!("{iface}/scopes/{scope}/api/views/agentic.resource.Claims"),
+            None,
+        );
+        assert_eq!(status, 200, "{body}");
+        body["rows"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| {
+                let keys: Vec<&String> = r.as_object().unwrap().keys().collect();
+                assert_eq!(keys[0], "claim_id", "{r}");
+                (
+                    r["claim_id"].as_str().unwrap().to_string(),
+                    r["state"].as_str().unwrap_or("").to_string(),
+                )
+            })
+            .collect()
+    };
+    let named = |part: Option<&str>| -> std::collections::BTreeSet<String> {
+        carried
+            .iter()
+            .filter(|e| e.payload.get("claim_id").is_some())
+            .filter(|e| part.is_none_or(|p| e.at.part == p))
+            .map(|e| e.payload["claim_id"].as_str().unwrap().to_string())
+            .collect()
+    };
+    let all = claims_of("workstation");
+    assert!(!all.is_empty());
+    let got: std::collections::BTreeSet<String> = all.iter().map(|(c, _)| c.clone()).collect();
+    assert_eq!(got, named(None));
+    for (_, state) in &all {
+        assert!(
+            [
+                "Queued",
+                "Held",
+                "Released",
+                "Expired",
+                "Killed",
+                "Withdrawn"
+            ]
+            .contains(&state.as_str()),
+            "{state}"
+        );
+    }
+    let parts: std::collections::BTreeSet<&str> = carried
+        .iter()
+        .filter(|e| e.payload.get("claim_id").is_some())
+        .map(|e| e.at.part.as_str())
+        .collect();
+    for part in parts {
+        let at: std::collections::BTreeSet<String> = claims_of(&format!("workstation/{part}"))
+            .into_iter()
+            .map(|(c, _)| c)
+            .collect();
+        assert_eq!(at, named(Some(part)), "workstation/{part}");
+    }
+    assert!(claims_of("workstation/owner").is_empty());
+
+    // The Metrics page of the control-plane UI shows the run's KPIs.
+    let (status, layout) = send(
+        "GET",
+        &format!("{}/control/views.json", server.url),
+        &[],
+        None,
+    );
+    assert_eq!(status, 200);
+    let metrics = layout["control"]["metrics"].as_array().unwrap();
+    let cost = metrics.iter().find(|m| m["kpi"] == "cost_usd").unwrap();
+    assert_eq!(
+        cost["prediction"].as_f64(),
+        run.kpis.get("cost_usd").copied()
+    );
+
+    let out = Command::new(env!("CARGO_BIN_EXE_agenticspec"))
+        .current_dir(outside("sim"))
+        .args(["--output", "json", "ui", "conform", "--architecture"])
+        .arg(repo().join(ARCH))
+        .arg("--source")
+        .arg(&iface)
+        .env("AGENTICSPEC_UI_TOKEN", TOKEN)
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let v: Value = serde_json::from_slice::<Value>(&out.stdout).unwrap()["result"].clone();
+    assert_eq!(v["failed"], 0, "{v}");
+    assert!(v["passed"].as_u64().unwrap() > 50, "{v}");
+}
+
+/// `--sim` and `--fixtures` name two sources and are refused before a port is bound, and so is a
+/// profile the simulator cannot read.
+#[test]
+fn ui_serve_sim_refuses_two_sources_and_an_unreadable_profile() {
+    let run = |extra: &[&str]| {
+        let out = Command::new(env!("CARGO_BIN_EXE_agenticspec"))
+            .current_dir(repo())
+            .args(["ui", "serve", ARCH, "--port", "0"])
+            .args(extra)
+            .env("AGENTICSPEC_UI_TOKEN", TOKEN)
+            .stdin(Stdio::null())
+            .output()
+            .unwrap();
+        assert!(!out.status.success());
+        String::from_utf8_lossy(&out.stderr).to_string()
+    };
+    let text = run(&["--sim", PROFILE, "--fixtures", "ui/views/fixtures"]);
+    assert!(text.contains("sources_conflict"), "{text}");
+    let text = run(&["--sim", "no-such-profile.yaml"]);
+    assert!(text.contains("document_unreadable"), "{text}");
 }

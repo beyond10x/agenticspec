@@ -200,7 +200,7 @@ makes the command exit non-zero with `conformance_failed` and one line per faile
 
 ## Served on fixtures
 
-`agenticspec ui serve <architecture> [--contract <file>] [--port <n>] [--fixtures <dir>]` serves
+`agenticspec ui serve <architecture> [--contract <file>] [--port <n>] [--fixtures <dir> | --sim <profile>]` serves
 the operator UI of an architecture over its default control plane on fixtures, with no runtime
 (port 7430 by default, 0 for a free one; 127.0.0.1 only). The fixtures are built into the binary
 (`views/serve.fixtures.json`) and the contract is derived with the ports and KPI catalogue built
@@ -219,12 +219,36 @@ directory that cannot be read, holds no view fixture or a file that is not that 
 with `fixtures_unreadable`. `ui conform --architecture` without `--source` starts the server on
 the built-in fixtures, or on those below `--root` when it is named.
 
+`--sim <profile>` answers a simulator run instead of fixtures:
+
+```console
+agenticspec ui serve architectures/workstation.yaml --sim fields/coding/profiles/coding.yaml
+```
+
+The server simulates the architecture once at the values it is built with, under the profile, with
+seed 1 for one simulated day, before it binds the port. The same files give the same run. It then
+answers:
+
+- R1: each view from the state the run's events left. An event's key field names its entity. The
+  block command that emits the event says what it does: `creates` opens the entity in its initial
+  state, `moves` moves it, `updates` keeps its state. A row holds the entity's identity, and its
+  `state` when the view has that field. A row is shown at the architecture, at each part where an
+  event of the entity happened, and at the copy that made it. A view the run says nothing about
+  answers no rows.
+- R2: the run's event log in order, the lines `sim run --events` writes. Each event is sent at the
+  scopes of its part, carries its payload, and has its `seq` as its cursor.
+- The Metrics page of `/control/`: the run's KPIs.
+
+R4 records commands and answers `{"row": null}`, and R5 allows every command, as on fixtures. A
+command does not change the run. `--sim` and `--fixtures` together are refused with
+`sources_conflict`. A profile the simulator refuses is refused with `simulation_refused`.
+
 | path | answers |
 |---|---|
 | `/` | the operator app `agenticspec ui build` writes for the architecture, its `config.json` with `api_base` `/ingress/operator`; the page sets the session cookie |
 | `/control/` | the control-plane UI `agenticspec ui build --control-plane` writes for the architecture: the same app with the pages across parts (Inbox, Activity, Operations, Metrics, Architecture, Events) and tiles on the overview, reading the same interface; `/control` redirects here |
-| `/ingress/operator/scopes/{scope}/api/views/{view}` | R1: the rows of the fixture of each view of the plane (`views/fixtures/<view>.json`), at every scope |
-| `/ingress/operator/scopes/{scope}/api/channels/{channel}` | R2: a level's channel plays every script of `views/fixtures/scripts/` in turn, a block's channel its own, each event the operator ingress carries, the cursor its position; a reconnect with `Last-Event-ID` gets the events after it |
+| `/ingress/operator/scopes/{scope}/api/views/{view}` | R1: the rows of the fixture of each view of the plane (`views/fixtures/<view>.json`), at every scope; with `--sim`, the rows the run left, at the scopes of their parts |
+| `/ingress/operator/scopes/{scope}/api/channels/{channel}` | R2: a level's channel plays every script of `views/fixtures/scripts/` in turn, a block's channel its own, each event the operator ingress carries, the cursor its position; a reconnect with `Last-Event-ID` gets the events after it; with `--sim`, a level's channel replays the run's event log, a block's channel the events of its domain, the cursor each event's `seq` |
 | `/ingress/operator/scopes/{scope}/api/commands/{command}` | R4: records the command and answers the outcome `views/source/outcomes.json` scripts for it (per command, optionally per input, the accepted row or the refusal's row with 422), `{"row": null}` when none does |
 | `/ingress/operator/scopes/{scope}/api/actions` | R5: every command of the plane, allowed |
 | `/fixture/commands` | the commands recorded so far, `[{scope, command, input, status}]` |

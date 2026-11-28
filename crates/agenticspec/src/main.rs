@@ -736,6 +736,7 @@ fn operator_files(
     architecture: &std::path::Path,
     contract: Option<&str>,
     api_base: &str,
+    result: Option<&Value>,
 ) -> Result<(OperatorFiles, OperatorFiles), HandlerReply> {
     use agenticspec_ui::derive::{ControlInputs, Failure};
     use agenticspec_ui::operator;
@@ -777,7 +778,7 @@ fn operator_files(
         &doc,
         &shown,
         api_base,
-        Some(&ControlInputs::default()),
+        Some(&ControlInputs { result }),
     )
     .map_err(failed)?;
     Ok((files, control))
@@ -789,10 +790,11 @@ type Served = (OperatorFiles, OperatorFiles, agenticspec_ui::plane::Plane);
 /// The control plane of an architecture: the files of its operator UI and of its control-plane UI
 /// with the API base of `ui serve`, and the plane read from the control-plane UI, which holds
 /// every read of both.
-fn plane_of(input: &Value) -> Result<Served, HandlerReply> {
+fn plane_of(input: &Value, result: Option<&Value>) -> Result<Served, HandlerReply> {
     let architecture = path_of(input, "architecture");
     let contract = input.get("contract").and_then(Value::as_str);
-    let (files, control) = operator_files(&architecture, contract, agenticspec_ui::serve::ROOT)?;
+    let (files, control) =
+        operator_files(&architecture, contract, agenticspec_ui::serve::ROOT, result)?;
     let plane = agenticspec_ui::plane::Plane::from_files(&control)
         .map_err(|e| refusal("document_refused", e))?;
     Ok((files, control, plane))
@@ -817,7 +819,7 @@ fn ui_conform_plane(input: &Value) -> HandlerReply {
             "--plan and --architecture name two plans; name one".to_string(),
         );
     }
-    let (files, control, plane) = match plane_of(input) {
+    let (files, control, plane) = match plane_of(input, None) {
         Ok(x) => x,
         Err(r) => return r,
     };
@@ -871,18 +873,52 @@ fn ui_conform_plane(input: &Value) -> HandlerReply {
 }
 
 /// `agenticspec ui serve`: the operator UI of an architecture and its default control plane on
-/// fixtures (those built into the binary, or a directory with `--fixtures`), on 127.0.0.1, until
-/// the process is stopped.
+/// fixtures (those built into the binary, or a directory with `--fixtures`), or with `--sim` on a
+/// simulator run of it under a profile, on 127.0.0.1, until the process is stopped.
 fn ui_serve(input: &Value) -> HandlerReply {
     use agenticspec_ui::serve;
-    let (files, control, plane) = match plane_of(input) {
+    let s = |k: &str| input.get(k).and_then(Value::as_str);
+    let run = match (s("sim"), s("fixtures")) {
+        (Some(_), Some(_)) => {
+            return refusal(
+                "sources_conflict",
+                "--sim and --fixtures name two sources; name one".to_string(),
+            );
+        }
+        (Some(profile), None) => {
+            let architecture = path_of(input, "architecture");
+            match agenticspec_sim::replay::run(&architecture, std::path::Path::new(profile)) {
+                Ok(r) => Some(r),
+                Err(r) => {
+                    let code = match r.code {
+                        "document_unreadable" => "document_unreadable",
+                        "architecture_refused" => "document_refused",
+                        _ => "simulation_refused",
+                    };
+                    return refusal(code, format!("{}: {}", r.code, r.detail));
+                }
+            }
+        }
+        (None, _) => None,
+    };
+    let result = run.as_ref().map(agenticspec_sim::replay::Run::result);
+    let (files, control, plane) = match plane_of(input, result.as_ref()) {
         Ok(x) => x,
         Err(r) => return r,
     };
-    let fixtures = match input.get("fixtures").and_then(Value::as_str) {
-        None => serve::Fixtures::embedded(),
-        Some(dir) => match serve::Fixtures::from_dir(std::path::Path::new(dir)) {
-            Ok(f) => f,
+    let (fixtures, source) = match (&run, s("fixtures")) {
+        (Some(r), _) => (
+            serve::Fixtures::replay(r.replay.clone()),
+            format!(
+                "a simulator run (seed {}, {} s, {} events)",
+                r.seed,
+                r.horizon_seconds,
+                r.events.len()
+            ),
+        ),
+        (None, None) => (serve::Fixtures::embedded(), "fixtures".to_string()),
+        (None, Some(dir)) => match serve::Fixtures::from_dir(std::path::Path::new(dir)) {
+            Ok(f) => (f, "fixtures".to_string()),
             Err(e) => return refusal("fixtures_unreadable", e),
         },
     };
@@ -914,7 +950,7 @@ fn ui_serve(input: &Value) -> HandlerReply {
     let mut err = std::io::stderr().lock();
     let _ = writeln!(
         err,
-        "agenticspec: serving {url} (the operator UI of {architecture} on fixtures, its control-plane UI at {control}; the runtime interface at {interface})"
+        "agenticspec: serving {url} (the operator UI of {architecture} on {source}, its control-plane UI at {control}; the runtime interface at {interface})"
     );
     if given.is_none() {
         let _ = writeln!(
