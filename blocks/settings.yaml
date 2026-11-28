@@ -6,7 +6,8 @@ summary: >-
   contract copies the settings marked `narrows` into the ports they narrow; the block pages list
   them. Types: number and integer (with `unit`, `min`, `max`), boolean, enum (the variants of a
   block's own enum named by `enum`, in snake case, or the words of `values`), duration (`90s`,
-  `15m`, `24h`, `1d`, or a number of seconds; `min` and `max` in seconds), string, part (the name
+  `15m`, `24h`, `1d`, or a number of seconds; `min` and `max` in seconds), string (`list: true`
+  takes a non-empty list of texts), part (the name
   of another part; `list: true` takes a list of names) and shares (a map from the name of a part
   to a number of at least 0). `default` is the value a part takes without the setting; `narrows`
   names the contract ports it narrows, `all` every port the part uses. `notes` (type notes) is a
@@ -92,6 +93,7 @@ blocks:
       - {name: kind, type: string, narrows: all, summary: "What kind of runtime the part is."}
       - {name: role, type: string, summary: "The role of the behaviour profile the runtime's runs play."}
       - {name: durable_state, type: boolean, default: false, summary: "Whether the runtime keeps durable state of its own, records it writes and reads back after a restart; in a deployment bundle its unit claims an exclusive volume for it, `<part>-state`."}
+      - {name: state_writers, type: string, list: true, summary: "The programs outside the runtime that also write its durable state, by name; only beside `durable_state: true`. The state stays the runtime's one volume, with no workspace lease or proposal port, and the bundle's claim of it names these writers."}
       - {name: model_share, type: shares, summary: "The share of the runtime's model calls each model part it reaches gets; without it, equal shares."}
       - {name: per_day_usd, type: number, unit: USD, min: 0, summary: "The spend cap of the runtime's runs per calendar day; without it, no cap."}
       - {name: per_month_usd, type: number, unit: USD, min: 0, summary: "The spend cap of the runtime's runs per calendar month; without it, no cap."}

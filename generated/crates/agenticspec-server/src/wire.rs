@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 8c5843f8412f29eddc22aa450de14862be977e412547fd1a08517178bd5b81bc
+// contract digest ca4c9e75228ab9679330c21f51ee71fa5ca55f4b89546af413be40d991d1a07f
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -5419,6 +5419,8 @@ pub fn encode_agenticspec_cli_ui_generate_input(value: &agenticspec_types::cli::
     json::push_text(out, &value.path);
     json::member(out, "out");
     json::push_text(out, &value.out);
+    json::member(out, "project");
+    json::push_bool(out, value.project);
     out.push('}');
 }
 
@@ -5428,7 +5430,7 @@ pub fn encode_agenticspec_cli_ui_generate_input(value: &agenticspec_types::cli::
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_generate_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiGenerateInput, json::DecodeError> {
-    json::closed_at(value, at, &["path", "out"])?;
+    json::closed_at(value, at, &["path", "out", "project"])?;
     Ok(agenticspec_types::cli::UiGenerateInput {
         path: {
             let at0 = json::nested(at, "path");
@@ -5439,6 +5441,11 @@ pub fn decode_agenticspec_cli_ui_generate_input(value: &json::Value, at: &str) -
             let at1 = json::nested(at, "out");
             let member1 = json::member_at(value, at, "out")?;
             json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        project: {
+            let at2 = json::nested(at, "project");
+            let member2 = json::member_at(value, at, "project")?;
+            json::bool_at(member2, &at2, "a boolean")?
         },
     })
 }

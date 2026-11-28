@@ -34,7 +34,10 @@ pub enum Kind {
         from: Option<String>,
     },
     Duration,
-    String,
+    /// A text, or with `list` a non-empty list of non-empty texts.
+    String {
+        list: bool,
+    },
     /// The name of another part, or a list of names.
     Part {
         list: bool,
@@ -177,7 +180,9 @@ fn setting(at: &str, v: &Value) -> Result<Setting, String> {
         Some("integer") => Kind::Integer,
         Some("boolean") => Kind::Boolean,
         Some("duration") => Kind::Duration,
-        Some("string") => Kind::String,
+        Some("string") => Kind::String {
+            list: v["list"] == true,
+        },
         Some("shares") => Kind::Shares,
         Some("notes") => Kind::Notes,
         Some("part") => Kind::Part {
@@ -322,7 +327,8 @@ impl Type {
             Kind::Boolean => "true or false".to_string(),
             Kind::Enum { values, .. } => format!("one of {}", values.join(", ")),
             Kind::Duration => format!("a duration{}", self.range()),
-            Kind::String => "a text".to_string(),
+            Kind::String { list: false } => "a text".to_string(),
+            Kind::String { list: true } => "a non-empty list of texts".to_string(),
             Kind::Part { list: false } => "the name of a part".to_string(),
             Kind::Part { list: true } => "a list of names of parts".to_string(),
             Kind::Shares => "a map from model parts to shares of at least 0".to_string(),
@@ -342,7 +348,8 @@ impl Type {
             Kind::Boolean => "boolean",
             Kind::Enum { .. } => "enum",
             Kind::Duration => "duration",
-            Kind::String => "string",
+            Kind::String { list: false } => "string",
+            Kind::String { list: true } => "string list",
             Kind::Part { list: false } => "part",
             Kind::Part { list: true } => "part list",
             Kind::Shares => "shares",
@@ -372,7 +379,10 @@ impl Type {
                 Value::String(s) => parse_duration(s).is_some_and(|x| self.within(x)),
                 _ => false,
             },
-            Kind::String => v.is_string(),
+            Kind::String { list: false } => v.is_string(),
+            Kind::String { list: true } => v.as_array().is_some_and(|xs| {
+                !xs.is_empty() && xs.iter().all(|x| x.as_str().is_some_and(|s| !s.is_empty()))
+            }),
             Kind::Part { list } => match v {
                 Value::String(s) => !s.is_empty(),
                 Value::Array(xs) => {

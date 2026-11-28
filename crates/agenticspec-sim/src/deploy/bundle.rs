@@ -1210,9 +1210,10 @@ fn access(
 }
 
 /// The volumes a unit claims: one per workspace part and one per runtime part with durable
-/// state, `<part>-state`. Per copy of its part when it is `per` one; its access from who mounts
-/// it ([`access`]); its size is `parts.<p>.size` of the binding, its mount
-/// `parts.<p>.volumes[].mount` of a part of the unit that names it.
+/// state, `<part>-state`, which names the programs outside the runtime that also write it
+/// (`writers`, from `state_writers`) when the part names any. Per copy of its part when it is
+/// `per` one; its access from who mounts it ([`access`]); its size is `parts.<p>.size` of the
+/// binding, its mount `parts.<p>.volumes[].mount` of a part of the unit that names it.
 fn volumes(inputs: &Inputs, plan: &Plan, u: &Unit) -> Vec<Value> {
     let parts = &u.parts;
     let binding = &inputs.binding.doc;
@@ -1227,6 +1228,9 @@ fn volumes(inputs: &Inputs, plan: &Plan, u: &Unit) -> Vec<Value> {
                 "access": access(plan, binding, u, &name, false, per_instance),
                 "per_instance": per_instance,
             });
+            if let Some(w) = binding_form::state_writers(part) {
+                v["writers"] = w.clone();
+            }
             if let Some(size) = inputs.binding.doc["parts"][p]["size"].as_str() {
                 v["size"] = json!(size);
             }

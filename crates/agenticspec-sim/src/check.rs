@@ -404,10 +404,27 @@ fn settings(parts: &serde_json::Map<String, Value>) -> Vec<Refusal> {
                     value: v.to_string(),
                     expected,
                 });
+            } else if let Some(expected) = beside(b, key, p) {
+                out.push(Refusal::SettingInvalid {
+                    part: name.clone(),
+                    setting: key.clone(),
+                    value: v.to_string(),
+                    expected: expected.to_string(),
+                });
             }
         }
     }
     out
+}
+
+/// What setting `key` of a part of block `b` needs beside it, when the part lacks it: a
+/// runtime's `state_writers` names writers of its durable state, so it needs
+/// `durable_state: true` (R109).
+fn beside(b: &str, key: &str, p: &Value) -> Option<&'static str> {
+    (b == "runtime"
+        && key == crate::deploy::binding::STATE_WRITERS
+        && *value(&p["durable_state"]) != Value::Bool(true))
+    .then_some("writers of durable state, on a part with `durable_state: true`")
 }
 
 pub fn check(architecture: &Value) -> Vec<Refusal> {

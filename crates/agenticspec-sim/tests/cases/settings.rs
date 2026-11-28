@@ -224,6 +224,101 @@ fn a_runtime_part_may_keep_durable_state_off_by_default() {
 }
 
 #[test]
+fn a_runtime_part_with_durable_state_may_name_the_outside_writers_of_it() {
+    let s = settings::table()
+        .setting("runtime", "state_writers")
+        .unwrap();
+    assert_eq!(s.ty.kind, Kind::String { list: true });
+    assert_eq!(s.ty.describe(), "a non-empty list of texts");
+    assert_eq!(s.ty.name(), "string list");
+    assert_eq!(s.default, None);
+    assert_eq!(s.narrows, Narrows::None);
+    assert!(!s.summary.is_empty());
+    // A plain text setting is unchanged.
+    let kind = settings::table().setting("runtime", "kind").unwrap();
+    assert_eq!(kind.ty.kind, Kind::String { list: false });
+    assert_eq!(kind.ty.describe(), "a text");
+    assert!(kind.ty.accepts(&json!("")).is_ok());
+
+    let path = repo_root().join(
+        "crates/agenticspec-sim/tests/cases/deploy/durable_state_unplaceable.architecture.yaml",
+    );
+    let mut a = agenticspec_sim::doc::load_yaml(&path).unwrap();
+    a["parts"]["flow"]["state_writers"] = json!(["backup", "indexer"]);
+    assert_eq!(check(&a), Vec::<Refusal>::new());
+    for bad in [
+        json!([]),
+        json!("backup"),
+        json!([""]),
+        json!(["backup", 1]),
+        json!({"writers": ["backup"]}),
+        json!(true),
+    ] {
+        a["parts"]["flow"]["state_writers"] = bad.clone();
+        let r = check(&a);
+        assert_eq!(
+            refused(&a),
+            vec![("setting_invalid".to_string(), "flow".to_string())],
+            "{bad}"
+        );
+        assert!(
+            r[0].to_string().contains(&format!(
+                "setting `state_writers` is {bad}, expected a non-empty list of texts"
+            )),
+            "{}",
+            r[0]
+        );
+    }
+    // Writers of a state the part does not keep are refused: `durable_state` absent or false.
+    a["parts"]["flow"]["state_writers"] = json!(["backup"]);
+    for durable in [None, Some(json!(false))] {
+        let flow = a["parts"]["flow"].as_object_mut().unwrap();
+        match &durable {
+            None => flow.remove("durable_state"),
+            Some(d) => flow.insert("durable_state".into(), d.clone()),
+        };
+        let r = check(&a);
+        assert_eq!(
+            refused(&a),
+            vec![("setting_invalid".to_string(), "flow".to_string())],
+            "durable_state {durable:?}"
+        );
+        assert!(
+            r[0].to_string().contains(
+                "setting `state_writers` is [\"backup\"], expected writers of durable state, on a part with `durable_state: true`"
+            ),
+            "{}",
+            r[0]
+        );
+    }
+    // Only a runtime part keeps durable state.
+    a["parts"]["flow"]["durable_state"] = json!(true);
+    a["parts"]["lead"]["state_writers"] = json!(["backup"]);
+    assert_eq!(
+        refused(&a),
+        vec![("setting_unknown".to_string(), "lead".to_string())]
+    );
+}
+
+#[test]
+fn a_string_list_setting_takes_a_non_empty_list_of_texts() {
+    let t = settings::parse(
+        "format: agenticspec-settings/1\nevery_part: []\nblocks:\n  - kind: gate\n    domain: agentic.gate\n    settings:\n      - {name: keys, type: string, list: true, summary: The keys that open the gate.}\n",
+    )
+    .unwrap();
+    let keys = t.setting("gate", "keys").unwrap();
+    assert_eq!(keys.ty.kind, Kind::String { list: true });
+    assert!(keys.ty.accepts(&json!(["brass", "iron"])).is_ok());
+    for bad in [json!([]), json!("brass"), json!([""]), json!([1])] {
+        assert_eq!(
+            keys.ty.accepts(&bad),
+            Err("a non-empty list of texts".into()),
+            "{bad}"
+        );
+    }
+}
+
+#[test]
 fn a_boolean_setting_takes_true_or_false() {
     // The type read from a table of its own, beside the runtime's `durable_state`.
     let t = settings::parse(

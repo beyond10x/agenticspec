@@ -207,6 +207,19 @@ its access by the rule below, `per_instance` when the part is `per` another, its
 model the target runs: none of them holds such a volume (`durable_state_unplaceable`). An external
 runtime part is not started by the target, and its state is not the bundle's.
 
+**Outside writers of durable state (R109).** A service may share its state directory with other
+programs on the same host (a backup, an indexer). Modelled as a workspace with
+`sharing: shared_read_write`, it would make the contract ask for `workspace.lease` and
+`workspace.proposal`, which nothing serves. So the runtime part names them instead:
+`state_writers: [<name>, ...]`, beside `durable_state: true`. A sibling setting, not a map in place
+of `true`: the settings table has one type per setting, `durable_state` stays a boolean, its
+meaning and every bundle without writers are unchanged, and the architecture page shows the list as
+the part's property `state writers`. The new type is `string` with `list: true` (a non-empty list
+of non-empty texts); the writers are not parts of the architecture, so `part` does not fit. The
+volume claim is the one of `durable_state: true`, its access by the rule below (the writers are
+outside the bundle's units), with `writers` added. `state_writers` without `durable_state: true` is
+`setting_invalid`. The contract does not carry the writers: no port is narrowed by them.
+
 **Volume access follows from who mounts it (R93).** A workspace's `sharing` says how its holders
 use it; a claim's access says how many pods attach it, and a single-node storage provisioner
 refuses `read_write_many`. So the access is derived from the mounts, the same data that gives the
