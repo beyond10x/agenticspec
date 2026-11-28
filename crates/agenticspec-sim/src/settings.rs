@@ -96,8 +96,16 @@ pub fn snake(variant: &str) -> String {
 }
 
 /// The variants of enum `name` of the blocks, in snake case, or `None` when no block declares it.
+///
+/// Only a block file whose text declares the enum (`name: <enum>`) is parsed: parsing every block
+/// file costs about 0.8 s in a test build, and the settings table is read once in each test
+/// process.
 pub fn enum_variants(name: &str) -> Option<Vec<String>> {
+    let declared = format!("name: {name}");
     for (_, text) in crate::unavailable::SOURCES {
+        if !text.contains(&declared) {
+            continue;
+        }
         let Ok(doc) = serde_yaml_ng::from_str::<Value>(text) else {
             continue;
         };
