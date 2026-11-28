@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:governance-types
 kind: story
-status: draft
+status: active
 title: 'Governance types: approver identity, grant issuers, decisions bound to a subject digest'
 summary: Seven governance gaps a consumer's adversarial reviews found; agenticspec holds the types and invariants, the decision stays a port
 relations:
@@ -22,7 +22,10 @@ scope:
   path: blocks/8-place/workspace.yaml
 - confidence: cited
   path: kpis/catalogue.yaml
-revision: 2
+revision: 4
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 3}
+- {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 4}
 ---
 ## Outcome
 
