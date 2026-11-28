@@ -170,6 +170,7 @@ Each entry of `units`:
 | `secrets` | every secret by name; never a value |
 | `egress` | every destination by name: another unit's link with transport and protocol, or an `external` dependency. Nothing undeclared is granted (`weft:docs/domain-sketch.md:364-365`) |
 | `roles` | the abstract roles the unit needs (below) |
+| `ports` | the contract ports its parts use, by their derived names (`agenticspec sim contract`, `blocks/ports.json`), with the settings that narrow them; cloudspec holds them unchanged, and a target matches a runtime against them, more than one runtime per role being possible |
 | `source` | bundle digest, unit name, part paths: carried into every object translated from the unit and every observation of it (C3) |
 
 **Abstract roles.** The bundle names roles, never a provider: a store's kind (record, key-value,
