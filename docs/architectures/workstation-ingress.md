@@ -80,8 +80,8 @@ Ingresses: who reaches the architecture from outside, what each audience may use
 | ingress | audience | authenticated | exports | commands | views | feeds | metrics |
 |---|---|---|---|---|---|---|---|
 | **metrics** | `monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 5 |
-| **operator** | `admin` | yes | `http`, `event_stream`, `ui`, `tool` | 3 | 30 | 75 | 0 |
-| **user** | `owner` | yes | `http`, `event_stream`, `ui` | 2 | 19 | 45 | 0 |
+| **operator** | `admin` | yes | `http`, `event_stream`, `ui`, `tool` | 3 | 31 | 75 | 0 |
+| **user** | `owner` | yes | `http`, `event_stream`, `ui` | 2 | 20 | 45 | 0 |
 
 - **metrics**: `cost_usd`, `owner_wait_share`, `pool_utilization`, `queue_wait_p90_seconds`, `rate_limited_seconds`
 - **operator**: `agentic.gateway.DetachUpstream`, `agentic.gateway.DrainGateway`, `agentic.gateway.StopGateway`

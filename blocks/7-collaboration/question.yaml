@@ -180,6 +180,11 @@ errors:
   - name: agentic.question.DeadlineNotReached
     summary: The deadline has not passed; the default is not taken yet.
 
+  - name: agentic.question.DeadlinePassed
+    summary: >-
+      The deadline has passed, so the question takes its default and no answer; nothing was
+      recorded.
+
   - name: agentic.question.NotTheAsker
     summary: Only the party that asked withdraws a question.
 
@@ -308,6 +313,13 @@ commands:
         payload:
           agentic.question.OptionNotOffered:
             option: input.option
+      # Past its deadline a question takes its default (design/building-blocks.md): from the
+      # deadline on, the instant TakeDefault first accepts, an answer is refused and the question
+      # stays Open for the clock.
+      - name: deadline-passed
+        when_subject:
+          predicate: deadline <= now
+        error: agentic.question.DeadlinePassed
       - name: answered
         moves: agentic.question.Question.answer
         instance: question_id
@@ -376,8 +388,8 @@ commands:
           agentic.question.QuestionStateConflict:
             state: {subject: state}
 
-  # An answer that arrives after the deadline and before the default is taken is accepted.
-  # UNMAPPED: whether an answer past the deadline is refused is not stated by the design.
+  # An answer that arrives at or after the deadline is refused (Answer, deadline-passed), so the
+  # question stays Open until this command takes its default.
   - name: agentic.question.TakeDefault
     naming:
       wire: take-default

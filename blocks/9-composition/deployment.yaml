@@ -435,6 +435,12 @@ errors:
     fields:
       - {name: state, type: agentic.deployment.DeploymentUnit.State}
 
+  - name: agentic.deployment.NegativeReady
+    summary: A unit has no negative number of ready replicas; nothing was observed.
+    fields:
+      - {name: unit_id, type: agentic.shared.DeploymentUnitId}
+      - {name: ready, type: Integer}
+
 commands:
   # One Active installation per runtime: a second is refused until the first drains. A new
   # installation that replaces a drained or draining one names it, so a rollback can return to it.
@@ -1188,6 +1194,12 @@ commands:
       - {name: ready, type: Integer}
       - {name: last_failure, type: Optional<String>}
     outcomes:
+      - name: negative-ready
+        when: ready < 0
+        error: agentic.deployment.NegativeReady
+        payload:
+          agentic.deployment.NegativeReady: {unit_id: input.unit_id, ready: input.ready}
+        summary: The unit keeps the ready count it last held (its invariant is ready >= 0).
       - name: unknown
         unknown_instance: true
         error: agentic.deployment.UnknownUnit

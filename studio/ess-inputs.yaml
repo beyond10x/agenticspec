@@ -9,3 +9,4 @@ specification:
   - components.yaml
 scenarios:
   - scenarios/session/call-tool-dry-run-only-for-apply.yaml
+  - scenarios/session/agent-opens-draft.yaml

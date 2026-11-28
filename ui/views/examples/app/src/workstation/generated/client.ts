@@ -12,10 +12,13 @@ export type Value = string | number | boolean | null | Value[] | { [key: string]
 export type Row = Record<string, Value>;
 
 /** The rows of `agentic.agent.AgentRevisions`, by the fields the document reads. */
-export type AgenticAgentAgentRevisionsRow = { agent_id?: Value; agent_revision_id?: Value; budget?: Value; instructions?: Value; knowledge?: Value; last_used_at?: Value; models?: Value; number?: Value; published_at?: Value; role?: Value; state?: Value; tools?: Value };
+export type AgenticAgentAgentRevisionsRow = { agent_id?: Value; agent_revision_id?: Value; budget?: Value; instructions?: Value; knowledge?: Value; models?: Value; number?: Value; published_at?: Value; role?: Value; state?: Value; tools?: Value };
 
 /** The rows of `agentic.agent.Agents`, by the fields the document reads. */
 export type AgenticAgentAgentsRow = { agent_id?: Value; defined_at?: Value; name?: Value; principal_id?: Value; state?: Value };
+
+/** The rows of `agentic.agent.RevisionUsages`, by the fields the document reads. */
+export type AgenticAgentRevisionUsagesRow = { agent_revision_id?: Value; state?: Value; usage_id?: Value; used_at?: Value };
 
 /** The rows of `agentic.architecture.Graph` (a placeholder until the model holds the view), by the fields the document reads. */
 export type AgenticArchitectureGraphRow = Record<string, never>;
@@ -117,6 +120,7 @@ export type AgenticWorkspaceWorkspacesRow = { base_revision?: Value; kind?: Valu
 export interface Reads {
   'agentic.agent.AgentRevisions': { params: Record<string, never>; row: AgenticAgentAgentRevisionsRow };
   'agentic.agent.Agents': { params: Record<string, never>; row: AgenticAgentAgentsRow };
+  'agentic.agent.RevisionUsages': { params: Record<string, never>; row: AgenticAgentRevisionUsagesRow };
   'agentic.architecture.Graph': { params: { architecture: Value }; row: AgenticArchitectureGraphRow };
   'agentic.architecture.Parts': { params: Record<string, never>; row: AgenticArchitecturePartsRow };
   'agentic.architecture.Reach': { params: { architecture_id: Value }; row: AgenticArchitectureReachRow };
@@ -164,7 +168,7 @@ export interface Channels {
 
 export type ChannelName = keyof Channels;
 
-export const READS = ['agentic.agent.AgentRevisions', 'agentic.agent.Agents', 'agentic.architecture.Graph', 'agentic.architecture.Parts', 'agentic.architecture.Reach', 'agentic.architecture.Settings', 'agentic.channel.ChannelMessages', 'agentic.channel.ChannelPosts', 'agentic.channel.Channels', 'agentic.channel.Messages', 'agentic.channel.Posts', 'agentic.channel.Subscriptions', 'agentic.gateway.Calls', 'agentic.gateway.Gateways', 'agentic.gateway.Upstreams', 'agentic.harness.HarnessSessions', 'agentic.harness.Harnesses', 'agentic.harness.PermissionModes', 'agentic.harness.ToolCalls', 'agentic.harness.Turns', 'agentic.model.Endpoints', 'agentic.model.Inferences', 'agentic.model.Models', 'agentic.model.Routes', 'agentic.principal.Principals', 'agentic.question.OpenQuestions', 'agentic.question.Questions', 'agentic.resource.Claims', 'agentic.resource.Pools', 'agentic.resource.Queue', 'agentic.sandbox.Sandboxes', 'agentic.workspace.Leases', 'agentic.workspace.Proposals', 'agentic.workspace.Workspaces'] as const;
+export const READS = ['agentic.agent.AgentRevisions', 'agentic.agent.Agents', 'agentic.agent.RevisionUsages', 'agentic.architecture.Graph', 'agentic.architecture.Parts', 'agentic.architecture.Reach', 'agentic.architecture.Settings', 'agentic.channel.ChannelMessages', 'agentic.channel.ChannelPosts', 'agentic.channel.Channels', 'agentic.channel.Messages', 'agentic.channel.Posts', 'agentic.channel.Subscriptions', 'agentic.gateway.Calls', 'agentic.gateway.Gateways', 'agentic.gateway.Upstreams', 'agentic.harness.HarnessSessions', 'agentic.harness.Harnesses', 'agentic.harness.PermissionModes', 'agentic.harness.ToolCalls', 'agentic.harness.Turns', 'agentic.model.Endpoints', 'agentic.model.Inferences', 'agentic.model.Models', 'agentic.model.Routes', 'agentic.principal.Principals', 'agentic.question.OpenQuestions', 'agentic.question.Questions', 'agentic.resource.Claims', 'agentic.resource.Pools', 'agentic.resource.Queue', 'agentic.sandbox.Sandboxes', 'agentic.workspace.Leases', 'agentic.workspace.Proposals', 'agentic.workspace.Workspaces'] as const;
 export const COMMANDS = ['agentic.channel.SendMessage', 'agentic.question.Answer'] as const;
 export const CHANNELS = ['level'] as const;
 

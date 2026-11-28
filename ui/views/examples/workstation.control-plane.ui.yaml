@@ -375,7 +375,6 @@ widgets:
           on:
             - agentic.agent.AgentRevisionPublished
             - agentic.agent.AgentRevisionRetired
-            - agentic.agent.AgentRevisionUsed
           effect: refetch
           coalesce: 1s
         columns:
@@ -389,7 +388,6 @@ widgets:
           - {field: knowledge, as: list}
           - {field: budget, as: json}
           - {field: published_at, as: timestamp}
-          - {field: last_used_at, as: timestamp}
           - {field: state, as: badge}
   agentic.agent.Agents:
     summary: "Rows of the view agentic.agent.Agents over Agent, keyed by agent_id."
@@ -416,6 +414,30 @@ widgets:
           - principal_id
           - name
           - {field: defined_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.agent.RevisionUsages:
+    summary: "Rows of the view agentic.agent.RevisionUsages over RevisionUsage, keyed by usage_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.agent.RevisionUsages, key: usage_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.agent.AgentRevisionUsed
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - usage_id
+          - agent_revision_id
+          - {field: used_at, as: timestamp}
           - {field: state, as: badge}
   agentic.harness.HarnessSessions:
     summary: "Rows of the view agentic.harness.HarnessSessions over HarnessSession, keyed by harness_session_id."
@@ -1508,7 +1530,7 @@ pages:
         grid: [[area_instances], [area_agent], [area_model], [area_harness], [area_channel], [area_question]]
         place:
           area_instances: [agent_agents]
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_model: {sections: [model_endpoints, model_inferences, model_models, model_routes], frame: shared, title: Model, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_channel: {sections: [channel_channel_messages, channel_channel_posts, channel_channels, channel_messages, channel_posts, channel_subscriptions], frame: shared, title: Channel, collapsed: true}
@@ -1521,6 +1543,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'workstation'", part: "'operator'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'workstation'", part: "'operator'", channel: level}
       - name: model_endpoints
         title: Endpoints
@@ -1690,7 +1716,7 @@ pages:
         place:
           area_instances: [agent_agents]
           area_per: {sections: [per_box_sandbox_sandboxes, per_tree_workspace_workspaces], frame: shared, title: "One per worker: box, tree"}
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_model: {sections: [model_endpoints, model_inferences, model_models, model_routes], frame: shared, title: Model, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_question: {sections: [question_open_questions, question_questions], frame: shared, title: Question, collapsed: true}
@@ -1711,6 +1737,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'workstation'", part: "'worker'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'workstation'", part: "'worker'", channel: level}
       - name: model_endpoints
         title: Endpoints
@@ -1870,8 +1900,8 @@ pages:
         grid: [[area_owner], [area_operator], [area_worker], [area_gateway], [area_model], [area_box], [area_placements]]
         place:
           area_owner: {sections: [ops_owner_principal_principals], frame: shared, title: owner, collapsed: true}
-          area_operator: {sections: [ops_operator_agent_agents, ops_operator_harness_harnesses], frame: shared, title: operator, collapsed: true}
-          area_worker: {sections: [ops_worker_agent_agents, ops_worker_harness_harnesses], frame: shared, title: worker, collapsed: true}
+          area_operator: {sections: [ops_operator_agent_agent_revisions, ops_operator_agent_agents, ops_operator_harness_harnesses], frame: shared, title: operator, collapsed: true}
+          area_worker: {sections: [ops_worker_agent_agent_revisions, ops_worker_agent_agents, ops_worker_harness_harnesses], frame: shared, title: worker, collapsed: true}
           area_gateway: {sections: [ops_gateway_gateway_gateways, ops_gateway_gateway_upstreams], frame: shared, title: gateway}
           area_model: {sections: [ops_model_model_models, ops_model_model_routes], frame: shared, title: model, collapsed: true}
           area_box: {sections: [ops_box_sandbox_sandboxes], frame: shared, title: box}
@@ -1881,6 +1911,10 @@ pages:
         title: Principals of owner
         component: agentic.principal.Principals
         args: {architecture: "'workstation'", part: "'owner'", channel: level}
+      - name: ops_operator_agent_agent_revisions
+        title: Agent revisions of operator
+        component: agentic.agent.AgentRevisions
+        args: {architecture: "'workstation'", part: "'operator'", channel: level}
       - name: ops_operator_agent_agents
         title: Agents of operator
         component: agentic.agent.Agents
@@ -1889,6 +1923,10 @@ pages:
         title: Harnesses of operator
         component: agentic.harness.Harnesses
         args: {architecture: "'workstation'", part: "'operator'", channel: level}
+      - name: ops_worker_agent_agent_revisions
+        title: Agent revisions of worker
+        component: agentic.agent.AgentRevisions
+        args: {architecture: "'workstation'", part: "'worker'", channel: level}
       - name: ops_worker_agent_agents
         title: Agents of worker
         component: agentic.agent.Agents

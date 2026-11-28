@@ -1,0 +1,8 @@
+{
+  "view": "agentic.agent.RevisionUsages",
+  "rows": [
+    {"usage_id": "00000000-0000-4000-8000-6705a1240000", "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000", "used_at": "2026-11-20T09:02:00Z", "state": "Recorded"},
+    {"usage_id": "00000000-0000-4000-8000-6705a1240001", "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0001", "used_at": "2026-11-20T10:02:00Z", "state": "Recorded"},
+    {"usage_id": "00000000-0000-4000-8000-6705a1240002", "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0002", "used_at": "2026-11-20T11:02:00Z", "state": "Recorded"}
+  ]
+}

@@ -282,10 +282,10 @@
     "agentic.agent": {
       "commands": {
         "agentic.agent.DefineAgent": "configuration",
-        "agentic.agent.PublishRevision": "intent",
+        "agentic.agent.PublishRevision": "configuration",
         "agentic.agent.RetireAgent": "administration",
         "agentic.agent.RetireRevision": "administration",
-        "agentic.agent.UseRevision": "report"
+        "agentic.agent.UseRevision": "configuration"
       },
       "events": [
         "agentic.agent.AgentDefined",
@@ -296,7 +296,8 @@
       ],
       "views": [
         "agentic.agent.AgentRevisions",
-        "agentic.agent.Agents"
+        "agentic.agent.Agents",
+        "agentic.agent.RevisionUsages"
       ]
     },
     "agentic.architecture": {
@@ -952,17 +953,6 @@
   "format": "agenticspec-ports/1",
   "ports": [
     {
-      "block": "agent",
-      "intent_event": "agentic.agent.AgentRevisionPublished",
-      "kind": "Outbound",
-      "name": "agent.revision",
-      "protocol": "PublishRevision UseRevision*",
-      "reports": [
-        "agentic.agent.UseRevision"
-      ],
-      "waiting_state": "agentic.agent.AgentRevision.Published"
-    },
-    {
       "block": "architecture",
       "intent_event": "agentic.architecture.PatchRequested",
       "kind": "Outbound",
@@ -1409,5 +1399,5 @@
       "waiting_state": "agentic.workspace.Proposal.Proposed"
     }
   ],
-  "sources_sha256": "b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1"
+  "sources_sha256": "b257c8de9607627a0d6f6d4b6786198c766bb2811aee55627f8a1c1c1b09e99e"
 }

@@ -5,12 +5,13 @@ type: ess-http/1
 specification:
   system: agentic
   version: v1
-  source_digest: sha256:fe73327ca63f6c7a34b08bf8fe59d68fb6c895294ffb569d0e4956008c169f92
+  source_digest: sha256:1a9c75e829f70b5fcd1e86362e8903fdfa91bc171a6cc686c64e2bf278a51c2d
 routes:
   - {command: agentic.channel.SendMessage, method: post}
   - {command: agentic.question.Answer, method: post}
   - {view: agentic.agent.AgentRevisions, method: get}
   - {view: agentic.agent.Agents, method: get}
+  - {view: agentic.agent.RevisionUsages, method: get}
   - {view: agentic.channel.ChannelMessages, method: get}
   - {view: agentic.channel.ChannelPosts, method: get}
   - {view: agentic.channel.Channels, method: get}

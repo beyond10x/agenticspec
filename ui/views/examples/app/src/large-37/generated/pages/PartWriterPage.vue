@@ -5,6 +5,7 @@ import { KitPanel, KitShell, KitStack } from '@kit';
 import { useShell } from '../runtime';
 import AgenticAgentAgentRevisions from '../widgets/AgenticAgentAgentRevisions.vue';
 import AgenticAgentAgents from '../widgets/AgenticAgentAgents.vue';
+import AgenticAgentRevisionUsages from '../widgets/AgenticAgentRevisionUsages.vue';
 import AgenticGatewayCalls from '../widgets/AgenticGatewayCalls.vue';
 import AgenticGatewayGateways from '../widgets/AgenticGatewayGateways.vue';
 import AgenticGatewayUpstreams from '../widgets/AgenticGatewayUpstreams.vue';
@@ -30,6 +31,9 @@ const shell = useShell();
         <KitStack :padded="false">
           <KitPanel name="agent_agent_revisions" title="Agent revisions" collapsible>
             <AgenticAgentAgentRevisions :architecture="'large-37'" :channel="'level'" :part="'writer'" />
+          </KitPanel>
+          <KitPanel name="agent_revision_usages" title="Revision usages" collapsible>
+            <AgenticAgentRevisionUsages :architecture="'large-37'" :channel="'level'" :part="'writer'" />
           </KitPanel>
         </KitStack>
       </KitPanel>

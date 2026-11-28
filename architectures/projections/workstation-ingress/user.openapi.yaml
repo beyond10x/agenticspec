@@ -45,9 +45,6 @@ components:
           items:
             $ref: '#/components/schemas/agentic.shared.KnowledgeId'
           type: array
-        last_used_at:
-          format: date-time
-          type: string
         models:
           items:
             $ref: '#/components/schemas/agentic.agent.ModelBinding'
@@ -189,6 +186,54 @@ components:
       type: string
       x-ess-kind: enum
       x-ess-name: agentic.agent.ModelUse
+    agentic.agent.RevisionUsage.State:
+      enum:
+      - Recorded
+      title: State
+      type: string
+      x-ess-kind: enum
+      x-ess-name: agentic.agent.RevisionUsage.State
+    agentic.agent.RevisionUsageId:
+      description: The identity of one use of a revision.
+      format: uuid
+      pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+      title: RevisionUsageId
+      type: string
+      x-ess-kind: newtype
+      x-ess-name: agentic.agent.RevisionUsageId
+    agentic.agent.RevisionUsages.Response:
+      additionalProperties: false
+      description: The rows of `agentic.agent.RevisionUsages`.
+      properties:
+        rows:
+          description: Every row the projection holds, in the order it holds them.
+          items:
+            $ref: '#/components/schemas/agentic.agent.RevisionUsages.Row'
+          type: array
+      required:
+      - rows
+      type: object
+    agentic.agent.RevisionUsages.Row:
+      additionalProperties: false
+      properties:
+        agent_revision_id:
+          $ref: '#/components/schemas/agentic.shared.AgentRevisionId'
+        state:
+          $ref: '#/components/schemas/agentic.agent.RevisionUsage.State'
+        usage_id:
+          $ref: '#/components/schemas/agentic.agent.RevisionUsageId'
+        used_at:
+          format: date-time
+          type: string
+      required:
+      - usage_id
+      - agent_revision_id
+      - used_at
+      - state
+      title: Revision usages row
+      type: object
+      x-ess-kind: view-row
+      x-ess-name: agentic.agent.RevisionUsages
     agentic.channel.Act:
       description: Request asks the recipient to act; Inform only tells it something.
       enum:
@@ -1486,6 +1531,26 @@ components:
       - outcome
       - published
       type: object
+    agentic.question.Answer.deadline-passed.Response:
+      additionalProperties: false
+      description: Taken when the existing subject's stored fields satisfy `deadline <= now`.
+      properties:
+        error:
+          const: agentic.question.DeadlinePassed
+          description: The deadline has passed, so the question takes its default and no answer; nothing was recorded.
+          type: string
+        outcome:
+          const: deadline-passed
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
+      type: object
     agentic.question.Answer.not-the-addressee.Response:
       additionalProperties: false
       description: Taken when the existing subject's stored fields satisfy `addressee != caller.party` and `not (defined(delegation_id))` holds of the input.
@@ -2057,7 +2122,7 @@ info:
     authenticated: true
     ingress: user
   x-ess-provenance:
-    contract_digest: slice-sha256/2:de7cf8b4e44367fdb7dd6a9b3e31d48378ad2e1862e3cbdda48d52fb44c5241d
+    contract_digest: slice-sha256/2:d7b596de78ada4dd7aa520cd67356d53d5a76ee2ebf2907144ecc735362a7f8d
     specification_version: v1
     system: agentic
   x-ess-reached-by: network
@@ -2132,6 +2197,43 @@ paths:
                 type: object
           description: 'No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.'
       summary: Agents
+      tags:
+      - agent
+      x-ess-consistency: read_your_writes
+      x-ess-may-read:
+      - agentic.agent.Viewer
+  /agent/views/revision-usages:
+    get:
+      operationId: agentic.agent.RevisionUsages
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/agentic.agent.RevisionUsages.Response'
+          description: 'Every row of `agentic.agent.RevisionUsages`, a projection of `agentic.agent.RevisionUsage`. Contains every instance. Read-your-writes: a caller that has just issued a command sees its effect here.'
+        '403':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  actor:
+                    description: The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.
+                    type:
+                    - string
+                    - 'null'
+                  refused:
+                    description: The standard refusal for an actor no grant admits.
+                    enum:
+                    - not granted
+                    type: string
+                required:
+                - refused
+                - actor
+                type: object
+          description: 'No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.'
+      summary: Revision usages
       tags:
       - agent
       x-ess-consistency: read_your_writes
@@ -2498,13 +2600,15 @@ paths:
               schema:
                 discriminator:
                   mapping:
+                    deadline-passed: '#/components/schemas/agentic.question.Answer.deadline-passed.Response'
                     option-not-offered: '#/components/schemas/agentic.question.Answer.option-not-offered.Response'
                     wrong-state: '#/components/schemas/agentic.question.Answer.wrong-state.Response'
                   propertyName: outcome
                 oneOf:
                 - $ref: '#/components/schemas/agentic.question.Answer.option-not-offered.Response'
+                - $ref: '#/components/schemas/agentic.question.Answer.deadline-passed.Response'
                 - $ref: '#/components/schemas/agentic.question.Answer.wrong-state.Response'
-          description: 'Outcomes `option-not-offered` and `wrong-state`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.'
+          description: 'Outcomes `option-not-offered`, `deadline-passed` and `wrong-state`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.'
         '501':
           content:
             application/json:
