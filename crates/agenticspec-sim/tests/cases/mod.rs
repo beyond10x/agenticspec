@@ -15,5 +15,7 @@ mod ports;
 mod scenario;
 mod search;
 mod sim;
+mod suite;
 mod swarm;
+mod trace;
 mod whole;

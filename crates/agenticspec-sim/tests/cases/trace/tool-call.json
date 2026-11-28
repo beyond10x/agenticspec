@@ -1,0 +1,10 @@
+{
+  "format": "agenticspec-trace/1",
+  "architecture": "tool-call",
+  "source": {"written_by": "hand"},
+  "records": ["model.inference", "question.question"],
+  "events": [
+    {"index": 0, "time": 0, "part": "agent", "instance": 0, "port": "model.inference", "phase": "begin", "to": "model"},
+    {"index": 1, "time": 4, "part": "agent", "instance": 0, "port": "model.inference", "phase": "end", "begin": 0}
+  ]
+}

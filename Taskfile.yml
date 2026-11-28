@@ -78,6 +78,12 @@ tasks:
       - target/debug/agenticspec sim ports --blocks blocks --out target/ports/ports.json
       - cmp blocks/ports.json target/ports/ports.json
 
+  contract:conform:
+    desc: Cut the conformance suite of the building blocks to one architecture's contract and run it on the interpreter (task contract:conform -- <architecture.yaml>). The suite is the cached one of scripts/check-blocks-conform.sh; the lines are in scripts/contract-conform.sh.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - scripts/contract-conform.sh {{.CLI_ARGS}}
+
   check:kpis:
     desc: Check kpis/catalogue.yaml and every packs/<pack>/kpis.yaml against their format, their blocks and the events they may read.
     cmds:

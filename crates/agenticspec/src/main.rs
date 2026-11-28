@@ -512,11 +512,36 @@ impl Handler for Commands {
                         .map(PathBuf::from)
                 };
                 let (ports, out, check) = (path("ports"), path("out"), path("check"));
-                sim_reply(sim::contract(&sim::ContractOptions {
+                let (suite, trace) = (path("suite"), path("trace"));
+                let mut err = std::io::stderr().lock();
+                sim_reply(sim::contract(
+                    &sim::ContractOptions {
+                        architecture: &path_of(&inv.input, "architecture"),
+                        ports: ports.as_deref(),
+                        out: out.as_deref(),
+                        check: check.as_deref(),
+                        suite: suite.as_deref(),
+                        trace: trace.as_deref(),
+                    },
+                    &mut err,
+                ))
+            }
+            "sim_trace" => {
+                let out = inv
+                    .input
+                    .get("out")
+                    .and_then(Value::as_str)
+                    .map(PathBuf::from);
+                sim_reply(sim::trace(&sim::TraceOptions {
                     architecture: &path_of(&inv.input, "architecture"),
-                    ports: ports.as_deref(),
+                    profile: &path_of(&inv.input, "profile"),
+                    seed: inv
+                        .input
+                        .get("seed")
+                        .and_then(Value::as_i64)
+                        .and_then(|s| u64::try_from(s).ok()),
+                    horizon: inv.input.get("horizon").and_then(Value::as_str),
                     out: out.as_deref(),
-                    check: check.as_deref(),
                 }))
             }
             "ui_conform" => ui_conform(&inv.input),

@@ -4,7 +4,9 @@ A runtime that brings an architecture into existence implements a few commands o
 blocks and gets the rest from the specification. The commands it implements are grouped into
 **ports**. The **contract** of an architecture document lists the ports its parts use, with the
 settings that narrow each port, how many instances run, and what each link promises about a run.
-Both are derived from files in this repository; nothing here is written by hand.
+Both are derived from files in this repository; nothing here is written by hand. A contract cuts
+the conformance suite of the blocks to what a runtime of the architecture must pass, and its
+routing invariants are checked on a trace of a run.
 
 ## Ports
 
@@ -204,3 +206,111 @@ used by the outer part, their instances multiplied by that part's instances; the
 parts are where the outer links into the part arrive, so an outer link's invariant names a port of
 an inner border part; and the inner invariants hold unchanged, their part names prefixed with the
 outer part.
+
+## Block conformance of a contract
+
+A runtime of an architecture is held to the behaviour of the blocks whose ports its contract
+lists. The conformance suite of the building blocks (`task check:blocks` synthesizes it once per
+state of `blocks/` and keeps it in `target/blocks-conform/<digest>.json`) can be cut to exactly
+those scenarios:
+
+```sh
+agenticspec sim contract architectures/workstation.yaml \
+  --suite target/blocks-conform/<digest>.json --out workstation.suite.json
+task contract:conform -- architectures/workstation.yaml   # cut the cached suite and run it
+```
+
+`--suite` keeps a scenario when the command it is about is a command of a port of the contract
+(a command of the port's protocol or one that reports into it) and drops the rest; `--out` names
+the cut suite, which keeps the whole suite's provenance and events. The result counts the
+scenarios kept (`kept_scenarios`) against the whole suite (`suite_scenarios`). A scenario is about
+the command its id names:
+
+| scenario id | about |
+|---|---|
+| `<command>/outcome/<outcome>` | the command |
+| `<entity>/transition/<transition>/by/<command>/<outcome>` | the command |
+| `<entity>/state/<state>/refuses/<command>` | the command |
+| `<entity>/invariant/after/<command>/<outcome>` | the command |
+| `<binding>/binding/<case>` | the command the binding invokes |
+| any other (an authored scenario, an invariant at a view) | the command of its last `execute_command` step |
+
+Each scenario carries its own setup steps, so a kept scenario runs alone, and `ess verify conform
+run` admits the cut suite as it is: the cut suite is what runs, not the whole suite filtered by
+scenario id afterwards. `task contract:conform` cuts the cached suite and runs the cut on the
+interpreter (`ess verify conform run --target interpreted`), prints each kept scenario with its
+result and `kept <n> of <m> scenarios`, and exits 1 when a kept scenario fails. For
+`architectures/workstation.yaml` it keeps the scenarios of inference, gateway calls, harness
+sessions, questions, build claims, messages, workspaces and sandboxes, and none about runtimes,
+triggers or posts on a shared channel.
+
+## Traces and the routing check
+
+The routing invariants of a contract are checked on a trace in port terms: each use of a port by
+an instance of a part, with its begin, its end, the use it lies inside and its counterparty. The
+simulator writes one for a single run:
+
+```sh
+agenticspec sim trace architectures/workstation.yaml --profile profiles/coding.yaml \
+  --seed 1 --out workstation.trace.json
+agenticspec sim contract architectures/workstation.yaml --trace workstation.trace.json
+```
+
+`sim trace` simulates the architecture once at the values it is built with (each marked place at
+its `value`), for one day unless `--horizon` names another duration, with seed 1 unless `--seed`
+names another; the same seed writes the same bytes. Recording changes no result of the run.
+
+### The trace format
+
+```json
+{
+  "format": "agenticspec-trace/1",
+  "architecture": "workstation",
+  "source": {"simulator": "agenticspec-sim", "profile": "coding", "seed": 1, "horizon_seconds": 86400.0},
+  "records": ["channel.message", "channel.post", "gateway.call", "model.inference", "question.question", "resource.claim", "trigger.firing"],
+  "events": [
+    {"index": 0, "time": 12.5, "part": "gateway", "instance": 0, "port": "gateway.call", "phase": "begin", "to": "model"},
+    {"index": 1, "time": 12.5, "part": "worker", "instance": 3, "port": "model.inference", "phase": "begin", "within": 0, "to": "model"},
+    {"index": 2, "time": 40.1, "part": "worker", "instance": 3, "port": "model.inference", "phase": "end", "begin": 1},
+    {"index": 3, "time": 40.1, "part": "gateway", "instance": 0, "port": "gateway.call", "phase": "end", "begin": 0}
+  ]
+}
+```
+
+| key | meaning |
+|---|---|
+| `records` | the ports whose every use is in the trace |
+| `index` | the event's place, from 0 |
+| `time` | seconds from the start of the run |
+| `part`, `instance` | the part that uses the port, and which of its copies (0 for a part of one) |
+| `port`, `phase` | the port, and `begin` or `end` of the use |
+| `within` | on a begin: the index of the begin of the use it lies inside |
+| `begin` | on an end: the index of the begin it ends |
+| `to`, `over` | on a begin: the part on the other side of the use, and the channel part it is carried over |
+
+Events are ordered by time; an end ends an earlier begin of the same port, part and instance, at
+most once, and a use without an end is still open when the trace ends. A trace that breaks one of
+these is refused with the index of the event.
+
+The simulator records model calls (the gateway's call, and the inference inside it), builds in a
+pool (a claim from its request to the end of the build), questions (the asker's, and a delegate's
+forward to a principal inside it, carried over the delegate's channel), the delivery of a
+forwarded question and of its answer on that channel, posts to a shared channel (a post and a
+delivery have no duration), and the firing of a trigger that starts a run (from the firing to the
+start of the run). It records no tool calls, workspace leases, sandbox checks or channel reads.
+
+### The check
+
+`sim contract --trace` checks every invariant of the contract on the trace and prints one line
+each: `held`, `violated` or `not_checked`, the link, and the number of uses it read.
+
+- `every A@p inside B@q` holds when each use of `A` by `p` lies inside a use of `B` by `q`: one
+  of the uses its `within` chain leads to, which begins no later and ends no earlier.
+- `every A@p to q [over c]` holds when each use of `A` by `p` names `q` as its counterparty, and
+  `c` as its channel when the clause names one.
+- An invariant whose predicate names a port the trace does not record is `not_checked`, never
+  `held`: absent uses prove nothing.
+
+A violated invariant names its link, the use and the index of the first event that breaks it,
+and the command exits 1; otherwise it exits 0. A trace of another architecture is refused. The
+same check reads a runtime's trace in the same format.

@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest ab30f76d73cc7b84aeb93fa478445cbc93fac7f9fb8bca1dd5e1af485cbef06c
+// contract digest 09499edd76383a5b6ce23f3305e5f98657a4cd8caa500a4cb9f9487e4c454993
 // do not edit: regenerate with `ess synthesize`
 
 //! Every actor the specification declares, and the commands each may invoke — as data.

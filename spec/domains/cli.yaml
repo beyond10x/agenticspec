@@ -770,25 +770,103 @@ types:
         summary: The ports file (`agenticspec-ports/1`); `blocks/ports.json` by default.
       - name: out
         type: Optional<String>
-        summary: The contract file to write (`agenticspec-contract/1`); printed when absent.
+        summary: The contract file to write (`agenticspec-contract/1`), printed when absent; with `--suite`, the cut suite to write.
       - name: check
         type: Optional<String>
         summary: A contract file checked against the document and the ports, without deriving.
+      - name: suite
+        type: Optional<String>
+        summary: A conformance suite of the building blocks (`ess-conformance/<N>`), cut to the scenarios about a command of a port of the contract; `--out` names the cut suite.
+      - name: trace
+        type: Optional<String>
+        summary: A trace (`agenticspec-trace/1`) on which every routing invariant of the contract is checked.
 
   - name: agenticspec.cli.SimContractResult
     kind: struct
     naming:
-      summary: The contract of an architecture, its counts, and whether it was written.
+      summary: The contract of an architecture, its counts, whether it was written, the suite cut to it and the checks of its routing invariants.
     fields:
       - {name: architecture, type: String}
       - {name: ports, type: Integer}
       - {name: invariants, type: Integer}
       - name: written
         type: Boolean
-        summary: The contract file was written.
+        summary: The contract file, or with `--suite` the cut suite, was written.
       - name: contract
         type: Optional<String>
-        summary: The contract as written, when neither `--out` nor `--check` was given.
+        summary: The contract as written, when none of `--out`, `--check`, `--suite` and `--trace` was given.
+      - name: suite_scenarios
+        type: Optional<Integer>
+        summary: With `--suite`, the scenarios of the whole suite.
+      - name: kept_scenarios
+        type: Optional<Integer>
+        summary: With `--suite`, the scenarios kept, those about a command of a port of the contract.
+      - name: checks
+        type: List<agenticspec.cli.SimInvariantCheck>
+        summary: With `--trace`, the check of each routing invariant, in the contract's order; empty otherwise.
+
+  - name: agenticspec.cli.InvariantStatus
+    kind: enum
+    variants: [held, violated, not_checked]
+
+  - name: agenticspec.cli.SimInvariantCheck
+    kind: struct
+    naming:
+      summary: >-
+        The check of one routing invariant on a trace. An invariant whose predicate names a port the
+        trace does not record is not checked, never held.
+    fields:
+      - {name: link, type: String}
+      - {name: predicate, type: String}
+      - {name: status, type: agenticspec.cli.InvariantStatus}
+      - name: uses
+        type: Integer
+        summary: The uses of the predicate's ports the check read.
+      - name: event
+        type: Optional<Integer>
+        summary: The index of the event of the first violation.
+      - name: detail
+        type: Optional<String>
+        summary: What was violated, or why the invariant was not checked.
+
+  - name: agenticspec.cli.SimTraceInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document to simulate, at the values it is built with.
+      - name: profile
+        type: String
+        summary: The behaviour profile (`agenticspec-profile/1`).
+      - name: seed
+        type: Optional<Integer>
+        summary: The seed of the run; 1 by default.
+      - name: horizon
+        type: Optional<String>
+        summary: The simulated time, as a duration (`24h`); one day by default.
+      - name: out
+        type: Optional<String>
+        summary: The trace file to write (`agenticspec-trace/1`); printed when absent.
+
+  - name: agenticspec.cli.SimTraceResult
+    kind: struct
+    naming:
+      summary: The trace of one simulated run, its counts, and whether it was written.
+    fields:
+      - {name: architecture, type: String}
+      - {name: seed, type: Integer}
+      - name: uses
+        type: Integer
+        summary: The port uses the run recorded.
+      - name: events
+        type: Integer
+        summary: The events of the trace, a begin per use and an end per use that ended.
+      - name: written
+        type: Boolean
+        summary: The trace file was written.
+      - name: trace
+        type: Optional<String>
+        summary: The trace as written, when no `--out` was given.
 
   - name: agenticspec.cli.UiGenerateInput
     kind: struct

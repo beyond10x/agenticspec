@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "7fee450a32887b051d4df6d0204180f00b5391438b47d875a177813258dab09e",
-    "contract_digest": "ab30f76d73cc7b84aeb93fa478445cbc93fac7f9fb8bca1dd5e1af485cbef06c"
+    "source_digest": "4a92b04e835eafaad0c199bd3b3cde361827bad5dbc8de03e8d549b008847d01",
+    "contract_digest": "09499edd76383a5b6ce23f3305e5f98657a4cd8caa500a4cb9f9487e4c454993"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -124,6 +124,13 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.ExposureFigures",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.InvariantStatus",
       "disposition": {
         "disposition": "generated"
       }
@@ -354,6 +361,13 @@
     },
     {
       "kind": "domain_type",
+      "source": "agenticspec.cli.SimInvariantCheck",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
       "source": "agenticspec.cli.SimLadderInput",
       "disposition": {
         "disposition": "generated"
@@ -425,6 +439,20 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.SimScenarioResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimTraceInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimTraceResult",
       "disposition": {
         "disposition": "generated"
       }
