@@ -1,0 +1,109 @@
+# A trigger fires when a post arrives on the channel the trigger's row names: every enabled
+# trigger on that channel gets one firing. The cause is an event; which commands it causes, and
+# how many, depends on stored rows. A binding maps an event to one invocation and reads only the
+# event (`event.<field>`, literals); it cannot select the rows of an entity, nor invoke once per
+# selected row. Naming the trigger by a selection over stored rows is refused:
+#
+#   ess specify validate --path design/ess-repro/binding-selects-stored-rows
+#
+# answers `unknown field `related`, expected `selection` or `path``. A binding `selection` picks the
+# first item of a list the event carries, and the binding still invokes once.
+#
+# The same holds for a trigger whose row names the event it waits for (an event trigger): a
+# binding names its event in the specification, not in a row.
+domain: repro.trigger
+
+types:
+  - {name: repro.trigger.ChannelId, kind: newtype, of: Uuid}
+  - {name: repro.trigger.TriggerId, kind: newtype, of: Uuid}
+  - {name: repro.trigger.FiringId, kind: newtype, of: Uuid}
+  - {name: repro.trigger.PostId, kind: newtype, of: Uuid}
+
+entities:
+  - name: repro.trigger.Trigger
+    identity: {name: trigger_id, type: repro.trigger.TriggerId}
+    fields:
+      - {name: channel_id, type: repro.trigger.ChannelId}
+    lifecycle:
+      initial: Enabled
+      states: [Enabled]
+      terminal: [Enabled]
+
+  - name: repro.trigger.Firing
+    identity: {name: firing_id, type: repro.trigger.FiringId}
+    fields:
+      - {name: trigger_id, type: repro.trigger.TriggerId}
+    relations:
+      - {name: trigger, kind: references, target: repro.trigger.Trigger, cardinality: one, via: trigger_id}
+    lifecycle:
+      initial: Fired
+      states: [Fired]
+      terminal: [Fired]
+
+commands:
+  - name: repro.trigger.CreateTrigger
+    input:
+      - {name: channel_id, type: repro.trigger.ChannelId}
+    outcomes:
+      - name: created
+        creates: repro.trigger.Trigger
+        instance: trigger_id
+        sets: {channel_id: input.channel_id}
+        emits: [repro.trigger.TriggerCreated]
+        payload:
+          repro.trigger.TriggerCreated: {trigger_id: {generated: true}}
+  - name: repro.trigger.Post
+    input:
+      - {name: channel_id, type: repro.trigger.ChannelId}
+    outcomes:
+      - name: posted
+        emits: [repro.trigger.Posted]
+        payload:
+          repro.trigger.Posted: {post_id: {generated: true}, channel_id: input.channel_id}
+  - name: repro.trigger.FireTrigger
+    input:
+      - {name: trigger_id, type: repro.trigger.TriggerId}
+    outcomes:
+      - name: fired
+        creates: repro.trigger.Firing
+        instance: firing_id
+        sets: {trigger_id: input.trigger_id}
+        emits: [repro.trigger.Fired]
+        payload:
+          repro.trigger.Fired: {firing_id: {generated: true}, trigger_id: input.trigger_id}
+
+events:
+  - name: repro.trigger.TriggerCreated
+    fields:
+      - {name: trigger_id, type: repro.trigger.TriggerId}
+  - name: repro.trigger.Posted
+    fields:
+      - {name: post_id, type: repro.trigger.PostId}
+      - {name: channel_id, type: repro.trigger.ChannelId}
+  - name: repro.trigger.Fired
+    fields:
+      - {name: firing_id, type: repro.trigger.FiringId}
+      - {name: trigger_id, type: repro.trigger.TriggerId}
+
+components:
+  - component: triggers
+    owns:
+      domains: [repro.trigger]
+    accepts:
+      commands: [repro.trigger.CreateTrigger, repro.trigger.Post, repro.trigger.FireTrigger]
+    publishes:
+      events: [repro.trigger.TriggerCreated, repro.trigger.Posted, repro.trigger.Fired]
+
+bindings:
+  - id: fire-every-trigger-on-the-posts-channel
+    when:
+      event: repro.trigger.Posted
+    invoke:
+      command: repro.trigger.FireTrigger
+    mapping:
+      trigger_id:
+        related:
+          entity: repro.trigger.Trigger
+          where: channel_id == event.channel_id
+    delivery: at_most_once
+    on_failure: drop

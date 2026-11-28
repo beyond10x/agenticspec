@@ -1192,6 +1192,125 @@
         }
       }
     },
+    "sim_contract": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_contract"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimContractInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "check": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimContractResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "contract": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "invariants": {
+              "kind": "integer"
+            },
+            "ports": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "contract_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "sim_corpus": {
       "target": {
         "kind": "local",
@@ -1400,6 +1519,142 @@
           }
         },
         "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sim_ports": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_ports"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimPortsInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "blocks": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "check": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "expect": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimPortsResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "differences": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "file": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "integer"
+            },
+            "sources_sha256": {
+              "kind": "string"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "blocks_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_differ": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_stale": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -1838,17 +2093,6 @@
             }
           }
         },
-        "out_unwritable": {
-          "type_ref": "agenticspec.cli.Refusal",
-          "shape": {
-            "kind": "struct",
-            "fields": {
-              "detail": {
-                "kind": "string"
-              }
-            }
-          }
-        },
         "panels_stale": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
@@ -2154,6 +2398,45 @@
     {
       "path": [
         "sim",
+        "contract"
+      ],
+      "aliases": [],
+      "callable": "sim_contract",
+      "about": "Derive and check the contract of an architecture (agenticspec-contract/1), or check a written contract with --check",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "option",
+            "long": "check"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
         "corpus"
       ],
       "aliases": [],
@@ -2204,6 +2487,45 @@
           "source": {
             "kind": "flag",
             "long": "check"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
+        "ports"
+      ],
+      "aliases": [],
+      "callable": "sim_ports",
+      "about": "Derive the ports of the building blocks into blocks/ports.json, check its digest with --check, or list how they differ from an expected list with --expect",
+      "arguments": [
+        {
+          "field": "blocks",
+          "source": {
+            "kind": "option",
+            "long": "blocks"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "option",
+            "long": "check"
+          }
+        },
+        {
+          "field": "expect",
+          "source": {
+            "kind": "option",
+            "long": "expect"
           }
         }
       ]
@@ -2364,8 +2686,10 @@
     "handler:query: implement the owner-qualified callable and its declared result/error contract",
     "handler:serve: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_check: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_contract: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_corpus: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_ports: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract",

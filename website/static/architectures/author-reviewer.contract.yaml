@@ -1,0 +1,128 @@
+format: agenticspec-contract/1
+architecture: author-reviewer
+ports_digest: 24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229
+ports:
+  - port: sandbox.sandbox
+    part: box
+    protocol: "DefineSandbox (CheckEgress | CheckSecretRead | CheckWrite)*"
+    instances: 8
+    settings: {egress: [gateway], isolation: process}
+  - port: resource.claim
+    part: builds
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {capacity: 16, job_limit: 10m, kind: build_slots}
+  - port: channel.message
+    part: chat
+    protocol: "SendMessage (MarkDelivered MarkRead? | MarkLost)"
+    instances: 1
+    settings: {kind: operator}
+  - port: gateway.call
+    part: gateway
+    protocol: "AdmitCall CompleteCall"
+    instances: 1
+    settings: {rate_limit_per_minute: 120}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: channel.message
+    part: operator
+    protocol: "SendMessage (MarkDelivered MarkRead? | MarkLost)"
+    instances: 1
+    settings: {}
+  - port: harness.session
+    part: operator
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 1
+    settings: {acts_for: owner, harness: coding, role: operator}
+  - port: model.inference
+    part: operator
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: operator
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {}
+  - port: channel.message
+    part: owner
+    protocol: "SendMessage (MarkDelivered MarkRead? | MarkLost)"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+  - port: harness.session
+    part: reviewer
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding, role: reviewer}
+  - port: model.inference
+    part: reviewer
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: workspace.lease
+    part: tree
+    protocol: "RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)"
+    instances: 8
+    settings: {sharing: exclusive}
+  - port: workspace.proposal
+    part: tree
+    protocol: "Propose (MergeProposal | RejectProposal | SupersedeProposal)"
+    instances: 8
+    settings: {sharing: exclusive}
+  - port: harness.session
+    part: worker
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 8
+    settings: {harness: coding}
+  - port: model.inference
+    part: worker
+    protocol: "StartInference FinishInference"
+    instances: 8
+    settings: {}
+  - port: question.question
+    part: worker
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 8
+    settings: {}
+  - port: resource.claim
+    part: worker
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 8
+    settings: {}
+invariants:
+  - link: "owner -> operator carries prompt over chat"
+    port: channel.message
+    predicate: "every channel.message@owner to operator over chat"
+  - link: "operator -> owner carries question over chat"
+    port: question.question
+    predicate: "every question.question@operator to owner over chat"
+  - link: "worker -> operator carries question"
+    port: question.question
+    predicate: "every question.question@worker to operator"
+  - link: "operator -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@operator inside gateway.call@gateway"
+  - link: "worker -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@worker inside gateway.call@gateway"
+  - link: "reviewer -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@reviewer inside gateway.call@gateway"
+  - link: "gateway -> model carries model_call"
+    port: gateway.call
+    predicate: "every gateway.call@gateway to model"
+  - link: "worker -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@worker to builds"
+border: [operator]

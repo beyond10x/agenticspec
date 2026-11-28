@@ -31,6 +31,8 @@ pub struct Architecture {
     pub up: String,
     /// What the page is generated from, for its note.
     pub sources: String,
+    /// The contract of the document, or why it has none.
+    pub contract: Result<crate::contract::Shown, String>,
 }
 
 pub struct Run {
@@ -123,6 +125,7 @@ pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
             up: "../".into(),
             sources: "architectures/ and experiments/".into(),
             name,
+            contract: crate::contract::derive(root, &doc),
             doc,
             experiment,
         });
@@ -147,6 +150,7 @@ pub fn load_field(field: &str, files: &[String], root: &Path) -> Result<Vec<Arch
             up: "../../".into(),
             sources: format!("fields/{field}/"),
             name,
+            contract: crate::contract::derive(root, &doc),
             doc,
             experiment: None,
         });
@@ -465,6 +469,14 @@ How the run was made: [Optimization](#optimization).\n",
         }
         s.push('\n');
     }
+
+    let file = format!("{}.contract.yaml", a.name);
+    let target = format!("pathname:///{}.contract.yaml", a.slug);
+    s.push_str(&crate::contract::section(
+        &a.contract,
+        Some((&file, &target)),
+        &a.up,
+    ));
 
     s.push_str("## Parts\n\n| part | block | settings |\n|---|---|---|\n");
     // Parts in layer order of their blocks, the principals first, as the graph draws them.

@@ -1,0 +1,18 @@
+domain: fixture.high
+summary: A block of layer 7 whose command a binding from layer 2 invokes.
+naming:
+  wire: high
+  display: High
+commands:
+  - name: fixture.high.Record
+    input:
+      - {name: label, type: String}
+    outcomes:
+      - name: recorded
+        emits: [fixture.high.Recorded]
+        payload:
+          fixture.high.Recorded: {label: input.label}
+events:
+  - name: fixture.high.Recorded
+    fields:
+      - {name: label, type: String}

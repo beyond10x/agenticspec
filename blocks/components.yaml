@@ -1,10 +1,24 @@
 # The deployment unit of the building blocks. One component owns every block and serves its views
 # over HTTP, so an `ess-ui/1` document over this system (`ui/views/blocks.ui.yaml`) reads them
 # from outside the process.
+#
+# The cross-block causation of the building blocks: a command one block causes in another when an
+# event of the first is published. A command a binding causes is behaviour of the specification;
+# `agenticspec sim ports` reads these bindings to tell such a command from an entry, which the
+# world issues (docs/contract.md).
+#
+# One component owns every block: the bindings cross blocks, not deployment units. A binding
+# points down the layers, or stays inside one layer without a cycle: the block of the event holds
+# the binding, as a higher block holds the identifier of a lower one (scripts/check-layers.sh
+# counts each binding as a dependency of the event's domain on the command's domain).
+#
+# Every causation that was considered, and why it is a binding, a gap of ESS or not implied by the
+# blocks, is listed in the epic of the architecture contract; the gaps and their reproductions are
+# in design/ess-repro/.
 
 components:
   - component: blocks
-    summary: Every building block, its views served over HTTP.
+    summary: Every building block, its views served over HTTP; the bindings below cross blocks inside it.
     owns:
       domains:
         - agentic.shared
@@ -30,3 +44,70 @@ components:
         - agentic.kpi
         - agentic.experiment
     reached_by: network
+
+bindings:
+  # The gateway makes the inference for the caller (actor agentic.model.Caller): an admitted call
+  # starts it on the call's route. A refused call starts nothing. The gateway starts it once; a
+  # refusal of StartInference (unknown or retired route) leaves the admitted call without an
+  # inference, which CompleteCall reports.
+  - id: start-inference-on-admitted-call
+    summary: An admitted gateway call starts its inference on the call's route.
+    when:
+      event: agentic.gateway.CallDecided
+      where: [event.admission == Admitted]
+    invoke:
+      command: agentic.model.StartInference
+    mapping:
+      inference_id: event.inference_id
+      route_id: event.route_id
+      request: event.request
+    delivery: at_most_once
+    on_failure: drop
+
+  # The authority records the decision on a request (a permission mode, a classifier, a hook, a
+  # rule, a delegate or a human); when the request is a harness tool call, that decision decides
+  # the call. An ApprovalRequired verdict decides nothing yet: the approval or rejection does.
+  - id: decide-tool-call-on-decision
+    summary: A final decision on a tool call's request allows or denies the call.
+    when:
+      event: agentic.authority.DecisionRecorded
+      where: [defined(event.tool_call_id), event.verdict != ApprovalRequired]
+    invoke:
+      command: agentic.harness.DecideToolCall
+    mapping:
+      tool_call_id: event.tool_call_id
+      verdict: event.verdict
+      decider: event.decider
+      attribution: event.attribution
+    delivery: at_most_once
+    on_failure: drop
+
+  - id: allow-tool-call-on-approval
+    summary: An approved decision on a tool call's request allows the call.
+    when:
+      event: agentic.authority.ApprovalGranted
+      where: [defined(event.tool_call_id)]
+    invoke:
+      command: agentic.harness.DecideToolCall
+    mapping:
+      tool_call_id: event.tool_call_id
+      verdict: Allow
+      decider: event.approver
+      attribution: Known
+    delivery: at_most_once
+    on_failure: drop
+
+  - id: deny-tool-call-on-rejection
+    summary: A rejected decision on a tool call's request denies the call.
+    when:
+      event: agentic.authority.ApprovalRejected
+      where: [defined(event.tool_call_id)]
+    invoke:
+      command: agentic.harness.DecideToolCall
+    mapping:
+      tool_call_id: event.tool_call_id
+      verdict: Deny
+      decider: event.rejecter
+      attribution: Known
+    delivery: at_most_once
+    on_failure: drop

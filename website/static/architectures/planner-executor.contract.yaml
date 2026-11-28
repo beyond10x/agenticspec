@@ -1,0 +1,109 @@
+format: agenticspec-contract/1
+architecture: planner-executor
+ports_digest: 24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229
+ports:
+  - port: resource.claim
+    part: builds
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {capacity: 16, job_limit: 10m, kind: build_slots}
+  - port: harness.session
+    part: executor
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 8
+    settings: {harness: coding, role: executor}
+  - port: model.inference
+    part: executor
+    protocol: "StartInference FinishInference"
+    instances: 8
+    settings: {}
+  - port: question.question
+    part: executor
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 8
+    settings: {}
+  - port: resource.claim
+    part: executor
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 8
+    settings: {}
+  - port: gateway.call
+    part: gateway
+    protocol: "AdmitCall CompleteCall"
+    instances: 1
+    settings: {rate_limit_per_minute: 120}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: trigger.firing
+    part: on_plan
+    protocol: "FireTrigger (RecordFailure | RecordStart RecordEnd | SkipFiring)"
+    instances: 1
+    settings: {channel: plans, kind: on_message, max_parallel: 8, policy: parallel}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+  - port: channel.post
+    part: planner
+    protocol: "PostMessage TakePost?"
+    instances: 1
+    settings: {}
+  - port: harness.session
+    part: planner
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding, role: planner}
+  - port: model.inference
+    part: planner
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: channel.post
+    part: plans
+    protocol: "PostMessage TakePost?"
+    instances: 1
+    settings: {distribution: queue, kind: agent_message}
+  - port: channel.subscription
+    part: plans
+    protocol: "Subscribe Beat* EndSubscription"
+    instances: 1
+    settings: {distribution: queue, kind: agent_message}
+  - port: workspace.lease
+    part: tree
+    protocol: "RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)"
+    instances: 8
+    settings: {sharing: exclusive}
+  - port: workspace.proposal
+    part: tree
+    protocol: "Propose (MergeProposal | RejectProposal | SupersedeProposal)"
+    instances: 8
+    settings: {sharing: exclusive}
+invariants:
+  - link: "planner -> plans carries message"
+    port: channel.post
+    predicate: "every channel.post@planner to plans"
+  - link: "on_plan -> executor carries trigger"
+    port: trigger.firing
+    predicate: "every trigger.firing@on_plan to executor"
+  - link: "executor -> owner carries question"
+    port: question.question
+    predicate: "every question.question@executor to owner"
+  - link: "planner -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@planner inside gateway.call@gateway"
+  - link: "executor -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@executor inside gateway.call@gateway"
+  - link: "gateway -> model carries model_call"
+    port: gateway.call
+    predicate: "every gateway.call@gateway to model"
+  - link: "executor -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@executor to builds"
+border: []

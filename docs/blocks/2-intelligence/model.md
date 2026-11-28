@@ -22,7 +22,7 @@ What a model is and how it is reached. A provider offers models; a model has cap
 
 ## Used by
 
-- [gateway](gateway.md) · layer 2 · 13 references
+- [gateway](gateway.md) · layer 2 · 14 references
 - [agent](../4-agent/agent.md) · layer 4 · 5 references
 - [harness](../4-agent/harness.md) · layer 4 · 9 references
 - [work](../5-work/work.md) · layer 5 · 5 references

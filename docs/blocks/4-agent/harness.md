@@ -27,6 +27,7 @@ The loop that turns a model into an agent: it sends the context to a model, take
 ## Used by
 
 - [work](../5-work/work.md) · layer 5 · 8 references
+- [authority](../6-governance/authority.md) · layer 6 · 10 references
 - [channel](../7-collaboration/channel.md) · layer 7 · 5 references
 - [trigger](../7-collaboration/trigger.md) · layer 7 · 6 references
 

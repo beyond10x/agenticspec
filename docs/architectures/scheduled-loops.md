@@ -76,6 +76,43 @@ A marked place carries `vary`: the value as built and the values a search may tr
 
 <span className="as-tag as-tag--accepted">accepted</span> 10 parts and 10 links; the structural check refuses nothing.
 
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [scheduled-loops.contract.yaml](pathname:///architectures/scheduled-loops.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 8`, `job_limit: 10m`, `kind: build_slots` | 1 |
+| `trigger.schedule` | `Outbound` | `trigger` | `CreateSchedule AdvanceSchedule*` | `clock` | `every: 1h` | 1 |
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `trigger.schedule` | `Outbound` | `trigger` | `CreateSchedule AdvanceSchedule*` | `nightly` | `every: 24h`, `next_fire_at: 2h` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `sweep` | `kind: on_schedule`, `max_parallel: 1`, `policy: skip`, `schedule: nightly` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `sweeper` | `harness: coding` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `sweeper` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `sweeper` | none | 1 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `sweeper` | none | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `triage` | `kind: on_schedule`, `max_parallel: 1`, `policy: skip`, `schedule: clock` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `triager` | `harness: coding` | 2 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `triager` | none | 2 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `triager` | none | 2 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `triager` | none | 2 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `sweep -> sweeper carries trigger`: `every trigger.firing@sweep to sweeper`
+- `triage -> triager carries trigger`: `every trigger.firing@triage to triager`
+- `triager -> owner carries question`: `every question.question@triager to owner`
+- `sweeper -> owner carries question`: `every question.question@sweeper to owner`
+- `sweeper -> gateway carries model_call`: `every model.inference@sweeper inside gateway.call@gateway`
+- `triager -> gateway carries model_call`: `every model.inference@triager inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+- `sweeper -> builds carries claim`: `every resource.claim@sweeper to builds`
+- `triager -> builds carries claim`: `every resource.claim@triager to builds`
+
+Border: none.
+
 ## Parts
 
 | part | block | settings |

@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- The building blocks declare their cross-block causation as ESS bindings (`blocks/components.yaml`): an admitted gateway call starts its inference, and the authority's decision, approval or rejection decides a harness tool call. `task check:layers` counts bindings among the dependencies, and `task check:blocks` requires a scenario per binding. Causations ESS cannot express yet have reproductions under `design/ess-repro/`
+- `agenticspec sim ports` derives the ports of the building blocks, where the specification waits on the world, into `blocks/ports.json`: each port's kind (outbound, clock, principal), intent, reports and protocol. `--check` compares the file's digest with the blocks without calling `ess` (`task check:ports`), `--expect` lists every difference from an expected list
+- `agenticspec sim contract <architecture>` derives and checks the contract of an architecture (`agenticspec-contract/1`): the ports its parts use with their protocols, narrowing settings (an agent's `role`, an `on_event` trigger's `event_name` and `source`) and instances, a routing invariant per link (a runtime's `run` and `model_call` links among them) in a small predicate language, and the border; `--check` checks a written contract. `docs/contract.md` describes ports, the contract and the predicate language
+- Every architecture page and catalog entry of the docs site has a "Contract" section and its contract file to download (`<name>.contract.yaml`)
+
 ## [0.4.1] - 2026-11-28
 
 ### Fixed

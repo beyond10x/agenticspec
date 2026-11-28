@@ -4,6 +4,7 @@
 pub mod best;
 pub mod check;
 pub mod cli;
+pub mod contract;
 pub mod corpus;
 pub mod doc;
 pub mod events;

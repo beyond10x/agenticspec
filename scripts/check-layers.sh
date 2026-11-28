@@ -13,7 +13,9 @@
 #     or view field, or a type A declares (nested in structs, unions, lists, optionals);
 #   - the identity type of an entity of B (an identifier in the shared domain counts as a
 #     dependency on the domain whose entity it identifies);
-#   - a relation of an entity of A whose target is an entity of B.
+#   - a relation of an entity of A whose target is an entity of B;
+#   - a binding from an event of A to a command of B (components.yaml): the block of the cause
+#     holds the effect, as a higher block holds the identifier of a lower one.
 # Rules:
 #   1. no dependency of a core domain points to a higher layer;
 #   2. no core domain depends on a pack or a field;
@@ -153,6 +155,14 @@ jq -r '
     | ($entities[.target].domain // (.target | prefix)) as $to
     | select($to != $e.domain)
     | "\($e.domain) \($to) \($e.name).\(.name)"
+  ),
+  (
+    (.bindings // {}) | to_entries[] | .value
+    | select(.event != null and .command != null)
+    | (.event | prefix) as $from
+    | (.command | prefix) as $to
+    | select($to != $from)
+    | "\($from) \($to) binding:\(.name)"
   )
 ' "$work/ir.json" > "$work/edges.raw" || { echo "check-layers: jq failed on the compiled IR" >&2; exit 2; }
 sort -u "$work/edges.raw" > "$work/edges.txt"
@@ -223,6 +233,7 @@ if [ "$status" = 0 ]; then
   core=$(awk '$2 ~ /^[0-9]+$/' "$work/layers.txt" | wc -l | tr -d ' ')
   packs=$(awk '$2 ~ /^pack:/' "$work/layers.txt" | wc -l | tr -d ' ')
   fields=$(awk '$2 ~ /^field:/' "$work/layers.txt" | wc -l | tr -d ' ')
-  echo "layers: $(wc -l < "$work/layers.txt" | tr -d ' ') domains ($core core, $packs in packs, $fields in fields), $(wc -l < "$work/edges.txt" | tr -d ' ') dependencies, every one points to its own or a lower layer, the core to no pack or field, each pack and field to what it declares, no cycle"
+  bindings=$(jq -r '(.bindings // {}) | length' "$work/ir.json")
+  echo "layers: $(wc -l < "$work/layers.txt" | tr -d ' ') domains ($core core, $packs in packs, $fields in fields), $(wc -l < "$work/edges.txt" | tr -d ' ') dependencies ($bindings binding(s) among their causes), every one points to its own or a lower layer, the core to no pack or field, each pack and field to what it declares, no cycle"
 fi
 exit "$status"

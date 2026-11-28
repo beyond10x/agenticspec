@@ -1,0 +1,60 @@
+# The 15 rows of the port table of design/architecture-runtime.md, § "The boundary: ports",
+# copied: the port, its block and its protocol. Where the table writes prose instead of a regular
+# expression (`…`, `then`, a remark in parentheses), `protocol` is the nearest expression and
+# `design` the cell as the table writes it. A kind is given where the design's text names it
+# (a principal port, the clock port). `agenticspec sim ports --expect` lists every difference
+# between this list and the derived ports.
+format: agenticspec-ports-expected/1
+ports:
+  - port: model.infer
+    block: model
+    protocol: StartInference FinishInference
+  - port: model.serve
+    block: model
+    protocol: OpenEndpoint CloseEndpoint
+    design: "`OpenEndpoint … CloseEndpoint` (only a self-hosted endpoint)"
+  - port: gateway.call
+    block: gateway
+    protocol: AdmitCall CompleteCall
+  - port: agent.session
+    block: harness
+    protocol: OpenSession (RecordTurn | CompactContext)* EndSession
+  - port: agent.spawn
+    block: harness
+    protocol: SpawnSubAgent
+    design: "`SpawnSubAgent` (then a session of the child)"
+  - port: tool.invoke
+    block: harness
+    protocol: RequestToolCall DecideToolCall CompleteToolCall?
+  - port: channel.deliver
+    block: channel
+    protocol: SendMessage (MarkDelivered MarkRead? | MarkLost)
+  - port: board.post
+    block: channel
+    protocol: PostMessage TakePost?
+  - port: principal.answer
+    block: question
+    kind: Principal
+    protocol: Ask (Answer | TakeDefault | Withdraw)
+  - port: principal.decide
+    block: authority
+    kind: Principal
+    protocol: DecideRequest (ApproveDecision | RejectDecision | DenyRequest)
+  - port: clock.fire
+    block: trigger
+    kind: Clock
+    protocol: FireTrigger (RecordStart (RecordEnd | RecordFailure) | SkipFiring)
+  - port: workspace.provide
+    block: workspace
+    protocol: CreateWorkspace RecordWrite* MergeProposal
+    design: "`CreateWorkspace`, then `RecordWrite*`, `MergeProposal`"
+  - port: sandbox.enforce
+    block: sandbox
+    protocol: DefineSandbox (CheckEgress | CheckSecretRead | CheckWrite)
+    design: "`DefineSandbox`, then `CheckEgress | CheckSecretRead | CheckWrite`"
+  - port: workload.run
+    block: runtime
+    protocol: StartInstance (ReportRunning (ReportExited | ReportFailed) | ReportFailed)
+  - port: pool.lease
+    block: resource
+    protocol: RequestClaim (GrantClaim (ReleaseClaim | ExpireClaim | KillClaim) | WithdrawClaim)

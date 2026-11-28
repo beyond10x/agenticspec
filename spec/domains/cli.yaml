@@ -676,3 +676,67 @@ types:
       - name: written
         type: Boolean
         summary: The files were written; false with `--check`, where they were found current.
+
+  - name: agenticspec.cli.SimPortsInput
+    kind: struct
+    fields:
+      - name: blocks
+        type: Optional<String>
+        summary: The directory of the building blocks, an ESS system; `blocks` by default.
+      - name: out
+        type: Optional<String>
+        summary: The ports file to write (`agenticspec-ports/1`); printed when absent.
+      - name: check
+        type: Optional<String>
+        summary: A ports file whose digest is compared with the sources in the blocks directory, without deriving.
+      - name: expect
+        type: Optional<String>
+        summary: An expected list (`agenticspec-ports-expected/1`); one line per difference from the derived ports.
+
+  - name: agenticspec.cli.SimPortsResult
+    kind: struct
+    naming:
+      summary: The derived ports, the digest of their sources, and the differences from an expected list.
+    fields:
+      - {name: ports, type: Integer}
+      - {name: sources_sha256, type: String}
+      - name: written
+        type: Boolean
+        summary: The ports file was written.
+      - name: file
+        type: Optional<String>
+        summary: The ports file as written, when no `--out` was given.
+      - name: differences
+        type: List<String>
+        summary: With `--expect`, one line per difference; the command exits 1 when there is one.
+
+  - name: agenticspec.cli.SimContractInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document whose contract is derived.
+      - name: ports
+        type: Optional<String>
+        summary: The ports file (`agenticspec-ports/1`); `blocks/ports.json` by default.
+      - name: out
+        type: Optional<String>
+        summary: The contract file to write (`agenticspec-contract/1`); printed when absent.
+      - name: check
+        type: Optional<String>
+        summary: A contract file checked against the document and the ports, without deriving.
+
+  - name: agenticspec.cli.SimContractResult
+    kind: struct
+    naming:
+      summary: The contract of an architecture, its counts, and whether it was written.
+    fields:
+      - {name: architecture, type: String}
+      - {name: ports, type: Integer}
+      - {name: invariants, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The contract file was written.
+      - name: contract
+        type: Optional<String>
+        summary: The contract as written, when neither `--out` nor `--check` was given.

@@ -1,0 +1,348 @@
+{
+  "bindings": {
+    "allow-tool-call-on-approval": "agentic.harness.DecideToolCall",
+    "decide-tool-call-on-decision": "agentic.harness.DecideToolCall",
+    "deny-tool-call-on-rejection": "agentic.harness.DecideToolCall",
+    "start-inference-on-admitted-call": "agentic.model.StartInference"
+  },
+  "ess": "ess 0.99.2",
+  "format": "agenticspec-ports/1",
+  "ports": [
+    {
+      "block": "agent",
+      "intent_event": "agentic.agent.AgentRevisionPublished",
+      "kind": "Outbound",
+      "name": "agent.revision",
+      "protocol": "PublishRevision UseRevision*",
+      "reports": [
+        "agentic.agent.UseRevision"
+      ],
+      "waiting_state": "agentic.agent.AgentRevision.Published"
+    },
+    {
+      "block": "architecture",
+      "intent_event": "agentic.architecture.PatchRequested",
+      "kind": "Outbound",
+      "name": "architecture.patch-application",
+      "protocol": "ApplyPatch (RecordDryRunApplied | RecordPatchApplied | RecordPatchRefused)",
+      "reports": [
+        "agentic.architecture.RecordDryRunApplied",
+        "agentic.architecture.RecordPatchApplied",
+        "agentic.architecture.RecordPatchRefused"
+      ],
+      "waiting_state": "agentic.architecture.PatchApplication.Requested"
+    },
+    {
+      "block": "authority",
+      "intent_event": "agentic.authority.BudgetOpened",
+      "kind": "Outbound",
+      "name": "authority.budget",
+      "protocol": "OpenBudget RecordSpend* RecordSpend",
+      "reports": [
+        "agentic.authority.RecordSpend"
+      ],
+      "waiting_state": "agentic.authority.Budget.Open"
+    },
+    {
+      "block": "authority",
+      "intent_event": "agentic.authority.DecisionRecorded",
+      "kind": "Principal",
+      "name": "authority.decision",
+      "protocol": "(DecideRequest | DenyRequest) (ApproveDecision | RejectDecision)",
+      "reports": [
+        "agentic.authority.ApproveDecision",
+        "agentic.authority.RejectDecision"
+      ],
+      "waiting_state": "agentic.authority.Decision.Recorded"
+    },
+    {
+      "block": "channel",
+      "intent_event": "agentic.channel.MessageSent",
+      "kind": "Outbound",
+      "name": "channel.message",
+      "protocol": "SendMessage (MarkDelivered MarkRead? | MarkLost)",
+      "reports": [
+        "agentic.channel.MarkDelivered",
+        "agentic.channel.MarkLost",
+        "agentic.channel.MarkRead"
+      ],
+      "waiting_state": "agentic.channel.Message.Sent"
+    },
+    {
+      "block": "channel",
+      "intent_event": "agentic.channel.Posted",
+      "kind": "Outbound",
+      "name": "channel.post",
+      "protocol": "PostMessage TakePost?",
+      "reports": [
+        "agentic.channel.TakePost"
+      ],
+      "waiting_state": "agentic.channel.Post.Posted"
+    },
+    {
+      "block": "channel",
+      "intent_event": "agentic.channel.Subscribed",
+      "kind": "Outbound",
+      "name": "channel.subscription",
+      "protocol": "Subscribe Beat* EndSubscription",
+      "reports": [
+        "agentic.channel.Beat",
+        "agentic.channel.EndSubscription"
+      ],
+      "waiting_state": "agentic.channel.Subscription.Active"
+    },
+    {
+      "block": "delegation",
+      "intent_event": "agentic.delegation.DelegationPassedOn",
+      "kind": "Outbound",
+      "name": "delegation.delegation",
+      "protocol": "(DelegateOnward | GrantDelegation) ActUnderDelegation* ExpireDelegation?",
+      "reports": [
+        "agentic.delegation.ActUnderDelegation",
+        "agentic.delegation.ExpireDelegation"
+      ],
+      "waiting_state": "agentic.delegation.Delegation.Active"
+    },
+    {
+      "block": "experiment",
+      "intent_event": "agentic.experiment.ExperimentPlanned",
+      "kind": "Outbound",
+      "name": "experiment.experiment",
+      "protocol": "PlanExperiment RecordVariant* (FailExperiment | StartExperiment RecordVariant* (CompleteExperiment | FailExperiment))",
+      "reports": [
+        "agentic.experiment.CompleteExperiment",
+        "agentic.experiment.FailExperiment",
+        "agentic.experiment.RecordVariant",
+        "agentic.experiment.StartExperiment"
+      ],
+      "waiting_state": "agentic.experiment.Experiment.Planned"
+    },
+    {
+      "block": "gateway",
+      "intent_event": "agentic.gateway.CallDecided",
+      "kind": "Outbound",
+      "name": "gateway.call",
+      "protocol": "AdmitCall CompleteCall",
+      "reports": [
+        "agentic.gateway.CompleteCall"
+      ],
+      "waiting_state": "agentic.gateway.Call.Recorded"
+    },
+    {
+      "block": "gateway",
+      "intent_event": "agentic.gateway.UpstreamAttached",
+      "kind": "Outbound",
+      "name": "gateway.upstream",
+      "protocol": "AttachUpstream (SaturateUpstream RestoreUpstream)* SaturateUpstream?",
+      "reports": [
+        "agentic.gateway.RestoreUpstream",
+        "agentic.gateway.SaturateUpstream"
+      ],
+      "waiting_state": "agentic.gateway.Upstream.Attached"
+    },
+    {
+      "block": "harness",
+      "intent_event": "agentic.harness.SessionOpened",
+      "kind": "Outbound",
+      "name": "harness.session",
+      "protocol": "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession",
+      "reports": [
+        "agentic.harness.CompactContext",
+        "agentic.harness.EndSession",
+        "agentic.harness.RecordTurn"
+      ],
+      "waiting_state": "agentic.harness.HarnessSession.Open"
+    },
+    {
+      "block": "harness",
+      "intent_event": "agentic.harness.ToolCallDecided",
+      "kind": "Outbound",
+      "name": "harness.tool-call",
+      "protocol": "DecideToolCall CompleteToolCall",
+      "reports": [
+        "agentic.harness.CompleteToolCall"
+      ],
+      "waiting_state": "agentic.harness.ToolCall.Allowed"
+    },
+    {
+      "block": "model",
+      "intent_event": "agentic.model.EndpointOpened",
+      "kind": "Outbound",
+      "name": "model.endpoint",
+      "protocol": "OpenEndpoint CloseEndpoint",
+      "reports": [
+        "agentic.model.CloseEndpoint"
+      ],
+      "waiting_state": "agentic.model.Endpoint.Open"
+    },
+    {
+      "block": "model",
+      "intent_event": "agentic.model.InferenceStarted",
+      "kind": "Outbound",
+      "name": "model.inference",
+      "protocol": "StartInference FinishInference",
+      "reports": [
+        "agentic.model.FinishInference"
+      ],
+      "waiting_state": "agentic.model.Inference.Started"
+    },
+    {
+      "block": "question",
+      "intent_event": "agentic.question.QuestionAsked",
+      "kind": "Principal",
+      "name": "question.question",
+      "protocol": "Ask (Answer | TakeDefault | Withdraw)",
+      "reports": [
+        "agentic.question.Answer",
+        "agentic.question.TakeDefault",
+        "agentic.question.Withdraw"
+      ],
+      "waiting_state": "agentic.question.Question.Open"
+    },
+    {
+      "block": "resource",
+      "intent_event": "agentic.resource.ClaimQueued",
+      "kind": "Outbound",
+      "name": "resource.claim",
+      "protocol": "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)",
+      "reports": [
+        "agentic.resource.ExpireClaim",
+        "agentic.resource.GrantClaim",
+        "agentic.resource.KillClaim",
+        "agentic.resource.ReleaseClaim",
+        "agentic.resource.WithdrawClaim"
+      ],
+      "waiting_state": "agentic.resource.Claim.Queued"
+    },
+    {
+      "block": "runtime",
+      "intent_event": "agentic.runtime.InstanceStarted",
+      "kind": "Outbound",
+      "name": "runtime.instance",
+      "protocol": "StartInstance (ReportFailed | ReportRunning (ReportExited | ReportFailed | StopInstance) | StopInstance)",
+      "reports": [
+        "agentic.runtime.ReportExited",
+        "agentic.runtime.ReportFailed",
+        "agentic.runtime.ReportRunning",
+        "agentic.runtime.StopInstance"
+      ],
+      "waiting_state": "agentic.runtime.Instance.Pending"
+    },
+    {
+      "block": "sandbox",
+      "intent_event": "agentic.sandbox.SandboxDefined",
+      "kind": "Outbound",
+      "name": "sandbox.sandbox",
+      "protocol": "DefineSandbox (CheckEgress | CheckSecretRead | CheckWrite)*",
+      "reports": [
+        "agentic.sandbox.CheckEgress",
+        "agentic.sandbox.CheckSecretRead",
+        "agentic.sandbox.CheckWrite"
+      ],
+      "waiting_state": "agentic.sandbox.Sandbox.Active"
+    },
+    {
+      "block": "trigger",
+      "intent_event": "agentic.trigger.TriggerFired",
+      "kind": "Outbound",
+      "name": "trigger.firing",
+      "protocol": "FireTrigger (RecordFailure | RecordStart RecordEnd | SkipFiring)",
+      "reports": [
+        "agentic.trigger.RecordEnd",
+        "agentic.trigger.RecordFailure",
+        "agentic.trigger.RecordStart",
+        "agentic.trigger.SkipFiring"
+      ],
+      "waiting_state": "agentic.trigger.Firing.Fired"
+    },
+    {
+      "block": "trigger",
+      "intent_event": "agentic.trigger.ScheduleCreated",
+      "kind": "Outbound",
+      "name": "trigger.schedule",
+      "protocol": "CreateSchedule AdvanceSchedule*",
+      "reports": [
+        "agentic.trigger.AdvanceSchedule"
+      ],
+      "waiting_state": "agentic.trigger.Schedule.Unchecked"
+    },
+    {
+      "block": "work",
+      "intent_event": "agentic.work.AssignmentOffered",
+      "kind": "Outbound",
+      "name": "work.assignment",
+      "protocol": "OfferAssignment (ActivateAssignment EndAssignment | EndAssignment)",
+      "reports": [
+        "agentic.work.ActivateAssignment",
+        "agentic.work.EndAssignment"
+      ],
+      "waiting_state": "agentic.work.Assignment.Offered"
+    },
+    {
+      "block": "work",
+      "intent_event": "agentic.work.DeliverableSubmitted",
+      "kind": "Principal",
+      "name": "work.deliverable",
+      "protocol": "SubmitDeliverable (AcceptDeliverable | RejectDeliverable)",
+      "reports": [
+        "agentic.work.AcceptDeliverable",
+        "agentic.work.RejectDeliverable"
+      ],
+      "waiting_state": "agentic.work.Deliverable.Proposed"
+    },
+    {
+      "block": "work",
+      "intent_event": "agentic.work.RunStarted",
+      "kind": "Outbound",
+      "name": "work.run",
+      "protocol": "StartRun (RecordStep | SuspendRun RecordStep* ResumeRun)* (EndRun | SuspendRun RecordStep* EndRun)",
+      "reports": [
+        "agentic.work.EndRun",
+        "agentic.work.RecordStep",
+        "agentic.work.ResumeRun",
+        "agentic.work.SuspendRun"
+      ],
+      "waiting_state": "agentic.work.Run.Running"
+    },
+    {
+      "block": "work",
+      "intent_event": "agentic.work.TaskCreated",
+      "kind": "Outbound",
+      "name": "work.task",
+      "protocol": "CreateTask (CancelTask | CompleteTask)",
+      "reports": [
+        "agentic.work.CancelTask",
+        "agentic.work.CompleteTask"
+      ],
+      "waiting_state": "agentic.work.Task.Open"
+    },
+    {
+      "block": "workspace",
+      "intent_event": "agentic.workspace.LeaseRequested",
+      "kind": "Outbound",
+      "name": "workspace.lease",
+      "protocol": "RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)",
+      "reports": [
+        "agentic.workspace.ExpireLease",
+        "agentic.workspace.GrantLease",
+        "agentic.workspace.RecordWrite",
+        "agentic.workspace.ReleaseLease"
+      ],
+      "waiting_state": "agentic.workspace.Lease.Requested"
+    },
+    {
+      "block": "workspace",
+      "intent_event": "agentic.workspace.ChangeProposed",
+      "kind": "Outbound",
+      "name": "workspace.proposal",
+      "protocol": "Propose (MergeProposal | RejectProposal | SupersedeProposal)",
+      "reports": [
+        "agentic.workspace.MergeProposal",
+        "agentic.workspace.RejectProposal",
+        "agentic.workspace.SupersedeProposal"
+      ],
+      "waiting_state": "agentic.workspace.Proposal.Proposed"
+    }
+  ],
+  "sources_sha256": "24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229"
+}

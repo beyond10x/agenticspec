@@ -43,9 +43,35 @@ The weighted KPIs that moved, the largest change of the fitness first:
 
 <ArchitectureFrame name={"scope-partition"} src={"/catalog/scope-partition/scope-partition"} caption={"The full result of scope-partition-tuning: objective, landscape, trade-offs, sensitivity, variants and timeline."} />
 
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [scope-partition.contract.yaml](pathname:///catalog/scope-partition/scope-partition.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 8`, `job_limit: 10m`, `kind: build_slots` | 1 |
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `team` | `harness: coding` | 4 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `team` | none | 4 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `team` | none | 4 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `team` | none | 4 |
+| `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 4 |
+| `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 4 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `team -> owner carries question`: `every question.question@team to owner`
+- `team -> gateway carries model_call`: `every model.inference@team inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+- `team -> builds carries claim`: `every resource.claim@team to builds`
+
+Border: none.
+
 ## Download
 
-<CatalogDownloads dir={"/catalog/scope-partition/"} files={[{"about":"the parts, links and policies, with the marked places at their values as written","file":"scope-partition.yaml","label":"Architecture as written"},{"about":"every marked place at the value of the best variant; its vary ranges are kept, so it can be searched again","file":"scope-partition.best.yaml","label":"Optimized architecture"},{"about":"seeds, horizon, faults, the search and its weights; it names the two files beside it","file":"scope-partition-tuning.yaml","label":"Experiment"},{"about":"how long turns, builds and answers take, and what model calls cost","file":"coding.yaml","label":"Behaviour profile"},{"about":"every variant with its KPIs, the best one and the timeline, as the result page draws it","file":"result.json","label":"Result"}]} />
+<CatalogDownloads dir={"/catalog/scope-partition/"} files={[{"about":"the parts, links and policies, with the marked places at their values as written","file":"scope-partition.yaml","label":"Architecture as written"},{"about":"the ports a runtime implements to run the architecture as written, with their protocols, settings, instances and routing invariants","file":"scope-partition.contract.yaml","label":"Contract"},{"about":"every marked place at the value of the best variant; its vary ranges are kept, so it can be searched again","file":"scope-partition.best.yaml","label":"Optimized architecture"},{"about":"seeds, horizon, faults, the search and its weights; it names the two files beside it","file":"scope-partition-tuning.yaml","label":"Experiment"},{"about":"how long turns, builds and answers take, and what model calls cost","file":"coding.yaml","label":"Behaviour profile"},{"about":"every variant with its KPIs, the best one and the timeline, as the result page draws it","file":"result.json","label":"Result"}]} />
 
 ## Run it
 

@@ -75,6 +75,12 @@ const pages: Record<string, Page> = {
     title: 'Scenarios and task corpora',
     lede: 'Test an architecture with given inputs and scripted outside parts, and check the events it should record.',
   },
+  'docs/contract.md': {
+    slug: '/contract',
+    title: 'The contract of an architecture',
+    sidebar_label: 'Contract',
+    lede: 'The ports a runtime implements, derived from the building blocks, and the contract of each architecture.',
+  },
 };
 
 const config: Config = {

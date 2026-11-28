@@ -104,6 +104,22 @@ Error `architecture_refused`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+### `sim contract`
+
+Derive and check the contract of an architecture (agenticspec-contract/1), or check a written contract with --check
+
+Callable: `sim_contract`. Input: `agenticspec.cli.SimContractInput`. Result: `agenticspec.cli.SimContractResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `contract_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
 ### `sim corpus`
 
 Run every entry of a task corpus on the simulator and print the predicted class beside the expected one
@@ -133,6 +149,24 @@ Error `ladder_refused`: `agenticspec.cli.Refusal`.
 Error `ladder_stale`: `agenticspec.cli.Refusal`.
 
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+### `sim ports`
+
+Derive the ports of the building blocks into blocks/ports.json, check its digest with --check, or list how they differ from an expected list with --expect
+
+Callable: `sim_ports`. Input: `agenticspec.cli.SimPortsInput`. Result: `agenticspec.cli.SimPortsResult`.
+
+Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `ports_differ`: `agenticspec.cli.Refusal`.
+
+Error `ports_refused`: `agenticspec.cli.Refusal`.
+
+Error `ports_stale`: `agenticspec.cli.Refusal`.
 
 ### `sim render`
 
@@ -190,8 +224,6 @@ Callable: `ui_panels`. Input: `agenticspec.cli.UiPanelsInput`. Result: `agentics
 
 Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
 
-Error `out_unwritable`: `agenticspec.cli.Refusal`.
-
 Error `panels_stale`: `agenticspec.cli.Refusal`.
 
 ## Runtime obligations
@@ -205,8 +237,10 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:query: implement the owner-qualified callable and its declared result/error contract
 - handler:serve: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_check: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_contract: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_corpus: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_ports: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_render: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract

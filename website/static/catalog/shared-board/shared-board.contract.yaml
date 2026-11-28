@@ -1,0 +1,95 @@
+format: agenticspec-contract/1
+architecture: shared-board
+ports_digest: 24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229
+ports:
+  - port: channel.post
+    part: board
+    protocol: "PostMessage TakePost?"
+    instances: 1
+    settings: {distribution: board, kind: agent_message}
+  - port: channel.subscription
+    part: board
+    protocol: "Subscribe Beat* EndSubscription"
+    instances: 1
+    settings: {distribution: board, kind: agent_message}
+  - port: resource.claim
+    part: builds
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {capacity: 16, job_limit: 10m, kind: build_slots}
+  - port: gateway.call
+    part: gateway
+    protocol: "AdmitCall CompleteCall"
+    instances: 1
+    settings: {rate_limit_per_minute: 120}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: trigger.firing
+    part: on_entry
+    protocol: "FireTrigger (RecordFailure | RecordStart RecordEnd | SkipFiring)"
+    instances: 1
+    settings: {channel: board, kind: on_message, max_parallel: 16, policy: parallel}
+  - port: channel.post
+    part: owner
+    protocol: "PostMessage TakePost?"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+  - port: harness.session
+    part: team
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 8
+    settings: {harness: coding}
+  - port: model.inference
+    part: team
+    protocol: "StartInference FinishInference"
+    instances: 8
+    settings: {}
+  - port: question.question
+    part: team
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 8
+    settings: {}
+  - port: resource.claim
+    part: team
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 8
+    settings: {}
+  - port: workspace.lease
+    part: tree
+    protocol: "RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)"
+    instances: 8
+    settings: {sharing: exclusive}
+  - port: workspace.proposal
+    part: tree
+    protocol: "Propose (MergeProposal | RejectProposal | SupersedeProposal)"
+    instances: 8
+    settings: {sharing: exclusive}
+invariants:
+  - link: "owner -> board carries message"
+    port: channel.post
+    predicate: "every channel.post@owner to board"
+  - link: "on_entry -> team carries trigger"
+    port: trigger.firing
+    predicate: "every trigger.firing@on_entry to team"
+  - link: "team -> owner carries question"
+    port: question.question
+    predicate: "every question.question@team to owner"
+  - link: "team -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@team inside gateway.call@gateway"
+  - link: "gateway -> model carries model_call"
+    port: gateway.call
+    predicate: "every gateway.call@gateway to model"
+  - link: "team -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@team to builds"
+border: []

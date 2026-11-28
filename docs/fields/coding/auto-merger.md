@@ -21,6 +21,10 @@ mdx:
 
 <span className="as-tag as-tag--accepted">accepted</span> 12 parts and 12 links; the structural check refuses nothing.
 
+## Contract
+
+No contract: part changes: block `scm.change` has no entry in the table of the ports a block uses; part checks: block `scm.check` has no entry in the table of the ports a block uses; part forge: block `scm.forge` has no entry in the table of the ports a block uses; part repo: block `scm.repository` has no entry in the table of the ports a block uses.
+
 ## Parts
 
 | part | block | settings |

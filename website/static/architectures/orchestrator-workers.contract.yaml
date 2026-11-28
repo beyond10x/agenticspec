@@ -1,0 +1,83 @@
+format: agenticspec-contract/1
+architecture: orchestrator-workers
+ports_digest: 24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229
+ports:
+  - port: resource.claim
+    part: builds
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {capacity: 16, job_limit: 10m, kind: build_slots}
+  - port: gateway.call
+    part: gateway
+    protocol: "AdmitCall CompleteCall"
+    instances: 1
+    settings: {rate_limit_per_minute: 120}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: harness.session
+    part: orchestrator
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding, role: orchestrator}
+  - port: model.inference
+    part: orchestrator
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+  - port: workspace.lease
+    part: tree
+    protocol: "RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)"
+    instances: 8
+    settings: {sharing: exclusive}
+  - port: workspace.proposal
+    part: tree
+    protocol: "Propose (MergeProposal | RejectProposal | SupersedeProposal)"
+    instances: 8
+    settings: {sharing: exclusive}
+  - port: harness.session
+    part: workers
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 8
+    settings: {harness: coding}
+  - port: model.inference
+    part: workers
+    protocol: "StartInference FinishInference"
+    instances: 8
+    settings: {}
+  - port: question.question
+    part: workers
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 8
+    settings: {}
+  - port: resource.claim
+    part: workers
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 8
+    settings: {}
+invariants:
+  - link: "workers -> owner carries question"
+    port: question.question
+    predicate: "every question.question@workers to owner"
+  - link: "orchestrator -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@orchestrator inside gateway.call@gateway"
+  - link: "workers -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@workers inside gateway.call@gateway"
+  - link: "gateway -> model carries model_call"
+    port: gateway.call
+    predicate: "every gateway.call@gateway to model"
+  - link: "workers -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@workers to builds"
+border: []

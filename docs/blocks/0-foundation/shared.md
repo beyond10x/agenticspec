@@ -24,7 +24,7 @@ Nothing: this block is the foundation.
 
 - [delegation](../1-principals/delegation.md) · layer 1 · 5 references
 - [principal](../1-principals/principal.md) · layer 1 · 4 references
-- [gateway](../2-intelligence/gateway.md) · layer 2 · 9 references
+- [gateway](../2-intelligence/gateway.md) · layer 2 · 10 references
 - [model](../2-intelligence/model.md) · layer 2 · 18 references
 - [knowledge](../3-capability/knowledge.md) · layer 3 · 7 references
 - [tool](../3-capability/tool.md) · layer 3 · 8 references

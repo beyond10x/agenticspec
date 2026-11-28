@@ -40,3 +40,4 @@ scenarios:
   - scenarios/trigger/schedule-queue-and-skip.yaml
   - scenarios/work/run-records-steps.yaml
   - scenarios/workspace/exclusive-and-shared-leases.yaml
+  - scenarios/authority/tool-call-decided-by-authority.yaml
