@@ -110,10 +110,40 @@ pub fn catalog_results(root: &Path, check: bool) -> Result<Vec<String>, String> 
     results::generate(root, check)
 }
 
+/// Checks the committed result of every experiment against the digest of its sources, as
+/// [`generate`] does before it reads them; returns how many there are.
+pub fn check_committed(root: &Path) -> Result<usize, String> {
+    let sources = results::sources(root)?;
+    for s in &sources {
+        results::committed(root, s)?;
+    }
+    Ok(sources.len())
+}
+
 /// Every generated file for the repository at `root`. `catalogue` replaces `kpis/catalogue.yaml`
 /// when given.
 pub fn generate(root: &Path, catalogue: Option<Catalogue>) -> Result<Generated, String> {
     let ir = compile(root)?;
+    // The committed results first: a stale one is refused before the architectures run.
+    let cat = catalog::load(root)?;
+    // The short runs of the architectures take longest; the other pages are made beside them.
+    std::thread::scope(|s| {
+        let archs = s.spawn(|| arch::load(root));
+        pages(root, catalogue, ir, cat, || {
+            archs
+                .join()
+                .unwrap_or_else(|p| std::panic::resume_unwind(p))
+        })
+    })
+}
+
+fn pages(
+    root: &Path,
+    catalogue: Option<Catalogue>,
+    ir: Value,
+    cat: catalog::Catalog,
+    archs: impl FnOnce() -> Result<Vec<arch::Architecture>, String>,
+) -> Result<Generated, String> {
     let catalogue = match catalogue {
         Some(c) => c,
         None => read_catalogue(root)?,
@@ -166,7 +196,8 @@ pub fn generate(root: &Path, catalogue: Option<Catalogue>) -> Result<Generated, 
         json_text(&blocks::kpi_json(&ctx)),
     );
 
-    let archs = arch::load(root)?;
+    let packs = packs::generate(root, &catalogue);
+    let archs = archs()?;
     files.insert(
         "docs/architectures/index.md".to_string(),
         arch::index(&archs),
@@ -189,7 +220,6 @@ pub fn generate(root: &Path, catalogue: Option<Catalogue>) -> Result<Generated, 
     }
     let names: Vec<String> = archs.iter().map(|a| a.name.clone()).collect();
 
-    let cat = catalog::load(root)?;
     files.insert("docs/catalog/index.md".to_string(), catalog::index(&cat));
     for e in &cat.entries {
         files.insert(format!("docs/catalog/{}.md", e.name), catalog::page(e));
@@ -197,7 +227,7 @@ pub fn generate(root: &Path, catalogue: Option<Catalogue>) -> Result<Generated, 
     }
     let entries: Vec<String> = cat.entries.iter().map(|e| e.name.clone()).collect();
 
-    let (sidebar_packs, sidebar_fields) = match packs::generate(root, &catalogue)? {
+    let (sidebar_packs, sidebar_fields) = match packs? {
         Some(out) => {
             if let Some(index) = files.get_mut("docs/blocks/index.md") {
                 index.push_str(
