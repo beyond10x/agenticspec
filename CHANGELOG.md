@@ -76,6 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A badge of the render model with `on: panel` is not drawn on its card but listed in the table "Details" under the graph (`on: card` is the default)
 - An edge of the render model with a `count` is drawn heavier: 2 or 3 wider than one, 4 or more wider again, its arrowhead the same size
 - Each core or service unit of a bundle may run an image of its own: a binding names it as `parts.<part>.image` or, on a unit listed under `packing.units`, as its `image`, each `{image, tag, digest}` under the same `target.images` rules as `runtimes.core` (`image_unpinned` from the local store with neither tag nor digest). The unit's image wins over its parts'; parts of one unit that name different images are refused as `unit_image_conflict`. The unit's `code.runtime` names its image and the bundle's `runtimes` carry every image a unit runs. `deploy check` applies the same rules
+- The gate runs the conformance suite of the session specification (`spec/`, 55 scenarios) on the interpreter, and a mutation audit of `spec/` and `studio/` (`task check:mutation`) that fails on a declared rule the suite stops pinning down; `studio/` has its first authored scenario (a dry run is refused only outside apply). `task spec:diff [-- <revision>]` classifies the change of `blocks/`, `spec/` and `studio/` since a release as breaking, unknown or compatible
 
 ### Changed
 

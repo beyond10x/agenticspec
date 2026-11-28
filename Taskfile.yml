@@ -6,6 +6,7 @@ tasks:
     cmds:
       - task: check:spec
       - task: check:blocks
+      - task: check:mutation
       - task: check:fields
       - task: check:ports
       - task: check:bundles
@@ -222,10 +223,23 @@ tasks:
       - npm run build
 
   check:spec:
-    desc: Validate the specification and synthesize its conformance suite with no refusal.
+    desc: Validate the specification, synthesize its conformance suite with no refusal and run it on the interpreter.
     cmds:
       - ess specify validate --path spec
       - mkdir -p target/spec && ess verify conform synthesize --path spec --out target/spec/suite.json
+      - ess verify conform run --target interpreted --path spec --suite target/spec/suite.json --report-format 2 --report-out target/spec/report.json > target/spec/run.txt 2>&1 || { grep -E '^  (failed|error|unsupported) ' target/spec/run.txt; tail -n 1 target/spec/run.txt; exit 1; }
+      - tail -n 1 target/spec/run.txt
+
+  spec:diff:
+    desc: Classify the change of blocks/, spec/ and studio/ since a git revision (task spec:diff -- <revision>; the newest release tag without one) as breaking, unknown or compatible for callers, readers and history; exits 4 on a breaking or unknown change. Not in the gate. The lines are in scripts/spec-diff.sh.
+    cmds:
+      - sh scripts/spec-diff.sh {{.CLI_ARGS}}
+
+  check:mutation:
+    desc: Mutation audit of spec/ and studio/ on the interpreter, authored scenarios included; fails on a mutant the suite does not kill that the specification's mutation-known.txt does not list, and on a listed one that is now killed (about 20 s; the lines are in scripts/check-mutation.sh).
+    cmds:
+      - sh scripts/check-mutation.sh spec
+      - sh scripts/check-mutation.sh studio
 
   check:ui:
     desc: Check the ess-ui document against the specification and run its headless tests on the fixtures; then fail when the block panels (ui/views/) differ from a fresh generation from blocks/ or their digest no longer matches (ui/views/serve.fixtures.json included), and check them against blocks/ with no finding.
