@@ -2011,6 +2011,9 @@
             "parts": {
               "kind": "integer"
             },
+            "requirements": {
+              "kind": "json"
+            },
             "single_points": {
               "kind": "list",
               "of": {

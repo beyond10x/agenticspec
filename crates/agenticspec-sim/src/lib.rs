@@ -15,6 +15,7 @@ pub mod marked;
 pub mod nest;
 pub mod profile;
 pub mod reader;
+pub mod requirements;
 pub mod rng;
 pub mod rows;
 pub mod scenario;

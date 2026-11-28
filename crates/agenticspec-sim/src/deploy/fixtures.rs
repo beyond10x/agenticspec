@@ -6,8 +6,8 @@
 //! names. So `local.yaml` is the base of the per-architecture `local-<architecture>.yaml`, which
 //! declare the egress of their parts.
 //!
-//! The digest of a bundle's sources covers the generator line, the architecture file, the
-//! binding file and every base it refines, each agent document it names, the ports file, the
+//! The digest of a bundle's sources covers the generator line, the architecture file and every document it nests,
+//! the binding file and every base it refines, each agent document it names, the ports file, the
 //! accepted list, the generator's own sources (this directory and the contract derivation) and,
 //! for a binding that asks for a UI (`ui:`), what its archive is built from.
 //! [`check`] compares those digests without building a bundle; [`stale`] builds every bundle
@@ -37,6 +37,8 @@ const GENERATOR: &[&str] = &[
     "crates/agenticspec-sim/src/deploy/mod.rs",
     "crates/agenticspec-sim/src/deploy/packing.rs",
     "crates/agenticspec-sim/src/deploy/ui.rs",
+    "crates/agenticspec-sim/src/nest.rs",
+    "crates/agenticspec-sim/src/requirements.rs",
 ];
 
 /// What the archive of a UI is built from, a source of each bundle whose binding asks for a UI
@@ -165,6 +167,13 @@ pub fn fixtures(root: &Path) -> Result<Vec<Fixture>, String> {
 /// The files a fixture bundle is built from, relative to the root, without the generator's own.
 pub fn sources(root: &Path, f: &Fixture) -> Result<Vec<PathBuf>, String> {
     let mut out = vec![f.architecture.clone()];
+    let mut nested: Vec<PathBuf> =
+        super::bundle::nested_documents(&f.architecture, &load_yaml(&f.architecture)?)?
+            .into_values()
+            .map(|c| c.file)
+            .collect();
+    nested.sort_by_key(|p| relative(root, p));
+    out.extend(nested);
     let mut at = f.binding.clone();
     for _ in 0..32 {
         out.push(at.clone());

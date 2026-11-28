@@ -500,7 +500,7 @@ types:
         summary: The ports file (`agenticspec-ports/1`) a document with `ingress:` is checked against; `blocks/ports.json` by default.
       - name: kpis
         type: Optional<String>
-        summary: The KPI catalogue (`agenticspec-kpis/1`) a document with `ingress:` is checked against; `kpis/catalogue.yaml` by default.
+        summary: The KPI catalogue (`agenticspec-kpis/1`) a document with `ingress:` or `requirements:` is checked against; `kpis/catalogue.yaml` by default.
       - name: json
         type: Boolean
         summary: >-
@@ -512,7 +512,8 @@ types:
     naming:
       summary: >-
         The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs
-        of the architecture as a whole and the architectures it nests. With `--json`, the
+        of the architecture as a whole, the architectures it nests and its requirements, each met,
+        missed or undecided. With `--json`, the
         `agenticspec-check/1` document, which carries `format`, `valid`, `violations` and `counts`
         too; a refused architecture prints the document of the check alone before its refusal.
     fields:
@@ -532,6 +533,14 @@ types:
         type: List<agenticspec.cli.SimNested>
         summary: Every nested architecture, resolved recursively, outermost first; empty when it nests none.
       - {name: ingresses, type: Integer}
+      - name: requirements
+        type: Json
+        summary: >-
+          Each entry of the document's `requirements:` as written, with its `stage` (`check`,
+          `evaluation`, `operation` or `cloud`), its `state` (`met`, `missed` or `undecided`) and the
+          `value` it was decided on: a KPI of the architecture as a whole or a gate count is decided
+          at check, every other one is `undecided`. A missed requirement is reported here and does
+          not refuse the document. Empty when the document has none.
       - name: format
         type: Optional<String>
         summary: "`agenticspec-check/1`."
