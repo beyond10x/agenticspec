@@ -27,7 +27,7 @@ const ROW_GAP: f64 = 20.0;
 const PILL_H: f64 = 20.0;
 
 /// The accessible title and description of the SVG.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct Words {
     pub title: String,
     pub desc: String,
@@ -36,7 +36,7 @@ pub(crate) struct Words {
 /// What a page of this crate draws beyond the render model: the rank and label of each group,
 /// and per node, edge and mark what its card, line or chip shows besides. [`crate::page::render`]
 /// draws with none of it.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct Decor {
     pub words: Words,
     /// Group id, legend label, row. Without any, a node's row is the longest chain of edges that
@@ -49,6 +49,8 @@ pub(crate) struct Decor {
     pub vias: Vec<Option<String>>,
     /// By mark index: the chip drawn for the mark.
     pub chips: Vec<Option<Chip>>,
+    /// The regions drawn open with a control that closes them.
+    pub closable: Vec<String>,
 }
 
 #[derive(Clone, Default)]
@@ -62,6 +64,8 @@ pub(crate) struct NodeDecor {
     pub outline: Option<String>,
     /// The accessible name of the card.
     pub description: Option<String>,
+    /// The card stands for a collapsed region and opens it.
+    pub opens: bool,
 }
 
 /// The colour slots of the stylesheet: a card of slot `s` has the class `f-s`.
@@ -411,6 +415,8 @@ struct Part {
     refused: bool,
     /// A region that is no node: drawn only as the frame around what it holds.
     frame_only: bool,
+    /// The card of a collapsed region, which opens it.
+    opens: bool,
     props: Vec<(String, String)>,
     description: String,
     region: Option<String>,
@@ -467,6 +473,8 @@ struct Scene {
     regions: Vec<(String, Option<String>, String, bool)>,
     /// The part whose frame each part is drawn in.
     parent: Vec<Option<usize>>,
+    /// The regions drawn open with a control that closes them.
+    closable: Vec<String>,
 }
 
 impl Scene {
@@ -563,6 +571,7 @@ impl Scene {
                     outline: d.outline.clone(),
                     refused: false,
                     frame_only: false,
+                    opens: d.opens,
                     props: d.properties.clone(),
                     region: n.region.clone(),
                     row,
@@ -589,6 +598,7 @@ impl Scene {
                 outline: None,
                 refused: false,
                 frame_only: true,
+                opens: false,
                 props: Vec::new(),
                 region: parent,
                 row: usize::MAX,
@@ -701,6 +711,7 @@ impl Scene {
                 from: e.from.clone(),
                 to: e.to.clone(),
                 label: match e.count {
+                    Some(c) if e.label.is_empty() => format!("×{c}"),
                     Some(c) => format!("{} ×{c}", e.label),
                     None => e.label.clone(),
                 },
@@ -714,6 +725,7 @@ impl Scene {
             links,
             regions,
             parent,
+            closable: decor.closable.clone(),
         }
     }
 
@@ -913,7 +925,36 @@ fn frame_head(sc: &Scene, p: usize) -> (Option<String>, String, bool) {
 
 fn frame_head_w(sc: &Scene, p: usize) -> f64 {
     let (label, heading, _) = frame_head(sc, p);
-    label.map(|l| text_w(&l, 12.0, true) + 8.0).unwrap_or(0.0) + text_w(&heading, 11.0, false)
+    let close = if sc.closable.contains(&sc.parts[p].id) {
+        close_w() + 8.0
+    } else {
+        0.0
+    };
+    label.map(|l| text_w(&l, 12.0, true) + 8.0).unwrap_or(0.0)
+        + text_w(&heading, 11.0, false)
+        + close
+}
+
+/// The width of the control that closes an open region.
+fn close_w() -> f64 {
+    (text_w("close", 11.0, false) + 22.0).ceil()
+}
+
+/// The control that closes the open region `id`, its right edge at `right` and its top at `y`.
+fn close_control(svg: &mut String, id: &str, label: &str, right: f64, y: f64) {
+    let w = close_w();
+    let x = right - w;
+    let _ = write!(
+        svg,
+        "<g class=\"region-close\" data-close=\"{}\"><rect class=\"close-bg\" tabindex=\"0\" role=\"button\" aria-expanded=\"true\" aria-label=\"Close region {}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"17\" rx=\"8.5\"/><text x=\"{}\" y=\"{}\" text-anchor=\"middle\">close</text></g>",
+        esc(id),
+        esc(label),
+        px(x),
+        px(y),
+        px(w),
+        px(x + w / 2.0),
+        px(y + 12.5)
+    );
 }
 
 /// Lays out part `p` with its top left at `x`, `y`: its node card, or its frame holding its own
@@ -1166,13 +1207,25 @@ struct Drawn {
 
 /// The graph of a page, laid out as its `layout` says.
 pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
+    render_in(page, decor, page)
+}
+
+/// The graph of `page` in the colours of the groups of `whole`, the page it is a state of.
+pub(crate) fn render_in(page: &Page, decor: &Decor, whole: &Page) -> Graph {
     match page.layout {
         page::Layout::Graph => {
-            let d = layered(page, decor, &Frame::default());
+            let d = layered(
+                page,
+                decor,
+                &Frame {
+                    origin: (0.0, 0.0),
+                    palette: Some(whole),
+                },
+            );
             wrap(page, decor, &d.body, d.width, d.height)
         }
         page::Layout::Bands => {
-            let (body, width, height) = bands(page, decor);
+            let (body, width, height) = bands(page, decor, whole);
             wrap(page, decor, &body, width, height)
         }
     }
@@ -1199,8 +1252,15 @@ struct Crossing {
 /// The graph of a page in bands, one per top-level region in the order of the list and a last
 /// one for the nodes in none: what a band holds is laid out by [`layered`] as a page of its own,
 /// and an edge between two bands runs through the gaps. Returns the body, width and height.
-fn bands(page: &Page, decor: &Decor) -> (String, f64, f64) {
-    let whole = Scene::read(page, decor, &Frame::default());
+fn bands(page: &Page, decor: &Decor, colours_of: &Page) -> (String, f64, f64) {
+    let whole = Scene::read(
+        page,
+        decor,
+        &Frame {
+            origin: (0.0, 0.0),
+            palette: Some(colours_of),
+        },
+    );
     let tops = &page.regions;
     let loose = tops.len();
     // The band of each region: the top-level region it lies in.
@@ -1320,6 +1380,7 @@ fn bands(page: &Page, decor: &Decor) -> (String, f64, f64) {
                     .iter()
                     .map(|&i| decor.chips.get(i).cloned().flatten())
                     .collect(),
+                closable: decor.closable.clone(),
             };
             sub.marks = marks.iter().map(|&i| page.marks[i].clone()).collect();
             sub.edges = inner[b].iter().map(|&i| page.edges[i].clone()).collect();
@@ -1328,7 +1389,7 @@ fn bands(page: &Page, decor: &Decor) -> (String, f64, f64) {
         .collect();
     let colours = |origin: (f64, f64)| Frame {
         origin,
-        palette: Some(page),
+        palette: Some(colours_of),
     };
     let measured: Vec<Drawn> = pages
         .iter()
@@ -1350,9 +1411,14 @@ fn bands(page: &Page, decor: &Decor) -> (String, f64, f64) {
     let band_w = measured
         .iter()
         .zip(&heads)
-        .map(|(d, h)| {
+        .zip(&shown)
+        .map(|((d, h), &b)| {
+            let close = tops
+                .get(b)
+                .filter(|r| decor.closable.contains(&r.id))
+                .map_or(0.0, |_| close_w() + 8.0);
             let head = h.as_ref().map_or(0.0, |(l, s, _)| {
-                text_w(l, 12.0, true) + 8.0 + text_w(s, 11.0, false) + 2.0 * FPAD
+                text_w(l, 12.0, true) + 8.0 + text_w(s, 11.0, false) + 2.0 * FPAD + close
             });
             d.width.max(head)
         })
@@ -1515,6 +1581,9 @@ fn bands(page: &Page, decor: &Decor) -> (String, f64, f64) {
                 px(bx[1] + 17.0),
                 esc(heading)
             );
+            if decor.closable.iter().any(|c| c == id) {
+                close_control(&mut svg, id, label, bx[0] + bx[2] - FPAD, bx[1] + 5.0);
+            }
         }
         svg.push_str("</g>");
     }
@@ -3013,11 +3082,15 @@ fn draw_card(svg: &mut String, sc: &Scene, card: &Card, x: f64, y: f64) {
         }
         let _ = write!(
             svg,
-            "<text class=\"region-sub\" x=\"{}\" y=\"{}\">{}</text></g>",
+            "<text class=\"region-sub\" x=\"{}\" y=\"{}\">{}</text>",
             px(tx),
             px(fy + 16.0),
             esc(&heading)
         );
+        if sc.closable.contains(&part.id) {
+            close_control(svg, &part.id, &part.label, fx + w - FPAD, fy + 4.0);
+        }
+        svg.push_str("</g>");
     }
     for &(p, dx, dy, w, h) in &card.nodes {
         draw_node(svg, sc, p, x + dx, y + dy, w, h);
@@ -3029,12 +3102,18 @@ fn draw_node(svg: &mut String, sc: &Scene, part: usize, x: f64, y: f64, w: f64, 
     let border = p.outline.is_some();
     let _ = write!(
         svg,
-        "<g class=\"node f-{}{}{}\"{} data-part=\"{}\">",
+        "<g class=\"node f-{}{}{}{}\"{} data-part=\"{}\"{}>",
         p.slot,
         if border { " on-border" } else { "" },
         if p.refused { " refused" } else { "" },
+        if p.opens { " collapsed" } else { "" },
         look(p),
         esc(&p.id),
+        if p.opens {
+            format!(" data-open=\"{}\"", esc(&p.id))
+        } else {
+            String::new()
+        },
     );
     if border {
         let _ = write!(
@@ -3060,7 +3139,13 @@ fn draw_node(svg: &mut String, sc: &Scene, part: usize, x: f64, y: f64, w: f64, 
     }
     let _ = write!(
         svg,
-        "<rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\" data-box=\"{} {} {} {}\"/>",
+        "<rect class=\"card-bg\" tabindex=\"0\" role=\"button\" {} aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\" data-box=\"{} {} {} {}\"/>",
+        // The card of a collapsed region opens it; any other card is selected.
+        if p.opens {
+            "aria-expanded=\"false\""
+        } else {
+            "aria-pressed=\"false\""
+        },
         esc(&p.description),
         px(x),
         px(y),

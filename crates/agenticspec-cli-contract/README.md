@@ -316,7 +316,7 @@ Error `ports_stale`: `agenticspec.cli.Refusal`.
 
 ### `sim render`
 
-Write the page of an architecture, with the result of a run when given
+Write the page of an architecture, with the result of a run when given, or of a render model page
 
 Callable: `sim_render`. Input: `agenticspec.cli.SimRenderInput`. Result: `agenticspec.cli.SimRenderResult`.
 

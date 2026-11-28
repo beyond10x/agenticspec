@@ -71,12 +71,14 @@ fn full() -> Page {
         label: "zone".to_string(),
         r#in: Some("zone".to_string()),
         per: Some("tenant".to_string()),
+        collapsed: false,
         regions: vec![Region {
             id: "rack".to_string(),
             label: "rack".to_string(),
             r#in: Some("rack".to_string()),
             per: Some("host".to_string()),
             regions: Vec::new(),
+            collapsed: false,
         }],
     }];
     p.nodes[0].badges = vec![Badge {
@@ -654,6 +656,17 @@ fn the_schema_accepts_a_page_and_refuses_an_unknown_field() {
     let mut deep = serde_json::to_value(full()).expect("serializes");
     deep["regions"][0]["regions"][0]["shape"] = json!("round");
     assert!(!validate(&s, &deep, false).is_empty());
+    let mut collapsed = serde_json::to_value(full()).expect("serializes");
+    collapsed["regions"][0]["collapsed"] = json!(true);
+    assert!(
+        validate(&s, &collapsed, false).is_empty(),
+        "collapsed: true"
+    );
+    collapsed["regions"][0]["collapsed"] = json!("yes");
+    assert!(
+        !validate(&s, &collapsed, false).is_empty(),
+        "collapsed is a boolean"
+    );
     let mut level = serde_json::to_value(full()).expect("serializes");
     level["marks"][0]["level"] = json!("warning");
     assert!(!validate(&s, &level, false).is_empty());
@@ -676,6 +689,8 @@ fn the_schema_and_the_types_name_the_same_fields() {
     page.layout = Layout::Bands;
     page.panels[0].place = Place::Below;
     page.nodes[0].badges[0].on = On::Panel;
+    page.regions[0].collapsed = true;
+    page.regions[0].regions[0].collapsed = true;
     for n in &mut page.nodes {
         n.region = Some("zone".to_string());
     }
@@ -721,6 +736,7 @@ fn the_renderer_names_no_agenticspec_term() {
         ("page.rs", include_str!("../../src/page.rs")),
         ("graph.rs", include_str!("../../src/graph.rs")),
         ("fmt.rs", include_str!("../../src/fmt.rs")),
+        ("collapse.rs", include_str!("../../src/collapse.rs")),
     ] {
         for w in words {
             assert!(!src.contains(w), "src/{file} names {w:?}");

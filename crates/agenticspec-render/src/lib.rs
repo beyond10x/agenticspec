@@ -11,6 +11,7 @@
 //! nothing from the network. The output is a function of the input only.
 
 pub mod architecture;
+mod collapse;
 mod fmt;
 mod graph;
 pub mod page;
