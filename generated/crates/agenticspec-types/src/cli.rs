@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 238a19fb6ae6bbc5b648eba06c828c629deaeed26ee2b95e60532c84a0ca0908
+// contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -276,6 +276,30 @@ pub struct DeployBundleResult {
     pub out: Option<String>,
     /// `bundle` — `Optional<String>`.
     pub bundle: Option<String>,
+}
+
+/// DeployCheckInput — `agenticspec.cli.DeployCheckInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeployCheckInput {
+    /// `bundle` — `String`.
+    pub bundle: String,
+    /// `accepts` — `Optional<String>`.
+    pub accepts: Option<String>,
+}
+
+/// DeployCheckResult — `agenticspec.cli.DeployCheckResult`.
+///
+/// A written bundle admitted again from what it carries, its digest and its units.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeployCheckResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `binding` — `String`.
+    pub binding: String,
+    /// `digest` — `String`.
+    pub digest: String,
+    /// `units` — `Integer`.
+    pub units: i64,
 }
 
 /// EntityRows — `agenticspec.cli.EntityRows`.

@@ -68,6 +68,20 @@ Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 Error `ports_unreadable`: `agenticspec.cli.Refusal`.
 
+### `deploy check`
+
+Admit a written deployment bundle again from what it carries, for a reader that did not write it; refuses a digest that does not hold, an undeclared secret or egress, a secret value and every other finding of admission
+
+Callable: `deploy_check`. Input: `agenticspec.cli.DeployCheckInput`. Result: `agenticspec.cli.DeployCheckResult`.
+
+Error `accepts_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `bundle_invalid`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `not_admitted`: `agenticspec.cli.Refusal`.
+
 ### `export`
 
 Export a procedure as a canon protocol and loom bindings
@@ -402,6 +416,7 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract
 - handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract
 - handler:deploy_bundle: implement the owner-qualified callable and its declared result/error contract
+- handler:deploy_check: implement the owner-qualified callable and its declared result/error contract
 - handler:export: implement the owner-qualified callable and its declared result/error contract
 - handler:ingress_default: implement the owner-qualified callable and its declared result/error contract
 - handler:ingress_project: implement the owner-qualified callable and its declared result/error contract

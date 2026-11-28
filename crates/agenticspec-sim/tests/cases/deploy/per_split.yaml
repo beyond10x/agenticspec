@@ -1,6 +1,7 @@
 format: agenticspec-binding/1
 binding: per-split
 architecture: workstation
+refines: egress/workstation.yaml
 summary: Each coding agent's workspace is in a unit of its own, away from its agent.
 packing:
   units:

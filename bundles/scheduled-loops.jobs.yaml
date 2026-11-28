@@ -478,7 +478,7 @@ contract:
       settings: {}
     ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 binding:
-  digest: sha256:7cdfc132f917582f1974c8fb701b606dc22ce16ba16639765b8793a5ceb9e6d0
+  digest: sha256:b0783b4c538e1303f0f57fcef5f9d44b20969c884e41aca4d5d72951c175effe
   document:
     architecture: scheduled-loops
     binding: jobs
@@ -491,9 +491,21 @@ binding:
       builds:
         state: service
       gateway:
+        egress:
+        - model
         state: service
+      sweep:
+        egress:
+        - sweeper
       sweeper:
         agent: ../agents/sweeper.yaml
+        egress:
+        - builds
+        - gateway
+        - owner
+      triager:
+        egress:
+        - owner
     summary: The scheduled loops with the nightly sweep as a scheduled unit that a clock starts and that ends when its run ends; everything else in the core unit.
     transports:
       claim: http
@@ -541,15 +553,18 @@ units:
   egress:
   - carries: model_call
     external: true
+    from: gateway
     link: gateway -> model carries model_call
     to: model
   - carries: trigger
+    from: sweep
     link: sweep -> sweeper carries trigger
     to: sweeper
     transport: schedule
     unit: sweeper
   - carries: question
     external: true
+    from: triager
     link: triager -> owner carries question
     to: owner
   isolation: none
@@ -652,17 +667,20 @@ units:
     role: agent-runtime
   egress:
   - carries: claim
+    from: sweeper
     link: sweeper -> builds carries claim
     to: builds
     transport: http
     unit: core
   - carries: model_call
+    from: sweeper
     link: sweeper -> gateway carries model_call
     to: gateway
     transport: http
     unit: core
   - carries: question
     external: true
+    from: sweeper
     link: sweeper -> owner carries question
     to: owner
   isolation: none
@@ -719,4 +737,4 @@ agents:
     parts:
     - sweeper
 runtimes: {}
-digest: sha256:d68d805831faf16f100b67a2e3afae17a7d81340c4c4c406ceadc393cf7e1acc
+digest: sha256:941def402824200d60b431d22b2a58845d437708c4101e9792da67dd0a78072c

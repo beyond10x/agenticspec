@@ -535,7 +535,7 @@ Called by: Deployer.
 | `Coordination` | one of | `Orchestrator`, `Board`, `Mesh`, `None` |
 | `Digest`<br/>Digest of the canonical form of an architecture's parts, links and border. | an identifier or value | `string` |
 | `EventName`<br/>The full name of an event of the building blocks. | an identifier or value | `string` |
-| `PartKind` | one of | `Principal`, `Agent`, `Harness`, `Model`, `Gateway`, `Tool`, `Knowledge`, `Channel`, `Workspace`, `Sandbox`, `Runtime`, `Pool`, `Trigger`, `Schedule` |
+| `PartKind` | one of | `Principal`, `Agent`, `Harness`, `Model`, `Gateway`, `Tool`, `Knowledge`, `Channel`, `Workspace`, `Sandbox`, `Runtime`, `Pool`, `Trigger`, `Schedule`, `Authority`, `Work`, `Experiment`, `Kpi` |
 | `PatchRule` | a record | `verb` PatchVerb, `text` string |
 | `PatchVerb` | one of | `Set`, `Add`, `Remove`, `Connect`, `Replicate`, `Wrap`, `Prepend`, `Append`, `Mark`, `Unmark` |
 | `PortKind` | one of | `Outbound`, `Clock`, `Principal` |

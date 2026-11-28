@@ -8,6 +8,7 @@ use agenticspec_sim::deploy::admit::{self, Accepts, REFUSALS};
 use agenticspec_sim::deploy::binding;
 use agenticspec_sim::deploy::bundle::{self, MEMBERS};
 use agenticspec_sim::deploy::fixtures;
+use agenticspec_sim::deploy::grants;
 use agenticspec_sim::deploy::packing::{self, Packing, STRATEGIES};
 use agenticspec_sim::doc::{load_yaml, parse_yaml};
 use serde_json::{Value, json};
@@ -255,7 +256,13 @@ fn each_refusal_of_admission_has_a_binding_that_is_refused_by_it_alone() {
         let file = cases().join(format!("{name}.yaml"));
         assert!(file.is_file(), "no refusing binding {}", file.display());
         let b = load_yaml(&file).unwrap();
-        let architecture = arch(b["architecture"].as_str().unwrap());
+        // A refusal of the architecture itself has its document beside the binding.
+        let own = cases().join(format!("{name}.architecture.yaml"));
+        let architecture = if own.is_file() {
+            own
+        } else {
+            arch(b["architecture"].as_str().unwrap())
+        };
         let accepts_file = cases().join(format!("{name}.accepts.yaml"));
         let accepts = accepts_file.is_file().then_some(accepts_file.as_path());
         let r = bundle_with(&architecture, &file, accepts, None).unwrap_err();
@@ -283,9 +290,17 @@ fn a_refusal_lists_every_finding_and_writes_nothing() {
     assert_eq!(r.code, "not_admitted");
     // Five links cross units: operator to gateway and to worker, worker to builds, gateway and
     // operator; the gateway's rate limit stays in memory; the two agent units name no agent
-    // document.
+    // document; seven links leave their unit, the five and two to external parts, and no part
+    // declares its egress.
     let findings: Vec<&str> = r.detail.split("; ").collect();
-    assert_eq!(findings.len(), 8, "{}", r.detail);
+    assert_eq!(findings.len(), 15, "{}", r.detail);
+    assert_eq!(
+        findings
+            .iter()
+            .filter(|f| f.starts_with("egress_undeclared"))
+            .count(),
+        7
+    );
     assert!(
         findings[0].starts_with("shared_state_split"),
         "sorted by refusal"
@@ -472,8 +487,12 @@ fn each_unit_of_a_bundle_carries_its_code_claims_isolation_ports_and_roles() {
     assert_eq!(gateway["egress"][0]["external"], true);
     let core = units["core"];
     let pinned = "sha256:0000000000000000000000000000000000000000000000000000000000000001";
-    assert_eq!(core["code"], json!({ "runtime": pinned }));
-    assert_eq!(v["runtimes"][pinned]["name"], "core");
+    let image = format!("registry.example/agenticspec-core@{pinned}");
+    assert_eq!(core["code"], json!({ "runtime": image }));
+    assert_eq!(
+        v["runtimes"][pinned],
+        json!({ "name": "core", "image": image })
+    );
     assert!(core.get("schedule").is_none());
     for u in units.values() {
         for k in [
@@ -545,5 +564,309 @@ fn the_fixture_bundles_are_current_and_hold_only_accepted_kinds_and_roles() {
                 assert!(accepts.roles.contains(name), "{}: role {r}", f.file);
             }
         }
+    }
+}
+
+#[test]
+fn a_secret_name_is_lower_case_words_and_nothing_that_looks_like_a_value() {
+    for ok in ["model-api-key", "chat-token", "a", "db2-password-ref"] {
+        assert!(grants::is_name(ok), "{ok}");
+    }
+    for refused in [
+        "",
+        "Model-Api-Key",
+        "2fa-seed",
+        "API_KEY=x",
+        "sk live",
+        "key:abc",
+        "a/b",
+        "dGhpcyBpcyBub3QgYSBrZXk=",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "abcdefghijabcdefghijk",
+    ] {
+        assert!(!grants::is_name(refused), "{refused}");
+    }
+    assert!(!grants::is_name(&"ab-".repeat(22)), "longer than 63");
+}
+
+#[test]
+fn a_secret_value_is_refused_by_where_it_is_never_by_its_text() {
+    let file = cases().join("secret_value.yaml");
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "not_admitted", "{}", r.detail);
+    let findings: Vec<&str> = r.detail.split("; ").collect();
+    assert_eq!(findings.len(), 4, "{}", r.detail);
+    for needle in [
+        "parts: operator: secrets[0] is not a secret name",
+        "parts: gateway: secrets[1] is not a secret name",
+        "parts: gateway has `value:`",
+        "parts: gateway: egress[0] has `data:`",
+    ] {
+        assert!(r.detail.contains(needle), "{needle} in {}", r.detail);
+    }
+    assert!(!r.detail.contains("placeholder"), "{}", r.detail);
+    assert!(!r.detail.contains("Model Key Text"), "{}", r.detail);
+}
+
+#[test]
+fn secrets_and_egress_are_carried_per_unit_by_name_with_the_part_they_start_at() {
+    let root = repo_root();
+    let out = bundle_with(
+        &arch("workstation"),
+        &root.join("bundles/bindings/split.yaml"),
+        None,
+        None,
+    )
+    .unwrap();
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    let unit = |n: &str| {
+        v["units"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|u| u["name"] == n)
+            .unwrap()
+            .clone()
+    };
+    let gateway = unit("gateway");
+    assert_eq!(
+        gateway["egress"],
+        json!([{ "link": "gateway -> model carries model_call", "from": "gateway", "to": "model", "carries": "model_call", "external": true, "secret": "model-api-key" }])
+    );
+    let operator = unit("operator");
+    assert_eq!(operator["secrets"], json!(["chat-token"]));
+    assert_eq!(
+        operator["egress"][0],
+        json!({ "from": "operator", "to": "chat-relay", "named": true, "secret": "chat-token" }),
+        "a named destination comes first, it has no link"
+    );
+    let to: Vec<&str> = operator["egress"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["to"].as_str().unwrap())
+        .collect();
+    assert_eq!(to, ["chat-relay", "gateway", "owner", "worker"]);
+    assert_eq!(unit("core")["egress"], json!([]));
+}
+
+#[test]
+fn an_egress_entry_of_the_wrong_form_is_refused_before_admission() {
+    let dir = scratch("deploy-egress-form");
+    let file = dir.join("b.yaml");
+    std::fs::write(
+        &file,
+        "format: agenticspec-binding/1\nbinding: odd\nparts:\n  gateway: {egress: model}\n  operator: {egress: [\"https://chat.example\", {to: owner, via: chat}, 3]}\n",
+    )
+    .unwrap();
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "binding_invalid", "{}", r.detail);
+    for needle in [
+        "gateway: egress is a list of destinations",
+        "operator: egress[0] names neither a part",
+        "operator: egress[1]: unknown key `via`",
+        "operator: egress[2] is a destination name",
+    ] {
+        assert!(r.detail.contains(needle), "{needle} in {}", r.detail);
+    }
+}
+
+/// `deploy check` of a bundle as YAML text written to a scratch file.
+fn check_text(dir: &Path, text: &str) -> Result<Value, cli::Refusal> {
+    let file = dir.join("bundle.yaml");
+    std::fs::write(&file, text).unwrap();
+    let accepts = repo_root().join("bundles/cloudspec-accepts.yaml");
+    cli::deploy_check(&file, Some(&accepts))
+}
+
+/// The split fixture bundle changed by `edit`, its binding and bundle digests recomputed.
+fn tampered(edit: impl FnOnce(&mut Value)) -> String {
+    let root = repo_root();
+    let mut v = load_yaml(&root.join("bundles/workstation.split.yaml")).unwrap();
+    edit(&mut v);
+    v["binding"]["digest"] = json!(agenticspec_sim::deploy::digest(&v["binding"]["document"]));
+    v["digest"] = json!(bundle::recompute(&v));
+    bundle::write(&v)
+}
+
+/// A change of a bundle read back.
+type Edit = Box<dyn FnOnce(&mut Value)>;
+
+fn unit_mut<'a>(v: &'a mut Value, name: &str) -> &'a mut Value {
+    v["units"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|u| u["name"] == name)
+        .unwrap()
+}
+
+#[test]
+fn deploy_check_admits_every_fixture_bundle_again() {
+    let root = repo_root();
+    let accepts = root.join("bundles/cloudspec-accepts.yaml");
+    for f in fixtures::fixtures(&root).unwrap() {
+        let path = root.join("bundles").join(&f.file);
+        let out = cli::deploy_check(&path, Some(&accepts))
+            .unwrap_or_else(|r| panic!("{}: {}: {}", f.file, r.code, r.detail));
+        let v = load_yaml(&path).unwrap();
+        assert_eq!(out["digest"], v["digest"]);
+        assert_eq!(out["units"], v["units"].as_array().unwrap().len());
+    }
+}
+
+#[test]
+fn deploy_check_refuses_an_undeclared_secret_or_egress_and_a_value_each_by_name() {
+    let dir = scratch("deploy-check-refusals");
+    let cases: [(&str, Edit); 4] = [
+        (
+            "secret_undeclared",
+            Box::new(|v| {
+                unit_mut(v, "worker")["secrets"] = json!(["model-api-key"]);
+            }),
+        ),
+        (
+            "egress_undeclared",
+            Box::new(|v| {
+                unit_mut(v, "worker")["egress"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(json!({ "from": "worker", "to": "package-mirror", "named": true }));
+            }),
+        ),
+        (
+            "secret_value",
+            Box::new(|v| {
+                let e = &mut unit_mut(v, "gateway")["egress"][0];
+                e["secret"] = json!("Bearer placeholder");
+                e["token"] = json!("placeholder");
+            }),
+        ),
+        (
+            "egress_undeclared",
+            Box::new(|v| {
+                v["binding"]["document"]["parts"]["gateway"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("egress");
+            }),
+        ),
+    ];
+    for (name, edit) in cases {
+        let r = check_text(&dir, &tampered(edit)).unwrap_err();
+        assert_eq!(r.code, "not_admitted", "{name}: {}", r.detail);
+        assert_eq!(
+            refusal_names(&r.detail),
+            BTreeSet::from([name.to_owned()]),
+            "{name}: {}",
+            r.detail
+        );
+        assert!(!r.detail.contains("placeholder"), "{}", r.detail);
+    }
+}
+
+#[test]
+fn deploy_check_refuses_a_bundle_whose_digest_does_not_hold() {
+    let dir = scratch("deploy-check-digest");
+    let root = repo_root();
+    let text = std::fs::read_to_string(root.join("bundles/workstation.split.yaml")).unwrap();
+    let r = check_text(&dir, &text.replace("chat-token", "chat-key")).unwrap_err();
+    assert_eq!(r.code, "bundle_invalid", "{}", r.detail);
+    assert!(
+        r.detail.contains("`digest` is not the digest"),
+        "{}",
+        r.detail
+    );
+    let r = check_text(&dir, "format: agenticspec-binding/1\n").unwrap_err();
+    assert_eq!(r.code, "bundle_invalid");
+}
+
+#[test]
+fn a_runtime_is_pinned_by_image_and_digest_and_refused_without_either() {
+    let dir = scratch("deploy-runtime-form");
+    let file = dir.join("b.yaml");
+    let d = "sha256:0000000000000000000000000000000000000000000000000000000000000002";
+    std::fs::write(
+        &file,
+        format!(
+            "format: agenticspec-binding/1\nbinding: odd\nruntimes:\n  core: {{image: registry.example/core:1.2}}\n  agent: {{digest: \"{d}\"}}\n  extra: {{image: \"registry.example/x@{d}\", digest: \"{d}\"}}\n"
+        ),
+    )
+    .unwrap();
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "binding_invalid", "{}", r.detail);
+    for needle in [
+        "runtimes: core: `digest:`",
+        "runtimes: core: `image:`",
+        "runtimes: agent: `image:`",
+        "runtimes: extra: `image:`",
+    ] {
+        assert!(r.detail.contains(needle), "{needle} in {}", r.detail);
+    }
+    assert!(!r.detail.contains("runtimes: extra: `digest:`"));
+    assert!(binding::is_image("localhost:5000/team/core"));
+    assert!(!binding::is_image("localhost:5000/team/core:latest"));
+}
+
+/// The variants of `agentic.architecture.PartKind`, in snake case.
+fn declared_part_kinds() -> BTreeSet<String> {
+    let doc = load_yaml(&repo_root().join("blocks/9-composition/architecture.yaml")).unwrap();
+    let t = doc["types"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["name"] == "agentic.architecture.PartKind")
+        .unwrap();
+    t["variants"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_str().unwrap().to_lowercase())
+        .collect()
+}
+
+#[test]
+fn every_part_kind_derives_its_ports_and_sim_check_refuses_any_other_block() {
+    use agenticspec_sim::contract::derive::{PART_KINDS, block_ports};
+    let table: BTreeSet<String> = PART_KINDS.iter().map(|k| (*k).to_owned()).collect();
+    assert_eq!(table, declared_part_kinds(), "the table is the part kinds");
+    let ports = load_yaml(&repo_root().join("blocks/ports.json")).unwrap();
+    let known: BTreeSet<&str> = ports["ports"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| p["name"].as_str().unwrap())
+        .collect();
+    for kind in PART_KINDS {
+        let part = json!({ "block": kind });
+        let doc = json!({ "parts": { "x": part } });
+        let used = block_ports(&doc, "x", &part).unwrap_or_else(|e| panic!("{kind}: {e}"));
+        for p in used {
+            assert!(
+                known.contains(p),
+                "{kind}: port {p} is not in blocks/ports.json"
+            );
+        }
+    }
+    let dir = scratch("sim-check-blocks");
+    for odd in ["resource", "cache"] {
+        let part = json!({ "block": odd });
+        assert!(block_ports(&json!({ "parts": { "x": part } }), "x", &part).is_err());
+        let file = dir.join(format!("{odd}.yaml"));
+        std::fs::write(
+            &file,
+            format!(
+                "format: agenticspec-architecture/1\narchitecture: odd\nparts:\n  owner: {{block: principal, kind: human}}\n  agent: {{block: agent, harness: coding}}\n  model: {{block: model, route: frontier}}\n  x: {{block: {odd}}}\nlinks:\n  - {{from: owner, to: agent, carries: prompt}}\n  - {{from: agent, to: model, carries: model_call}}\n  - {{from: agent, to: x, carries: message}}\n"
+            ),
+        )
+        .unwrap();
+        let r = cli::check(&file).unwrap_err();
+        assert_eq!(r.code, "architecture_refused", "{odd}: {}", r.detail);
+        assert!(
+            r.detail
+                .contains(&format!("block `{odd}` is not a part kind")),
+            "{odd}: {}",
+            r.detail
+        );
     }
 }

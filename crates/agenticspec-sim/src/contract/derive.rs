@@ -59,13 +59,44 @@ pub struct Contract {
     pub ingress: Vec<ContractIngress>,
 }
 
+/// The blocks a part may be: the variants of `agentic.architecture.PartKind`
+/// (`blocks/9-composition/architecture.yaml`), in snake case. `agenticspec sim check` refuses a
+/// part of any other block, and [`block_ports`] has an entry for each.
+pub const PART_KINDS: &[&str] = &[
+    "principal",
+    "agent",
+    "harness",
+    "model",
+    "gateway",
+    "tool",
+    "knowledge",
+    "channel",
+    "workspace",
+    "sandbox",
+    "runtime",
+    "pool",
+    "trigger",
+    "schedule",
+    "authority",
+    "work",
+    "experiment",
+    "kpi",
+    "question",
+    "process",
+    "delegation",
+    "architecture",
+];
+
 /// The ports a part of a block uses by being there. Blocks of an inner domain (principal, tool,
-/// knowledge, work, experiment, kpi) use none: the specification runs them. A principal uses the
-/// question port when a link carrying `question` reaches it (see [`link_uses`]).
-fn block_ports(doc: &Value, name: &str, part: &Value) -> Result<Vec<&'static str>, String> {
+/// knowledge, work, experiment, kpi, question, process, delegation) use none: the specification
+/// runs them. A principal uses the question port when a link carrying `question` reaches it (see
+/// [`link_uses`]). A harness part serves the sessions and decides the tool calls of the agents that
+/// run in it.
+pub fn block_ports(doc: &Value, name: &str, part: &Value) -> Result<Vec<&'static str>, String> {
     let block = part["block"].as_str().unwrap_or("");
     Ok(match block {
         "agent" => vec!["harness.session"],
+        "harness" => vec!["harness.session", "harness.tool-call"],
         "model" => vec!["model.inference"],
         "gateway" => vec!["gateway.call"],
         "pool" => vec!["resource.claim"],
@@ -100,7 +131,11 @@ fn block_ports(doc: &Value, name: &str, part: &Value) -> Result<Vec<&'static str
             }
         }
         "runtime" => vec!["runtime.instance"],
-        "principal" | "tool" | "knowledge" | "work" | "experiment" | "kpi" => vec![],
+        "principal" | "tool" | "knowledge" | "work" | "experiment" | "kpi" | "question"
+        | "process" | "delegation" => vec![],
+        // A nested architecture is flattened before its contract is derived: its own parts use
+        // the ports.
+        "architecture" => vec![],
         other => {
             return Err(format!(
                 "part {name}: block `{other}` has no entry in the table of the ports a block uses"
@@ -117,6 +152,7 @@ fn narrowing(block: &str, port: &str) -> &'static [&'static str] {
     match (block, port) {
         ("agent", "harness.session") => &["harness", "role", "acts_for"],
         ("agent", "harness.tool-call") => &["harness"],
+        ("harness", _) => &["kind"],
         ("model", "model.inference") => &["route"],
         ("gateway", "gateway.call") => &["rate_limit_per_minute"],
         ("pool", "resource.claim") => &["kind", "capacity", "job_limit"],

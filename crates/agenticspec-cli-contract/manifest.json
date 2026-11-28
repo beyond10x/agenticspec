@@ -17,6 +17,7 @@
     "handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract",
     "handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract",
     "handler:deploy_bundle: implement the owner-qualified callable and its declared result/error contract",
+    "handler:deploy_check: implement the owner-qualified callable and its declared result/error contract",
     "handler:export: implement the owner-qualified callable and its declared result/error contract",
     "handler:ingress_default: implement the owner-qualified callable and its declared result/error contract",
     "handler:ingress_project: implement the owner-qualified callable and its declared result/error contract",

@@ -1,7 +1,7 @@
 //! The commands of `agenticspec sim` (check, digest, run, render, ladder, ports, contract and
 //! trace), of `agenticspec ingress` (default, project) and of the deploy side (`agenticspec
-//! packing default`, `agenticspec deploy bundle`). Each returns the result the command line
-//! prints, a JSON value of the shape `spec/domains/cli.yaml` declares
+//! packing default`, `agenticspec deploy bundle`, `agenticspec deploy check`). Each returns the
+//! result the command line prints, a JSON value of the shape `spec/domains/cli.yaml` declares
 //! (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of the error codes `spec/cli.yaml`
 //! binds to the command. The parser and the process adapter are the generated
 //! `agenticspec-cli-contract` of the `agenticspec` crate.
@@ -895,7 +895,7 @@ pub struct BundleOptions<'a> {
 pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
     use crate::contract::derive as d;
     use crate::contract::ports::PortsFile;
-    use crate::deploy::{admit::Accepts, binding, bundle, packing};
+    use crate::deploy::{admit::Accepts, binding, bundle, grants, packing};
     let unreadable = |e: String| refused("document_unreadable", e);
     let bytes = std::fs::read(o.architecture)
         .map_err(|e| unreadable(format!("{}: {e}", o.architecture.display())))?;
@@ -916,8 +916,10 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
         return Err(refused("contract_refused", problems.join("; ")));
     }
     let b = binding::load(o.binding).map_err(|e| refused("binding_invalid", e))?;
-    let mut problems = binding::problems(&b.doc, &arch);
-    let p = match packing::resolve(&arch, &b.doc["packing"]) {
+    // A secret value is refused by admission, by name; the form is checked without it.
+    let form = grants::without_values(&b.doc);
+    let mut problems = binding::problems(&form, &arch);
+    let p = match packing::resolve(&arch, &form["packing"]) {
         Ok(p) => Some(p),
         Err(e) => {
             problems.extend(e);
@@ -1156,4 +1158,35 @@ pub fn ingress_project(o: &ProjectOptions) -> Result<Value, Refusal> {
         }
     }
     Ok(answer(true))
+}
+
+/// `deploy check <bundle> [--accepts <file>]`: admit a written bundle again from what it carries,
+/// for a reader that did not write it. A bundle of the wrong form or whose digests do not hold is
+/// `bundle_invalid`; one that admission refuses, an undeclared secret or egress or a secret value
+/// among them, is `not_admitted` with every finding.
+pub fn deploy_check(path: &Path, accepts: Option<&Path>) -> Result<Value, Refusal> {
+    use crate::deploy::admit::Accepts;
+    use crate::deploy::bundle::{self, Refused};
+    let v = load_yaml(path).map_err(|e| refused("document_unreadable", e))?;
+    let accepts_path = accepts.unwrap_or(Path::new("bundles/cloudspec-accepts.yaml"));
+    let accepts = Accepts::load(accepts_path).map_err(|e| refused("accepts_unreadable", e))?;
+    let lines = |f: &[crate::deploy::admit::Finding]| -> String {
+        f.iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("; ")
+    };
+    bundle::check(&v, &accepts).map_err(|r| match r {
+        Refused::Invalid(p) => refused(
+            "bundle_invalid",
+            format!("{}: {}", path.display(), p.join("; ")),
+        ),
+        Refused::NotAdmitted(f) => refused("not_admitted", lines(&f)),
+    })?;
+    Ok(json!({
+        "architecture": v["architecture"]["name"].as_str().unwrap_or(""),
+        "binding": v["binding"]["name"].as_str().unwrap_or(""),
+        "digest": v["digest"].as_str().unwrap_or(""),
+        "units": v["units"].as_array().map_or(0, Vec::len),
+    }))
 }

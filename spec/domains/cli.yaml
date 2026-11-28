@@ -1159,6 +1159,28 @@ types:
         type: Optional<String>
         summary: The bundle as written, when no `--out` was given.
 
+  - name: agenticspec.cli.DeployCheckInput
+    kind: struct
+    fields:
+      - name: bundle
+        type: String
+        summary: A written deployment bundle (`agenticspec-deployment/1`) to admit again.
+      - name: accepts
+        type: Optional<String>
+        summary: The copy of cloudspec's accepted unit kinds and roles; `bundles/cloudspec-accepts.yaml` by default.
+
+  - name: agenticspec.cli.DeployCheckResult
+    kind: struct
+    naming:
+      summary: A written bundle admitted again from what it carries, its digest and its units.
+    fields:
+      - {name: architecture, type: String}
+      - {name: binding, type: String}
+      - name: digest
+        type: String
+        summary: The bundle digest, checked against the other members.
+      - {name: units, type: Integer}
+
   - name: agenticspec.cli.IngressDefaultInput
     kind: struct
     fields:

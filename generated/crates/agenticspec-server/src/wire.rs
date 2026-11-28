@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 238a19fb6ae6bbc5b648eba06c828c629deaeed26ee2b95e60532c84a0ca0908
+// contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -1228,6 +1228,98 @@ pub fn decode_agenticspec_cli_deploy_bundle_result(
                 let at6 = json::nested(at, "bundle");
                 Some(json::text_at(member6, &at6, "a string")?.to_owned())
             }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.DeployCheckInput` as JSON.
+pub fn encode_agenticspec_cli_deploy_check_input(
+    value: &agenticspec_types::cli::DeployCheckInput,
+    out: &mut String,
+) {
+    out.push('{');
+    json::member(out, "bundle");
+    json::push_text(out, &value.bundle);
+    if let Some(held0) = &value.accepts {
+        json::member(out, "accepts");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.DeployCheckInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_deploy_check_input(
+    value: &json::Value,
+    at: &str,
+) -> Result<agenticspec_types::cli::DeployCheckInput, json::DecodeError> {
+    json::closed_at(value, at, &["bundle", "accepts"])?;
+    Ok(agenticspec_types::cli::DeployCheckInput {
+        bundle: {
+            let at0 = json::nested(at, "bundle");
+            let member0 = json::member_at(value, at, "bundle")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        accepts: match value.member("accepts") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "accepts");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.DeployCheckResult` as JSON.
+pub fn encode_agenticspec_cli_deploy_check_result(
+    value: &agenticspec_types::cli::DeployCheckResult,
+    out: &mut String,
+) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "binding");
+    json::push_text(out, &value.binding);
+    json::member(out, "digest");
+    json::push_text(out, &value.digest);
+    json::member(out, "units");
+    json::push_integer(out, value.units);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.DeployCheckResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_deploy_check_result(
+    value: &json::Value,
+    at: &str,
+) -> Result<agenticspec_types::cli::DeployCheckResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "binding", "digest", "units"])?;
+    Ok(agenticspec_types::cli::DeployCheckResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        binding: {
+            let at1 = json::nested(at, "binding");
+            let member1 = json::member_at(value, at, "binding")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        digest: {
+            let at2 = json::nested(at, "digest");
+            let member2 = json::member_at(value, at, "digest")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        units: {
+            let at3 = json::nested(at, "units");
+            let member3 = json::member_at(value, at, "units")?;
+            json::integer_at(member3, &at3, "an integer")?
         },
     })
 }

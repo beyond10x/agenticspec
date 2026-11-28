@@ -8,9 +8,15 @@ summary: >-
 target:
   isolation: container
 parts:
-  operator: {agent: ../agents/operator.yaml, secrets: [chat-token]}
-  worker: {agent: ../agents/coder.yaml}
-  gateway: {state: service, secrets: [model-api-key]}
+  operator:
+    agent: ../agents/operator.yaml
+    secrets: [chat-token]
+    egress: [gateway, owner, worker, {to: chat-relay, secret: chat-token}]
+  worker: {agent: ../agents/coder.yaml, egress: [builds, gateway, operator]}
+  gateway:
+    state: service
+    secrets: [model-api-key]
+    egress: [{to: model, secret: model-api-key}]
   builds: {state: service}
   tree: {size: 20Gi}
 transports:

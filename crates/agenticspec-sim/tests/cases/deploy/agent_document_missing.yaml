@@ -1,6 +1,7 @@
 format: agenticspec-binding/1
 binding: agent-document-missing
 architecture: workstation
+refines: egress/workstation.yaml
 summary: The coding agents run as an agent unit, and the binding names no agent document for them.
 parts:
   operator: {agent: ../../../../../bundles/agents/operator.yaml}

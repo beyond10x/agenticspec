@@ -2,7 +2,9 @@
 //! `bundles/<architecture>.<binding>.yaml`, and `bundles/sources.sha256`, one digest of the
 //! sources of each bundle. A binding of `bundles/bindings/` that names an `architecture:` is
 //! that architecture's alone; one that names none is bundled with every catalog architecture
-//! (the architectures the experiments of `experiments/` name).
+//! (the architectures the experiments of `experiments/` name) that no binding of the same name
+//! names. So `local.yaml` is the base of the per-architecture `local-<architecture>.yaml`, which
+//! declare the egress of their parts.
 //!
 //! The digest of a bundle's sources covers the generator line, the architecture file, the
 //! binding file and every base it refines, each agent document it names, the ports file, the
@@ -30,6 +32,7 @@ const GENERATOR: &[&str] = &[
     "crates/agenticspec-sim/src/deploy/admit.rs",
     "crates/agenticspec-sim/src/deploy/binding.rs",
     "crates/agenticspec-sim/src/deploy/bundle.rs",
+    "crates/agenticspec-sim/src/deploy/grants.rs",
     "crates/agenticspec-sim/src/deploy/mod.rs",
     "crates/agenticspec-sim/src/deploy/packing.rs",
 ];
@@ -86,34 +89,59 @@ pub fn catalog_architectures(root: &Path) -> Result<Vec<PathBuf>, String> {
     Ok(out.into_iter().collect())
 }
 
-/// Every fixture bundle, in file order.
+/// Every fixture bundle, in file order. A binding that names an architecture is bundled with it;
+/// one that names none, with every catalog architecture that no binding of the same name names.
+/// Two bindings of one name for one architecture are refused.
 pub fn fixtures(root: &Path) -> Result<Vec<Fixture>, String> {
     let archs = catalog_architectures(root)?;
-    let mut out = Vec::new();
+    let mut named = Vec::new();
+    let mut generic = Vec::new();
     for b in yaml_files(&root.join("bundles/bindings")) {
         let doc = binding::load(&b)?.doc;
         let name = doc["binding"]
             .as_str()
-            .ok_or(format!("{}: needs `binding:`", b.display()))?;
-        let targets: Vec<PathBuf> = match doc["architecture"].as_str() {
+            .ok_or(format!("{}: needs `binding:`", b.display()))?
+            .to_owned();
+        match doc["architecture"].as_str() {
             Some(a) => {
                 let p = root.join("architectures").join(format!("{a}.yaml"));
                 if !p.is_file() {
                     return Err(format!("{}: no architecture {}", b.display(), p.display()));
                 }
-                vec![p]
+                named.push((name, p, b));
             }
-            None => archs.clone(),
-        };
-        for a in targets {
+            None => generic.push((name, b)),
+        }
+    }
+    let mut out: Vec<Fixture> = Vec::new();
+    for (name, a, b) in &named {
+        out.push(Fixture {
+            file: format!("{}.{name}.yaml", stem(a)),
+            architecture: a.clone(),
+            binding: b.clone(),
+        });
+    }
+    for (name, b) in &generic {
+        for a in &archs {
+            if named.iter().any(|(n, x, _)| n == name && x == a) {
+                continue;
+            }
             out.push(Fixture {
-                file: format!("{}.{name}.yaml", stem(&a)),
-                architecture: a,
+                file: format!("{}.{name}.yaml", stem(a)),
+                architecture: a.clone(),
                 binding: b.clone(),
             });
         }
     }
     out.sort_by(|a, b| a.file.cmp(&b.file));
+    if let Some(w) = out.windows(2).find(|w| w[0].file == w[1].file) {
+        return Err(format!(
+            "bundles/{}: two bindings ({} and {}) of one name for one architecture",
+            w[0].file,
+            w[0].binding.display(),
+            w[1].binding.display()
+        ));
+    }
     Ok(out)
 }
 

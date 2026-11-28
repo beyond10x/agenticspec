@@ -645,6 +645,17 @@ impl Handler for Commands {
                 }))
             }
             "ui_derive" => ui_derive(&inv.input),
+            "deploy_check" => {
+                let accepts = inv
+                    .input
+                    .get("accepts")
+                    .and_then(Value::as_str)
+                    .map(PathBuf::from);
+                sim_reply(sim::deploy_check(
+                    &path_of(&inv.input, "bundle"),
+                    accepts.as_deref(),
+                ))
+            }
             _ => HandlerReply::Unavailable,
         }
     }

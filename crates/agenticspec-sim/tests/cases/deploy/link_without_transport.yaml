@@ -1,6 +1,7 @@
 format: agenticspec-binding/1
 binding: link-without-transport
 architecture: workstation
+refines: egress/workstation.yaml
 summary: One unit per part, and no transport for the links between them.
 parts:
   gateway: {state: service}

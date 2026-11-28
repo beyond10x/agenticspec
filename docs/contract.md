@@ -102,6 +102,7 @@ A part uses the ports of its block:
 | block | ports |
 |---|---|
 | `agent` | `harness.session` |
+| `harness` | `harness.session`, `harness.tool-call` |
 | `model` | `model.inference` |
 | `gateway` | `gateway.call` |
 | `pool` | `resource.claim` |
@@ -114,7 +115,9 @@ A part uses the ports of its block:
 | `runtime` | `runtime.instance` |
 | `principal`, `tool`, `knowledge`, `work`, `experiment`, `kpi` | none: the specification runs them |
 
-A block not in the table is refused, so a new block gets its row before a document uses it.
+The table holds exactly the part kinds of the architecture block (`agentic.architecture.PartKind`).
+`agenticspec sim check` refuses a part of any other block (`process` or `question`, for example)
+as "no part kind", so every document it accepts derives its contract.
 
 A link adds the port its carried value travels in to its `from` part:
 
@@ -145,9 +148,9 @@ Every other value (`order` to an agent, `review`, `result`, `handoff`, `report`,
   `job_limit`; channel `kind`, `distribution`; principal (question port) `kind`; trigger and
   schedule (firing port) `kind`, `every`, `schedule`, `channel`, `policy`, `max_parallel`,
   `event_name`, `source`; schedule (schedule port) `every`, `next_fire_at`; workspace `kind`,
-  `sharing`; sandbox `isolation`, `egress`; authority and runtime `kind`. A port used through a
-  link takes no setting of its part (an agent's `model_share` among them), except a principal's
-  `kind`.
+  `sharing`; sandbox `isolation`, `egress`; harness, authority and runtime `kind`. A port used
+  through a link takes no setting of its part (an agent's `model_share` among them), except a
+  principal's `kind`.
 - **Instances.** The part's `count` (1 when absent) times the count of the part it is `per`,
   along that chain: in `architectures/workstation.yaml`, `tree: { per: worker }` with 12 workers
   provides 12 workspaces.

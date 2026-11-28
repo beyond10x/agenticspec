@@ -1,6 +1,7 @@
 format: agenticspec-binding/1
 binding: part-packed-twice
 architecture: workstation
+refines: egress/workstation.yaml
 summary: The owner is in the core unit and outside it.
 packing:
   units:

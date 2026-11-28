@@ -1,6 +1,7 @@
 format: agenticspec-binding/1
 binding: agent-document-digest
 architecture: workstation
+refines: egress/workstation.yaml
 summary: The binding pins the coding agents' document by a digest it does not have.
 parts:
   operator: {agent: ../../../../../bundles/agents/operator.yaml}

@@ -1,0 +1,7 @@
+format: agenticspec-binding/1
+binding: address-in-architecture
+architecture: workstation
+refines: egress/workstation.yaml
+summary: >-
+  The workstation whose gateway names its address in the architecture
+  (address_in_architecture.architecture.yaml); an address is the binding's.

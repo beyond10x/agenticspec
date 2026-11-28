@@ -1694,8 +1694,8 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "x-ess-provenance": {
-    "contract_digest": "slice-sha256/2:91d192d17d399c12ada433d13606f0781e78c13d78f9cf93f7d470512f42f8c0",
-    "source_digest": "5156bea4f7055c246a8e2c402b6a7c9fcdd8c953f441190398faeabb9de9fc3e",
+    "contract_digest": "slice-sha256/2:187dc2954854d6dadfe9db21f6eff3454748ab27a127b6f9f4fe0cab52366213",
+    "source_digest": "2edc7b66add345b9c9a20d2dd29eaddb088b0092e645b2e09d0da2c333850fb4",
     "specification_version": "v1",
     "system": "agenticspec"
   }

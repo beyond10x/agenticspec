@@ -1,0 +1,7 @@
+format: agenticspec-binding/1
+binding: local
+architecture: workstation
+refines: local.yaml
+parts:
+  operator: {egress: [owner]}
+  gateway: {egress: [model]}

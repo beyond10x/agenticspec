@@ -488,11 +488,19 @@ contract:
         sharing: exclusive
     ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 binding:
-  digest: sha256:a9429a15b7babfd6f2559f8834477b17d5f2e7666909e90573c5e6f9f02a563e
+  digest: sha256:d58a65394c9be2270523d0e9f99dca148f978f357c15ea777bc4dd455412999b
   document:
+    architecture: shared-board
     binding: local
     format: agenticspec-binding/1
-    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. Fits any architecture whose sandboxes ask for no more than a container.'
+    parts:
+      gateway:
+        egress:
+        - model
+      team:
+        egress:
+        - owner
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. The base of each local-<architecture>.yaml, which declares where its parts reach. Fits any architecture whose sandboxes ask for no more than a container.'
   name: local
 packing:
   digest: sha256:1d2e14e31d46ae30f6ba20b9084249263e54ee40c43bf4cc02450cf6290c1a9a
@@ -533,10 +541,12 @@ units:
   egress:
   - carries: model_call
     external: true
+    from: gateway
     link: gateway -> model carries model_call
     to: model
   - carries: question
     external: true
+    from: team
     link: team -> owner carries question
     to: owner
   isolation: none
@@ -627,4 +637,4 @@ ingress: []
 requirements: []
 agents: {}
 runtimes: {}
-digest: sha256:3ad2e56107ba02532d93d1363a700cd4eecd3b4aaeffeb5842009408913403b2
+digest: sha256:8ec3bd5a2382bf999c43e4045a0b636a6302d4588d95974980b2561619313599

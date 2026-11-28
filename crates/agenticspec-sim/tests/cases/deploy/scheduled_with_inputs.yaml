@@ -1,6 +1,7 @@
 format: agenticspec-binding/1
 binding: scheduled-with-inputs
 architecture: scheduled-loops
+refines: egress/scheduled-loops.yaml
 summary: The triage agents run as a scheduled unit, and the owner still sends them prompts.
 parts:
   gateway: {state: service}

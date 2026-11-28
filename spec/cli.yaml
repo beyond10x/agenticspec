@@ -259,6 +259,15 @@ callables:
       document_refused: agenticspec.cli.Refusal
       derived_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+  deploy_check:
+    target: {kind: local, owner: agenticspec.cli, action: deploy_check}
+    input: agenticspec.cli.DeployCheckInput
+    result: agenticspec.cli.DeployCheckResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      accepts_unreadable: agenticspec.cli.Refusal
+      bundle_invalid: agenticspec.cli.Refusal
+      not_admitted: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -476,3 +485,9 @@ commands:
       - {field: out, source: {kind: option, long: out}}
       - {field: root, source: {kind: option, long: root}}
       - {field: check, source: {kind: flag, long: check}}
+  - path: [deploy, check]
+    callable: deploy_check
+    about: Admit a written deployment bundle again from what it carries, for a reader that did not write it; refuses a digest that does not hold, an undeclared secret or egress, a secret value and every other finding of admission
+    arguments:
+      - {field: bundle, source: {kind: positional, index: 1}}
+      - {field: accepts, source: {kind: option, long: accepts}}

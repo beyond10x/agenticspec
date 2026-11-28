@@ -25,6 +25,10 @@ pub const REFUSALS: &[&str] = &[
     "unit_not_hosted",
     "agent_document_missing",
     "agent_document_digest",
+    "secret_value",
+    "secret_undeclared",
+    "egress_undeclared",
+    "address_in_architecture",
 ];
 
 /// The transport of the link from a clock into the scheduled unit it starts: the target's

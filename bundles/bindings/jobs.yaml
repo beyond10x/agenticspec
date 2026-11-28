@@ -1,12 +1,13 @@
 format: agenticspec-binding/1
 binding: jobs
 architecture: scheduled-loops
-refines: local.yaml
+refines: local-scheduled-loops.yaml
 summary: >-
   The scheduled loops with the nightly sweep as a scheduled unit that a clock starts and that
   ends when its run ends; everything else in the core unit.
 parts:
-  sweeper: {agent: ../agents/sweeper.yaml}
+  sweeper: {agent: ../agents/sweeper.yaml, egress: [builds, gateway, owner]}
+  sweep: {egress: [sweeper]}
   gateway: {state: service}
   builds: {state: service}
 transports:

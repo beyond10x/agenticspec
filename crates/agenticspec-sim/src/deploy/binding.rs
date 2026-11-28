@@ -26,7 +26,9 @@ const KEYS: &[&str] = &[
 ];
 
 /// The keys of one part's entry under `parts:`.
-const PART_KEYS: &[&str] = &["agent", "digest", "state", "inside", "secrets", "size"];
+const PART_KEYS: &[&str] = &[
+    "agent", "digest", "state", "inside", "secrets", "egress", "size",
+];
 
 /// The keys of a runtime pinned under `runtimes:`.
 const RUNTIME_KEYS: &[&str] = &["image", "digest"];
@@ -167,6 +169,10 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                     out.push(format!("parts: {name}: unknown key `{k}`"));
                     continue;
                 }
+                if k == "egress" {
+                    egress_problems(name, v, parts, &mut out);
+                    continue;
+                }
                 let ok = match k.as_str() {
                     "state" => matches!(v.as_str(), Some("memory" | "service")),
                     "secrets" => v.as_array().is_some_and(|a| a.iter().all(Value::is_string)),
@@ -210,7 +216,12 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                 .is_some_and(is_digest)
             {
                 out.push(format!(
-                    "runtimes: {name}: `digest:` is sha256:<64 hex digits>"
+                    "runtimes: {name}: `digest:` is sha256:<64 hex digits>; a runtime is pinned by its digest"
+                ));
+            }
+            if !m.get("image").and_then(Value::as_str).is_some_and(is_image) {
+                out.push(format!(
+                    "runtimes: {name}: `image:` names the image without tag or digest (`registry/name`); the digest goes in `digest:`"
                 ));
             }
         }
@@ -239,6 +250,58 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
         out.push("`claims:` is a mapping from a unit name to its claims".into());
     }
     out
+}
+
+/// The problems of one part's `egress:`: a list of destinations, each a part of the document or
+/// a name the target resolves ([`super::grants::is_name`]), written as the name or as
+/// `{to: <name>, secret: <secret name>}`. Whether a secret is a name is checked by
+/// [`super::grants::values`].
+fn egress_problems(part: &str, v: &Value, parts: &Value, out: &mut Vec<String>) {
+    let Some(list) = v.as_array() else {
+        out.push(format!("parts: {part}: egress is a list of destinations"));
+        return;
+    };
+    let destination = |to: &str| parts.get(to).is_some() || super::grants::is_name(to);
+    for (i, e) in list.iter().enumerate() {
+        let to = match e {
+            Value::String(to) => Some(to.as_str()),
+            Value::Object(m) => {
+                for k in m.keys() {
+                    if k != "to" && k != "secret" {
+                        out.push(format!("parts: {part}: egress[{i}]: unknown key `{k}`"));
+                    }
+                }
+                m.get("to").and_then(Value::as_str)
+            }
+            _ => None,
+        };
+        match to {
+            Some(to) if destination(to) => {}
+            Some(_) => out.push(format!(
+                "parts: {part}: egress[{i}] names neither a part of the document nor a destination name (^[a-z][a-z0-9-]*$)"
+            )),
+            None => out.push(format!(
+                "parts: {part}: egress[{i}] is a destination name or {{to: <name>, secret: <name>}}"
+            )),
+        }
+    }
+}
+
+/// An image name without tag or digest: not empty, no space, no `@`, and no `:` after its last
+/// `/` (a `:` before it is a registry's port).
+pub fn is_image(s: &str) -> bool {
+    let last = s.rsplit('/').next().unwrap_or(s);
+    !s.is_empty() && !last.is_empty() && !s.contains(['@', ' ']) && !last.contains(':')
+}
+
+/// The image reference of a runtime the binding pins: `<image>@<digest>`.
+pub fn image_reference(binding: &Value, runtime: &str) -> Option<String> {
+    let r = &binding["runtimes"][runtime];
+    Some(format!(
+        "{}@{}",
+        r["image"].as_str()?,
+        r["digest"].as_str()?
+    ))
 }
 
 /// `sha256:` and 64 lower-case hex digits.

@@ -514,7 +514,7 @@ contract:
       settings: {}
     ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 binding:
-  digest: sha256:ae71fbbb086cfd45ef91aa424e7222a3d4617e0c81c5fbbd27ed75484ee551ac
+  digest: sha256:5b21534279cef4e74ee96670f086f42b56fa43019609591b7d3e3bc49aff7983
   document:
     architecture: workstation
     binding: split
@@ -529,17 +529,30 @@ binding:
       builds:
         state: service
       gateway:
+        egress:
+        - secret: model-api-key
+          to: model
         secrets:
         - model-api-key
         state: service
       operator:
         agent: ../agents/operator.yaml
+        egress:
+        - gateway
+        - owner
+        - worker
+        - secret: chat-token
+          to: chat-relay
         secrets:
         - chat-token
       tree:
         size: 20Gi
       worker:
         agent: ../agents/coder.yaml
+        egress:
+        - builds
+        - gateway
+        - operator
     runtimes:
       core:
         digest: sha256:0000000000000000000000000000000000000000000000000000000000000001
@@ -602,7 +615,7 @@ units:
     memory_mib: 512
     volumes: []
   code:
-    runtime: sha256:0000000000000000000000000000000000000000000000000000000000000001
+    runtime: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
   egress: []
   isolation: none
   kind: core
@@ -635,7 +648,7 @@ units:
     memory_mib: 512
     volumes: []
   code:
-    runtime: sha256:0000000000000000000000000000000000000000000000000000000000000001
+    runtime: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
   egress: []
   isolation: none
   kind: service
@@ -670,11 +683,13 @@ units:
     memory_mib: 512
     volumes: []
   code:
-    runtime: sha256:0000000000000000000000000000000000000000000000000000000000000001
+    runtime: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
   egress:
   - carries: model_call
     external: true
+    from: gateway
     link: gateway -> model carries model_call
+    secret: model-api-key
     to: model
   isolation: none
   kind: service
@@ -712,16 +727,23 @@ units:
       part: operator
     role: agent-runtime
   egress:
+  - from: operator
+    named: true
+    secret: chat-token
+    to: chat-relay
   - carries: model_call
+    from: operator
     link: operator -> gateway carries model_call
     to: gateway
     transport: http
     unit: gateway
   - carries: question
     external: true
+    from: operator
     link: operator -> owner carries question over chat
     to: owner
   - carries: order
+    from: operator
     link: operator -> worker carries order
     to: worker
     transport: a2a
@@ -781,16 +803,19 @@ units:
     role: agent-runtime
   egress:
   - carries: claim
+    from: worker
     link: worker -> builds carries claim
     to: builds
     transport: http
     unit: builds
   - carries: model_call
+    from: worker
     link: worker -> gateway carries model_call
     to: gateway
     transport: http
     unit: gateway
   - carries: question
+    from: worker
     link: worker -> operator carries question
     to: operator
     transport: a2a
@@ -878,6 +903,6 @@ agents:
     - worker
 runtimes:
   sha256:0000000000000000000000000000000000000000000000000000000000000001:
-    image: registry.example/agenticspec-core
+    image: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
     name: core
-digest: sha256:499114ad3793f3820bce90e808f053684d6298acb6766dd3a2f062fa0e67b6e2
+digest: sha256:8a873712df542454d9ee5a791952ca8859bbe15dec547129649503d63fdb6990
