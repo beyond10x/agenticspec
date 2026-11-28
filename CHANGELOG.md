@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
+- Scenarios (`agenticspec-scenario/1`) and task corpora (`agenticspec-corpus/1`): `agenticspec sim scenario check|run` checks a scenario against its architecture (border parts, authors, digests) and runs it on the simulator with scripted model outcomes, build times and principal replies, then writes `scenario-result.json` with every expected block event held, failed or not checked and exits 1 on a failure; `agenticspec sim corpus run` runs every entry of a corpus and prints the predicted outcome class beside the expected one; a behaviour profile draws its tasks from a corpus with `load.corpus`. Examples for the workstation in `scenarios/workstation/`, run by `task check:scenarios` in the gate; format on the new docs page `docs/scenarios.md`
 
 ### Changed
 

@@ -73,11 +73,27 @@ impl Experiment {
                 .ok_or_else(|| format!("{}: needs `{key}`", path.display()))
         };
         let architecture = load_yaml(&file("architecture")?)?;
-        let profile = load_yaml(&file("profile")?)?;
-        Self::from_docs(doc, architecture, profile)
+        let profile_path = file("profile")?;
+        let profile = load_yaml(&profile_path)?;
+        Self::from_docs_in(
+            doc,
+            architecture,
+            profile,
+            Some(profile_path.parent().unwrap_or(Path::new("."))),
+        )
     }
 
     pub fn from_docs(doc: Value, architecture: Value, profile: Value) -> Result<Self, String> {
+        Self::from_docs_in(doc, architecture, profile, None)
+    }
+
+    /// As [`Experiment::from_docs`]; a corpus the profile names is read relative to `profile_dir`.
+    pub fn from_docs_in(
+        doc: Value,
+        architecture: Value,
+        profile: Value,
+        profile_dir: Option<&Path>,
+    ) -> Result<Self, String> {
         for (d, want) in [
             (&doc, "agenticspec-experiment/1"),
             (&architecture, "agenticspec-architecture/1"),
@@ -88,7 +104,10 @@ impl Experiment {
                 return Err(format!("format `{f}`, expected {want}"));
             }
         }
-        let profile_parsed = Profile::parse(&profile)?;
+        let mut profile_parsed = Profile::parse(&profile)?;
+        if let Some(dir) = profile_dir {
+            profile_parsed.read_corpus(dir)?;
+        }
         let horizon = match &doc["horizon"] {
             Value::Null => 86400.0,
             v => num(v)
@@ -475,7 +494,7 @@ fn run_inside(e: &Experiment) -> Result<Value, String> {
     let run = simulate(&model, e.run_seed(0), true);
     let timeline: Vec<Value> = sample(&run.timeline, TIMELINE_LIMIT)
         .into_iter()
-        .map(|(t, part, kind)| json!({"t_seconds": t, "part": part, "kind": kind}))
+        .map(|s| json!({"t_seconds": s.t, "part": s.part, "kind": s.kind}))
         .collect();
     let marked: Vec<Value> = e
         .marked

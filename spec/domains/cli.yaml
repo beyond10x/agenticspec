@@ -572,3 +572,83 @@ types:
       - name: written
         type: Boolean
         summary: The file was written; false with `--check`, where it was found current.
+
+  - name: agenticspec.cli.ScenarioAction
+    kind: enum
+    variants: [check, run]
+    naming:
+      summary: >-
+        check: the scenario against its architecture and profile. run: the scenario on the
+        simulator, with its expectations evaluated.
+
+  - name: agenticspec.cli.SimScenarioInput
+    kind: struct
+    fields:
+      - name: action
+        type: agenticspec.cli.ScenarioAction
+      - name: scenario
+        type: String
+        summary: An `agenticspec-scenario/1` file; its architecture and profile are read relative to it.
+      - name: out
+        type: Optional<String>
+        summary: The directory `run` writes `scenario-result.json` to.
+
+  - name: agenticspec.cli.SimScenarioResult
+    kind: struct
+    naming:
+      summary: >-
+        The scenario checked, with its counts; after `run` also the verdict, the outcome class the
+        run predicts and the count of expectations held, failed and not checked.
+    fields:
+      - {name: scenario, type: String}
+      - {name: architecture, type: String}
+      - {name: inputs, type: Integer}
+      - name: expectations
+        type: Integer
+        summary: Expected events and KPI bounds.
+      - {name: out, type: Optional<String>}
+      - {name: verdict, type: Optional<String>}
+      - {name: predicted, type: Optional<String>}
+      - {name: held, type: Optional<Integer>}
+      - {name: failed, type: Optional<Integer>}
+      - {name: not_checked, type: Optional<Integer>}
+
+  - name: agenticspec.cli.CorpusAction
+    kind: enum
+    variants: [run]
+    naming:
+      summary: "run: every entry of the corpus on the simulator."
+
+  - name: agenticspec.cli.SimCorpusInput
+    kind: struct
+    fields:
+      - name: action
+        type: agenticspec.cli.CorpusAction
+      - name: corpus
+        type: String
+        summary: An `agenticspec-corpus/1` file; its scenarios, architecture and profile are read relative to it.
+
+  - name: agenticspec.cli.SimCorpusRow
+    kind: struct
+    naming:
+      summary: One entry of a corpus run, the class it expects beside the class its run predicts.
+    fields:
+      - {name: entry, type: String}
+      - {name: kind, type: String}
+      - {name: expected, type: String}
+      - {name: predicted, type: String}
+      - {name: held, type: Integer}
+      - {name: failed, type: Integer}
+      - {name: not_checked, type: Integer}
+      - {name: verdict, type: String}
+
+  - name: agenticspec.cli.SimCorpusResult
+    kind: struct
+    naming:
+      summary: Every entry of a corpus held. The table of the rows is printed to standard error.
+    fields:
+      - {name: corpus, type: String}
+      - {name: entries, type: Integer}
+      - {name: held, type: Integer}
+      - {name: failed, type: Integer}
+      - {name: rows, type: List<agenticspec.cli.SimCorpusRow>}

@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "8b12a32dcc485e3c2515c968411d86b6a59aeeed0c6812f469ccc7edbee32174",
-    "contract_digest": "be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c"
+    "source_digest": "d443979db969a54a74d4b97061cfca3f1cce485d844a9695f1da836582ef8734",
+    "contract_digest": "59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -82,6 +82,13 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.ConcurrencyFigures",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.CorpusAction",
       "disposition": {
         "disposition": "generated"
       }
@@ -256,6 +263,13 @@
     },
     {
       "kind": "domain_type",
+      "source": "agenticspec.cli.ScenarioAction",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
       "source": "agenticspec.cli.ServeInput",
       "disposition": {
         "disposition": "generated"
@@ -285,6 +299,27 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.SimCheckResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimCorpusInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimCorpusResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimCorpusRow",
       "disposition": {
         "disposition": "generated"
       }
@@ -327,6 +362,20 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.SimRunResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimScenarioInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimScenarioResult",
       "disposition": {
         "disposition": "generated"
       }

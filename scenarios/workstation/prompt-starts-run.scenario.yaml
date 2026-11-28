@@ -1,0 +1,31 @@
+format: agenticspec-scenario/1
+scenario: prompt-starts-run
+summary: >-
+  The owner prompts the operator on the chat. The prompt makes a task, a worker starts a run on
+  it, builds once in the pool and completes it.
+architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
+profile: { ref: ../../profiles/coding.yaml, digest: f9986e82bfc8e4b0c14f2d871e437ed19689aae2a450bae1a9f006e0589c6802 }
+seed: 1
+horizon: 2h
+
+when:
+  - { at: operator, kind: prompt, author: owner, text: "Make the failing build pass." }
+
+fixtures:
+  model:
+    - { for: worker, outcome: correct, turns: 4, builds: 1 }
+  tools:
+    - { tool: build, seconds: 2m }
+
+then:
+  order: sequence
+  events:
+    - { event: post_sent, part: operator, author: owner, channel: chat }
+    - { event: task_created, part: operator, task: when.0 }
+    - { event: run_started, part: worker, task: when.0 }
+    - { event: proposal_opened, part: worker, task: when.0 }
+    - { event: claim_granted, part: builds, task: when.0 }
+    - { event: task_completed, part: worker, task: when.0 }
+  kpis:
+    tasks_done: { min: 1, max: 1 }
+    false_completions_shipped: { max: 0 }

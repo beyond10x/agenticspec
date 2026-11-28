@@ -1,13 +1,13 @@
 <!--
   generated from agenticspec v1
-  contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+  contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-186 capabilities: **183 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+193 capabilities: **190 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -24,6 +24,7 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.CheckFigures` |
 | domain type | `agenticspec.cli.CheckVerdict` |
 | domain type | `agenticspec.cli.ConcurrencyFigures` |
+| domain type | `agenticspec.cli.CorpusAction` |
 | domain type | `agenticspec.cli.Dashboard` |
 | domain type | `agenticspec.cli.DecisionFigures` |
 | domain type | `agenticspec.cli.ExportInput` |
@@ -48,17 +49,23 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.QueryReport` |
 | domain type | `agenticspec.cli.QueryRow` |
 | domain type | `agenticspec.cli.Refusal` |
+| domain type | `agenticspec.cli.ScenarioAction` |
 | domain type | `agenticspec.cli.ServeInput` |
 | domain type | `agenticspec.cli.ServeResult` |
 | domain type | `agenticspec.cli.SessionSummary` |
 | domain type | `agenticspec.cli.SimCheckInput` |
 | domain type | `agenticspec.cli.SimCheckResult` |
+| domain type | `agenticspec.cli.SimCorpusInput` |
+| domain type | `agenticspec.cli.SimCorpusResult` |
+| domain type | `agenticspec.cli.SimCorpusRow` |
 | domain type | `agenticspec.cli.SimLadderInput` |
 | domain type | `agenticspec.cli.SimLadderResult` |
 | domain type | `agenticspec.cli.SimRenderInput` |
 | domain type | `agenticspec.cli.SimRenderResult` |
 | domain type | `agenticspec.cli.SimRunInput` |
 | domain type | `agenticspec.cli.SimRunResult` |
+| domain type | `agenticspec.cli.SimScenarioInput` |
+| domain type | `agenticspec.cli.SimScenarioResult` |
 | domain type | `agenticspec.cli.StepKind` |
 | domain type | `agenticspec.cli.SyncInput` |
 | domain type | `agenticspec.cli.SyncResult` |

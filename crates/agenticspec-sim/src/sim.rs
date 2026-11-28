@@ -6,6 +6,7 @@
 //! variants see the same tasks.
 
 use crate::check::{block, is_reviewer, reach};
+use crate::corpus::Class;
 use crate::doc::num;
 use crate::profile::{
     Coordination as CoordProfile, Dist, Load, Profile, Role, Strictness, TOKEN_CLASSES,
@@ -15,9 +16,10 @@ use serde_json::Value;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BinaryHeap, VecDeque};
 
+mod script;
 mod swarm;
 
-pub use swarm::EVENTS;
+pub use script::{Arrival, RunOutcome, Script, Stamp, TaskRecord, TaskScript};
 use swarm::{Coordination, Distribution, Input, Output, Schedule, TrigAcc, Trigger};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -263,6 +265,19 @@ pub struct Model {
     answers_alone: bool,
     load_per_second: f64,
     agent_hour_usd: f64,
+    /// The profile's corpus: each arrival draws one entry by weight.
+    corpus: Vec<(f64, Class)>,
+    /// Inputs and fixtures of a scripted run, with parts resolved.
+    script: Option<Resolved>,
+}
+
+/// A [`Script`] with its parts resolved to worker kinds and principals.
+#[derive(Debug, Clone)]
+struct Resolved {
+    arrivals: Vec<Arrival>,
+    runs: Vec<(Option<usize>, TaskScript)>,
+    builds: Vec<f64>,
+    replies: Vec<(usize, f64)>,
 }
 
 fn index_by_block(arch: &Value, b: &str) -> Vec<String> {
@@ -326,6 +341,13 @@ impl Model {
         faults: &[Fault],
         bursts: &[(f64, usize)],
     ) -> Result<Model, String> {
+        if let Some(r) = &profile.corpus_ref
+            && profile.corpus.is_empty()
+        {
+            return Err(format!(
+                "load.corpus `{r}` is not read: a corpus is read relative to the profile file"
+            ));
+        }
         let part = |n: &str| &arch["parts"][n];
         let links: Vec<Value> = arch["links"].as_array().cloned().unwrap_or_default();
         let parts: Vec<String> = arch["parts"]
@@ -684,7 +706,52 @@ impl Model {
                 .unwrap_or(false),
             load_per_second: per_hour / 3600.0,
             agent_hour_usd: profile.agent_hour_usd,
+            corpus: profile.corpus.clone(),
+            script: None,
         })
+    }
+
+    /// The model run by `script` instead of the profile's load: only its arrivals make tasks,
+    /// and its fixtures decide outcomes, build times and replies. Refuses a fixture whose part is
+    /// not a worker (runs) or a principal (replies), and an arrival at a part that does not exist.
+    pub fn with_script(mut self, script: Script) -> Result<Model, String> {
+        let mut runs = Vec::new();
+        for (i, (part, s)) in script.runs.into_iter().enumerate() {
+            let kind = match part {
+                None => None,
+                Some(p) => Some(
+                    self.workers
+                        .iter()
+                        .position(|w| w.exec.part == p)
+                        .ok_or_else(|| format!("runs.{i}: part `{p}` is no worker"))?,
+                ),
+            };
+            runs.push((kind, s));
+        }
+        let mut replies = Vec::new();
+        for (i, (part, after)) in script.replies.into_iter().enumerate() {
+            let p = self
+                .principals
+                .iter()
+                .position(|pr| pr.part == part)
+                .ok_or_else(|| format!("replies.{i}: part `{part}` is no principal"))?;
+            replies.push((p, after));
+        }
+        for (i, a) in script.arrivals.iter().enumerate() {
+            if !self.parts.contains(&a.part) {
+                return Err(format!("arrivals.{i}: part `{}` does not exist", a.part));
+            }
+        }
+        self.load_per_second = 0.0;
+        self.bursts.clear();
+        self.corpus.clear();
+        self.script = Some(Resolved {
+            arrivals: script.arrivals,
+            runs,
+            builds: script.builds,
+            replies,
+        });
+        Ok(self)
     }
 }
 
@@ -693,8 +760,10 @@ impl Model {
 pub struct RunOut {
     pub kpis: BTreeMap<String, f64>,
     pub per_part: BTreeMap<String, BTreeMap<String, f64>>,
-    /// `(t_seconds, part, kind)`, ordered by time.
-    pub timeline: Vec<(f64, String, &'static str)>,
+    /// Ordered by time.
+    pub timeline: Vec<Stamp>,
+    /// Each task of a scripted run, by its number; empty otherwise.
+    pub tasks: Vec<TaskRecord>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -715,6 +784,8 @@ enum Ev {
     EmptyDone(usize),
     /// An event a trigger waits for occurred.
     Fire(usize),
+    /// A task of the script arrives.
+    Scripted(usize),
 }
 
 struct Item {
@@ -763,6 +834,8 @@ struct Outcome {
     defaulted: bool,
     answerer: Answerer,
     channel: Option<usize>,
+    /// The reply of the script the question took.
+    reply: Option<usize>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -809,6 +882,12 @@ struct Task {
     work_started: f64,
     /// A worker started it once; its backlog wait is counted.
     waited: bool,
+    /// What is decided about it instead of drawn.
+    script: Option<TaskScript>,
+    /// The arrival of the script it came from.
+    arrival: Option<usize>,
+    /// The run fixture of the script its first run took.
+    fixture: Option<usize>,
 }
 
 #[derive(Default, Clone)]
@@ -892,6 +971,8 @@ struct AnswerAcc {
 const ARRIVALS: u64 = u64::MAX - 1;
 /// The stream index of the draws of coordination: board reads, mesh reads, empty runs.
 const COORDINATION: u64 = u64::MAX - 2;
+/// The stream index of the draws of corpus entries.
+const CORPUS: u64 = u64::MAX - 3;
 /// Mixed into the seed for the scope streams, one per task.
 const SCOPES: u64 = 0x5C0B_E5C0_BE5C_0BE5;
 
@@ -934,7 +1015,16 @@ struct Sim<'a> {
     channels: Vec<f64>,
     defaulted: f64,
     record: bool,
-    timeline: Vec<(f64, String, &'static str)>,
+    timeline: Vec<Stamp>,
+    /// The draws of corpus entries.
+    corpus: Rng,
+    /// Run fixtures not yet taken: by worker kind, and for any kind.
+    runs_left: Vec<VecDeque<usize>>,
+    runs_any: VecDeque<usize>,
+    /// Replies not yet taken, by principal.
+    replies_left: Vec<VecDeque<usize>>,
+    /// Build times of the script taken so far.
+    builds_taken: usize,
 }
 
 /// The part of `[a, b)` inside the horizon `[0, h)`.
@@ -973,8 +1063,18 @@ impl<'a> Sim<'a> {
     /// Records an event of the simulation, and fires the `on_event` triggers that wait for it
     /// once the current event is handled.
     fn rec(&mut self, t: f64, part: &str, kind: &'static str) {
+        self.rec_task(t, part, kind, None);
+    }
+
+    fn rec_task(&mut self, t: f64, part: &str, kind: &'static str, task: Option<usize>) {
         if self.record && t < self.m.horizon {
-            self.timeline.push((t, part.to_string(), kind));
+            self.timeline.push(Stamp {
+                t,
+                part: part.to_string(),
+                kind,
+                task,
+                reply: None,
+            });
         }
         let m = self.m;
         for &tr in &m.on_event {
@@ -982,6 +1082,69 @@ impl<'a> Sim<'a> {
                 self.at(t, Ev::Fire(tr));
             }
         }
+    }
+
+    /// An answered or defaulted question of instance `i`, with the reply of the script it took.
+    fn rec_reply(
+        &mut self,
+        t: f64,
+        part: &str,
+        kind: &'static str,
+        i: usize,
+        reply: Option<usize>,
+    ) {
+        let task = self.insts[i].task;
+        let before = self.timeline.len();
+        self.rec_task(t, part, kind, task);
+        if self.timeline.len() > before
+            && let Some(s) = self.timeline.last_mut()
+        {
+            s.reply = reply;
+        }
+    }
+
+    /// Seconds the next build of instance `i` of worker kind `kind` takes: the script's next
+    /// build time, else a draw.
+    fn build_time(&mut self, kind: usize, i: usize) -> f64 {
+        let m = self.m;
+        if let Some(d) = m
+            .script
+            .as_ref()
+            .and_then(|s| s.builds.get(self.builds_taken))
+        {
+            self.builds_taken += 1;
+            return d.max(0.0);
+        }
+        m.workers[kind]
+            .exec
+            .role
+            .build_seconds
+            .sample(self.rng(i))
+            .max(0.0)
+    }
+
+    /// The next run fixture for a run of worker kind `kind`: its own first, then any kind's.
+    fn next_run(&mut self, kind: usize) -> Option<usize> {
+        self.m.script.as_ref()?;
+        self.runs_left[kind]
+            .pop_front()
+            .or_else(|| self.runs_any.pop_front())
+    }
+
+    /// How long principal `p` takes to answer the question of instance `i`: the next reply of
+    /// the script (never, with none left), else a draw.
+    fn reply_delay(&mut self, p: usize, i: usize) -> (f64, Option<usize>) {
+        if let Some(sc) = &self.m.script {
+            return match self.replies_left[p].pop_front() {
+                Some(r) => (sc.replies[r].1.max(0.0), Some(r)),
+                None => (f64::INFINITY, None),
+            };
+        }
+        let d = self.m.principals[p]
+            .answer
+            .as_ref()
+            .map_or(f64::INFINITY, |d| d.sample(self.rng(i)).max(0.0));
+        (d, None)
     }
 
     fn exec(&self, who: Who) -> &'a Exec {
@@ -1106,19 +1269,39 @@ impl<'a> Sim<'a> {
         let r = &w.exec.role;
         self.insts[i].task = Some(id);
         self.coordinate_start(i, kind, id, now);
+        if self.tasks[id].script.is_none()
+            && self.tasks[id].fixture.is_none()
+            && let Some(f) = self.next_run(kind)
+        {
+            self.tasks[id].fixture = Some(f);
+            self.tasks[id].script = m.script.as_ref().map(|s| s.runs[f].1.clone());
+        }
         let task = &mut self.tasks[id];
         if !task.waited {
             task.waited = true;
             self.backlog_waits.push(now - task.arrived);
         }
         task.work_started = now;
+        // A script decides the first run only: its outcome is taken when that run reports.
+        let s = task
+            .script
+            .clone()
+            .filter(|s| s.outcome.is_some())
+            .unwrap_or_default();
         let rng = &mut task.rng;
-        let turns = whole(&w.exec.task_turns, rng, 1.0);
-        let builds = whole(&r.builds_per_task, rng, 0.0);
-        let questions = if w.question.is_some() {
-            whole(&r.questions_per_task, rng, 0.0)
-        } else {
-            0
+        let turns = s
+            .turns
+            .map_or_else(|| whole(&w.exec.task_turns, rng, 1.0), |n| n.max(1));
+        let builds = s
+            .builds
+            .unwrap_or_else(|| whole(&r.builds_per_task, rng, 0.0));
+        let ask_first =
+            w.question.is_some() && s.outcome == Some(RunOutcome::Question) && s.question_first;
+        let questions = match (w.question.is_some(), s.outcome) {
+            (false, _) => 0,
+            (true, Some(RunOutcome::Question)) => usize::from(!s.question_first),
+            (true, Some(_)) => 0,
+            (true, None) => whole(&r.questions_per_task, rng, 0.0),
         };
         let mut after: Vec<(usize, Step)> = Vec::with_capacity(builds + questions);
         for _ in 0..builds {
@@ -1134,6 +1317,10 @@ impl<'a> Sim<'a> {
         let mut outcomes: Vec<(Option<bool>, bool)> = Vec::new();
         let mut prev: Option<bool> = None;
         let mut t = 0;
+        if let Some(o) = s.outcome {
+            prev = Some(matches!(o, RunOutcome::Correct | RunOutcome::Question));
+            t = turns;
+        }
         while t < turns {
             let size = r.step_turns.as_ref().map_or(turns, |d| whole(d, rng, 1.0));
             let end = (t + size).min(turns);
@@ -1152,7 +1339,10 @@ impl<'a> Sim<'a> {
         }
         task.base_turns = turns;
         task.correct = prev.unwrap_or(true);
-        let mut steps = Vec::with_capacity(turns + after.len());
+        let mut steps = Vec::with_capacity(turns + after.len() + 1);
+        if ask_first {
+            steps.push(Step::Question);
+        }
         let mut extra = after.iter().peekable();
         for (t, rework) in rework_after.iter().enumerate() {
             steps.push(Step::Turn);
@@ -1167,7 +1357,7 @@ impl<'a> Sim<'a> {
         self.kinds[kind].started += 1.0;
         self.insts[i].steps = steps;
         self.insts[i].at = 0;
-        self.rec(now, &w.exec.part, "task_started");
+        self.rec_task(now, &w.exec.part, "task_started", Some(id));
         self.advance(i, now);
     }
 
@@ -1195,7 +1385,7 @@ impl<'a> Sim<'a> {
         self.count_step(kind, Some(before), pass);
         self.insts[i].steps = vec![Step::Rework; n];
         self.insts[i].at = 0;
-        self.rec(now, &w.exec.part, "task_reworked");
+        self.rec_task(now, &w.exec.part, "task_reworked", Some(id));
         self.advance(i, now);
     }
 
@@ -1228,7 +1418,7 @@ impl<'a> Sim<'a> {
                 {
                     self.gateways[g].limited_seconds += waited;
                     self.gateways[g].limited_calls += 1.0;
-                    self.rec(now, &m.gateways[g].part, "rate_limited");
+                    self.rec_task(now, &m.gateways[g].part, "rate_limited", self.insts[i].task);
                 }
                 let rng = self.rng(i);
                 let dur = e.turn_seconds.sample(rng).max(0.0);
@@ -1297,12 +1487,16 @@ impl<'a> Sim<'a> {
                             self.start_build(p, i, now);
                         } else {
                             self.pools[p].queue.push_back((i, now));
-                            self.rec(now, &m.pools[p].part, "build_queued");
+                            self.rec_task(
+                                now,
+                                &m.pools[p].part,
+                                "build_queued",
+                                self.insts[i].task,
+                            );
                         }
                     }
                     None => {
-                        let role = &m.workers[kind].exec.role;
-                        let dur = role.build_seconds.sample(self.rng(i)).max(0.0);
+                        let dur = self.build_time(kind, i);
                         self.kinds[kind].busy += span(now, now + dur, h);
                         self.at(now + dur, Ev::StepDone(i));
                     }
@@ -1319,11 +1513,17 @@ impl<'a> Sim<'a> {
         let w = &m.workers[kind];
         let id = self.insts[i].task.expect("a worker at work holds a task");
         let task = &mut self.tasks[id];
-        let claims = task.correct || task.rng.chance(w.exec.role.false_completion);
+        let scripted = task.script.as_mut().and_then(|s| s.outcome.take());
+        let claims = match scripted {
+            Some(RunOutcome::Wrong) => false,
+            Some(RunOutcome::FalseCompletion) => true,
+            Some(RunOutcome::Correct | RunOutcome::Question) => task.correct,
+            None => task.correct || task.rng.chance(w.exec.role.false_completion),
+        };
         if claims {
             task.kind = kind;
         } else {
-            self.rec(now, &w.exec.part, "task_failed");
+            self.rec_task(now, &w.exec.part, "task_failed", Some(id));
             return self.start_rework(i, id, now);
         }
         if w.partition && !self.merge(kind, id, now) {
@@ -1334,7 +1534,7 @@ impl<'a> Sim<'a> {
         self.end_run(i, Some(id), now);
         match w.review {
             Some(r) => {
-                self.rec(now, &w.exec.part, "task_claimed");
+                self.rec_task(now, &w.exec.part, "task_claimed", Some(id));
                 self.reviewers[r].queue.push_back((id, now));
                 self.dispatch_reviews(r, now);
             }
@@ -1350,7 +1550,7 @@ impl<'a> Sim<'a> {
             Output::Ship => self.ship(id, now),
             Output::Hand(k) => {
                 self.handed[k].push_back(id);
-                self.rec(now, &self.m.workers[k].exec.part, "task_handed");
+                self.rec_task(now, &self.m.workers[k].exec.part, "task_handed", Some(id));
                 self.assign(now);
             }
             Output::Post(c) => self.post(c, id, now),
@@ -1362,7 +1562,12 @@ impl<'a> Sim<'a> {
         let origin = self.tasks[id].origin;
         if self.shipped[origin] {
             self.duplicates += 1.0;
-            self.rec(now, &self.m.workers[kind].exec.part, "duplicate_dropped");
+            self.rec_task(
+                now,
+                &self.m.workers[kind].exec.part,
+                "duplicate_dropped",
+                Some(id),
+            );
             return;
         }
         self.shipped[origin] = true;
@@ -1374,7 +1579,7 @@ impl<'a> Sim<'a> {
             k.false_shipped += 1.0;
         }
         let part = &self.m.workers[kind].exec.part;
-        self.rec(now, part, "task_done");
+        self.rec_task(now, part, "task_done", Some(id));
     }
 
     fn dispatch_reviews(&mut self, r: usize, now: f64) {
@@ -1392,7 +1597,7 @@ impl<'a> Sim<'a> {
             self.insts[i].task = Some(id);
             self.insts[i].steps = vec![Step::Review; n];
             self.insts[i].at = 0;
-            self.rec(now, &m.reviewers[r].exec.part, "review_started");
+            self.rec_task(now, &m.reviewers[r].exec.part, "review_started", Some(id));
             self.advance(i, now);
         }
     }
@@ -1417,7 +1622,7 @@ impl<'a> Sim<'a> {
             self.release(id, now);
         } else {
             self.reviewers[r].rejected += 1.0;
-            self.rec(now, &m.reviewers[r].exec.part, "task_rejected");
+            self.rec_task(now, &m.reviewers[r].exec.part, "task_rejected", Some(id));
             let kind = self.tasks[id].kind;
             self.returned[kind].push_back(id);
         }
@@ -1433,12 +1638,7 @@ impl<'a> Sim<'a> {
         let Who::Worker(kind) = self.insts[i].who else {
             unreachable!("only workers build")
         };
-        let dur = m.workers[kind]
-            .exec
-            .role
-            .build_seconds
-            .sample(self.rng(i))
-            .max(0.0);
+        let dur = self.build_time(kind, i);
         let limit = m.pools[p].job_limit;
         let run = dur.min(limit);
         self.insts[i].killed = dur > limit;
@@ -1447,7 +1647,7 @@ impl<'a> Sim<'a> {
         pa.jobs += 1.0;
         pa.busy += span(now, now + run, h);
         self.kinds[kind].busy += span(now, now + run, h);
-        self.rec(now, &m.pools[p].part, "build_started");
+        self.rec_task(now, &m.pools[p].part, "build_started", self.insts[i].task);
         self.at(now + run, Ev::BuildDone(i));
     }
 
@@ -1481,19 +1681,27 @@ impl<'a> Sim<'a> {
             return self.advance(i, now);
         };
         self.kinds[kind].asked += 1.0;
-        self.rec(now, &w.exec.part, "question_asked");
-        let needs_owner = self.rng(i).chance(w.exec.role.question_needs_owner);
+        self.rec_task(now, &w.exec.part, "question_asked", self.insts[i].task);
+        let task = self.insts[i].task.expect("an asking instance holds a task");
+        let scripted = self.tasks[task]
+            .script
+            .as_ref()
+            .filter(|s| s.outcome.is_some())
+            .and_then(|s| s.needs_owner);
+        let needs_owner = match scripted {
+            Some(b) => b,
+            None => self.rng(i).chance(w.exec.role.question_needs_owner),
+        };
         let deadline = now + m.default_after;
         let mut channel = None;
+        let mut reply = None;
         let (answer_at, forwarded_at, answerer) = match target {
             Target::Principal(p) => {
                 self.principals[p].received += 1.0;
                 let pr = &m.principals[p];
                 let avail = pr.available_from(now);
-                let delay = pr
-                    .answer
-                    .as_ref()
-                    .map_or(f64::INFINITY, |d| d.sample(self.rng(i)).max(0.0));
+                let (delay, r) = self.reply_delay(p, i);
+                reply = r;
                 (avail + delay, Some(now), Answerer::Principal(p))
             }
             Target::Delegate(d) => {
@@ -1509,14 +1717,12 @@ impl<'a> Sim<'a> {
                                 self.channels[c] += 1.0;
                             }
                         }
-                        self.rec(triage, &dl.part, "question_forwarded");
+                        self.rec_task(triage, &dl.part, "question_forwarded", self.insts[i].task);
                         channel = dl.channel;
                         let pr = &m.principals[p];
                         let avail = pr.available_from(triage);
-                        let delay = pr
-                            .answer
-                            .as_ref()
-                            .map_or(f64::INFINITY, |a| a.sample(self.rng(i)).max(0.0));
+                        let (delay, r) = self.reply_delay(p, i);
+                        reply = r;
                         (avail + delay, Some(triage), Answerer::Principal(p))
                     }
                     _ => {
@@ -1541,6 +1747,7 @@ impl<'a> Sim<'a> {
             defaulted: answer_at > deadline,
             answerer,
             channel,
+            reply,
         });
         self.at(resolve, Ev::StepDone(i));
     }
@@ -1554,7 +1761,13 @@ impl<'a> Sim<'a> {
                     unreachable!("only workers ask")
                 };
                 let role = &m.workers[kind].exec.role;
-                self.rec(now, &m.workers[kind].exec.part, "question_defaulted");
+                self.rec_reply(
+                    now,
+                    &m.workers[kind].exec.part,
+                    "question_defaulted",
+                    i,
+                    o.reply,
+                );
                 // A default rests on an assumption; a wrong one costs a share of the task again.
                 if self.rng(i).chance(role.default_wrong) {
                     self.kinds[kind].wrong_assumptions += 1.0;
@@ -1571,11 +1784,16 @@ impl<'a> Sim<'a> {
                         if let Some(c) = o.channel {
                             self.channels[c] += 1.0;
                         }
-                        self.rec(now, &m.principals[p].part, "question_answered");
+                        self.rec_reply(now, &m.principals[p].part, "question_answered", i, o.reply);
                     }
                     Answerer::Delegate(d) => {
                         self.delegates[d].answered += 1.0;
-                        self.rec(now, &m.delegates[d].part, "question_answered");
+                        self.rec_task(
+                            now,
+                            &m.delegates[d].part,
+                            "question_answered",
+                            self.insts[i].task,
+                        );
                     }
                 }
             }
@@ -1665,7 +1883,26 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
         defaulted: 0.0,
         record,
         timeline: Vec::new(),
+        corpus: Rng::stream(seed, CORPUS),
+        runs_left: vec![VecDeque::new(); m.workers.len()],
+        runs_any: VecDeque::new(),
+        replies_left: vec![VecDeque::new(); m.principals.len()],
+        builds_taken: 0,
     };
+    if let Some(sc) = &m.script {
+        for (f, (kind, _)) in sc.runs.iter().enumerate() {
+            match kind {
+                Some(k) => s.runs_left[*k].push_back(f),
+                None => s.runs_any.push_back(f),
+            }
+        }
+        for (r, (p, _)) in sc.replies.iter().enumerate() {
+            s.replies_left[*p].push_back(r);
+        }
+        for (a, arrival) in sc.arrivals.iter().enumerate() {
+            s.at(arrival.at, Ev::Scripted(a));
+        }
+    }
     let first = s.arrivals.exponential(m.load_per_second);
     s.at(first, Ev::Arrive);
     for &(at, n) in &m.bursts {
@@ -1713,6 +1950,10 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
                 }
                 s.assign(t);
             }
+            Ev::Scripted(a) => {
+                s.arrive_scripted(a, t);
+                s.assign(t);
+            }
             Ev::Tick(sc) => s.tick(sc, t),
             Ev::Wake => {
                 s.assign(t);
@@ -1740,9 +1981,9 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
                 s.pools[p].running -= 1;
                 if s.insts[i].killed {
                     s.pools[p].killed += 1.0;
-                    s.rec(t, &m.pools[p].part, "build_killed");
+                    s.rec_task(t, &m.pools[p].part, "build_killed", s.insts[i].task);
                 } else {
-                    s.rec(t, &m.pools[p].part, "build_done");
+                    s.rec_task(t, &m.pools[p].part, "build_done", s.insts[i].task);
                 }
                 s.dispatch(p, t);
                 s.step_done(i, t);
@@ -2042,11 +2283,24 @@ fn finish(s: Sim<'_>) -> RunOut {
     set("merge_conflicts", sum.merge_conflicts);
     set("duplicate_runs", s.duplicates);
     let mut timeline = s.timeline;
-    timeline.sort_by(|a, b| a.0.total_cmp(&b.0));
+    timeline.sort_by(|a, b| a.t.total_cmp(&b.t));
+    let tasks = if s.record && m.script.is_some() {
+        s.tasks
+            .iter()
+            .map(|t| TaskRecord {
+                arrival: t.arrival,
+                fixture: t.fixture,
+                correct: t.correct,
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
     RunOut {
         kpis: k,
         per_part,
         timeline,
+        tasks,
     }
 }
 

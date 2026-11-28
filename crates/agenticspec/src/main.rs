@@ -417,6 +417,28 @@ impl Handler for Commands {
                     .map(std::path::Path::new),
                 &path_of(&inv.input, "out"),
             )),
+            "sim_scenario" => sim_reply(sim::scenario(
+                inv.input
+                    .get("action")
+                    .and_then(Value::as_str)
+                    .unwrap_or(""),
+                &path_of(&inv.input, "scenario"),
+                inv.input
+                    .get("out")
+                    .and_then(Value::as_str)
+                    .map(std::path::Path::new),
+            )),
+            "sim_corpus" => {
+                let mut err = std::io::stderr().lock();
+                sim_reply(sim::corpus(
+                    inv.input
+                        .get("action")
+                        .and_then(Value::as_str)
+                        .unwrap_or(""),
+                    &path_of(&inv.input, "corpus"),
+                    &mut err,
+                ))
+            }
             "sim_ladder" => sim_reply(sim::ladder(
                 &path_of(&inv.input, "ladder"),
                 &path_of(&inv.input, "out"),

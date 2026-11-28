@@ -1,0 +1,32 @@
+format: agenticspec-scenario/1
+scenario: question-answered
+summary: >-
+  The worker on the owner's task asks a question only the owner can answer. The operator passes it
+  on over the chat, the owner picks option B after ten minutes, inside the default deadline, and
+  the worker completes the task.
+architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
+profile: { ref: ../../profiles/coding.yaml, digest: f9986e82bfc8e4b0c14f2d871e437ed19689aae2a450bae1a9f006e0589c6802 }
+seed: 1
+horizon: 2h
+
+when:
+  - { at: operator, kind: prompt, author: owner, text: "Rename the config key the release script reads." }
+
+fixtures:
+  model:
+    - { for: worker, outcome: question, turns: 3, options: [A, B], default: A, needs_owner: true }
+  principals:
+    - { part: owner, option: B, after: 10m }
+
+then:
+  order: sequence
+  events:
+    - { event: run_started, part: worker, task: when.0 }
+    - { event: question_asked, part: worker, task: when.0, options: [A, B] }
+    - { event: question_asked, part: operator, task: when.0 }
+    - { event: post_sent, part: operator, channel: chat }
+    - { event: question_answered, part: owner, task: when.0, option: B }
+    - { event: task_completed, part: worker, task: when.0 }
+  kpis:
+    questions_forwarded: { min: 1, max: 1 }
+    questions_defaulted: { max: 0 }

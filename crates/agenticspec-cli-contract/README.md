@@ -104,6 +104,22 @@ Error `architecture_refused`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+### `sim corpus`
+
+Run every entry of a task corpus on the simulator and print the predicted class beside the expected one
+
+Callable: `sim_corpus`. Input: `agenticspec.cli.SimCorpusInput`. Result: `agenticspec.cli.SimCorpusResult`.
+
+Error `corpus_failed`: `agenticspec.cli.Refusal`.
+
+Error `corpus_invalid`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `scenario_invalid`: `agenticspec.cli.Refusal`.
+
+Error `scenario_refused`: `agenticspec.cli.Refusal`.
+
 ### `sim ladder`
 
 Check the agentic ladder and write the data file of its page, or compare it with --check
@@ -138,6 +154,24 @@ Error `experiment_invalid`: `agenticspec.cli.Refusal`.
 
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
+### `sim scenario`
+
+Check a scenario against its architecture, or run it on the simulator and write scenario-result.json
+
+Callable: `sim_scenario`. Input: `agenticspec.cli.SimScenarioInput`. Result: `agenticspec.cli.SimScenarioResult`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `expectation_failed`: `agenticspec.cli.Refusal`.
+
+Error `out_missing`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `scenario_invalid`: `agenticspec.cli.Refusal`.
+
+Error `scenario_refused`: `agenticspec.cli.Refusal`.
+
 ### `sync`
 
 Lift the new and changed sessions of a window into the local store
@@ -159,7 +193,9 @@ Error `store_unavailable`: `agenticspec.cli.Refusal`.
 - handler:query: implement the owner-qualified callable and its declared result/error contract
 - handler:serve: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_check: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_corpus: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_render: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract

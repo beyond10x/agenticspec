@@ -69,6 +69,11 @@ const pages: Record<string, Page> = {
     title: 'Records library',
     lede: 'Write session records from your own program, such as an LLM gateway.',
   },
+  'docs/scenarios.md': {
+    slug: '/scenarios',
+    title: 'Scenarios and task corpora',
+    lede: 'Test an architecture with given inputs and scripted outside parts, and check the events it should record.',
+  },
 };
 
 const config: Config = {

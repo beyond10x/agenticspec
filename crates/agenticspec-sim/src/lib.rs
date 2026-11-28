@@ -4,11 +4,15 @@
 pub mod best;
 pub mod check;
 pub mod cli;
+pub mod corpus;
 pub mod doc;
+pub mod events;
 pub mod ladder;
 pub mod marked;
 pub mod profile;
+pub mod reader;
 pub mod rng;
+pub mod scenario;
 pub mod search;
 pub mod sim;
 
