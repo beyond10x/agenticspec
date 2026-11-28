@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "6252d4079c49a4fe64209febd153c1d0c0ec8a1afe60f6c1502d62b171036848",
-    "contract_digest": "90a28fd2ce03bd7799575535ea810907bbdeaae9a8cbb396b9cb4727e5d2ede2"
+    "source_digest": "3921b84ac260e232b45110ddcb75302eb4ecd70cec5f9bc8eb58d3a64a4b8a4b",
+    "contract_digest": "686290621bdc328555b19ac1d9465350d893cf2287ec9899613b89617200bb31"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -341,6 +341,13 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.SimCheckResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimCheckViolation",
       "disposition": {
         "disposition": "generated"
       }

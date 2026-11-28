@@ -14,7 +14,12 @@ use serde_json::{Value, json};
 
 const VERSION_LINE: &str = concat!("agenticspec ", env!("CARGO_PKG_VERSION"), "\n");
 
-struct Commands;
+/// The handler. `stdout` is what a command prints before the generated adapter's own output: the
+/// document of `sim check --json` when the check refuses the architecture.
+#[derive(Default)]
+struct Commands {
+    stdout: String,
+}
 
 fn refusal(code: &str, detail: String) -> HandlerReply {
     HandlerReply::Error {
@@ -426,11 +431,34 @@ impl Handler for Commands {
                         .map(PathBuf::from)
                 };
                 let (ports, kpis) = (path("ports"), path("kpis"));
-                sim_reply(sim::check_with(&sim::CheckOptions {
-                    architecture: &path_of(&inv.input, "architecture"),
+                let architecture = path_of(&inv.input, "architecture");
+                let options = sim::CheckOptions {
+                    architecture: &architecture,
                     ports: ports.as_deref(),
                     kpis: kpis.as_deref(),
-                }))
+                };
+                if !inv
+                    .input
+                    .get("json")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false)
+                {
+                    return sim_reply(sim::check_with(&options));
+                }
+                match sim::check_json(&options) {
+                    Ok(sim::Checked {
+                        document,
+                        refusal: None,
+                    }) => HandlerReply::Success(document),
+                    Ok(sim::Checked {
+                        document,
+                        refusal: Some(r),
+                    }) => {
+                        self.stdout = format!("{document}\n");
+                        refusal(r.code, r.detail)
+                    }
+                    Err(r) => refusal(r.code, r.detail),
+                }
             }
             "sim_digest" => sim_reply(sim::digest(&path_of(&inv.input, "architecture"))),
             "sim_run" => {
@@ -672,8 +700,10 @@ fn main() {
     if args.len() == 2 && args[1] == "--version" {
         std::process::exit(emit(VERSION_LINE, "", 0));
     }
-    let output = cli_contract::run(args, &mut cli_contract::OsSources, &mut Commands, None);
-    std::process::exit(emit(&output.stdout, &output.stderr, output.exit_code));
+    let mut commands = Commands::default();
+    let output = cli_contract::run(args, &mut cli_contract::OsSources, &mut commands, None);
+    let stdout = commands.stdout + &output.stdout;
+    std::process::exit(emit(&stdout, &output.stderr, output.exit_code));
 }
 
 fn emit(stdout: &str, stderr: &str, exit_code: i32) -> i32 {

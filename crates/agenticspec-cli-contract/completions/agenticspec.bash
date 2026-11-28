@@ -1212,7 +1212,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__sim__subcmd__check)
-            opts="-h --ports --kpis --config --state-dir --output --help"
+            opts="-h --ports --kpis --json --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

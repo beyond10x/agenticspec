@@ -1348,6 +1348,9 @@
             "architecture": {
               "kind": "string"
             },
+            "json": {
+              "kind": "boolean"
+            },
             "kpis": {
               "kind": "optional",
               "of": {
@@ -1370,6 +1373,21 @@
           "fields": {
             "architecture": {
               "kind": "string"
+            },
+            "counts": {
+              "kind": "optional",
+              "of": {
+                "kind": "map",
+                "value": {
+                  "kind": "integer"
+                }
+              }
+            },
+            "format": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
             },
             "ingresses": {
               "kind": "integer"
@@ -1413,6 +1431,44 @@
               "kind": "list",
               "of": {
                 "kind": "string"
+              }
+            },
+            "valid": {
+              "kind": "optional",
+              "of": {
+                "kind": "boolean"
+              }
+            },
+            "violations": {
+              "kind": "optional",
+              "of": {
+                "kind": "list",
+                "of": {
+                  "kind": "struct",
+                  "fields": {
+                    "gate": {
+                      "kind": "boolean"
+                    },
+                    "link": {
+                      "kind": "optional",
+                      "of": {
+                        "kind": "integer"
+                      }
+                    },
+                    "message": {
+                      "kind": "string"
+                    },
+                    "part": {
+                      "kind": "string"
+                    },
+                    "rule": {
+                      "kind": "string"
+                    },
+                    "subject": {
+                      "kind": "string"
+                    }
+                  }
+                }
               }
             }
           }
@@ -3220,6 +3276,13 @@
           "source": {
             "kind": "option",
             "long": "kpis"
+          }
+        },
+        {
+          "field": "json",
+          "source": {
+            "kind": "flag",
+            "long": "json"
           }
         }
       ]

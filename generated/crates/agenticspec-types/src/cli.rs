@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 90a28fd2ce03bd7799575535ea810907bbdeaae9a8cbb396b9cb4727e5d2ede2
+// contract digest 686290621bdc328555b19ac1d9465350d893cf2287ec9899613b89617200bb31
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -691,11 +691,13 @@ pub struct SimCheckInput {
     pub ports: Option<String>,
     /// `kpis` — `Optional<String>`.
     pub kpis: Option<String>,
+    /// `json` — `Boolean`.
+    pub json: bool,
 }
 
 /// SimCheckResult — `agenticspec.cli.SimCheckResult`.
 ///
-/// The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs of the architecture as a whole and the architectures it nests.
+/// The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs of the architecture as a whole and the architectures it nests. With `--json`, the `agenticspec-check/1` document, which carries `format`, `valid`, `violations` and `counts` too; a refused architecture prints the document of the check alone before its refusal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCheckResult {
     /// `architecture` — `String`.
@@ -712,6 +714,33 @@ pub struct SimCheckResult {
     pub nested: Vec<SimNested>,
     /// `ingresses` — `Integer`.
     pub ingresses: i64,
+    /// `format` — `Optional<String>`.
+    pub format: Option<String>,
+    /// `valid` — `Optional<Boolean>`.
+    pub valid: Option<bool>,
+    /// `violations` — `Optional<List<agenticspec.cli.SimCheckViolation>>`.
+    pub violations: Option<Vec<SimCheckViolation>>,
+    /// `counts` — `Optional<Map<String, Integer>>`.
+    pub counts: Option<std::collections::BTreeMap<String, i64>>,
+}
+
+/// SimCheckViolation — `agenticspec.cli.SimCheckViolation`.
+///
+/// One violation of a rule of the architecture check.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimCheckViolation {
+    /// `rule` — `String`.
+    pub rule: String,
+    /// `gate` — `Boolean`.
+    pub gate: bool,
+    /// `subject` — `String`.
+    pub subject: String,
+    /// `part` — `String`.
+    pub part: String,
+    /// `link` — `Optional<Integer>`.
+    pub link: Option<i64>,
+    /// `message` — `String`.
+    pub message: String,
 }
 
 /// SimContractInput — `agenticspec.cli.SimContractInput`.

@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 90a28fd2ce03bd7799575535ea810907bbdeaae9a8cbb396b9cb4727e5d2ede2
+// contract digest 686290621bdc328555b19ac1d9465350d893cf2287ec9899613b89617200bb31
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -2646,6 +2646,8 @@ pub fn encode_agenticspec_cli_sim_check_input(value: &agenticspec_types::cli::Si
         json::member(out, "kpis");
         json::push_text(out, &*held0);
     }
+    json::member(out, "json");
+    json::push_bool(out, value.json);
     out.push('}');
 }
 
@@ -2655,7 +2657,7 @@ pub fn encode_agenticspec_cli_sim_check_input(value: &agenticspec_types::cli::Si
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckInput, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "ports", "kpis"])?;
+    json::closed_at(value, at, &["architecture", "ports", "kpis", "json"])?;
     Ok(agenticspec_types::cli::SimCheckInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -2675,6 +2677,11 @@ pub fn decode_agenticspec_cli_sim_check_input(value: &json::Value, at: &str) -> 
                 let at2 = json::nested(at, "kpis");
                 Some(json::text_at(member2, &at2, "a string")?.to_owned())
             }
+        },
+        json: {
+            let at3 = json::nested(at, "json");
+            let member3 = json::member_at(value, at, "json")?;
+            json::bool_at(member3, &at3, "a boolean")?
         },
     })
 }
@@ -2710,6 +2717,38 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
     out.push(']');
     json::member(out, "ingresses");
     json::push_integer(out, value.ingresses);
+    if let Some(held0) = &value.format {
+        json::member(out, "format");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.valid {
+        json::member(out, "valid");
+        json::push_bool(out, *held0);
+    }
+    if let Some(held0) = &value.violations {
+        json::member(out, "violations");
+        out.push('[');
+        for (index1, item1) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            encode_agenticspec_cli_sim_check_violation(&*item1, out);
+        }
+        out.push(']');
+    }
+    if let Some(held0) = &value.counts {
+        json::member(out, "counts");
+        out.push('{');
+        for (index1, (key1, item1)) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            json::push_text(out, key1);
+            out.push(':');
+            json::push_integer(out, *item1);
+        }
+        out.push('}');
+    }
     out.push('}');
 }
 
@@ -2719,7 +2758,7 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckResult, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "parts", "links", "kpis", "single_points", "nested", "ingresses"])?;
+    json::closed_at(value, at, &["architecture", "parts", "links", "kpis", "single_points", "nested", "ingresses", "format", "valid", "violations", "counts"])?;
     Ok(agenticspec_types::cli::SimCheckResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -2769,6 +2808,111 @@ pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) ->
             let at6 = json::nested(at, "ingresses");
             let member6 = json::member_at(value, at, "ingresses")?;
             json::integer_at(member6, &at6, "an integer")?
+        },
+        format: match value.member("format") {
+            None | Some(json::Value::Null) => None,
+            Some(member7) => {
+                let at7 = json::nested(at, "format");
+                Some(json::text_at(member7, &at7, "a string")?.to_owned())
+            }
+        },
+        valid: match value.member("valid") {
+            None | Some(json::Value::Null) => None,
+            Some(member8) => {
+                let at8 = json::nested(at, "valid");
+                Some(json::bool_at(member8, &at8, "a boolean")?)
+            }
+        },
+        violations: match value.member("violations") {
+            None | Some(json::Value::Null) => None,
+            Some(member9) => {
+                let at9 = json::nested(at, "violations");
+                Some({
+                let mut items9 = Vec::new();
+                for (index9, element9) in json::items_at(member9, &at9, "an array")?.iter().enumerate() {
+                    let nested9 = json::nested(&at9, &index9.to_string());
+                    items9.push(decode_agenticspec_cli_sim_check_violation(element9, &nested9)?);
+                }
+                items9
+            })
+            }
+        },
+        counts: match value.member("counts") {
+            None | Some(json::Value::Null) => None,
+            Some(member10) => {
+                let at10 = json::nested(at, "counts");
+                Some({
+                let mut entries10 = std::collections::BTreeMap::new();
+                for (key10, element10) in json::members_at(member10, &at10, "an object")? {
+                    let nested10 = json::nested(&at10, key10);
+                    entries10.insert(key10.clone(), json::integer_at(element10, &nested10, "an integer")?);
+                }
+                entries10
+            })
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimCheckViolation` as JSON.
+pub fn encode_agenticspec_cli_sim_check_violation(value: &agenticspec_types::cli::SimCheckViolation, out: &mut String) {
+    out.push('{');
+    json::member(out, "rule");
+    json::push_text(out, &value.rule);
+    json::member(out, "gate");
+    json::push_bool(out, value.gate);
+    json::member(out, "subject");
+    json::push_text(out, &value.subject);
+    json::member(out, "part");
+    json::push_text(out, &value.part);
+    if let Some(held0) = &value.link {
+        json::member(out, "link");
+        json::push_integer(out, *held0);
+    }
+    json::member(out, "message");
+    json::push_text(out, &value.message);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimCheckViolation` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_check_violation(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckViolation, json::DecodeError> {
+    json::closed_at(value, at, &["rule", "gate", "subject", "part", "link", "message"])?;
+    Ok(agenticspec_types::cli::SimCheckViolation {
+        rule: {
+            let at0 = json::nested(at, "rule");
+            let member0 = json::member_at(value, at, "rule")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        gate: {
+            let at1 = json::nested(at, "gate");
+            let member1 = json::member_at(value, at, "gate")?;
+            json::bool_at(member1, &at1, "a boolean")?
+        },
+        subject: {
+            let at2 = json::nested(at, "subject");
+            let member2 = json::member_at(value, at, "subject")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        part: {
+            let at3 = json::nested(at, "part");
+            let member3 = json::member_at(value, at, "part")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
+        },
+        link: match value.member("link") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "link");
+                Some(json::integer_at(member4, &at4, "an integer")?)
+            }
+        },
+        message: {
+            let at5 = json::nested(at, "message");
+            let member5 = json::member_at(value, at, "message")?;
+            json::text_at(member5, &at5, "a string")?.to_owned()
         },
     })
 }

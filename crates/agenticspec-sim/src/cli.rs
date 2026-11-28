@@ -4,7 +4,7 @@
 //! the error codes `spec/cli.yaml` binds to the command. The parser and the process adapter are
 //! the generated `agenticspec-cli-contract` of the `agenticspec` crate.
 
-use crate::check::check as check_architecture;
+use crate::check::{GATE_KPIS, Refusal as ArchRefusal, check as check_architecture};
 use crate::doc::load_yaml;
 use crate::event_log::{FILE as EVENTS_FILE, jsonl, log as event_log};
 use crate::{Experiment, ladder as ladder_doc, nest, run_shown};
@@ -54,7 +54,8 @@ pub struct CheckOptions<'a> {
     pub kpis: Option<&'a Path>,
 }
 
-/// `sim check <architecture>` with the default ports file and KPI catalogue.
+/// `sim check <architecture>` with the default ports file and KPI catalogue. With `--json`,
+/// [`check_json`].
 pub fn check(path: &Path) -> Result<Value, Refusal> {
     check_with(&CheckOptions {
         architecture: path,
@@ -100,30 +101,165 @@ pub fn check_with(o: &CheckOptions) -> Result<Value, Refusal> {
         let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
         return Err(refused("architecture_refused", names.join("; ")));
     }
-    let kpis: serde_json::Map<String, Value> = crate::whole::measure(&flat)
+    accepted(&arch, &flat, o)
+}
+
+/// The result of `sim check` for a document (`arch`, `flat` flattened) the structural check
+/// accepted: its counts, the KPIs of the architecture as a whole, its single points, its nested
+/// architectures and its ingresses, or the refusal of its `ingress:`.
+fn accepted(arch: &Value, flat: &Value, o: &CheckOptions) -> Result<Value, Refusal> {
+    let kpis: serde_json::Map<String, Value> = crate::whole::measure(flat)
         .into_iter()
         .map(|(k, v)| (k.to_string(), crate::doc::number(v)))
         .collect();
     let mut ingresses = 0;
-    if crate::contract::ingress::declares(&flat) {
+    if crate::contract::ingress::declares(flat) {
         let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
         let ports = crate::contract::ports::PortsFile::load(ports_path)
             .map_err(|e| refused("ports_unreadable", e))?;
-        let contract = derive_contract(&flat, &ports, o.kpis).map_err(|r| match r.code {
+        let contract = derive_contract(flat, &ports, o.kpis).map_err(|r| match r.code {
             "contract_refused" => refused("architecture_refused", r.detail),
             _ => r,
         })?;
         ingresses = contract.ingress.len();
     }
-    Ok(json!({
+    let mut out = summary(arch);
+    out["kpis"] = Value::Object(kpis);
+    out["single_points"] = json!(crate::whole::single_point_parts(flat));
+    out["nested"] = json!(nest::listed(arch));
+    out["ingresses"] = json!(ingresses);
+    Ok(out)
+}
+
+fn summary(arch: &Value) -> Value {
+    json!({
         "architecture": arch["architecture"].as_str().unwrap_or("architecture"),
         "parts": arch["parts"].as_object().map_or(0, |p| p.len()),
         "links": arch["links"].as_array().map_or(0, |l| l.len()),
-        "kpis": kpis,
-        "single_points": crate::whole::single_point_parts(&flat),
-        "nested": nest::listed(&arch),
-        "ingresses": ingresses,
-    }))
+    })
+}
+
+/// The format of the document `sim check --json` prints.
+pub const CHECK_FORMAT: &str = "agenticspec-check/1";
+
+/// What `sim check --json` says about a readable architecture: the `agenticspec-check/1`
+/// document, and the refusal the command ends with when a gate rule is violated.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Checked {
+    pub document: Value,
+    pub refusal: Option<Refusal>,
+}
+
+/// Whether a rule of the check refuses the architecture. Every rule of the check is a gate.
+pub fn is_gate(rule: &str) -> bool {
+    GATE_KPIS.contains(&rule)
+}
+
+/// The index of the link a refusal concerns, when its subject is a link.
+fn link_of(r: &ArchRefusal) -> Option<usize> {
+    match r {
+        ArchRefusal::UnknownLinkPart { link, .. }
+        | ArchRefusal::UnknownCarries { link, .. }
+        | ArchRefusal::QuestionWithoutAnswerer { link, .. }
+        | ArchRefusal::ReviewWithoutReviewer { link, .. }
+        | ArchRefusal::TriggerSourceNotTrigger { link, .. }
+        | ArchRefusal::TriggerTargetNotAgent { link, .. } => Some(*link),
+        _ => None,
+    }
+}
+
+/// One violation as the document carries it.
+fn violation(arch: &Value, r: &ArchRefusal) -> Value {
+    let line = r.to_string();
+    let prefix = format!("{}: part `{}`: ", r.rule(), r.part());
+    let message = line.strip_prefix(&prefix).unwrap_or(&line);
+    let link = link_of(r);
+    let subject = link.map_or_else(
+        || r.part().to_string(),
+        |i| {
+            let l = &arch["links"][i];
+            let end = |k: &str| l[k].as_str().unwrap_or("").to_string();
+            format!("{}->{}:{}", end("from"), end("to"), end("carries"))
+        },
+    );
+    let mut v = json!({
+        "rule": r.rule(),
+        "gate": is_gate(r.rule()),
+        "subject": subject,
+        "part": r.part(),
+        "message": message,
+    });
+    if let Some(i) = link {
+        v["link"] = json!(i);
+    }
+    v
+}
+
+/// The `agenticspec-check/1` document of an architecture, its nested architectures resolved:
+/// its summary, `valid`, every violation of the flattened document sorted by rule, subject,
+/// part, link and message, and the count of every rule.
+pub fn check_document(arch: &Value) -> Value {
+    let flat = nest::flatten(arch);
+    let refusals = check_architecture(&flat);
+    let mut violations: Vec<Value> = refusals.iter().map(|r| violation(&flat, r)).collect();
+    let key = |v: &Value| {
+        (
+            v["rule"].as_str().unwrap_or("").to_string(),
+            v["subject"].as_str().unwrap_or("").to_string(),
+            v["part"].as_str().unwrap_or("").to_string(),
+            v["link"].as_u64(),
+            v["message"].as_str().unwrap_or("").to_string(),
+        )
+    };
+    violations.sort_by_key(key);
+    let counts: serde_json::Map<String, Value> = GATE_KPIS
+        .iter()
+        .map(|g| {
+            let n = refusals.iter().filter(|r| r.rule() == *g).count();
+            ((*g).to_string(), json!(n))
+        })
+        .collect();
+    let mut doc = summary(arch);
+    doc["format"] = json!(CHECK_FORMAT);
+    doc["valid"] = json!(!violations.iter().any(|v| v["gate"] == true));
+    doc["violations"] = Value::Array(violations);
+    doc["counts"] = Value::Object(counts);
+    doc
+}
+
+/// `sim check --json <architecture> [--ports <file>] [--kpis <file>]`: the document, also for a
+/// refused architecture; only an unreadable file or a nested reference that does not resolve is
+/// refused without one. An accepted architecture's document also carries what `sim check`
+/// prints (KPIs, single points, nested architectures, ingresses); a refused `ingress:` is the
+/// command's refusal after the document.
+pub fn check_json(o: &CheckOptions) -> Result<Checked, Refusal> {
+    let arch = load_nested(o.architecture)?;
+    let flat = nest::flatten(&arch);
+    let mut document = check_document(&arch);
+    let gates: Vec<String> = check_architecture(&flat)
+        .iter()
+        .filter(|r| is_gate(r.rule()))
+        .map(ToString::to_string)
+        .collect();
+    if !gates.is_empty() {
+        let refusal = Some(refused("architecture_refused", gates.join("; ")));
+        return Ok(Checked { document, refusal });
+    }
+    match accepted(&arch, &flat, o) {
+        Ok(fields) => {
+            for (k, v) in fields.as_object().into_iter().flatten() {
+                document[k] = v.clone();
+            }
+            Ok(Checked {
+                document,
+                refusal: None,
+            })
+        }
+        Err(r) => Ok(Checked {
+            document,
+            refusal: Some(r),
+        }),
+    }
 }
 
 /// `sim digest <architecture>`: the digest a referring document pins it with.

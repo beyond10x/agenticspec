@@ -280,6 +280,7 @@ commands:
       - {field: architecture, source: {kind: positional, index: 1}}
       - {field: ports, source: {kind: option, long: ports}}
       - {field: kpis, source: {kind: option, long: kpis}}
+      - {field: json, source: {kind: flag, long: json}}
   - path: [sim, digest]
     callable: sim_digest
     about: Print the digest a document pins a nested architecture with (sha256 of its canonical parts, links and border)

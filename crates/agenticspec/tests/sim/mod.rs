@@ -68,6 +68,44 @@ fn check_exits_1_and_names_the_refusal() {
 }
 
 #[test]
+fn check_json_prints_the_document_of_an_accepted_architecture() {
+    let arch = repo().join("architectures/author-reviewer.yaml");
+    let out = sim(&["check".as_ref(), "--json".as_ref(), arch.as_os_str()]);
+    let doc = result(&out);
+    assert_eq!(doc["format"], "agenticspec-check/1");
+    assert_eq!(doc["valid"], true);
+    assert_eq!(doc["violations"], serde_json::json!([]));
+    assert!(
+        out.stderr.is_empty(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}
+
+#[test]
+fn check_json_prints_the_document_and_exits_1_when_refused() {
+    let dir = scratch("check-json-refused");
+    let arch = dir.join("broken.yaml");
+    std::fs::write(
+        &arch,
+        "format: agenticspec-architecture/1\narchitecture: broken\nparts:\n  you: { block: principal, kind: human }\nlinks:\n  - { from: you, to: nobody, carries: prompt }\n",
+    )
+    .unwrap();
+    let out = sim(&["check".as_ref(), "--json".as_ref(), arch.as_os_str()]);
+    assert_eq!(out.status.code(), Some(1));
+    let stdout = String::from_utf8(out.stdout.clone()).unwrap();
+    assert_eq!(stdout.lines().count(), 1, "{stdout}");
+    let doc: Value = serde_json::from_str(&stdout).unwrap();
+    assert_eq!(doc["valid"], false);
+    assert_eq!(doc["violations"][0]["subject"], "you->nobody:prompt");
+    assert_eq!(doc["counts"]["unknown_link_parts"], 1);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(stderr.starts_with("architecture_refused: "), "{stderr}");
+    let again = sim(&["check".as_ref(), "--json".as_ref(), arch.as_os_str()]);
+    assert_eq!(again.stdout, out.stdout);
+}
+
+#[test]
 fn run_writes_the_result_with_the_threads_given() {
     let dir = scratch("run");
     let exp = dir.join("exp.yaml");
