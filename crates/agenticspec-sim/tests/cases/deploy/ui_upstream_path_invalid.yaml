@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: ui-upstream-path-invalid
+architecture: workstation
+refines: egress/workstation.yaml
+summary: The operator UI reads its upstream's adapter at a path that does not start with a slash.
+ui:
+  operator:
+    upstream: {path: api/}

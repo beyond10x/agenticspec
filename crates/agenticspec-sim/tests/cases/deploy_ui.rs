@@ -427,6 +427,139 @@ fn deploy_check_admits_the_ui_bundle_and_refuses_a_changed_archive_or_an_unknown
     assert_eq!(names(&r.detail), ["ui_upstream_unknown"], "{}", r.detail);
 }
 
+/// The `config.json` of the archive of the UI unit `name` carried in the bundle `v`.
+fn config_of(v: &Value, name: &str) -> Value {
+    let archive = format!("{name}.tar");
+    let tar = ui::unbase64(v["files"][&archive]["base64"].as_str().unwrap()).unwrap();
+    let mut at = 0;
+    while at + 512 <= tar.len() && tar[at] != 0 {
+        let h = &tar[at..at + 512];
+        let end = h[..100].iter().position(|b| *b == 0).unwrap_or(100);
+        let file = std::str::from_utf8(&h[..end]).unwrap();
+        let size = std::str::from_utf8(&h[124..136]).unwrap();
+        let size = usize::from_str_radix(size.trim_matches(['\0', ' ']), 8).unwrap();
+        if file == "config.json" {
+            return serde_json::from_slice(&tar[at + 512..at + 512 + size]).unwrap();
+        }
+        at += 512 + size.div_ceil(512) * 512;
+    }
+    panic!("no config.json in {archive}");
+}
+
+/// Without `ui.<ui>.upstream.path` a UI reads its upstream's adapter at `/api/`: the unit's
+/// `upstream.path` and the `api_base` of the built archive's `config.json`.
+#[test]
+fn the_upstream_path_is_api_by_default_in_the_unit_and_in_config_json() {
+    let v = fixture();
+    for name in ["operator-ui", "control-plane-ui"] {
+        assert_eq!(unit(&v, name)["upstream"]["path"], "/api/", "{name}");
+        assert_eq!(config_of(&v, name)["api_base"], "/api/", "{name}");
+    }
+    assert_eq!(unit(&v, "console")["upstream"]["path"], "/api/");
+}
+
+/// `ui.<ui>.upstream.path` is written into the unit's `upstream.path` and, for a UI the binary
+/// builds, into the `api_base` of its `config.json`; the bundle passes `deploy check`.
+#[test]
+fn a_binding_upstream_path_is_carried_into_the_unit_and_config_json() {
+    let dir = scratch("deploy-ui-upstream-path");
+    let v = bundle_of(
+        &dir,
+        &refining(
+            "bundles/bindings/operator-ui.yaml",
+            "ui:\n  operator:\n    upstream: {path: /ingress/operator/}\n  control-plane:\n    upstream: {path: /control/api/}\n  console:\n    upstream: {path: /console/api/}\n",
+        ),
+    )
+    .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    for (name, path) in [
+        ("operator-ui", "/ingress/operator/"),
+        ("control-plane-ui", "/control/api/"),
+    ] {
+        assert_eq!(
+            unit(&v, name)["upstream"],
+            json!({ "unit": "core", "port": 8080, "path": path }),
+            "{name}"
+        );
+        assert_eq!(config_of(&v, name)["api_base"], path, "{name}");
+    }
+    // The archive of a UI of the consumer's own is carried as it is; its unit names the path.
+    assert_eq!(unit(&v, "console")["upstream"]["path"], "/console/api/");
+    assert_eq!(
+        v["files"]["console.tar"]["digest"],
+        fixture()["files"]["console.tar"]["digest"]
+    );
+    assert_ne!(
+        v["files"]["operator-ui.tar"]["digest"],
+        fixture()["files"]["operator-ui.tar"]["digest"]
+    );
+    let file = dir.join("bundle.yaml");
+    std::fs::write(&file, bundle::write(&v)).unwrap();
+    cli::deploy_check(
+        &file,
+        Some(&repo_root().join("bundles/cloudspec-accepts.yaml")),
+    )
+    .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+}
+
+/// A path that does not start with `/` is refused with `ui_upstream_path_invalid` by `deploy
+/// bundle` and, in a written bundle, by `deploy check`; a path that is no string is a binding of
+/// the wrong form.
+#[test]
+fn an_upstream_path_not_starting_with_a_slash_is_refused() {
+    let dir = scratch("deploy-ui-upstream-path-invalid");
+    for (key, path) in [
+        ("operator", "api/"),
+        ("control-plane", "\"\""),
+        ("console", "http://adapter/api/"),
+    ] {
+        let r = bundle_of(
+            &dir,
+            &refining(
+                "bundles/bindings/operator-ui.yaml",
+                &format!("ui:\n  {key}:\n    upstream: {{path: {path}}}\n"),
+            ),
+        )
+        .unwrap_err();
+        assert_eq!(r.code, "not_admitted", "{key}: {}", r.detail);
+        assert_eq!(
+            names(&r.detail),
+            ["ui_upstream_path_invalid"],
+            "{key}: {}",
+            r.detail
+        );
+        assert!(r.detail.contains(&format!("ui: {key}:")), "{}", r.detail);
+    }
+    let r = bundle_of(
+        &dir,
+        &refining(
+            "bundles/bindings/operator-ui.yaml",
+            "ui:\n  operator:\n    upstream: {path: 3}\n",
+        ),
+    )
+    .unwrap_err();
+    assert_eq!(r.code, "binding_invalid", "{}", r.detail);
+    assert!(r.detail.contains("upstream: path is"), "{}", r.detail);
+    for path in [json!("api/"), json!(""), json!(3)] {
+        let r = check_tampered(&dir, |v| {
+            let i = v["units"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .position(|u| u["name"] == "operator-ui")
+                .unwrap();
+            v["units"][i]["upstream"]["path"] = path.clone();
+        })
+        .unwrap_err();
+        assert_eq!(r.code, "not_admitted", "{path}: {}", r.detail);
+        assert_eq!(
+            names(&r.detail),
+            ["ui_upstream_path_invalid"],
+            "{path}: {}",
+            r.detail
+        );
+    }
+}
+
 #[test]
 fn base64_reads_back_what_it_writes() {
     for bytes in [&b""[..], b"a", b"ab", b"abc", b"abcd", &[0, 255, 128, 7, 9]] {

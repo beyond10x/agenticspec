@@ -32,7 +32,7 @@ but `format` and `binding` is optional.
 | `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui`, the control-plane UI's `control-plane-ui` |
 | `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below); the UI units, `operator-ui` and `control-plane-ui`, have `ready` and `alive` |
 | `ingress` | per ingress of the contract and per protocol it exports, where it listens: `{operator: {exports: {http: {port: 8080, bind: all}}}}`. `port` (1 to 65535), `bind` (`loopback`, the default, or `all`), `address` (the address it is reached at, text) and `part` (a part of a unit that serves it, when not the control plane of the core) |
-| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port}}, control-plane: {port, bind, upstream: {unit, port}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) and [the control-plane UI](#the-control-plane-ui) |
+| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port, path}}, control-plane: {port, bind, upstream: {unit, port, path}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) and [the control-plane UI](#the-control-plane-ui) |
 | `packing` | the packing section below |
 
 A binding never changes the architecture: promoting a revision to another target is a new binding
@@ -212,6 +212,7 @@ order of the table, and writes nothing.
 | `egress_undeclared` | a link leaves its unit, for an external part or a part of another unit, and the part it starts at does not declare that destination in its `egress` |
 | `address_in_architecture` | the architecture names an address: a key `address`, `host`, `hostname` or `url` anywhere in it (see [the bundle](#the-bundle)) |
 | `ui_upstream_unknown` | the UI the binding asks for reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have |
+| `ui_upstream_path_invalid` | the path a UI reads its upstream's adapter at (`ui.<ui>.upstream.path`) does not start with `/` |
 | `requirement_kpi_unknown` | a requirement names a KPI that is in neither the KPI catalogue nor the simulator and is not a cloud KPI (`cloudspec:<id>`) |
 | `requirement_invalid` | a requirement of the wrong form: no `kpi`, not exactly one number of `at_least`, `at_most`, `equals`, a `part` the architecture does not have or on a KPI of the architecture as a whole, a `window` that is no duration, an unknown key |
 | `ui_export_unknown` | a UI of your own serves an export (`ui.<name>.export`, `<ingress>.<protocol>`) that no ingress of the architecture has |
@@ -261,7 +262,7 @@ Each unit:
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
 | `schedule` | a scheduled unit's cron rule: the one the binding gives (`packing.parts.<part>.schedule`), else the one that states its schedule's `every` exactly ([Packing](#packing)); absent when it has neither |
 | `clock` | a scheduled unit's clock in the architecture: the trigger and schedule that wake it, `every`, `next_fire_at`, and the trigger's `policy` and `max_parallel` as the rule for overlapping runs |
-| `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (`/api/`) |
+| `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (the binding's `ui.<ui>.upstream.path`, else `/api/`) |
 | `config` | the configuration the binding gives the unit, when it gives any: `env`, its environment variables with their keys sorted, each value text or `{secret: <name>}`, and `args`, a list of strings; merged from the unit's entry under `packing.units`, then its parts by name (see [configuration of a unit](#configuration-of-a-unit)) |
 | `secrets` | the secret names its parts declare, never a value |
 | `egress` | every destination its parts declare, each with the part it starts at (`from`), the secret it authenticates with, when declared (`secret`), and `name`, what the target resolves: a link to another unit, with its transport, named by that unit; a link to an external part (`external: true`), named by its reach (its name, or its address, which is then also `address`); or a destination outside the architecture (`named: true`, no link), named by its own name, with the `address` the binding gives it, else `unresolved: true`. Nothing that is not listed is granted |
@@ -340,7 +341,8 @@ a local runtime image with neither tag nor digest, a core or service unit whose 
 that enforces no network policy, and a scheduled unit whose `schedule` is not the rule of its
 binding or of its schedule's `every` (`schedule_not_cron`). Of a UI unit it hashes the archive the bundle carries and refuses
 an archive that is missing or whose SHA-256 is not the unit's `digest` (`ui_archive_mismatch`),
-and an `upstream` that names no other unit of the bundle (`ui_upstream_unknown`). A refusal exits
+an `upstream` that names no other unit of the bundle (`ui_upstream_unknown`), and an `upstream.path`
+that does not start with `/` (`ui_upstream_path_invalid`). A refusal exits
 1 with `not_admitted` and names every finding.
 
 ```sh
@@ -407,19 +409,20 @@ agenticspec ui build workstation-ingress.yaml --contract wi.contract.yaml --ingr
 
 A binding with `ui: {operator: {...}}` makes `deploy bundle` add the operator UI as a unit of its
 own. It builds the UI in-process with the library `ui build` uses, from the architecture and its
-contract, and the archive is the same bytes as `ui build --archive` writes for them (`api_base`
-`/api/`). Without `ui:` the bundle is the same as before.
+contract, and the archive is the same bytes as `ui build --archive` writes for them (with
+`--api-base` set to `upstream.path`, `/api/` when absent). Without `ui:` the bundle is the same as before.
 
 | key under `ui.operator` | holds |
 |---|---|
 | `port`, `bind` | where the UI's export listens when the binding's `ingress.operator.exports.ui` gives none. Given in both places, they must agree |
 | `upstream.unit` | the unit whose adapter (the runtime interface, `ui/runtime.openapi.yaml`) the page reads; the unit that serves the operator ingress's `http` export (the core) when absent |
 | `upstream.port` | its port; the `http` export's port when absent and that export is served by the same unit |
+| `upstream.path` | the path the page reads that adapter at, starting with `/`: the `api_base` of the UI's `config.json` and the unit's `upstream.path` (`/api/` when absent). A UI of your own carries its archive as it is; only its unit's `upstream.path` says the path |
 
 The bundle then has:
 
 - a unit `operator-ui`, `kind: service`, `roles: [operator-ui]`, no parts, `code: {kind: static,
-  archive: operator-ui.tar, digest: sha256:<hex>}`, `upstream: {unit, port, path: /api/}`, and
+  archive: operator-ui.tar, digest: sha256:<hex>}`, `upstream: {unit, port, path}`, and
   `ready` and `alive` checks over HTTP at `/` on the export's port, or on the port of
   `checks.operator-ui.<check>.port`, and the claims of `claims.operator-ui` (500 millicores and
   512 MiB when absent);
@@ -431,7 +434,8 @@ The bundle then has:
 `deploy bundle` refuses, with `binding_invalid`, a `ui:` of the wrong form, a packing that has a
 unit named `operator-ui`, and a `part` on the `ui` export; with `not_admitted`, a contract whose
 operator ingress exports no `ui` (`ui_export_unknown`), an upstream that names no unit of the
-packing (`ui_upstream_unknown`), a role `operator-ui` the accepted list does not hold
+packing (`ui_upstream_unknown`), an upstream path that does not start with `/`
+(`ui_upstream_path_invalid`), a role `operator-ui` the accepted list does not hold
 (`unit_not_hosted`), and a UI that does not build (`ui_build_refused`, for example a contract
 from other ports than the binary's). `bundles/bindings/operator-ui.yaml` is the worked example.
 
