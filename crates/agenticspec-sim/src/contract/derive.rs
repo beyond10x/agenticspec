@@ -136,6 +136,8 @@ pub fn block_ports(doc: &Value, name: &str, part: &Value) -> Result<Vec<&'static
         // A nested architecture is flattened before its contract is derived: its own parts use
         // the ports.
         "architecture" => vec![],
+        // A block of a pack uses no port of the core blocks' catalogue.
+        b if crate::check::pack_blocks().iter().any(|k| k == b) => vec![],
         other => {
             return Err(format!(
                 "part {name}: block `{other}` has no entry in the table of the ports a block uses"

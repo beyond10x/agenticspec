@@ -322,6 +322,36 @@ fn a_carries_the_domain_does_not_declare_is_refused() {
     assert!(r[0].to_string().contains("telepathy"), "{}", r[0]);
 }
 
+/// A field's architecture places the blocks of its packs (`scm.change`) and its links to them
+/// carry what the pack names; a link between parts of the core still carries only the core's
+/// vocabulary.
+#[test]
+fn a_pack_block_is_a_part_and_a_link_to_it_carries_what_the_pack_names() {
+    assert!(
+        agenticspec_sim::check::pack_blocks()
+            .iter()
+            .any(|b| b == "scm.change")
+    );
+    let mut a = base();
+    a["parts"]["changes"] = json!({"block": "scm.change"});
+    a["links"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"from": "operator", "to": "changes", "carries": "merge"}));
+    assert_eq!(refused(&a), Vec::<(String, String)>::new());
+    a["links"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"from": "worker", "to": "operator", "carries": "merge"}));
+    assert_eq!(
+        refused(&a),
+        vec![("unknown_carries".into(), "worker".into())]
+    );
+    let field = repo_root().join("fields/coding/architectures/auto-merger.yaml");
+    let doc = yaml(&std::fs::read_to_string(field).unwrap());
+    assert_eq!(check(&doc), Vec::<Refusal>::new());
+}
+
 #[test]
 fn the_kind_rules_are_gate_kpis() {
     for rule in ["unknown_blocks", "unknown_carries"] {

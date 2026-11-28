@@ -46,6 +46,34 @@ pub fn part_kinds() -> &'static [String] {
     KINDS.get_or_init(|| variants("agentic.architecture.PartKind"))
 }
 
+/// The blocks of the packs a part may instantiate too, as a field's architecture writes them:
+/// the domain of a pack block without `agentic.` (`scm.change`). Read from the block files built
+/// into the crate (`unavailable::SOURCES`, held equal to the root `ess-inputs.yaml`).
+pub fn pack_blocks() -> &'static [String] {
+    static PACKS: OnceLock<Vec<String>> = OnceLock::new();
+    PACKS.get_or_init(|| {
+        crate::unavailable::SOURCES
+            .iter()
+            .filter(|(path, _)| path.starts_with("packs/"))
+            .filter_map(|(_, text)| {
+                let doc: Value = serde_yaml_ng::from_str(text).ok()?;
+                let domain = doc["domain"].as_str()?;
+                Some(
+                    domain
+                        .strip_prefix("agentic.")
+                        .unwrap_or(domain)
+                        .to_string(),
+                )
+            })
+            .collect()
+    })
+}
+
+/// Whether a part may instantiate `block`: a part kind or a block of a pack.
+pub fn is_part_block(block: &str) -> bool {
+    part_kinds().iter().any(|k| k == block) || pack_blocks().iter().any(|k| k == block)
+}
+
 /// What a link may carry: the variants of `agentic.architecture.Carries`.
 pub fn carries() -> &'static [String] {
     static CARRIES: OnceLock<Vec<String>> = OnceLock::new();
@@ -176,8 +204,9 @@ impl fmt::Display for Refusal {
                 format!("link {link} names a part that does not exist")
             }
             Refusal::UnknownBlock { block, .. } => format!(
-                "block `{block}` is not a part kind of agentic.architecture ({})",
-                part_kinds().join(", ")
+                "block `{block}` is not a part kind of agentic.architecture ({}) nor a block of a pack ({})",
+                part_kinds().join(", "),
+                pack_blocks().join(", ")
             ),
             Refusal::UnknownCarries { link, carries: c, .. } => format!(
                 "link {link} carries `{c}`, which agentic.architecture does not declare ({})",
@@ -345,7 +374,7 @@ pub fn check(architecture: &Value) -> Vec<Refusal> {
     }
     for (name, p) in parts {
         if let Some(b) = s(&p["block"])
-            && !part_kinds().iter().any(|k| k == b)
+            && !is_part_block(b)
         {
             out.push(Refusal::UnknownBlock {
                 part: name.clone(),
@@ -353,9 +382,18 @@ pub fn check(architecture: &Value) -> Vec<Refusal> {
             });
         }
     }
+    // A link that reaches a part of a pack block carries what the pack names: the core's
+    // vocabulary holds only the links between parts of the core.
+    let of_pack = |part: Option<&str>| {
+        part.and_then(|n| parts.get(n))
+            .and_then(|p| s(&p["block"]))
+            .is_some_and(|b| pack_blocks().iter().any(|k| k == b))
+    };
     for (i, l) in links.iter().enumerate() {
         if let Some(c) = s(&l["carries"])
             && !carries().iter().any(|k| k == c)
+            && !of_pack(s(&l["from"]))
+            && !of_pack(s(&l["to"]))
         {
             out.push(Refusal::UnknownCarries {
                 link: i,

@@ -21,6 +21,8 @@ export interface FixtureClient {
   read(view: string, params: object): Promise<Row[]>;
   command(command: string, input: object): Promise<never>;
   subscribe(channel: string, params: Record<string, Value>, onEvent: (event: string, data: Value) => void): () => void;
+  /** The action set at the scope; the examples have none, so every action shows (null). */
+  actions(): Promise<null>;
   scope(path: string): FixtureClient;
 }
 
@@ -85,6 +87,9 @@ export function exampleClient(name: string, options: FixtureOptions): FixtureCli
       if (options.play === false) return () => undefined;
       const timers = (events.get(channel) ?? []).map((e) => setTimeout(() => onEvent(e.event, e.payload), offset(e.at)));
       return () => timers.forEach(clearTimeout);
+    },
+    async actions() {
+      return null;
     },
     scope() {
       return client;
