@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Packs and fields above the core blocks: four packs named without any product (`packs/source-control`: forge, repository, change request with reviews and head-bound approvals, check runs; `packs/tracking`: issue, board, work queue; `packs/files`: the conceptual file tools `read_file`, `write_file`, `edit_file`, `list_dir`, `search`, `move`, `copy`, `delete`; `packs/shell`: `run_command`), each with its KPIs and authored scenarios, and the field `fields/coding` with the example architecture `auto-merger`. The root `ess-inputs.yaml` validates the whole system; `task check:fields` checks it, its manifests and its conformance suite, and `task check:layers` refuses a core block that depends on a pack or a field, a pack on a field or an undeclared pack, and a field on another field. The docs site has pages for every pack block and field
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
 
 ### Changed

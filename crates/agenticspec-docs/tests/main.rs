@@ -177,6 +177,69 @@ fn every_architecture_has_a_page_and_a_rendered_html() {
     }
 }
 
+/// Every domain the root ess-inputs.yaml adds to the core is a block of a pack, with a page under
+/// docs/packs/<pack>/ that the packs index links and that links the core blocks it depends on; the
+/// layer map of the core links the packs index; every architecture a field lists has its page and
+/// graph under the field, accepted by the check.
+#[test]
+fn every_pack_block_and_field_architecture_has_a_linked_page() {
+    let g = generated_with_fixture();
+    let out = Command::new("ess")
+        .args(["specify", "compile", "--format", "json", "--path"])
+        .arg(root())
+        .output()
+        .expect("ess runs");
+    assert!(out.status.success(), "the whole system compiles");
+    let ir: serde_json::Value = serde_json::from_slice(&out.stdout).expect("IR JSON");
+    let core = domains();
+    let packs = &g.files["docs/packs/index.md"];
+    let mut seen = 0;
+    for domain in ir["domains"].as_object().expect("domains").keys() {
+        if core.contains(domain) {
+            continue;
+        }
+        seen += 1;
+        let name = domain.strip_prefix("agentic.").expect("agentic prefix");
+        let last = name.rsplit('.').next().unwrap();
+        let page = g
+            .files
+            .keys()
+            .find(|p| {
+                p.starts_with("docs/packs/")
+                    && p.ends_with(&format!("/{last}.md"))
+                    && g.files[*p].contains(&format!("title: \"{name}\"\n"))
+            })
+            .unwrap_or_else(|| panic!("{domain} has a page under docs/packs/"));
+        let rel = page.strip_prefix("docs/packs/").unwrap();
+        assert!(
+            packs.contains(&format!("({rel})")),
+            "the packs index links {rel}"
+        );
+        assert!(
+            g.files[page].contains("](../../blocks/"),
+            "{page} links the core blocks it depends on"
+        );
+    }
+    assert!(seen >= 9, "the packs add {seen} domains");
+    assert!(g.files["docs/blocks/index.md"].contains("(../packs/index.md)"));
+    let field = &g.files["docs/fields/coding/index.md"];
+    assert!(
+        field.contains("(auto-merger.md)"),
+        "the field lists its architecture"
+    );
+    let page = &g.files["docs/fields/coding/auto-merger.md"];
+    assert!(page.contains("src={\"/fields/coding/auto-merger\"}"));
+    assert!(
+        page.contains("as-tag--accepted"),
+        "the check accepts the auto-merger"
+    );
+    assert!(page.contains("](../../packs/source-control/change.md)"));
+    assert!(
+        g.files
+            .contains_key("website/static/fields/coding/auto-merger.html")
+    );
+}
+
 /// SUF-002: on an architecture with an experiment, the search result (the marked places with their
 /// best values and the KPIs that moved) comes before the graph.
 #[test]
@@ -291,12 +354,14 @@ fn copy_inputs(name: &str) -> PathBuf {
         "profiles",
         "kpis",
         "crates/agenticspec-sim/src",
+        "packs",
+        "fields",
     ] {
         if root().join(dir).exists() {
             copy_dir(&root().join(dir), &tmp.join(dir));
         }
     }
-    for file in ["Cargo.lock", "rust-toolchain.toml"] {
+    for file in ["Cargo.lock", "rust-toolchain.toml", "ess-inputs.yaml"] {
         std::fs::copy(root().join(file), tmp.join(file)).unwrap();
     }
     for (_, name) in experiments() {

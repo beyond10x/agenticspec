@@ -7,6 +7,8 @@ interface Props {
   layer?: number;
   layerName?: string;
   planned?: boolean;
+  /** The pack a block of a pack belongs to; set instead of a layer. */
+  pack?: string;
   counts: Partial<Record<'entities' | 'commands' | 'events' | 'views' | 'refusals' | 'kpis', number>>;
 }
 
@@ -20,7 +22,7 @@ const LABELS: [keyof Props['counts'], string, string][] = [
 ];
 
 /** The block's place and size at a glance: family colour, layer, and how much its contract holds. */
-export default function BlockHeader({name, family, layer, layerName, planned, counts}: Props): ReactNode {
+export default function BlockHeader({name, family, layer, layerName, planned, pack, counts}: Props): ReactNode {
   return (
     <div className={`as-head as-fam-${family}`}>
       <div className="as-head__id">
@@ -32,6 +34,11 @@ export default function BlockHeader({name, family, layer, layerName, planned, co
             <>
               <b>planned</b>
               <span>not specified yet</span>
+            </>
+          ) : pack ? (
+            <>
+              <b>pack</b>
+              <span>{pack}</span>
             </>
           ) : (
             <>

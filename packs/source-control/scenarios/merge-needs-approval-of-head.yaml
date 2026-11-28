@@ -1,0 +1,182 @@
+# The merge rule of a change request, walked by hand: synthesis reaches no approved change request
+# (an approval reads a submitted Review of the same head), so it reaches neither a merge nor the
+# refusals that need an approval to exist. A change request is refused a merge without an approval,
+# with checks not passed, with an approval of an older head after a push, at a stale head, under a
+# grant that does not exist or no longer holds; it merges once its current head is approved, its
+# checks passed and the merger acts under an active grant, and a second merge is refused.
+type: ess-scenario/7
+domain: agentic.scm.change
+scenario: merge-needs-approval-of-head
+summary: A merge needs an approval of the current head, passed checks and an active grant; a push leaves the old approval behind.
+
+arrange:
+  - instance: grant
+    entity: agentic.authority.Grant
+  - instance: revoked
+    entity: agentic.authority.Grant
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000c01, kind: Human, name: owner, at: 2026-11-27T09:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000c02, kind: Agent, name: merger, at: 2026-11-27T09:00:01Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000c03, kind: Human, name: reviewer, at: 2026-11-27T09:00:02Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.scm.forge.RegisterForge
+    actor: agentic.scm.forge.ForgeAdministrator
+    input: {forge_id: 00000000-0000-4000-8000-000000000c10, name: forge, registered_by: 00000000-0000-4000-8000-000000000c01, at: 2026-11-27T09:00:03Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.scm.repository.CreateRepository
+    actor: agentic.scm.repository.RepositoryManager
+    input: {repository_id: 00000000-0000-4000-8000-000000000c20, forge_id: 00000000-0000-4000-8000-000000000c10, name: service, default_reference: main, created_by: 00000000-0000-4000-8000-000000000c01, at: 2026-11-27T09:00:04Z}
+    outcome: created
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.scm.change.OpenChangeRequest
+    actor: agentic.scm.change.Contributor
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, repository_id: 00000000-0000-4000-8000-000000000c20, source_reference: topic, target_reference: main, head: rev-1, title: {digest: sha256-title-1, length: 13, class: title}, opened_by: 00000000-0000-4000-8000-000000000c02, at: 2026-11-27T09:00:05Z}
+    outcome: opened
+
+  # no approval yet
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-1, merged_revision: rev-m1, merged_by: 00000000-0000-4000-8000-000000000c02, merged_under: 00000000-0000-4000-8000-000000000c99, at: 2026-11-27T09:00:06Z}
+    outcome: not-approved
+    error: {name: agentic.scm.change.NotApproved}
+    no_events: [agentic.scm.change.ChangeRequestMerged]
+
+  # the reviewer approves rev-1
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.scm.change.SubmitReview
+    actor: agentic.scm.change.Reviewer
+    input: {review_id: 00000000-0000-4000-8000-000000000c40, change_request_id: 00000000-0000-4000-8000-000000000c30, reviewer: 00000000-0000-4000-8000-000000000c03, head: rev-1, verdict: Approve, body: {digest: sha256-review-1, length: 11, class: review}, at: 2026-11-27T09:00:07Z}
+    outcome: reviewed
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.scm.change.ApproveHead
+    actor: agentic.scm.change.Reviewer
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, review_id: 00000000-0000-4000-8000-000000000c40, head: rev-1, at: 2026-11-27T09:00:08Z}
+    outcome: approved
+    events:
+      - event: agentic.scm.change.HeadApproved
+        payload: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-1, approved_by: 00000000-0000-4000-8000-000000000c03}
+
+  # approved, but the checks are still pending
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-1, merged_revision: rev-m1, merged_by: 00000000-0000-4000-8000-000000000c02, merged_under: 00000000-0000-4000-8000-000000000c99, at: 2026-11-27T09:00:09Z}
+    outcome: checks-not-passed
+    error: {name: agentic.scm.change.ChecksNotPassed}
+    no_events: [agentic.scm.change.ChangeRequestMerged]
+
+  # a push moves the head; the approval stays on rev-1
+  - at: 2026-11-27T09:00:10Z
+    command: agentic.scm.change.PushHead
+    actor: agentic.scm.change.Contributor
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-2, at: 2026-11-27T09:00:10Z}
+    outcome: pushed
+  - at: 2026-11-27T09:00:11Z
+    command: agentic.scm.change.RecordChecks
+    actor: agentic.scm.change.CheckReporter
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-2, verdict: Passed, at: 2026-11-27T09:00:11Z}
+    outcome: recorded
+  - at: 2026-11-27T09:00:12Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-2, merged_revision: rev-m2, merged_by: 00000000-0000-4000-8000-000000000c02, merged_under: 00000000-0000-4000-8000-000000000c99, at: 2026-11-27T09:00:12Z}
+    outcome: approval-for-other-head
+    error: {name: agentic.scm.change.ApprovalForOtherHead}
+    no_events: [agentic.scm.change.ChangeRequestMerged]
+  - at: 2026-11-27T09:00:13Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-1, merged_revision: rev-m1, merged_by: 00000000-0000-4000-8000-000000000c02, merged_under: 00000000-0000-4000-8000-000000000c99, at: 2026-11-27T09:00:13Z}
+    outcome: stale-head
+    error: {name: agentic.scm.change.StaleHead}
+    no_events: [agentic.scm.change.ChangeRequestMerged]
+
+  # the review of rev-1 cannot approve rev-2; a new review of rev-2 does
+  - at: 2026-11-27T09:00:14Z
+    command: agentic.scm.change.ApproveHead
+    actor: agentic.scm.change.Reviewer
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, review_id: 00000000-0000-4000-8000-000000000c40, head: rev-2, at: 2026-11-27T09:00:14Z}
+    outcome: review-of-other-head
+    error: {name: agentic.scm.change.ReviewNotApproving}
+    no_events: [agentic.scm.change.HeadApproved]
+  - at: 2026-11-27T09:00:15Z
+    command: agentic.scm.change.SubmitReview
+    actor: agentic.scm.change.Reviewer
+    input: {review_id: 00000000-0000-4000-8000-000000000c41, change_request_id: 00000000-0000-4000-8000-000000000c30, reviewer: 00000000-0000-4000-8000-000000000c03, head: rev-2, verdict: Approve, body: {digest: sha256-review-2, length: 11, class: review}, at: 2026-11-27T09:00:15Z}
+    outcome: reviewed
+  - at: 2026-11-27T09:00:16Z
+    command: agentic.scm.change.ApproveHead
+    actor: agentic.scm.change.Reviewer
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, review_id: 00000000-0000-4000-8000-000000000c41, head: rev-2, at: 2026-11-27T09:00:16Z}
+    outcome: approved
+
+  # the merger needs an active grant
+  - at: 2026-11-27T09:00:17Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-2, merged_revision: rev-m2, merged_by: 00000000-0000-4000-8000-000000000c02, merged_under: 00000000-0000-4000-8000-000000000c99, at: 2026-11-27T09:00:17Z}
+    outcome: unknown-grant
+    error: {name: agentic.scm.change.UnknownGrant}
+    no_events: [agentic.scm.change.ChangeRequestMerged]
+  - at: 2026-11-27T09:00:18Z
+    command: agentic.authority.GrantAuthority
+    actor: agentic.authority.Steward
+    input: {grantee_kind: Principal, grantee_id: 00000000-0000-4000-8000-000000000c02, action_class: Execute, scope: repository service, expires_at: 2026-11-28T09:00:00Z, granted_by: 00000000-0000-4000-8000-000000000c01, effect: Allow, excludes: [], at: 2026-11-27T09:00:18Z}
+    outcome: granted
+    capture: {instance: revoked, event: agentic.authority.GrantIssued, field: grant_id}
+  - at: 2026-11-27T09:00:19Z
+    command: agentic.authority.RevokeGrant
+    actor: agentic.authority.Steward
+    input: {grant_id: {$instance: revoked}, revoked_by: 00000000-0000-4000-8000-000000000c01, at: 2026-11-27T09:00:19Z}
+    outcome: revoked
+  - at: 2026-11-27T09:00:20Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-2, merged_revision: rev-m2, merged_by: 00000000-0000-4000-8000-000000000c02, merged_under: {$instance: revoked}, at: 2026-11-27T09:00:20Z}
+    outcome: grant-not-active
+    error: {name: agentic.scm.change.GrantNotActive}
+    no_events: [agentic.scm.change.ChangeRequestMerged]
+  - at: 2026-11-27T09:00:21Z
+    command: agentic.authority.GrantAuthority
+    actor: agentic.authority.Steward
+    input: {grantee_kind: Principal, grantee_id: 00000000-0000-4000-8000-000000000c02, action_class: Execute, scope: repository service, expires_at: 2026-11-28T09:00:00Z, granted_by: 00000000-0000-4000-8000-000000000c01, effect: Allow, excludes: [], at: 2026-11-27T09:00:21Z}
+    outcome: granted
+    capture: {instance: grant, event: agentic.authority.GrantIssued, field: grant_id}
+  - at: 2026-11-27T09:00:22Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-2, merged_revision: rev-m2, merged_by: 00000000-0000-4000-8000-000000000c02, merged_under: {$instance: grant}, at: 2026-11-27T09:00:22Z}
+    outcome: merged
+    events:
+      - event: agentic.scm.change.ChangeRequestMerged
+        payload: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-2, merged_revision: rev-m2, merged_under: {$instance: grant}}
+
+  # merged is final
+  - at: 2026-11-27T09:00:23Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c30, head: rev-2, merged_revision: rev-m3, merged_by: 00000000-0000-4000-8000-000000000c02, merged_under: {$instance: grant}, at: 2026-11-27T09:00:23Z}
+    outcome: not-open
+    error: {name: agentic.scm.change.ChangeRequestNotOpen}
+    no_events: [agentic.scm.change.ChangeRequestMerged]
+
+assert:
+  - view: agentic.scm.change.ChangeRequests
+    contains:
+      change_request_id: 00000000-0000-4000-8000-000000000c30
+      state: Merged
+      head: rev-2
+      approved_head: rev-2
+      merged_revision: rev-m2

@@ -91,6 +91,42 @@ change.
   components are in `website/src/components/catalog/`; a ladder stage on a card comes from
   `STAGES` in `catalog.rs`.
 
+## Packs (`packs/`) and fields (`fields/`)
+
+- Three tiers of the `agentic` system, each in its own directories, dependencies only downward:
+  - core: `blocks/`, what every agentic system has; it validates alone from
+    `blocks/ess-inputs.yaml`;
+  - packs: `packs/<pack>/` (`pack.yaml`, `blocks/`, `scenarios/`, `kpis.yaml`), concepts more
+    than one field reuses, in the namespace `agentic.<word>` (`source-control` is `agentic.scm`,
+    then `tracking`, `files`, `shell`); a pack depends on the core and on the packs its
+    `pack.yaml` lists under `uses:`;
+  - fields: `fields/<field>/` (`field.yaml`, `architectures/`, `README.md`), one kind of work; a
+    field lists the packs it uses and adds a block only for a concept no other field shares.
+- The root `ess-inputs.yaml` is the whole system: `packs/system.yaml` (the core domains and the
+  pack domains), every core file, every pack file and the packs' authored scenarios. It pins
+  `ess 0.99` (the minor line), so it does not take over every `ess` run at the root. A new block of
+  a pack goes into its `pack.yaml`, the root `ess-inputs.yaml` and `packs/system.yaml` in one
+  change; `scripts/check-packs.sh` holds the three together.
+- `scripts/check-layers.sh --path .` refuses a core block that depends on a pack or a field, a
+  pack that depends on a field or on a pack its `pack.yaml` does not list, and a field that
+  depends on another field. The fixtures under `scripts/fixtures/layers/` fail, those under
+  `scripts/fixtures/layers-pass/` pass.
+- No product names under `packs/` or `fields/`: a forge, an issue tracker or an agent product is a
+  binding, never a block. `scripts/check-packs.sh` greps for them.
+- `task check:fields` validates the whole system, checks the manifests, runs its conformance suite
+  (`scripts/check-blocks-conform.sh --path .`, cached in `target/system-conform/`; synthesis about
+  70-100 s on a change of its sources, a run on the cached suite seconds) and runs
+  `agenticspec sim check` on every architecture a field lists. `packs/known-synthesis-defects.txt`
+  lists the synthesized scenarios ESS 0.99.2's interpreter fails because synthesis arranged them
+  wrong; each names the authored scenario that walks its path. The run passes only when exactly
+  those fail. `task slow:fields` synthesizes afresh and compares bytes.
+- A refusal synthesis cannot reach gets an authored scenario in `packs/<pack>/scenarios/`.
+- KPIs of a pack are in `packs/<pack>/kpis.yaml` (same format as `kpis/catalogue.yaml`, `block`
+  is the domain without `agentic.`, at least 2 per block); `scripts/check-kpis.sh` checks every
+  catalogue.
+- The docs pages of the packs and fields are generated with the others: `docs/packs/`,
+  `docs/fields/`, `website/static/fields/`.
+
 ## agenticstudio nouns (`studio/`)
 
 - A noun that is a building block of agentic development goes into `blocks/` (the patch and its
@@ -122,7 +158,7 @@ change.
 | `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
 | `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
 | `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
-| `agenticspec-docs` | `lib.rs`, `main.rs` | the generated docs pages of the blocks, architectures and KPI catalogue (`task docs:generate`, `--check`) |
+| `agenticspec-docs` | `lib.rs`, `main.rs`, `packs.rs` | the generated docs pages of the blocks, architectures and KPI catalogue, and of the packs and fields (`packs.rs`, from the root `ess-inputs.yaml`) (`task docs:generate`, `--check`) |
 
 Beside the crates, `ui/` holds:
 

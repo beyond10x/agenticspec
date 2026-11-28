@@ -120,5 +120,58 @@
     "docs/catalog/scope-partition",
     "docs/catalog/shared-board",
     "docs/catalog/workstation"
+  ],
+  "fields": [
+    {
+      "collapsed": true,
+      "items": [
+        "docs/fields/coding/auto-merger"
+      ],
+      "label": "coding",
+      "link": {
+        "id": "docs/fields/coding/index",
+        "type": "doc"
+      },
+      "type": "category"
+    }
+  ],
+  "packs": [
+    {
+      "collapsed": true,
+      "items": [
+        "docs/packs/files/toolset"
+      ],
+      "label": "files",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/packs/shell/toolset"
+      ],
+      "label": "shell",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/packs/source-control/change",
+        "docs/packs/source-control/check",
+        "docs/packs/source-control/forge",
+        "docs/packs/source-control/repository"
+      ],
+      "label": "source-control",
+      "type": "category"
+    },
+    {
+      "collapsed": true,
+      "items": [
+        "docs/packs/tracking/board",
+        "docs/packs/tracking/issue",
+        "docs/packs/tracking/queue"
+      ],
+      "label": "tracking",
+      "type": "category"
+    }
   ]
 }

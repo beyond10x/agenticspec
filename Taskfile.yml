@@ -6,6 +6,7 @@ tasks:
     cmds:
       - task: check:spec
       - task: check:blocks
+      - task: check:fields
       - task: check:ui
       - task: check:app
       - task: check:generated
@@ -30,16 +31,40 @@ tasks:
     cmds:
       - scripts/check-blocks-conform.sh --slow
 
+  check:fields:
+    desc: Validate the whole system (the core and the packs, from the root ess-inputs.yaml), hold the pack and field manifests against it and keep product names out of packs/ and fields/ (scripts/check-packs.sh), run its conformance suite with the packs' authored scenarios on the interpreter (synthesized once per digest into target/system-conform/, scripts/check-blocks-conform.sh --path .), and check every architecture a field lists with agenticspec sim check.
+    cmds:
+      - ess specify validate --path . --strict-requires
+      - scripts/check-packs.sh
+      - scripts/check-blocks-conform.sh --path .
+      - cargo build --quiet --locked -p agenticspec
+      - |
+        set -eu
+        for manifest in fields/*/field.yaml; do
+          dir=${manifest%/field.yaml}
+          for a in $(yq '.architectures // [] | .[]' "$manifest"); do
+            printf 'check:fields: %s/%s ' "$dir" "$a"
+            target/debug/agenticspec sim check "$dir/$a"
+          done
+        done
+
+  slow:fields:
+    desc: Slow lane. Synthesize the conformance suite of the whole system afresh, compare it byte for byte with the cached suite of the same digest, and run it.
+    cmds:
+      - scripts/check-blocks-conform.sh --path . --slow
+
   check:kpis:
-    desc: Check kpis/catalogue.yaml against its format, the blocks and the events they declare.
+    desc: Check kpis/catalogue.yaml and every packs/<pack>/kpis.yaml against their format, their blocks and the events they may read.
     cmds:
       - scripts/check-kpis.sh
 
   check:layers:
-    desc: Fail when a block depends on a block of a higher layer or two blocks of one layer depend on each other; then each fixture under scripts/fixtures/layers must fail.
+    desc: Fail when a block depends on a block of a higher layer, two blocks of one layer depend on each other, a core block depends on a pack or field, a pack on a field or an undeclared pack, or a field on another field; for blocks/ and for the whole system. Then each fixture under scripts/fixtures/layers must fail and each under scripts/fixtures/layers-pass must pass.
     cmds:
       - scripts/check-layers.sh
+      - scripts/check-layers.sh --path .
       - scripts/check-layers.sh --negative
+      - scripts/check-layers.sh --positive
 
   layers:graph:
     desc: Print the dependency graph between blocks with counts, then the layer check.

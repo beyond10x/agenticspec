@@ -1,0 +1,227 @@
+# The refusals of the file tools that change a file, walked by hand: each needs a file and a lease
+# to exist, and synthesis reaches neither (ESS-SYNTH-004). With one file in each of two workspaces,
+# every changing tool is refused a file that does not exist, a file of another workspace, a lease
+# that does not exist, a lease not yet granted and a lease of another workspace; a copy is also
+# refused onto an existing file and from a source of another workspace.
+type: ess-scenario/7
+domain: agentic.files.toolset
+scenario: file-tools-refuse-without-a-live-lease
+summary: write, edit, copy, move and delete refuse an unknown file, a foreign file, and a lease that is unknown, not granted or of another workspace.
+
+arrange:
+  - instance: ws
+    entity: agentic.workspace.Workspace
+  - instance: other
+    entity: agentic.workspace.Workspace
+  - instance: lease
+    entity: agentic.workspace.Lease
+  - instance: foreign
+    entity: agentic.workspace.Lease
+  - instance: pending
+    entity: agentic.workspace.Lease
+
+timeline:
+  - at: 2026-11-27T12:00:00Z
+    command: agentic.workspace.CreateWorkspace
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000f21}
+    input: {kind: Worktree, sharing: Exclusive, base_revision: rev-1}
+    outcome: created
+    capture: {instance: ws, event: agentic.workspace.WorkspaceCreated, field: workspace_id}
+  - at: 2026-11-27T12:00:01Z
+    command: agentic.workspace.CreateWorkspace
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000f21}
+    input: {kind: Worktree, sharing: Exclusive, base_revision: rev-1}
+    outcome: created
+    capture: {instance: other, event: agentic.workspace.WorkspaceCreated, field: workspace_id}
+  - at: 2026-11-27T12:00:02Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000f21}
+    input: {workspace_id: {$instance: ws}, expires_at: 2026-11-27T13:00:00Z}
+    outcome: requested
+    capture: {instance: lease, event: agentic.workspace.LeaseRequested, field: lease_id}
+  - at: 2026-11-27T12:00:03Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: lease}}
+    outcome: granted-exclusive
+  - at: 2026-11-27T12:00:04Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000f21}
+    input: {workspace_id: {$instance: other}, expires_at: 2026-11-27T13:00:00Z}
+    outcome: requested
+    capture: {instance: foreign, event: agentic.workspace.LeaseRequested, field: lease_id}
+  - at: 2026-11-27T12:00:05Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: foreign}}
+    outcome: granted-exclusive
+  - at: 2026-11-27T12:00:06Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000f22}
+    input: {workspace_id: {$instance: ws}, expires_at: 2026-11-27T13:00:00Z}
+    outcome: requested
+    capture: {instance: pending, event: agentic.workspace.LeaseRequested, field: lease_id}
+  - at: 2026-11-27T12:00:07Z
+    command: agentic.files.toolset.WriteFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, path: a.txt, content: {digest: sha256-a, length: 3, class: text}, executable: false, at: 2026-11-27T12:00:07Z}
+    outcome: written
+  - at: 2026-11-27T12:00:08Z
+    command: agentic.files.toolset.WriteFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f32, workspace_id: {$instance: other}, lease_id: {$instance: foreign}, path: b.txt, content: {digest: sha256-b, length: 3, class: text}, executable: false, at: 2026-11-27T12:00:08Z}
+    outcome: written
+
+  # write_file
+  - at: 2026-11-27T12:00:09Z
+    command: agentic.files.toolset.WriteFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f33, workspace_id: {$instance: ws}, lease_id: 00000000-0000-4000-8000-000000000f99, path: c.txt, content: {digest: sha256-c, length: 3, class: text}, executable: false, at: 2026-11-27T12:00:09Z}
+    outcome: unknown-lease
+    error: {name: agentic.files.toolset.UnknownLease}
+  - at: 2026-11-27T12:00:10Z
+    command: agentic.files.toolset.WriteFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f33, workspace_id: {$instance: ws}, lease_id: {$instance: pending}, path: c.txt, content: {digest: sha256-c, length: 3, class: text}, executable: false, at: 2026-11-27T12:00:10Z}
+    outcome: lease-not-live
+    error: {name: agentic.files.toolset.LeaseNotLive}
+
+  # read_file and edit_file
+  - at: 2026-11-27T12:00:11Z
+    command: agentic.files.toolset.ReadFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f98}
+    outcome: no-such-file
+    error: {name: agentic.files.toolset.FileNotFound}
+  - at: 2026-11-27T12:00:12Z
+    command: agentic.files.toolset.EditFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f98, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, expected: sha256-a, edit: {by: Whole, value: {digest: sha256-a2, length: 4, class: text}}, at: 2026-11-27T12:00:12Z}
+    outcome: no-such-file
+    error: {name: agentic.files.toolset.FileNotFound}
+  - at: 2026-11-27T12:00:13Z
+    command: agentic.files.toolset.EditFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: 00000000-0000-4000-8000-000000000f99, expected: sha256-a, edit: {by: Whole, value: {digest: sha256-a2, length: 4, class: text}}, at: 2026-11-27T12:00:13Z}
+    outcome: unknown-lease
+    error: {name: agentic.files.toolset.UnknownLease}
+  - at: 2026-11-27T12:00:14Z
+    command: agentic.files.toolset.EditFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: pending}, expected: sha256-a, edit: {by: Whole, value: {digest: sha256-a2, length: 4, class: text}}, at: 2026-11-27T12:00:14Z}
+    outcome: lease-not-live
+    error: {name: agentic.files.toolset.LeaseNotLive}
+  - at: 2026-11-27T12:00:15Z
+    command: agentic.files.toolset.EditFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: foreign}, expected: sha256-a, edit: {by: Anchor, value: {anchor: {digest: sha256-old, length: 3, class: text}, replacement: {digest: sha256-new, length: 3, class: text}}}, at: 2026-11-27T12:00:15Z}
+    outcome: lease-of-other-workspace
+    error: {name: agentic.files.toolset.LeaseOfOtherWorkspace}
+
+  # copy
+  - at: 2026-11-27T12:00:16Z
+    command: agentic.files.toolset.CopyFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, source_file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, to: d.txt, at: 2026-11-27T12:00:16Z}
+    outcome: exists
+    error: {name: agentic.files.toolset.FileExists}
+  - at: 2026-11-27T12:00:17Z
+    command: agentic.files.toolset.CopyFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f34, source_file_id: 00000000-0000-4000-8000-000000000f98, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, to: d.txt, at: 2026-11-27T12:00:17Z}
+    outcome: no-such-source
+    error: {name: agentic.files.toolset.FileNotFound}
+  - at: 2026-11-27T12:00:18Z
+    command: agentic.files.toolset.CopyFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f34, source_file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: 00000000-0000-4000-8000-000000000f99, to: d.txt, at: 2026-11-27T12:00:18Z}
+    outcome: unknown-lease
+    error: {name: agentic.files.toolset.UnknownLease}
+  - at: 2026-11-27T12:00:19Z
+    command: agentic.files.toolset.CopyFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f34, source_file_id: 00000000-0000-4000-8000-000000000f32, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, to: d.txt, at: 2026-11-27T12:00:19Z}
+    outcome: source-in-other-workspace
+    error: {name: agentic.files.toolset.OtherWorkspace}
+  - at: 2026-11-27T12:00:20Z
+    command: agentic.files.toolset.CopyFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f34, source_file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: pending}, to: d.txt, at: 2026-11-27T12:00:20Z}
+    outcome: lease-not-live
+    error: {name: agentic.files.toolset.LeaseNotLive}
+  - at: 2026-11-27T12:00:21Z
+    command: agentic.files.toolset.CopyFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f34, source_file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: foreign}, to: d.txt, at: 2026-11-27T12:00:21Z}
+    outcome: lease-of-other-workspace
+    error: {name: agentic.files.toolset.LeaseOfOtherWorkspace}
+
+  # move
+  - at: 2026-11-27T12:00:22Z
+    command: agentic.files.toolset.MoveFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f98, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, to: e.txt, at: 2026-11-27T12:00:22Z}
+    outcome: no-such-file
+    error: {name: agentic.files.toolset.FileNotFound}
+  - at: 2026-11-27T12:00:23Z
+    command: agentic.files.toolset.MoveFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f32, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, to: e.txt, at: 2026-11-27T12:00:23Z}
+    outcome: other-workspace
+    error: {name: agentic.files.toolset.OtherWorkspace}
+  - at: 2026-11-27T12:00:24Z
+    command: agentic.files.toolset.MoveFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: 00000000-0000-4000-8000-000000000f99, to: e.txt, at: 2026-11-27T12:00:24Z}
+    outcome: unknown-lease
+    error: {name: agentic.files.toolset.UnknownLease}
+  - at: 2026-11-27T12:00:25Z
+    command: agentic.files.toolset.MoveFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: pending}, to: e.txt, at: 2026-11-27T12:00:25Z}
+    outcome: lease-not-live
+    error: {name: agentic.files.toolset.LeaseNotLive}
+  - at: 2026-11-27T12:00:26Z
+    command: agentic.files.toolset.MoveFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: foreign}, to: e.txt, at: 2026-11-27T12:00:26Z}
+    outcome: lease-of-other-workspace
+    error: {name: agentic.files.toolset.LeaseOfOtherWorkspace}
+
+  # delete
+  - at: 2026-11-27T12:00:27Z
+    command: agentic.files.toolset.DeleteFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f98, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, at: 2026-11-27T12:00:27Z}
+    outcome: no-such-file
+    error: {name: agentic.files.toolset.FileNotFound}
+  - at: 2026-11-27T12:00:28Z
+    command: agentic.files.toolset.DeleteFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f32, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, at: 2026-11-27T12:00:28Z}
+    outcome: other-workspace
+    error: {name: agentic.files.toolset.OtherWorkspace}
+  - at: 2026-11-27T12:00:29Z
+    command: agentic.files.toolset.DeleteFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: 00000000-0000-4000-8000-000000000f99, at: 2026-11-27T12:00:29Z}
+    outcome: unknown-lease
+    error: {name: agentic.files.toolset.UnknownLease}
+  - at: 2026-11-27T12:00:30Z
+    command: agentic.files.toolset.DeleteFile
+    actor: agentic.files.toolset.FileTool
+    input: {file_id: 00000000-0000-4000-8000-000000000f31, workspace_id: {$instance: ws}, lease_id: {$instance: foreign}, at: 2026-11-27T12:00:30Z}
+    outcome: lease-of-other-workspace
+    error: {name: agentic.files.toolset.LeaseOfOtherWorkspace}
+
+assert:
+  - view: agentic.files.toolset.Files
+    contains:
+      file_id: 00000000-0000-4000-8000-000000000f31
+      path: a.txt
+      state: Present

@@ -1,0 +1,37 @@
+format: agenticspec-kpis/1
+kpis:
+  - id: command_timeout_share
+    block: shell.toolset
+    kind: quality
+    unit: share
+    summary: Share of started commands that ran into their time limit.
+    how: CommandEnded events with end TimedOut divided by CommandStarted events.
+    direction: lower
+    gate: false
+    reads: [agentic.shell.toolset.CommandStarted, agentic.shell.toolset.CommandEnded]
+    status: planned
+    source: design
+
+  - id: command_failure_share
+    block: shell.toolset
+    kind: quality
+    unit: share
+    summary: Share of commands that exited with a code other than 0.
+    how: CommandEnded events with end Exited and an exit code other than 0, divided by CommandEnded events with end Exited.
+    direction: lower
+    gate: false
+    reads: [agentic.shell.toolset.CommandEnded]
+    status: planned
+    source: design
+
+  - id: command_attributed_share
+    block: shell.toolset
+    kind: completeness
+    unit: share
+    summary: Share of started commands tied to the tool call and run that asked for them.
+    how: CommandStarted events with both tool_call_id and run_id set, divided by all CommandStarted events. A command without them cannot be traced to the agent decision that ran it.
+    direction: higher
+    gate: false
+    reads: [agentic.shell.toolset.CommandStarted]
+    status: planned
+    source: design

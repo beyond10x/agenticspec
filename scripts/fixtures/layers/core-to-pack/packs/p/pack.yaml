@@ -1,0 +1,6 @@
+format: agenticspec-pack/1
+pack: p
+namespace: fixture.p
+summary: Fixture.
+uses: []
+blocks: [blocks/thing.yaml]

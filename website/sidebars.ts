@@ -4,9 +4,9 @@ import generated from './src/generated/sidebar.json';
 type Items = Extract<SidebarsConfig[string], unknown[]>;
 
 /**
- * Document ids are the repository paths of the Markdown files, without `.md`. The building blocks
- * and architectures are listed from src/generated/sidebar.json, which agenticspec-docs writes with
- * their pages.
+ * Document ids are the repository paths of the Markdown files, without `.md`. The building blocks,
+ * packs, fields and architectures are listed from src/generated/sidebar.json, which
+ * agenticspec-docs writes with their pages.
  */
 const sidebars: SidebarsConfig = {
   docsSidebar: [
@@ -27,6 +27,20 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       link: {type: 'doc', id: 'docs/blocks/index'},
       items: generated.blocks as Items,
+    },
+    {
+      type: 'category',
+      label: 'Packs',
+      collapsed: true,
+      link: {type: 'doc', id: 'docs/packs/index'},
+      items: generated.packs as Items,
+    },
+    {
+      type: 'category',
+      label: 'Fields',
+      collapsed: true,
+      link: {type: 'doc', id: 'docs/fields/index'},
+      items: generated.fields as Items,
     },
     {
       type: 'category',

@@ -1,0 +1,152 @@
+# What an approval reads, and what a closed or merged change request refuses, walked by hand:
+# synthesis arranges no change request it can name again in the act (ESS-SYNTH-003, declared
+# overlap), so it reaches neither the approval's refusals nor the closed state's. An approval is
+# refused for a review that does not exist, a review that comments, and a review of another
+# change request; a closed change request takes no approval, check result or merge; a reopened one
+# takes them again; a merged one cannot be closed or reopened.
+type: ess-scenario/7
+domain: agentic.scm.change
+scenario: approval-needs-an-approving-review-of-the-head
+summary: Only an approving review of the same change request and head approves it; closed and merged change requests refuse what an open one takes.
+
+arrange:
+  - instance: grant
+    entity: agentic.authority.Grant
+
+timeline:
+  - at: 2026-11-27T10:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000c51, kind: Human, name: owner, at: 2026-11-27T10:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T10:00:01Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000c52, kind: Human, name: reviewer, at: 2026-11-27T10:00:01Z}
+    outcome: registered
+  - at: 2026-11-27T10:00:02Z
+    command: agentic.scm.forge.RegisterForge
+    actor: agentic.scm.forge.ForgeAdministrator
+    input: {forge_id: 00000000-0000-4000-8000-000000000c60, name: forge, registered_by: 00000000-0000-4000-8000-000000000c51, at: 2026-11-27T10:00:02Z}
+    outcome: registered
+  - at: 2026-11-27T10:00:03Z
+    command: agentic.scm.repository.CreateRepository
+    actor: agentic.scm.repository.RepositoryManager
+    input: {repository_id: 00000000-0000-4000-8000-000000000c61, forge_id: 00000000-0000-4000-8000-000000000c60, name: service, default_reference: main, created_by: 00000000-0000-4000-8000-000000000c51, at: 2026-11-27T10:00:03Z}
+    outcome: created
+  - at: 2026-11-27T10:00:04Z
+    command: agentic.scm.change.OpenChangeRequest
+    actor: agentic.scm.change.Contributor
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c70, repository_id: 00000000-0000-4000-8000-000000000c61, source_reference: topic-a, target_reference: main, head: rev-a1, title: {digest: sha256-title-a, length: 7, class: title}, opened_by: 00000000-0000-4000-8000-000000000c51, at: 2026-11-27T10:00:04Z}
+    outcome: opened
+  - at: 2026-11-27T10:00:05Z
+    command: agentic.scm.change.OpenChangeRequest
+    actor: agentic.scm.change.Contributor
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, repository_id: 00000000-0000-4000-8000-000000000c61, source_reference: topic-b, target_reference: main, head: rev-b1, title: {digest: sha256-title-b, length: 7, class: title}, opened_by: 00000000-0000-4000-8000-000000000c51, at: 2026-11-27T10:00:05Z}
+    outcome: opened
+
+  # what an approval reads
+  - at: 2026-11-27T10:00:06Z
+    command: agentic.scm.change.ApproveHead
+    actor: agentic.scm.change.Reviewer
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c70, review_id: 00000000-0000-4000-8000-000000000c89, head: rev-a1, at: 2026-11-27T10:00:06Z}
+    outcome: no-such-review
+    error: {name: agentic.scm.change.ReviewNotFound}
+  - at: 2026-11-27T10:00:07Z
+    command: agentic.scm.change.SubmitReview
+    actor: agentic.scm.change.Reviewer
+    input: {review_id: 00000000-0000-4000-8000-000000000c80, change_request_id: 00000000-0000-4000-8000-000000000c70, reviewer: 00000000-0000-4000-8000-000000000c52, head: rev-a1, verdict: Comment, body: {digest: sha256-note, length: 9, class: review}, at: 2026-11-27T10:00:07Z}
+    outcome: reviewed
+  - at: 2026-11-27T10:00:08Z
+    command: agentic.scm.change.ApproveHead
+    actor: agentic.scm.change.Reviewer
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c70, review_id: 00000000-0000-4000-8000-000000000c80, head: rev-a1, at: 2026-11-27T10:00:08Z}
+    outcome: review-not-approving
+    error: {name: agentic.scm.change.ReviewNotApproving}
+    no_events: [agentic.scm.change.HeadApproved]
+  - at: 2026-11-27T10:00:09Z
+    command: agentic.scm.change.SubmitReview
+    actor: agentic.scm.change.Reviewer
+    input: {review_id: 00000000-0000-4000-8000-000000000c81, change_request_id: 00000000-0000-4000-8000-000000000c71, reviewer: 00000000-0000-4000-8000-000000000c52, head: rev-b1, verdict: Approve, body: {digest: sha256-ok, length: 2, class: review}, at: 2026-11-27T10:00:09Z}
+    outcome: reviewed
+  - at: 2026-11-27T10:00:10Z
+    command: agentic.scm.change.ApproveHead
+    actor: agentic.scm.change.Reviewer
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c70, review_id: 00000000-0000-4000-8000-000000000c81, head: rev-a1, at: 2026-11-27T10:00:10Z}
+    outcome: review-of-other-change-request
+    error: {name: agentic.scm.change.ReviewNotApproving}
+    no_events: [agentic.scm.change.HeadApproved]
+
+  # a closed change request takes nothing until it is reopened
+  - at: 2026-11-27T10:00:11Z
+    command: agentic.scm.change.CloseChangeRequest
+    actor: agentic.scm.change.Contributor
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, at: 2026-11-27T10:00:11Z}
+    outcome: closed
+  - at: 2026-11-27T10:00:12Z
+    command: agentic.scm.change.ApproveHead
+    actor: agentic.scm.change.Reviewer
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, review_id: 00000000-0000-4000-8000-000000000c81, head: rev-b1, at: 2026-11-27T10:00:12Z}
+    outcome: not-open
+    error: {name: agentic.scm.change.ChangeRequestNotOpen}
+  - at: 2026-11-27T10:00:13Z
+    command: agentic.scm.change.RecordChecks
+    actor: agentic.scm.change.CheckReporter
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, head: rev-b1, verdict: Passed, at: 2026-11-27T10:00:13Z}
+    outcome: not-open
+    error: {name: agentic.scm.change.ChangeRequestNotOpen}
+  - at: 2026-11-27T10:00:14Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, head: rev-b1, merged_revision: rev-bm, merged_by: 00000000-0000-4000-8000-000000000c51, merged_under: 00000000-0000-4000-8000-000000000c99, at: 2026-11-27T10:00:14Z}
+    outcome: not-open
+    error: {name: agentic.scm.change.ChangeRequestNotOpen}
+  - at: 2026-11-27T10:00:15Z
+    command: agentic.scm.change.ReopenChangeRequest
+    actor: agentic.scm.change.Contributor
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, at: 2026-11-27T10:00:15Z}
+    outcome: reopened
+  - at: 2026-11-27T10:00:16Z
+    command: agentic.scm.change.ApproveHead
+    actor: agentic.scm.change.Reviewer
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, review_id: 00000000-0000-4000-8000-000000000c81, head: rev-b1, at: 2026-11-27T10:00:16Z}
+    outcome: approved
+  - at: 2026-11-27T10:00:17Z
+    command: agentic.scm.change.RecordChecks
+    actor: agentic.scm.change.CheckReporter
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, head: rev-b1, verdict: Passed, at: 2026-11-27T10:00:17Z}
+    outcome: recorded
+
+  # merged is final
+  - at: 2026-11-27T10:00:18Z
+    command: agentic.authority.GrantAuthority
+    actor: agentic.authority.Steward
+    input: {grantee_kind: Principal, grantee_id: 00000000-0000-4000-8000-000000000c51, action_class: Execute, scope: repository service, expires_at: 2026-11-28T10:00:00Z, granted_by: 00000000-0000-4000-8000-000000000c51, effect: Allow, excludes: [], at: 2026-11-27T10:00:18Z}
+    outcome: granted
+    capture: {instance: grant, event: agentic.authority.GrantIssued, field: grant_id}
+  - at: 2026-11-27T10:00:19Z
+    command: agentic.scm.change.MergeChangeRequest
+    actor: agentic.scm.change.Merger
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, head: rev-b1, merged_revision: rev-bm, merged_by: 00000000-0000-4000-8000-000000000c51, merged_under: {$instance: grant}, at: 2026-11-27T10:00:19Z}
+    outcome: merged
+  - at: 2026-11-27T10:00:20Z
+    command: agentic.scm.change.CloseChangeRequest
+    actor: agentic.scm.change.Contributor
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, at: 2026-11-27T10:00:20Z}
+    outcome: wrong-state
+    error: {name: agentic.scm.change.ChangeRequestStateConflict}
+  - at: 2026-11-27T10:00:21Z
+    command: agentic.scm.change.ReopenChangeRequest
+    actor: agentic.scm.change.Contributor
+    input: {change_request_id: 00000000-0000-4000-8000-000000000c71, at: 2026-11-27T10:00:21Z}
+    outcome: wrong-state
+    error: {name: agentic.scm.change.ChangeRequestStateConflict}
+
+assert:
+  - view: agentic.scm.change.ChangeRequests
+    contains:
+      change_request_id: 00000000-0000-4000-8000-000000000c70
+      state: Open
+      checks: Pending
+  - view: agentic.scm.change.ChangeRequests
+    contains:
+      change_request_id: 00000000-0000-4000-8000-000000000c71
+      state: Merged

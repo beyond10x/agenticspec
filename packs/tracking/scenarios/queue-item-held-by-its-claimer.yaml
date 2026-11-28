@@ -1,0 +1,146 @@
+# A work queue's claim, walked by hand: synthesis reaches a claimed item but no second principal to
+# release or finish it, so the claimer guard (not-the-claimer) is unreached. One principal claims an
+# item; a second may neither claim, release nor finish it; the claimer releases it, the second
+# principal claims it and finishes it; the finished item takes no claim, release or withdrawal.
+# Synthesis also reaches none of the refusals of Enqueue (ESS-SYNTH-001, -003): an item naming no
+# item or two, a queue, issue or task that does not exist, and a closed queue are refused.
+type: ess-scenario/7
+domain: agentic.tracking.queue
+scenario: queue-item-held-by-its-claimer
+summary: A claimed item is released or finished only by its claimer; a released item can be claimed by another.
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000d01, kind: Human, name: dispatcher, at: 2026-11-27T09:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000d02, kind: Agent, name: first-taker, at: 2026-11-27T09:00:01Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000d03, kind: Agent, name: second-taker, at: 2026-11-27T09:00:02Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.tracking.issue.OpenIssue
+    actor: agentic.tracking.issue.Reporter
+    input: {issue_id: 00000000-0000-4000-8000-000000000d10, title: {digest: sha256-issue-1, length: 12, class: title}, body: {digest: sha256-body-1, length: 80, class: body}, opened_by: 00000000-0000-4000-8000-000000000d01, labels: [], at: 2026-11-27T09:00:03Z}
+    outcome: opened
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.tracking.queue.CreateQueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {queue_id: 00000000-0000-4000-8000-000000000d20, name: inbox, owner: 00000000-0000-4000-8000-000000000d01, at: 2026-11-27T09:00:04Z}
+    outcome: created
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.tracking.queue.Enqueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, queue_id: 00000000-0000-4000-8000-000000000d20, issue_id: 00000000-0000-4000-8000-000000000d10, at: 2026-11-27T09:00:05Z}
+    outcome: enqueued
+
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.tracking.queue.Claim
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d02, at: 2026-11-27T09:00:06Z}
+    outcome: claimed
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.tracking.queue.Claim
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d03, at: 2026-11-27T09:00:07Z}
+    outcome: not-waiting
+    error: {name: agentic.tracking.queue.ItemStateConflict}
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.tracking.queue.Release
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d03, at: 2026-11-27T09:00:08Z}
+    outcome: not-the-claimer
+    error: {name: agentic.tracking.queue.NotTheClaimer}
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.tracking.queue.Finish
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d03, at: 2026-11-27T09:00:09Z}
+    outcome: not-the-claimer
+    error: {name: agentic.tracking.queue.NotTheClaimer}
+  - at: 2026-11-27T09:00:10Z
+    command: agentic.tracking.queue.Release
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d02, at: 2026-11-27T09:00:10Z}
+    outcome: released
+  - at: 2026-11-27T09:00:11Z
+    command: agentic.tracking.queue.Claim
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d03, at: 2026-11-27T09:00:11Z}
+    outcome: claimed
+  - at: 2026-11-27T09:00:12Z
+    command: agentic.tracking.queue.Finish
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d03, at: 2026-11-27T09:00:12Z}
+    outcome: finished
+  - at: 2026-11-27T09:00:13Z
+    command: agentic.tracking.queue.Withdraw
+    actor: agentic.tracking.queue.Dispatcher
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, at: 2026-11-27T09:00:13Z}
+    outcome: wrong-state
+    error: {name: agentic.tracking.queue.ItemStateConflict}
+  - at: 2026-11-27T09:00:14Z
+    command: agentic.tracking.queue.Claim
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d02, at: 2026-11-27T09:00:14Z}
+    outcome: not-waiting
+    error: {name: agentic.tracking.queue.ItemStateConflict}
+  - at: 2026-11-27T09:00:15Z
+    command: agentic.tracking.queue.Release
+    actor: agentic.tracking.queue.Taker
+    input: {item_id: 00000000-0000-4000-8000-000000000d30, by: 00000000-0000-4000-8000-000000000d03, at: 2026-11-27T09:00:15Z}
+    outcome: not-claimed
+    error: {name: agentic.tracking.queue.ItemStateConflict}
+
+  # an item names one issue or one task, both existing, in an open queue
+  - at: 2026-11-27T09:00:16Z
+    command: agentic.tracking.queue.Enqueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {item_id: 00000000-0000-4000-8000-000000000d31, queue_id: 00000000-0000-4000-8000-000000000d20, at: 2026-11-27T09:00:16Z}
+    outcome: no-item
+    error: {name: agentic.tracking.queue.ItemMissing}
+  - at: 2026-11-27T09:00:17Z
+    command: agentic.tracking.queue.Enqueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {item_id: 00000000-0000-4000-8000-000000000d31, queue_id: 00000000-0000-4000-8000-000000000d20, issue_id: 00000000-0000-4000-8000-000000000d10, task_id: 00000000-0000-4000-8000-000000000d98, at: 2026-11-27T09:00:17Z}
+    outcome: two-items
+    error: {name: agentic.tracking.queue.ItemMissing}
+  - at: 2026-11-27T09:00:18Z
+    command: agentic.tracking.queue.Enqueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {item_id: 00000000-0000-4000-8000-000000000d31, queue_id: 00000000-0000-4000-8000-000000000d97, issue_id: 00000000-0000-4000-8000-000000000d10, at: 2026-11-27T09:00:18Z}
+    outcome: no-such-queue
+    error: {name: agentic.tracking.queue.QueueNotFound}
+  - at: 2026-11-27T09:00:19Z
+    command: agentic.tracking.queue.Enqueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {item_id: 00000000-0000-4000-8000-000000000d31, queue_id: 00000000-0000-4000-8000-000000000d20, issue_id: 00000000-0000-4000-8000-000000000d96, at: 2026-11-27T09:00:19Z}
+    outcome: unknown-issue
+    error: {name: agentic.tracking.queue.UnknownIssue}
+  - at: 2026-11-27T09:00:20Z
+    command: agentic.tracking.queue.Enqueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {item_id: 00000000-0000-4000-8000-000000000d31, queue_id: 00000000-0000-4000-8000-000000000d20, task_id: 00000000-0000-4000-8000-000000000d98, at: 2026-11-27T09:00:20Z}
+    outcome: unknown-task
+    error: {name: agentic.tracking.queue.UnknownTask}
+  - at: 2026-11-27T09:00:21Z
+    command: agentic.tracking.queue.CloseQueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {queue_id: 00000000-0000-4000-8000-000000000d20, at: 2026-11-27T09:00:21Z}
+    outcome: closed
+  - at: 2026-11-27T09:00:22Z
+    command: agentic.tracking.queue.Enqueue
+    actor: agentic.tracking.queue.Dispatcher
+    input: {item_id: 00000000-0000-4000-8000-000000000d31, queue_id: 00000000-0000-4000-8000-000000000d20, issue_id: 00000000-0000-4000-8000-000000000d10, at: 2026-11-27T09:00:22Z}
+    outcome: queue-closed
+    error: {name: agentic.tracking.queue.QueueClosed}
+
+assert:
+  - view: agentic.tracking.queue.QueueItems
+    contains:
+      item_id: 00000000-0000-4000-8000-000000000d30
+      state: Done
+      claimed_by: 00000000-0000-4000-8000-000000000d03

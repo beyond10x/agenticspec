@@ -1,0 +1,42 @@
+format: ess/37
+system: agentic
+version: v1
+
+summary: >-
+  The building blocks of agentic development with their packs. The core blocks of blocks/ are
+  read unchanged; each pack under packs/ adds the domains of one group of concepts that more than
+  one field of work reuses (source control, tracking, files, a shell), named without any product.
+  A pack depends on the core and on the packs it declares; the core depends on no pack.
+
+domains:
+  - agentic.shared
+  - agentic.principal
+  - agentic.delegation
+  - agentic.model
+  - agentic.gateway
+  - agentic.tool
+  - agentic.knowledge
+  - agentic.agent
+  - agentic.harness
+  - agentic.work
+  - agentic.process
+  - agentic.authority
+  - agentic.channel
+  - agentic.question
+  - agentic.trigger
+  - agentic.workspace
+  - agentic.sandbox
+  - agentic.runtime
+  - agentic.resource
+  - agentic.architecture
+  - agentic.kpi
+  - agentic.experiment
+  - agentic.scm.forge
+  - agentic.scm.repository
+  - agentic.scm.check
+  - agentic.scm.change
+  - agentic.tracking.issue
+  - agentic.tracking.board
+  - agentic.tracking.queue
+  - agentic.files.toolset
+  - agentic.shell.toolset

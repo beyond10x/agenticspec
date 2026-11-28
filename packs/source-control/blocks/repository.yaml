@@ -1,0 +1,833 @@
+domain: agentic.scm.repository
+
+summary: >-
+  A history of files kept by a forge. A repository holds revisions, each a snapshot of files named
+  by the version control system (`agentic.workspace.Revision`) with the digest of its tree and its
+  parent revisions; and references, the names that point at a revision. A movable reference (what a
+  version control system calls a branch) is moved only from the revision its mover last saw, so two
+  writers never overwrite each other; a fixed reference (a tag) never moves. A checkout binds a
+  workspace (`agentic.workspace`) to a repository and a reference, which is how an agent's files
+  come from and go back to a repository. An archived repository takes no new revision, reference or
+  checkout.
+
+naming:
+  wire: repository
+  display: Repository
+
+types:
+  - {name: agentic.scm.repository.RepositoryId, kind: newtype, of: Uuid}
+  - {name: agentic.scm.repository.RevisionId, kind: newtype, of: Uuid}
+  - {name: agentic.scm.repository.ReferenceId, kind: newtype, of: Uuid}
+  - {name: agentic.scm.repository.CheckoutId, kind: newtype, of: Uuid}
+
+  - name: agentic.scm.repository.ReferenceName
+    kind: newtype
+    of: String
+    naming:
+      summary: The name of a reference inside its repository, such as `main` or `release/1.2`.
+
+  - name: agentic.scm.repository.TreeDigest
+    kind: newtype
+    of: String
+    naming:
+      summary: >-
+        The digest of a revision's tree: every path and the digest of its content, in path order.
+        Two revisions with the same tree digest hold the same files.
+
+  - name: agentic.scm.repository.ReferenceKind
+    kind: enum
+    variants: [Movable, Fixed]
+    naming:
+      summary: >-
+        Movable is moved to later revisions (a branch); Fixed names one revision for good (a tag).
+
+  - name: agentic.scm.repository.TreeEntry
+    kind: struct
+    fields:
+      - {name: path, type: agentic.workspace.Path}
+      - {name: content, type: agentic.shared.Content}
+      - {name: executable, type: Boolean}
+
+entities:
+  - name: agentic.scm.repository.Repository
+    naming:
+      summary: One repository on one forge.
+    identity:
+      name: repository_id
+      type: agentic.scm.repository.RepositoryId
+    fields:
+      - name: forge_id
+        type: agentic.scm.forge.ForgeId
+      - name: name
+        type: agentic.shared.Name
+      - name: default_reference
+        type: agentic.scm.repository.ReferenceName
+        summary: The reference a new checkout and a new change request target unless told otherwise.
+      - name: created_by
+        type: agentic.shared.PrincipalId
+      - name: created_at
+        type: Timestamp
+    relations:
+      - name: forge
+        kind: references
+        target: agentic.scm.forge.Forge
+        cardinality: one
+        via: forge_id
+      - name: creator
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: created_by
+      - name: revisions
+        kind: owns
+        target: agentic.scm.repository.Revision
+        cardinality: many
+        via: repository_id
+      - name: references
+        kind: owns
+        target: agentic.scm.repository.Reference
+        cardinality: many
+        via: repository_id
+    lifecycle:
+      initial: Active
+      states: [Active, Archived]
+      terminal: []
+      transitions:
+        - name: archive
+          from: [Active]
+          to: Archived
+        - name: unarchive
+          from: [Archived]
+          to: Active
+
+  - name: agentic.scm.repository.Revision
+    naming:
+      summary: >-
+        One snapshot of the repository's files. It is recorded once and never changes; its name is
+        the version control system's, its tree digest says what files it holds.
+    identity:
+      name: revision_id
+      type: agentic.scm.repository.RevisionId
+    fields:
+      - name: repository_id
+        type: agentic.scm.repository.RepositoryId
+      - name: revision
+        type: agentic.workspace.Revision
+      - name: tree_digest
+        type: agentic.scm.repository.TreeDigest
+      - name: tree
+        type: List<agentic.scm.repository.TreeEntry>
+      - name: parents
+        type: List<agentic.workspace.Revision>
+      - name: authored_by
+        type: agentic.shared.PrincipalId
+      - name: message
+        type: agentic.shared.Content
+      - name: recorded_at
+        type: Timestamp
+    relations:
+      - name: author
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: authored_by
+    # UNMAPPED: that `revision` is unique within a repository and that every parent is a recorded
+    # revision of the same repository are row-set rules over Revision; the draft does not enforce
+    # them. Open question for the owner.
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+  - name: agentic.scm.repository.Reference
+    naming:
+      summary: A name in the repository that points at one revision.
+    identity:
+      name: reference_id
+      type: agentic.scm.repository.ReferenceId
+    fields:
+      - name: repository_id
+        type: agentic.scm.repository.RepositoryId
+      - name: name
+        type: agentic.scm.repository.ReferenceName
+      - name: kind
+        type: agentic.scm.repository.ReferenceKind
+      - name: target
+        type: agentic.workspace.Revision
+      - name: moved_by
+        type: agentic.shared.PrincipalId
+      - name: moved_at
+        type: Timestamp
+    relations:
+      - name: mover
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: moved_by
+    # UNMAPPED: a reference name unique within its repository is a row-set rule over Reference; the
+    # draft does not enforce it. Open question for the owner.
+    lifecycle:
+      initial: Live
+      states: [Live, Deleted]
+      terminal: [Deleted]
+      transitions:
+        - name: delete
+          from: [Live]
+          to: Deleted
+
+  - name: agentic.scm.repository.Checkout
+    naming:
+      summary: >-
+        A workspace that holds a repository's files at a reference. Its writes leave the workspace
+        as a proposal (`agentic.workspace`) or as a revision pushed to a reference.
+    identity:
+      name: checkout_id
+      type: agentic.scm.repository.CheckoutId
+    fields:
+      - name: repository_id
+        type: agentic.scm.repository.RepositoryId
+      - name: workspace_id
+        type: agentic.shared.WorkspaceId
+      - name: reference
+        type: agentic.scm.repository.ReferenceName
+      - name: checked_out_at
+        type: Timestamp
+    relations:
+      - name: repository
+        kind: references
+        target: agentic.scm.repository.Repository
+        cardinality: one
+        via: repository_id
+      - name: workspace
+        kind: references
+        target: agentic.workspace.Workspace
+        cardinality: one
+        via: workspace_id
+    lifecycle:
+      initial: Active
+      states: [Active, Removed]
+      terminal: [Removed]
+      transitions:
+        - name: remove
+          from: [Active]
+          to: Removed
+
+actors:
+  - name: agentic.scm.repository.RepositoryManager
+    naming:
+      display: Repository manager
+      summary: Whoever creates, archives and checks out repositories.
+    may:
+      - agentic.scm.repository.CreateRepository
+      - agentic.scm.repository.ArchiveRepository
+      - agentic.scm.repository.UnarchiveRepository
+      - agentic.scm.repository.CheckOut
+      - agentic.scm.repository.RemoveCheckout
+      - agentic.scm.repository.Repositories
+      - agentic.scm.repository.References
+      - agentic.scm.repository.Checkouts
+
+  - name: agentic.scm.repository.Committer
+    naming:
+      display: Committer
+      summary: A principal that records revisions and moves references, a human or an agent.
+    may:
+      - agentic.scm.repository.RecordRevision
+      - agentic.scm.repository.CreateReference
+      - agentic.scm.repository.MoveReference
+      - agentic.scm.repository.DeleteReference
+      - agentic.scm.repository.Revisions
+      - agentic.scm.repository.References
+
+errors:
+  - name: agentic.scm.repository.UnknownForge
+    summary: No forge of this identity is registered.
+    fields:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+
+  - name: agentic.scm.repository.ForgeNotActive
+    summary: The forge is retired; it hosts no new repository.
+    fields:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+
+  - name: agentic.scm.repository.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+
+  - name: agentic.scm.repository.RepositoryNotFound
+    summary: No repository of this identity exists.
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+
+  - name: agentic.scm.repository.RepositoryStateConflict
+    summary: The repository is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.scm.repository.Repository.State}
+
+  - name: agentic.scm.repository.RepositoryArchived
+    summary: The repository is archived; it takes no new revision, reference or checkout.
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+
+  - name: agentic.scm.repository.RevisionExists
+    summary: A revision of this identity is already recorded; a revision never changes.
+    fields:
+      - {name: revision_id, type: agentic.scm.repository.RevisionId}
+
+  - name: agentic.scm.repository.ReferenceExists
+    summary: A reference of this identity exists.
+    fields:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+
+  - name: agentic.scm.repository.ReferenceNotFound
+    summary: No reference of this identity exists.
+    fields:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+
+  - name: agentic.scm.repository.ReferenceStateConflict
+    summary: The reference is deleted.
+    fields:
+      - {name: state, type: agentic.scm.repository.Reference.State}
+
+  - name: agentic.scm.repository.ReferenceFixed
+    summary: The reference is fixed; it never moves and is never deleted.
+    fields:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+
+  - name: agentic.scm.repository.ReferenceMoved
+    summary: >-
+      The reference no longer points where the mover saw it: someone moved it since. The mover reads
+      it again and decides.
+    fields:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+      - {name: target, type: agentic.workspace.Revision}
+
+  - name: agentic.scm.repository.UnknownWorkspace
+    summary: No workspace of this identity exists.
+    fields:
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+
+  - name: agentic.scm.repository.CheckoutNotFound
+    summary: No checkout of this identity exists.
+    fields:
+      - {name: checkout_id, type: agentic.scm.repository.CheckoutId}
+
+  - name: agentic.scm.repository.CheckoutStateConflict
+    summary: The checkout is removed.
+    fields:
+      - {name: state, type: agentic.scm.repository.Checkout.State}
+
+commands:
+  - name: agentic.scm.repository.CreateRepository
+    naming:
+      wire: create-repository
+      display: Create a repository on a forge
+    input:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: default_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: created_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown-forge
+        when_related: {via: input.forge_id, exists: false}
+        error: agentic.scm.repository.UnknownForge
+        payload:
+          agentic.scm.repository.UnknownForge: {forge_id: input.forge_id}
+      - name: unknown-creator
+        when_related: {via: input.created_by, exists: false}
+        error: agentic.scm.repository.UnknownPrincipal
+        payload:
+          agentic.scm.repository.UnknownPrincipal: {principal_id: input.created_by}
+      - name: forge-retired
+        when_related: {via: input.forge_id, predicate: state == Retired}
+        error: agentic.scm.repository.ForgeNotActive
+        payload:
+          agentic.scm.repository.ForgeNotActive: {forge_id: input.forge_id}
+      - name: created
+        creates: agentic.scm.repository.Repository
+        instance: repository_id
+        sets:
+          forge_id: input.forge_id
+          name: input.name
+          default_reference: input.default_reference
+          created_by: input.created_by
+          created_at: input.at
+        emits: [agentic.scm.repository.RepositoryCreated]
+        payload:
+          agentic.scm.repository.RepositoryCreated:
+            repository_id: input.repository_id
+            forge_id: input.forge_id
+            name: input.name
+            default_reference: input.default_reference
+            created_by: input.created_by
+            at: input.at
+        summary: The repository is Active, with no revision and no reference yet.
+
+  - name: agentic.scm.repository.ArchiveRepository
+    naming:
+      wire: archive-repository
+      display: Archive a repository
+    input:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-repository
+        unknown_instance: true
+        error: agentic.scm.repository.RepositoryNotFound
+        payload:
+          agentic.scm.repository.RepositoryNotFound: {repository_id: input.repository_id}
+      - name: archived
+        moves: agentic.scm.repository.Repository.archive
+        instance: repository_id
+        emits: [agentic.scm.repository.RepositoryArchivedEvent]
+        payload:
+          agentic.scm.repository.RepositoryArchivedEvent:
+            repository_id: input.repository_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.repository.RepositoryStateConflict
+        payload:
+          agentic.scm.repository.RepositoryStateConflict: {state: {subject: state}}
+
+  - name: agentic.scm.repository.UnarchiveRepository
+    naming:
+      wire: unarchive-repository
+      display: Take a repository out of the archive
+    input:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-repository
+        unknown_instance: true
+        error: agentic.scm.repository.RepositoryNotFound
+        payload:
+          agentic.scm.repository.RepositoryNotFound: {repository_id: input.repository_id}
+      - name: unarchived
+        moves: agentic.scm.repository.Repository.unarchive
+        instance: repository_id
+        emits: [agentic.scm.repository.RepositoryUnarchived]
+        payload:
+          agentic.scm.repository.RepositoryUnarchived:
+            repository_id: input.repository_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.repository.RepositoryStateConflict
+        payload:
+          agentic.scm.repository.RepositoryStateConflict: {state: {subject: state}}
+
+  - name: agentic.scm.repository.RecordRevision
+    naming:
+      wire: record-revision
+      display: Record a revision
+    input:
+      - {name: revision_id, type: agentic.scm.repository.RevisionId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: revision, type: agentic.workspace.Revision}
+      - {name: tree_digest, type: agentic.scm.repository.TreeDigest}
+      - {name: tree, type: List<agentic.scm.repository.TreeEntry>}
+      - {name: parents, type: List<agentic.workspace.Revision>}
+      - {name: authored_by, type: agentic.shared.PrincipalId}
+      - {name: message, type: agentic.shared.Content}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: already-recorded
+        existing_instance: true
+        error: agentic.scm.repository.RevisionExists
+        payload:
+          agentic.scm.repository.RevisionExists: {revision_id: input.revision_id}
+      - name: no-such-repository
+        when_related: {via: input.repository_id, exists: false}
+        error: agentic.scm.repository.RepositoryNotFound
+        payload:
+          agentic.scm.repository.RepositoryNotFound: {repository_id: input.repository_id}
+      - name: unknown-author
+        when_related: {via: input.authored_by, exists: false}
+        error: agentic.scm.repository.UnknownPrincipal
+        payload:
+          agentic.scm.repository.UnknownPrincipal: {principal_id: input.authored_by}
+      - name: archived
+        when_related: {via: input.repository_id, predicate: state == Archived}
+        error: agentic.scm.repository.RepositoryArchived
+        payload:
+          agentic.scm.repository.RepositoryArchived: {repository_id: input.repository_id}
+      # UNMAPPED: that `tree_digest` is the digest of `tree` is a rule of the digest function; the
+      # draft cannot state which function. Open question for the owner.
+      - name: recorded
+        creates: agentic.scm.repository.Revision
+        instance: revision_id
+        sets:
+          repository_id: input.repository_id
+          revision: input.revision
+          tree_digest: input.tree_digest
+          tree: input.tree
+          parents: input.parents
+          authored_by: input.authored_by
+          message: input.message
+          recorded_at: input.at
+        emits: [agentic.scm.repository.RevisionRecorded]
+        payload:
+          agentic.scm.repository.RevisionRecorded:
+            revision_id: input.revision_id
+            repository_id: input.repository_id
+            revision: input.revision
+            tree_digest: input.tree_digest
+            parents: input.parents
+            authored_by: input.authored_by
+            at: input.at
+        summary: The revision is recorded; no reference points at it until one is moved there.
+
+  - name: agentic.scm.repository.CreateReference
+    naming:
+      wire: create-reference
+      display: Create a reference
+    input:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: name, type: agentic.scm.repository.ReferenceName}
+      - {name: kind, type: agentic.scm.repository.ReferenceKind}
+      - {name: target, type: agentic.workspace.Revision}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: already-exists
+        existing_instance: true
+        error: agentic.scm.repository.ReferenceExists
+        payload:
+          agentic.scm.repository.ReferenceExists: {reference_id: input.reference_id}
+      - name: no-such-repository
+        when_related: {via: input.repository_id, exists: false}
+        error: agentic.scm.repository.RepositoryNotFound
+        payload:
+          agentic.scm.repository.RepositoryNotFound: {repository_id: input.repository_id}
+      - name: unknown-principal
+        when_related: {via: input.by, exists: false}
+        error: agentic.scm.repository.UnknownPrincipal
+        payload:
+          agentic.scm.repository.UnknownPrincipal: {principal_id: input.by}
+      - name: archived
+        when_related: {via: input.repository_id, predicate: state == Archived}
+        error: agentic.scm.repository.RepositoryArchived
+        payload:
+          agentic.scm.repository.RepositoryArchived: {repository_id: input.repository_id}
+      - name: created
+        creates: agentic.scm.repository.Reference
+        instance: reference_id
+        sets:
+          repository_id: input.repository_id
+          name: input.name
+          kind: input.kind
+          target: input.target
+          moved_by: input.by
+          moved_at: input.at
+        emits: [agentic.scm.repository.ReferenceCreated]
+        payload:
+          agentic.scm.repository.ReferenceCreated:
+            reference_id: input.reference_id
+            repository_id: input.repository_id
+            name: input.name
+            kind: input.kind
+            target: input.target
+            by: input.by
+            at: input.at
+
+  - name: agentic.scm.repository.MoveReference
+    naming:
+      wire: move-reference
+      display: Move a reference to another revision
+      summary: >-
+        Compare and set: the reference moves only when it still points at `expected`, the revision
+        the mover last saw.
+    input:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+      - {name: expected, type: agentic.workspace.Revision}
+      - {name: to, type: agentic.workspace.Revision}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-reference
+        unknown_instance: true
+        error: agentic.scm.repository.ReferenceNotFound
+        payload:
+          agentic.scm.repository.ReferenceNotFound: {reference_id: input.reference_id}
+      - name: deleted
+        when_subject:
+          predicate: state == Deleted
+        error: agentic.scm.repository.ReferenceStateConflict
+        payload:
+          agentic.scm.repository.ReferenceStateConflict: {state: {subject: state}}
+      - name: fixed
+        when_subject:
+          predicate: kind == Fixed
+        error: agentic.scm.repository.ReferenceFixed
+        payload:
+          agentic.scm.repository.ReferenceFixed: {reference_id: input.reference_id}
+      - name: moved-since
+        when_subject:
+          predicate: target != input.expected
+        error: agentic.scm.repository.ReferenceMoved
+        payload:
+          agentic.scm.repository.ReferenceMoved:
+            reference_id: input.reference_id
+            target: {subject: target}
+      - name: unknown-principal
+        when_related: {via: input.by, exists: false}
+        error: agentic.scm.repository.UnknownPrincipal
+        payload:
+          agentic.scm.repository.UnknownPrincipal: {principal_id: input.by}
+      - name: moved
+        updates: agentic.scm.repository.Reference
+        instance: reference_id
+        sets:
+          target: input.to
+          moved_by: input.by
+          moved_at: input.at
+        emits: [agentic.scm.repository.ReferenceMovedEvent]
+        payload:
+          agentic.scm.repository.ReferenceMovedEvent:
+            reference_id: input.reference_id
+            from: {subject: target}
+            to: input.to
+            by: input.by
+            at: input.at
+
+  - name: agentic.scm.repository.DeleteReference
+    naming:
+      wire: delete-reference
+      display: Delete a reference
+    input:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-reference
+        unknown_instance: true
+        error: agentic.scm.repository.ReferenceNotFound
+        payload:
+          agentic.scm.repository.ReferenceNotFound: {reference_id: input.reference_id}
+      - name: fixed
+        when_subject:
+          predicate: kind == Fixed
+        error: agentic.scm.repository.ReferenceFixed
+        payload:
+          agentic.scm.repository.ReferenceFixed: {reference_id: input.reference_id}
+      - name: deleted
+        moves: agentic.scm.repository.Reference.delete
+        instance: reference_id
+        emits: [agentic.scm.repository.ReferenceDeleted]
+        payload:
+          agentic.scm.repository.ReferenceDeleted:
+            reference_id: input.reference_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.repository.ReferenceStateConflict
+        payload:
+          agentic.scm.repository.ReferenceStateConflict: {state: {subject: state}}
+
+  - name: agentic.scm.repository.CheckOut
+    naming:
+      wire: check-out
+      display: Check a repository out into a workspace
+    input:
+      - {name: checkout_id, type: agentic.scm.repository.CheckoutId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: reference, type: agentic.scm.repository.ReferenceName}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-repository
+        when_related: {via: input.repository_id, exists: false}
+        error: agentic.scm.repository.RepositoryNotFound
+        payload:
+          agentic.scm.repository.RepositoryNotFound: {repository_id: input.repository_id}
+      - name: unknown-workspace
+        when_related: {via: input.workspace_id, exists: false}
+        error: agentic.scm.repository.UnknownWorkspace
+        payload:
+          agentic.scm.repository.UnknownWorkspace: {workspace_id: input.workspace_id}
+      - name: archived
+        when_related: {via: input.repository_id, predicate: state == Archived}
+        error: agentic.scm.repository.RepositoryArchived
+        payload:
+          agentic.scm.repository.RepositoryArchived: {repository_id: input.repository_id}
+      - name: checked-out
+        creates: agentic.scm.repository.Checkout
+        instance: checkout_id
+        sets:
+          repository_id: input.repository_id
+          workspace_id: input.workspace_id
+          reference: input.reference
+          checked_out_at: input.at
+        emits: [agentic.scm.repository.CheckedOut]
+        payload:
+          agentic.scm.repository.CheckedOut:
+            checkout_id: input.checkout_id
+            repository_id: input.repository_id
+            workspace_id: input.workspace_id
+            reference: input.reference
+            at: input.at
+
+  - name: agentic.scm.repository.RemoveCheckout
+    naming:
+      wire: remove-checkout
+      display: Remove a checkout
+    input:
+      - {name: checkout_id, type: agentic.scm.repository.CheckoutId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-checkout
+        unknown_instance: true
+        error: agentic.scm.repository.CheckoutNotFound
+        payload:
+          agentic.scm.repository.CheckoutNotFound: {checkout_id: input.checkout_id}
+      - name: removed
+        moves: agentic.scm.repository.Checkout.remove
+        instance: checkout_id
+        emits: [agentic.scm.repository.CheckoutRemoved]
+        payload:
+          agentic.scm.repository.CheckoutRemoved:
+            checkout_id: input.checkout_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.repository.CheckoutStateConflict
+        payload:
+          agentic.scm.repository.CheckoutStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.scm.repository.RepositoryCreated
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: default_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: created_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.repository.RepositoryArchivedEvent
+    naming:
+      wire: repository-archived
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.repository.RepositoryUnarchived
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.repository.RevisionRecorded
+    fields:
+      - {name: revision_id, type: agentic.scm.repository.RevisionId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: revision, type: agentic.workspace.Revision}
+      - {name: tree_digest, type: agentic.scm.repository.TreeDigest}
+      - {name: parents, type: List<agentic.workspace.Revision>}
+      - {name: authored_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.repository.ReferenceCreated
+    fields:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: name, type: agentic.scm.repository.ReferenceName}
+      - {name: kind, type: agentic.scm.repository.ReferenceKind}
+      - {name: target, type: agentic.workspace.Revision}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.repository.ReferenceMovedEvent
+    naming:
+      wire: reference-moved
+    fields:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+      - {name: from, type: agentic.workspace.Revision}
+      - {name: to, type: agentic.workspace.Revision}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.repository.ReferenceDeleted
+    fields:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.repository.CheckedOut
+    fields:
+      - {name: checkout_id, type: agentic.scm.repository.CheckoutId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: reference, type: agentic.scm.repository.ReferenceName}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.repository.CheckoutRemoved
+    fields:
+      - {name: checkout_id, type: agentic.scm.repository.CheckoutId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.scm.repository.Repositories
+    source: agentic.scm.repository.Repository
+    consistency: read_your_writes
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: default_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: created_by, type: agentic.shared.PrincipalId}
+      - {name: created_at, type: Timestamp}
+      - {name: state, type: agentic.scm.repository.Repository.State}
+    naming:
+      wire: repositories
+      display: Repositories
+
+  - name: agentic.scm.repository.Revisions
+    source: agentic.scm.repository.Revision
+    consistency: read_your_writes
+    fields:
+      - {name: revision_id, type: agentic.scm.repository.RevisionId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: revision, type: agentic.workspace.Revision}
+      - {name: tree_digest, type: agentic.scm.repository.TreeDigest}
+      - {name: tree, type: List<agentic.scm.repository.TreeEntry>}
+      - {name: parents, type: List<agentic.workspace.Revision>}
+      - {name: authored_by, type: agentic.shared.PrincipalId}
+      - {name: message, type: agentic.shared.Content}
+      - {name: recorded_at, type: Timestamp}
+      - {name: state, type: agentic.scm.repository.Revision.State}
+    naming:
+      wire: revisions
+      display: Revisions
+
+  - name: agentic.scm.repository.References
+    source: agentic.scm.repository.Reference
+    consistency: read_your_writes
+    fields:
+      - {name: reference_id, type: agentic.scm.repository.ReferenceId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: name, type: agentic.scm.repository.ReferenceName}
+      - {name: kind, type: agentic.scm.repository.ReferenceKind}
+      - {name: target, type: agentic.workspace.Revision}
+      - {name: moved_by, type: agentic.shared.PrincipalId}
+      - {name: moved_at, type: Timestamp}
+      - {name: state, type: agentic.scm.repository.Reference.State}
+    naming:
+      wire: references
+      display: References
+
+  - name: agentic.scm.repository.Checkouts
+    source: agentic.scm.repository.Checkout
+    consistency: read_your_writes
+    fields:
+      - {name: checkout_id, type: agentic.scm.repository.CheckoutId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: reference, type: agentic.scm.repository.ReferenceName}
+      - {name: checked_out_at, type: Timestamp}
+      - {name: state, type: agentic.scm.repository.Checkout.State}
+    naming:
+      wire: checkouts
+      display: Checkouts

@@ -1,0 +1,134 @@
+format: agenticspec-kpis/1
+kpis:
+  - id: retired_forge_writes
+    block: scm.forge
+    kind: correctness
+    unit: count
+    summary: Repositories created or roles granted on a forge after it was retired.
+    how: RepositoryCreated and RoleGranted events of a forge timestamped after its ForgeRetiredEvent. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.scm.forge.ForgeRetiredEvent, agentic.scm.repository.RepositoryCreated, agentic.scm.forge.RoleGranted]
+    status: planned
+    source: design
+
+  - id: agent_maintainer_share
+    block: scm.forge
+    kind: quality
+    unit: share
+    summary: Share of forge memberships at Maintainer or Administrator held by agent principals.
+    how: Live RoleGranted and RoleChanged memberships whose role is Maintainer or Administrator and whose principal is registered with kind Agent, divided by all such memberships.
+    direction: lower
+    modes: { autonomous: ignore, pairing: lower, review: lower }
+    gate: false
+    reads: [agentic.scm.forge.RoleGranted, agentic.scm.forge.RoleChanged, agentic.scm.forge.RoleRevoked, agentic.principal.PrincipalRegistered]
+    status: planned
+    source: design
+
+  - id: reference_lost_update
+    block: scm.repository
+    kind: correctness
+    unit: count
+    summary: Reference moves that dropped a revision another writer had moved the reference to.
+    how: ReferenceMovedEvent events whose `from` is not the reference's target at that moment, by the preceding ReferenceCreated or ReferenceMovedEvent. The compare-and-set of MoveReference refuses these; any found is an implementation defect. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.scm.repository.ReferenceCreated, agentic.scm.repository.ReferenceMovedEvent]
+    status: planned
+    source: design
+
+  - id: revision_to_reference_seconds
+    block: scm.repository
+    kind: quality
+    unit: seconds
+    summary: Seconds from a revision being recorded to a reference pointing to it.
+    how: Median over revisions of the time from RevisionRecorded to the first ReferenceCreated or ReferenceMovedEvent whose target is that revision. Revisions no reference reaches are counted apart.
+    direction: lower
+    gate: false
+    reads: [agentic.scm.repository.RevisionRecorded, agentic.scm.repository.ReferenceCreated, agentic.scm.repository.ReferenceMovedEvent]
+    status: planned
+    source: design
+
+  - id: check_errored_share
+    block: scm.check
+    kind: quality
+    unit: share
+    summary: Share of completed check runs that ended Errored rather than Passed or Failed.
+    how: CheckCompleted events with outcome Errored divided by all CheckCompleted events. An errored check says nothing about the revision.
+    direction: lower
+    gate: false
+    reads: [agentic.scm.check.CheckCompleted]
+    status: planned
+    source: design
+
+  - id: check_queue_seconds
+    block: scm.check
+    kind: quality
+    unit: seconds
+    summary: Seconds a check run waits between being queued and starting.
+    how: Median of CheckStarted time minus CheckQueued time per check run.
+    direction: lower
+    gate: false
+    reads: [agentic.scm.check.CheckQueued, agentic.scm.check.CheckStarted]
+    status: planned
+    source: design
+
+  - id: check_flaky_share
+    block: scm.check
+    kind: quality
+    unit: share
+    summary: Share of checks that both passed and failed on the same revision.
+    how: Pairs of check name and revision with at least one CheckCompleted Passed and one CheckCompleted Failed, divided by all pairs with a completed run.
+    direction: lower
+    gate: false
+    reads: [agentic.scm.check.CheckCompleted]
+    status: planned
+    source: design
+
+  - id: merge_without_head_approval
+    block: scm.change
+    kind: correctness
+    unit: count
+    summary: Change requests merged at a head no approval was given for.
+    how: ChangeRequestMerged events whose head is not the head of a HeadApproved event of the same change request after its last HeadPushed. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.scm.change.ChangeRequestMerged, agentic.scm.change.HeadApproved, agentic.scm.change.HeadPushed]
+    status: planned
+    source: design
+
+  - id: merge_without_green_checks
+    block: scm.change
+    kind: correctness
+    unit: count
+    summary: Change requests merged while the checks of their head had not passed.
+    how: ChangeRequestMerged events whose head has no ChecksRecorded with verdict Passed for that head after the last HeadPushed. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.scm.change.ChangeRequestMerged, agentic.scm.change.ChecksRecorded, agentic.scm.change.HeadPushed]
+    status: planned
+    source: design
+
+  - id: change_request_cycle_seconds
+    block: scm.change
+    kind: quality
+    unit: seconds
+    summary: Seconds from a change request being opened to it being merged.
+    how: Median of ChangeRequestMerged time minus ChangeRequestOpened time over merged change requests; closed ones are counted apart.
+    direction: lower
+    gate: false
+    reads: [agentic.scm.change.ChangeRequestOpened, agentic.scm.change.ChangeRequestMerged]
+    status: planned
+    source: design
+
+  - id: approval_invalidated_share
+    block: scm.change
+    kind: quality
+    unit: share
+    summary: Share of approvals left behind by a later push to the change request.
+    how: HeadApproved events followed by a HeadPushed of the same change request before it merged, divided by all HeadApproved events. Each one costs a second review.
+    direction: lower
+    gate: false
+    reads: [agentic.scm.change.HeadApproved, agentic.scm.change.HeadPushed, agentic.scm.change.ChangeRequestMerged]
+    status: planned
+    source: design

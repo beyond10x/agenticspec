@@ -11,9 +11,10 @@ import {withProductSite} from '@beyond10x/docs-system/product-site';
 // GitHub. The landing page is src/pages/index.tsx, which draws product.json with the docs-system
 // product template.
 //
-// docs/blocks/, docs/architectures/ and docs/kpis-catalogue.md are written by agenticspec-docs
-// (task docs:generate) from blocks/, architectures/ and kpis/catalogue.yaml; each carries its route,
-// title and header in its own front matter, and draws with the components of src/theme/MDXComponents.tsx.
+// docs/blocks/, docs/architectures/, docs/packs/, docs/fields/ and docs/kpis-catalogue.md are written
+// by agenticspec-docs (task docs:generate) from blocks/, architectures/, packs/, fields/ and
+// kpis/catalogue.yaml; each carries its route, title and header in its own front matter, and draws
+// with the components of src/theme/MDXComponents.tsx.
 
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(siteDir, '..');
@@ -112,13 +113,13 @@ const config: Config = {
       {
         docs: {
           path: '..',
-          include: ['docs/*.md', 'docs/ladder.mdx', 'docs/blocks/**/*.md', 'docs/architectures/*.md', 'docs/catalog/*.md'],
+          include: ['docs/*.md', 'docs/ladder.mdx', 'docs/blocks/**/*.md', 'docs/architectures/*.md', 'docs/catalog/*.md', 'docs/packs/**/*.md', 'docs/fields/**/*.md'],
           numberPrefixParser: false,
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
           // A generated page is changed through its sources, so it has no edit link.
           editUrl: ({docPath}) =>
-            /^docs\/(blocks\/|architectures\/|catalog\/|kpis-catalogue\.md$)/.test(docPath)
+            /^docs\/(blocks\/|architectures\/|catalog\/|packs\/|fields\/|kpis-catalogue\.md$)/.test(docPath)
               ? undefined
               : `https://github.com/beyond10x/agenticspec/tree/main/${docPath}`,
         },

@@ -1,0 +1,13 @@
+format: agenticspec-pack/1
+pack: files
+namespace: agentic.files
+summary: >-
+  The conceptual file tools of an agent: read_file, write_file, edit_file, list_dir, search, move,
+  copy and delete, each typed by its input, its answer and the file it reads or changes.
+uses: []
+blocks:
+  - blocks/toolset.yaml
+kpis: kpis.yaml
+scenarios:
+  - scenarios/file-tools-under-a-lease.yaml
+  - scenarios/file-tools-refuse-without-a-live-lease.yaml

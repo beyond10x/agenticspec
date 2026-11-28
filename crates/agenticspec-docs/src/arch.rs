@@ -24,6 +24,13 @@ pub struct Architecture {
     pub file: String,
     pub doc: Value,
     pub experiment: Option<Run>,
+    /// The page and its graph, below the site root: `architectures/solo`,
+    /// `fields/coding/auto-merger`.
+    pub slug: String,
+    /// The way up from the page to `docs/`: `../` or `../../`.
+    pub up: String,
+    /// What the page is generated from, for its note.
+    pub sources: String,
 }
 
 pub struct Run {
@@ -112,9 +119,36 @@ pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
         }
         out.push(Architecture {
             file: format!("architectures/{name}.yaml"),
+            slug: format!("architectures/{name}"),
+            up: "../".into(),
+            sources: "architectures/ and experiments/".into(),
             name,
             doc,
             experiment,
+        });
+    }
+    Ok(out)
+}
+
+/// The architectures a field lists (`fields/<field>/architectures/<name>.yaml`), without an
+/// experiment: their pages go under `docs/fields/<field>/`.
+pub fn load_field(field: &str, files: &[String], root: &Path) -> Result<Vec<Architecture>, String> {
+    let mut out = Vec::new();
+    for file in files {
+        let path = root.join(file);
+        let name = path
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let doc = agenticspec_sim::doc::load_yaml(&path).map_err(|e| format!("{file}: {e}"))?;
+        out.push(Architecture {
+            file: file.clone(),
+            slug: format!("fields/{field}/{name}"),
+            up: "../../".into(),
+            sources: format!("fields/{field}/"),
+            name,
+            doc,
+            experiment: None,
         });
     }
     Ok(out)
@@ -164,9 +198,9 @@ fn value(v: &Value) -> String {
     }
 }
 
-fn block_link(blocks: &[Block], block: &str) -> String {
+fn block_link(blocks: &[Block], block: &str, up: &str) -> String {
     match blocks.iter().find(|b| b.name == block) {
-        Some(b) => format!("[{}](../blocks/{}/{}.md)", b.name, b.dir, b.name),
+        Some(b) => format!("[{}]({up}{}/{}/{}.md)", b.name, b.section, b.dir, b.page),
         None => code(block),
     }
 }
@@ -338,7 +372,7 @@ pub fn page(a: &Architecture, blocks: &[Block]) -> String {
     s.push_str("---\n");
     let _ = writeln!(s, "title: {}", yaml(&a.name));
     let _ = writeln!(s, "sidebar_label: {}", yaml(&a.name));
-    let _ = writeln!(s, "slug: /architectures/{}", a.name);
+    let _ = writeln!(s, "slug: /{}", a.slug);
     if !summary.is_empty() {
         let _ = writeln!(s, "description: {}", yaml(summary));
         let _ = writeln!(s, "lede: {}", yaml(summary));
@@ -351,17 +385,14 @@ pub fn page(a: &Architecture, blocks: &[Block]) -> String {
         yaml(&format!("{SOURCE_BASE}{}", a.file))
     );
     s.push_str("mdx:\n  format: mdx\n---\n\n");
-    s.push_str(&GENERATED_NOTE.replace(
-        "the specification in blocks/",
-        "architectures/ and experiments/",
-    ));
+    s.push_str(&GENERATED_NOTE.replace("the specification in blocks/", &a.sources));
 
     let refusals = check(doc);
     let parts = doc["parts"].as_object().cloned().unwrap_or_default();
     let links = doc["links"].as_array().cloned().unwrap_or_default();
     // Without `.html`: `docusaurus serve` answers `<name>.html` with a redirect that drops the base
     // path, and GitHub Pages answers `<name>` with `<name>.html`.
-    let html_path = format!("/architectures/{}", a.name);
+    let html_path = format!("/{}", a.slug);
     let caption = match &a.experiment {
         Some(r) => format!(
             "The architecture as a graph, with the best variant of a short run of the experiment {} at its marked places.",
@@ -465,7 +496,7 @@ How the run was made: [Optimization](#optimization).\n",
             s,
             "| {} | {} | {} |",
             code(name),
-            block_link(blocks, block),
+            block_link(blocks, block, &a.up),
             if set.is_empty() {
                 "–".into()
             } else {

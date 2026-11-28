@@ -1,0 +1,37 @@
+format: agenticspec-kpis/1
+kpis:
+  - id: write_after_lease_end
+    block: files.toolset
+    kind: correctness
+    unit: count
+    summary: File changes made under a lease that had already ended.
+    how: FileWritten, FileEdited, FileCopied, FileMoved and FileDeleted events whose lease has a LeaseReleased or LeaseExpired before the change. The tools refuse these; any found is an implementation defect. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.files.toolset.FileWritten, agentic.files.toolset.FileEdited, agentic.files.toolset.FileCopied, agentic.files.toolset.FileMoved, agentic.files.toolset.FileDeleted, agentic.workspace.LeaseReleased, agentic.workspace.LeaseExpired]
+    status: planned
+    source: design
+
+  - id: file_churn_ratio
+    block: files.toolset
+    kind: quality
+    unit: ratio
+    summary: Edits per file an agent changed in one run.
+    how: FileEdited events divided by the distinct files written or edited, per lease. A high ratio is an agent editing the same file over and over.
+    direction: lower
+    gate: false
+    reads: [agentic.files.toolset.FileWritten, agentic.files.toolset.FileEdited]
+    status: planned
+    source: design
+
+  - id: stale_edit_share
+    block: files.toolset
+    kind: quality
+    unit: share
+    summary: Share of edits made against content that had changed since it was read.
+    how: edit_file calls refused content-changed divided by all edit_file calls. Counted from the tool's answers; each refusal is an agent working from a stale read.
+    direction: lower
+    gate: false
+    reads: [agentic.files.toolset.FileEdited]
+    status: planned
+    source: design

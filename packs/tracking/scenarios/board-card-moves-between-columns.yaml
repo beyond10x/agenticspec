@@ -1,0 +1,109 @@
+# A board's cards, walked by hand: a card is moved within its board's columns, and the guards of a
+# move read the board through the card's stored board. A card for an issue is added to the first
+# column, refused a column the board does not have and a negative position, moved to the next
+# column, and refused a move once its board is archived. A card naming no item, a board, issue or
+# task that does not exist, and a move of a card that does not exist are refused; synthesis
+# reaches none of these (ESS-SYNTH-001, -003, -008).
+type: ess-scenario/7
+domain: agentic.tracking.board
+scenario: board-card-moves-between-columns
+summary: A card moves only to a column of its board, at a position of zero or more, and not once the board is archived.
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000b01, kind: Human, name: keeper, at: 2026-11-27T09:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.tracking.issue.OpenIssue
+    actor: agentic.tracking.issue.Reporter
+    input: {issue_id: 00000000-0000-4000-8000-000000000b10, title: {digest: sha256-issue-2, length: 12, class: title}, body: {digest: sha256-body-2, length: 80, class: body}, opened_by: 00000000-0000-4000-8000-000000000b01, labels: [], at: 2026-11-27T09:00:01Z}
+    outcome: opened
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.tracking.board.CreateBoard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {board_id: 00000000-0000-4000-8000-000000000b20, name: release, columns: [todo, doing, done], owner: 00000000-0000-4000-8000-000000000b01, at: 2026-11-27T09:00:02Z}
+    outcome: created
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.tracking.board.AddCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b30, board_id: 00000000-0000-4000-8000-000000000b20, column: later, position: 0, issue_id: 00000000-0000-4000-8000-000000000b10, added_by: 00000000-0000-4000-8000-000000000b01, at: 2026-11-27T09:00:03Z}
+    outcome: unknown-column
+    error: {name: agentic.tracking.board.UnknownColumn}
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.tracking.board.AddCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b30, board_id: 00000000-0000-4000-8000-000000000b20, column: todo, position: 0, issue_id: 00000000-0000-4000-8000-000000000b10, added_by: 00000000-0000-4000-8000-000000000b01, at: 2026-11-27T09:00:04Z}
+    outcome: added
+
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.tracking.board.MoveCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b30, column: later, position: 0, at: 2026-11-27T09:00:05Z}
+    outcome: unknown-column
+    error: {name: agentic.tracking.board.UnknownColumn}
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.tracking.board.MoveCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b30, column: doing, position: -1, at: 2026-11-27T09:00:06Z}
+    outcome: negative-position
+    error: {name: agentic.tracking.board.NegativePosition}
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.tracking.board.MoveCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b30, column: doing, position: 0, at: 2026-11-27T09:00:07Z}
+    outcome: moved
+    events:
+      - event: agentic.tracking.board.CardMoved
+        payload: {card_id: 00000000-0000-4000-8000-000000000b30, from: todo, to: doing, position: 0}
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.tracking.board.ArchiveBoard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {board_id: 00000000-0000-4000-8000-000000000b20, at: 2026-11-27T09:00:08Z}
+    outcome: archived
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.tracking.board.MoveCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b30, column: done, position: 0, at: 2026-11-27T09:00:09Z}
+    outcome: archived
+    error: {name: agentic.tracking.board.BoardArchived}
+    no_events: [agentic.tracking.board.CardMoved]
+
+  # a card names one issue or one task, both existing, on a board that exists
+  - at: 2026-11-27T09:00:10Z
+    command: agentic.tracking.board.AddCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b31, board_id: 00000000-0000-4000-8000-000000000b20, column: todo, position: 1, added_by: 00000000-0000-4000-8000-000000000b01, at: 2026-11-27T09:00:10Z}
+    outcome: no-item
+    error: {name: agentic.tracking.board.ItemMissing}
+  - at: 2026-11-27T09:00:11Z
+    command: agentic.tracking.board.AddCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b31, board_id: 00000000-0000-4000-8000-000000000b97, column: todo, position: 1, issue_id: 00000000-0000-4000-8000-000000000b10, added_by: 00000000-0000-4000-8000-000000000b01, at: 2026-11-27T09:00:11Z}
+    outcome: no-such-board
+    error: {name: agentic.tracking.board.BoardNotFound}
+  - at: 2026-11-27T09:00:12Z
+    command: agentic.tracking.board.AddCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b31, board_id: 00000000-0000-4000-8000-000000000b20, column: todo, position: 1, issue_id: 00000000-0000-4000-8000-000000000b96, added_by: 00000000-0000-4000-8000-000000000b01, at: 2026-11-27T09:00:12Z}
+    outcome: unknown-issue
+    error: {name: agentic.tracking.board.UnknownIssue}
+  - at: 2026-11-27T09:00:13Z
+    command: agentic.tracking.board.AddCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b31, board_id: 00000000-0000-4000-8000-000000000b20, column: todo, position: 1, task_id: 00000000-0000-4000-8000-000000000b98, added_by: 00000000-0000-4000-8000-000000000b01, at: 2026-11-27T09:00:13Z}
+    outcome: unknown-task
+    error: {name: agentic.tracking.board.UnknownTask}
+  - at: 2026-11-27T09:00:14Z
+    command: agentic.tracking.board.MoveCard
+    actor: agentic.tracking.board.BoardKeeper
+    input: {card_id: 00000000-0000-4000-8000-000000000b99, column: doing, position: 0, at: 2026-11-27T09:00:14Z}
+    outcome: no-such-card
+    error: {name: agentic.tracking.board.CardNotFound}
+
+assert:
+  - view: agentic.tracking.board.Cards
+    contains:
+      card_id: 00000000-0000-4000-8000-000000000b30
+      column: doing
+      position: 0

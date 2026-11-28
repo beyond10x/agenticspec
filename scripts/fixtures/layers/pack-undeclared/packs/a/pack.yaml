@@ -1,0 +1,6 @@
+format: agenticspec-pack/1
+pack: a
+namespace: fixture.a
+summary: Fixture.
+uses: []
+blocks: [blocks/one.yaml]

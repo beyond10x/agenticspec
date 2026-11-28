@@ -1,0 +1,8 @@
+format: agenticspec-field/1
+field: coding
+summary: >-
+  Agents that change software: they read and edit files, run commands, and bring their changes
+  into repositories through change requests, issues and queues of work.
+packs: [source-control, tracking, files, shell]
+architectures:
+  - architectures/auto-merger.yaml

@@ -1,0 +1,493 @@
+domain: agentic.tracking.board
+
+summary: >-
+  Work laid out in columns. A board has named columns in order; a card on it stands for one issue
+  (`agentic.tracking.issue`) or one task (`agentic.work`) and sits in one column at a position.
+  Cards move between columns and are removed; an archived board takes no new card and moves none.
+  A board shows where work stands; who works on it is the assignment's concern.
+
+naming:
+  wire: board
+  display: Board
+
+types:
+  - {name: agentic.tracking.board.BoardId, kind: newtype, of: Uuid}
+  - {name: agentic.tracking.board.CardId, kind: newtype, of: Uuid}
+
+  - name: agentic.tracking.board.ColumnName
+    kind: newtype
+    of: String
+    naming:
+      summary: The name of a column, such as `todo`, `doing` or `done`.
+
+entities:
+  - name: agentic.tracking.board.Board
+    naming:
+      summary: One board and its columns, left to right.
+    identity:
+      name: board_id
+      type: agentic.tracking.board.BoardId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: columns
+        type: List<agentic.tracking.board.ColumnName>
+      - name: owner
+        type: agentic.shared.PrincipalId
+      - name: created_at
+        type: Timestamp
+    relations:
+      - name: owned_by
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: owner
+      - name: cards
+        kind: owns
+        target: agentic.tracking.board.Card
+        cardinality: many
+        via: board_id
+    lifecycle:
+      initial: Active
+      states: [Active, Archived]
+      terminal: [Archived]
+      transitions:
+        - name: archive
+          from: [Active]
+          to: Archived
+
+  - name: agentic.tracking.board.Card
+    naming:
+      summary: One issue or task on a board, in one column at one position.
+    identity:
+      name: card_id
+      type: agentic.tracking.board.CardId
+    fields:
+      - name: board_id
+        type: agentic.tracking.board.BoardId
+      - name: column
+        type: agentic.tracking.board.ColumnName
+      - name: position
+        type: Integer
+        summary: The card's place in its column, 0 at the top.
+      - name: issue_id
+        type: Optional<agentic.tracking.issue.IssueId>
+      - name: task_id
+        type: Optional<agentic.shared.TaskId>
+      - name: added_by
+        type: agentic.shared.PrincipalId
+      - name: added_at
+        type: Timestamp
+    invariants:
+      - position >= 0
+    relations:
+      - name: issue
+        kind: references
+        target: agentic.tracking.issue.Issue
+        cardinality: one
+        via: issue_id
+      - name: task
+        kind: references
+        target: agentic.work.Task
+        cardinality: one
+        via: task_id
+      - name: adder
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: added_by
+    # UNMAPPED: that two cards of one column never share a position, and that one issue or task
+    # stands on a board once, are row-set rules over Card; the draft does not enforce them.
+    lifecycle:
+      initial: OnBoard
+      states: [OnBoard, Removed]
+      terminal: [Removed]
+      transitions:
+        - name: remove
+          from: [OnBoard]
+          to: Removed
+
+actors:
+  - name: agentic.tracking.board.BoardKeeper
+    naming:
+      display: Board keeper
+      summary: A principal that keeps a board and moves its cards, a human or an agent.
+    may:
+      - agentic.tracking.board.CreateBoard
+      - agentic.tracking.board.ArchiveBoard
+      - agentic.tracking.board.AddCard
+      - agentic.tracking.board.MoveCard
+      - agentic.tracking.board.RemoveCard
+      - agentic.tracking.board.Boards
+      - agentic.tracking.board.Cards
+
+errors:
+  - name: agentic.tracking.board.BoardExists
+    summary: A board of this identity exists.
+    fields:
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+
+  - name: agentic.tracking.board.BoardNotFound
+    summary: No board of this identity exists.
+    fields:
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+
+  - name: agentic.tracking.board.BoardArchived
+    summary: The board is archived; its cards stay where they are.
+    fields:
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+
+  - name: agentic.tracking.board.BoardStateConflict
+    summary: The board is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.tracking.board.Board.State}
+
+  - name: agentic.tracking.board.NoColumns
+    summary: A board needs at least one column.
+
+  - name: agentic.tracking.board.UnknownColumn
+    summary: The board has no column of this name.
+    fields:
+      - {name: column, type: agentic.tracking.board.ColumnName}
+
+  - name: agentic.tracking.board.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+
+  - name: agentic.tracking.board.UnknownIssue
+    summary: No issue of this identity exists.
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+
+  - name: agentic.tracking.board.UnknownTask
+    summary: No task of this identity exists.
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+
+  - name: agentic.tracking.board.ItemMissing
+    summary: A card stands for exactly one issue or one task; the request names none or both.
+
+  - name: agentic.tracking.board.NegativePosition
+    summary: A position is 0 or more.
+
+  - name: agentic.tracking.board.CardExists
+    summary: A card of this identity exists.
+    fields:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+
+  - name: agentic.tracking.board.CardNotFound
+    summary: No card of this identity exists.
+    fields:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+
+  - name: agentic.tracking.board.CardStateConflict
+    summary: The card is removed.
+    fields:
+      - {name: state, type: agentic.tracking.board.Card.State}
+
+commands:
+  - name: agentic.tracking.board.CreateBoard
+    naming:
+      wire: create-board
+      display: Create a board
+    input:
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: columns, type: List<agentic.tracking.board.ColumnName>}
+      - {name: owner, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-columns
+        when:
+          columns.count: 0
+        error: agentic.tracking.board.NoColumns
+      - name: already-exists
+        existing_instance: true
+        error: agentic.tracking.board.BoardExists
+        payload:
+          agentic.tracking.board.BoardExists: {board_id: input.board_id}
+      - name: unknown-owner
+        when_related: {via: input.owner, exists: false}
+        error: agentic.tracking.board.UnknownPrincipal
+        payload:
+          agentic.tracking.board.UnknownPrincipal: {principal_id: input.owner}
+      - name: created
+        creates: agentic.tracking.board.Board
+        instance: board_id
+        sets:
+          name: input.name
+          columns: input.columns
+          owner: input.owner
+          created_at: input.at
+        emits: [agentic.tracking.board.BoardCreated]
+        payload:
+          agentic.tracking.board.BoardCreated:
+            board_id: input.board_id
+            name: input.name
+            columns: input.columns
+            owner: input.owner
+            at: input.at
+
+  - name: agentic.tracking.board.ArchiveBoard
+    naming:
+      wire: archive-board
+      display: Archive a board
+    input:
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-board
+        unknown_instance: true
+        error: agentic.tracking.board.BoardNotFound
+        payload:
+          agentic.tracking.board.BoardNotFound: {board_id: input.board_id}
+      - name: archived
+        moves: agentic.tracking.board.Board.archive
+        instance: board_id
+        emits: [agentic.tracking.board.BoardArchivedEvent]
+        payload:
+          agentic.tracking.board.BoardArchivedEvent:
+            board_id: input.board_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.tracking.board.BoardStateConflict
+        payload:
+          agentic.tracking.board.BoardStateConflict: {state: {subject: state}}
+
+  - name: agentic.tracking.board.AddCard
+    naming:
+      wire: add-card
+      display: Add a card for an issue or a task
+    input:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+      - {name: column, type: agentic.tracking.board.ColumnName}
+      - {name: position, type: Integer}
+      - {name: issue_id, type: Optional<agentic.tracking.issue.IssueId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: added_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-item
+        when:
+          all:
+            - not defined(issue_id)
+            - not defined(task_id)
+        error: agentic.tracking.board.ItemMissing
+      - name: two-items
+        when:
+          all:
+            - defined(issue_id)
+            - defined(task_id)
+        error: agentic.tracking.board.ItemMissing
+      - name: negative-position
+        when: position < 0
+        error: agentic.tracking.board.NegativePosition
+      - name: already-exists
+        existing_instance: true
+        error: agentic.tracking.board.CardExists
+        payload:
+          agentic.tracking.board.CardExists: {card_id: input.card_id}
+      - name: no-such-board
+        when_related: {via: input.board_id, exists: false}
+        error: agentic.tracking.board.BoardNotFound
+        payload:
+          agentic.tracking.board.BoardNotFound: {board_id: input.board_id}
+      - name: unknown-issue
+        when_related: {via: input.issue_id, exists: false}
+        error: agentic.tracking.board.UnknownIssue
+        payload:
+          agentic.tracking.board.UnknownIssue: {issue_id: input.issue_id}
+      - name: unknown-task
+        when_related: {via: input.task_id, exists: false}
+        error: agentic.tracking.board.UnknownTask
+        payload:
+          agentic.tracking.board.UnknownTask: {task_id: input.task_id}
+      - name: archived
+        when_related: {via: input.board_id, predicate: state == Archived}
+        error: agentic.tracking.board.BoardArchived
+        payload:
+          agentic.tracking.board.BoardArchived: {board_id: input.board_id}
+      - name: unknown-column
+        when_related:
+          via: input.board_id
+          predicate:
+            not:
+              exists: {in: columns, as: c, that: c == input.column}
+        error: agentic.tracking.board.UnknownColumn
+        payload:
+          agentic.tracking.board.UnknownColumn: {column: input.column}
+      - name: added
+        creates: agentic.tracking.board.Card
+        instance: card_id
+        sets:
+          board_id: input.board_id
+          column: input.column
+          position: input.position
+          issue_id: input.issue_id
+          task_id: input.task_id
+          added_by: input.added_by
+          added_at: input.at
+        emits: [agentic.tracking.board.CardAdded]
+        payload:
+          agentic.tracking.board.CardAdded:
+            card_id: input.card_id
+            board_id: input.board_id
+            column: input.column
+            position: input.position
+            issue_id: input.issue_id
+            task_id: input.task_id
+            at: input.at
+
+  - name: agentic.tracking.board.MoveCard
+    naming:
+      wire: move-card
+      display: Move a card to a column and position
+    input:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+      - {name: column, type: agentic.tracking.board.ColumnName}
+      - {name: position, type: Integer}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: negative-position
+        when: position < 0
+        error: agentic.tracking.board.NegativePosition
+      - name: no-such-card
+        unknown_instance: true
+        error: agentic.tracking.board.CardNotFound
+        payload:
+          agentic.tracking.board.CardNotFound: {card_id: input.card_id}
+      - name: removed
+        when_subject:
+          predicate: state == Removed
+        error: agentic.tracking.board.CardStateConflict
+        payload:
+          agentic.tracking.board.CardStateConflict: {state: {subject: state}}
+      - name: archived
+        when_related: {via: board_id, predicate: state == Archived}
+        error: agentic.tracking.board.BoardArchived
+        payload:
+          agentic.tracking.board.BoardArchived: {board_id: {subject: board_id}}
+      - name: unknown-column
+        when_related:
+          via: board_id
+          predicate:
+            not:
+              exists: {in: columns, as: c, that: c == input.column}
+        error: agentic.tracking.board.UnknownColumn
+        payload:
+          agentic.tracking.board.UnknownColumn: {column: input.column}
+      - name: moved
+        updates: agentic.tracking.board.Card
+        instance: card_id
+        sets:
+          column: input.column
+          position: input.position
+        emits: [agentic.tracking.board.CardMoved]
+        payload:
+          agentic.tracking.board.CardMoved:
+            card_id: input.card_id
+            from: {subject: column}
+            to: input.column
+            position: input.position
+            at: input.at
+
+  - name: agentic.tracking.board.RemoveCard
+    naming:
+      wire: remove-card
+      display: Remove a card from its board
+    input:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-card
+        unknown_instance: true
+        error: agentic.tracking.board.CardNotFound
+        payload:
+          agentic.tracking.board.CardNotFound: {card_id: input.card_id}
+      - name: removed
+        moves: agentic.tracking.board.Card.remove
+        instance: card_id
+        emits: [agentic.tracking.board.CardRemoved]
+        payload:
+          agentic.tracking.board.CardRemoved:
+            card_id: input.card_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.tracking.board.CardStateConflict
+        payload:
+          agentic.tracking.board.CardStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.tracking.board.BoardCreated
+    fields:
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: columns, type: List<agentic.tracking.board.ColumnName>}
+      - {name: owner, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.board.BoardArchivedEvent
+    naming:
+      wire: board-archived
+    fields:
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.board.CardAdded
+    fields:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+      - {name: column, type: agentic.tracking.board.ColumnName}
+      - {name: position, type: Integer}
+      - {name: issue_id, type: Optional<agentic.tracking.issue.IssueId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.board.CardMoved
+    fields:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+      - {name: from, type: agentic.tracking.board.ColumnName}
+      - {name: to, type: agentic.tracking.board.ColumnName}
+      - {name: position, type: Integer}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.board.CardRemoved
+    fields:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.tracking.board.Boards
+    source: agentic.tracking.board.Board
+    consistency: read_your_writes
+    fields:
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: columns, type: List<agentic.tracking.board.ColumnName>}
+      - {name: owner, type: agentic.shared.PrincipalId}
+      - {name: created_at, type: Timestamp}
+      - {name: state, type: agentic.tracking.board.Board.State}
+    naming:
+      wire: boards
+      display: Boards
+
+  - name: agentic.tracking.board.Cards
+    source: agentic.tracking.board.Card
+    consistency: read_your_writes
+    fields:
+      - {name: card_id, type: agentic.tracking.board.CardId}
+      - {name: board_id, type: agentic.tracking.board.BoardId}
+      - {name: column, type: agentic.tracking.board.ColumnName}
+      - {name: position, type: Integer}
+      - {name: issue_id, type: Optional<agentic.tracking.issue.IssueId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: added_by, type: agentic.shared.PrincipalId}
+      - {name: added_at, type: Timestamp}
+      - {name: state, type: agentic.tracking.board.Card.State}
+    naming:
+      wire: cards
+      display: Cards

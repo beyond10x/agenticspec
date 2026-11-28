@@ -1,0 +1,44 @@
+format: agenticspec-architecture/1
+architecture: auto-merger
+summary: >-
+  An agent that watches the change requests of one repository on a forge and merges each one whose
+  checks passed at the head a reviewer approved, acting under a grant its owner issued. A recorded
+  check result wakes it; it reads the change request, and merges or leaves it. The merge rule is the
+  source-control pack's (agentic.scm.change.MergeChangeRequest): the named head is still the head,
+  an approval binds exactly that head, its checks passed, and the grant is active. A push after an
+  approval leaves the approval behind, so the merger waits for a new one. The parts of the pack
+  (forge, repository, change requests, check runs) are named by their blocks; the simulator checks
+  the structure and does not simulate them.
+
+parts:
+  owner:    { block: principal, kind: human }
+  reviewer: { block: principal, kind: human }
+  ci:       { block: principal, kind: service }
+  merger:   { block: agent, harness: coding, role: merger, acts_for: owner }
+  gateway:  { block: gateway, rate_limit_per_minute: 30 }
+  model:    { block: model, route: small }
+  forge:    { block: scm.forge }
+  repo:     { block: scm.repository }
+  changes:  { block: scm.change }
+  checks:   { block: scm.check }
+  merge_grant: { block: authority, kind: grant, action_class: Execute, scope: merge, expires_after: 24h }
+  on_checks: { block: trigger, kind: on_event, event_name: agentic.scm.change.ChecksRecorded, policy: queue, max_parallel: 1 }
+
+links:
+  - { from: forge,       to: repo,        carries: hosts }
+  - { from: repo,        to: changes,     carries: change_request }
+  - { from: ci,          to: checks,      carries: check_result }
+  - { from: checks,      to: changes,     carries: checks }
+  - { from: reviewer,    to: changes,     carries: approval }
+  - { from: on_checks,   to: merger,      carries: trigger }
+  - { from: owner,       to: merge_grant, carries: grant }
+  - { from: merge_grant, to: merger,      carries: grant }
+  - { from: merger,      to: changes,     carries: merge }
+  - { from: merger,      to: owner,       carries: question }
+  - { from: merger,      to: gateway,     carries: model_call }
+  - { from: gateway,     to: model,       carries: model_call }
+
+border: [merger]
+
+policies:
+  question_default_after: 15m
