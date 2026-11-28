@@ -8,6 +8,7 @@ mod control_plane;
 mod corpus;
 mod deploy;
 mod deploy_config;
+mod deploy_access;
 mod deploy_images;
 mod deploy_state;
 mod deploy_ui;

@@ -9,7 +9,7 @@ use super::admit::{Accepts, Finding, Plan, PlannedUnit, admit, sort};
 use super::binding::{self as binding_form, Binding, UnitImage};
 use super::config;
 use super::grants;
-use super::packing::{self, Packing, clock_link, schedule_of, schedule_part};
+use super::packing::{self, Packing, Unit, clock_link, schedule_of, schedule_part};
 use super::ui;
 use super::{digest, sha256};
 use crate::check::value;
@@ -1173,21 +1173,59 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     Err(Refused::NotAdmitted(findings))
 }
 
-/// The volumes a unit claims: one per workspace part, read-write by one copy when it is
-/// exclusive, read-only by many when shared read-only, read-write by many otherwise; and one per
-/// runtime part with durable state, `<part>-state`, read-write by one copy. Per copy of its part
-/// when it is `per` one; its size is `parts.<p>.size` of the binding, its mount
+/// Whether part `p` names the volume `name` under `parts.<p>.volumes[]` of the binding.
+fn names_volume(binding: &Value, p: &str, name: &str) -> bool {
+    binding["parts"][p]["volumes"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .any(|v| v["name"] == name)
+}
+
+/// The access of unit `u`'s claim on the volume `name`, from who mounts it: `read_only_many`
+/// for a shared read-only workspace; `read_write_many` when a part of another unit names the
+/// volume under `parts.<p>.volumes[]`, or when the claim is not one per copy (`per_instance`)
+/// and the unit does not run exactly one copy (more replicas, or a `job` or `scheduled` unit,
+/// whose runs start on demand and may overlap); `read_write_once` otherwise, whatever the
+/// sharing among the parts of the unit.
+fn access(
+    plan: &Plan,
+    binding: &Value,
+    u: &Unit,
+    name: &str,
+    read_only: bool,
+    per_instance: bool,
+) -> &'static str {
+    if read_only {
+        return "read_only_many";
+    }
+    let other_unit = plan.units.iter().any(|o| {
+        o.unit.name != u.name && o.unit.parts.iter().any(|p| names_volume(binding, p, name))
+    });
+    if !other_unit && (per_instance || u.replicas == Some(1)) {
+        "read_write_once"
+    } else {
+        "read_write_many"
+    }
+}
+
+/// The volumes a unit claims: one per workspace part and one per runtime part with durable
+/// state, `<part>-state`. Per copy of its part when it is `per` one; its access from who mounts
+/// it ([`access`]); its size is `parts.<p>.size` of the binding, its mount
 /// `parts.<p>.volumes[].mount` of a part of the unit that names it.
-fn volumes(inputs: &Inputs, parts: &[String]) -> Vec<Value> {
+fn volumes(inputs: &Inputs, plan: &Plan, u: &Unit) -> Vec<Value> {
+    let parts = &u.parts;
+    let binding = &inputs.binding.doc;
     let mut out = Vec::new();
     for p in parts {
         let part = &inputs.arch["parts"][p];
+        let per_instance = !part["per"].is_null();
         if binding_form::durable_state(part) {
             let name = binding_form::state_volume(p);
             let mut v = json!({
                 "name": name,
-                "access": "read_write_once",
-                "per_instance": !part["per"].is_null(),
+                "access": access(plan, binding, u, &name, false, per_instance),
+                "per_instance": per_instance,
             });
             if let Some(size) = inputs.binding.doc["parts"][p]["size"].as_str() {
                 v["size"] = json!(size);
@@ -1201,15 +1239,11 @@ fn volumes(inputs: &Inputs, parts: &[String]) -> Vec<Value> {
         if part["block"] != "workspace" {
             continue;
         }
-        let access = match value(&part["sharing"]).as_str() {
-            Some("exclusive") => "read_write_once",
-            Some("shared_read_only") => "read_only_many",
-            _ => "read_write_many",
-        };
+        let read_only = value(&part["sharing"]).as_str() == Some("shared_read_only");
         let mut v = json!({
             "name": p,
-            "access": access,
-            "per_instance": !part["per"].is_null(),
+            "access": access(plan, binding, u, p, read_only, per_instance),
+            "per_instance": per_instance,
         });
         if let Some(size) = inputs.binding.doc["parts"][p]["size"].as_str() {
             v["size"] = json!(size);
@@ -1268,7 +1302,7 @@ fn unit(
         "cpu_millis": c["cpu_millis"].as_u64().unwrap_or(DEFAULT_CPU_MILLIS),
         "memory_mib": c["memory_mib"].as_u64().unwrap_or(DEFAULT_MEMORY_MIB),
         "accelerators": accelerators,
-        "volumes": volumes(inputs, &u.parts),
+        "volumes": volumes(inputs, plan, u),
     });
 
     let isolation = u
