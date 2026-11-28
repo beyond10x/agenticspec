@@ -81,6 +81,7 @@ const TOP: &[&str] = &[
     "parts",
     "links",
     "border",
+    "ingress",
     "policies",
 ];
 

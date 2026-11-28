@@ -1,6 +1,6 @@
 format: agenticspec-contract/1
 architecture: solo
-ports_digest: 24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229
+ports_digest: 1fd7870a3fac38ea3ab9fd288724a732bdc422a140fc1b42e3e1bc132e93df1c
 ports:
   - port: harness.session
     part: agent

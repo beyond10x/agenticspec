@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 09499edd76383a5b6ce23f3305e5f98657a4cd8caa500a4cb9f9487e4c454993
+// contract digest 90fcbfa17c5fb1a9f501de5125201a571c9c685b523fe085bb71ac08a299e348
 // do not edit: regenerate with `ess synthesize`
 
 //! Ephemeral stores for the generated network entry points; no durability.

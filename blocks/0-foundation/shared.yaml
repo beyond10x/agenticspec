@@ -80,6 +80,8 @@ types:
   - {name: agentic.shared.PlacementId, kind: newtype, of: Uuid}
   - {name: agentic.shared.PortId, kind: newtype, of: Uuid}
   - {name: agentic.shared.ContractId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.IngressId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ExportId, kind: newtype, of: Uuid}
 
   # 10 evaluation
   - {name: agentic.shared.KpiId, kind: newtype, of: Uuid}

@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 09499edd76383a5b6ce23f3305e5f98657a4cd8caa500a4cb9f9487e4c454993
+// contract digest 90fcbfa17c5fb1a9f501de5125201a571c9c685b523fe085bb71ac08a299e348
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -620,11 +620,15 @@ pub struct SessionSummary {
 pub struct SimCheckInput {
     /// `architecture` — `String`.
     pub architecture: String,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `kpis` — `Optional<String>`.
+    pub kpis: Option<String>,
 }
 
 /// SimCheckResult — `agenticspec.cli.SimCheckResult`.
 ///
-/// The architecture the check accepted, with its counts of parts and links, the KPIs of the architecture as a whole and the architectures it nests.
+/// The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs of the architecture as a whole and the architectures it nests.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCheckResult {
     /// `architecture` — `String`.
@@ -639,6 +643,8 @@ pub struct SimCheckResult {
     pub single_points: Vec<String>,
     /// `nested` — `List<agenticspec.cli.SimNested>`.
     pub nested: Vec<SimNested>,
+    /// `ingresses` — `Integer`.
+    pub ingresses: i64,
 }
 
 /// SimContractInput — `agenticspec.cli.SimContractInput`.
@@ -656,6 +662,8 @@ pub struct SimContractInput {
     pub suite: Option<String>,
     /// `trace` — `Optional<String>`.
     pub trace: Option<String>,
+    /// `kpis` — `Optional<String>`.
+    pub kpis: Option<String>,
 }
 
 /// SimContractResult — `agenticspec.cli.SimContractResult`.
@@ -669,6 +677,8 @@ pub struct SimContractResult {
     pub ports: i64,
     /// `invariants` — `Integer`.
     pub invariants: i64,
+    /// `ingresses` — `Integer`.
+    pub ingresses: i64,
     /// `written` — `Boolean`.
     pub written: bool,
     /// `contract` — `Optional<String>`.

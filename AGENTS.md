@@ -107,9 +107,10 @@ change.
   `<binding>/binding/...` scenario. A causation ESS cannot express gets a reproduction under
   `design/ess-repro/<gap>/` (a header comment says what `ess specify validate` answers).
 - `blocks/ports.json` (`agenticspec-ports/1`) holds the ports derived from the compiled blocks
-  (`agenticspec sim ports`, `docs/contract.md`). A change of a file `blocks/ess-inputs.yaml` lists
-  runs `task ports:generate` in the same change; `task check:ports` (in the gate) compares the
-  digest without `ess`, `task slow:ports` derives afresh. The actors
+  and the surface an ingress selects from: each command's role, each domain's views and events,
+  each actor's `may:` (`agenticspec sim ports`, `docs/contract.md`). A change of a file
+  `blocks/ess-inputs.yaml` lists runs `task ports:generate` in the same change; `task check:ports`
+  (in the gate) compares the digest without `ess`, `task slow:ports` derives afresh. The actors
   `agentic.architecture.Deployer` and `agentic.architecture.Principal` decide configuration and
   principal ports; a new command a deployer issues to end something goes into the deployer's
   `may:`.
@@ -188,6 +189,7 @@ change.
 | `agenticspec-sim` | `contract/derive.rs`, `contract/predicate.rs` | `agenticspec sim contract`: the contract of an architecture document (`agenticspec-contract/1`), its check, and the predicate language of routing invariants |
 | `agenticspec-sim` | `contract/suite.rs` | `agenticspec sim contract --suite`: the blocks' conformance suite cut to the scenarios about a command of a port of the contract (`task contract:conform`, `scripts/contract-conform.sh`) |
 | `agenticspec-sim` | `contract/trace.rs`, `sim/record.rs` | `agenticspec sim trace`: the port uses of one recorded run (`sim/record.rs`, kept only when a run records) as a trace (`agenticspec-trace/1`), and `agenticspec sim contract --trace`, the check of the routing invariants on it |
+| `agenticspec-sim` | `contract/ingress.rs` | the `ingress:` key of an architecture document: its check (`ingress_*` rules, one refusing fixture each in `tests/cases/ingress/`) and each interface resolved into operations for the contract, from the surface of `blocks/ports.json` and `kpis/catalogue.yaml` |
 | `agenticspec-docs` | `lib.rs`, `main.rs`, `packs.rs` | the generated docs pages of the blocks, architectures and KPI catalogue, and of the packs and fields (`packs.rs`, from the root `ess-inputs.yaml`) (`task docs:generate`, `--check`) |
 | `agenticspec-views` | `lib.rs`, `panels.rs`, `values.rs` | the library of `agenticspec ui panels`: from the compiled `blocks/`, one `ess-ui/1` widget per view (`panels.rs`, naming no block, view or command), the synthetic fixture rows and script payloads (`values.rs`), the digest of the inputs and `--check` (`lib.rs`) |
 | `agenticspec-docs` | `contract.rs` | the "Contract" section of an architecture page and a catalog entry |

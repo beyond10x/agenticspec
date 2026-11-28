@@ -37,6 +37,7 @@ scenarios:
   - scenarios/architecture/placements-team-lead.yaml
   - scenarios/architecture/placements-refused.yaml
   - scenarios/architecture/solo-contract-recorded.yaml
+  - scenarios/architecture/workstation-ingress.yaml
   - scenarios/channel/queue-post-taken-once.yaml
   - scenarios/resource/claim-withdrawn-from-queue.yaml
   - scenarios/trigger/schedule-queue-and-skip.yaml

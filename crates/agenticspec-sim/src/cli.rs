@@ -42,11 +42,57 @@ fn load_nested(path: &Path) -> Result<Value, Refusal> {
     })
 }
 
-/// `sim check <architecture>`: the architecture with its counts, the KPIs of the architecture as
-/// a whole (`whole.rs`) and its nested architectures, or every refusal of the check. The
-/// references are resolved first; the check and the KPIs then read the document flattened.
+/// The options of `sim check`.
+#[derive(Debug, Clone)]
+pub struct CheckOptions<'a> {
+    pub architecture: &'a Path,
+    /// The ports file; `blocks/ports.json` when absent. Read only for a document with `ingress:`.
+    pub ports: Option<&'a Path>,
+    /// The KPI catalogue; `kpis/catalogue.yaml` when absent. Read only for a document with
+    /// `ingress:`.
+    pub kpis: Option<&'a Path>,
+}
+
+/// `sim check <architecture>` with the default ports file and KPI catalogue.
 pub fn check(path: &Path) -> Result<Value, Refusal> {
-    let arch = load_nested(path)?;
+    check_with(&CheckOptions {
+        architecture: path,
+        ports: None,
+        kpis: None,
+    })
+}
+
+/// The contract of a document the structural check accepts, its ingresses resolved: refused
+/// with every refusal of the check of `ingress:` (`architecture_refused`). A document without
+/// `ingress:` reads no KPI catalogue.
+fn derive_contract(
+    arch: &Value,
+    ports: &crate::contract::ports::PortsFile,
+    kpis: Option<&Path>,
+) -> Result<crate::contract::derive::Contract, Refusal> {
+    use crate::contract::{derive as d, ingress};
+    let mut contract =
+        d::derive(arch, ports).map_err(|r| refused("contract_refused", r.join("; ")))?;
+    if ingress::declares(arch) {
+        let kpis = ingress::Kpis::load(kpis.unwrap_or(Path::new("kpis/catalogue.yaml")))
+            .map_err(|e| refused("kpis_unreadable", e))?;
+        let (resolved, refusals) = ingress::resolve(arch, &contract, ports, &kpis);
+        if !refusals.is_empty() {
+            let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+            return Err(refused("architecture_refused", names.join("; ")));
+        }
+        contract.ingress = resolved;
+    }
+    Ok(contract)
+}
+
+/// `sim check <architecture> [--ports <file>] [--kpis <file>]`: the architecture with its
+/// counts, the KPIs of the architecture as a whole (`whole.rs`) and its nested architectures,
+/// or every refusal of the check. The references are resolved first; the check and the KPIs
+/// then read the document flattened. A document with `ingress:` is checked against the ports
+/// file and the KPI catalogue too.
+pub fn check_with(o: &CheckOptions) -> Result<Value, Refusal> {
+    let arch = load_nested(o.architecture)?;
     let flat = nest::flatten(&arch);
     let refusals = check_architecture(&flat);
     if !refusals.is_empty() {
@@ -57,6 +103,17 @@ pub fn check(path: &Path) -> Result<Value, Refusal> {
         .into_iter()
         .map(|(k, v)| (k.to_string(), crate::doc::number(v)))
         .collect();
+    let mut ingresses = 0;
+    if crate::contract::ingress::declares(&flat) {
+        let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
+        let ports = crate::contract::ports::PortsFile::load(ports_path)
+            .map_err(|e| refused("ports_unreadable", e))?;
+        let contract = derive_contract(&flat, &ports, o.kpis).map_err(|r| match r.code {
+            "contract_refused" => refused("architecture_refused", r.detail),
+            _ => r,
+        })?;
+        ingresses = contract.ingress.len();
+    }
     Ok(json!({
         "architecture": arch["architecture"].as_str().unwrap_or("architecture"),
         "parts": arch["parts"].as_object().map_or(0, |p| p.len()),
@@ -64,6 +121,7 @@ pub fn check(path: &Path) -> Result<Value, Refusal> {
         "kpis": kpis,
         "single_points": crate::whole::single_point_parts(&flat),
         "nested": nest::listed(&arch),
+        "ingresses": ingresses,
     }))
 }
 
@@ -394,7 +452,13 @@ pub fn ports(o: &PortsOptions, log: &mut dyn Write) -> Result<Value, Refusal> {
             "differences": [],
         }));
     }
-    let text = p::file_text(&derived.ports, &derived.bindings, &ess, &digest);
+    let text = p::file_text(
+        &derived.ports,
+        &derived.bindings,
+        &derived.surface,
+        &ess,
+        &digest,
+    );
     let mut answer = json!({
         "ports": derived.ports.len(),
         "sources_sha256": digest,
@@ -422,15 +486,18 @@ pub struct ContractOptions<'a> {
     pub suite: Option<&'a Path>,
     /// A trace (`agenticspec-trace/1`) to check the contract's routing invariants on.
     pub trace: Option<&'a Path>,
+    /// The KPI catalogue; `kpis/catalogue.yaml` when absent. Read only for a document with
+    /// `ingress:`.
+    pub kpis: Option<&'a Path>,
 }
 
-/// `sim contract <architecture> [--ports <file>] [--out <file>] [--check <file>]
+/// `sim contract <architecture> [--ports <file>] [--kpis <file>] [--out <file>] [--check <file>]
 /// [--suite <suite.json>] [--trace <trace.json>]`: derive the contract of an architecture
-/// document and check it, then write it (or print it); refused, writing nothing, when the
-/// document fails `sim check`. With `--check`, read a written contract and check it against the
-/// document and the ports instead. With `--suite`, cut the suite to the contract's ports and write
-/// the cut suite to `--out`. With `--trace`, check every routing invariant on the trace, one line
-/// each to `log`, refused as `invariant_violated` when one is violated.
+/// document, its ingresses resolved, and check it, then write it (or print it); refused, writing
+/// nothing, when the document fails `sim check`. With `--check`, read a written contract and check
+/// it against the document and the ports instead. With `--suite`, cut the suite to the contract's
+/// ports and write the cut suite to `--out`. With `--trace`, check every routing invariant on the
+/// trace, one line each to `log`, refused as `invariant_violated` when one is violated.
 pub fn contract(o: &ContractOptions, log: &mut dyn Write) -> Result<Value, Refusal> {
     use crate::contract::derive as d;
     use crate::contract::ports::PortsFile;
@@ -449,7 +516,7 @@ pub fn contract(o: &ContractOptions, log: &mut dyn Write) -> Result<Value, Refus
             d::Contract::parse(&text)
                 .map_err(|e| refused("contract_refused", format!("{}: {e}", file.display())))?
         }
-        None => d::derive(&arch, &ports).map_err(|r| refused("contract_refused", r.join("; ")))?,
+        None => derive_contract(&arch, &ports, o.kpis)?,
     };
     let problems = d::check(&contract, &arch, &ports);
     if !problems.is_empty() {
@@ -459,6 +526,7 @@ pub fn contract(o: &ContractOptions, log: &mut dyn Write) -> Result<Value, Refus
         "architecture": contract.architecture,
         "ports": contract.ports.len(),
         "invariants": contract.invariants.len(),
+        "ingresses": contract.ingress.len(),
         "written": false,
         "checks": [],
     });

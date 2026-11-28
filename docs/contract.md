@@ -47,6 +47,22 @@ in `blocks/9-composition/architecture.yaml`.
 | `sources_sha256` | SHA-256 over the `ess` line, then `<sha256> <path>` for `blocks/ess-inputs.yaml` and every file it lists |
 | `bindings` | each binding of the blocks and the command it invokes: the commands no runtime is asked for |
 | `ports` | each port: `name`, `block`, `kind` (`Outbound`, `Clock`, `Principal`), `intent_event`, `waiting_state`, `reports`, `protocol` |
+| `actors` | each actor of the blocks and the commands its `may:` lists |
+| `domains` | each domain of the blocks: its `commands`, each with its role (below), its `views` and its `events` |
+
+The role of a command is the first of these that applies:
+
+| role | the command |
+|---|---|
+| `internal` | a binding invokes it |
+| `report` | reports into a waiting state of a port (`CompleteCall`, `Answer`) |
+| `intent` | states the intent of a port: a first command of its protocol (`SendMessage`, `AdmitCall`) |
+| `configuration` | an accepting outcome creates its entity (`OpenGateway`, `RegisterPrincipal`): set up from the architecture document only |
+| `administration` | every accepting outcome moves or updates an existing entity (`DrainGateway`, `StopGateway`, `RevokeGrant`): an operator issues it at run time |
+| `entry` | any other command |
+
+An ingress reads the roles, the views, the events and the actors from this file, so its check
+calls no `ess`.
 
 ```sh
 task ports:generate                                     # derive blocks/ports.json (calls ess)
@@ -69,7 +85,9 @@ protocol of a direct message.
 from the document and `blocks/ports.json`, checks it, and prints it (`jq -r .contract`) or writes
 it with `--out <file>`. A document `agenticspec sim check` refuses gets no contract: the command
 exits 1 with the check's refusals and writes nothing. `--check <file>` reads a written contract
-and checks it against the document and the ports.
+and checks it against the document and the ports. For a document with [ingresses](#ingresses),
+`--kpis <file>` names the KPI catalogue its metrics are resolved against
+(`kpis/catalogue.yaml` by default).
 
 Each [architecture page](architectures/index.md) and [catalog entry](catalog/index.md) shows its
 contract in a section "Contract", with the contract file to download
@@ -185,18 +203,132 @@ invariants:
     within: gateway.call
     predicate: "every model.inference@worker inside gateway.call@gateway"
 border: [operator]
+ingress:
+  - name: metrics
+    audience: monitor
+    authenticated: false
+    exports: [metrics_scrape]
+    operations:
+      - {kind: metric, name: cost_usd}
 ```
 
-Ports are ordered by part, then port; invariants follow the document's links. The same document
-and ports file give the same bytes. The contract is the content of `agentic.architecture.Contract`
-in the building blocks.
+Ports are ordered by part, then port; invariants follow the document's links; ingresses by name,
+their operations by kind (command, view, feed, metric), then name. `ingress` is written only for
+a document that declares one. The same document, ports file and KPI catalogue give the same bytes.
+The contract is the content of `agentic.architecture.Contract` in the building blocks.
 
 ### The check
 
 A contract passes when its `ports_digest` is the ports file's digest, every port it names is in
 the ports file with the same protocol, every part, link and border part is in the document, and
 every invariant names a port its link's `from` part uses and has a predicate that parses and
-starts with that use. `sim contract` checks every contract it derives before printing it.
+starts with that use. Its ingresses are the document's, with the same audience, `authenticated`
+and exports. `sim contract` checks every contract it derives before printing it.
+
+## Ingresses
+
+The border says which parts take input from outside. An **ingress** says who reaches the
+architecture from outside, what that audience may use, and over which protocols. A document
+declares its ingresses under a top-level `ingress:` key; without one it declares none.
+
+```yaml
+ingress:
+  user:
+    audience: owner
+    interface:
+      scope: linked
+      commands: [principal]
+      views: true
+      feeds: true
+    exports:
+      - { protocol: http }
+      - { protocol: event_stream }
+      - { protocol: ui }
+  operator:
+    audience: admin
+    interface:
+      scope: all
+      commands: { plays: [agentic.gateway.GatewayOperator] }
+      views: true
+    exports: [{ protocol: http }, { protocol: tool }]
+  metrics:
+    audience: monitor
+    authenticated: false
+    interface:
+      scope: all
+      metrics: [owner_wait_share, cost_usd]
+    exports: [{ protocol: metrics_scrape }]
+```
+
+[`architectures/workstation-ingress.yaml`](architectures/workstation-ingress.md) is this example
+in full.
+
+### An ingress
+
+| key | meaning |
+|---|---|
+| `audience` | the principal part the ingress serves. A part only an ingress reaches is not refused as unreachable |
+| `authenticated` | whether callers authenticate; `true` by default. `false` only for an interface without commands |
+| `interface` | what the audience may use (below) |
+| `exports` | one or more `{protocol: …}`, each protocol at most once |
+| `rate_limit_per_minute` | a limit of the ingress; it may be marked with `vary` |
+| `summary` | text |
+
+### The interface
+
+An interface only selects. It names no field, no type and no protocol; the fields of each
+operation come from the building blocks.
+
+| key | values | selects |
+|---|---|---|
+| `scope` | `linked`: the parts the audience links to (`to` and `over` of its links); `all`; or a list of parts | the domains the rules below read: each part's own block's domain and the domains of the ports it uses in the contract |
+| `commands` | `principal`; `{plays: [<actor>]}`; `{except: [<command>]}`; or a list of these | `principal`: the answers of the principal ports the audience uses (the reports the actor `agentic.architecture.Principal` may issue: `Answer`) and the intent of each input the audience sends into the border (`owner -> operator carries prompt over chat`: `SendMessage`). `plays`: the `administration` commands in the actor's `may:` |
+| `views` | `true`, `false` (default), or `{except: [<view>]}` | every view of the scope's domains |
+| `feeds` | `true`, `false` (default), or `{except: [<event>]}` | every event of the scope's domains |
+| `metrics` | KPI ids of `kpis/catalogue.yaml` | each KPI, whose block is a block of the scope |
+
+Configuration commands never enter an interface: the document, through a new revision, is their
+only source.
+
+### Exports
+
+| protocol | carries |
+|---|---|
+| `http` | commands, views |
+| `event_stream` | feeds |
+| `cli` | commands, views |
+| `tool` | commands, views |
+| `agent` | commands, feeds |
+| `metrics_scrape` | metrics |
+| `ui` | commands, views, feeds, metrics |
+
+Every operation kind of the interface is carried by at least one export. A different subset for
+another protocol is another ingress.
+
+### The check of ingresses
+
+`agenticspec sim check` reads `blocks/ports.json` (`--ports`) and `kpis/catalogue.yaml`
+(`--kpis`) for a document with `ingress:`, and refuses, naming the rule:
+
+| rule | refused |
+|---|---|
+| `ingress_malformed` | a key, value or shape the format does not have |
+| `ingress_audience_not_principal` | an audience that names no principal part |
+| `ingress_without_export` | an ingress with no export |
+| `ingress_unknown_protocol` | a protocol outside the table above |
+| `ingress_unknown_part` | a part in a `scope` list that does not exist |
+| `ingress_unknown_operation` | a name in `plays`, `except` or `metrics` the blocks or the catalogue lack |
+| `ingress_actor_is_implementation` | `plays` names an actor whose `may:` holds a report of a port that is not a principal port (the implementation issues those) |
+| `ingress_outside_scope` | an actor or a KPI whose domain or block is not in the scope |
+| `ingress_command_off_border` | an input of the audience (a `principal` command) that reaches a part not on the border |
+| `ingress_operation_not_carried` | an operation kind no export of the ingress carries |
+| `ingress_ui_without_wire` | a `ui` export without `http` and `event_stream` beside it |
+| `ingress_unauthenticated_command` | `authenticated: false` beside a command |
+| `ingress_agent_without_channel` | an `agent` export whose audience sends no input into the border, or one over no channel part |
+| `principal_port_without_ingress` | a principal port a principal part uses that no ingress of that part answers over an export that carries commands |
+
+A document refused here gets no contract. The contract's `ingress` lists each interface resolved
+into operations, `{kind, name}`.
 
 ### Nested architectures
 

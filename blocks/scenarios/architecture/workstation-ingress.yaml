@@ -1,0 +1,205 @@
+# The ingresses of the workstation (architectures/workstation-ingress.yaml), lowered to commands:
+# the owner's ingress `user` is added with its interface's rules as written and exported over
+# http, an event stream and a UI. A second ingress of the same name is refused, an ingress whose
+# audience is the operator agent is refused (an audience is a principal part), and a second http
+# export of `user` is refused, and so are an audience of another architecture, an architecture
+# that does not exist and a retired one. The Ingresses view lists `user` with its audience.
+# Synthesis cannot arrange the audience part (ESS-SYNTH-003), so every outcome of AddIngress and
+# AddExport but no-such-ingress is authored here.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: workstation-ingress
+summary: The owner's ingress is added and exported over http, an event stream and a UI; a taken name, an agent audience and a second http export are refused.
+
+arrange:
+  - instance: ws
+    entity: agentic.architecture.Architecture
+  - instance: other
+    entity: agentic.architecture.Architecture
+
+timeline:
+  - at: 2026-11-28T10:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: workstation-ingress}
+    outcome: created
+    capture: {instance: ws, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+
+  - at: 2026-11-28T10:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000301
+      architecture_id: {$instance: ws}
+      name: owner
+      kind: Principal
+      count: 1
+      settings: [{name: kind, value: human}]
+    outcome: added
+  - at: 2026-11-28T10:00:02Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000302
+      architecture_id: {$instance: ws}
+      name: operator
+      kind: Agent
+      count: 1
+      settings: [{name: harness, value: coding}]
+    outcome: added
+
+  - at: 2026-11-28T10:00:03Z
+    command: agentic.architecture.AddIngress
+    input:
+      ingress_id: 00000000-0000-4000-8000-000000000401
+      architecture_id: {$instance: ws}
+      name: user
+      audience_part_id: 00000000-0000-4000-8000-000000000301
+      authenticated: true
+      interface: "{scope: linked, commands: [principal], views: true, feeds: true}"
+    outcome: added
+    events:
+      - event: agentic.architecture.IngressAdded
+        payload:
+          ingress_id: 00000000-0000-4000-8000-000000000401
+          name: user
+
+  - at: 2026-11-28T10:00:04Z
+    command: agentic.architecture.AddIngress
+    input:
+      ingress_id: 00000000-0000-4000-8000-000000000402
+      architecture_id: {$instance: ws}
+      name: user
+      audience_part_id: 00000000-0000-4000-8000-000000000301
+      authenticated: true
+      interface: "{views: true}"
+    outcome: name-taken
+    error:
+      name: agentic.architecture.IngressNameTaken
+    no_events: [agentic.architecture.IngressAdded]
+
+  - at: 2026-11-28T10:00:05Z
+    command: agentic.architecture.AddIngress
+    input:
+      ingress_id: 00000000-0000-4000-8000-000000000403
+      architecture_id: {$instance: ws}
+      name: robot
+      audience_part_id: 00000000-0000-4000-8000-000000000302
+      authenticated: true
+      interface: "{views: true}"
+    outcome: audience-not-principal
+    error:
+      name: agentic.architecture.AudienceNotPrincipal
+    no_events: [agentic.architecture.IngressAdded]
+
+  - at: 2026-11-28T10:00:06Z
+    command: agentic.architecture.AddExport
+    input:
+      export_id: 00000000-0000-4000-8000-000000000501
+      ingress_id: 00000000-0000-4000-8000-000000000401
+      protocol: Http
+    outcome: added
+  - at: 2026-11-28T10:00:07Z
+    command: agentic.architecture.AddExport
+    input:
+      export_id: 00000000-0000-4000-8000-000000000502
+      ingress_id: 00000000-0000-4000-8000-000000000401
+      protocol: EventStream
+    outcome: added
+  - at: 2026-11-28T10:00:08Z
+    command: agentic.architecture.AddExport
+    input:
+      export_id: 00000000-0000-4000-8000-000000000503
+      ingress_id: 00000000-0000-4000-8000-000000000401
+      protocol: Ui
+    outcome: added
+    events:
+      - event: agentic.architecture.ExportAdded
+        payload:
+          ingress_id: 00000000-0000-4000-8000-000000000401
+          protocol: Ui
+
+  - at: 2026-11-28T10:00:09Z
+    command: agentic.architecture.AddExport
+    input:
+      export_id: 00000000-0000-4000-8000-000000000504
+      ingress_id: 00000000-0000-4000-8000-000000000401
+      protocol: Http
+    outcome: exists
+    error:
+      name: agentic.architecture.ExportExists
+    no_events: [agentic.architecture.ExportAdded]
+
+  # The audience is a part of another architecture; then an architecture that does not exist;
+  # then the workstation retired.
+  - at: 2026-11-28T10:00:10Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: other}
+    outcome: created
+    capture: {instance: other, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+  - at: 2026-11-28T10:00:11Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000303
+      architecture_id: {$instance: other}
+      name: owner
+      kind: Principal
+      count: 1
+      settings: [{name: kind, value: human}]
+    outcome: added
+  - at: 2026-11-28T10:00:12Z
+    command: agentic.architecture.AddIngress
+    input:
+      ingress_id: 00000000-0000-4000-8000-000000000404
+      architecture_id: {$instance: ws}
+      name: guest
+      audience_part_id: 00000000-0000-4000-8000-000000000303
+      authenticated: true
+      interface: "{views: true}"
+    outcome: foreign-audience
+    error:
+      name: agentic.architecture.ForeignPart
+    no_events: [agentic.architecture.IngressAdded]
+  - at: 2026-11-28T10:00:13Z
+    command: agentic.architecture.AddIngress
+    input:
+      ingress_id: 00000000-0000-4000-8000-000000000405
+      architecture_id: 00000000-0000-4000-8000-0000000009ff
+      name: lost
+      audience_part_id: 00000000-0000-4000-8000-000000000301
+      authenticated: true
+      interface: "{views: true}"
+    outcome: no-such-architecture
+    error:
+      name: agentic.architecture.NoSuchArchitecture
+    no_events: [agentic.architecture.IngressAdded]
+  - at: 2026-11-28T10:00:14Z
+    command: agentic.architecture.RetireArchitecture
+    input:
+      architecture_id: {$instance: ws}
+    outcome: retired
+  - at: 2026-11-28T10:00:15Z
+    command: agentic.architecture.AddIngress
+    input:
+      ingress_id: 00000000-0000-4000-8000-000000000406
+      architecture_id: {$instance: ws}
+      name: late
+      audience_part_id: 00000000-0000-4000-8000-000000000301
+      authenticated: true
+      interface: "{views: true}"
+    outcome: retired
+    error:
+      name: agentic.architecture.RetiredArchitecture
+    no_events: [agentic.architecture.IngressAdded]
+
+assert:
+  - view: agentic.architecture.Ingresses
+    params:
+      architecture_id: {$instance: ws}
+    counts:
+      at_least: 1
+      at_most: 1
+  - view: agentic.architecture.Ingresses
+    params:
+      architecture_id: {$instance: ws}
+    contains:
+      name: user
+      audience_name: owner
+      authenticated: true

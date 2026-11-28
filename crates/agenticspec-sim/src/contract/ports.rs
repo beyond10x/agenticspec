@@ -149,6 +149,132 @@ impl fmt::Display for Class {
     }
 }
 
+/// What a command is to an interface of an architecture (`docs/contract.md`, "The surface"):
+/// the first that applies, in this order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Role {
+    /// An ESS binding invokes it.
+    Internal,
+    /// It reports into a waiting state of a port: the world's, or a principal's, answer.
+    Report,
+    /// It states the intent of a port (the first command of its protocol).
+    Intent,
+    /// An accepting outcome creates its entity: set up from the architecture document only.
+    Configuration,
+    /// Every accepting outcome moves or updates an existing entity: an operator's at run time.
+    Administration,
+    /// Any other entry command.
+    Entry,
+}
+
+impl Role {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Role::Internal => "internal",
+            Role::Report => "report",
+            Role::Intent => "intent",
+            Role::Configuration => "configuration",
+            Role::Administration => "administration",
+            Role::Entry => "entry",
+        }
+    }
+
+    pub fn parse(text: &str) -> Option<Role> {
+        [
+            Role::Internal,
+            Role::Report,
+            Role::Intent,
+            Role::Configuration,
+            Role::Administration,
+            Role::Entry,
+        ]
+        .into_iter()
+        .find(|r| r.as_str() == text)
+    }
+}
+
+/// The commands, views and events of one domain of the blocks.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct DomainSurface {
+    pub commands: BTreeMap<String, Role>,
+    pub views: Vec<String>,
+    pub events: Vec<String>,
+}
+
+/// What an interface of an architecture selects from: per domain its commands with their role,
+/// its views and its events, and per ESS actor the commands it may issue.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Surface {
+    pub actors: BTreeMap<String, Vec<String>>,
+    pub domains: BTreeMap<String, DomainSurface>,
+}
+
+impl Surface {
+    /// The role of a command, when it is a command of the blocks.
+    pub fn role(&self, command: &str) -> Option<Role> {
+        let (domain, _) = command.rsplit_once('.')?;
+        self.domains.get(domain)?.commands.get(command).copied()
+    }
+
+    pub fn has_view(&self, view: &str) -> bool {
+        view.rsplit_once('.')
+            .and_then(|(d, _)| self.domains.get(d))
+            .is_some_and(|d| d.views.iter().any(|v| v == view))
+    }
+
+    pub fn has_event(&self, event: &str) -> bool {
+        event
+            .rsplit_once('.')
+            .and_then(|(d, _)| self.domains.get(d))
+            .is_some_and(|d| d.events.iter().any(|v| v == event))
+    }
+
+    fn to_json(&self) -> (Value, Value) {
+        let domains: Map<String, Value> = self
+            .domains
+            .iter()
+            .map(|(name, d)| {
+                let commands: Map<String, Value> = d
+                    .commands
+                    .iter()
+                    .map(|(c, r)| (c.clone(), json!(r.as_str())))
+                    .collect();
+                (
+                    name.clone(),
+                    json!({ "commands": commands, "views": d.views, "events": d.events }),
+                )
+            })
+            .collect();
+        (json!(self.actors), Value::Object(domains))
+    }
+
+    fn from_json(actors: &Value, domains: &Value) -> Result<Surface, String> {
+        let mut out = Surface::default();
+        for (name, may) in actors.as_object().into_iter().flatten() {
+            out.actors.insert(name.clone(), strings(may));
+        }
+        for (name, d) in domains.as_object().into_iter().flatten() {
+            let mut commands = BTreeMap::new();
+            for (c, r) in d["commands"].as_object().into_iter().flatten() {
+                let role = r
+                    .as_str()
+                    .and_then(Role::parse)
+                    .ok_or_else(|| format!("command {c}: unknown role {r}"))?;
+                commands.insert(c.clone(), role);
+            }
+            out.domains.insert(
+                name.clone(),
+                DomainSurface {
+                    commands,
+                    views: strings(&d["views"]),
+                    events: strings(&d["events"]),
+                },
+            );
+        }
+        Ok(out)
+    }
+}
+
 /// The derivation: every command's class, every event's consumption, and the ports.
 #[derive(Debug)]
 pub struct Derivation {
@@ -158,6 +284,7 @@ pub struct Derivation {
     /// Binding name to the command it invokes.
     pub bindings: BTreeMap<String, String>,
     pub ports: Vec<Port>,
+    pub surface: Surface,
 }
 
 /// One change of state by one command.
@@ -432,6 +559,7 @@ pub fn derive(ir: &Value) -> Result<Derivation, Vec<String>> {
     let is_config = |c: &str| class.get(c) == Some(&Class::Configuration);
     let is_internal = |c: &str| class.get(c) == Some(&Class::Internal);
     let mut ports = Vec::new();
+    let mut intent_commands: BTreeSet<String> = BTreeSet::new();
     for (ename, e) in entities {
         let term = terminal(ename);
         let exits = |s: &str| -> Vec<&Edge> {
@@ -575,6 +703,7 @@ pub fn derive(ir: &Value) -> Result<Derivation, Vec<String>> {
         } else {
             Kind::Outbound
         };
+        intent_commands.extend(intents.iter().map(|x| x.command.clone()));
         ports.push(Port {
             name,
             block: block_of(ename),
@@ -608,6 +737,7 @@ pub fn derive(ir: &Value) -> Result<Derivation, Vec<String>> {
         }
     }
     if refusals.is_empty() {
+        let surface = surface(ir, &bound, &ports, &intent_commands);
         Ok(Derivation {
             commands: class,
             events,
@@ -616,10 +746,79 @@ pub fn derive(ir: &Value) -> Result<Derivation, Vec<String>> {
                 .filter_map(|(n, b)| b["command"].as_str().map(|c| (n.clone(), c.to_owned())))
                 .collect(),
             ports,
+            surface,
         })
     } else {
         Err(refusals)
     }
+}
+
+/// The surface of a compiled system: each command's [`Role`], each domain's views and events,
+/// each actor's `may:`.
+fn surface(
+    ir: &Value,
+    bound: &BTreeSet<String>,
+    ports: &[Port],
+    intents: &BTreeSet<String>,
+) -> Surface {
+    let reports: BTreeSet<&str> = ports
+        .iter()
+        .flat_map(|p| p.reports.iter().map(String::as_str))
+        .collect();
+    let mut out = Surface::default();
+    let domain_of = |v: &Value, name: &str| {
+        v["domain"]
+            .as_str()
+            .map(str::to_owned)
+            .unwrap_or_else(|| name.rsplit_once('.').map_or("", |x| x.0).to_owned())
+    };
+    for (name, c) in ir["commands"].as_object().into_iter().flatten() {
+        let effects: Vec<&str> = c["outcomes"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|o| o["error"].is_null())
+            .map(|o| o["subject"]["effect"].as_str().unwrap_or(""))
+            .collect();
+        let role = if bound.contains(name) {
+            Role::Internal
+        } else if reports.contains(name.as_str()) {
+            Role::Report
+        } else if intents.contains(name) {
+            Role::Intent
+        } else if effects.contains(&"creates") {
+            Role::Configuration
+        } else if !effects.is_empty() && effects.iter().all(|e| matches!(*e, "moves" | "updates")) {
+            Role::Administration
+        } else {
+            Role::Entry
+        };
+        out.domains
+            .entry(domain_of(c, name))
+            .or_default()
+            .commands
+            .insert(name.clone(), role);
+    }
+    for (key, list) in [("views", 0), ("events", 1)] {
+        for (name, v) in ir[key].as_object().into_iter().flatten() {
+            let d = out.domains.entry(domain_of(v, name)).or_default();
+            if list == 0 {
+                d.views.push(name.clone());
+            } else {
+                d.events.push(name.clone());
+            }
+        }
+    }
+    for d in out.domains.values_mut() {
+        d.views.sort();
+        d.events.sort();
+    }
+    for (name, a) in ir["actors"].as_object().into_iter().flatten() {
+        let mut may = strings(&a["may"]);
+        may.sort();
+        out.actors.insert(name.clone(), may);
+    }
+    out
 }
 
 fn hex(bytes: &[u8]) -> String {
@@ -684,15 +883,19 @@ pub fn compile(blocks: &Path) -> Result<Value, String> {
 pub fn file_text(
     ports: &[Port],
     bindings: &BTreeMap<String, String>,
+    surface: &Surface,
     ess: &str,
     digest: &str,
 ) -> String {
+    let (actors, domains) = surface.to_json();
     let doc = json!({
         "format": FORMAT,
         "ess": ess,
         "sources_sha256": digest,
         "bindings": bindings,
         "ports": ports.iter().map(Port::to_json).collect::<Vec<_>>(),
+        "actors": actors,
+        "domains": domains,
     });
     let mut text = serde_json::to_string_pretty(&doc).unwrap_or_default();
     text.push('\n');
@@ -707,6 +910,8 @@ pub struct PortsFile {
     /// Binding name to the command it invokes: the commands no entry of the system.
     pub bindings: BTreeMap<String, String>,
     pub ports: Vec<Port>,
+    /// What an interface selects from; empty in a file written before it was derived.
+    pub surface: Surface,
 }
 
 impl PortsFile {
@@ -733,6 +938,7 @@ impl PortsFile {
                 })
                 .unwrap_or_default(),
             ports,
+            surface: Surface::from_json(&v["actors"], &v["domains"])?,
         })
     }
 

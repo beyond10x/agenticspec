@@ -1,10 +1,12 @@
 //! The "Contract" section of an architecture page and a catalog entry: the ports the document's
 //! parts use, from `agenticspec-sim`'s contract derivation over the committed `blocks/ports.json`
-//! (no `ess` call), with the kind and block of each port, the routing invariants and the border.
+//! (no `ess` call), with the kind and block of each port, the routing invariants, the border and
+//! the ingresses, each interface resolved against `kpis/catalogue.yaml`.
 
 use crate::md::{code, text};
 use agenticspec_sim::check::check;
 use agenticspec_sim::contract::derive::{self, Contract};
+use agenticspec_sim::contract::ingress::{self, OpKind};
 use agenticspec_sim::contract::ports::PortsFile;
 use serde_json::Value;
 use std::fmt::Write as _;
@@ -24,8 +26,63 @@ pub fn derive(root: &Path, doc: &Value) -> Result<Shown, String> {
         return Err("the check refuses the architecture (see Check), so it has no contract".into());
     }
     let ports = PortsFile::load(&root.join("blocks/ports.json"))?;
-    let contract = derive::derive(doc, &ports).map_err(|r| r.join("; "))?;
+    let mut contract = derive::derive(doc, &ports).map_err(|r| r.join("; "))?;
+    if ingress::declares(doc) {
+        let kpis = ingress::Kpis::load(&root.join("kpis/catalogue.yaml"))?;
+        let (resolved, refusals) = ingress::resolve(doc, &contract, &ports, &kpis);
+        if !refusals.is_empty() {
+            let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+            return Err(format!(
+                "the check of its ingresses refuses it: {}",
+                names.join("; ")
+            ));
+        }
+        contract.ingress = resolved;
+    }
     Ok(Shown { contract, ports })
+}
+
+/// The ingresses of a contract: per ingress its audience, exports and the count of its
+/// operations by kind, then its commands and metrics by name.
+fn ingress_part(c: &Contract) -> String {
+    let mut s = String::new();
+    if c.ingress.is_empty() {
+        return s;
+    }
+    s.push_str(
+        "Ingresses: who reaches the architecture from outside, what each audience may use, and over which protocols.\n\n",
+    );
+    s.push_str("| ingress | audience | authenticated | exports | commands | views | feeds | metrics |\n|---|---|---|---|---|---|---|---|\n");
+    for i in &c.ingress {
+        let count = |k: OpKind| i.operations.iter().filter(|o| o.kind == k).count();
+        let exports: Vec<String> = i.exports.iter().map(|e| code(e)).collect();
+        let _ = writeln!(
+            s,
+            "| **{}** | {} | {} | {} | {} | {} | {} | {} |",
+            text(&i.name),
+            code(&i.audience),
+            if i.authenticated { "yes" } else { "no" },
+            exports.join(", "),
+            count(OpKind::Command),
+            count(OpKind::View),
+            count(OpKind::Feed),
+            count(OpKind::Metric),
+        );
+    }
+    s.push('\n');
+    for i in &c.ingress {
+        let named: Vec<String> = i
+            .operations
+            .iter()
+            .filter(|o| matches!(o.kind, OpKind::Command | OpKind::Metric))
+            .map(|o| code(&o.name))
+            .collect();
+        if !named.is_empty() {
+            let _ = writeln!(s, "- **{}**: {}", text(&i.name), named.join(", "));
+        }
+    }
+    s.push('\n');
+    s
 }
 
 fn setting(name: &str, v: &Value) -> String {
@@ -106,5 +163,6 @@ Derived from the document and the ports of the building blocks; [how]({up}contra
     } else {
         let _ = writeln!(s, "Border: {}.\n", border.join(", "));
     }
+    s.push_str(&ingress_part(c));
     s
 }

@@ -4,6 +4,7 @@
 use super::common::{repo_root, scratch, yaml};
 use agenticspec_sim::cli::{self, ContractOptions};
 use agenticspec_sim::contract::derive::{self, Contract};
+use agenticspec_sim::contract::ingress;
 use agenticspec_sim::contract::ports::PortsFile;
 use agenticspec_sim::contract::predicate::{Clause, Predicate, Use};
 use serde_json::{Value, json};
@@ -26,7 +27,7 @@ fn workstation() -> Contract {
     contract_of("architectures/workstation.yaml")
 }
 
-/// The 21 documents `agenticspec sim check` accepts: the architectures and the ladder stages.
+/// The 22 documents `agenticspec sim check` accepts: the architectures and the ladder stages.
 fn accepted() -> Vec<PathBuf> {
     let root = repo_root();
     let mut out = Vec::new();
@@ -240,12 +241,20 @@ fn a_schedule_gives_the_clock_port_and_a_board_the_board_port() {
 #[test]
 fn every_accepted_document_has_a_contract_that_passes_its_check_with_the_same_bytes() {
     let docs = accepted();
-    assert_eq!(docs.len(), 21, "{docs:?}");
+    assert_eq!(docs.len(), 22, "{docs:?}");
     let ports = ports();
+    let kpis = ingress::Kpis::load(&repo_root().join("kpis/catalogue.yaml")).unwrap();
+    let full = |doc: &Value| {
+        let mut c = derive::derive(doc, &ports).unwrap();
+        let (resolved, refusals) = ingress::resolve(doc, &c, &ports, &kpis);
+        assert_eq!(refusals, Vec::new());
+        c.ingress = resolved;
+        c
+    };
     for path in docs {
-        let doc = agenticspec_sim::nest::load(&path).unwrap();
-        let first = derive::derive(&doc, &ports).unwrap();
-        let second = derive::derive(&doc, &ports).unwrap();
+        let doc = agenticspec_sim::nest::flatten(&agenticspec_sim::nest::load(&path).unwrap());
+        let first = full(&doc);
+        let second = full(&doc);
         assert_eq!(first.text(), second.text(), "{}", path.display());
         assert!(!first.ports.is_empty(), "{}", path.display());
         assert_eq!(derive::check(&first, &doc, &ports), Vec::<String>::new());
@@ -270,6 +279,7 @@ fn the_command_writes_the_contract_and_refuses_a_refused_document_writing_nothin
             check: None,
             suite: None,
             trace: None,
+            kpis: None,
         },
         &mut std::io::sink(),
     )
@@ -284,6 +294,7 @@ fn the_command_writes_the_contract_and_refuses_a_refused_document_writing_nothin
             check: None,
             suite: None,
             trace: None,
+            kpis: None,
         },
         &mut std::io::sink(),
     )
@@ -303,6 +314,7 @@ fn the_command_writes_the_contract_and_refuses_a_refused_document_writing_nothin
             check: None,
             suite: None,
             trace: None,
+            kpis: None,
         },
         &mut std::io::sink(),
     )
@@ -333,6 +345,7 @@ fn a_contract_whose_predicate_does_not_parse_is_refused_naming_the_link_and_offs
         check: Some(&file),
         suite: None,
         trace: None,
+        kpis: None,
     };
     std::fs::write(&file, &good).unwrap();
     assert_eq!(

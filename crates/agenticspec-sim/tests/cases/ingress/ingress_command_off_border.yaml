@@ -1,0 +1,30 @@
+format: agenticspec-architecture/1
+architecture: ingress-small
+summary: "Refused: the admin's message reaches the chat channel, which is not on the border."
+
+parts:
+  owner:    { block: principal, kind: human }
+  admin:    { block: principal, kind: human }
+  operator: { block: agent, harness: coding, acts_for: owner }
+  gateway:  { block: gateway }
+  model:    { block: model }
+  chat:     { block: channel }
+
+links:
+  - { from: owner,    to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner,    carries: question, over: chat }
+  - { from: operator, to: gateway,  carries: model_call }
+  - { from: gateway,  to: model,    carries: model_call }
+  - { from: admin,    to: chat,     carries: message }
+
+border: [operator]
+
+ingress:
+  user:
+    audience: owner
+    interface: { commands: [principal], views: true }
+    exports: [{ protocol: http }]
+  ops:
+    audience: admin
+    interface: { commands: [principal] }
+    exports: [{ protocol: http }]

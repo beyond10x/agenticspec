@@ -1,13 +1,15 @@
 //! The contract of one architecture document (`agenticspec-contract/1`): the ports its parts use,
 //! each with the port's protocol, the settings of the part that narrow it and its number of
-//! instances; the routing invariant of each link; and the border. Derived from the document and
-//! the ports file (`blocks/ports.json`) alone, without a runtime; `docs/contract.md` states the
-//! rules and the format.
+//! instances; the routing invariant of each link; the border; and the ingresses, each interface
+//! resolved into operations (`super::ingress`). Derived from the document and the ports file
+//! (`blocks/ports.json`) alone, with the KPI catalogue for the metrics of an interface, without a
+//! runtime; `docs/contract.md` states the rules and the format.
 //!
 //! A contract is one document's: a document that names another as a part would get the contract
 //! of each, composed by the document that names them (`docs/contract.md`, "Nested
 //! architectures").
 
+use super::ingress::{ContractIngress, OpKind, Operation};
 use super::ports::PortsFile;
 use super::predicate::{Clause, Predicate, Use};
 use crate::check::value;
@@ -51,6 +53,9 @@ pub struct Contract {
     pub ports: Vec<ContractPort>,
     pub invariants: Vec<Invariant>,
     pub border: Vec<String>,
+    /// The document's ingresses, each interface resolved into operations; empty when the
+    /// document declares none, and then not written.
+    pub ingress: Vec<ContractIngress>,
 }
 
 /// The ports a part of a block uses by being there. Blocks of an inner domain (principal, tool,
@@ -237,6 +242,11 @@ fn link_uses(doc: &Value, link: &Value) -> LinkUse {
     LinkUse { port, within, uses }
 }
 
+/// The port of the link's `from` part its carried value travels in, when there is one.
+pub fn link_port(doc: &Value, link: &Value) -> Option<&'static str> {
+    link_uses(doc, link).port
+}
+
 fn count(part: &Value) -> u64 {
     value(&part["count"])
         .as_f64()
@@ -355,6 +365,7 @@ pub fn derive(doc: &Value, ports: &PortsFile) -> Result<Contract, Vec<String>> {
             .as_array()
             .map(|b| b.iter().map(|x| text(x).to_owned()).collect())
             .unwrap_or_default(),
+        ingress: Vec::new(),
     })
 }
 
@@ -439,6 +450,46 @@ pub fn check(contract: &Contract, doc: &Value, ports: &PortsFile) -> Vec<String>
             out.push(format!("border part {b} is not in the document"));
         }
     }
+    for i in &contract.ingress {
+        let declared = &doc["ingress"][&i.name];
+        if !declared.is_object() {
+            out.push(format!("ingress {}: not declared in the document", i.name));
+            continue;
+        }
+        if declared["audience"].as_str() != Some(i.audience.as_str()) {
+            out.push(format!(
+                "ingress {}: audience {} is not the document's",
+                i.name, i.audience
+            ));
+        }
+        if declared["authenticated"].as_bool().unwrap_or(true) != i.authenticated {
+            out.push(format!(
+                "ingress {}: authenticated {} is not the document's",
+                i.name, i.authenticated
+            ));
+        }
+        let exports: Vec<&str> = declared["exports"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|e| e["protocol"].as_str())
+            .collect();
+        if exports != i.exports.iter().map(String::as_str).collect::<Vec<_>>() {
+            out.push(format!(
+                "ingress {}: exports [{}] are not the document's [{}]",
+                i.name,
+                i.exports.join(", "),
+                exports.join(", ")
+            ));
+        }
+    }
+    let declared = doc["ingress"].as_object().map_or(0, |m| m.len());
+    if declared != contract.ingress.len() {
+        out.push(format!(
+            "the contract has {} ingresses, the document declares {declared}",
+            contract.ingress.len()
+        ));
+    }
     out
 }
 
@@ -511,6 +562,28 @@ impl Contract {
             .map(|b| Value::String(b.clone()))
             .collect();
         s.push_str(&format!("border: {}\n", flow(&Value::Array(border))));
+        if !self.ingress.is_empty() {
+            s.push_str("ingress:\n");
+        }
+        for i in &self.ingress {
+            s.push_str(&format!("  - name: {}\n", scalar(&i.name)));
+            s.push_str(&format!("    audience: {}\n", scalar(&i.audience)));
+            s.push_str(&format!("    authenticated: {}\n", i.authenticated));
+            let exports: Vec<Value> = i.exports.iter().map(|e| Value::String(e.clone())).collect();
+            s.push_str(&format!("    exports: {}\n", flow(&Value::Array(exports))));
+            if i.operations.is_empty() {
+                s.push_str("    operations: []\n");
+            } else {
+                s.push_str("    operations:\n");
+            }
+            for o in &i.operations {
+                s.push_str(&format!(
+                    "      - {{kind: {}, name: {}}}\n",
+                    o.kind.as_str(),
+                    scalar(&o.name)
+                ));
+            }
+        }
         s
     }
 
@@ -555,6 +628,42 @@ impl Contract {
                 })
             })
             .collect::<Result<Vec<_>, String>>()?;
+        let ingress = v["ingress"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|i| {
+                let name = field(i, "name")?;
+                let operations = i["operations"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .map(|o| {
+                        let kind = field(o, "kind")?;
+                        Ok(Operation {
+                            kind: OpKind::parse(&kind).ok_or_else(|| {
+                                format!("ingress {name}: unknown operation kind `{kind}`")
+                            })?,
+                            name: field(o, "name")?,
+                        })
+                    })
+                    .collect::<Result<Vec<_>, String>>()?;
+                Ok(ContractIngress {
+                    audience: field(i, "audience")?,
+                    authenticated: i["authenticated"]
+                        .as_bool()
+                        .ok_or_else(|| format!("ingress {name}: no `authenticated`"))?,
+                    exports: i["exports"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .map(|e| text(e).to_owned())
+                        .collect(),
+                    operations,
+                    name,
+                })
+            })
+            .collect::<Result<Vec<_>, String>>()?;
         Ok(Contract {
             architecture: field(&v, "architecture")?,
             ports_digest: field(&v, "ports_digest")?,
@@ -564,6 +673,7 @@ impl Contract {
                 .as_array()
                 .map(|b| b.iter().map(|x| text(x).to_owned()).collect())
                 .unwrap_or_default(),
+            ingress,
         })
     }
 }

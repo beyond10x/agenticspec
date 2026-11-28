@@ -986,12 +986,20 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__sim__subcmd__check)
-            opts="-h --config --state-dir --output --help"
+            opts="-h --ports --kpis --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
+                --ports)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --kpis)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
                 --config)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
@@ -1012,13 +1020,17 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__sim__subcmd__contract)
-            opts="-h --ports --out --check --suite --trace --config --state-dir --output --help"
+            opts="-h --ports --kpis --out --check --suite --trace --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
                 --ports)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --kpis)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

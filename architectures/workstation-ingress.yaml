@@ -1,0 +1,70 @@
+format: agenticspec-architecture/1
+architecture: workstation-ingress
+summary: "The workstation with an ingress per audience: owner, operator, monitoring."
+
+parts:
+  owner:    { block: principal, kind: human }
+  admin:    { block: principal, kind: human }
+  monitor:  { block: principal, kind: service }
+  operator: { block: agent, harness: coding, role: operator, acts_for: owner }
+  worker:   { block: agent, harness: coding, count: 12 }
+  gateway:  { block: gateway, rate_limit_per_minute: 120 }
+  model:    { block: model, route: frontier }
+  builds:   { block: pool, kind: build_slots, capacity: 16, job_limit: 10m }
+  chat:     { block: channel, kind: operator }
+  tree:     { block: workspace, sharing: exclusive, per: worker }
+  box:      { block: sandbox, isolation: process, egress: [gateway], per: worker }
+
+links:
+  - { from: owner,    to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner,    carries: question, over: chat }
+  - { from: worker,   to: operator, carries: question }
+  - { from: operator, to: worker,   carries: order }
+  - { from: operator, to: gateway,  carries: model_call }
+  - { from: worker,   to: gateway,  carries: model_call }
+  - { from: gateway,  to: model,    carries: model_call }
+  - { from: worker,   to: builds,   carries: claim }
+
+border: [operator]
+
+ingress:
+  user:
+    audience: owner
+    interface:
+      scope: linked
+      commands: [principal]
+      views: true
+      feeds: true
+    exports:
+      - { protocol: http }
+      - { protocol: event_stream }
+      - { protocol: ui }
+  operator:
+    audience: admin
+    interface:
+      scope: all
+      commands: { plays: [agentic.gateway.GatewayOperator] }
+      views: true
+      feeds: true
+    exports:
+      - { protocol: http }
+      - { protocol: event_stream }
+      - { protocol: ui }
+      - { protocol: tool }
+  metrics:
+    audience: monitor
+    authenticated: false
+    interface:
+      scope: all
+      metrics:
+        - owner_wait_share
+        - cost_usd
+        - rate_limited_seconds
+        - queue_wait_p90_seconds
+        - pool_utilization
+    exports:
+      - { protocol: metrics_scrape }
+
+policies:
+  question_default_after: 15m
+  operator_answers_alone: false

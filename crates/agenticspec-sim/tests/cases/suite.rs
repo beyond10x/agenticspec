@@ -142,6 +142,7 @@ fn the_command_writes_the_cut_suite_with_the_suites_provenance_and_counts() {
             check: None,
             suite: Some(&small_path()),
             trace: None,
+            kpis: None,
         },
         &mut std::io::sink(),
     )
@@ -169,6 +170,7 @@ fn the_command_writes_the_cut_suite_with_the_suites_provenance_and_counts() {
             check: None,
             suite: Some(&root.join("architectures/workstation.yaml")),
             trace: None,
+            kpis: None,
         },
         &mut std::io::sink(),
     )

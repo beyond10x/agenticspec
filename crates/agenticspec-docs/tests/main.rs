@@ -641,7 +641,14 @@ fn contract_of(path: &Path) -> agenticspec_sim::contract::derive::Contract {
         agenticspec_sim::contract::ports::PortsFile::load(&root().join("blocks/ports.json"))
             .expect("blocks/ports.json");
     let doc = agenticspec_sim::doc::load_yaml(path).expect("the document");
-    agenticspec_sim::contract::derive::derive(&doc, &ports).expect("a contract")
+    let mut contract = agenticspec_sim::contract::derive::derive(&doc, &ports).expect("a contract");
+    let kpis = agenticspec_sim::contract::ingress::Kpis::load(&root().join("kpis/catalogue.yaml"))
+        .expect("kpis/catalogue.yaml");
+    let (resolved, refusals) =
+        agenticspec_sim::contract::ingress::resolve(&doc, &contract, &ports, &kpis);
+    assert!(refusals.is_empty(), "{refusals:?}");
+    contract.ingress = resolved;
+    contract
 }
 
 /// The part of a page from its "Contract" section to the next section.
@@ -724,13 +731,21 @@ fn every_architecture_page_and_catalog_entry_shows_its_contract() {
             );
         }
     }
-    assert_eq!(pages, 16, "10 architecture pages and 6 catalog entries");
+    assert_eq!(pages, 17, "11 architecture pages and 6 catalog entries");
     let contracts = g
         .files
         .keys()
         .filter(|k| k.ends_with(".contract.yaml"))
         .count();
-    assert_eq!(contracts, 16);
+    assert_eq!(contracts, 17);
+    let wi = contract_section(
+        &g.files["docs/architectures/workstation-ingress.md"],
+        "workstation-ingress",
+    );
+    assert!(
+        wi.contains("| **operator** | `admin` | yes | `http`, `event_stream`, `ui`, `tool` | 3 |"),
+        "{wi}"
+    );
     let ws = contract_section(&g.files["docs/architectures/workstation.md"], "workstation");
     assert!(
         ws.contains("| `workspace.lease` | `Outbound` | `workspace` |"),

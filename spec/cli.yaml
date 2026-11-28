@@ -80,6 +80,8 @@ callables:
     errors:
       document_unreadable: agenticspec.cli.Refusal
       architecture_refused: agenticspec.cli.Refusal
+      ports_unreadable: agenticspec.cli.Refusal
+      kpis_unreadable: agenticspec.cli.Refusal
   sim_digest:
     target: {kind: local, owner: agenticspec.cli, action: sim_digest}
     input: agenticspec.cli.SimDigestInput
@@ -157,6 +159,7 @@ callables:
       document_unreadable: agenticspec.cli.Refusal
       architecture_refused: agenticspec.cli.Refusal
       ports_unreadable: agenticspec.cli.Refusal
+      kpis_unreadable: agenticspec.cli.Refusal
       contract_refused: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
       suite_unreadable: agenticspec.cli.Refusal
@@ -258,6 +261,8 @@ commands:
     about: Check an architecture document against the building blocks and name each refusal
     arguments:
       - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: kpis, source: {kind: option, long: kpis}}
   - path: [sim, digest]
     callable: sim_digest
     about: Print the digest a document pins a nested architecture with (sha256 of its canonical parts, links and border)
@@ -317,6 +322,7 @@ commands:
     arguments:
       - {field: architecture, source: {kind: positional, index: 1}}
       - {field: ports, source: {kind: option, long: ports}}
+      - {field: kpis, source: {kind: option, long: kpis}}
       - {field: out, source: {kind: option, long: out}}
       - {field: check, source: {kind: option, long: check}}
       - {field: suite, source: {kind: option, long: suite}}

@@ -104,6 +104,10 @@ Error `architecture_refused`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+Error `kpis_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
 ### `sim contract`
 
 Derive and check the contract of an architecture (agenticspec-contract/1), check a written contract with --check, cut the blocks' conformance suite to its ports with --suite, or check its routing invariants on a trace with --trace
@@ -117,6 +121,8 @@ Error `contract_refused`: `agenticspec.cli.Refusal`.
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `invariant_violated`: `agenticspec.cli.Refusal`.
+
+Error `kpis_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 

@@ -8,6 +8,7 @@ mod determinism;
 mod dynamics;
 mod events;
 mod fidelity;
+mod ingress;
 mod ladder;
 mod marked;
 mod nest;

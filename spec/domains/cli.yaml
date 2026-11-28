@@ -495,13 +495,19 @@ types:
       - name: architecture
         type: String
         summary: An `agenticspec-architecture/1` file.
+      - name: ports
+        type: Optional<String>
+        summary: The ports file (`agenticspec-ports/1`) a document with `ingress:` is checked against; `blocks/ports.json` by default.
+      - name: kpis
+        type: Optional<String>
+        summary: The KPI catalogue (`agenticspec-kpis/1`) a document with `ingress:` is checked against; `kpis/catalogue.yaml` by default.
 
   - name: agenticspec.cli.SimCheckResult
     kind: struct
     naming:
       summary: >-
-        The architecture the check accepted, with its counts of parts and links, the KPIs of the
-        architecture as a whole and the architectures it nests.
+        The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs
+        of the architecture as a whole and the architectures it nests.
     fields:
       - {name: architecture, type: String}
       - {name: parts, type: Integer}
@@ -518,6 +524,7 @@ types:
       - name: nested
         type: List<agenticspec.cli.SimNested>
         summary: Every nested architecture, resolved recursively, outermost first; empty when it nests none.
+      - {name: ingresses, type: Integer}
 
   - name: agenticspec.cli.SimNested
     kind: struct
@@ -780,6 +787,9 @@ types:
       - name: trace
         type: Optional<String>
         summary: A trace (`agenticspec-trace/1`) on which every routing invariant of the contract is checked.
+      - name: kpis
+        type: Optional<String>
+        summary: The KPI catalogue (`agenticspec-kpis/1`) the metrics of an interface are resolved against; `kpis/catalogue.yaml` by default.
 
   - name: agenticspec.cli.SimContractResult
     kind: struct
@@ -789,6 +799,7 @@ types:
       - {name: architecture, type: String}
       - {name: ports, type: Integer}
       - {name: invariants, type: Integer}
+      - {name: ingresses, type: Integer}
       - name: written
         type: Boolean
         summary: The contract file, or with `--suite` the cut suite, was written.

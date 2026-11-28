@@ -1146,6 +1146,18 @@
           "fields": {
             "architecture": {
               "kind": "string"
+            },
+            "kpis": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
             }
           }
         }
@@ -1157,6 +1169,9 @@
           "fields": {
             "architecture": {
               "kind": "string"
+            },
+            "ingresses": {
+              "kind": "integer"
             },
             "kpis": {
               "kind": "json"
@@ -1224,6 +1239,28 @@
               }
             }
           }
+        },
+        "kpis_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
         }
       }
     },
@@ -1242,6 +1279,12 @@
               "kind": "string"
             },
             "check": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "kpis": {
               "kind": "optional",
               "of": {
                 "kind": "string"
@@ -1325,6 +1368,9 @@
                 "kind": "string"
               }
             },
+            "ingresses": {
+              "kind": "integer"
+            },
             "invariants": {
               "kind": "integer"
             },
@@ -1384,6 +1430,17 @@
           }
         },
         "invariant_violated": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "kpis_unreadable": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -2869,6 +2926,20 @@
             "kind": "positional",
             "index": 1
           }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "kpis",
+          "source": {
+            "kind": "option",
+            "long": "kpis"
+          }
         }
       ]
     },
@@ -2893,6 +2964,13 @@
           "source": {
             "kind": "option",
             "long": "ports"
+          }
+        },
+        {
+          "field": "kpis",
+          "source": {
+            "kind": "option",
+            "long": "kpis"
           }
         },
         {

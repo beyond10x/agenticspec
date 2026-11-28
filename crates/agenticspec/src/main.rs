@@ -418,7 +418,20 @@ impl Handler for Commands {
                 agenticspec::serve::run(listener, shared, syncer);
                 HandlerReply::Success(json!({ "url": url }))
             }
-            "sim_check" => sim_reply(sim::check(&path_of(&inv.input, "architecture"))),
+            "sim_check" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (ports, kpis) = (path("ports"), path("kpis"));
+                sim_reply(sim::check_with(&sim::CheckOptions {
+                    architecture: &path_of(&inv.input, "architecture"),
+                    ports: ports.as_deref(),
+                    kpis: kpis.as_deref(),
+                }))
+            }
             "sim_digest" => sim_reply(sim::digest(&path_of(&inv.input, "architecture"))),
             "sim_run" => {
                 let threads = inv
@@ -511,7 +524,8 @@ impl Handler for Commands {
                         .and_then(Value::as_str)
                         .map(PathBuf::from)
                 };
-                let (ports, out, check) = (path("ports"), path("out"), path("check"));
+                let (ports, out, check, kpis) =
+                    (path("ports"), path("out"), path("check"), path("kpis"));
                 let (suite, trace) = (path("suite"), path("trace"));
                 let mut err = std::io::stderr().lock();
                 sim_reply(sim::contract(
@@ -522,6 +536,7 @@ impl Handler for Commands {
                         check: check.as_deref(),
                         suite: suite.as_deref(),
                         trace: trace.as_deref(),
+                        kpis: kpis.as_deref(),
                     },
                     &mut err,
                 ))

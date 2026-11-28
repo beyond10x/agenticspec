@@ -64,12 +64,14 @@ Nothing: this block is the foundation.
 | `DeliverableId` | an identifier or value | `uuid` |
 | `EndpointId` | an identifier or value | `uuid` |
 | `ExperimentId` | an identifier or value | `uuid` |
+| `ExportId` | an identifier or value | `uuid` |
 | `FiringId` | an identifier or value | `uuid` |
 | `GatewayId` | an identifier or value | `uuid` |
 | `GrantId` | an identifier or value | `uuid` |
 | `HarnessId` | an identifier or value | `uuid` |
 | `HarnessSessionId` | an identifier or value | `uuid` |
 | `InferenceId` | an identifier or value | `uuid` |
+| `IngressId` | an identifier or value | `uuid` |
 | `InstanceId` | an identifier or value | `uuid` |
 | `IsolationLevel` | one of | `None`, `Process`, `Container`, `UserKernel`, `MicroVm` |
 | `KnowledgeId` | an identifier or value | `uuid` |

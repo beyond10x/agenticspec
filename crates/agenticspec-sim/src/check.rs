@@ -505,6 +505,12 @@ pub fn check(architecture: &Value) -> Vec<Refusal> {
             });
         }
     }
+    // The audience of an ingress is reached from outside, through the ingress.
+    for ingress in architecture["ingress"].as_object().into_iter().flatten() {
+        if let Some(n) = s(&ingress.1["audience"]) {
+            referenced.insert(n);
+        }
+    }
     for (name, p) in parts {
         if !referenced.contains(name.as_str()) && p.get("per").is_none() {
             out.push(Refusal::UnreachablePart { part: name.clone() });

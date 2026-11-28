@@ -210,6 +210,41 @@ types:
       - {name: within_port_id, type: Optional<agentic.shared.PortId>}
       - {name: predicate, type: String}
 
+  # The ingress: how an architecture exposes interfaces to the outside. Source: design/ingress.md
+  # (I1, I7, I8). An ingress names its audience (a principal part), one interface (what the
+  # audience may use) and one or more exports (over which protocol). Its interface is resolved
+  # by the contract derivation into operations, each a command, a view, a feed (an event) or a
+  # metric (a KPI of the catalogue).
+  - name: agentic.architecture.OperationKind
+    kind: enum
+    variants: [Command, View, Feed, Metric]
+
+  # The protocols an export may name (design/ingress.md I7); a field adds no protocol.
+  - name: agentic.architecture.ExportProtocol
+    kind: enum
+    variants: [Http, EventStream, Cli, Tool, Agent, MetricsScrape, Ui]
+
+  # One operation of a resolved interface: its kind and the full name of the command, view or
+  # event, or the KPI's id. ESS limit (0.99.2): a field cannot reference a command, view or
+  # event, so the name is text; the derivation writes only names `ess specify compile` lists and
+  # ids of kpis/catalogue.yaml.
+  - name: agentic.architecture.ContractOperation
+    kind: struct
+    fields:
+      - {name: kind, type: agentic.architecture.OperationKind}
+      - {name: name, type: String}
+
+  # One ingress of a contract: the audience, whether callers authenticate, the protocols of its
+  # exports and the operations its interface resolves to. Derived, never authored.
+  - name: agentic.architecture.ContractIngress
+    kind: struct
+    fields:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+      - {name: authenticated, type: Boolean}
+      - {name: protocols, type: List<agentic.architecture.ExportProtocol>}
+      - {name: operations, type: List<agentic.architecture.ContractOperation>}
+
 entities:
   # UNMAPPED: the brief names the lifecycle "Draft -> Committed revisions, Retired". An outcome
   # that records a revision creates the revision row, and ESS admits no second effect beside a
@@ -231,6 +266,7 @@ entities:
       - {name: links, kind: owns, target: agentic.architecture.Link, cardinality: many, via: architecture_id}
       - {name: revisions, kind: owns, target: agentic.architecture.ArchitectureRevision, cardinality: many, via: architecture_id}
       - {name: patch_applications, kind: owns, target: agentic.architecture.PatchApplication, cardinality: many, via: architecture_id}
+      - {name: ingresses, kind: owns, target: agentic.architecture.Ingress, cardinality: many, via: architecture_id}
       # UNMAPPED: whether an architecture owns its revisions' contracts (a contract is derived, so
       # deleting the architecture could drop them) or a contract only references its revision.
       # Taken: references, from the contract.
@@ -492,6 +528,8 @@ entities:
       - {name: ports, type: List<agentic.architecture.ContractPort>}
       - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
       - {name: border, type: List<agentic.shared.PartId>}
+      # The ingresses of the revision, each interface resolved; empty when it declares none.
+      - {name: ingress, type: List<agentic.architecture.ContractIngress>}
     relations:
       - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
       - {name: border_parts, kind: references, target: agentic.architecture.Part, cardinality: many, via: border}
@@ -499,6 +537,49 @@ entities:
       initial: Recorded
       states: [Recorded]
       terminal: [Recorded]
+
+  # An ingress of an architecture (design/ingress.md I1, I3, I6): for whom it is reachable from
+  # outside. `audience_part_id` is a principal part of the same architecture; `interface` holds
+  # the interface's selection rules as written (`scope`, `commands`, `views`, `feeds`,
+  # `metrics`), as a patch rule keeps its text: the contract derivation reads them. Callers
+  # authenticate unless `authenticated` is false, which the document's check admits only for an
+  # interface without commands. Immutable once added, like a part.
+  - name: agentic.architecture.Ingress
+    naming:
+      summary: For whom an architecture is reachable from outside, what that audience may use, and whether callers authenticate.
+    identity:
+      name: ingress_id
+      type: agentic.shared.IngressId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+      - {name: authenticated, type: Boolean}
+      - {name: interface, type: String}
+    relations:
+      - {name: audience, kind: references, target: agentic.architecture.Part, cardinality: one, via: audience_part_id}
+      - {name: exports, kind: owns, target: agentic.architecture.Export, cardinality: many, via: ingress_id}
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+
+  # One export of an ingress: the protocol its interface is served over (design/ingress.md I7).
+  # Its projection (an OpenAPI document, a stream list, a tool list, a metric list) is generated,
+  # never authored; its address, server and authenticator are the runtime binding's.
+  - name: agentic.architecture.Export
+    naming:
+      summary: The protocol an ingress's interface is served over.
+    identity:
+      name: export_id
+      type: agentic.shared.ExportId
+    fields:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: protocol, type: agentic.architecture.ExportProtocol}
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
 
 # The Viewer reads the views of this block. The Deployer and the Principal are two roles that
 # cross every block, read by the contract of an architecture. `agenticspec sim ports` reads
@@ -641,6 +722,14 @@ errors:
     summary: A contract names at least one port, and nothing was recorded.
   - name: agentic.architecture.ContractExists
     summary: The revision already has a contract, and nothing was recorded.
+  - name: agentic.architecture.IngressNameTaken
+    summary: The architecture already has an ingress of this name, and nothing was added.
+  - name: agentic.architecture.AudienceNotPrincipal
+    summary: The audience of an ingress is a principal part, and the part named is not one; nothing was added.
+  - name: agentic.architecture.NoSuchIngress
+    summary: No ingress has this id, and nothing was added.
+  - name: agentic.architecture.ExportExists
+    summary: The ingress already exports over this protocol, and nothing was added.
 
   # Placements (M45).
   - name: agentic.architecture.ForeignRevision
@@ -735,6 +824,17 @@ events:
       - {name: contract_id, type: agentic.shared.ContractId}
       - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
       - {name: digest, type: agentic.architecture.Digest}
+  - name: agentic.architecture.IngressAdded
+    fields:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+  - name: agentic.architecture.ExportAdded
+    fields:
+      - {name: export_id, type: agentic.shared.ExportId}
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: protocol, type: agentic.architecture.ExportProtocol}
 
   # Placements (M45).
   - name: agentic.architecture.EntityPlaced
@@ -1491,6 +1591,7 @@ commands:
       - {name: ports, type: List<agentic.architecture.ContractPort>}
       - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
       - {name: border, type: List<agentic.shared.PartId>}
+      - {name: ingress, type: List<agentic.architecture.ContractIngress>}
     outcomes:
       - name: empty
         when: ports.count == 0
@@ -1513,12 +1614,103 @@ commands:
           ports: input.ports
           invariants: input.invariants
           border: input.border
+          ingress: input.ingress
         emits: [agentic.architecture.ContractRecorded]
         payload:
           agentic.architecture.ContractRecorded:
             contract_id: {generated: true}
             revision_id: input.revision_id
             digest: {generated: true}
+
+  # Declare an ingress of an architecture: its name, its audience (a principal part of the same
+  # architecture), whether callers authenticate, and its interface's rules as written. The
+  # document's check (`agenticspec sim check`) holds the rules an ingress's interface and exports
+  # must keep together; this command keeps the rules of its own rows.
+  - name: agentic.architecture.AddIngress
+    naming:
+      display: Add an ingress
+    input:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+      - {name: authenticated, type: Boolean}
+      - {name: interface, type: String}
+    outcomes:
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: no-such-audience
+        when_related: {via: input.audience_part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: foreign-audience
+        when_related: {via: input.audience_part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: audience-not-principal
+        when_related: {via: input.audience_part_id, predicate: kind != Principal}
+        error: agentic.architecture.AudienceNotPrincipal
+      - name: name-taken
+        when_related:
+          entity: agentic.architecture.Ingress
+          where:
+            all:
+              - architecture_id == input.architecture_id
+              - name == input.name
+          exists: true
+        error: agentic.architecture.IngressNameTaken
+      - name: added
+        creates: agentic.architecture.Ingress
+        instance: ingress_id
+        sets:
+          architecture_id: input.architecture_id
+          name: input.name
+          audience_part_id: input.audience_part_id
+          authenticated: input.authenticated
+          interface: input.interface
+        emits: [agentic.architecture.IngressAdded]
+        payload:
+          agentic.architecture.IngressAdded:
+            ingress_id: input.ingress_id
+            architecture_id: input.architecture_id
+            name: input.name
+            audience_part_id: input.audience_part_id
+
+  # Export an ingress over one protocol; each protocol at most once per ingress.
+  - name: agentic.architecture.AddExport
+    naming:
+      display: Export an ingress over a protocol
+    input:
+      - {name: export_id, type: agentic.shared.ExportId}
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: protocol, type: agentic.architecture.ExportProtocol}
+    outcomes:
+      - name: no-such-ingress
+        when_related: {via: input.ingress_id, exists: false}
+        error: agentic.architecture.NoSuchIngress
+      - name: exists
+        when_related:
+          entity: agentic.architecture.Export
+          where:
+            all:
+              - ingress_id == input.ingress_id
+              - protocol == input.protocol
+          exists: true
+        error: agentic.architecture.ExportExists
+      - name: added
+        creates: agentic.architecture.Export
+        instance: export_id
+        sets:
+          ingress_id: input.ingress_id
+          protocol: input.protocol
+        emits: [agentic.architecture.ExportAdded]
+        payload:
+          agentic.architecture.ExportAdded:
+            export_id: input.export_id
+            ingress_id: input.ingress_id
+            protocol: input.protocol
 
 views:
   # Who may call whom: one row per link. No row, no reach.
@@ -1659,3 +1851,22 @@ views:
       - {name: ports, type: List<agentic.architecture.ContractPort>}
       - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
       - {name: border, type: List<agentic.shared.PartId>}
+      - {name: ingress, type: List<agentic.architecture.ContractIngress>}
+
+  # The ingresses of one architecture: who reaches it from outside, and under which rules.
+  - name: agentic.architecture.Ingresses
+    source: agentic.architecture.Ingress
+    consistency: read_your_writes
+    params:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+    filter: architecture_id == param.architecture_id
+    fields:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+      - name: audience_name
+        type: Optional<agentic.shared.Name>
+        field: {related: {via: audience_part_id, field: name}}
+      - {name: authenticated, type: Boolean}
+      - {name: interface, type: String}
