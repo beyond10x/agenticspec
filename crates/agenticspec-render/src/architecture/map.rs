@@ -5,7 +5,7 @@
 use super::model::{Architecture, Outcome, Part, Place, norm, range_text};
 use crate::fmt;
 use crate::graph::{Chip, Decor, NodeDecor};
-use crate::page::{Badge, Direction, Edge, Level, Mark, Node, Page, Port, Region, Target};
+use crate::page::{Badge, Direction, Edge, Level, Mark, Node, On, Page, Port, Region, Target};
 
 /// Colour family and row of a block.
 pub fn family(block: &str) -> (&'static str, usize) {
@@ -204,6 +204,7 @@ pub fn to_page(arch: &Architecture, o: Option<&Outcome>) -> (Page, Decor) {
                 .map(|c| Badge {
                     name: "count".to_string(),
                     value: c.clone(),
+                    on: On::Card,
                 })
                 .collect(),
             region: p
