@@ -131,6 +131,7 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `image_unpinned` | with `target.images: local`, a runtime, a part's `image` or a listed unit's `image` with neither `tag` nor `digest` (with `registry`, the default, one without its repository digest is refused as a binding of the wrong form) |
 | `unit_image_conflict` | parts of one core or service unit name different images (`parts.<p>.image`) and the unit names none (`packing.units[].image`); K19 |
 | `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image of its own, of its parts or, for the core unit only, `runtimes.core`; names the unit and its runtime parts; K19 |
+| `unit_runtime_mismatch` | a core or service unit's `code.runtime` names an image that is not in the bundle's `runtimes`, or differs from the image the carried binding resolves for that unit (`binding::unit_image`; none gives the role `core-runtime`); names the unit, the image found and the image expected. At bundle time, two images of one key (one digest, two names) leave the second uncarried; in a written bundle (`deploy check`), also a unit or `runtimes` entry changed after writing. A unit refused `unit_image_conflict`, `unit_image_missing` or `image_unpinned` is left to that refusal; K19 |
 | `volume_mount_missing` | a volume a unit claims that no part of the unit mounts (`parts.<p>.volumes[].mount`, matched by name), or mounts at a relative path; there is no default path |
 | `ui_upstream_unknown` | a UI unit (K17) reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have; in a written bundle, a UI unit's `upstream.unit` that is no other unit of the bundle |
 | `nested_document_missing` | in a written bundle (`deploy check`) only: a part of block `architecture`, at any depth, pins a digest the bundle's `nested` carries no document of |
@@ -452,7 +453,11 @@ stays `/1`.
   (`<image>@<digest>`; local `<image>:<tag>`, else the config id). `runtimes` carries every image
   used, keyed as `runtimes.core` is: the binding's runtimes by their names, then each unit's own by
   the unit's name, unless an entry of the same key is there already.
-- **Check.** `deploy check` reads the binding the bundle carries and applies the same rules.
+- **Check.** `deploy check` reads the binding the bundle carries and applies the same rules, and
+  compares each core and service unit's `code.runtime` with the image that binding resolves for
+  it and with the references `runtimes` carry (`unit_runtime_mismatch`, naming the unit, the image
+  found and the image expected). `deploy bundle` refuses the same on the bundle it built: an image
+  that shares a key with another under a different name is not carried.
 
 ## Risks
 

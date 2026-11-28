@@ -27,7 +27,7 @@ scope:
   path: spec/cli.yaml
 - confidence: inferred
   path: spec/domains/cli.yaml
-revision: 2
+revision: 3
 ---
 ## Outcome
 
@@ -76,3 +76,7 @@ capabilities", § "The smallest first runtime"; `design/deployment.md` K11, K14.
 
 Packing and units (`story:packing-format`); exports (`story:ingress-admission`); store and bus
 fixtures (`story:binding-store-and-bus`); any remote target.
+
+## Decision
+
+Owner decision, 2026-11-28: not now. Consumers run their own servers as service units behind an adapter that `agenticspec ui conform` checks against the runtime UI interface; per-unit images (R83) and consumer UIs (R84) carry them in a bundle. This story stays draft until the owner reopens it.

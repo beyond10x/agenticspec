@@ -1,0 +1,11 @@
+format: agenticspec-binding/1
+binding: unit-runtime-mismatch
+architecture: workstation
+refines: egress/workstation.yaml
+summary: >-
+  The core runtime and the gateway's image share one digest under two names, so the bundle's
+  runtimes carry one entry for both and the core unit's image, the gateway's, is not among them.
+runtimes:
+  core: {image: registry.example/core, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000004"}
+parts:
+  gateway: {image: {image: registry.example/gateway, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000004"}}

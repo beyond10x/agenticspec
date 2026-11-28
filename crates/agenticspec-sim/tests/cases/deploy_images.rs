@@ -350,9 +350,9 @@ fn deploy_check_applies_the_image_rules_to_a_bundle_read_back() {
     b["parts"]["notifier"] = json!({ "image": image("notifier", 4) });
     let v = admitted(&dir, &b);
     check(&dir, &bundle::write(&v)).unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
-    let cases: [(&str, Edit); 3] = [
+    let cases: [(&[&str], Edit); 3] = [
         (
-            "unit_image_conflict",
+            &["unit_image_conflict"],
             Box::new(|d| {
                 d["packing"]["units"][2]
                     .as_object_mut()
@@ -361,7 +361,7 @@ fn deploy_check_applies_the_image_rules_to_a_bundle_read_back() {
             }),
         ),
         (
-            "unit_image_missing",
+            &["unit_image_missing"],
             Box::new(|d| {
                 d["packing"]["units"][2]
                     .as_object_mut()
@@ -372,16 +372,173 @@ fn deploy_check_applies_the_image_rules_to_a_bundle_read_back() {
                 }
             }),
         ),
+        // The local store also turns the core runtime into its config id, which the core unit's
+        // registry reference no longer is.
         (
-            "image_unpinned",
+            &["image_unpinned", "unit_runtime_mismatch"],
             Box::new(|d| {
                 d["target"] = json!({ "images": "local" });
                 d["packing"]["units"][2]["image"] = json!({ "image": "runner" });
             }),
         ),
     ];
-    for (name, edit) in cases {
+    for (want, edit) in cases {
         let r = check(&dir, &tampered(&v, edit)).unwrap_err();
-        refused_by(&r, name);
+        assert_eq!(r.code, "not_admitted", "{}", r.detail);
+        let want: BTreeSet<String> = want.iter().map(|s| (*s).to_owned()).collect();
+        assert_eq!(names(&r.detail), want, "{}", r.detail);
+    }
+}
+
+/// `bundle` changed by `edit`, its digest recomputed.
+fn rewritten(bundle: &Value, edit: impl FnOnce(&mut Value)) -> String {
+    let mut v = bundle.clone();
+    edit(&mut v);
+    v["digest"] = json!(bundle::recompute(&v));
+    bundle::write(&v)
+}
+
+fn unit_index(v: &Value, name: &str) -> usize {
+    v["units"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .position(|u| u["name"] == name)
+        .unwrap_or_else(|| panic!("no unit {name}"))
+}
+
+#[test]
+fn two_images_under_one_digest_leave_a_units_runtime_uncarried_and_are_refused() {
+    let dir = scratch("deploy-images-one-digest");
+    let mut b = base();
+    b["parts"]["flow"]["image"] = image("flow", 2);
+    b["parts"]["notifier"] = json!({ "image": image("notifier", 2) });
+    let r = bundle_of(&dir, &b).unwrap_err();
+    refused_by(&r, "unit_runtime_mismatch");
+    assert!(
+        r.detail.contains(&format!(
+            "unit notifier: its code.runtime {} is no image the bundle's runtimes carry, and the binding resolves {}",
+            reference("notifier", 2),
+            reference("notifier", 2)
+        )),
+        "{}",
+        r.detail
+    );
+    assert!(!r.detail.contains("unit flow"), "{}", r.detail);
+    // The core runtime is carried first: a unit image of its digest under another name is not.
+    let mut b = base();
+    b["parts"]["flow"]["image"] = image("flow", 1);
+    b["parts"]["notifier"] = json!({ "image": image("notifier", 4) });
+    let r = bundle_of(&dir, &b).unwrap_err();
+    refused_by(&r, "unit_runtime_mismatch");
+    assert!(r.detail.contains("unit flow:"), "{}", r.detail);
+    // One image under one digest for two units is carried once and admitted.
+    b["parts"]["flow"]["image"] = image("core", 1);
+    admitted(&dir, &b);
+}
+
+#[test]
+fn deploy_check_refuses_a_unit_runtime_that_is_not_its_bindings_image_or_not_carried() {
+    let dir = scratch("deploy-images-runtime-check");
+    let mut b = base();
+    b["parts"]["flow"]["image"] = image("flow", 2);
+    b["parts"]["notifier"] = json!({ "image": image("notifier", 4) });
+    let v = admitted(&dir, &b);
+    let (flow, gateway, core) = (
+        unit_index(&v, "flow"),
+        unit_index(&v, "gateway"),
+        unit_index(&v, "core"),
+    );
+    check(&dir, &rewritten(&v, |_| {})).unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let cases: [(String, Edit); 6] = [
+        // Another image the bundle carries, not the one the binding resolves.
+        (
+            format!(
+                "unit flow: its code.runtime is {}, and the binding resolves {}",
+                reference("core", 1),
+                reference("flow", 2)
+            ),
+            Box::new(move |v| v["units"][flow]["code"]["runtime"] = json!(reference("core", 1))),
+        ),
+        // The binding's image, which the bundle's runtimes no longer carry.
+        (
+            format!(
+                "unit flow: its code.runtime {} is no image the bundle's runtimes carry, and the binding resolves {}",
+                reference("flow", 2),
+                reference("flow", 2)
+            ),
+            Box::new(|v| {
+                v["runtimes"].as_object_mut().unwrap().remove(&digest(2));
+            }),
+        ),
+        // An image for a unit the binding gives none, which names the role the target binds.
+        (
+            format!(
+                "unit gateway: its code.runtime is {}, and the binding resolves none",
+                reference("core", 1)
+            ),
+            Box::new(move |v| {
+                v["units"][gateway]["code"] = json!({ "runtime": reference("core", 1) })
+            }),
+        ),
+        // No image for a unit the binding gives one.
+        (
+            format!(
+                "unit core: its code.runtime is none, and the binding resolves {}",
+                reference("core", 1)
+            ),
+            Box::new(move |v| v["units"][core]["code"] = json!({ "role": "core-runtime" })),
+        ),
+        // The carried binding changed under its unit: another image of the unit's own.
+        (
+            format!(
+                "unit flow: its code.runtime is {}, and the binding resolves {}",
+                reference("flow", 2),
+                reference("flow", 7)
+            ),
+            Box::new(|v| {
+                v["binding"]["document"]["parts"]["flow"]["image"] = image("flow", 7);
+                v["binding"]["digest"] =
+                    json!(agenticspec_sim::deploy::digest(&v["binding"]["document"]));
+            }),
+        ),
+        // From the local store an entry is run by `<image>:<tag>`; a unit naming its digest is
+        // not that image.
+        (
+            "unit flow: its code.runtime is sha256:".to_owned(),
+            Box::new(move |v| {
+                let d = &mut v["binding"]["document"];
+                d["target"] = json!({ "images": "local" });
+                d["runtimes"]["core"] = json!({ "image": "core", "tag": "dev" });
+                d["parts"]["flow"]["image"] = json!({ "image": "flow", "tag": "dev" });
+                d["parts"]["notifier"]["image"] = json!({ "image": "notifier", "tag": "dev" });
+                v["binding"]["digest"] = json!(agenticspec_sim::deploy::digest(d));
+                v["runtimes"] = json!({
+                    "core:dev": { "name": "core", "image": "core", "tag": "dev" },
+                    "flow:dev": { "name": "flow", "image": "flow", "tag": "dev" },
+                    "notifier:dev": { "name": "notifier", "image": "notifier", "tag": "dev" },
+                });
+                v["units"][core]["code"]["runtime"] = json!("core:dev");
+                v["units"][flow]["code"]["runtime"] = json!(digest(2));
+                let n = v["units"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .position(|u| u["name"] == "notifier")
+                    .unwrap();
+                v["units"][n]["code"]["runtime"] = json!("notifier:dev");
+            }),
+        ),
+    ];
+    for (needle, edit) in cases {
+        let r = check(&dir, &rewritten(&v, edit)).unwrap_err();
+        refused_by(&r, "unit_runtime_mismatch");
+        assert!(r.detail.contains(&needle), "{needle} in {}", r.detail);
+        assert_eq!(
+            r.detail.matches("unit_runtime_mismatch").count(),
+            1,
+            "{}",
+            r.detail
+        );
     }
 }

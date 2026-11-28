@@ -168,6 +168,7 @@ order of the table, and writes nothing.
 | `image_unpinned` | a runtime, a part's `image` or a unit's `image` from the target's local store names neither a `tag` nor a `digest` |
 | `unit_image_conflict` | parts of one core or service unit name different images under `parts.<part>.image`, and the unit names none under `packing.units` |
 | `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image: neither its own, its parts', nor, for the core unit, `runtimes.core`. The finding names the unit and its runtime parts |
+| `unit_runtime_mismatch` | a core or service unit's `code.runtime` names an image the bundle's `runtimes` do not carry, or is not the image the binding resolves for the unit (none for a unit that names the role `core-runtime`). At bundle time this is two images under one digest with different names: the bundle carries one entry per digest, so give them one name. The finding names the unit, the image found and the image expected |
 | `volume_mount_missing` | a unit claims a workspace's volume and no part of the unit mounts it, or mounts it at a path that is not absolute; there is no default path |
 | `secret_value` | something that looks like a secret's value stands where a secret name belongs (see [secrets and egress](#secrets-and-egress)) |
 | `secret_undeclared` | an egress entry, or in a written bundle a unit, names a secret that no part of its unit declares |
@@ -256,7 +257,7 @@ its key and which parse to its `document` (`agent_document_mismatch`), and check
 secret or an egress entry's secret that no part of the unit declares, an egress entry whose part
 does not declare its destination, and a secret value, each by its name. It also refuses what the
 target cannot be asked to serve: a volume without an absolute mount (in the binding or in a unit),
-a local runtime image with neither tag nor digest, a core or service unit whose parts name different images or that holds a runtime part without an image (`unit_image_conflict`, `unit_image_missing`), a part isolated on the network of a target
+a local runtime image with neither tag nor digest, a core or service unit whose parts name different images or that holds a runtime part without an image (`unit_image_conflict`, `unit_image_missing`), a core or service unit whose `code.runtime` is not the image its binding resolves or is not carried in `runtimes` (`unit_runtime_mismatch`), a part isolated on the network of a target
 that enforces no network policy, and a scheduled unit whose `schedule` is not the rule of its
 binding or of its schedule's `every` (`schedule_not_cron`). Of a UI unit it hashes the archive the bundle carries and refuses
 an archive that is missing or whose SHA-256 is not the unit's `digest` (`ui_archive_mismatch`),

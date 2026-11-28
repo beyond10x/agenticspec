@@ -414,6 +414,13 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         "agents": agents,
         "runtimes": runtimes,
     });
+    // Two images under one key of `runtimes` (one digest, two names) leave a unit's image
+    // uncarried: refused as `deploy check` would refuse the bundle.
+    let mut uncarried = unit_runtimes(&bundle, inputs.arch, binding, inputs.packing);
+    if !uncarried.is_empty() {
+        sort(&mut uncarried);
+        return Err(uncarried);
+    }
     if !files.is_empty() {
         bundle["files"] = Value::Object(files);
     }
@@ -837,6 +844,92 @@ fn unit_volumes(bundle: &Value) -> Vec<Finding> {
     out
 }
 
+/// The reference a target runs an image the bundle's `runtimes` carry by: from a registry the
+/// entry's `image`, already `<image>@<digest>`; from the target's local store `<image>:<tag>`,
+/// else its digest ([`binding_form::pinned_reference`]).
+fn carried_reference(binding: &Value, entry: &Value) -> Option<String> {
+    if binding_form::images(binding) == "local" {
+        binding_form::pinned_reference(binding, entry)
+    } else {
+        entry["image"].as_str().map(str::to_owned)
+    }
+}
+
+/// The `unit_runtime_mismatch` findings of a bundle: a core or service unit whose
+/// `code.runtime` is not the image the binding resolves for it ([`binding_form::unit_image`],
+/// none when it resolves none), or names an image the bundle's `runtimes` do not carry. A unit
+/// the binding gives no image because of a refusal of its own (`unit_image_conflict`,
+/// `unit_image_missing`, `image_unpinned`) is left to that refusal. The finding names the unit,
+/// the image found and the image expected.
+pub fn unit_runtimes(
+    bundle: &Value,
+    arch: &Value,
+    binding: &Value,
+    packing: &Packing,
+) -> Vec<Finding> {
+    let carried: BTreeSet<String> = bundle["runtimes"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter_map(|(_, e)| carried_reference(binding, e))
+        .collect();
+    let mut out = Vec::new();
+    for u in packing
+        .units
+        .iter()
+        .filter(|u| binding_form::IMAGE_KINDS.contains(&u.kind.as_str()))
+    {
+        let resolved = binding_form::unit_image(binding, u);
+        let expected = match &resolved {
+            UnitImage::Conflict(_) => continue,
+            UnitImage::None
+                if u.parts
+                    .iter()
+                    .any(|p| arch["parts"][p]["block"] == binding_form::RUNTIME_BLOCK) =>
+            {
+                continue;
+            }
+            UnitImage::None => None,
+            r => match r
+                .image()
+                .and_then(|i| binding_form::pinned_reference(binding, i))
+            {
+                Some(x) => Some(x),
+                None => continue,
+            },
+        };
+        let Some(written) = bundle["units"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|x| x["name"] == u.name.as_str())
+        else {
+            continue;
+        };
+        let found = written["code"]["runtime"].as_str();
+        let detail = if found != expected.as_deref() {
+            format!(
+                "unit {}: its code.runtime is {}, and the binding resolves {}",
+                u.name,
+                found.unwrap_or("none"),
+                expected.as_deref().unwrap_or("none")
+            )
+        } else if let Some(f) = found.filter(|f| !carried.contains(*f)) {
+            format!(
+                "unit {}: its code.runtime {f} is no image the bundle's runtimes carry, and the binding resolves {f}",
+                u.name
+            )
+        } else {
+            continue;
+        };
+        out.push(Finding {
+            refusal: "unit_runtime_mismatch",
+            detail,
+        });
+    }
+    out
+}
+
 /// The keys that hold where something is reached. An address is the binding's (per export, and
 /// the named destinations of a part's `egress`), never the architecture's, which the bundle
 /// copies as written.
@@ -894,7 +987,8 @@ pub enum Refused {
 /// by the digest its part pins and its bytes recomputed, then flattened; admission of that
 /// architecture under its binding and packing ([`admit`]), its agent documents against the parts that need them and the digests the
 /// binding pins, the bytes each agent document carries ([`CHECK_REFUSALS`]), the cron rule of
-/// each scheduled unit ([`packing::schedule_of`]), and the secrets and
+/// each scheduled unit ([`packing::schedule_of`]), the runtime image of each core and service
+/// unit ([`unit_runtimes`]), and the secrets and
 /// egress of the binding and of each unit
 /// ([`grants::check`], [`grants::check_units`]), and its UI units ([`ui::check`]).
 pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
@@ -1011,6 +1105,7 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     findings.extend(nested_findings);
     findings.extend(unit_schedules(bundle, arch, &packing));
     findings.extend(served(arch, binding, &packing));
+    findings.extend(unit_runtimes(bundle, arch, binding, &packing));
     findings.extend(unit_volumes(bundle));
     findings.extend(grants::check(arch, binding, &packing));
     findings.extend(grants::check_units(bundle));

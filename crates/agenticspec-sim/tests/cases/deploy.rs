@@ -1677,9 +1677,9 @@ fn an_address_is_a_cidr_block_or_a_host_and_port() {
 fn deploy_check_refuses_a_volume_without_a_mount_an_unpinned_local_image_and_unmet_network_isolation()
  {
     let dir = scratch("deploy-check-served");
-    let cases: [(&str, Edit); 4] = [
+    let cases: [(&[&str], Edit); 4] = [
         (
-            "volume_mount_missing",
+            &["volume_mount_missing"],
             Box::new(|v| {
                 v["binding"]["document"]["parts"]["worker"]
                     .as_object_mut()
@@ -1688,7 +1688,7 @@ fn deploy_check_refuses_a_volume_without_a_mount_an_unpinned_local_image_and_unm
             }),
         ),
         (
-            "volume_mount_missing",
+            &["volume_mount_missing"],
             Box::new(|v| {
                 unit_mut(v, "worker")["claims"]["volumes"][0]
                     .as_object_mut()
@@ -1697,7 +1697,9 @@ fn deploy_check_refuses_a_volume_without_a_mount_an_unpinned_local_image_and_unm
             }),
         ),
         (
-            "image_unpinned",
+            // The local store also turns the gateway's and the build pool's registry image into
+            // its config id, which their units' registry reference no longer is.
+            &["image_unpinned", "unit_runtime_mismatch"],
             Box::new(|v| {
                 let b = &mut v["binding"]["document"];
                 b["target"]["images"] = json!("local");
@@ -1705,18 +1707,22 @@ fn deploy_check_refuses_a_volume_without_a_mount_an_unpinned_local_image_and_unm
             }),
         ),
         (
-            "network_isolation_unmet",
+            &["network_isolation_unmet"],
             Box::new(|v| {
                 v["binding"]["document"]["target"]["network_policy"] = json!("not_enforced");
             }),
         ),
     ];
-    for (name, edit) in cases {
+    for (names, edit) in cases {
         let r = check_text(&dir, &tampered(edit)).unwrap_err();
+        let name = names.join(", ");
         assert_eq!(r.code, "not_admitted", "{name}: {}", r.detail);
         assert_eq!(
             refusal_names(&r.detail),
-            BTreeSet::from([name.to_owned()]),
+            names
+                .iter()
+                .map(|n| (*n).to_owned())
+                .collect::<BTreeSet<_>>(),
             "{name}: {}",
             r.detail
         );
