@@ -1010,6 +1010,7 @@ views:
       - {name: channel, type: agenticspec.session.ExposureChannel}
       - {name: class, type: agenticspec.session.ExposureClass}
       - {name: kind, type: String}
+      - {name: alias, type: String}
       - {name: verdict, type: agenticspec.session.Verdict}
       - {name: state, type: agenticspec.session.Exposure.State}
     naming:

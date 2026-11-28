@@ -8,7 +8,7 @@
     "x-ess-provenance": {
       "system": "agenticspec",
       "specification_version": "v1",
-      "contract_digest": "slice-sha256/2:962a46f571f3414a7fc0a740afb611402cad464353c78bc5475861b9c2db98a6"
+      "contract_digest": "slice-sha256/2:7ab5dac0e12a0512b412611505f32121eaab14a77968c27f3b03bf4b1d77fed0"
     },
     "x-ess-reached-by": "network"
   },
@@ -2326,6 +2326,9 @@
           "kind": {
             "type": "string"
           },
+          "alias": {
+            "type": "string"
+          },
           "verdict": {
             "$ref": "#/components/schemas/agenticspec.session.Verdict"
           },
@@ -2339,6 +2342,7 @@
           "channel",
           "class",
           "kind",
+          "alias",
           "verdict",
           "state"
         ],
