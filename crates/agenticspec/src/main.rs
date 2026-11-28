@@ -600,7 +600,11 @@ impl Handler for Commands {
                     out: out.as_deref(),
                 }))
             }
-            "ui_conform" => ui_conform(&inv.input),
+            "ui_conform" => {
+                let (reply, stdout) = ui_conform(&inv.input, inv.context.output);
+                self.stdout = stdout;
+                reply
+            }
             "packing_default" => sim_reply(sim::packing_default(
                 &path_of(&inv.input, "architecture"),
                 inv.input.get("strategy").and_then(Value::as_str),
@@ -669,13 +673,92 @@ impl Handler for Commands {
 }
 
 /// `agenticspec ui conform`: the conformance suite of the runtime interface against `--source`,
-/// or against the fixture source started here when there is none.
-fn ui_conform(input: &Value) -> HandlerReply {
+/// or against the fixture source started here when there is none; with the reply, what the
+/// command prints on standard output before it ([`conform_reply`]).
+fn ui_conform(input: &Value, output: cli_contract::OutputMode) -> (HandlerReply, String) {
+    let options = match conform_options(input) {
+        Ok(o) => o,
+        Err(r) => return (r, String::new()),
+    };
+    let run = if input.get("architecture").and_then(Value::as_str).is_some() {
+        ui_conform_plane(input, options)
+    } else {
+        ui_conform_plan(input, options)
+    };
+    match run {
+        Ok(report) => conform_reply(input, output, &report),
+        Err(r) => (r, String::new()),
+    }
+}
+
+/// The options of `ui conform` from `--origin` and `--header`.
+fn conform_options(input: &Value) -> Result<agenticspec_ui::conform::Options, HandlerReply> {
+    use agenticspec_ui::conform;
+    let mut options = conform::Options::default();
+    if let Some(origin) = input.get("origin").and_then(Value::as_str) {
+        options.origin =
+            Some(conform::parse_origin(origin).map_err(|e| refusal("origin_invalid", e))?);
+    }
+    for text in input
+        .get("header")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+    {
+        options
+            .headers
+            .push(conform::parse_header(text).map_err(|e| refusal("header_invalid", e))?);
+    }
+    Ok(options)
+}
+
+/// The reply of `ui conform` for a report, and what it prints on standard output first. With
+/// `--json` that is the report (`UiConformResult`) when a check failed; without it, in text
+/// output, every check on a line of its own (`passed|failed|skipped <name>: <detail>`) when a
+/// check failed. A failed check refuses with `conformance_failed`, its detail the counts and the
+/// failed checks.
+fn conform_reply(
+    input: &Value,
+    output: cli_contract::OutputMode,
+    report: &agenticspec_ui::conform::Report,
+) -> (HandlerReply, String) {
+    use agenticspec_ui::conform::Status;
+    let failed = report.failed();
+    if failed.is_empty() {
+        return (HandlerReply::Success(report.to_json()), String::new());
+    }
+    let json = input.get("json").and_then(Value::as_bool).unwrap_or(false);
+    let stdout = if json {
+        format!("{}\n", report.to_json())
+    } else if output == cli_contract::OutputMode::Json {
+        String::new()
+    } else {
+        report.lines().iter().map(|l| format!("{l}\n")).collect()
+    };
+    let lines: Vec<String> = failed.iter().map(ToString::to_string).collect();
+    let reply = refusal(
+        "conformance_failed",
+        format!(
+            "{}: {} of {} checks failed, {} passed, {} skipped\n{}",
+            report.source,
+            failed.len(),
+            report.checks.len(),
+            report.count(Status::Passed),
+            report.count(Status::Skipped),
+            lines.join("\n")
+        ),
+    );
+    (reply, stdout)
+}
+
+/// `agenticspec ui conform` by a plan.
+fn ui_conform_plan(
+    input: &Value,
+    options: agenticspec_ui::conform::Options,
+) -> Result<agenticspec_ui::conform::Report, HandlerReply> {
     use agenticspec_ui::{conform, source};
     let s = |k: &str| input.get(k).and_then(Value::as_str);
-    if s("architecture").is_some() {
-        return ui_conform_plane(input);
-    }
     let root = std::path::Path::new(s("root").unwrap_or("."));
     let plan_path = s("plan")
         .map(PathBuf::from)
@@ -685,7 +768,12 @@ fn ui_conform(input: &Value) -> HandlerReply {
         .and_then(|t| conform::Plan::parse(&t))
     {
         Ok(p) => p,
-        Err(e) => return refusal("plan_unreadable", format!("{}: {e}", plan_path.display())),
+        Err(e) => {
+            return Err(refusal(
+                "plan_unreadable",
+                format!("{}: {e}", plan_path.display()),
+            ));
+        }
     };
     let token = std::env::var("AGENTICSPEC_UI_TOKEN")
         .ok()
@@ -703,26 +791,12 @@ fn ui_conform(input: &Value) -> HandlerReply {
                 });
             fixture = match started {
                 Ok(f) => f,
-                Err(e) => return refusal("source_unavailable", e),
+                Err(e) => return Err(refusal("source_unavailable", e)),
             };
             fixture.url().to_string()
         }
     };
-    let report = conform::run(&url, &plan, token.as_deref(), conform::Options::default());
-    let failed = report.failed();
-    if !failed.is_empty() {
-        let lines: Vec<String> = failed.iter().map(ToString::to_string).collect();
-        return refusal(
-            "conformance_failed",
-            format!(
-                "{url}: {} of {} checks failed\n{}",
-                failed.len(),
-                report.checks.len(),
-                lines.join("\n")
-            ),
-        );
-    }
-    HandlerReply::Success(report.to_json())
+    Ok(conform::run(&url, &plan, token.as_deref(), options))
 }
 
 /// The files of an operator UI by name.
@@ -810,19 +884,19 @@ fn ui_token() -> Option<String> {
 /// `agenticspec ui conform --architecture`: the checks of the default control plane of the
 /// architecture against `--source`, or against `ui serve` of it started here, on the fixtures
 /// built into the binary, or on those of `--root` when it is named.
-fn ui_conform_plane(input: &Value) -> HandlerReply {
+fn ui_conform_plane(
+    input: &Value,
+    options: agenticspec_ui::conform::Options,
+) -> Result<agenticspec_ui::conform::Report, HandlerReply> {
     use agenticspec_ui::{conform, serve};
     let s = |k: &str| input.get(k).and_then(Value::as_str);
     if s("plan").is_some() {
-        return refusal(
+        return Err(refusal(
             "plan_unreadable",
             "--plan and --architecture name two plans; name one".to_string(),
-        );
+        ));
     }
-    let (files, control, plane) = match plane_of(input, None) {
-        Ok(x) => x,
-        Err(r) => return r,
-    };
+    let (files, control, plane) = plane_of(input, None)?;
     let mut token = ui_token();
     let served;
     let url = match s("source") {
@@ -849,27 +923,13 @@ fn ui_conform_plane(input: &Value) -> HandlerReply {
             });
             served = match started {
                 Ok(x) => x,
-                Err(e) => return refusal("source_unavailable", e),
+                Err(e) => return Err(refusal("source_unavailable", e)),
             };
             token = Some(t);
             served.interface_root()
         }
     };
-    let report = conform::run_plane(&url, &plane, token.as_deref(), conform::Options::default());
-    let failed = report.failed();
-    if !failed.is_empty() {
-        let lines: Vec<String> = failed.iter().map(ToString::to_string).collect();
-        return refusal(
-            "conformance_failed",
-            format!(
-                "{url}: {} of {} checks failed\n{}",
-                failed.len(),
-                report.checks.len(),
-                lines.join("\n")
-            ),
-        );
-    }
-    HandlerReply::Success(report.to_json())
+    Ok(conform::run_plane(&url, &plane, token.as_deref(), options))
 }
 
 /// `agenticspec ui serve`: the operator UI of an architecture and its default control plane on

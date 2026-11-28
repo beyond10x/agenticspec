@@ -144,7 +144,7 @@ equal):
 
 | request | wire |
 |---|---|
-| R1 read | `GET {source}/api/views/{view}?{params}` answers `{"rows": [...]}`, only the rows in scope: the row's key, or a field of it that holds an entity's identifier, is the `entity_id` of a placement (`agentic.architecture.Placements`) to that part and copy |
+| R1 read | `GET {source}/api/views/{view}?{params}` answers `{"rows": [...]}`, only the rows in scope: the row's `scope` field names the scope or one below it, or, for a row without one, the row's key or a field of it that holds an entity's identifier is the `entity_id` of a placement (`agentic.architecture.Placements`) to that part and copy. A view the source does not serve answers 404 `{"error": "view_not_served", "view": "<view>"}` |
 | R2 feed | `GET {source}/api/channels/{channel}?{params}`, server-sent events with `event:` the qualified name, `data:` the event JSON and `id:` its cursor; a reconnect with `Last-Event-ID` gets exactly the events after it, in order |
 | R3 placements | R1 on `Placements`, `Parts`, `Reach`, `Revisions` and `Contracts` of the scope's architecture |
 | R4 command | `POST {source}/api/commands/{command}` answers `{"row"}`, or 422 with the refusal's row (`error` its qualified name) |
@@ -155,6 +155,19 @@ Every request carries `Authorization: Bearer <token>` or the session cookie of t
 before anything is dispatched. An action that sends a command shows only while R5 of its scope
 allows the command (and its own `visible`, which may read `actor.may(<command>)`); with no R5 every
 action shows. Hiding is a convenience: R4 refuses what the grants do not allow.
+
+A row or change signal that names no entity says where it belongs in a top-level `scope` field:
+the scope id `{architecture_id}`, `{architecture_id}/{part path}` or
+`{architecture_id}/{part path}/{instance}`. When it holds a scope of the architecture it decides over
+the entity-id rule: the row is in scope at that scope and at every scope above it, so
+`ws/team.lead` shows at `ws/team.lead` and at `ws`, not at `ws/team.worker` or at the copy
+`ws/team.lead/2`. A source may add the field to any row, also where the view does not declare it.
+A field of that name with any other value (a store's `scope: Part`) is the view's own and leaves the
+entity-id rule in force. `ui serve`, the fixture source and `ui conform` all apply the rule.
+
+A source that does not serve a view answers its read with 404 and
+`{"error": "view_not_served", "view": "<view>"}`; `ui conform` counts that view as skipped, by its
+name. Any other 404 of a view read fails.
 
 `views/source/` is the fixture source: `source.json` holds the principals by token, the placements,
 the parts of the architecture, the grants, the action class of each command (standing in for a
@@ -195,8 +208,31 @@ agenticspec ui conform --architecture architectures/workstation.yaml   # against
 | `R4 withheld <command> at <scope>` | a command R5 withholds is refused with 422 and the refusal's row |
 | `unauthenticated R1\|R2\|R4\|R5 …` | without credentials the answer is 401 with no row |
 
-R4 posts the input `{}`, which a runtime's model refuses, so nothing changes. A failed check
-makes the command exit non-zero with `conformance_failed` and one line per failed check.
+R4 posts the input `{}`, which a runtime's model refuses, so nothing changes. A row whose `scope`
+names a scope outside the one read fails its R1 check, and so does an undeclared `scope` that is no
+scope of the architecture. A view answered with `view_not_served` is a skipped check.
+
+### Writes, and what the command prints
+
+Every write (R4, in both modes) carries what a page served from the source sends: `Origin`, the
+source's own origin (`http://host[:port]` of `--source`), so a source that accepts only same-origin
+writes carries out the command. `--origin <url>` sends another origin, and `--header 'Name: value'`
+(repeatable) adds a header to every write, such as the CSRF token such a source asks for:
+
+```console
+AGENTICSPEC_UI_TOKEN=<token> agenticspec ui conform --architecture <architecture> --source <root> \
+  --header 'X-CSRF-Token: <token>'
+```
+
+A header the suite sets itself (`Host`, `Content-Type`, `Content-Length`, `Authorization`) or
+`Origin` is refused with `header_invalid`, an origin that is not `scheme://host[:port]` with
+`origin_invalid`.
+
+When every check passes, the command prints the report: `source`, the counts `passed`, `failed`
+and `skipped`, and `checks`, each `{name, status, detail}`. When a check fails it exits non-zero
+with `conformance_failed` (the counts and one line per failed check) and prints every check on a
+line of its own first, `passed|failed|skipped <name>: <detail>`. With `--json` it prints the report
+instead, also when a check failed.
 
 ## Served on fixtures
 
@@ -247,8 +283,8 @@ command does not change the run. `--sim` and `--fixtures` together are refused w
 |---|---|
 | `/` | the operator app `agenticspec ui build` writes for the architecture, its `config.json` with `api_base` `/ingress/operator`; the page sets the session cookie |
 | `/control/` | the control-plane UI `agenticspec ui build --control-plane` writes for the architecture: the same app with the pages across parts (Inbox, Activity, Operations, Metrics, Architecture, Events) and tiles on the overview, reading the same interface; `/control` redirects here |
-| `/ingress/operator/scopes/{scope}/api/views/{view}` | R1: the rows of the fixture of each view of the plane (`views/fixtures/<view>.json`), at every scope; with `--sim`, the rows the run left, at the scopes of their parts |
-| `/ingress/operator/scopes/{scope}/api/channels/{channel}` | R2: a level's channel plays every script of `views/fixtures/scripts/` in turn, a block's channel its own, each event the operator ingress carries, the cursor its position; a reconnect with `Last-Event-ID` gets the events after it; with `--sim`, a level's channel replays the run's event log, a block's channel the events of its domain, the cursor each event's `seq` |
+| `/ingress/operator/scopes/{scope}/api/views/{view}` | R1: the rows of the fixture of each view of the plane (`views/fixtures/<view>.json`), at every scope; with `--sim`, the rows the run left, at the scopes of their parts. A row whose `scope` names a scope of the architecture only there and above, on fixtures and with `--sim`. Every view of the plane is served, so never `view_not_served` |
+| `/ingress/operator/scopes/{scope}/api/channels/{channel}` | R2: a level's channel plays every script of `views/fixtures/scripts/` in turn, a block's channel its own, each event the operator ingress carries, the cursor its position; a reconnect with `Last-Event-ID` gets the events after it; with `--sim`, a level's channel replays the run's event log, a block's channel the events of its domain, the cursor each event's `seq`. An event whose data names its `scope` only there and above, with the same cursor at every scope |
 | `/ingress/operator/scopes/{scope}/api/commands/{command}` | R4: records the command and answers the outcome `views/source/outcomes.json` scripts for it (per command, optionally per input, the accepted row or the refusal's row with 422), `{"row": null}` when none does |
 | `/ingress/operator/scopes/{scope}/api/actions` | R5: every command of the plane, allowed |
 | `/fixture/commands` | the commands recorded so far, `[{scope, command, input, status}]` |

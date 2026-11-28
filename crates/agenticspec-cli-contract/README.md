@@ -384,6 +384,10 @@ Error `document_refused`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+Error `header_invalid`: `agenticspec.cli.Refusal`.
+
+Error `origin_invalid`: `agenticspec.cli.Refusal`.
+
 Error `plan_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `source_unavailable`: `agenticspec.cli.Refusal`.

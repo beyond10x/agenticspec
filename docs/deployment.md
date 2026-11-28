@@ -426,9 +426,28 @@ architecture), the level's channel resumes from a cursor without repeating an ev
 action set answers at the architecture and at each part (R5), a command it allows is not refused
 by the authority evaluator and a command it withholds is refused (R4), and a request without
 credentials gets 401. Commands are posted with the input `{}`, which the model refuses, so nothing
-changes. It exits non-zero on a failed check and prints one line per failure, named by the
-request (`R1 agentic.gateway.Gateways at workstation/gateway: …`). Without `--source` it checks
-`ui serve` of the architecture, started for the run.
+changes. It exits non-zero on a failed check, prints every check on a line of its own with its
+status (`passed`, `failed` or `skipped`), named by the request
+(`failed R1 agentic.gateway.Gateways at workstation/gateway: …`), and names the failed ones again
+in the refusal. `--json` prints the report instead: every check with its status and detail, also
+when one failed. Without `--source` it checks `ui serve` of the architecture, started for the run.
+
+Each write carries `Origin`, the origin of `--source`, as a page served from the adapter sends it,
+so an adapter that accepts only same-origin writes carries out the command. `--origin <url>` sends
+another origin. `--header 'Name: value'`, repeatable, adds a header to every write, such as a CSRF
+token:
+
+```sh
+AGENTICSPEC_UI_TOKEN=<token> agenticspec ui conform --architecture workstation.yaml \
+  --source http://127.0.0.1:<port>/ingress/operator --header 'X-CSRF-Token: <token>'
+```
+
+An adapter that does not serve a view answers its read with 404 and
+`{"error": "view_not_served", "view": "<view>"}`. The check of that view is skipped, by its name;
+any other 404 fails. A row or change signal that names no entity can carry a top-level `scope`, the
+scope id it belongs to (`<architecture>`, `<architecture>/<part>` or `<architecture>/<part>/<copy>`).
+It then shows at that scope and at the scopes above it, whatever entity ids the row holds, and the
+check fails when it comes back at another scope.
 
 ## Fixture bundles
 

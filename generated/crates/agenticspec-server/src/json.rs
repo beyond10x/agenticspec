@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 6c15432f871ce0173f9a863e95955d78c0cf94618f96a031932e6b988262083b
+// contract digest 7ca419a1f1a9f71de3ce25ad3078b8717f84c1e2138f789f976359da1619b7ea
 // do not edit: regenerate with `ess synthesize`
 
 //! JSON at this system's boundary: the types crate's own module, re-exported.

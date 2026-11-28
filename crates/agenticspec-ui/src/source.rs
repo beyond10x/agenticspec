@@ -1,4 +1,4 @@
-//! The fixtu.filter(|r| interface::in_sc                !interface::in_scope_values(r.values(), &placed)pe_values(r.values(), &placed))|r| r.str("architecture_id") == Some(&sco.is_none_or(|p| r.str("name") == Some(p))e.architecture))e source: an ada.filter_ma                self.placements(scope).into_iter().cloned().collect(),(|p| p.str("entity_id").map(String::from))ter that answers R1-R5 of the runtime interface
+//! The fixture source: an adapter that answers R1-R5 of the runtime interface
 //! (`ui/runtime.openapi.yaml`) at a scope, from the panels' fixtures (`ui/views/fixtures/`, a file
 //! per view and a script per channel) and the fixture source file (`ui/views/source/source.json`:
 //! the principals by token, the placements, the architecture's parts, the grants, the action class
@@ -483,7 +483,7 @@ impl Shared {
         let placed = self.placed(scope);
         Some(
             rows.iter()
-                .filter(|r| interface::in_scope_values(r.values(), &placed))
+                .filter(|r| r.in_scope_at(&placed, &scope.architecture, &scope.path()))
                 .cloned()
                 .collect(),
         )
@@ -504,7 +504,7 @@ impl Shared {
                 .get(view)
                 .into_iter()
                 .flatten()
-                .find(|r| !interface::in_scope_values(r.values(), &placed))
+                .find(|r| !r.in_scope_at(&placed, &scope.architecture, &scope.path()))
             {
                 rows.push(out.clone());
             }
@@ -545,7 +545,10 @@ impl Shared {
                 .query
                 .iter()
                 .any(|(k, v)| obj.get(k).and_then(Value::as_str).is_some_and(|x| x != v));
-            if skip || outside_params || !interface::in_scope(obj, &placed) {
+            if skip
+                || outside_params
+                || !interface::in_scope_at(obj, &placed, &scope.architecture, &scope.path())
+            {
                 continue;
             }
             let id = cursor.to_string();

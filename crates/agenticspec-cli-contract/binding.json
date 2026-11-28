@@ -3365,6 +3365,21 @@
                 "kind": "string"
               }
             },
+            "header": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "json": {
+              "kind": "boolean"
+            },
+            "origin": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
             "plan": {
               "kind": "optional",
               "of": {
@@ -3447,6 +3462,28 @@
           }
         },
         "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "header_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "origin_invalid": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -4887,6 +4924,28 @@
           "source": {
             "kind": "option",
             "long": "contract"
+          }
+        },
+        {
+          "field": "origin",
+          "source": {
+            "kind": "option",
+            "long": "origin"
+          }
+        },
+        {
+          "field": "header",
+          "source": {
+            "kind": "option",
+            "long": "header",
+            "repeated": true
+          }
+        },
+        {
+          "field": "json",
+          "source": {
+            "kind": "flag",
+            "long": "json"
           }
         }
       ]
