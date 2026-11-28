@@ -248,15 +248,31 @@ Run every entry of a task corpus on the simulator and print the predicted class 
 
 Callable: `sim_corpus`. Input: `agenticspec.cli.SimCorpusInput`. Result: `agenticspec.cli.SimCorpusResult`.
 
+Error `architecture_digest_mismatch`: `agenticspec.cli.Refusal`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
 Error `corpus_failed`: `agenticspec.cli.Refusal`.
 
 Error `corpus_invalid`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+Error `fixture_without_part`: `agenticspec.cli.Refusal`.
+
+Error `input_not_at_border`: `agenticspec.cli.Refusal`.
+
+Error `invalid_row`: `agenticspec.cli.Refusal`.
+
+Error `profile_digest_mismatch`: `agenticspec.cli.Refusal`.
+
 Error `scenario_invalid`: `agenticspec.cli.Refusal`.
 
 Error `scenario_refused`: `agenticspec.cli.Refusal`.
+
+Error `unknown_event`: `agenticspec.cli.Refusal`.
+
+Error `unknown_refusal`: `agenticspec.cli.Refusal`.
 
 ### `sim digest`
 
@@ -324,17 +340,33 @@ Check a scenario against its architecture, or run it on the simulator and write 
 
 Callable: `sim_scenario`. Input: `agenticspec.cli.SimScenarioInput`. Result: `agenticspec.cli.SimScenarioResult`.
 
+Error `architecture_digest_mismatch`: `agenticspec.cli.Refusal`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `expectation_failed`: `agenticspec.cli.Refusal`.
+
+Error `fixture_without_part`: `agenticspec.cli.Refusal`.
+
+Error `input_not_at_border`: `agenticspec.cli.Refusal`.
+
+Error `invalid_row`: `agenticspec.cli.Refusal`.
 
 Error `out_missing`: `agenticspec.cli.Refusal`.
 
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
+Error `profile_digest_mismatch`: `agenticspec.cli.Refusal`.
+
 Error `scenario_invalid`: `agenticspec.cli.Refusal`.
 
 Error `scenario_refused`: `agenticspec.cli.Refusal`.
+
+Error `unknown_event`: `agenticspec.cli.Refusal`.
+
+Error `unknown_refusal`: `agenticspec.cli.Refusal`.
 
 ### `sim trace`
 

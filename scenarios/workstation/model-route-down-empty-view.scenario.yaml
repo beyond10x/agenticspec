@@ -22,10 +22,10 @@ fixtures:
 then:
   order: sequence
   events:
-    - { event: task_created, part: operator, task: when.0 }
-    - { event: run_started, part: worker, task: when.0 }
-    - { event: call_decided, part: gateway, task: when.0 }
-    - { event: task_completed, absent: true }
+    - { event: agentic.work.TaskCreated, part: operator, task: when.0 }
+    - { event: agentic.work.RunStarted, part: worker, task: when.0 }
+    - { event: agentic.gateway.CallDecided, part: gateway, task: when.0 }
+    - { event: agentic.work.TaskCompleted, absent: true }
   kpis:
     tasks_done: { max: 0 }
   parts:

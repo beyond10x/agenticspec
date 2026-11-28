@@ -279,12 +279,33 @@ pub const SOURCES: &[(&str, &str)] = sources![
     "packs/shell/blocks/toolset.yaml",
 ];
 
-/// The views, commands and errors the blocks declare: each view and command with its domain.
+/// The views, commands, errors and events the blocks declare: each view and command with its
+/// domain, and each command with the errors its outcomes refuse it with.
 #[derive(Debug, Default)]
 pub struct Names {
     pub views: BTreeMap<String, String>,
     pub commands: BTreeMap<String, String>,
     pub errors: BTreeSet<String>,
+    pub events: BTreeSet<String>,
+    pub refusals: BTreeMap<String, BTreeSet<String>>,
+}
+
+/// Every `error` a command's outcomes name, at any depth.
+fn outcome_errors(v: &Value, out: &mut BTreeSet<String>) {
+    match v {
+        Value::Object(o) => {
+            for (k, x) in o {
+                match (k.as_str(), x) {
+                    ("error", Value::String(e)) => {
+                        out.insert(e.clone());
+                    }
+                    _ => outcome_errors(x, out),
+                }
+            }
+        }
+        Value::Array(xs) => xs.iter().for_each(|x| outcome_errors(x, out)),
+        _ => {}
+    }
 }
 
 /// The declared names, read once from [`SOURCES`].
@@ -310,6 +331,14 @@ pub fn names() -> &'static Names {
                 n.commands.insert(c, domain.clone());
             }
             n.errors.extend(each("errors"));
+            n.events.extend(each("events"));
+            for c in doc["commands"].as_array().into_iter().flatten() {
+                if let Some(name) = c["name"].as_str() {
+                    let mut errors = BTreeSet::new();
+                    outcome_errors(&c["outcomes"], &mut errors);
+                    n.refusals.insert(name.to_string(), errors);
+                }
+            }
         }
         n
     })

@@ -1,6 +1,6 @@
 //! The one table from the simulator's own event kinds to the events of the building blocks
-//! (`blocks/`), which of them an `on_event` trigger can wait for, the names a scenario expects
-//! them by, and the rules a scenario run refuses an input by.
+//! (`blocks/`), which of them an `on_event` trigger can wait for, the block commands a refusal
+//! stands for, and the rules a scenario run refuses an input by.
 
 /// A refused command: no block event, a refusal with a rule.
 pub const REFUSAL: &str = "refusal";
@@ -78,64 +78,41 @@ pub const TABLE: &[Kind] = &[
     kind("input_refused", &[REFUSAL]),
 ];
 
-/// The names a scenario's `then` expects events by, each with the block event it means.
-pub const EXPECTABLE: &[(&str, &str)] = &[
-    ("task_created", "agentic.work.TaskCreated"),
-    ("run_started", "agentic.work.RunStarted"),
-    ("run_ended", "agentic.work.RunEnded"),
-    ("assignment_offered", "agentic.work.AssignmentOffered"),
-    ("deliverable_submitted", "agentic.work.DeliverableSubmitted"),
-    ("deliverable_rejected", "agentic.work.DeliverableRejected"),
-    ("task_completed", "agentic.work.TaskCompleted"),
-    ("task_cancelled", "agentic.work.TaskCancelled"),
-    ("proposal_opened", "agentic.workspace.ChangeProposed"),
-    ("proposal_merged", "agentic.workspace.ProposalMerged"),
-    ("question_asked", "agentic.question.QuestionAsked"),
-    ("question_answered", "agentic.question.QuestionAnswered"),
-    ("default_taken", "agentic.question.DefaultTaken"),
-    ("post_sent", "agentic.channel.MessageSent"),
-    ("board_posted", "agentic.channel.Posted"),
-    ("approval_granted", "agentic.authority.ApprovalGranted"),
-    ("approval_rejected", "agentic.authority.ApprovalRejected"),
-    ("call_decided", "agentic.gateway.CallDecided"),
-    ("claim_queued", "agentic.resource.ClaimQueued"),
-    ("claim_granted", "agentic.resource.ClaimGranted"),
-    ("claim_released", "agentic.resource.ClaimReleased"),
-    ("claim_killed", "agentic.resource.ClaimKilled"),
-    ("schedule_advanced", "agentic.trigger.ScheduleAdvanced"),
-    ("trigger_fired", "agentic.trigger.TriggerFired"),
-    ("firing_queued", "agentic.trigger.FiringQueued"),
-    ("firing_skipped", "agentic.trigger.FiringSkipped"),
-    ("firing_started", "agentic.trigger.FiringStarted"),
-    ("firing_failed", "agentic.trigger.FiringFailed"),
-    ("refusal", REFUSAL),
-];
+/// The block command an input stands for: every input is a message to its border part
+/// (`input_delivered` records `agentic.channel.MessageSent`), so a refused input is a refusal of
+/// this command.
+pub const INPUT_COMMAND: &str = "agentic.channel.SendMessage";
 
-/// The rules a scenario run refuses an input by, with the block error that refuses the same
-/// (none where no block declares one) and what each means.
-pub const RULES: &[(&str, Option<&str>, &str)] = &[
+/// The rules a scenario run refuses by, with the block command each refuses, the block error that
+/// refuses the same (none where no block declares one) and what each means.
+pub const RULES: &[(&str, &str, Option<&str>, &str)] = &[
     (
         "input_without_link",
+        INPUT_COMMAND,
         Some("agentic.channel.NotAParty"),
         "no link from the author to the part carries the input's kind",
     ),
     (
         "control_without_authority",
+        INPUT_COMMAND,
         Some("agentic.delegation.NotTheDelegator"),
         "a control input from an author that is not the principal the part acts for",
     ),
     (
         "control_without_proof",
+        INPUT_COMMAND,
         None,
         "a control input without proof that it comes from its author",
     ),
     (
         "claim_conflict",
+        "agentic.channel.TakePost",
         Some("agentic.channel.PostAlreadyTaken"),
         "a copy claims a board entry another copy claimed first",
     ),
     (
         "corpus_refused",
+        INPUT_COMMAND,
         None,
         "a corpus entry whose input was refused makes no task",
     ),
@@ -160,28 +137,53 @@ pub fn trigger_kind(block_event: &str) -> Option<&'static str> {
     triggers().find(|(e, _)| *e == block_event).map(|(_, k)| k)
 }
 
-/// The block event an expected name means.
-pub fn expected_event(name: &str) -> Option<&'static str> {
-    EXPECTABLE.iter().find(|(n, _)| *n == name).map(|(_, b)| *b)
+/// Every block event the simulator records, in table order, each once.
+pub fn recorded() -> Vec<&'static str> {
+    let mut out: Vec<&'static str> = Vec::new();
+    for b in TABLE.iter().flat_map(|k| k.events.iter().copied()) {
+        if b != REFUSAL && !out.contains(&b) {
+            out.push(b);
+        }
+    }
+    out
 }
 
-/// The expected name of a block event.
-pub fn name_of(block_event: &str) -> Option<&'static str> {
-    EXPECTABLE
+/// Whether the simulator records the block event `block_event`.
+pub fn modeled(block_event: &str) -> bool {
+    block_event != REFUSAL && TABLE.iter().any(|k| k.events.contains(&block_event))
+}
+
+/// Whether the simulator refuses the block command `command` by one of its rules.
+pub fn refuses(command: &str) -> bool {
+    RULES.iter().any(|(_, c, _, _)| *c == command)
+}
+
+/// The block command a rule refuses; an input's command for a rule of no row (an input refused
+/// because a part is unavailable).
+pub fn rule_command(rule: &str) -> &'static str {
+    RULES
         .iter()
-        .find(|(_, b)| *b == block_event)
-        .map(|(n, _)| *n)
-}
-
-/// Whether the simulator records the block event an expected name means.
-pub fn modeled(name: &str) -> bool {
-    expected_event(name).is_some_and(|b| TABLE.iter().any(|k| k.events.contains(&b)))
+        .find(|(r, _, _, _)| *r == rule)
+        .map_or(INPUT_COMMAND, |(_, c, _, _)| *c)
 }
 
 /// The block error of a rule, if a block declares one.
 pub fn rule_error(rule: &str) -> Option<&'static str> {
     RULES
         .iter()
-        .find(|(r, _, _)| *r == rule)
-        .and_then(|(_, e, _)| *e)
+        .find(|(r, _, _, _)| *r == rule)
+        .and_then(|(_, _, e, _)| *e)
+}
+
+/// Whether a refusal of `command` with `error` can occur: the command's outcomes name the error,
+/// or a rule of the simulator refuses that command with it.
+pub fn refusal_known(
+    command: &str,
+    error: &str,
+    declared: &std::collections::BTreeSet<String>,
+) -> bool {
+    declared.contains(error)
+        || RULES
+            .iter()
+            .any(|(_, c, e, _)| *c == command && *e == Some(error))
 }

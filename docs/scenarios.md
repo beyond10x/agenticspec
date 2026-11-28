@@ -36,7 +36,18 @@ A refused command exits 1 and prints `<code>: <detail>` to standard error:
 |---|---|
 | `document_unreadable` | a file cannot be read or is not YAML |
 | `scenario_invalid` | the scenario is not a valid `agenticspec-scenario/1` document; every problem is named by its path, such as `when.0.atx: unknown key` |
-| `scenario_refused` | the scenario does not fit its architecture: a digest does not match, an input is not at a border part, an author or a fixture names no part, an `unavailable` entry or a part of `then.parts` names no part or no dependency, a view, command or error is not declared by a block, or the architecture itself is refused |
+| `architecture_digest_mismatch` | `architecture.digest` is not the sha256 of the architecture file; `scenario run` refuses before the simulation starts |
+| `profile_digest_mismatch` | `profile.digest` is not the sha256 of the profile file |
+| `architecture_refused` | the architecture itself is refused, with the rules `sim check` names |
+| `input_not_at_border` | an input is at a part the architecture's `border` does not list |
+| `invalid_row` | a `given` row does not fit its entity ([below](#given-rows)) |
+| `fixture_without_part` | a fixture names a part the architecture does not have |
+| `unknown_event` | an expected `event` is no event a block declares, such as `agentic.resource.ClaimGrantd` |
+| `unknown_refusal` | an expected `refusal` is no command a block declares, or its `error` is no error that command is refused with |
+| `scenario_refused` | the scenario does not fit its architecture in another way: an author names no part, a fixture names a part of the wrong block, an `unavailable` entry or a part of `then.parts` names no part or no dependency, a view, command or error is not declared by a block; or it has problems of more than one code |
+
+A check names every problem, each after its code. When all of them have one code, the command
+exits with that code; when their codes differ, with `scenario_refused`.
 | `out_missing` | `scenario run` without `--out` |
 | `out_unwritable` | `scenario-result.json` cannot be written |
 | `expectation_failed` | an expected event or a KPI bound failed; `scenario-result.json` is written first |
@@ -66,12 +77,12 @@ fixtures:
 then:
   order: sequence
   events:
-    - { event: run_started, part: worker, task: when.0 }
-    - { event: question_asked, part: worker, task: when.0, options: [A, B] }
-    - { event: question_asked, part: operator, task: when.0 }
-    - { event: post_sent, part: operator, channel: chat }
-    - { event: question_answered, part: owner, task: when.0, option: B }
-    - { event: task_completed, part: worker, task: when.0 }
+    - { event: agentic.work.RunStarted, part: worker, task: when.0 }
+    - { event: agentic.question.QuestionAsked, part: worker, task: when.0, options: [A, B] }
+    - { event: agentic.question.QuestionAsked, part: operator, task: when.0 }
+    - { event: agentic.channel.MessageSent, part: operator, channel: chat }
+    - { event: agentic.question.QuestionAnswered, part: owner, task: when.0, option: B }
+    - { event: agentic.work.TaskCompleted, part: worker, task: when.0 }
   kpis:
     questions_forwarded: { min: 1, max: 1 }
     questions_defaulted: { max: 0 }
@@ -109,16 +120,17 @@ Each entry of `when` is one input at a border part:
 | `text` | no | the input as written; the simulator does not read it, a corpus entry holds its digest |
 | `after` | no | the time since the input before it (the first: since the start); `0s` by default |
 
-The run admits an input or refuses it by a rule:
+The run admits an input or refuses it by a rule. Every input is a message to its border part, so
+a refused input is a refusal of `agentic.channel.SendMessage`:
 
-| rule | refused when | block error |
-|---|---|---|
-| `input_without_link` | no link from the author to the part carries the input: a prompt needs a `prompt` link, an order an `order` link, a message or a control input any link | `agentic.channel.NotAParty` |
-| `control_without_authority` | a control input comes from an author that is not the principal the part acts for (`acts_for`) | `agentic.delegation.NotTheDelegator` |
-| `control_without_proof` | a control input carries no proof | none: no block refuses a message without proof |
-| `claim_conflict` | a copy claims a board entry another copy claimed first | `agentic.channel.PostAlreadyTaken` |
-| `corpus_refused` | a corpus entry a profile drew was refused, so it makes no task | none |
-| `part_unavailable` | the part, the author or the channel of the input is unavailable at its time, or the part is cut from the author or the channel ([below](#unavailable-parts-and-dependencies)) | none: no block declares one |
+| rule | refused when | command | block error |
+|---|---|---|---|
+| `input_without_link` | no link from the author to the part carries the input: a prompt needs a `prompt` link, an order an `order` link, a message or a control input any link | `agentic.channel.SendMessage` | `agentic.channel.NotAParty` |
+| `control_without_authority` | a control input comes from an author that is not the principal the part acts for (`acts_for`) | `agentic.channel.SendMessage` | `agentic.delegation.NotTheDelegator` |
+| `control_without_proof` | a control input carries no proof | `agentic.channel.SendMessage` | none: no block refuses a message without proof |
+| `claim_conflict` | a copy claims a board entry another copy claimed first | `agentic.channel.TakePost` | `agentic.channel.PostAlreadyTaken` |
+| `corpus_refused` | a corpus entry a profile drew was refused, so it makes no task | `agentic.channel.SendMessage` | none |
+| `part_unavailable` | the part, the author or the channel of the input is unavailable at its time, or the part is cut from the author or the channel ([below](#unavailable-parts-and-dependencies)) | `agentic.channel.SendMessage` | none: no block declares one |
 
 An admitted prompt (`send`), order (`send`, `dispatch`) or control input (`run`, `retry`,
 `dispatch`) makes a task, named after the input: `when.0` for the first. Other admitted inputs are
@@ -202,61 +214,66 @@ ends, not each model call.
 then:
   order: sequence
   events:
-    - { event: refusal, part: operator, author: owner, rule: control_without_proof }
-    - { event: task_created, absent: true }
+    - { refusal: agentic.channel.SendMessage, part: operator, author: owner, rule: control_without_proof }
+    - { event: agentic.work.TaskCreated, absent: true }
   kpis:
     tasks_arrived: { max: 0 }
 ```
 
-`order: sequence` (the default) expects each event after the one before it; `order: set` expects
-each on an event of its own, in any order. An expectation with `absent: true` holds when no event
-matches it.
+An expectation names one block event by its full name (`event`), or one refusal (`refusal`,
+`error`, `rule`, or any of them). `order: sequence` (the default) expects each after the one before
+it; `order: set` expects each on an event of its own, in any order. An expectation with
+`absent: true` holds when no event matches it.
 
 | key | matches |
 |---|---|
-| `event` | the event's name, from the table below |
+| `event` | the block event, as a block declares it: `agentic.resource.ClaimGranted` |
+| `refusal` | the block command refused: `agentic.resource.RequestClaim` |
+| `error` | the block error of a refusal; it must be one the command is refused with: `agentic.resource.NoTimeLimit` |
+| `rule` | the rule of the run that refused it (the table above) |
 | `part` | the part the event is about |
 | `task` | the task: `when.<n>` for an input, the `id` of a given row |
-| `rule` | the rule of a refusal |
 | `options`, `option` | the options of a question, the option of its answer or default |
 | `channel`, `author` | the channel and the sender of a message |
-| `process` | the process the run follows; the simulator models no process, so this is never checked |
+| `process` | the process the task follows; the simulator follows none, so this is never checked |
 
-| name | block event | recorded by the simulator |
-|---|---|---|
-| `task_created` | `agentic.work.TaskCreated` | yes |
-| `run_started` | `agentic.work.RunStarted` | yes |
-| `run_ended` | `agentic.work.RunEnded` | yes, when a run ends failed |
-| `assignment_offered` | `agentic.work.AssignmentOffered` | yes |
-| `deliverable_submitted` | `agentic.work.DeliverableSubmitted` | yes, when a reviewer receives it |
-| `deliverable_rejected` | `agentic.work.DeliverableRejected` | yes |
-| `task_completed` | `agentic.work.TaskCompleted` | yes |
-| `task_cancelled` | `agentic.work.TaskCancelled` | yes |
-| `proposal_opened` | `agentic.workspace.ChangeProposed` | no |
-| `proposal_merged` | `agentic.workspace.ProposalMerged` | no |
-| `question_asked` | `agentic.question.QuestionAsked` | yes |
-| `question_answered` | `agentic.question.QuestionAnswered` | yes |
-| `default_taken` | `agentic.question.DefaultTaken` | yes |
-| `post_sent` | `agentic.channel.MessageSent` | yes |
-| `board_posted` | `agentic.channel.Posted` | yes |
-| `approval_granted` | `agentic.authority.ApprovalGranted` | no |
-| `approval_rejected` | `agentic.authority.ApprovalRejected` | no |
-| `call_decided` | `agentic.gateway.CallDecided` | yes, when the rate limit holds a call |
-| `claim_queued` | `agentic.resource.ClaimQueued` | yes |
-| `claim_granted` | `agentic.resource.ClaimGranted` | yes |
-| `claim_released` | `agentic.resource.ClaimReleased` | yes |
-| `claim_killed` | `agentic.resource.ClaimKilled` | yes |
-| `schedule_advanced` | `agentic.trigger.ScheduleAdvanced` | yes |
-| `trigger_fired` | `agentic.trigger.TriggerFired` | yes |
-| `firing_queued` | `agentic.trigger.FiringQueued` | yes |
-| `firing_skipped` | `agentic.trigger.FiringSkipped` | yes |
-| `firing_started` | `agentic.trigger.FiringStarted` | yes |
-| `firing_failed` | `agentic.trigger.FiringFailed` | yes |
-| `refusal` | a refused input or claim, with its rule | yes |
+`scenario check` refuses an event no block declares (`unknown_event`, with the nearest declared
+name when there is one) and a command or error no block declares for it (`unknown_refusal`). An
+expectation that names an `event` and a key of a refusal, or neither, is not a valid scenario.
 
-An expectation of an event the simulator does not record is `not_checked`, not failed: a runtime
-that records it can check the same scenario. `kpis` bounds any KPI of a simulator run with `min`,
-`max` or both, inclusive.
+The simulator records these block events:
+
+| block event | recorded by the simulator |
+|---|---|
+| `agentic.work.TaskCreated` | yes |
+| `agentic.work.RunStarted` | yes |
+| `agentic.work.RunEnded` | yes, when a run ends failed |
+| `agentic.work.DeliverableSubmitted` | yes, when a reviewer receives it |
+| `agentic.work.AssignmentOffered` | yes |
+| `agentic.work.TaskCompleted` | yes |
+| `agentic.work.DeliverableRejected` | yes |
+| `agentic.work.TaskCancelled` | yes |
+| `agentic.gateway.CallDecided` | yes, when the rate limit holds a call |
+| `agentic.resource.ClaimQueued` | yes |
+| `agentic.resource.ClaimGranted` | yes |
+| `agentic.resource.ClaimReleased` | yes |
+| `agentic.question.QuestionAsked` | yes |
+| `agentic.channel.MessageSent` | yes |
+| `agentic.question.QuestionAnswered` | yes |
+| `agentic.question.DefaultTaken` | yes |
+| `agentic.resource.ClaimKilled` | yes |
+| `agentic.channel.Posted` | yes |
+| `agentic.trigger.ScheduleAdvanced` | yes |
+| `agentic.trigger.TriggerFired` | yes |
+| `agentic.trigger.FiringQueued` | yes |
+| `agentic.trigger.FiringSkipped` | yes |
+| `agentic.trigger.FiringStarted` | yes |
+| `agentic.trigger.FiringFailed` | yes |
+
+It refuses only `agentic.channel.SendMessage` (an input) and `agentic.channel.TakePost` (a board
+claim). An expectation of any other block event, such as `agentic.workspace.ChangeProposed`, or of
+a refusal of any other command, is `not_checked`, not failed: a runtime that records it can check
+the same scenario. `kpis` bounds any KPI of a simulator run with `min`, `max` or both, inclusive.
 
 ## Unavailable parts and dependencies
 
@@ -365,12 +382,12 @@ the observables checked:
   "predicted": "question",
   "counts": { "held": 8, "failed": 0, "not_checked": 0 },
   "expectations": [
-    { "index": 4, "expect": { "event": "question_answered", "part": "owner", "task": "when.0", "option": "B" }, "status": "held", "trace": 6 }
+    { "index": 4, "expect": { "event": "agentic.question.QuestionAnswered", "part": "owner", "task": "when.0", "option": "B" }, "status": "held", "trace": 6 }
   ],
   "kpi_bounds": [ { "kpi": "questions_forwarded", "min": 1, "max": 1, "value": 1, "status": "held" } ],
   "inputs": [ { "index": 0, "t_seconds": 0, "at": "operator", "kind": "prompt", "act": "send", "author": "owner", "status": "accepted", "rule": null } ],
   "trace": [
-    { "t_seconds": 654.63, "event": "agentic.question.QuestionAnswered", "name": "question_answered", "part": "owner", "sim": "question_answered", "task": "when.0", "option": "B" }
+    { "t_seconds": 654.63, "event": "agentic.question.QuestionAnswered", "part": "owner", "sim": "question_answered", "task": "when.0", "option": "B" }
   ],
   "kpis": { "tasks_done": { "value": 1, "kind": "Quality" } }
 }
@@ -383,7 +400,7 @@ the observables checked:
 | `expectations` | each expected event with `status` `held`, `failed` or `not_checked`, the index of the trace event it matched, and the reason when it did not hold |
 | `kpi_bounds` | each bound with the measured value and its status |
 | `inputs` | each input, when it arrived, and whether it was accepted or refused by which rule |
-| `trace` | every event of the run in block terms, in time order: the block event, its name, the part, the task, and `sim`, the simulator's own event it comes from |
+| `trace` | every event of the run in block terms, in time order: the block event (`refusal` for a refusal, with its `command`, `rule` and `error`), the part, the task, and `sim`, the simulator's own event it comes from |
 | `kpis` | every KPI of the run |
 | `unavailable` | each `unavailable` entry, its window (`from_seconds`, `until_seconds`) and how the simulator made it unavailable: `simulated` is `fault`, `inputs_refused` or `not_modeled` with the reason |
 | `observables` | each observable of `then.parts`: the part, `observable` (`view`, `command`, `exits` or `rest`), the expectation as written, its status and the reason when it was not checked |
@@ -414,7 +431,7 @@ seed: 1
 horizon: 4h
 
 entries:
-  - scenario: { ref: question-answered.scenario.yaml, digest: c41a31c4225f675d2e429f2e155b54c74c2ee866f63851dbf862d73b265f63b5 }
+  - scenario: { ref: question-answered.scenario.yaml, digest: 6c675930da48357e350cc404d4a48704d3474261efbe9785eaa73d103524dd03 }
     kind: prompt
     input_digest: 674bead15a2e6fe07d6bffb0d9e6c35e414ddeb8701cd9b3521840636b2d3d62
     expected: question
@@ -470,8 +487,9 @@ the block events of the rows each input caused as `then`. An outside input is a 
 main agent by a human (kind `prompt`), a delegate or another session (kind `message`), with proof
 `none` and the time since the input before it. A prompt of the harness or a hook, such as a task
 notification, is no input. What an input caused is every row lifted from the turn that received it
-and from every step after it, up to the next input: a task makes `task_created`, a run
-`run_started`, a question `question_asked` (and `question_answered`), a sent message `post_sent`,
+and from every step after it, up to the next input: a task makes `agentic.work.TaskCreated`, a run
+`agentic.work.RunStarted`, a question `agentic.question.QuestionAsked` (and
+`agentic.question.QuestionAnswered`), a sent message `agentic.channel.MessageSent`,
 each with the input's task, `when.<n>`. A comment beside each entry names the node it comes from.
 
 `--map` names the part each side of the session plays, as `key=part` pairs:

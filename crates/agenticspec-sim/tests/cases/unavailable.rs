@@ -234,7 +234,7 @@ fn an_unavailable_principal_is_away_and_its_question_takes_the_default() {
         "owner-away",
         "2h",
         &format!(
-            "unavailable:\n  - {{ part: owner, from: 1s }}\nwhen:\n{PROMPT}fixtures:\n  model:\n    - {{ for: worker, outcome: question, turns: 2, options: [A, B], default: A, needs_owner: true }}\n  principals:\n    - {{ part: owner, option: B, after: 1m }}\nthen:\n  events:\n    - {{ event: question_asked, part: operator, task: when.0 }}\n    - {{ event: default_taken, task: when.0, option: A }}\n    - {{ event: question_answered, absent: true }}\n"
+            "unavailable:\n  - {{ part: owner, from: 1s }}\nwhen:\n{PROMPT}fixtures:\n  model:\n    - {{ for: worker, outcome: question, turns: 2, options: [A, B], default: A, needs_owner: true }}\n  principals:\n    - {{ part: owner, option: B, after: 1m }}\nthen:\n  events:\n    - {{ event: agentic.question.QuestionAsked, part: operator, task: when.0 }}\n    - {{ event: agentic.question.DefaultTaken, task: when.0, option: A }}\n    - {{ event: agentic.question.QuestionAnswered, absent: true }}\n"
         ),
     );
     let r = run(&path, &dir.join("out"));
@@ -250,7 +250,7 @@ fn an_entry_the_simulator_cannot_model_leaves_every_expectation_not_checked() {
         "worker-down",
         "1h",
         &format!(
-            "unavailable:\n  - {{ part: worker, from: 0s }}\nwhen:\n{PROMPT}then:\n  events:\n    - {{ event: run_started, absent: true }}\n  kpis:\n    tasks_done: {{ max: 0 }}\n"
+            "unavailable:\n  - {{ part: worker, from: 0s }}\nwhen:\n{PROMPT}then:\n  events:\n    - {{ event: agentic.work.RunStarted, absent: true }}\n  kpis:\n    tasks_done: {{ max: 0 }}\n"
         ),
     );
     let r = run(&path, &dir.join("out"));
@@ -275,7 +275,7 @@ fn a_down_channel_the_simulation_still_uses_is_reported_not_modeled() {
         "chat-used",
         "2h",
         &format!(
-            "unavailable:\n  - {{ part: chat, from: 1s }}\nwhen:\n{PROMPT}fixtures:\n  model:\n    - {{ for: worker, outcome: question, turns: 2, options: [A, B], default: A, needs_owner: true }}\nthen:\n  events:\n    - {{ event: task_created, task: when.0 }}\n"
+            "unavailable:\n  - {{ part: chat, from: 1s }}\nwhen:\n{PROMPT}fixtures:\n  model:\n    - {{ for: worker, outcome: question, turns: 2, options: [A, B], default: A, needs_owner: true }}\nthen:\n  events:\n    - {{ event: agentic.work.TaskCreated, task: when.0 }}\n"
         ),
     );
     let r = run(&path, &dir.join("out"));
@@ -284,7 +284,7 @@ fn a_down_channel_the_simulation_still_uses_is_reported_not_modeled() {
         r["unavailable"][0]["reason"]
             .as_str()
             .unwrap()
-            .contains("post_sent by `operator`")
+            .contains("agentic.channel.MessageSent by `operator`")
     );
     assert_eq!(r["expectations"][0]["status"], "not_checked");
 }
