@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
+// contract digest 7650ea129a3d117e018d65788846d62f507c651784597c9f236674bc69f31367
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -186,6 +186,253 @@ pub fn decode_agenticspec_cli_autonomy_figures(value: &json::Value, at: &str) ->
                     items4.push(decode_agenticspec_cli_decision_figures(element4, &nested4)?);
                 }
                 items4
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.BlocksLiftInput` as JSON.
+pub fn encode_agenticspec_cli_blocks_lift_input(value: &agenticspec_types::cli::BlocksLiftInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "transcript");
+    json::push_text(out, &value.transcript);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.BlocksLiftInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_blocks_lift_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksLiftInput, json::DecodeError> {
+    json::closed_at(value, at, &["transcript"])?;
+    Ok(agenticspec_types::cli::BlocksLiftInput {
+        transcript: {
+            let at0 = json::nested(at, "transcript");
+            let member0 = json::member_at(value, at, "transcript")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.BlocksLiftResult` as JSON.
+pub fn encode_agenticspec_cli_blocks_lift_result(value: &agenticspec_types::cli::BlocksLiftResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "session_id");
+    json::push_text(out, &value.session_id);
+    json::member(out, "given");
+    json::push_value(out, &value.given);
+    json::member(out, "entities");
+    out.push('[');
+    for (index0, item0) in value.entities.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        encode_agenticspec_cli_entity_rows(&*item0, out);
+    }
+    out.push(']');
+    json::member(out, "not_observable");
+    out.push('[');
+    for (index0, item0) in value.not_observable.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.BlocksLiftResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_blocks_lift_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksLiftResult, json::DecodeError> {
+    json::closed_at(value, at, &["session_id", "given", "entities", "not_observable"])?;
+    Ok(agenticspec_types::cli::BlocksLiftResult {
+        session_id: {
+            let at0 = json::nested(at, "session_id");
+            let member0 = json::member_at(value, at, "session_id")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        given: {
+            let at1 = json::nested(at, "given");
+            let member1 = json::member_at(value, at, "given")?;
+            json::value_at(member1, &at1)
+        },
+        entities: {
+            let at2 = json::nested(at, "entities");
+            let member2 = json::member_at(value, at, "entities")?;
+            {
+                let mut items2 = Vec::new();
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
+                    let nested2 = json::nested(&at2, &index2.to_string());
+                    items2.push(decode_agenticspec_cli_entity_rows(element2, &nested2)?);
+                }
+                items2
+            }
+        },
+        not_observable: {
+            let at3 = json::nested(at, "not_observable");
+            let member3 = json::member_at(value, at, "not_observable")?;
+            {
+                let mut items3 = Vec::new();
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
+                    let nested3 = json::nested(&at3, &index3.to_string());
+                    items3.push(json::text_at(element3, &nested3, "a string")?.to_owned());
+                }
+                items3
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.BlocksScenarioInput` as JSON.
+pub fn encode_agenticspec_cli_blocks_scenario_input(value: &agenticspec_types::cli::BlocksScenarioInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "transcript");
+    json::push_text(out, &value.transcript);
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "profile");
+    json::push_text(out, &value.profile);
+    json::member(out, "map");
+    json::push_text(out, &value.map);
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    if let Some(held0) = &value.name {
+        json::member(out, "name");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.BlocksScenarioInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_blocks_scenario_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksScenarioInput, json::DecodeError> {
+    json::closed_at(value, at, &["transcript", "architecture", "profile", "map", "out", "name"])?;
+    Ok(agenticspec_types::cli::BlocksScenarioInput {
+        transcript: {
+            let at0 = json::nested(at, "transcript");
+            let member0 = json::member_at(value, at, "transcript")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        architecture: {
+            let at1 = json::nested(at, "architecture");
+            let member1 = json::member_at(value, at, "architecture")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        profile: {
+            let at2 = json::nested(at, "profile");
+            let member2 = json::member_at(value, at, "profile")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        map: {
+            let at3 = json::nested(at, "map");
+            let member3 = json::member_at(value, at, "map")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
+        },
+        out: {
+            let at4 = json::nested(at, "out");
+            let member4 = json::member_at(value, at, "out")?;
+            json::text_at(member4, &at4, "a string")?.to_owned()
+        },
+        name: match value.member("name") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "name");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.BlocksScenarioResult` as JSON.
+pub fn encode_agenticspec_cli_blocks_scenario_result(value: &agenticspec_types::cli::BlocksScenarioResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "scenario");
+    json::push_text(out, &value.scenario);
+    json::member(out, "inputs");
+    json::push_integer(out, value.inputs);
+    json::member(out, "expectations");
+    json::push_integer(out, value.expectations);
+    json::member(out, "unjoined");
+    out.push('[');
+    for (index0, item0) in value.unjoined.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    json::member(out, "unmapped");
+    out.push('[');
+    for (index0, item0) in value.unmapped.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.BlocksScenarioResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_blocks_scenario_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksScenarioResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "scenario", "inputs", "expectations", "unjoined", "unmapped"])?;
+    Ok(agenticspec_types::cli::BlocksScenarioResult {
+        out: {
+            let at0 = json::nested(at, "out");
+            let member0 = json::member_at(value, at, "out")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        scenario: {
+            let at1 = json::nested(at, "scenario");
+            let member1 = json::member_at(value, at, "scenario")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        inputs: {
+            let at2 = json::nested(at, "inputs");
+            let member2 = json::member_at(value, at, "inputs")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        expectations: {
+            let at3 = json::nested(at, "expectations");
+            let member3 = json::member_at(value, at, "expectations")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        unjoined: {
+            let at4 = json::nested(at, "unjoined");
+            let member4 = json::member_at(value, at, "unjoined")?;
+            {
+                let mut items4 = Vec::new();
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
+                    let nested4 = json::nested(&at4, &index4.to_string());
+                    items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
+                }
+                items4
+            }
+        },
+        unmapped: {
+            let at5 = json::nested(at, "unmapped");
+            let member5 = json::member_at(value, at, "unmapped")?;
+            {
+                let mut items5 = Vec::new();
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
+                    let nested5 = json::nested(&at5, &index5.to_string());
+                    items5.push(json::text_at(element5, &nested5, "a string")?.to_owned());
+                }
+                items5
             }
         },
     })
@@ -588,6 +835,37 @@ pub fn decode_agenticspec_cli_decision_figures(value: &json::Value, at: &str) ->
             let at2 = json::nested(at, "count");
             let member2 = json::member_at(value, at, "count")?;
             json::integer_at(member2, &at2, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.EntityRows` as JSON.
+pub fn encode_agenticspec_cli_entity_rows(value: &agenticspec_types::cli::EntityRows, out: &mut String) {
+    out.push('{');
+    json::member(out, "entity");
+    json::push_text(out, &value.entity);
+    json::member(out, "rows");
+    json::push_integer(out, value.rows);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.EntityRows` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_entity_rows(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::EntityRows, json::DecodeError> {
+    json::closed_at(value, at, &["entity", "rows"])?;
+    Ok(agenticspec_types::cli::EntityRows {
+        entity: {
+            let at0 = json::nested(at, "entity");
+            let member0 = json::member_at(value, at, "entity")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        rows: {
+            let at1 = json::nested(at, "rows");
+            let member1 = json::member_at(value, at, "rows")?;
+            json::integer_at(member1, &at1, "an integer")?
         },
     })
 }

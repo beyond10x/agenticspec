@@ -14,6 +14,8 @@
   "format": "ess-cli-artifacts/1",
   "obligations": [
     "handler:analyze: implement the owner-qualified callable and its declared result/error contract",
+    "handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract",
+    "handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract",
     "handler:export: implement the owner-qualified callable and its declared result/error contract",
     "handler:kpi: implement the owner-qualified callable and its declared result/error contract",
     "handler:lift: implement the owner-qualified callable and its declared result/error contract",

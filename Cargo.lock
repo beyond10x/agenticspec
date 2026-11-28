@@ -50,6 +50,7 @@ name = "agenticspec-records"
 version = "0.4.0"
 dependencies = [
  "agenticspec-server",
+ "agenticspec-sim",
  "agenticspec-system",
  "agenticspec-types",
  "rayon",

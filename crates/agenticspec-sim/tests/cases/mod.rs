@@ -9,6 +9,7 @@ mod events;
 mod fidelity;
 mod ladder;
 mod marked;
+mod rows;
 mod scenario;
 mod search;
 mod sim;

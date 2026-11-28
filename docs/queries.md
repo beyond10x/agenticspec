@@ -118,6 +118,45 @@ transcript does not record, a sub-agent link that had to be inferred. An answer 
 fact is marked `possible`, and `unknown` lists the facts it rests on. Every other answer is
 `definite`.
 
+## Rows of the building blocks
+
+[`queries/blocks.sq`](https://github.com/beyond10x/agenticspec/blob/main/queries/blocks.sq) lifts
+a session into rows of the [building blocks](/docs/blocks): the tasks it was given, the runs that
+worked them, their steps, the questions asked and the messages sent and received.
+
+```console
+agenticspec query queries/blocks.sq --transcript <session>.jsonl
+agenticspec blocks lift <session>.jsonl
+```
+
+`query` shows the answers of its rules. `blocks lift` writes one row per answer, checked against
+the blocks, in the form of a scenario's `given` (see [Scenarios](scenarios.md)).
+
+| rule | block entity | from |
+|---|---|---|
+| `block_input` | (the inputs of a draft scenario) | a prompt of the main agent by `Human`, `Delegate` or `PeerSession`; a `Harness` or `Hook` prompt is no input |
+| `block_task` | `agentic.work.Task` | an input classed `Task` |
+| `block_run` | `agentic.work.Run`, with its `agentic.work.Assignment` | the main agent working a task from its prompt on; a sub-agent working the task of the run whose call spawned it |
+| `block_step` | `agentic.work.Step` | each model turn and tool call of a run, in order; kind `Agent`, `Child` (a spawn), `Person` (`AskUserQuestion`) or `Program` |
+| `block_question` | `agentic.question.Question` | an `AskUserQuestion` call, or an input classed `Question` |
+| `block_message` | `agentic.channel.Message` | a `SendMessage` call, or an input by a delegate or another session |
+| `block_received` | `Message.received_in_turn` | the first model turn of the turn an input started |
+
+Every row names the node it was lifted from in `evidence`. A field the session does not record,
+such as a question's options or the channel of a message, is listed in `not_recorded`, never
+guessed. No relation records a claim on a pool, so `agentic.resource.Claim` is reported in
+`not_observable` and no row of it is written. Identifiers are UUIDs derived from the session's
+nodes and agents, so two lifts of one session give the same rows.
+
+`blocks lift` prints JSON:
+
+| field | what |
+|---|---|
+| `session_id` | the session |
+| `given` | `{ rows: [...] }`, each row `{ entity, id, state, fields, not_recorded, evidence }` |
+| `entities` | the number of rows per entity |
+| `not_observable` | the entities the session cannot show |
+
 ## Relations
 
 Every step of a session is a node, written `<session>#<number>`.

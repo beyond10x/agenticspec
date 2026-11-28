@@ -4,6 +4,7 @@ Usage: agenticspec [OPTIONS] <COMMAND>
 
 Commands:
   analyze      Find the Claude Code sessions on this machine, evaluate each, and write a dashboard file
+  blocks       
   export       Export a procedure as a canon protocol and loom bindings
   kpi          Evaluate the KPIs over every Claude Code session in a time window
   lift         Lift one Claude Code session and its sub-agents into session IR commands and replay them

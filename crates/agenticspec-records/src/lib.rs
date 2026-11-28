@@ -5,6 +5,7 @@
 //! through the generated `session-ir` component (`replay`), whose published events every reader
 //! takes: the KPIs (`kpi`), the view projection (`view`), the queries (`sq`). `store` keeps each
 //! session's commands in SQLite; `append` is the non-blocking writer a gateway appends through.
+//! `blocks` lifts a session into rows of the building blocks and drafts a scenario of its inputs.
 //!
 //! A gateway's adapter calls, per finished call: [`wire::lift_call`] with the session's
 //! [`wire::WireSession`], then [`append::AppenderHandle::append`] with the steps.
@@ -13,6 +14,7 @@
 //! crate holds what the specification leaves to an implementation.
 
 pub mod append;
+pub mod blocks;
 pub mod claude;
 pub mod kpi;
 pub mod pricing;

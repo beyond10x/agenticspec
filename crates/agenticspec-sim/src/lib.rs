@@ -12,6 +12,7 @@ pub mod marked;
 pub mod profile;
 pub mod reader;
 pub mod rng;
+pub mod rows;
 pub mod scenario;
 pub mod search;
 pub mod sim;

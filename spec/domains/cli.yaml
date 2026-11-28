@@ -652,3 +652,75 @@ types:
       - {name: held, type: Integer}
       - {name: failed, type: Integer}
       - {name: rows, type: List<agenticspec.cli.SimCorpusRow>}
+
+  - name: agenticspec.cli.BlocksLiftInput
+    kind: struct
+    fields:
+      - name: transcript
+        type: String
+        summary: The main transcript file of one Claude Code session, `<session>.jsonl`; its sub-agents are read from `<session>/subagents/`.
+
+  - name: agenticspec.cli.EntityRows
+    kind: struct
+    fields:
+      - {name: entity, type: String}
+      - {name: rows, type: Integer}
+
+  - name: agenticspec.cli.BlocksLiftResult
+    kind: struct
+    naming:
+      summary: >-
+        The rows of one session, in the form of a scenario's `given`, each checked against the
+        building blocks, with the count per entity and the entities the session cannot show.
+    fields:
+      - {name: session_id, type: String}
+      - name: given
+        type: Json
+        summary: "`{ rows: [...] }`: each row `{ entity, id, state, fields, not_recorded, evidence }`."
+      - {name: entities, type: List<agenticspec.cli.EntityRows>}
+      - name: not_observable
+        type: List<String>
+        summary: Block entities no record of the session holds; the lift writes no row of them.
+
+  - name: agenticspec.cli.BlocksScenarioInput
+    kind: struct
+    fields:
+      - name: transcript
+        type: String
+        summary: The main transcript file of one Claude Code session.
+      - name: architecture
+        type: String
+        summary: The architecture file the scenario is written against.
+      - name: profile
+        type: String
+        summary: The behaviour profile file the scenario names.
+      - name: map
+        type: String
+        summary: >-
+          The parts the session plays, as `key=part` pairs separated by commas: `main` (required,
+          a border part), `sub`, `human` (the part the main part acts for by default), `delegate`
+          (the human's part by default) and `peer`.
+      - name: out
+        type: String
+        summary: The scenario file to write; its references are relative to it.
+      - name: name
+        type: Optional<String>
+        summary: The scenario's name; the file name without `.scenario.yaml` by default.
+
+  - name: agenticspec.cli.BlocksScenarioResult
+    kind: struct
+    naming:
+      summary: >-
+        The draft scenario written and checked against its architecture and profile, with the
+        inputs no turn followed and the inputs whose author plays no part.
+    fields:
+      - {name: out, type: String}
+      - {name: scenario, type: String}
+      - {name: inputs, type: Integer}
+      - {name: expectations, type: Integer}
+      - name: unjoined
+        type: List<String>
+        summary: Inputs no turn received, as `when.<n> (<node>)`; in the scenario with no expectation.
+      - name: unmapped
+        type: List<String>
+        summary: Inputs whose author plays no part, as `<node> (<author>)`; left out of the scenario.

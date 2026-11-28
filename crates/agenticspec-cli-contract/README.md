@@ -18,6 +18,32 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `blocks lift`
+
+Lift one Claude Code session into rows of the building blocks, each naming the node it came from
+
+Callable: `blocks_lift`. Input: `agenticspec.cli.BlocksLiftInput`. Result: `agenticspec.cli.BlocksLiftResult`.
+
+Error `rows_invalid`: `agenticspec.cli.Refusal`.
+
+Error `transcript_unreadable`: `agenticspec.cli.Refusal`.
+
+### `blocks scenario`
+
+Write a draft scenario of a session's outside inputs and the block events of the turns they started
+
+Callable: `blocks_scenario`. Input: `agenticspec.cli.BlocksScenarioInput`. Result: `agenticspec.cli.BlocksScenarioResult`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `map_invalid`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `scenario_refused`: `agenticspec.cli.Refusal`.
+
+Error `transcript_unreadable`: `agenticspec.cli.Refusal`.
+
 ### `export`
 
 Export a procedure as a canon protocol and loom bindings
@@ -185,6 +211,8 @@ Error `store_unavailable`: `agenticspec.cli.Refusal`.
 ## Runtime obligations
 
 - handler:analyze: implement the owner-qualified callable and its declared result/error contract
+- handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract
+- handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract
 - handler:export: implement the owner-qualified callable and its declared result/error contract
 - handler:kpi: implement the owner-qualified callable and its declared result/error contract
 - handler:lift: implement the owner-qualified callable and its declared result/error contract

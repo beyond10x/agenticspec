@@ -90,6 +90,207 @@
         }
       }
     },
+    "blocks_lift": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "blocks_lift"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.BlocksLiftInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "transcript": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.BlocksLiftResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "entities": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "entity": {
+                    "kind": "string"
+                  },
+                  "rows": {
+                    "kind": "integer"
+                  }
+                }
+              }
+            },
+            "given": {
+              "kind": "json"
+            },
+            "not_observable": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "session_id": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "rows_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "transcript_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "blocks_scenario": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "blocks_scenario"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.BlocksScenarioInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "map": {
+              "kind": "string"
+            },
+            "name": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "string"
+            },
+            "profile": {
+              "kind": "string"
+            },
+            "transcript": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.BlocksScenarioResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "expectations": {
+              "kind": "integer"
+            },
+            "inputs": {
+              "kind": "integer"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "scenario": {
+              "kind": "string"
+            },
+            "unjoined": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "unmapped": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "map_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "scenario_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "transcript_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "export": {
       "target": {
         "kind": "local",
@@ -1818,6 +2019,77 @@
     },
     {
       "path": [
+        "blocks",
+        "lift"
+      ],
+      "aliases": [],
+      "callable": "blocks_lift",
+      "about": "Lift one Claude Code session into rows of the building blocks, each naming the node it came from",
+      "arguments": [
+        {
+          "field": "transcript",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "blocks",
+        "scenario"
+      ],
+      "aliases": [],
+      "callable": "blocks_scenario",
+      "about": "Write a draft scenario of a session's outside inputs and the block events of the turns they started",
+      "arguments": [
+        {
+          "field": "transcript",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "option",
+            "long": "architecture"
+          }
+        },
+        {
+          "field": "profile",
+          "source": {
+            "kind": "option",
+            "long": "profile"
+          }
+        },
+        {
+          "field": "map",
+          "source": {
+            "kind": "option",
+            "long": "map"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "name",
+          "source": {
+            "kind": "option",
+            "long": "name"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
         "export"
       ],
       "aliases": [],
@@ -2252,6 +2524,8 @@
   ],
   "obligations": [
     "handler:analyze: implement the owner-qualified callable and its declared result/error contract",
+    "handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract",
+    "handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract",
     "handler:export: implement the owner-qualified callable and its declared result/error contract",
     "handler:kpi: implement the owner-qualified callable and its declared result/error contract",
     "handler:lift: implement the owner-qualified callable and its declared result/error contract",
