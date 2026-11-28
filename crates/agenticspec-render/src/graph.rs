@@ -401,6 +401,10 @@ struct Part {
     label: String,
     slot: &'static str,
     icon: &'static str,
+    /// The colour of its group, written as `--c` over the slot's.
+    colour: Option<String>,
+    /// A text drawn in the icon's tile instead of the icon.
+    icon_text: Option<String>,
     subtitle: String,
     badges: Vec<String>,
     outline: Option<String>,
@@ -450,6 +454,8 @@ struct Link {
     via: Option<String>,
     /// Whether the edge stands for more than one.
     multi: bool,
+    /// The stroke: 1 for one edge, 2 for two or three, 3 for four or more.
+    weight: u8,
 }
 
 /// The nodes and edges of a page, resolved for layout.
@@ -519,9 +525,12 @@ impl Scene {
                     .map(|(_, d)| d)
                     .unwrap_or(&none);
                 let subtitle = d.subtitle.clone().unwrap_or_else(|| group_label(&n.group));
+                let look = page.groups.iter().find(|g| g.name == n.group);
+                let chosen = look.and_then(|g| g.icon.as_ref());
                 let badges: Vec<String> = n
                     .badges
                     .iter()
+                    .filter(|b| b.on == page::On::Card)
                     .map(|b| {
                         if b.name == "count" {
                             format!("×{}", b.value)
@@ -541,7 +550,13 @@ impl Scene {
                     id: n.id.clone(),
                     label: n.label.clone(),
                     slot: palette.slot(&n.group),
-                    icon: icon(d.icon.unwrap_or("")),
+                    icon: icon(chosen.and_then(page::Icon::name).or(d.icon).unwrap_or("")),
+                    colour: look
+                        .and_then(|g| g.colour.as_ref())
+                        .map(|c| c.as_str().to_string()),
+                    icon_text: chosen
+                        .filter(|i| i.name().is_none())
+                        .map(|i| i.as_str().to_string()),
                     description,
                     subtitle,
                     badges,
@@ -566,6 +581,8 @@ impl Scene {
                 label: r.label.clone(),
                 slot: "other",
                 icon: icon("frame"),
+                colour: None,
+                icon_text: None,
                 description: r.label.clone(),
                 subtitle: String::new(),
                 badges: Vec::new(),
@@ -689,6 +706,11 @@ impl Scene {
                 },
                 via: decor.vias.get(i).cloned().flatten(),
                 multi: e.count.is_some_and(|c| c > 1),
+                weight: match e.count.unwrap_or(1) {
+                    0..=1 => 1,
+                    2..=3 => 2,
+                    _ => 3,
+                },
             })
             .collect();
         Scene {
@@ -1023,6 +1045,14 @@ impl Fan {
 /// Track spacing of the combs in a label row.
 const TRACK: f64 = 6.0;
 
+/// Height of a lane below what an item holds.
+const LANE: f64 = 26.0;
+
+/// The stroke width of an edge that stands for two or three, and for four or more; one edge is
+/// 1.4 wide (the stylesheet).
+const WEIGHT_2: f64 = 2.4;
+const WEIGHT_3: f64 = 3.6;
+
 impl Bundle {
     fn label_size(&self, sc: &Scene) -> (f64, f64) {
         match self.channel {
@@ -1172,6 +1202,55 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
     }
     let mut cards: Vec<Card> = order.iter().map(|&i| Card::new(sc, i)).collect();
     let card_of = |part: usize| order.iter().position(|&c| c == part);
+
+    // An edge between two node cards of one item that is not drawn across a gap (they are not
+    // side by side, or one of them is in a frame inside the item) is drawn below what the item
+    // holds, on a lane of its own, the shortest lane on top. The item grows by its lanes.
+    // card, link, lane centre from the item's top
+    let mut lanes: Vec<(usize, usize, f64)> = Vec::new();
+    for (ci, card) in cards.iter_mut().enumerate() {
+        if card.single() {
+            continue;
+        }
+        let mut own: Vec<(f64, usize)> = Vec::new();
+        for (li, l) in sc.links.iter().enumerate() {
+            let (Some(pa), Some(pb)) = (index(&l.from), index(&l.to)) else {
+                continue;
+            };
+            if pa == pb
+                || resolve(&l.from).and_then(card_of) != Some(ci)
+                || resolve(&l.to).and_then(card_of) != Some(ci)
+                || card
+                    .gaps
+                    .iter()
+                    .any(|g| (g.0 == pa && g.1 == pb) || (g.0 == pb && g.1 == pa))
+            {
+                continue;
+            }
+            let (Some(a), Some(b)) = (card.node(pa), card.node(pb)) else {
+                continue;
+            };
+            own.push((((a.0 + a.2 / 2.0) - (b.0 + b.2 / 2.0)).abs(), li));
+        }
+        if own.is_empty() {
+            continue;
+        }
+        own.sort_by(|x, y| x.0.total_cmp(&y.0).then(x.1.cmp(&y.1)));
+        let widest = own
+            .iter()
+            .map(|&(_, li)| text_w(&edge_label(sc, &sc.links[li], false), 11.5, false) + 18.0)
+            .fold(0.0, f64::max);
+        let base = card.h - FPAD + 6.0;
+        card.w = card.w.max((widest + 2.0 * FPAD).ceil());
+        card.h += 6.0 + own.len() as f64 * LANE;
+        if let Some(f) = card.frames.first_mut() {
+            f.3 = card.w;
+            f.4 = card.h;
+        }
+        for (k, &(_, li)) in own.iter().enumerate() {
+            lanes.push((ci, li, base + LANE * (k as f64 + 0.5)));
+        }
+    }
 
     // A card that two or more cards of its own row send to moves to a row of its own just
     // below: its links then cross rows, where they share a label, instead of arching over the
@@ -1921,8 +2000,19 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
         esc(&decor.words.desc)
     );
     svg.push_str(
-        "<defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker></defs>",
+        "<defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker>",
     );
+    // A heavier edge's arrowhead is drawn smaller in its stroke's units, so it keeps one size.
+    for (weight, width) in [(2, WEIGHT_2), (3, WEIGHT_3)] {
+        if sc.links.iter().any(|l| l.weight == weight) {
+            let m = px(7.0 * 1.4 / width);
+            let _ = write!(
+                svg,
+                "<marker id=\"arrow-{weight}\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"{m}\" markerHeight=\"{m}\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker>"
+            );
+        }
+    }
+    svg.push_str("</defs>");
 
     // Edges across rows.
     svg.push_str("<g class=\"edges\">");
@@ -2134,6 +2224,83 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
         edge_path(&mut svg, &d, link);
         row_labels.push(((x1 + x2) / 2.0, y, edge_label(sc, link, false)));
     }
+    // Edges on a lane: down from the bottom of the node card they leave, along the lane, up to
+    // the bottom of the node card they reach. The ends at one card spread over its width in the
+    // order of where they go.
+    let lane_box = |ci: usize, p: usize| -> Option<(f64, f64, f64)> {
+        let (dx, dy, w, h) = cards[ci].node(p)?;
+        let x0 = items[ci].x - cards[ci].w / 2.0;
+        let y0 = items[ci].y - cards[ci].h / 2.0;
+        Some((x0 + dx + w / 2.0, y0 + dy + h, w))
+    };
+    // lane entry, from end, node, toward x
+    let mut lane_ends: Vec<(usize, bool, usize, f64)> = Vec::new();
+    for (k, &(ci, li, _)) in lanes.iter().enumerate() {
+        let link = &sc.links[li];
+        let (Some(pa), Some(pb)) = (index(&link.from), index(&link.to)) else {
+            continue;
+        };
+        let (Some(a), Some(b)) = (lane_box(ci, pa), lane_box(ci, pb)) else {
+            continue;
+        };
+        lane_ends.push((k, true, pa, b.0));
+        lane_ends.push((k, false, pb, a.0));
+    }
+    let lane_x = |k: usize, from: bool| -> Option<f64> {
+        let &(_, _, node, _) = lane_ends.iter().find(|e| e.0 == k && e.1 == from)?;
+        let ci = lanes[k].0;
+        let mut at: Vec<&(usize, bool, usize, f64)> = lane_ends
+            .iter()
+            .filter(|e| lanes[e.0].0 == ci && e.2 == node)
+            .collect();
+        at.sort_by(|a, b| a.3.total_cmp(&b.3).then(a.0.cmp(&b.0)).then(b.1.cmp(&a.1)));
+        let (cx, _, w) = lane_box(ci, node)?;
+        let m = at.len() as f64;
+        let j = at.iter().position(|e| e.0 == k && e.1 == from)? as f64;
+        let span = if m > 1.0 {
+            (w - 40.0).min(26.0 * (m - 1.0))
+        } else {
+            0.0
+        };
+        Some(if m > 1.0 {
+            cx - span / 2.0 + span * j / (m - 1.0)
+        } else {
+            cx
+        })
+    };
+    for (k, &(ci, li, ly)) in lanes.iter().enumerate() {
+        let link = &sc.links[li];
+        let (Some(pa), Some(pb)) = (index(&link.from), index(&link.to)) else {
+            continue;
+        };
+        let (Some((_, sb, _)), Some((_, eb, _)), Some(sx), Some(ex)) = (
+            lane_box(ci, pa),
+            lane_box(ci, pb),
+            lane_x(k, true),
+            lane_x(k, false),
+        ) else {
+            continue;
+        };
+        let y = items[ci].y - cards[ci].h / 2.0 + ly;
+        let d = format!(
+            "M{} {}L{} {}L{} {}L{} {}",
+            px(sx),
+            px(sb),
+            px(sx),
+            px(y),
+            px(ex),
+            px(y),
+            px(ex),
+            px(eb + 1.0)
+        );
+        edge_path(&mut svg, &d, link);
+        let label = edge_label(sc, link, false);
+        let half = (text_w(&label, 11.5, false) + 18.0) / 2.0;
+        let x0 = items[ci].x - cards[ci].w / 2.0;
+        let (lo, hi) = (x0 + FPAD + half, x0 + cards[ci].w - FPAD - half);
+        let mid = (sx + ex) / 2.0;
+        row_labels.push((if lo <= hi { mid.clamp(lo, hi) } else { mid }, y, label));
+    }
     svg.push_str("</g>");
 
     // Labels and channel cards.
@@ -2215,9 +2382,15 @@ fn edge_path(svg: &mut String, d: &str, link: &Link) {
         .as_ref()
         .map(|o| format!(" over {o}"))
         .unwrap_or_default();
+    // The stroke of a heavier edge, and an arrowhead that keeps the size of a single edge's.
+    let weight = match link.weight {
+        2 => format!(" style=\"stroke-width:{WEIGHT_2};marker-end:url(#arrow-2)\""),
+        3 => format!(" style=\"stroke-width:{WEIGHT_3};marker-end:url(#arrow-3)\""),
+        _ => String::new(),
+    };
     let _ = write!(
         svg,
-        "<path class=\"edge{}\" d=\"{d}\" data-from=\"{}\" data-to=\"{}\"{}><title>{} → {}: {}{}</title></path>",
+        "<path class=\"edge{}\" d=\"{d}\" data-from=\"{}\" data-to=\"{}\"{}{weight}><title>{} → {}: {}{}</title></path>",
         if link.multi { " multi" } else { "" },
         esc(&link.from),
         esc(&link.to),
@@ -2250,8 +2423,35 @@ fn pill(svg: &mut String, cx: f64, cy: f64, text: &str, w: Option<f64>) {
     );
 }
 
-fn icon_tile(svg: &mut String, icon: &str, x: f64, y: f64, size: f64) {
+/// The style attribute of a part whose group names a colour, with a leading space. The colour is
+/// a [`page::Colour`], so it holds nothing but a colour.
+fn look(p: &Part) -> String {
+    p.colour
+        .as_ref()
+        .map(|c| format!(" style=\"--c:{}\"", esc(c)))
+        .unwrap_or_default()
+}
+
+/// The icon tile of a part: its stroke icon, or the text its group names.
+fn icon_tile(svg: &mut String, p: &Part, x: f64, y: f64, size: f64) {
     let scale = size / 30.0;
+    if let Some(t) = &p.icon_text {
+        let _ = write!(
+            svg,
+            "<rect class=\"icon-bg\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"{}\"/><text class=\"icon-text\" x=\"{}\" y=\"{}\" text-anchor=\"middle\" style=\"fill:var(--c);font-size:{}px;font-weight:600\">{}</text>",
+            px(x),
+            px(y),
+            px(size),
+            px(size),
+            px(7.0 * scale),
+            px(x + size / 2.0),
+            px(y + size / 2.0 + 4.5 * scale),
+            px(13.0 * scale),
+            esc(t)
+        );
+        return;
+    }
+    let icon = p.icon;
     let _ = write!(
         svg,
         "<rect class=\"icon-bg\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"{}\"/><path class=\"icon\" transform=\"translate({} {}) scale({})\" d=\"{}\"/>",
@@ -2271,8 +2471,9 @@ fn channel_card(svg: &mut String, sc: &Scene, c: usize, x: f64, y: f64, w: f64, 
     let p = &sc.parts[c];
     let _ = write!(
         svg,
-        "<g class=\"node channel f-{}\" data-part=\"{}\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\" data-box=\"{} {} {} {}\"/>",
+        "<g class=\"node channel f-{}\"{} data-part=\"{}\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\" data-box=\"{} {} {} {}\"/>",
         p.slot,
+        look(p),
         esc(&p.id),
         esc(&p.description),
         px(x),
@@ -2284,7 +2485,7 @@ fn channel_card(svg: &mut String, sc: &Scene, c: usize, x: f64, y: f64, w: f64, 
         px(w),
         px(h)
     );
-    icon_tile(svg, p.icon, x + 8.0, y + 11.0, 22.0);
+    icon_tile(svg, p, x + 8.0, y + 11.0, 22.0);
     let _ = write!(
         svg,
         "<text class=\"name sm\" x=\"{}\" y=\"{}\">{}</text><text class=\"sub\" x=\"{}\" y=\"{}\">{}</text></g>",
@@ -2305,9 +2506,10 @@ fn draw_card(svg: &mut String, sc: &Scene, card: &Card, x: f64, y: f64) {
         let (fx, fy) = (x + dx, y + dy);
         let _ = write!(
             svg,
-            "<g class=\"region{} f-{}\" data-region=\"{}\"><rect class=\"region-bg\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"12\"/>",
+            "<g class=\"region{} f-{}\"{} data-region=\"{}\"><rect class=\"region-bg\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"12\"/>",
             if per { " per" } else { "" },
             part.slot,
+            look(part),
             esc(&part.id),
             px(fx),
             px(fy),
@@ -2343,10 +2545,11 @@ fn draw_node(svg: &mut String, sc: &Scene, part: usize, x: f64, y: f64, w: f64, 
     let border = p.outline.is_some();
     let _ = write!(
         svg,
-        "<g class=\"node f-{}{}{}\" data-part=\"{}\">",
+        "<g class=\"node f-{}{}{}\"{} data-part=\"{}\">",
         p.slot,
         if border { " on-border" } else { "" },
         if p.refused { " refused" } else { "" },
+        look(p),
         esc(&p.id),
     );
     if border {
@@ -2384,7 +2587,7 @@ fn draw_node(svg: &mut String, sc: &Scene, part: usize, x: f64, y: f64, w: f64, 
         px(w),
         px(h)
     );
-    icon_tile(svg, p.icon, x + PAD, y + PAD, ICON);
+    icon_tile(svg, p, x + PAD, y + PAD, ICON);
     let tx = x + PAD + ICON + 10.0;
     let _ = write!(
         svg,

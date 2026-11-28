@@ -67,6 +67,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - An agent unit of a bundle carries `shape`: `service`, `job` or `scheduled`. A scheduled one carries `schedule`, the cron rule a binding gives with `packing.parts.<part>.schedule: <cron>` (five fields; such a part runs as a scheduled unit, the cron counting as its clock); `packing.parts.<part>.shape: job` is another spelling of `schedule: job`. The resolved packing lists a scheduled unit's `schedule`
 - A scheduled unit whose binding gives no cron rule carries the one that states its schedule's `every` exactly: N minutes dividing 60 (`*/N * * * *`), N hours dividing 24 (`0 */N * * *`), one day (`0 0 * * *`) or one week (`0 0 * * 0`). `deploy bundle` and `deploy check` refuse any other interval (`90m`, `7h`, `45s`) as `schedule_not_cron`, naming the unit, the part and the interval; `deploy check` also refuses a unit that carries another rule. A rule the binding gives still wins
 - The operator UI's unit takes its claims and check ports from the binding like any other unit: `claims.operator-ui` and `checks.operator-ui.<ready|alive>.port` (before, always 500 millicores and 512 MiB, and the export's port)
+- The render model has a top-level `groups: [{name, colour?, icon?}]`: the cards, frames and legend swatch of a group take its `colour` (a hex colour, `rgb()`, `hsl()` or a named colour of a fixed list; anything else is refused) and its cards its `icon` (one of the crate's icon names, or a text of 1 or 2 characters). A group not listed keeps the palette
+- A badge of the render model with `on: panel` is not drawn on its card but listed in the table "Details" under the graph (`on: card` is the default)
+- An edge of the render model with a `count` is drawn heavier: 2 or 3 wider than one, 4 or more wider again, its arrowhead the same size
 
 ### Changed
 
@@ -81,6 +84,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `agenticspec sim check`, `sim contract`, `packing default` and `deploy bundle` accept the same documents: each runs the check, which refuses a part whose block is no part kind of the architecture block, and every part kind derives its ports (`question`, `process`, `delegation` and a nested `architecture` none of their own); a `harness` part uses `harness.session` and `harness.tool-call`
 - A deployment bundle names each pinned runtime by its image reference, `<image>@sha256:<digest>`, in `runtimes` and in a unit's `code`; the binding's runtime needs both `image` (without tag or digest) and `digest`. `deploy bundle` refuses an address in the architecture (a key `address`, `host`, `hostname` or `url`) as `address_in_architecture`: an address is the binding's
 - A deployment bundle writes the packing's `agent`, `job` and `scheduled` units as `kind: agent` with `shape: service`, `job` or `scheduled` (the packing keeps its own kinds), and a scheduled unit's clock (trigger, schedule, `every`, `next_fire_at`, `policy`, `max_parallel`) moved from `schedule` to `clock`. The binding's runtime of the agent units is named `agent-runtime`; `runtimes.agent` is refused (`binding_invalid`) with its new name
+
+### Fixed
+
+- The render model (`agenticspec-render-model/1`) draws every edge between two nodes of one region: one between cards that do not stand side by side, or that crosses the frame of a region inside it, runs on a lane of its own below what the region holds. Before, such edges were not drawn at all
 
 ## [0.4.1] - 2026-11-28
 
