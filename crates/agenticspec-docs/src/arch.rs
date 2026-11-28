@@ -902,6 +902,8 @@ An architecture document may hold a top-level `view:` key: how its operator UI l
 an overview of each level (its parts, its links in a table filterable by part, its graph, its policies and marked places), \
 a page per part with the panels of every block it uses, and a live channel per level. \
 `--contract` adds the actions of the architecture's contract and the domains its ports use; `--check` compares instead of writing. \
+The command runs in any directory: the building blocks, their panels and the port catalogue are built into the binary, \
+and `--root <checkout>` reads them from a checkout of agenticspec instead. \
 The key is read by the derivation only: the simulator, the check and the digest of a catalog result ignore it, \
 so a label edit changes no result.\n\n\
 - `home`: the page the UI opens on: `overview`, or a part's name\n\

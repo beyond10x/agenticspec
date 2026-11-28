@@ -20,6 +20,7 @@
 //!
 //! The output is a function of the document alone: the same document gives the same bytes.
 
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::path::Path;
@@ -67,22 +68,33 @@ pub fn generate(text: &str) -> Result<Files, Vec<Refusal>> {
     Ok(emit::emit(&app))
 }
 
-/// `agenticspec ui derive`: compiles the blocks under `inputs.root` and derives the composition
-/// of the architecture (see [`derive`]).
+/// The compiled blocks a derivation of `inputs` reads: the blocks under `inputs.root` compiled,
+/// or without a root the part of them built into the binary.
+fn derive_ir(inputs: &derive::Inputs) -> Result<Cow<'static, serde_json::Value>, derive::Failure> {
+    match &inputs.root {
+        Some(root) => agenticspec_views::compile(&root.join("blocks"))
+            .map(Cow::Owned)
+            .map_err(derive::Failure::Unreadable),
+        None => operator::built_in_model().map(Cow::Borrowed),
+    }
+}
+
+/// `agenticspec ui derive`: compiles the blocks under `inputs.root` (without a root, reads the
+/// part of them built into the binary) and derives the composition of the architecture (see
+/// [`derive`]).
 ///
 /// # Errors
 ///
 /// The blocks do not compile, an input cannot be read, or the architecture or its `view:` key is
 /// refused.
 pub fn derive_ui(inputs: &derive::Inputs) -> Result<derive::Derivation, derive::Failure> {
-    let ir = agenticspec_views::compile(&inputs.root.join("blocks"))
-        .map_err(derive::Failure::Unreadable)?;
-    derive::derive_with(inputs, &ir)
+    derive::derive_with(inputs, derive_ir(inputs)?.as_ref())
 }
 
 /// `agenticspec ui derive` of every UI of the architecture: compiles the blocks under
-/// `inputs.root` once and derives one composition per ingress with a `ui` export when the
-/// contract gives a UI per ingress, else the one operator UI (see [`derive::derive_all`]).
+/// `inputs.root` once (without a root, reads the part of them built into the binary) and derives
+/// one composition per ingress with a `ui` export when the contract gives a UI per ingress, else
+/// the one operator UI (see [`derive::derive_all`]).
 ///
 /// # Errors
 ///
@@ -90,9 +102,7 @@ pub fn derive_ui(inputs: &derive::Inputs) -> Result<derive::Derivation, derive::
 pub fn derive_uis(
     inputs: &derive::Inputs,
 ) -> Result<Vec<(Option<String>, derive::Derivation)>, derive::Failure> {
-    let ir = agenticspec_views::compile(&inputs.root.join("blocks"))
-        .map_err(derive::Failure::Unreadable)?;
-    derive::derive_all(inputs, &ir)
+    derive::derive_all(inputs, derive_ir(inputs)?.as_ref())
 }
 
 /// Replaces `out` with exactly `files`: what was in it before is removed.

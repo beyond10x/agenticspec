@@ -324,3 +324,118 @@ fn ui_build_refuses_a_foreign_directory_and_a_contract_of_other_ports() {
     assert!(text.contains("ports_digest"), "{text}");
     assert!(!tmp.join("ui").exists());
 }
+
+/// Every file below `dir`, by its path relative to `dir`, sorted.
+fn files_below(dir: &std::path::Path) -> Vec<String> {
+    fn walk(base: &std::path::Path, d: &std::path::Path, out: &mut Vec<String>) {
+        for e in std::fs::read_dir(d).unwrap() {
+            let p = e.unwrap().path();
+            if p.is_dir() {
+                walk(base, &p, out);
+            } else {
+                out.push(p.strip_prefix(base).unwrap().to_string_lossy().into_owned());
+            }
+        }
+    }
+    let mut out = Vec::new();
+    walk(dir, dir, &mut out);
+    out.sort();
+    out
+}
+
+/// `ui derive` in a working directory with no checkout (no `blocks/`, no `ui/views/`) and no
+/// `--root`, from the inputs `copy` placed at the same paths as in the repository, then
+/// `ui derive --check --root <repository>` of the same inputs from the repository: both give
+/// the committed files of `examples` byte for byte, so the derivation from the data built into
+/// the binary is the derivation from the tree.
+fn derive_outside_equals_root(name: &str, copy: &[&str], args: &[&str], examples: &[&str]) {
+    let tmp = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name);
+    let _ = std::fs::remove_dir_all(&tmp);
+    for rel in copy {
+        let to = tmp.join(rel);
+        std::fs::create_dir_all(to.parent().unwrap()).unwrap();
+        std::fs::copy(repo().join(rel), &to).unwrap();
+    }
+    assert!(!tmp.join("blocks").exists() && !tmp.join("ui/views/blocks.ui.yaml").exists());
+    let run = |cwd: &std::path::Path, extra: &[&std::ffi::OsStr]| {
+        Command::new(env!("CARGO_BIN_EXE_agenticspec"))
+            .current_dir(cwd)
+            .args(["--output", "json", "ui", "derive"])
+            .args(args)
+            .args(extra)
+            .output()
+            .unwrap()
+    };
+    result(&run(&tmp, &[]));
+    let examples_dir = "ui/views/examples";
+    let written: Vec<String> = files_below(&tmp.join(examples_dir))
+        .into_iter()
+        .filter(|f| examples.iter().any(|e| f.starts_with(e)))
+        .collect();
+    let committed: Vec<String> = files_below(&repo().join(examples_dir))
+        .into_iter()
+        .filter(|f| examples.iter().any(|e| f.starts_with(e)))
+        .filter(|f| !copy.contains(&format!("{examples_dir}/{f}").as_str()))
+        .collect();
+    let written: Vec<String> = written
+        .into_iter()
+        .filter(|f| !copy.contains(&format!("{examples_dir}/{f}").as_str()))
+        .collect();
+    assert!(!written.is_empty());
+    assert_eq!(written, committed, "the files derived outside the checkout");
+    for f in &written {
+        assert_eq!(
+            std::fs::read(tmp.join(examples_dir).join(f)).unwrap(),
+            std::fs::read(repo().join(examples_dir).join(f)).unwrap(),
+            "{f} derived outside the checkout is not the committed file"
+        );
+    }
+
+    let root = repo();
+    result(&run(
+        &repo(),
+        &["--check".as_ref(), "--root".as_ref(), root.as_os_str()],
+    ));
+}
+
+/// The 37-part fixture alone, no contract and no port catalogue named: the blocks, the panels,
+/// their scripts and the port catalogue all come from the binary.
+#[test]
+fn ui_derive_without_a_checkout_equals_the_derivation_with_root() {
+    derive_outside_equals_root(
+        "ui-derive-outside",
+        &["crates/agenticspec-render/tests/fixtures/large-37.yaml"],
+        &[
+            "--path",
+            "crates/agenticspec-render/tests/fixtures/large-37.yaml",
+            "--out",
+            "ui/views/examples/large-37.ui.yaml",
+        ],
+        &["large-37."],
+    );
+}
+
+/// The architecture with ingresses: one composition per ingress with a `ui` export, each the
+/// same outside the checkout as with `--root`.
+#[test]
+fn ui_derive_per_ingress_without_a_checkout_equals_the_derivation_with_root() {
+    derive_outside_equals_root(
+        "ui-derive-outside-ingress",
+        &[
+            "architectures/workstation-ingress.yaml",
+            "ui/views/examples/workstation-ingress.contract.yaml",
+            "ui/views/examples/ports.json",
+        ],
+        &[
+            "--path",
+            "architectures/workstation-ingress.yaml",
+            "--contract",
+            "ui/views/examples/workstation-ingress.contract.yaml",
+            "--ports",
+            "ui/views/examples/ports.json",
+            "--out",
+            "ui/views/examples/workstation-ingress.ui.yaml",
+        ],
+        &["workstation-ingress.user.", "workstation-ingress.operator."],
+    );
+}
