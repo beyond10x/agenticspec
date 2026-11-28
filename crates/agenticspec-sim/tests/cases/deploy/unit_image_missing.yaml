@@ -1,0 +1,9 @@
+format: agenticspec-binding/1
+binding: unit-image-missing
+architecture: runtimes
+summary: >-
+  Every part in the core unit, which holds the runtime parts flow and notifier (beside
+  unit_image_missing.architecture.yaml), and neither the unit, its parts nor `runtimes.core` name
+  an image.
+parts:
+  gateway: {egress: [model]}

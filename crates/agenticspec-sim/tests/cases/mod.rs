@@ -7,6 +7,7 @@ mod contract;
 mod control_plane;
 mod corpus;
 mod deploy;
+mod deploy_images;
 mod deploy_ui;
 mod determinism;
 mod dynamics;
