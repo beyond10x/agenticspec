@@ -2,16 +2,17 @@
 format: aep.planning-md/3
 id: epic:architecture-contract
 kind: epic
-status: active
+status: implemented
 title: 'The contract of an architecture: derived ports, narrowing settings, routing invariants, multiplicities'
 summary: For every architecture, agenticspec sim derives its contract from ports derived from the blocks, checks it, and the docs show it on every architecture page and catalog entry; runtimes and bindings build against it in a later epic.
 relations:
 - depends_on: epic:building-blocks
 - depends_on: epic:simulator-and-search
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:33:37Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-11-27T23:33:40Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:22Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"review_outcome":2}}}
 ---
 ## Outcome
 

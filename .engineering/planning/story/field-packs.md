@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:field-packs
 kind: story
-status: draft
+status: implemented
 title: 'Field packs: the rule, the format and fields/coding'
 summary: Move coding vocabulary, profile and KPIs out of the core into fields/coding
 relations:
@@ -28,7 +28,11 @@ scope:
   path: profiles
 - confidence: cited
   path: scripts/check-kpis.sh
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 3, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

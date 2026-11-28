@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:action-sets
 kind: story
-status: draft
+status: implemented
 title: 'Action sets: actions visible by the viewer''s grants at a scope'
 summary: R5 answered by the authority evaluator returns the commands the signed-in principal may issue at a scope; actor.may reads it per scope; R4 still refuses (M47).
 relations:
@@ -18,7 +18,11 @@ scope:
   path: crates/agenticspec-ui
 - confidence: inferred
   path: ui/views/fixtures
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 3, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

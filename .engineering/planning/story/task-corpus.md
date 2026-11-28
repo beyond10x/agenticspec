@@ -23,7 +23,7 @@ scope:
   path: crates/agenticspec-sim/tests/cases
 - confidence: inferred
   path: docs/scenarios.md
-revision: 10
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 9}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 10}
@@ -80,3 +80,7 @@ each with its own size instead of a draw. A scenario's `when` may name a corpus 
 Filling a corpus from observed sessions (`epic:evaluation-loop`, `story:scenario-input-extraction`
 writes inputs, a corpus may be written from them later); fitting the profile's distributions from a
 corpus.
+
+## Remaining at 9bb5998
+
+Missing: the corpus is weighted outcome classes (crates/agenticspec-sim/src/corpus.rs:83,147), not tasks with their own sizes taken in order.

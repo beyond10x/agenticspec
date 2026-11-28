@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:runtime-ui-interface
 kind: story
-status: draft
+status: implemented
 title: 'The runtime interface of the UI: scoped reads, a resumable feed, commands, and their conformance'
 summary: R1-R4 at {root}/scopes/{architecture_id}[/{part path}], the R2 cursor, and a conformance suite run against fixtures first and then the first runtime (M44, M46).
 relations:
@@ -19,7 +19,11 @@ scope:
   path: ui/README.md
 - confidence: inferred
   path: ui/views/fixtures
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

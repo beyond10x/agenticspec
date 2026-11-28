@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:packing-format
 kind: story
-status: draft
+status: implemented
 title: 'Packing: the binding''s packing section, unit kinds, strategies, packing default'
 summary: 'agenticspec-binding/1 packing: single (default), by_kind, by_part, groups; per-part schedule: job and external; unit kinds core to external; agenticspec packing default prints the resolved packing.'
 relations:
@@ -23,7 +23,11 @@ scope:
   path: spec/cli.yaml
 - confidence: inferred
   path: spec/domains/cli.yaml
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 3, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

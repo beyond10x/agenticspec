@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:contract-docs
 kind: story
-status: active
+status: implemented
 title: Show the contract on every architecture page and catalog entry, with the file to download
 summary: A generated Contract section (ports, invariants, border) on the 10 architecture pages and 6 catalog entries, and <name>.contract.yaml among the downloads.
 relations:
@@ -39,10 +39,11 @@ scope:
   path: website/static/architectures
 - confidence: cited
   path: website/static/catalog
-revision: 9
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:33:37Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-11-27T23:33:37Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"review_outcome":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:11Z", actor: "human:operator", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Outcome
 

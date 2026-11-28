@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:store-block
 kind: story
-status: draft
+status: implemented
 title: 'The store block: stores and records of five kinds'
 summary: 'agentic.store in layer 3: Store and Record, kinds record, artifact, key_value, semantic, graph, put/get/query/expire/delete, record events, artifact invariants, delete needing approval.'
 relations:
@@ -24,7 +24,11 @@ scope:
   path: docs/blocks/3-capability/store.md
 - confidence: inferred
   path: website/src/generated
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

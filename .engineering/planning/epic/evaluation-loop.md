@@ -2,12 +2,15 @@
 format: aep.planning-md/3
 id: epic:evaluation-loop
 kind: epic
-status: draft
+status: active
 title: From observed sessions to tasks, protocols, scores and KPIs
 summary: Extract tasks from sessions, draft protocols, score agents and architectures against them, and grow the KPI catalogue.
 relations:
 - depends_on: epic:building-blocks
-revision: 1
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:24Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:24Z", actor: "human:operator", revision: 3}
 ---
 ## Outcome
 

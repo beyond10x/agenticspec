@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:interface-derivation
 kind: story
-status: draft
+status: implemented
 title: Resolve each ingress's interface into operations in the contract
 summary: 'agenticspec sim contract resolves scope, commands, views, feeds and metrics into {kind, name} operations from the contract, ports.json, actors'' may: and the KPI catalogue; agenticspec-contract/1 gets its ingress section.'
 relations:
@@ -19,7 +19,11 @@ scope:
   path: crates/agenticspec-sim/tests
 - confidence: inferred
   path: docs/contract.md
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:19Z", actor: "human:operator", revision: 3, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:19Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:19Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

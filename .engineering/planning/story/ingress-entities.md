@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ingress-entities
 kind: story
-status: draft
+status: implemented
 title: Ingress and Export in the composition block, and Contract.ingress
 summary: agentic.architecture gets Ingress, Export, AddIngress, AddExport and the view Ingresses; agentic.shared IngressId and ExportId; Contract gets ingress inside its digest.
 relations:
@@ -20,7 +20,11 @@ scope:
   path: docs/blocks/9-composition/architecture.md
 - confidence: inferred
   path: website/src/generated
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:19Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:19Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:19Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

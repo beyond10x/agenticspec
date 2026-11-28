@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:session-lift
 kind: story
-status: draft
+status: implemented
 title: Lift an observed session into block rows
 summary: Rules over the session IR write rows of agentic.work Task, Run, Step, agentic.question Question, agentic.channel Message and, where recorded, agentic.resource Claim, each with its evidence node (consumer gap M7)
 relations:
@@ -23,7 +23,11 @@ scope:
   path: spec/cli.yaml
 - confidence: cited
   path: spec/domains/cli.yaml
-revision: 8
+revision: 11
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:17Z", actor: "human:operator", revision: 9, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:17Z", actor: "human:operator", revision: 10, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:17Z", actor: "human:operator", revision: 11, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

@@ -2,13 +2,16 @@
 format: aep.planning-md/3
 id: epic:control-plane
 kind: epic
-status: draft
+status: active
 title: 'The default control plane: what every architecture brings for its operator'
 summary: 'Default operator and metrics ingresses derived from every architecture, printable as ingress: rules, with Inbox, Activity, Operations, Metrics, Architecture and Events pages and a day-one fixture server (C1-C8).'
 relations:
 - depends_on: epic:ingress
 - informed_by: epic:view-layer
-revision: 1
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:23Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:23Z", actor: "human:operator", revision: 3}
 ---
 ## Outcome
 

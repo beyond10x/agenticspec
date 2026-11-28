@@ -25,7 +25,7 @@ scope:
   path: kpis/catalogue.yaml
 - confidence: inferred
   path: website/src/generated
-revision: 11
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 10}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 11}
@@ -105,3 +105,7 @@ settings are typed per block. A consumer's gap report (M3, M4) found two gaps at
 
 Simulating the new part kinds (`story:simulator-fidelity` runs process parts); which port a kind
 uses (`story:contract-derivation`); the architecture part kind (`story:architecture-references`).
+
+## Remaining at 9bb5998
+
+Part kinds delivered (d6d6db6, PART_KINDS). Missing: typed settings per block; only unknown_blocks and unknown_carries exist (crates/agenticspec-sim/src/check.rs:136). Consumer requirement R2.

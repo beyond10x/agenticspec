@@ -2,12 +2,15 @@
 format: aep.planning-md/3
 id: epic:events-and-storage
 kind: epic
-status: draft
+status: active
 title: 'Events and storage: an event bus and stores as building blocks'
 summary: Parts subscribe to block events and react with a command; data lives in a store block of five kinds, scoped to a part, the architecture or outside it (E1-E10).
 relations:
 - informed_by: epic:building-blocks
-revision: 1
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:24Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:24Z", actor: "human:operator", revision: 3}
 ---
 ## Outcome
 

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:large-graph-view
 kind: story
-status: draft
+status: implemented
 title: 'Large architecture graphs: natural size with pan and zoom, a header that wraps at 390 px'
 summary: The rendered architecture page shows a wide graph at its natural size with keyboard pan, zoom and fit, and its header does not overflow on a phone (consumer gap M15)
 relations:
@@ -20,7 +20,11 @@ scope:
   path: docs/architectures
 - confidence: cited
   path: website/e2e
-revision: 7
+revision: 10
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 9, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:16Z", actor: "human:operator", revision: 10, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

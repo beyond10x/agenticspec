@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:packing-admission
 kind: story
-status: draft
+status: implemented
 title: 'Admission of a packing: the plan''s units and every refusal'
 summary: 'admit() lists units, part instances and links crossing units, or refuses with every finding: part_unpacked, part_packed_twice, per_split, shared_state_split, link_without_transport, isolation_unmet, scheduled_with_inputs, core_count, unit_not_hosted.'
 relations:
@@ -16,7 +16,11 @@ scope:
   path: crates/agenticspec-runtime
 - confidence: inferred
   path: docs/binding.md
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 3, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 
