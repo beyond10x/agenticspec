@@ -55,7 +55,7 @@ fn every_domain_has_a_page_linked_from_the_layer_map() {
     let g = generated_with_fixture();
     let index = &g.files["docs/blocks/index.md"];
     let ds = domains();
-    assert_eq!(ds.len(), 23, "the blocks system has 23 domains");
+    assert_eq!(ds.len(), 24, "the blocks system has 24 domains");
     for domain in &ds {
         let block = domain.strip_prefix("agentic.").expect("agentic prefix");
         let page = g
@@ -685,7 +685,8 @@ fn contract_of(path: &Path) -> agenticspec_sim::contract::derive::Contract {
     let ports =
         agenticspec_sim::contract::ports::PortsFile::load(&root().join("blocks/ports.json"))
             .expect("blocks/ports.json");
-    let doc = agenticspec_sim::doc::load_yaml(path).expect("the document");
+    let doc =
+        agenticspec_sim::nest::flatten(&agenticspec_sim::nest::load(path).expect("the document"));
     let mut contract = agenticspec_sim::contract::derive::derive(&doc, &ports).expect("a contract");
     let kpis = agenticspec_sim::contract::ingress::Kpis::load(&root().join("kpis/catalogue.yaml"))
         .expect("kpis/catalogue.yaml");
@@ -776,13 +777,16 @@ fn every_architecture_page_and_catalog_entry_shows_its_contract() {
             );
         }
     }
-    assert_eq!(pages, 17, "11 architecture pages and 6 catalog entries");
+    assert_eq!(pages, 19, "13 architecture pages and 6 catalog entries");
     let contracts = g
         .files
         .keys()
         .filter(|k| k.ends_with(".contract.yaml"))
         .count();
-    assert_eq!(contracts, 17);
+    assert_eq!(
+        contracts, 20,
+        "13 architectures, 6 catalog entries and 1 field architecture"
+    );
     let wi = contract_section(
         &g.files["docs/architectures/workstation-ingress.md"],
         "workstation-ingress",
