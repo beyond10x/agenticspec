@@ -1643,3 +1643,63 @@ kpis:
     reads: [agentic.trigger.FiringStarted, agentic.trigger.FiringReplaced]
     status: planned
     source: design
+
+  - id: store_put_failure_share
+    block: store
+    kind: quality
+    unit: share
+    summary: Share of puts into a store that the store service failed.
+    how: PutFailed events divided by PutRequested events, per store. A failed put stores nothing and leaves the record it would supersede present.
+    direction: lower
+    gate: false
+    reads: [agentic.store.PutRequested, agentic.store.PutFailed]
+    status: planned
+    source: design
+
+  - id: store_read_seconds
+    block: store
+    kind: quality
+    unit: seconds
+    summary: Median time from a get or query of a store to its answer.
+    how: Seconds from ReadRequested to RecordReturned and from QueryRequested to QueryAnswered, median per store. Failed reads are counted apart.
+    direction: lower
+    gate: false
+    reads: [agentic.store.ReadRequested, agentic.store.RecordReturned, agentic.store.QueryRequested, agentic.store.QueryAnswered]
+    status: planned
+    source: design
+
+  - id: records_never_read
+    block: store
+    kind: quality
+    unit: share
+    summary: Share of records that ended without being read once.
+    how: Records put that expired, were deleted or were superseded with no RecordReturned naming them, divided by records that ended. A store written and never read costs writes for nothing.
+    direction: lower
+    gate: false
+    reads: [agentic.store.RecordPut, agentic.store.RecordReturned, agentic.store.RecordExpired, agentic.store.RecordDeleted, agentic.store.RecordSuperseded]
+    status: planned
+    source: design
+
+  - id: deleted_without_approval
+    block: store
+    kind: correctness
+    unit: count
+    summary: Records deleted before their expiry without a principal's approval.
+    how: RecordDeleted events of a record that had not expired, with no ApprovalGranted for that deletion before it. Deleting data cannot be undone. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.store.RecordDeleted, agentic.authority.ApprovalGranted]
+    status: planned
+    source: design
+
+  - id: evidence_unresolved
+    block: work
+    kind: correctness
+    unit: count
+    summary: Accepted deliverables whose evidence names a record that is not present, or only records its submitter recorded.
+    how: DeliverableAccepted events whose deliverable lists an evidence record with no RecordPut before the acceptance, one that ended before it, or whose every evidence record the submitting agent recorded itself. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.work.DeliverableSubmitted, agentic.work.DeliverableAccepted, agentic.store.RecordPut]
+    status: planned
+    source: design

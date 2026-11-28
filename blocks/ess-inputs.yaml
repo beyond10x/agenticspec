@@ -9,6 +9,7 @@ specification:
   - 2-intelligence/gateway.yaml
   - 3-capability/tool.yaml
   - 3-capability/knowledge.yaml
+  - 3-capability/store.yaml
   - 4-agent/agent.yaml
   - 4-agent/harness.yaml
   - 5-work/work.yaml
@@ -49,3 +50,6 @@ scenarios:
   - scenarios/work/run-records-steps.yaml
   - scenarios/workspace/exclusive-and-shared-leases.yaml
   - scenarios/authority/tool-call-decided-by-authority.yaml
+  - scenarios/store/record-revised-by-compare-and-set.yaml
+  - scenarios/store/artifact-immutable.yaml
+  - scenarios/store/expire-and-delete.yaml

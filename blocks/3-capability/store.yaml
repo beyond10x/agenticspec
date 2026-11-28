@@ -1,0 +1,1280 @@
+domain: agentic.store
+
+summary: >-
+  Data a part writes and another part reads. A store has one of five kinds (record, artifact,
+  key-value, semantic, graph), a scope and a retention. A record is one entry of a store under a
+  key: it is put, confirmed by the service that plays the store, and stays present until a newer
+  revision supersedes it, it expires or it is deleted. The block records that a write happened, its
+  key, the digest of its content and who wrote it, never the bytes; the bytes live behind the
+  store's port. An artifact is a record of an artifact store: its content is never revised, its key
+  is its digest, and its provenance (who recorded it, which artifacts it derives from) is required.
+  Reads are recorded too: a get by key and a query, each with the digests of what was asked and
+  answered and a count. A store names no part: the architecture names the store a part links to.
+
+naming:
+  wire: store
+  display: Store
+
+types:
+  - name: agentic.store.StoreKind
+    kind: enum
+    variants: [Record, Artifact, KeyValue, Semantic, Graph]
+    naming:
+      summary: >-
+        What a store holds. Record holds typed records of one declared record type, each under a
+        key and revised by a newer put; Artifact holds immutable content addressed by its digest,
+        with provenance; KeyValue holds an opaque value per key, with an optional expiry; Semantic
+        holds items with a vector and a payload; Graph holds nodes and typed edges as facts, a put
+        asserts one and a delete retracts it.
+
+  - name: agentic.store.StoreScope
+    kind: enum
+    variants: [Part, Architecture, External]
+    naming:
+      summary: >-
+        Who shares a store. Part gives one store to each instance of one part (an agent's memory),
+        Architecture one store to every part that links to it, External a store that outlives the
+        architecture and is shared beyond it; which one and where is the binding's concern.
+
+  - name: agentic.store.Retention
+    kind: enum
+    variants: [Duration, Run, Forever]
+    naming:
+      summary: >-
+        How long a record is kept. Duration keeps it for a declared number of seconds from its
+        put, Run until the instance of the architecture ends, Forever until it is deleted.
+
+  - name: agentic.store.QueryForm
+    kind: enum
+    variants: [Predicate, Listing, Prefix, Nearest, Pattern, Path]
+    naming:
+      summary: >-
+        How a query asks. Predicate filters records by their fields, with order and limit (a
+        record store); Listing lists artifacts by class or provenance (an artifact store); Prefix
+        scans keys by a prefix (a key-value store); Nearest finds the k items nearest a vector or a
+        text, with a filter over the payload (a semantic store); Pattern matches a pattern and Path
+        traverses a path (a graph store).
+
+entities:
+  - name: agentic.store.Store
+    naming:
+      summary: >-
+        One store of one kind. Open until retired; a retired store takes no new put.
+    identity:
+      name: store_id
+      type: agentic.shared.StoreId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: kind
+        type: agentic.store.StoreKind
+      - name: scope
+        type: agentic.store.StoreScope
+      - name: retention
+        type: agentic.store.Retention
+      - name: retention_seconds
+        type: Optional<Integer>
+        summary: How long a record is kept, in seconds; required by a Duration retention and read by no other.
+      - name: record_type
+        type: Optional<agentic.shared.Name>
+        summary: >-
+          The record type every record of a record store has, a row a field registers; present
+          when the kind is Record.
+    lifecycle:
+      initial: Open
+      states: [Open, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Open]
+          to: Retired
+
+  - name: agentic.store.Record
+    naming:
+      summary: >-
+        One entry of a store under a key. It is Writing from the put until the service that plays
+        the store confirms or fails it. A confirmed record is Present until a newer revision under
+        its key supersedes it, it expires or it is deleted. A record of an artifact store is an
+        artifact: its key is the digest of its content, and no revision supersedes it.
+    identity:
+      name: record_id
+      type: agentic.shared.RecordId
+    fields:
+      - name: store_id
+        type: agentic.shared.StoreId
+      - name: kind
+        type: agentic.store.StoreKind
+        summary: The kind of its store, kept on the record so a guard on it needs no second read.
+      - name: key
+        type: String
+        summary: The key it is stored under; for an artifact the digest of its content.
+      - name: revision
+        type: Integer
+        summary: 1 for the first record under a key, one more for each record that supersedes the one before.
+      - name: content
+        type: agentic.shared.Content
+        summary: Digest, length and class of the content; for an artifact the class is a row a field registers.
+      - name: recorded_by
+        type: agentic.shared.PrincipalId
+        summary: Who put it; an agent is a principal of kind Agent.
+      - name: recorded_at
+        type: Timestamp
+      - name: derived_from
+        type: List<agentic.shared.RecordId>
+        summary: The records it derives from; for an artifact the artifacts it is a new version of or is made from.
+      - name: supersedes
+        type: Optional<agentic.shared.RecordId>
+        summary: The record under the same key that it replaces when confirmed; absent for the first record under a key.
+      - name: expires_at
+        type: Optional<Timestamp>
+        summary: >-
+          When the clock of the store expires it. The writer sets it from the store's retention: the
+          time of the put plus its seconds for a Duration retention, none for Forever; a Run
+          retention ends the record with the instance of the architecture.
+    invariants:
+      - revision >= 1
+    relations:
+      - name: store
+        kind: references
+        target: agentic.store.Store
+        cardinality: one
+        via: store_id
+      - name: predecessor
+        kind: references
+        target: agentic.store.Record
+        cardinality: one
+        via: supersedes
+    # UNMAPPED: that every record in `derived_from` exists is not refused here; a guard over the
+    # rows an input list names is beyond what ESS 0.99.2 arranges (see `agentic.experiment`).
+    lifecycle:
+      initial: Writing
+      states: [Writing, Present, Failed, Superseded, Expired, Deleted]
+      terminal: [Failed, Superseded, Expired, Deleted]
+      transitions:
+        - name: confirm
+          from: [Writing]
+          to: Present
+        - name: fail
+          from: [Writing]
+          to: Failed
+        - name: supersede
+          from: [Present]
+          to: Superseded
+        - name: expire
+          from: [Present]
+          to: Expired
+        - name: delete
+          from: [Present]
+          to: Deleted
+
+  - name: agentic.store.Read
+    naming:
+      summary: >-
+        One get of a store by key, recorded with what it returned. Requested until the service
+        that plays the store returns the present record of the key or fails.
+    identity:
+      name: read_id
+      type: agentic.shared.ReadId
+    fields:
+      - name: store_id
+        type: agentic.shared.StoreId
+      - name: key
+        type: String
+      - name: read_by
+        type: agentic.shared.PrincipalId
+      - name: requested_at
+        type: Timestamp
+      - name: record_id
+        type: Optional<agentic.shared.RecordId>
+        summary: The record returned; present once Returned.
+      - name: answered_at
+        type: Optional<Timestamp>
+    relations:
+      - name: store
+        kind: references
+        target: agentic.store.Store
+        cardinality: one
+        via: store_id
+      - name: record
+        kind: references
+        target: agentic.store.Record
+        cardinality: one
+        via: record_id
+    lifecycle:
+      initial: Requested
+      states: [Requested, Returned, Failed]
+      terminal: [Returned, Failed]
+      transitions:
+        - name: return
+          from: [Requested]
+          to: Returned
+        - name: fail
+          from: [Requested]
+          to: Failed
+
+  - name: agentic.store.Query
+    naming:
+      summary: >-
+        One query of a store, recorded as the digest of what was asked, then the digest of the
+        answer and the number of items in it. Requested until the service that plays the store
+        answers or fails.
+    identity:
+      name: query_id
+      type: agentic.shared.QueryId
+    fields:
+      - name: store_id
+        type: agentic.shared.StoreId
+      - name: form
+        type: agentic.store.QueryForm
+      - name: question
+        type: agentic.shared.Content
+        summary: Digest of the query (predicate, prefix, vector or text, pattern, path).
+      - name: limit
+        type: Optional<Integer>
+        summary: At most this many items in the answer.
+      - name: read_by
+        type: agentic.shared.PrincipalId
+      - name: requested_at
+        type: Timestamp
+      - name: answer
+        type: Optional<agentic.shared.Content>
+        summary: Digest of the answer; present once Answered.
+      - name: count
+        type: Optional<Integer>
+        summary: The number of items in the answer; present once Answered.
+      - name: answered_at
+        type: Optional<Timestamp>
+    relations:
+      - name: store
+        kind: references
+        target: agentic.store.Store
+        cardinality: one
+        via: store_id
+    lifecycle:
+      initial: Requested
+      states: [Requested, Answered, Failed]
+      terminal: [Answered, Failed]
+      transitions:
+        - name: answer
+          from: [Requested]
+          to: Answered
+        - name: fail
+          from: [Requested]
+          to: Failed
+
+actors:
+  - name: agentic.store.StoreOwner
+    naming:
+      display: Store owner
+      summary: Whoever sets a store up for an architecture and retires it.
+    may:
+      - agentic.store.CreateStore
+      - agentic.store.RetireStore
+      - agentic.store.Stores
+
+  - name: agentic.store.Writer
+    naming:
+      display: Writer
+      summary: A part that writes into a store it is linked to.
+    may:
+      - agentic.store.PutRecord
+      - agentic.store.ReviseRecord
+      - agentic.store.DeleteRecord
+      - agentic.store.Records
+
+  - name: agentic.store.Reader
+    naming:
+      display: Reader
+      summary: A part that reads from a store it is linked to.
+    may:
+      - agentic.store.GetRecord
+      - agentic.store.QueryStore
+      - agentic.store.Records
+      - agentic.store.PresentRecords
+      - agentic.store.Artifacts
+
+  - name: agentic.store.StoreService
+    naming:
+      display: Store service
+      summary: >-
+        The service that plays a store and holds its bytes. It reports what became of each put,
+        get and query, and expires records whose time has come.
+    may:
+      - agentic.store.ConfirmPut
+      - agentic.store.FailPut
+      - agentic.store.ReturnRecord
+      - agentic.store.FailGet
+      - agentic.store.AnswerQuery
+      - agentic.store.FailQuery
+      - agentic.store.ExpireRecord
+      - agentic.store.Records
+      - agentic.store.Reads
+      - agentic.store.Queries
+
+errors:
+  - name: agentic.store.UnknownStore
+    summary: No store of this identity exists.
+    fields:
+      - {name: store_id, type: agentic.shared.StoreId}
+
+  - name: agentic.store.StoreNotOpen
+    summary: The store is retired and takes no new put.
+    fields:
+      - {name: store_id, type: agentic.shared.StoreId}
+
+  - name: agentic.store.StoreStateConflict
+    summary: The store is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.store.Store.State}
+
+  - name: agentic.store.InvalidRetention
+    summary: A Duration retention names no positive number of seconds.
+
+  - name: agentic.store.RecordTypeMissing
+    summary: A record store names no record type.
+
+  - name: agentic.store.UnknownRecord
+    summary: No record of this identity exists.
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+
+  - name: agentic.store.RecordStateConflict
+    summary: The record is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.store.Record.State}
+
+  - name: agentic.store.ArtifactNotAtDigest
+    summary: A put into an artifact store names a key other than the digest of its content.
+    fields:
+      - {name: key, type: String}
+
+  - name: agentic.store.ArtifactImmutable
+    summary: An artifact is never revised; a new version is a new artifact that derives from it.
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+
+  - name: agentic.store.RecordNotPresent
+    summary: >-
+      The record named is no longer present: it was superseded, expired or deleted, or it is still
+      being written. A put that supersedes such a record lost a compare-and-set.
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+
+  - name: agentic.store.InvalidRevision
+    summary: The revision is not 1 for a first record, or not one more than the record it supersedes.
+
+  - name: agentic.store.KeyTaken
+    summary: >-
+      A record is present under this key and the put does not name it as the one it supersedes.
+      In an artifact store, the same content is already stored.
+    fields:
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+
+  - name: agentic.store.NotExpired
+    summary: The record has no expiry, or its expiry lies in the future.
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+
+  - name: agentic.store.KeyNotFound
+    summary: No record is present under this key.
+    fields:
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+
+  - name: agentic.store.UnknownRead
+    summary: No get of this identity was requested.
+    fields:
+      - {name: read_id, type: agentic.shared.ReadId}
+
+  - name: agentic.store.ReadStateConflict
+    summary: The get is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.store.Read.State}
+
+  - name: agentic.store.QueryFormNotServed
+    summary: The store's kind does not answer a query of this form.
+    fields:
+      - {name: form, type: agentic.store.QueryForm}
+
+  - name: agentic.store.InvalidLimit
+    summary: The limit is less than 1.
+
+  - name: agentic.store.UnknownQuery
+    summary: No query of this identity was requested.
+    fields:
+      - {name: query_id, type: agentic.shared.QueryId}
+
+  - name: agentic.store.QueryStateConflict
+    summary: The query is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.store.Query.State}
+
+  - name: agentic.store.InvalidCount
+    summary: The count is negative or exceeds the query's limit.
+
+commands:
+  - name: agentic.store.CreateStore
+    naming:
+      wire: create-store
+      display: Create a store
+    input:
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.store.StoreKind}
+      - {name: scope, type: agentic.store.StoreScope}
+      - {name: retention, type: agentic.store.Retention}
+      - {name: retention_seconds, type: Optional<Integer>}
+      - {name: record_type, type: Optional<agentic.shared.Name>}
+    outcomes:
+      - name: seconds-invalid
+        when: {all: [defined(retention_seconds), retention_seconds < 1]}
+        error: agentic.store.InvalidRetention
+        summary: A retention of less than one second keeps nothing; no store is created.
+      - name: seconds-missing
+        when:
+          all:
+            - retention == Duration
+            - not defined(retention_seconds)
+        error: agentic.store.InvalidRetention
+        summary: A Duration retention names how many seconds it keeps a record.
+      - name: record-type-missing
+        when:
+          all:
+            - kind == Record
+            - not defined(record_type)
+        error: agentic.store.RecordTypeMissing
+        summary: A record store needs the record type its records have.
+      - name: created
+        creates: agentic.store.Store
+        instance: store_id
+        sets:
+          name: input.name
+          kind: input.kind
+          scope: input.scope
+          retention: input.retention
+          retention_seconds: input.retention_seconds
+          record_type: input.record_type
+        emits: [agentic.store.StoreCreated]
+        payload:
+          agentic.store.StoreCreated:
+            store_id: {generated: true}
+            name: input.name
+            kind: input.kind
+            scope: input.scope
+            retention: input.retention
+            retention_seconds: input.retention_seconds
+            record_type: input.record_type
+        summary: The store is Open and takes puts.
+
+  - name: agentic.store.RetireStore
+    naming:
+      wire: retire-store
+      display: Retire a store
+    input:
+      - {name: store_id, type: agentic.shared.StoreId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownStore
+        payload:
+          agentic.store.UnknownStore: {store_id: input.store_id}
+      - name: retired
+        moves: agentic.store.Store.retire
+        instance: store_id
+        emits: [agentic.store.StoreRetired]
+        payload:
+          agentic.store.StoreRetired: {store_id: input.store_id}
+        summary: The store takes no new put; its records stay readable until they expire or are deleted.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.StoreStateConflict
+        payload:
+          agentic.store.StoreStateConflict: {state: {subject: state}}
+
+  - name: agentic.store.PutRecord
+    naming:
+      wire: put-record
+      display: Put a record
+      summary: >-
+        A writer asks the store to hold content under a key no present record holds. The record is
+        Writing, at revision 1, until the service that plays the store confirms or fails the put. A
+        put into an artifact store creates an artifact.
+    input:
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+      - {name: content, type: agentic.shared.Content}
+      - {name: recorded_by, type: agentic.shared.PrincipalId}
+      - {name: derived_from, type: "List<agentic.shared.RecordId>"}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown-store
+        when_related: {via: input.store_id, exists: false}
+        error: agentic.store.UnknownStore
+        payload:
+          agentic.store.UnknownStore: {store_id: input.store_id}
+      - name: store-retired
+        when_related: {via: input.store_id, predicate: state != Open}
+        error: agentic.store.StoreNotOpen
+        payload:
+          agentic.store.StoreNotOpen: {store_id: input.store_id}
+      - name: artifact-not-at-digest
+        when_related:
+          via: input.store_id
+          predicate:
+            all:
+              - kind == Artifact
+              - input.key != input.content.digest
+        error: agentic.store.ArtifactNotAtDigest
+        payload:
+          agentic.store.ArtifactNotAtDigest: {key: input.key}
+        summary: An artifact is addressed by its digest; any other key is refused.
+      - name: key-taken
+        when_related:
+          entity: agentic.store.Record
+          where:
+            all:
+              - store_id == input.store_id
+              - key == input.key
+              - state == Present
+          exists: true
+        error: agentic.store.KeyTaken
+        payload:
+          agentic.store.KeyTaken: {store_id: input.store_id, key: input.key}
+        summary: >-
+          A record is present under the key; replacing it is a revision (ReviseRecord). In an
+          artifact store the same content is stored already.
+      - name: requested
+        creates: agentic.store.Record
+        instance: record_id
+        sets:
+          store_id: input.store_id
+          kind: {related: {via: input.store_id, field: kind}}
+          key: input.key
+          revision: 1
+          content: input.content
+          recorded_by: input.recorded_by
+          recorded_at: input.at
+          derived_from: input.derived_from
+          expires_at: input.expires_at
+        emits: [agentic.store.PutRequested]
+        payload:
+          agentic.store.PutRequested:
+            record_id: {generated: true}
+            store_id: input.store_id
+            key: input.key
+            revision: 1
+            content: input.content
+            recorded_by: input.recorded_by
+            derived_from: input.derived_from
+            expires_at: input.expires_at
+            at: input.at
+        summary: The record is Writing; the service that plays the store now holds the bytes or fails.
+
+  - name: agentic.store.ReviseRecord
+    naming:
+      wire: revise-record
+      display: Revise a record
+      summary: >-
+        A writer puts a new revision under the key of a present record, in the same store. It is a
+        compare-and-set: refused when that record is no longer present. The new record is Writing
+        until the put is confirmed, which supersedes the old one. An artifact is never revised.
+    # UNMAPPED: a revision into a retired store is not refused here; the store lies two references
+    # away, beyond what a guard of ESS 0.99.2 reads. PutRecord refuses it for the first record
+    # under a key.
+    input:
+      - {name: supersedes, type: agentic.shared.RecordId}
+      - {name: revision, type: Integer}
+      - {name: content, type: agentic.shared.Content}
+      - {name: recorded_by, type: agentic.shared.PrincipalId}
+      - {name: derived_from, type: "List<agentic.shared.RecordId>"}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: revision-too-low
+        when: revision < 2
+        error: agentic.store.InvalidRevision
+        summary: A revision supersedes a record of revision 1 or more, so it is 2 or more.
+      - name: unknown-record
+        when_related: {via: input.supersedes, exists: false}
+        error: agentic.store.UnknownRecord
+        payload:
+          agentic.store.UnknownRecord: {record_id: input.supersedes}
+      - name: artifact-revised
+        when_related: {via: input.supersedes, predicate: kind == Artifact}
+        error: agentic.store.ArtifactImmutable
+        payload:
+          agentic.store.ArtifactImmutable: {record_id: input.supersedes}
+        summary: An artifact is never superseded; a new version is put as a new artifact that names it in `derived_from`.
+      - name: not-present
+        when_related: {via: input.supersedes, predicate: state != Present}
+        error: agentic.store.RecordNotPresent
+        payload:
+          agentic.store.RecordNotPresent: {record_id: input.supersedes}
+        summary: The record to supersede is gone or not yet confirmed; the compare-and-set lost.
+      - name: revision-not-next
+        when_related: {via: input.supersedes, predicate: input.revision != revision + 1}
+        error: agentic.store.InvalidRevision
+      - name: requested
+        creates: agentic.store.Record
+        instance: record_id
+        sets:
+          store_id: {related: {via: input.supersedes, field: store_id}}
+          kind: {related: {via: input.supersedes, field: kind}}
+          key: {related: {via: input.supersedes, field: key}}
+          revision: input.revision
+          content: input.content
+          recorded_by: input.recorded_by
+          recorded_at: input.at
+          derived_from: input.derived_from
+          supersedes: input.supersedes
+          expires_at: input.expires_at
+        emits: [agentic.store.RevisionRequested]
+        payload:
+          agentic.store.RevisionRequested:
+            record_id: {generated: true}
+            supersedes: input.supersedes
+            revision: input.revision
+            content: input.content
+            recorded_by: input.recorded_by
+            derived_from: input.derived_from
+            expires_at: input.expires_at
+            at: input.at
+        summary: The new revision is Writing under the old record's store and key.
+
+  - name: agentic.store.ConfirmPut
+    naming:
+      wire: confirm-put
+      display: Confirm a put
+    input:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownRecord
+        payload:
+          agentic.store.UnknownRecord: {record_id: input.record_id}
+      - name: confirmed
+        when_subject: {predicate: {all: [state == Writing, not defined(supersedes)]}}
+        moves: agentic.store.Record.confirm
+        instance: record_id
+        emits: [agentic.store.RecordPut]
+        payload:
+          agentic.store.RecordPut:
+            record_id: input.record_id
+            store_id: {subject: store_id}
+            key: {subject: key}
+            revision: {subject: revision}
+            content: {subject: content}
+            recorded_by: {subject: recorded_by}
+            at: input.at
+        summary: The record is Present under its key.
+      - name: predecessor-missing
+        when_related: {via: supersedes, exists: false}
+        error: agentic.store.RecordNotPresent
+        summary: The record it supersedes does not exist; ReviseRecord refuses that, so this is never answered.
+      - name: predecessor-gone
+        when_related: {via: supersedes, predicate: state != Present}
+        error: agentic.store.RecordNotPresent
+        summary: Another put superseded the same record first; this one can only fail.
+      - name: confirmed-superseding
+        moves: agentic.store.Record.confirm
+        instance: record_id
+        affects:
+          - entity: agentic.store.Record
+            where: {all: [record_id == subject.supersedes, state == Present]}
+            moves: agentic.store.Record.supersede
+        emits: [agentic.store.RecordPut, agentic.store.RecordSuperseded]
+        payload:
+          agentic.store.RecordPut:
+            record_id: input.record_id
+            store_id: {subject: store_id}
+            key: {subject: key}
+            revision: {subject: revision}
+            content: {subject: content}
+            recorded_by: {subject: recorded_by}
+            at: input.at
+          agentic.store.RecordSuperseded:
+            record_id: {related: {via: supersedes, field: record_id}}
+            superseded_by: input.record_id
+            at: input.at
+        summary: The record is Present and the one it supersedes is Superseded.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.RecordStateConflict
+        payload:
+          agentic.store.RecordStateConflict: {state: {subject: state}}
+
+  - name: agentic.store.FailPut
+    naming:
+      wire: fail-put
+      display: Fail a put
+    input:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: reason, type: String}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownRecord
+        payload:
+          agentic.store.UnknownRecord: {record_id: input.record_id}
+      - name: failed
+        moves: agentic.store.Record.fail
+        instance: record_id
+        emits: [agentic.store.PutFailed]
+        payload:
+          agentic.store.PutFailed:
+            record_id: input.record_id
+            reason: input.reason
+            at: input.at
+        summary: The record is Failed; nothing was stored and the record it would supersede stays present.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.RecordStateConflict
+        payload:
+          agentic.store.RecordStateConflict: {state: {subject: state}}
+
+  - name: agentic.store.ExpireRecord
+    naming:
+      wire: expire-record
+      display: Expire a record
+      summary: The clock of the store ends a record whose expiry has come.
+    input:
+      - {name: record_id, type: agentic.shared.RecordId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownRecord
+        payload:
+          agentic.store.UnknownRecord: {record_id: input.record_id}
+      - name: no-expiry
+        when_subject:
+          predicate: not defined(expires_at)
+        error: agentic.store.NotExpired
+        payload:
+          agentic.store.NotExpired: {record_id: input.record_id}
+      - name: not-yet
+        when_subject:
+          predicate: expires_at > now
+        error: agentic.store.NotExpired
+        payload:
+          agentic.store.NotExpired: {record_id: input.record_id}
+      - name: expired
+        moves: agentic.store.Record.expire
+        instance: record_id
+        emits: [agentic.store.RecordExpired]
+        payload:
+          agentic.store.RecordExpired: {record_id: input.record_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.RecordStateConflict
+        payload:
+          agentic.store.RecordStateConflict: {state: {subject: state}}
+
+  - name: agentic.store.DeleteRecord
+    naming:
+      wire: delete-record
+      display: Delete a record
+      summary: >-
+        A writer deletes a present record; it leaves a tombstone. Deleting data cannot be undone,
+        so the grant for this action is ApprovalRequired by default (`agentic.authority`).
+    input:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: deleted_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownRecord
+        payload:
+          agentic.store.UnknownRecord: {record_id: input.record_id}
+      - name: deleted
+        moves: agentic.store.Record.delete
+        instance: record_id
+        emits: [agentic.store.RecordDeleted]
+        payload:
+          agentic.store.RecordDeleted:
+            record_id: input.record_id
+            deleted_by: input.deleted_by
+            at: input.at
+        summary: The record is Deleted; a get of its key finds nothing from now on.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.RecordStateConflict
+        payload:
+          agentic.store.RecordStateConflict: {state: {subject: state}}
+
+  - name: agentic.store.GetRecord
+    naming:
+      wire: get-record
+      display: Get a record
+      summary: A reader asks for the present record under a key; the get is recorded.
+    input:
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+      - {name: read_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown-store
+        when_related: {via: input.store_id, exists: false}
+        error: agentic.store.UnknownStore
+        payload:
+          agentic.store.UnknownStore: {store_id: input.store_id}
+      - name: key-not-found
+        when_related:
+          entity: agentic.store.Record
+          where:
+            all:
+              - store_id == input.store_id
+              - key == input.key
+              - state == Present
+          exists: false
+        error: agentic.store.KeyNotFound
+        payload:
+          agentic.store.KeyNotFound: {store_id: input.store_id, key: input.key}
+      - name: requested
+        creates: agentic.store.Read
+        instance: read_id
+        sets:
+          store_id: input.store_id
+          key: input.key
+          read_by: input.read_by
+          requested_at: input.at
+        emits: [agentic.store.ReadRequested]
+        payload:
+          agentic.store.ReadRequested:
+            read_id: {generated: true}
+            store_id: input.store_id
+            key: input.key
+            read_by: input.read_by
+            at: input.at
+        summary: The get is Requested; the service that plays the store returns the record or fails.
+
+  - name: agentic.store.ReturnRecord
+    naming:
+      wire: return-record
+      display: Return a record
+    input:
+      - {name: read_id, type: agentic.shared.ReadId}
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownRead
+        payload:
+          agentic.store.UnknownRead: {read_id: input.read_id}
+      - name: unknown-record
+        when_related: {via: input.record_id, exists: false}
+        error: agentic.store.UnknownRecord
+        payload:
+          agentic.store.UnknownRecord: {record_id: input.record_id}
+      # UNMAPPED: that the record returned lies under the store and key of the get is the store
+      # service's to hold; a guard on the related record cannot read the get's stored fields.
+      - name: not-present
+        when_related: {via: input.record_id, predicate: state != Present}
+        error: agentic.store.RecordNotPresent
+        payload:
+          agentic.store.RecordNotPresent: {record_id: input.record_id}
+      - name: returned
+        moves: agentic.store.Read.return
+        instance: read_id
+        sets:
+          record_id: input.record_id
+          answered_at: input.at
+        emits: [agentic.store.RecordReturned]
+        payload:
+          agentic.store.RecordReturned:
+            read_id: input.read_id
+            record_id: input.record_id
+            content: {related: {via: input.record_id, field: content}}
+            at: input.at
+        summary: The get is Returned with the record it read.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.ReadStateConflict
+        payload:
+          agentic.store.ReadStateConflict: {state: {subject: state}}
+
+  - name: agentic.store.FailGet
+    naming:
+      wire: fail-get
+      display: Fail a get
+    input:
+      - {name: read_id, type: agentic.shared.ReadId}
+      - {name: reason, type: String}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownRead
+        payload:
+          agentic.store.UnknownRead: {read_id: input.read_id}
+      - name: failed
+        moves: agentic.store.Read.fail
+        instance: read_id
+        sets:
+          answered_at: input.at
+        emits: [agentic.store.ReadFailed]
+        payload:
+          agentic.store.ReadFailed:
+            read_id: input.read_id
+            reason: input.reason
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.ReadStateConflict
+        payload:
+          agentic.store.ReadStateConflict: {state: {subject: state}}
+
+  - name: agentic.store.QueryStore
+    naming:
+      wire: query-store
+      display: Query a store
+      summary: A reader asks a store a question of a form its kind answers; the query is recorded as digests.
+    input:
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: form, type: agentic.store.QueryForm}
+      - {name: question, type: agentic.shared.Content}
+      - {name: limit, type: Optional<Integer>}
+      - {name: read_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: invalid-limit
+        when: {all: [defined(limit), limit < 1]}
+        error: agentic.store.InvalidLimit
+      - name: unknown-store
+        when_related: {via: input.store_id, exists: false}
+        error: agentic.store.UnknownStore
+        payload:
+          agentic.store.UnknownStore: {store_id: input.store_id}
+      - name: form-not-served
+        when_related:
+          via: input.store_id
+          predicate:
+            any:
+              - all: [kind == Record, input.form != Predicate]
+              - all: [kind == Artifact, input.form != Listing]
+              - all: [kind == KeyValue, input.form != Prefix]
+              - all: [kind == Semantic, input.form != Nearest]
+              - all: [kind == Graph, input.form != Pattern, input.form != Path]
+        error: agentic.store.QueryFormNotServed
+        payload:
+          agentic.store.QueryFormNotServed: {form: input.form}
+      - name: requested
+        creates: agentic.store.Query
+        instance: query_id
+        sets:
+          store_id: input.store_id
+          form: input.form
+          question: input.question
+          limit: input.limit
+          read_by: input.read_by
+          requested_at: input.at
+        emits: [agentic.store.QueryRequested]
+        payload:
+          agentic.store.QueryRequested:
+            query_id: {generated: true}
+            store_id: input.store_id
+            form: input.form
+            question: input.question
+            limit: input.limit
+            read_by: input.read_by
+            at: input.at
+        summary: The query is Requested; the service that plays the store answers or fails.
+
+  - name: agentic.store.AnswerQuery
+    naming:
+      wire: answer-query
+      display: Answer a query
+    input:
+      - {name: query_id, type: agentic.shared.QueryId}
+      - {name: answer, type: agentic.shared.Content}
+      - {name: count, type: Integer}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownQuery
+        payload:
+          agentic.store.UnknownQuery: {query_id: input.query_id}
+      - name: invalid-count
+        when_subject:
+          predicate:
+            any:
+              - input.count < 0
+              - all: [defined(limit), input.count > limit]
+        error: agentic.store.InvalidCount
+        summary: An answer has no negative count and never more items than the limit.
+      - name: answered
+        moves: agentic.store.Query.answer
+        instance: query_id
+        sets:
+          answer: input.answer
+          count: input.count
+          answered_at: input.at
+        emits: [agentic.store.QueryAnswered]
+        payload:
+          agentic.store.QueryAnswered:
+            query_id: input.query_id
+            answer: input.answer
+            count: input.count
+            at: input.at
+        summary: The query is Answered with the digest of its answer and the number of items in it.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.QueryStateConflict
+        payload:
+          agentic.store.QueryStateConflict: {state: {subject: state}}
+
+  - name: agentic.store.FailQuery
+    naming:
+      wire: fail-query
+      display: Fail a query
+    input:
+      - {name: query_id, type: agentic.shared.QueryId}
+      - {name: reason, type: String}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.store.UnknownQuery
+        payload:
+          agentic.store.UnknownQuery: {query_id: input.query_id}
+      - name: failed
+        moves: agentic.store.Query.fail
+        instance: query_id
+        sets:
+          answered_at: input.at
+        emits: [agentic.store.QueryFailed]
+        payload:
+          agentic.store.QueryFailed:
+            query_id: input.query_id
+            reason: input.reason
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.store.QueryStateConflict
+        payload:
+          agentic.store.QueryStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.store.StoreCreated
+    fields:
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.store.StoreKind}
+      - {name: scope, type: agentic.store.StoreScope}
+      - {name: retention, type: agentic.store.Retention}
+      - {name: retention_seconds, type: Optional<Integer>}
+      - {name: record_type, type: Optional<agentic.shared.Name>}
+
+  - name: agentic.store.StoreRetired
+    fields:
+      - {name: store_id, type: agentic.shared.StoreId}
+
+  - name: agentic.store.PutRequested
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+      - {name: revision, type: Integer}
+      - {name: content, type: agentic.shared.Content}
+      - {name: recorded_by, type: agentic.shared.PrincipalId}
+      - {name: derived_from, type: "List<agentic.shared.RecordId>"}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.RevisionRequested
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: supersedes, type: agentic.shared.RecordId}
+      - {name: revision, type: Integer}
+      - {name: content, type: agentic.shared.Content}
+      - {name: recorded_by, type: agentic.shared.PrincipalId}
+      - {name: derived_from, type: "List<agentic.shared.RecordId>"}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.RecordPut
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+      - {name: revision, type: Integer}
+      - {name: content, type: agentic.shared.Content}
+      - {name: recorded_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.PutFailed
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: reason, type: String}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.RecordSuperseded
+    fields:
+      - name: record_id
+        type: Optional<agentic.shared.RecordId>
+        summary: The record superseded. Always present; optional only because it is read through the optional `supersedes` of the new record.
+      - {name: superseded_by, type: agentic.shared.RecordId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.RecordExpired
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+
+  - name: agentic.store.RecordDeleted
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: deleted_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.ReadRequested
+    fields:
+      - {name: read_id, type: agentic.shared.ReadId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+      - {name: read_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.RecordReturned
+    fields:
+      - {name: read_id, type: agentic.shared.ReadId}
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: content, type: agentic.shared.Content}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.ReadFailed
+    fields:
+      - {name: read_id, type: agentic.shared.ReadId}
+      - {name: reason, type: String}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.QueryRequested
+    fields:
+      - {name: query_id, type: agentic.shared.QueryId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: form, type: agentic.store.QueryForm}
+      - {name: question, type: agentic.shared.Content}
+      - {name: limit, type: Optional<Integer>}
+      - {name: read_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.QueryAnswered
+    fields:
+      - {name: query_id, type: agentic.shared.QueryId}
+      - {name: answer, type: agentic.shared.Content}
+      - {name: count, type: Integer}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.store.QueryFailed
+    fields:
+      - {name: query_id, type: agentic.shared.QueryId}
+      - {name: reason, type: String}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.store.Stores
+    source: agentic.store.Store
+    consistency: read_your_writes
+    fields:
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.store.StoreKind}
+      - {name: scope, type: agentic.store.StoreScope}
+      - {name: retention, type: agentic.store.Retention}
+      - {name: retention_seconds, type: Optional<Integer>}
+      - {name: record_type, type: Optional<agentic.shared.Name>}
+      - {name: state, type: agentic.store.Store.State}
+    naming:
+      wire: stores
+      display: Stores
+
+  - name: agentic.store.Records
+    source: agentic.store.Record
+    consistency: read_your_writes
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: kind, type: agentic.store.StoreKind}
+      - {name: key, type: String}
+      - {name: revision, type: Integer}
+      - {name: content, type: agentic.shared.Content}
+      - {name: recorded_by, type: agentic.shared.PrincipalId}
+      - {name: recorded_at, type: Timestamp}
+      - {name: derived_from, type: "List<agentic.shared.RecordId>"}
+      - {name: supersedes, type: Optional<agentic.shared.RecordId>}
+      - {name: expires_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.store.Record.State}
+    naming:
+      wire: records
+      display: Records
+
+  - name: agentic.store.PresentRecords
+    source: agentic.store.Record
+    consistency: read_your_writes
+    filter: state == Present
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+      - {name: revision, type: Integer}
+      - {name: content, type: agentic.shared.Content}
+      - {name: expires_at, type: Optional<Timestamp>}
+    naming:
+      wire: present-records
+      display: Present records
+
+  - name: agentic.store.Artifacts
+    source: agentic.store.Record
+    consistency: read_your_writes
+    filter: kind == Artifact
+    fields:
+      - {name: record_id, type: agentic.shared.RecordId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: content, type: agentic.shared.Content}
+      - {name: recorded_by, type: agentic.shared.PrincipalId}
+      - {name: recorded_at, type: Timestamp}
+      - {name: derived_from, type: "List<agentic.shared.RecordId>"}
+      - {name: state, type: agentic.store.Record.State}
+    naming:
+      wire: artifacts
+      display: Artifacts
+
+  - name: agentic.store.Reads
+    source: agentic.store.Read
+    consistency: read_your_writes
+    fields:
+      - {name: read_id, type: agentic.shared.ReadId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: key, type: String}
+      - {name: read_by, type: agentic.shared.PrincipalId}
+      - {name: requested_at, type: Timestamp}
+      - {name: record_id, type: Optional<agentic.shared.RecordId>}
+      - {name: answered_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.store.Read.State}
+    naming:
+      wire: reads
+      display: Reads
+
+  - name: agentic.store.Queries
+    source: agentic.store.Query
+    consistency: read_your_writes
+    fields:
+      - {name: query_id, type: agentic.shared.QueryId}
+      - {name: store_id, type: agentic.shared.StoreId}
+      - {name: form, type: agentic.store.QueryForm}
+      - {name: question, type: agentic.shared.Content}
+      - {name: limit, type: Optional<Integer>}
+      - {name: read_by, type: agentic.shared.PrincipalId}
+      - {name: requested_at, type: Timestamp}
+      - {name: answer, type: Optional<agentic.shared.Content>}
+      - {name: count, type: Optional<Integer>}
+      - {name: answered_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.store.Query.State}
+    naming:
+      wire: queries
+      display: Queries

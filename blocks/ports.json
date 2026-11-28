@@ -172,6 +172,28 @@
       "agentic.sandbox.DefineSandbox",
       "agentic.sandbox.RetireSandbox"
     ],
+    "agentic.store.Reader": [
+      "agentic.store.GetRecord",
+      "agentic.store.QueryStore"
+    ],
+    "agentic.store.StoreOwner": [
+      "agentic.store.CreateStore",
+      "agentic.store.RetireStore"
+    ],
+    "agentic.store.StoreService": [
+      "agentic.store.AnswerQuery",
+      "agentic.store.ConfirmPut",
+      "agentic.store.ExpireRecord",
+      "agentic.store.FailGet",
+      "agentic.store.FailPut",
+      "agentic.store.FailQuery",
+      "agentic.store.ReturnRecord"
+    ],
+    "agentic.store.Writer": [
+      "agentic.store.DeleteRecord",
+      "agentic.store.PutRecord",
+      "agentic.store.ReviseRecord"
+    ],
     "agentic.tool.ToolCatalogue": [
       "agentic.tool.PublishTool",
       "agentic.tool.RegisterToolProvider",
@@ -707,6 +729,49 @@
         "agentic.sandbox.Sandboxes"
       ]
     },
+    "agentic.store": {
+      "commands": {
+        "agentic.store.AnswerQuery": "report",
+        "agentic.store.ConfirmPut": "report",
+        "agentic.store.CreateStore": "intent",
+        "agentic.store.DeleteRecord": "report",
+        "agentic.store.ExpireRecord": "report",
+        "agentic.store.FailGet": "report",
+        "agentic.store.FailPut": "report",
+        "agentic.store.FailQuery": "report",
+        "agentic.store.GetRecord": "intent",
+        "agentic.store.PutRecord": "intent",
+        "agentic.store.QueryStore": "intent",
+        "agentic.store.RetireStore": "report",
+        "agentic.store.ReturnRecord": "report",
+        "agentic.store.ReviseRecord": "intent"
+      },
+      "events": [
+        "agentic.store.PutFailed",
+        "agentic.store.PutRequested",
+        "agentic.store.QueryAnswered",
+        "agentic.store.QueryFailed",
+        "agentic.store.QueryRequested",
+        "agentic.store.ReadFailed",
+        "agentic.store.ReadRequested",
+        "agentic.store.RecordDeleted",
+        "agentic.store.RecordExpired",
+        "agentic.store.RecordPut",
+        "agentic.store.RecordReturned",
+        "agentic.store.RecordSuperseded",
+        "agentic.store.RevisionRequested",
+        "agentic.store.StoreCreated",
+        "agentic.store.StoreRetired"
+      ],
+      "views": [
+        "agentic.store.Artifacts",
+        "agentic.store.PresentRecords",
+        "agentic.store.Queries",
+        "agentic.store.Reads",
+        "agentic.store.Records",
+        "agentic.store.Stores"
+      ]
+    },
     "agentic.tool": {
       "commands": {
         "agentic.tool.PublishTool": "configuration",
@@ -1118,6 +1183,55 @@
       "waiting_state": "agentic.sandbox.Sandbox.Active"
     },
     {
+      "block": "store",
+      "intent_event": "agentic.store.QueryRequested",
+      "kind": "Outbound",
+      "name": "store.query",
+      "protocol": "QueryStore (AnswerQuery | FailQuery)",
+      "reports": [
+        "agentic.store.AnswerQuery",
+        "agentic.store.FailQuery"
+      ],
+      "waiting_state": "agentic.store.Query.Requested"
+    },
+    {
+      "block": "store",
+      "intent_event": "agentic.store.ReadRequested",
+      "kind": "Outbound",
+      "name": "store.read",
+      "protocol": "GetRecord (FailGet | ReturnRecord)",
+      "reports": [
+        "agentic.store.FailGet",
+        "agentic.store.ReturnRecord"
+      ],
+      "waiting_state": "agentic.store.Read.Requested"
+    },
+    {
+      "block": "store",
+      "intent_event": "agentic.store.PutRequested",
+      "kind": "Outbound",
+      "name": "store.record",
+      "protocol": "(PutRecord | ReviseRecord) (ConfirmPut (DeleteRecord | ExpireRecord) | FailPut)",
+      "reports": [
+        "agentic.store.ConfirmPut",
+        "agentic.store.DeleteRecord",
+        "agentic.store.ExpireRecord",
+        "agentic.store.FailPut"
+      ],
+      "waiting_state": "agentic.store.Record.Writing"
+    },
+    {
+      "block": "store",
+      "intent_event": "agentic.store.StoreCreated",
+      "kind": "Outbound",
+      "name": "store.store",
+      "protocol": "CreateStore RetireStore",
+      "reports": [
+        "agentic.store.RetireStore"
+      ],
+      "waiting_state": "agentic.store.Store.Open"
+    },
+    {
       "block": "trigger",
       "intent_event": "agentic.trigger.TriggerFired",
       "kind": "Outbound",
@@ -1221,5 +1335,5 @@
       "waiting_state": "agentic.workspace.Proposal.Proposed"
     }
   ],
-  "sources_sha256": "3e1bf009ac181854cf7a5d43d821885a2b9300f205e23169156c7a56f4736401"
+  "sources_sha256": "f3dc01e928c8297e5eb2155f8618d1c55c0c37c9f5ecbd9953239d3af8d67de3"
 }

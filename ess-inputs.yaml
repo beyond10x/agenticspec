@@ -9,6 +9,7 @@ specification:
   - blocks/2-intelligence/gateway.yaml
   - blocks/3-capability/tool.yaml
   - blocks/3-capability/knowledge.yaml
+  - blocks/3-capability/store.yaml
   - blocks/4-agent/agent.yaml
   - blocks/4-agent/harness.yaml
   - blocks/5-work/work.yaml
@@ -22,6 +23,7 @@ specification:
   - blocks/8-place/runtime.yaml
   - blocks/8-place/resource.yaml
   - blocks/9-composition/architecture.yaml
+  - blocks/9-composition/deployment.yaml
   - blocks/10-evaluation/kpi.yaml
   - blocks/10-evaluation/experiment.yaml
   - packs/source-control/blocks/forge.yaml

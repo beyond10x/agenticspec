@@ -27,6 +27,7 @@ Nothing: this block is the foundation.
 - [gateway](../2-intelligence/gateway.md) · layer 2 · 10 references
 - [model](../2-intelligence/model.md) · layer 2 · 18 references
 - [knowledge](../3-capability/knowledge.md) · layer 3 · 7 references
+- [store](../3-capability/store.md) · layer 3 · 22 references
 - [tool](../3-capability/tool.md) · layer 3 · 8 references
 - [agent](../4-agent/agent.md) · layer 4 · 9 references
 - [harness](../4-agent/harness.md) · layer 4 · 22 references
@@ -95,7 +96,10 @@ Nothing: this block is the foundation.
 | `ProfileId` | an identifier or value | `uuid` |
 | `ProposalId` | an identifier or value | `uuid` |
 | `ProviderId` | an identifier or value | `uuid` |
+| `QueryId` | an identifier or value | `uuid` |
 | `QuestionId` | an identifier or value | `uuid` |
+| `ReadId` | an identifier or value | `uuid` |
+| `RecordId` | an identifier or value | `uuid` |
 | `RouteId` | an identifier or value | `uuid` |
 | `RunId` | an identifier or value | `uuid` |
 | `RuntimeId` | an identifier or value | `uuid` |
@@ -103,6 +107,7 @@ Nothing: this block is the foundation.
 | `ScheduleId` | an identifier or value | `uuid` |
 | `Sharing` | one of | `Exclusive`, `SharedReadOnly`, `SharedReadWrite` |
 | `StepId` | an identifier or value | `uuid` |
+| `StoreId` | an identifier or value | `uuid` |
 | `SubscriptionId` | an identifier or value | `uuid` |
 | `TaskId` | an identifier or value | `uuid` |
 | `ToolCallId` | an identifier or value | `uuid` |

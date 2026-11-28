@@ -80,6 +80,10 @@ Each line: the block, what it is from first principles, and where the concept ex
   spawn, message, plan, other), and whether its effect leaves the sandbox.
 - `knowledge`: what an agent is given before it acts. Instructions, skills, memory, context
   files. Concepts an agent applies are declared here.
+- `store`: data a part writes and another part reads, in a store of one of five kinds (record,
+  artifact, key-value, semantic, graph) with a scope and a retention. Records hold digests, never
+  bytes; an artifact is an immutable record addressed by its digest, with provenance; gets and
+  queries are recorded. Design: `design/events-and-storage.md`.
 
 ### 4 agent
 

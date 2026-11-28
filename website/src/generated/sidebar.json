@@ -44,6 +44,7 @@
       "collapsed": true,
       "items": [
         "docs/blocks/3-capability/knowledge",
+        "docs/blocks/3-capability/store",
         "docs/blocks/3-capability/tool"
       ],
       "label": "3 · capability",

@@ -70,7 +70,7 @@ pub fn family(block: &str) -> &'static str {
         "channel" | "question" => "collab",
         "work" | "process" | "authority" => "work",
         "gateway" | "model" => "intel",
-        "tool" | "knowledge" => "capability",
+        "tool" | "knowledge" | "store" => "capability",
         "workspace" | "sandbox" | "runtime" => "place",
         "pool" | "resource" => "resource",
         "shared" => "foundation",

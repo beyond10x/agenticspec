@@ -1,0 +1,224 @@
+# A record store keeps one present record per key; a new revision is a compare-and-set on the
+# present one. Synthesis arranges no record (ESS-SYNTH-004: the route to a Record runs through
+# PutRecord/requested, which it does not arrange for a later command) and no row set of present
+# records (ESS-SYNTH-001), so this scenario walks the path by hand: a first put is confirmed, a
+# second first put under the key is refused, two revisions race, the first to be confirmed
+# supersedes the record and the second can only fail, and a get returns the present revision.
+type: ess-scenario/7
+domain: agentic.store
+scenario: record-revised-by-compare-and-set
+summary: Two revisions of one record race; the first confirmed supersedes it, the other fails, and a get returns the winner.
+
+arrange:
+  - instance: store
+    entity: agentic.store.Store
+  - instance: first
+    entity: agentic.store.Record
+  - instance: winner
+    entity: agentic.store.Record
+  - instance: loser
+    entity: agentic.store.Record
+  - instance: get
+    entity: agentic.store.Read
+
+timeline:
+  - at: 2026-11-28T09:00:00Z
+    command: agentic.store.CreateStore
+    actor: agentic.store.StoreOwner
+    input: {name: evidence, kind: Record, scope: Architecture, retention: Forever, record_type: test-report}
+    outcome: created
+    capture: {instance: store, event: agentic.store.StoreCreated, field: store_id}
+
+  - at: 2026-11-28T09:00:01Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: report-1
+      content: {digest: sha256-report-1, length: 120, class: test-report}
+      recorded_by: 00000000-0000-4000-8000-0000000000a1
+      derived_from: []
+      at: 2026-11-28T09:00:01Z
+    outcome: requested
+    capture: {instance: first, event: agentic.store.PutRequested, field: record_id}
+
+  - at: 2026-11-28T09:00:02Z
+    command: agentic.store.GetRecord
+    actor: agentic.store.Reader
+    input: {store_id: {$instance: store}, key: report-1, read_by: 00000000-0000-4000-8000-0000000000a2, at: 2026-11-28T09:00:02Z}
+    outcome: key-not-found
+    error:
+      name: agentic.store.KeyNotFound
+    no_events: [agentic.store.ReadRequested]
+
+  - at: 2026-11-28T09:00:03Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: first}, at: 2026-11-28T09:00:03Z}
+    outcome: confirmed
+    events:
+      - event: agentic.store.RecordPut
+        payload: {record_id: {$instance: first}, key: report-1, revision: 1}
+
+  - at: 2026-11-28T09:00:04Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: report-1
+      content: {digest: sha256-report-1b, length: 130, class: test-report}
+      recorded_by: 00000000-0000-4000-8000-0000000000a1
+      derived_from: []
+      at: 2026-11-28T09:00:04Z
+    outcome: key-taken
+    error:
+      name: agentic.store.KeyTaken
+    no_events: [agentic.store.PutRequested]
+
+  - at: 2026-11-28T09:00:05Z
+    command: agentic.store.ReviseRecord
+    actor: agentic.store.Writer
+    input:
+      supersedes: {$instance: first}
+      revision: 3
+      content: {digest: sha256-report-2, length: 140, class: test-report}
+      recorded_by: 00000000-0000-4000-8000-0000000000a1
+      derived_from: []
+      at: 2026-11-28T09:00:05Z
+    outcome: revision-not-next
+    error:
+      name: agentic.store.InvalidRevision
+    no_events: [agentic.store.RevisionRequested]
+
+  - at: 2026-11-28T09:00:06Z
+    command: agentic.store.ReviseRecord
+    actor: agentic.store.Writer
+    input:
+      supersedes: {$instance: first}
+      revision: 2
+      content: {digest: sha256-report-2, length: 140, class: test-report}
+      recorded_by: 00000000-0000-4000-8000-0000000000a1
+      derived_from: [{$instance: first}]
+      at: 2026-11-28T09:00:06Z
+    outcome: requested
+    capture: {instance: winner, event: agentic.store.RevisionRequested, field: record_id}
+
+  - at: 2026-11-28T09:00:07Z
+    command: agentic.store.ReviseRecord
+    actor: agentic.store.Writer
+    input:
+      supersedes: {$instance: first}
+      revision: 2
+      content: {digest: sha256-report-3, length: 150, class: test-report}
+      recorded_by: 00000000-0000-4000-8000-0000000000a3
+      derived_from: []
+      at: 2026-11-28T09:00:07Z
+    outcome: requested
+    capture: {instance: loser, event: agentic.store.RevisionRequested, field: record_id}
+
+  - at: 2026-11-28T09:00:08Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: winner}, at: 2026-11-28T09:00:08Z}
+    outcome: confirmed-superseding
+    events:
+      - event: agentic.store.RecordPut
+        payload: {record_id: {$instance: winner}, key: report-1, revision: 2}
+      - event: agentic.store.RecordSuperseded
+        payload: {record_id: {$instance: first}, superseded_by: {$instance: winner}}
+
+  - at: 2026-11-28T09:00:09Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: loser}, at: 2026-11-28T09:00:09Z}
+    outcome: predecessor-gone
+    error:
+      name: agentic.store.RecordNotPresent
+    no_events: [agentic.store.RecordPut, agentic.store.RecordSuperseded]
+
+  - at: 2026-11-28T09:00:10Z
+    command: agentic.store.FailPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: loser}, reason: superseded meanwhile, at: 2026-11-28T09:00:10Z}
+    outcome: failed
+    events:
+      - event: agentic.store.PutFailed
+        payload: {record_id: {$instance: loser}}
+
+  - at: 2026-11-28T09:00:11Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: winner}, at: 2026-11-28T09:00:11Z}
+    outcome: wrong-state
+    error:
+      name: agentic.store.RecordStateConflict
+
+  - at: 2026-11-28T09:00:12Z
+    command: agentic.store.ReviseRecord
+    actor: agentic.store.Writer
+    input:
+      supersedes: {$instance: first}
+      revision: 2
+      content: {digest: sha256-report-4, length: 160, class: test-report}
+      recorded_by: 00000000-0000-4000-8000-0000000000a1
+      derived_from: []
+      at: 2026-11-28T09:00:12Z
+    outcome: not-present
+    error:
+      name: agentic.store.RecordNotPresent
+    no_events: [agentic.store.RevisionRequested]
+
+  - at: 2026-11-28T09:00:13Z
+    command: agentic.store.GetRecord
+    actor: agentic.store.Reader
+    input: {store_id: {$instance: store}, key: report-1, read_by: 00000000-0000-4000-8000-0000000000a2, at: 2026-11-28T09:00:13Z}
+    outcome: requested
+    capture: {instance: get, event: agentic.store.ReadRequested, field: read_id}
+
+  - at: 2026-11-28T09:00:14Z
+    command: agentic.store.ReturnRecord
+    actor: agentic.store.StoreService
+    input: {read_id: {$instance: get}, record_id: {$instance: first}, at: 2026-11-28T09:00:14Z}
+    outcome: not-present
+    error:
+      name: agentic.store.RecordNotPresent
+    no_events: [agentic.store.RecordReturned]
+
+  - at: 2026-11-28T09:00:15Z
+    command: agentic.store.ReturnRecord
+    actor: agentic.store.StoreService
+    input: {read_id: {$instance: get}, record_id: {$instance: winner}, at: 2026-11-28T09:00:15Z}
+    outcome: returned
+    events:
+      - event: agentic.store.RecordReturned
+        payload: {read_id: {$instance: get}, record_id: {$instance: winner}}
+
+  - at: 2026-11-28T09:00:16Z
+    command: agentic.store.FailGet
+    actor: agentic.store.StoreService
+    input: {read_id: {$instance: get}, reason: late, at: 2026-11-28T09:00:16Z}
+    outcome: wrong-state
+    error:
+      name: agentic.store.ReadStateConflict
+    no_events: [agentic.store.ReadFailed]
+
+assert:
+  - view: agentic.store.Records
+    contains:
+      record_id: {$instance: first}
+      revision: 1
+      state: Superseded
+  - view: agentic.store.Records
+    contains:
+      record_id: {$instance: winner}
+      revision: 2
+      state: Present
+  - view: agentic.store.Records
+    contains:
+      record_id: {$instance: loser}
+      state: Failed
+  - view: agentic.store.Reads
+    contains:
+      read_id: {$instance: get}
+      record_id: {$instance: winner}
+      state: Returned

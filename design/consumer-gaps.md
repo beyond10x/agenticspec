@@ -21,7 +21,7 @@ concept that a lower block would have to name of a higher one is turned around. 
 | G1 delegation of authority | covered, added | `delegation` Delegation.excludes; `channel` Message and Post `delegation_id`, `proof` |
 | G2 standing rules as policy | added | `authority` Grant effect, condition, excludes, supersedes; Decision.grant_id |
 | G3 spend caps and model starts | added | `authority` Budget owner kinds Run and Route, window; `runtime` Workload.start_cost, Instance.budget_id |
-| G4 a sub-agent's hand-back | added | `workspace` Proposal handback, head_revision, merged_under |
+| G4 a sub-agent's hand-back | added | `workspace` Proposal handback (an artifact id of `store`), head_revision, merged_under |
 | G5 protocol runs | covered, added | `process`, `work` Task and Run; new entity `work` Step, Run.route_id |
 | G6 model routes as records | covered, added | `model` Route; Endpoint.hosting, start_wait_seconds; `runtime` Workload.endpoint_id |
 | G7 a decision with options | covered, added | `question` Question.topic, run_id; AnswerOption.binds |
@@ -99,7 +99,8 @@ when its merge request is open. The coordinator merges under a policy.
 - Covered: `workspace` Workspace (kind Worktree), Lease (holder is the session as a party),
   Proposal (proposed_by, base_revision, change, Proposed to Merged).
 - Added on Proposal:
-  - `handback` (where the change was handed back for review) and `head_revision`, set by Propose;
+  - `handback`, the artifact id (`store`) the change is handed back as, and `head_revision`, set
+    by Propose; the branch and the merge or pull request are rows of a source-control pack;
   - `merged_under`, a GrantId with a relation to `authority` Grant, set by MergeProposal.
 - `work` Deliverable (kind Proposal) stays the work-side record. It does not name the workspace
   proposal: `work` is layer 5, `workspace` layer 8.

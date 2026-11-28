@@ -5,7 +5,8 @@ summary: >-
   assignment binds one agent revision to the task for a principal; a run is one bounded period of
   execution of the assignment in a harness session, on a route, and records each of its steps
   once; a deliverable is what a run hands back, a
-  proposal or an artifact, accepted only with evidence. The block holds no goal text, only its
+  proposal or an artifact (a record of an artifact store, `agentic.store`), accepted only with
+  evidence, which is a list of store records. The block holds no goal text, only its
   digest. UNMAPPED: at most one open run per assignment, ending an assignment ending its runs,
   and a task being Done only with an accepted deliverable are not enforced here; the first two need
   a row-set guard that synthesis cannot arrange, the third belongs to the process evaluator.
@@ -248,7 +249,7 @@ entities:
   - name: agentic.work.Deliverable
     naming:
       summary: >-
-        What a run hands back for a task, with the digests of the evidence that supports it. It is
+        What a run hands back for a task, with the records of the evidence that supports it. It is
         accepted or rejected by a principal; acceptance needs evidence.
     identity:
       name: deliverable_id
@@ -262,9 +263,12 @@ entities:
         type: agentic.work.DeliverableKind
       - name: content
         type: agentic.shared.Content
+      - name: artifact_id
+        type: Optional<agentic.shared.RecordId>
+        summary: The artifact it hands back, a record of an artifact store; present exactly when the kind is Artifact.
       - name: evidence
-        type: List<String>
-        summary: Digests (sha256, lower-case hex) of what supports the deliverable.
+        type: List<agentic.shared.RecordId>
+        summary: The records and artifacts (`agentic.store`) that support the deliverable.
       - name: submitted_at
         type: Timestamp
     relations:
@@ -278,6 +282,15 @@ entities:
         target: agentic.work.Task
         cardinality: one
         via: task_id
+      - name: artifact
+        kind: references
+        target: agentic.store.Record
+        cardinality: one
+        via: artifact_id
+    # UNMAPPED: that the artifact is a record of an artifact store, and that each evidence record
+    # exists and was not recorded by the submitting agent alone, is not refused here; the first is
+    # a guard over a record synthesis does not arrange, the second a guard over the rows an input
+    # list names. KPI `evidence_unresolved` counts what slips through.
     lifecycle:
       initial: Proposed
       states: [Proposed, Accepted, Rejected]
@@ -414,10 +427,13 @@ errors:
         type: agentic.work.Deliverable.State
 
   - name: agentic.work.EvidenceMissing
-    summary: A deliverable without evidence digests cannot be accepted.
+    summary: A deliverable without evidence records cannot be accepted.
     fields:
       - name: deliverable_id
         type: agentic.shared.DeliverableId
+
+  - name: agentic.work.ArtifactMissing
+    summary: A deliverable of kind Artifact names no artifact.
 
 commands:
   - name: agentic.work.CreateTask
@@ -911,11 +927,20 @@ commands:
         type: agentic.work.DeliverableKind
       - name: content
         type: agentic.shared.Content
+      - name: artifact_id
+        type: Optional<agentic.shared.RecordId>
       - name: evidence
-        type: List<String>
+        type: List<agentic.shared.RecordId>
       - name: at
         type: Timestamp
     outcomes:
+      - name: artifact-missing
+        when:
+          all:
+            - kind == Artifact
+            - not defined(artifact_id)
+        error: agentic.work.ArtifactMissing
+        summary: A deliverable of kind Artifact names the artifact it hands back.
       - name: no-such-assignment
         when_related: {via: input.assignment_id, exists: false}
         error: agentic.work.AssignmentNotFound
@@ -936,6 +961,7 @@ commands:
           task_id: {related: {via: input.assignment_id, field: task_id}}
           kind: input.kind
           content: input.content
+          artifact_id: input.artifact_id
           evidence: input.evidence
           submitted_at: input.at
         emits:
@@ -946,6 +972,7 @@ commands:
             assignment_id: input.assignment_id
             kind: input.kind
             content: input.content
+            artifact_id: input.artifact_id
             evidence: input.evidence
             at: input.at
         summary: The deliverable is Proposed; with no evidence it can only be rejected.
@@ -974,7 +1001,7 @@ commands:
         payload:
           agentic.work.EvidenceMissing:
             deliverable_id: input.deliverable_id
-        summary: Accepting without evidence digests is refused.
+        summary: Accepting without evidence records is refused.
       - name: accepted
         moves: agentic.work.Deliverable.accept
         instance: deliverable_id
@@ -1107,7 +1134,8 @@ events:
       - {name: assignment_id, type: agentic.shared.AssignmentId}
       - {name: kind, type: agentic.work.DeliverableKind}
       - {name: content, type: agentic.shared.Content}
-      - {name: evidence, type: "List<String>"}
+      - {name: artifact_id, type: Optional<agentic.shared.RecordId>}
+      - {name: evidence, type: "List<agentic.shared.RecordId>"}
       - {name: at, type: Timestamp}
 
   - name: agentic.work.DeliverableAccepted
@@ -1192,7 +1220,8 @@ views:
       - {name: assignment_id, type: agentic.shared.AssignmentId}
       - {name: task_id, type: agentic.shared.TaskId}
       - {name: kind, type: agentic.work.DeliverableKind}
-      - {name: evidence, type: "List<String>"}
+      - {name: artifact_id, type: Optional<agentic.shared.RecordId>}
+      - {name: evidence, type: "List<agentic.shared.RecordId>"}
       - {name: state, type: agentic.work.Deliverable.State}
     naming:
       wire: deliverables

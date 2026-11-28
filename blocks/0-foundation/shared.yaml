@@ -27,6 +27,10 @@ types:
   - {name: agentic.shared.ToolProviderId, kind: newtype, of: Uuid}
   - {name: agentic.shared.ToolId, kind: newtype, of: Uuid}
   - {name: agentic.shared.KnowledgeId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.StoreId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.RecordId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ReadId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.QueryId, kind: newtype, of: Uuid}
 
   # 4 agent
   - {name: agentic.shared.AgentId, kind: newtype, of: Uuid}
