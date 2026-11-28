@@ -564,8 +564,8 @@ fn the_fixture_bundles_are_current_and_hold_only_accepted_kinds_and_roles() {
     let all = fixtures::fixtures(&root).unwrap();
     assert_eq!(
         all.len(),
-        8,
-        "six catalog architectures under `local`, two named bindings"
+        9,
+        "six catalog architectures under `local`, three named bindings"
     );
     let accepts = accepts();
     for f in all {

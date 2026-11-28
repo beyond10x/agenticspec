@@ -2,7 +2,8 @@
 //! section (`binding`, `packing`), the admission of a packing into a plan of units or a list of
 //! named refusals (`admit`), the secrets and egress a unit is granted, by name (`grants`), and
 //! the deployment bundle (`agenticspec-deployment/1`) a translator reads (`bundle`), checked
-//! again when read back (`bundle::check`); the fixture bundles of `bundles/` (`fixtures`). The
+//! again when read back (`bundle::check`); the UIs a binding asks for as units of their own (`ui`);
+//! the fixture bundles of `bundles/` (`fixtures`). The
 //! formats are on `docs/deployment.md`.
 //!
 //! Nothing here changes a simulation result: the catalog digest leaves this directory out.
@@ -13,6 +14,7 @@ pub mod bundle;
 pub mod fixtures;
 pub mod grants;
 pub mod packing;
+pub mod ui;
 
 use serde_json::Value;
 use sha2::{Digest, Sha256};

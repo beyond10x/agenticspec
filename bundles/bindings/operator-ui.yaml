@@ -1,0 +1,10 @@
+format: agenticspec-binding/1
+binding: operator-ui
+architecture: workstation
+refines: split.yaml
+summary: >-
+  The split workstation with its operator UI as a unit of its own: the static files of `agenticspec
+  ui build` serve the operator ingress's ui export on its port, and read the adapter of the core
+  unit.
+ui:
+  operator: {}

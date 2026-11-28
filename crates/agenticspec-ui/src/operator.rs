@@ -84,12 +84,35 @@ fn refused(path: &str, message: String) -> Failure {
 /// An input that cannot be read, a contract of another architecture or of other ports, or an
 /// architecture or `view:` key the derivation refuses.
 pub fn build(inputs: &Inputs) -> Result<Vec<(String, Vec<u8>)>, Failure> {
+    let contract = read_doc(&inputs.contract)?;
+    build_with(
+        &inputs.root,
+        &inputs.architecture,
+        &contract,
+        &inputs.contract.display().to_string(),
+        &inputs.api_base,
+    )
+}
+
+/// Every file of the operator UI of `architecture`, by name, sorted, from a contract held in
+/// memory (`shown` names it in a refusal): the files [`build`] writes for the same contract.
+///
+/// # Errors
+///
+/// A contract of another architecture or of other ports, an architecture that cannot be read, or
+/// an architecture or `view:` key the derivation refuses.
+pub fn build_with(
+    root: &Path,
+    architecture: &Path,
+    contract: &Value,
+    shown: &str,
+    api_base: &str,
+) -> Result<Vec<(String, Vec<u8>)>, Failure> {
     let ir: Value = serde_json::from_str(MODEL)
         .map_err(|e| Failure::Unreadable(format!("the embedded model: {e}")))?;
     let ports: Value = serde_json::from_str(PORTS)
         .map_err(|e| Failure::Unreadable(format!("the embedded ports: {e}")))?;
-    let contract = read_doc(&inputs.contract)?;
-    let shown = inputs.contract.display().to_string();
+    let shown = shown.to_string();
     if contract["format"].as_str() != Some("agenticspec-contract/1") {
         return Err(refused(
             &shown,
@@ -108,12 +131,12 @@ pub fn build(inputs: &Inputs) -> Result<Vec<(String, Vec<u8>)>, Failure> {
         ));
     }
     let layout = derive::layout_with(
-        &inputs.root,
-        &inputs.architecture,
+        root,
+        architecture,
         &ir,
         PANELS,
         Some(&ports),
-        Some(&contract),
+        Some(contract),
     )?;
     let doc: Value = serde_json::from_str(&layout)
         .map_err(|e| Failure::Unreadable(format!("the layout: {e}")))?;
@@ -129,7 +152,7 @@ pub fn build(inputs: &Inputs) -> Result<Vec<(String, Vec<u8>)>, Failure> {
     let config = json!({
         "format": CONFIG_FORMAT,
         "architecture": architecture,
-        "api_base": inputs.api_base,
+        "api_base": api_base,
         "title": architecture,
     });
     let mut files: Vec<(String, Vec<u8>)> = APP
@@ -137,7 +160,7 @@ pub fn build(inputs: &Inputs) -> Result<Vec<(String, Vec<u8>)>, Failure> {
         .map(|(name, bytes)| ((*name).to_string(), bytes.to_vec()))
         .collect();
     files.push(("config.json".to_string(), pretty(&config)));
-    files.push(("contract.json".to_string(), pretty(&contract)));
+    files.push(("contract.json".to_string(), pretty(contract)));
     files.push(("ports.json".to_string(), PORTS.as_bytes().to_vec()));
     files.push(("views.json".to_string(), layout.into_bytes()));
     files.sort();

@@ -15,3 +15,4 @@ sha2.workspace = true
 rayon.workspace = true
 regex.workspace = true
 agenticspec-render.workspace = true
+agenticspec-ui.workspace = true

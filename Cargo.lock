@@ -101,6 +101,7 @@ name = "agenticspec-sim"
 version = "0.4.1"
 dependencies = [
  "agenticspec-render",
+ "agenticspec-ui",
  "rayon",
  "regex",
  "serde_json",

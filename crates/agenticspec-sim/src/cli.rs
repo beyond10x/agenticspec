@@ -941,6 +941,7 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
         .unwrap_or(Path::new("bundles/cloudspec-accepts.yaml"));
     let accepts = Accepts::load(accepts_path).map_err(|e| refused("accepts_unreadable", e))?;
     let built = bundle::build(&bundle::Inputs {
+        architecture: o.architecture,
         arch_bytes: &bytes,
         arch: &arch,
         contract: &contract,
