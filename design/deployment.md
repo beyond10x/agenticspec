@@ -1,7 +1,7 @@
 # Deployment: from an agentic architecture to a running target
 
-Status: design for approval, nothing built. Decisions K1-K16, open points Q1-Q15 with the option
-recommended. Builds on `design/architecture-runtime.md`, `design/ingress.md` (I1-I12),
+Status: approved, every open point (Q1-Q17) at its recommended option; nothing built. Decisions
+K1-K16. Builds on `design/architecture-runtime.md`, `design/ingress.md` (I1-I12),
 `design/control-plane.md` (C1-C8), `design/view-layer.md` (D1-D11) and
 `design/events-and-storage.md` (E1-E10) without repeating them. Heads read: weft `main` at
 `4138723`, cited `weft:<path>:<line>`; Loom `main` at `b4b5de28c`, cited `loom:<path>:<line>`;
@@ -269,6 +269,7 @@ granting nothing the bundle does not declare. What agenticspec asks it to map:
 | `scheduled` unit | `Schedule` of a `Job`, overlap from the trigger's `policy` (row 10) |
 | `service` unit, `core` unit | `Service`; `core` runs the core runtime image (Q4) |
 | `store` unit | a managed-service binding (row 21) or a volume claim (row 6), by role |
+| store kind | cloudspec's managed-service contracts (its layer 1, epic `service-contracts`): `record` -> relational record store, `key-value` -> key-value store, `semantic` -> semantic store, `artifact` -> artifact store, `graph` -> graph store |
 | `model` unit | package kind `Model` with an accelerator claim (rows 10, 11) |
 | `external` part | an egress link to a named destination (cloudspec E4: not modelled yet) |
 | link across units | link with protocol; the unit's `egress` its allow-list |
@@ -310,8 +311,10 @@ semantics, `on_message` and `on_event` triggers, spawned sub-agents, principal p
   architecture with a test binding, and `bundles/sources.sha256` (architecture, nested documents,
   binding, agent documents, generator version). `task check` compares the digests; the `slow` lane
   writes them afresh and compares bytes.
-- cloudspec vendors them with a lock (agenticspec commit and each bundle digest) and a coverage
-  test: every fixture translates with full coverage, every loss named.
+- cloudspec knows an agenticspec bundle only as a deployment artifact, as it knows a Compose
+  file: its translator story (`translate-in-agenticspec`) takes copies of these fixtures as its
+  sample inputs, with no lock on an agenticspec commit, and tests that each translates with full
+  coverage, every loss named.
 - agenticspec holds a copy of cloudspec's accepted unit kinds and roles, `bundles/cloudspec-accepts.yaml`,
   with the cloudspec commit it came from. `deploy bundle`, admission (`unit_not_hosted`) and a test
   fail when a bundle would carry a kind or role not in it.
