@@ -25,7 +25,7 @@ fn scratch(name: &str) -> PathBuf {
 fn inputs(arch: &Path, contract: Option<&str>, ports: Option<PathBuf>, out: PathBuf) -> Inputs {
     let r = root();
     Inputs {
-        root: r.clone(),
+        root: Some(r.clone()),
         architecture: arch.to_path_buf(),
         contract: contract.map(|c| r.join(c)),
         ports,

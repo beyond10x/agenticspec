@@ -1076,7 +1076,7 @@ fn ui_serve(input: &Value) -> HandlerReply {
 fn ui_derive(input: &Value) -> HandlerReply {
     use agenticspec_ui::derive::{Failure, Inputs, differences, write};
     let opt = |k: &str| input.get(k).and_then(Value::as_str).map(PathBuf::from);
-    let root = opt("root").unwrap_or_else(|| PathBuf::from("."));
+    let root = opt("root");
     let inputs = Inputs {
         architecture: path_of(input, "path"),
         contract: opt("contract"),

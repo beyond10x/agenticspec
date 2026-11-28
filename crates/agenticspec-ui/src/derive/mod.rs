@@ -54,11 +54,15 @@ pub const SCRIPTS: &str = "ui/views/fixtures/scripts";
 pub const FIXTURES: &str = "ui/views/fixtures";
 /// The port catalogue a derivation reads when it exists and none is named.
 pub const PORTS: &str = "blocks/ports.json";
+/// The bytes of [`PANELS_DIGEST`] this binary was built with.
+const PANELS_DIGEST_BUILT_IN: &str = include_str!("../../../../ui/views/blocks.sources.sha256");
 
 /// What `agenticspec ui derive` reads and where it writes.
 pub struct Inputs {
-    /// The repository root that holds `blocks/` and `ui/views/`.
-    pub root: PathBuf,
+    /// The repository checkout that holds `blocks/` and `ui/views/`, read when given. Without
+    /// one, the compiled blocks, the panels, their scripts and digest and the port catalogue are
+    /// the copies built into the binary, and files are named relative to the working directory.
+    pub root: Option<PathBuf>,
     pub architecture: PathBuf,
     pub contract: Option<PathBuf>,
     pub ports: Option<PathBuf>,
@@ -69,6 +73,30 @@ pub struct Inputs {
     /// A simulator result of the architecture (`agenticspec-sim-result/1`), whose predictions
     /// the Metrics page shows beside each KPI; read only with `control_plane`.
     pub prediction: Option<PathBuf>,
+}
+
+impl Inputs {
+    /// The directory the files read are named relative to: the root, else the working directory.
+    pub fn base(&self) -> &Path {
+        self.root.as_deref().unwrap_or(Path::new("."))
+    }
+
+    /// The text of `rel` below the root, or `built_in` without one.
+    fn read_or(&self, rel: &str, built_in: &'static str) -> Result<String, Failure> {
+        match &self.root {
+            Some(r) => std::fs::read_to_string(r.join(rel))
+                .map_err(|e| Failure::Unreadable(format!("{rel}: {e}"))),
+            None => Ok(built_in.to_string()),
+        }
+    }
+}
+
+/// Where the port catalogue of a derivation comes from.
+enum PortsFrom {
+    /// A file: the one named, or `blocks/ports.json` below the root.
+    File(PathBuf),
+    /// The catalogue built into the binary, named as [`PORTS`].
+    BuiltIn,
 }
 
 /// Why a derivation did not produce a document.
@@ -866,18 +894,20 @@ pub fn derive_ingress(
     ir: &Value,
     ingress: Option<&str>,
 ) -> Result<Derivation, Failure> {
-    let root = &inputs.root;
-    let tree = Tree::read(root, &inputs.architecture).map_err(Failure::Unreadable)?;
-    let panels_text = std::fs::read_to_string(root.join(PANELS))
-        .map_err(|e| Failure::Unreadable(format!("{PANELS}: {e}")))?;
+    let tree = Tree::read(inputs.base(), &inputs.architecture).map_err(Failure::Unreadable)?;
+    let panels_text = inputs.read_or(PANELS, crate::operator::PANELS)?;
     let panels = Panels::read(&panels_text).map_err(Failure::Unreadable)?;
     let model = Model { ir };
-    let ports_path = inputs
-        .ports
-        .clone()
-        .or_else(|| Some(root.join(PORTS)).filter(|p| p.exists()));
-    let ports_doc = match &ports_path {
-        Some(p) => Some(read_json(p)?),
+    let ports_from = match (&inputs.ports, &inputs.root) {
+        (Some(p), _) => Some(PortsFrom::File(p.clone())),
+        (None, Some(r)) => Some(r.join(PORTS))
+            .filter(|p| p.exists())
+            .map(PortsFrom::File),
+        (None, None) => Some(PortsFrom::BuiltIn),
+    };
+    let ports_doc = match &ports_from {
+        Some(PortsFrom::File(p)) => Some(read_json(p)?),
+        Some(PortsFrom::BuiltIn) => Some(crate::operator::built_in_ports()?.clone()),
         None => None,
     };
     let contract_doc = match &inputs.contract {
@@ -902,7 +932,7 @@ pub fn derive_ingress(
         control.as_ref(),
         scope.as_ref(),
     )?;
-    derivation(inputs, &plan, ports_path.as_ref())
+    derivation(inputs, &plan, ports_from.as_ref())
 }
 
 /// What the control-plane mode reads besides the inputs of the operator UI.
@@ -1075,18 +1105,25 @@ fn plan<'a>(
 fn derivation(
     inputs: &Inputs,
     plan: &Plan<'_>,
-    ports_path: Option<&PathBuf>,
+    ports_from: Option<&PortsFrom>,
 ) -> Result<Derivation, Failure> {
-    let root = &inputs.root;
+    let root = inputs.base();
     let tree = plan.tree;
     let name = stem(&inputs.out);
     let dir = inputs.out.parent().unwrap_or(Path::new(".")).to_path_buf();
     let fixtures_dir = dir.join(format!("{name}.fixtures"));
     let to_panels = relative(&fixtures_dir, &root.join(FIXTURES));
-    let scripts = write::scripts(&root.join(SCRIPTS));
+    let read_scripts;
+    let scripts = match &inputs.root {
+        Some(r) => {
+            read_scripts = write::scripts(&r.join(SCRIPTS));
+            &read_scripts
+        }
+        None => write::built_in_scripts(),
+    };
     let doc = write::document(plan, &name, &format!("{name}.fixtures"));
     let mut files = vec![(inputs.out.clone(), doc)];
-    for (rel, text) in write::fixtures(plan, &to_panels, &scripts) {
+    for (rel, text) in write::fixtures(plan, &to_panels, scripts) {
         files.push((fixtures_dir.join(rel), text));
     }
     files.push((dir.join(format!("{name}.layout.json")), write::layout(plan)));
@@ -1096,11 +1133,22 @@ fn derivation(
     for (file, bytes) in &tree.files {
         lines.push(format!("{}  {file}", sha(bytes)));
     }
-    for rel in [PANELS, PANELS_DIGEST] {
-        let bytes = std::fs::read(root.join(rel))
-            .map_err(|e| Failure::Unreadable(format!("{rel}: {e}")))?;
-        lines.push(format!("{}  {rel}", sha(&bytes)));
+    for (rel, built_in) in [
+        (PANELS, crate::operator::PANELS),
+        (PANELS_DIGEST, PANELS_DIGEST_BUILT_IN),
+    ] {
+        let text = inputs.read_or(rel, built_in)?;
+        lines.push(format!("{}  {rel}", sha(text.as_bytes())));
     }
+    let ports_path = match ports_from {
+        Some(PortsFrom::File(p)) => Some(p),
+        Some(PortsFrom::BuiltIn) => {
+            let text = crate::operator::PORTS;
+            lines.push(format!("{}  {PORTS}", sha(text.as_bytes())));
+            None
+        }
+        None => None,
+    };
     let prediction = inputs.prediction.as_ref().filter(|_| inputs.control_plane);
     for p in [ports_path, inputs.contract.as_ref(), prediction]
         .into_iter()

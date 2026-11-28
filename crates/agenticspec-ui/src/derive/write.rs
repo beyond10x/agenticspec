@@ -568,7 +568,6 @@ fn pretty(v: &Value) -> String {
 
 /// Every event payload of the panels' channel scripts, by event.
 pub fn scripts(dir: &Path) -> BTreeMap<String, Value> {
-    let mut out = BTreeMap::new();
     let mut files: Vec<_> = std::fs::read_dir(dir)
         .into_iter()
         .flatten()
@@ -577,13 +576,30 @@ pub fn scripts(dir: &Path) -> BTreeMap<String, Value> {
         .filter(|p| p.extension().is_some_and(|x| x == "json"))
         .collect();
     files.sort();
-    for f in files {
-        let Ok(text) = std::fs::read_to_string(&f) else {
-            continue;
-        };
-        let Ok(doc) = serde_json::from_str::<Value>(&text) else {
-            continue;
-        };
+    let docs = files.iter().filter_map(|f| {
+        let text = std::fs::read_to_string(f).ok()?;
+        serde_json::from_str::<Value>(&text).ok()
+    });
+    first_payloads(docs)
+}
+
+/// Every event payload of the channel scripts built into the binary (the `scripts` of
+/// [`crate::serve::BUNDLE`], in the order of their files), by event, read once per process: what
+/// [`scripts`] reads from the panels' scripts directory.
+pub fn built_in_scripts() -> &'static BTreeMap<String, Value> {
+    static SCRIPTS: std::sync::OnceLock<BTreeMap<String, Value>> = std::sync::OnceLock::new();
+    SCRIPTS.get_or_init(|| {
+        let bundle: Value =
+            serde_json::from_str(crate::serve::BUNDLE).expect("the embedded serve bundle is JSON");
+        let docs = bundle["scripts"].as_array().cloned().unwrap_or_default();
+        first_payloads(docs)
+    })
+}
+
+/// The first payload of each event of `docs`, channel scripts in the order of their files.
+fn first_payloads(docs: impl IntoIterator<Item = Value>) -> BTreeMap<String, Value> {
+    let mut out = BTreeMap::new();
+    for doc in docs {
         for e in doc["events"].as_array().into_iter().flatten() {
             if let Some(name) = e["event"].as_str() {
                 out.entry(name.to_string())

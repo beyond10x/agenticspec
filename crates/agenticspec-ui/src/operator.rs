@@ -10,6 +10,7 @@
 //! [`archive`] packs them into a tar that is the same bytes each time too.
 
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -35,9 +36,40 @@ pub const APP: &[(&str, &[u8])] = &[
 /// The panels document a derivation copies from.
 pub const PANELS: &str = include_str!("../../../ui/views/blocks.ui.yaml");
 /// The port catalogue of the blocks this binary was built with.
-const PORTS: &str = include_str!("../../../blocks/ports.json");
+pub const PORTS: &str = include_str!("../../../blocks/ports.json");
 /// The part of the compiled blocks a derivation reads (`agenticspec ui panels` writes it).
 const MODEL: &str = include_str!("../../../ui/views/blocks.model.json");
+
+/// `text`, a JSON file built into the binary, parsed once per process.
+fn parsed(
+    cell: &'static OnceLock<Result<Value, String>>,
+    text: &str,
+    what: &str,
+) -> Result<&'static Value, Failure> {
+    cell.get_or_init(|| serde_json::from_str(text).map_err(|e| format!("the embedded {what}: {e}")))
+        .as_ref()
+        .map_err(|e| Failure::Unreadable(e.clone()))
+}
+
+/// [`MODEL`], the part of the compiled blocks a derivation reads, parsed once per process.
+///
+/// # Errors
+///
+/// The embedded model is not JSON.
+pub fn built_in_model() -> Result<&'static Value, Failure> {
+    static CELL: OnceLock<Result<Value, String>> = OnceLock::new();
+    parsed(&CELL, MODEL, "model")
+}
+
+/// [`PORTS`], the port catalogue this binary was built with, parsed once per process.
+///
+/// # Errors
+///
+/// The embedded port catalogue is not JSON.
+pub fn built_in_ports() -> Result<&'static Value, Failure> {
+    static CELL: OnceLock<Result<Value, String>> = OnceLock::new();
+    parsed(&CELL, PORTS, "ports")
+}
 
 /// The format of `config.json`.
 pub const CONFIG_FORMAT: &str = "agenticspec-operator-config/1";
@@ -190,10 +222,8 @@ pub fn build_ingress(
     control: Option<&ControlInputs<'_>>,
     ingress: Option<&str>,
 ) -> Result<Vec<(String, Vec<u8>)>, Failure> {
-    let ir: Value = serde_json::from_str(MODEL)
-        .map_err(|e| Failure::Unreadable(format!("the embedded model: {e}")))?;
-    let ports: Value = serde_json::from_str(PORTS)
-        .map_err(|e| Failure::Unreadable(format!("the embedded ports: {e}")))?;
+    let ir = built_in_model()?;
+    let ports = built_in_ports()?;
     let shown = shown.to_string();
     if contract["format"].as_str() != Some("agenticspec-contract/1") {
         return Err(refused(
@@ -215,9 +245,9 @@ pub fn build_ingress(
     let layout = derive::layout_for(
         root,
         architecture,
-        &ir,
+        ir,
         PANELS,
-        Some(&ports),
+        Some(ports),
         Some(contract),
         control,
         ingress,
