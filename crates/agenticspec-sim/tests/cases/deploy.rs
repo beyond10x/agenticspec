@@ -569,6 +569,158 @@ fn a_scheduled_unit_carries_its_clock_and_needs_no_transport_from_it() {
     assert_eq!(packed["schedule"], "0 2 * * *");
 }
 
+/// The cron rule of the scheduled sweeper of the scheduled loops, run as a job without a rule of
+/// its own, when its schedule `nightly` wakes it every `every`.
+fn derived_cron(every: Value) -> Result<Option<String>, String> {
+    let mut doc = load_yaml(&arch("scheduled-loops")).unwrap();
+    doc["parts"]["nightly"]["every"] = every;
+    let p = packing::resolve(
+        &doc,
+        &json!({ "parts": { "sweeper": { "schedule": "job" } } }),
+    )
+    .unwrap();
+    let u = p.units.iter().find(|u| u.name == "sweeper").unwrap();
+    assert_eq!((u.kind.as_str(), &u.schedule), ("scheduled", &None));
+    packing::schedule_of(&doc, u)
+}
+
+#[test]
+fn a_scheduled_unit_without_a_cron_rule_takes_the_one_its_clocks_every_states_exactly() {
+    for (every, cron) in [
+        (json!("1m"), "*/1 * * * *"),
+        (json!("15m"), "*/15 * * * *"),
+        (json!(900), "*/15 * * * *"),
+        (json!("30m"), "*/30 * * * *"),
+        (json!("60m"), "0 */1 * * *"),
+        (json!("1h"), "0 */1 * * *"),
+        (json!("6h"), "0 */6 * * *"),
+        (json!("12h"), "0 */12 * * *"),
+        (json!("24h"), "0 0 * * *"),
+        (json!("1d"), "0 0 * * *"),
+        (json!("7d"), "0 0 * * 0"),
+        (json!("168h"), "0 0 * * 0"),
+        (
+            json!({ "value": "2h", "vary": ["1h", "2h"] }),
+            "0 */2 * * *",
+        ),
+    ] {
+        assert_eq!(
+            derived_cron(every.clone()),
+            Ok(Some(cron.to_owned())),
+            "{every}"
+        );
+    }
+    // One of each kind no cron rule states: seconds, minutes that do not divide 60, hours that
+    // do not divide 24, days other than one or seven, a part of a minute.
+    for every in ["45s", "90m", "7m", "7h", "5h", "2d", "14d", "1.5m"] {
+        let e = derived_cron(json!(every)).unwrap_err();
+        for needle in [
+            "unit sweeper",
+            "part sweeper",
+            &format!("every {every}"),
+            "trigger sweep of schedule nightly",
+            "packing.parts.sweeper.schedule",
+        ] {
+            assert!(e.contains(needle), "{every}: {needle} in {e}");
+        }
+    }
+}
+
+#[test]
+fn deploy_bundle_and_deploy_check_carry_the_derived_cron_and_the_bindings_wins() {
+    let root = repo_root();
+    let dir = scratch("deploy-derived-cron");
+    let write = |name: &str, text: String| {
+        let f = dir.join(name);
+        std::fs::write(&f, text).unwrap();
+        f
+    };
+    let header = |base: &Path| {
+        format!(
+            "format: agenticspec-binding/1\nbinding: odd\narchitecture: scheduled-loops\nrefines: {}\n",
+            base.display()
+        )
+    };
+    let jobs = root.join("bundles/bindings/jobs.yaml");
+    let derived = write(
+        "derived.yaml",
+        header(&jobs) + "packing:\n  parts:\n    sweeper: {schedule: job}\n",
+    );
+    let out_file = dir.join("bundle.yaml");
+    bundle_with(&arch("scheduled-loops"), &derived, None, Some(&out_file))
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = load_yaml(&out_file).unwrap();
+    let sweeper = unit_of(&v, "sweeper");
+    assert_eq!(sweeper["schedule"], "0 0 * * *", "nightly is every 24h");
+    assert_eq!(sweeper["clock"]["every"], "24h");
+    let packed = v["packing"]["document"]["units"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|u| u["name"] == "sweeper")
+        .unwrap();
+    assert!(
+        packed.get("schedule").is_none(),
+        "the packing keeps the binding's rules only"
+    );
+    let accepts = root.join("bundles/cloudspec-accepts.yaml");
+    cli::deploy_check(&out_file, Some(&accepts))
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    // `deploy check` holds the unit to the same rule.
+    for (edit, carried) in [(Some(json!("0 3 * * *")), "0 3 * * *"), (None, "(none)")] {
+        let mut t = v.clone();
+        match &edit {
+            Some(c) => unit_mut(&mut t, "sweeper")["schedule"] = c.clone(),
+            None => {
+                unit_mut(&mut t, "sweeper")
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("schedule");
+            }
+        }
+        t["digest"] = json!(bundle::recompute(&t));
+        let r = check_text(&dir, &bundle::write(&t)).unwrap_err();
+        assert_eq!(
+            refusal_names(&r.detail),
+            BTreeSet::from(["schedule_not_cron".to_owned()]),
+            "{}",
+            r.detail
+        );
+        assert!(
+            r.detail.contains(&format!(
+                "carries schedule {carried}, and its binding and clock give 0 0 * * *"
+            )),
+            "{}",
+            r.detail
+        );
+    }
+    // The binding's rule wins, also over an `every` no rule states (90m).
+    let odd_arch = cases().join("schedule_not_cron.architecture.yaml");
+    let r = bundle_with(
+        &odd_arch,
+        &cases().join("schedule_not_cron.yaml"),
+        None,
+        None,
+    )
+    .unwrap_err();
+    assert!(
+        r.detail
+            .contains("schedule_not_cron: unit sweeper: part sweeper is woken every 90m"),
+        "{}",
+        r.detail
+    );
+    let given = write(
+        "given.yaml",
+        header(&cases().join("schedule_not_cron.yaml"))
+            + "packing:\n  parts:\n    sweeper: {schedule: \"0 2 * * *\"}\n",
+    );
+    let out = bundle_with(&odd_arch, &given, None, None)
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    assert_eq!(unit_of(&v, "sweeper")["schedule"], "0 2 * * *");
+    assert_eq!(unit_of(&v, "sweeper")["clock"]["every"], "90m");
+}
+
 #[test]
 fn an_agent_unit_carries_its_shape_service_job_or_scheduled() {
     let v = fixture("workstation.split.yaml");

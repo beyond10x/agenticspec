@@ -232,6 +232,54 @@ fn the_archive_digest_is_the_one_ui_build_archive_writes_for_the_same_inputs() {
 }
 
 #[test]
+fn the_binding_gives_the_ui_unit_its_claims_and_check_ports_by_its_unit_name() {
+    let fixture = fixture();
+    let u = unit(&fixture, "operator-ui");
+    assert_eq!(
+        u["claims"],
+        json!({ "cpu_millis": 500, "memory_mib": 512, "accelerators": 0, "volumes": [] })
+    );
+    let dir = scratch("deploy-ui-claims");
+    let v = bundle_of(
+        &dir,
+        &refining(
+            "bundles/bindings/operator-ui.yaml",
+            "claims:\n  operator-ui: {cpu_millis: 100, memory_mib: 64}\nchecks:\n  operator-ui:\n    ready: {port: 9000}\n",
+        ),
+    )
+    .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let u = unit(&v, "operator-ui");
+    assert_eq!(
+        u["claims"],
+        json!({ "cpu_millis": 100, "memory_mib": 64, "accelerators": 0, "volumes": [] })
+    );
+    assert_eq!(
+        u["checks"],
+        json!({
+            "ready": { "kind": "http", "path": "/", "port": 9000 },
+            "alive": { "kind": "http", "path": "/", "port": 8080 },
+        })
+    );
+    // The UI unit is a service unit: it has no startup check, and without `ui:` it is no unit.
+    for (base, extra, says) in [
+        (
+            "bundles/bindings/operator-ui.yaml",
+            "checks:\n  operator-ui:\n    startup: {port: 9000}\n",
+            "checks: operator-ui: a service unit has no startup check",
+        ),
+        (
+            "bundles/bindings/split.yaml",
+            "claims:\n  operator-ui: {cpu_millis: 100}\n",
+            "claims: `operator-ui` is not a unit of the packing",
+        ),
+    ] {
+        let r = bundle_of(&dir, &refining(base, extra)).unwrap_err();
+        assert_eq!(r.code, "binding_invalid", "{extra}: {}", r.detail);
+        assert!(r.detail.contains(says), "{extra}: {}", r.detail);
+    }
+}
+
+#[test]
 fn deploy_bundle_refuses_an_upstream_that_names_no_unit_and_a_ui_of_the_wrong_form() {
     let dir = scratch("deploy-ui-refused");
     let r = bundle_of(

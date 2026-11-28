@@ -8,7 +8,7 @@
 use super::admit::{Accepts, Finding, Plan, PlannedUnit, admit, sort};
 use super::binding::{self as binding_form, Binding};
 use super::grants;
-use super::packing::{self, Packing, is_clock};
+use super::packing::{self, Packing, clock_link, schedule_of, schedule_part};
 use super::ui;
 use super::{digest, sha256};
 use crate::check::value;
@@ -497,6 +497,39 @@ fn agent_contents(agents: &Map<String, Value>) -> Vec<Finding> {
     out
 }
 
+/// The `schedule_not_cron` findings of the scheduled units of a written bundle whose `schedule`
+/// is not the cron rule of [`schedule_of`]: the binding's, else the one its clock's `every`
+/// states. An `every` no cron rule states is admission's finding already.
+fn unit_schedules(bundle: &Value, arch: &Value, packing: &Packing) -> Vec<Finding> {
+    let mut out = Vec::new();
+    for u in packing.units.iter().filter(|u| u.kind == "scheduled") {
+        let Ok(want) = schedule_of(arch, u) else {
+            continue;
+        };
+        let Some(written) = bundle["units"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|x| x["name"] == u.name.as_str())
+        else {
+            continue;
+        };
+        let got = written["schedule"].as_str();
+        if got != want.as_deref() {
+            out.push(Finding {
+                refusal: "schedule_not_cron",
+                detail: format!(
+                    "unit {}: carries schedule {}, and its binding and clock give {}",
+                    u.name,
+                    got.unwrap_or("(none)"),
+                    want.as_deref().unwrap_or("none")
+                ),
+            });
+        }
+    }
+    out
+}
+
 /// The `volume_mount_missing` findings of the units of a written bundle: a volume claim without
 /// a `mount`, or one that is not an absolute path.
 fn unit_volumes(bundle: &Value) -> Vec<Finding> {
@@ -573,7 +606,8 @@ pub enum Refused {
 /// Admit a written bundle again from what it carries, for a reader that did not write it: its
 /// form and digests, then admission of its architecture under its binding and packing
 /// ([`admit`]), its agent documents against the parts that need them and the digests the
-/// binding pins, the bytes each agent document carries ([`CHECK_REFUSALS`]), and the secrets and
+/// binding pins, the bytes each agent document carries ([`CHECK_REFUSALS`]), the cron rule of
+/// each scheduled unit ([`packing::schedule_of`]), and the secrets and
 /// egress of the binding and of each unit
 /// ([`grants::check`], [`grants::check_units`]), and its UI units ([`ui::check`]).
 pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
@@ -672,6 +706,7 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
         }
     }
     findings.extend(agent_contents(&agents));
+    findings.extend(unit_schedules(bundle, arch, &packing));
     findings.extend(served(arch, binding, &packing));
     findings.extend(unit_volumes(bundle));
     findings.extend(grants::check(arch, binding, &packing));
@@ -898,7 +933,8 @@ fn unit(
         if let Some(c) = clock(arch, &u.parts) {
             v["clock"] = c;
         }
-        if let Some(cron) = &u.schedule {
+        // Admission refused an `every` no cron rule states, so `Err` does not reach here.
+        if let Ok(Some(cron)) = schedule_of(arch, u) {
             v["schedule"] = json!(cron);
         }
     }
@@ -920,18 +956,11 @@ pub fn agent_shape(kind: &str) -> (&str, Option<&'static str>) {
 /// The clock of a scheduled unit: the trigger or schedule that wakes its part, the schedule's
 /// interval and first firing, and the trigger's `policy` and `max_parallel` as the overlap rule.
 fn clock(arch: &Value, parts: &[String]) -> Option<Value> {
-    let l = arch["links"].as_array()?.iter().find(|l| {
-        text(&l["carries"]) == "trigger"
-            && parts.iter().any(|p| p == text(&l["to"]))
-            && is_clock(arch, text(&l["from"]))
-    })?;
+    let l = clock_link(arch, parts)?;
     let from = text(&l["from"]);
     let p = &arch["parts"][from];
-    let (trigger, sched) = if p["block"] == "trigger" {
-        (Some(from), value(&p["schedule"]).as_str().unwrap_or(""))
-    } else {
-        (None, from)
-    };
+    let sched = schedule_part(arch, from);
+    let trigger = (p["block"] == "trigger").then_some(from);
     let s = &arch["parts"][sched];
     let mut out = json!({ "schedule": sched });
     if let Some(t) = trigger {

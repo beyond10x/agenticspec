@@ -413,7 +413,8 @@ fn ingress_problems(name: &str, v: &Value, parts: &Value, out: &mut Vec<String>)
 }
 
 /// The problems of a binding that need the contract and the packing: a claim or a check of a
-/// unit the packing does not have, a check its unit's kind has not, an ingress or a protocol
+/// unit the packing does not have (nor a UI the binding asks for, a `service` unit named by its
+/// role), a check its unit's kind has not, an ingress or a protocol
 /// the contract does not export, an export served by a part no unit holds. `contract_ingress`
 /// is the contract's `ingress` as data.
 pub fn served_problems(
@@ -422,29 +423,39 @@ pub fn served_problems(
     packing: &super::packing::Packing,
 ) -> Vec<String> {
     let mut out = Vec::new();
-    let unit = |name: &str| packing.units.iter().find(|u| u.name == name);
+    // The kind of a unit by name: a unit of the packing, or the `service` unit of a UI the
+    // binding asks for.
+    let ui_units: Vec<&str> = super::ui::asked(binding)
+        .into_iter()
+        .map(super::ui::unit_name)
+        .collect();
+    let kind = |name: &str| {
+        packing
+            .units
+            .iter()
+            .find(|u| u.name == name)
+            .map(|u| u.kind.as_str())
+            .or_else(|| ui_units.contains(&name).then_some("service"))
+    };
     for name in binding["claims"]
         .as_object()
         .into_iter()
         .flatten()
         .map(|(k, _)| k)
     {
-        if unit(name).is_none() {
+        if kind(name).is_none() {
             out.push(format!("claims: `{name}` is not a unit of the packing"));
         }
     }
     for (name, v) in binding["checks"].as_object().into_iter().flatten() {
-        let Some(u) = unit(name) else {
+        let Some(kind) = kind(name) else {
             out.push(format!("checks: `{name}` is not a unit of the packing"));
             continue;
         };
-        let has = unit_checks(&u.kind);
+        let has = unit_checks(kind);
         for k in v.as_object().into_iter().flatten().map(|(k, _)| k) {
             if CHECKS.contains(&k.as_str()) && !has.contains(&k.as_str()) {
-                out.push(format!(
-                    "checks: {name}: a {} unit has no {k} check",
-                    u.kind
-                ));
+                out.push(format!("checks: {name}: a {kind} unit has no {k} check"));
             }
         }
     }

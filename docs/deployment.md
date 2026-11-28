@@ -29,8 +29,8 @@ but `format` and `binding` is optional.
 | `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists) |
 | `transports` | per carried value (`model_call`, `order`, `question`, `claim`, ...), the transport a link that crosses units uses |
 | `runtimes` | runtime images: `core` for the core and service units, `agent-runtime` for the agent units (the role it plays; without it the target binds the role, and the older name `agent` is refused). Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both |
-| `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator) |
-| `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below) |
+| `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui` |
+| `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below); the operator UI's unit, `operator-ui`, has `ready` and `alive` |
 | `ingress` | per ingress of the contract and per protocol it exports, where it listens: `{operator: {exports: {http: {port: 8080, bind: all}}}}`. `port` (1 to 65535), `bind` (`loopback`, the default, or `all`), `address` (the address it is reached at, text) and `part` (a part of a unit that serves it, when not the control plane of the core) |
 | `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) |
 | `packing` | the packing section below |
@@ -109,7 +109,11 @@ The `packing:` section names a **strategy**, or lists the units:
 
 Per part, `parts: { <part>: { schedule: job } }` (or `shape: job`) puts an agent into a `job` or
 `scheduled` unit of its own; `schedule: <cron>`, a cron rule of five fields (`"0 2 * * *"`), puts it
-into a `scheduled` unit that carries the rule, which counts as its clock; `external: true` or `external: false` overrides where a part goes, and `reach` says where
+into a `scheduled` unit that carries the rule, which counts as its clock. A scheduled unit without
+a rule of the binding carries the one that states its schedule's `every` exactly: N minutes
+dividing 60 (`*/N * * * *`), N hours dividing 24 (`0 */N * * *`), one day (`0 0 * * *`) or one week
+(`0 0 * * 0`); any other interval (`90m`, `7h`, `45s`) is refused as `schedule_not_cron`, and
+`next_fire_at` stays in the unit's `clock`. `external: true` or `external: false` overrides where a part goes, and `reach` says where
 an external part is reached. A part that is `per` another goes with it. A `count` marked for optimization is packed at its built value.
 
 ```yaml
@@ -156,6 +160,7 @@ order of the table, and writes nothing.
 | `isolation_unmet` | a sandbox asks for more isolation than the target gives a unit, and the binding names no sandbox `inside:` it |
 | `network_isolation_unmet` | a part is marked `network: isolated` and the target says `network_policy: not_enforced` |
 | `scheduled_with_inputs` | a `scheduled` unit takes an input other than its clock, or neither a clock nor a cron rule of the binding wakes it |
+| `schedule_not_cron` | a `scheduled` unit without a cron rule of the binding whose schedule has an `every` no cron rule states exactly (`90m`, `7h`, `45s`); the finding names the unit, the part, the interval and the schedule. Give the part a rule (`packing.parts.<part>.schedule: <cron>`) |
 | `core_count` | the packing has not exactly one `core` unit |
 | `unit_not_hosted` | a unit's kind or one of its roles is not in the accepted list |
 | `agent_document_missing` | an agent, job or scheduled unit holds an agent part the binding names no readable agent document for |
@@ -209,7 +214,7 @@ Each unit:
 | `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace, with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
-| `schedule` | a scheduled unit's cron rule, when the binding gives one (`packing.parts.<part>.schedule`) |
+| `schedule` | a scheduled unit's cron rule: the one the binding gives (`packing.parts.<part>.schedule`), else the one that states its schedule's `every` exactly ([Packing](#packing)); absent when it has neither |
 | `clock` | a scheduled unit's clock in the architecture: the trigger and schedule that wake it, `every`, `next_fire_at`, and the trigger's `policy` and `max_parallel` as the rule for overlapping runs |
 | `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (`/api/`) |
 | `secrets` | the secret names its parts declare, never a value |
@@ -240,8 +245,9 @@ its key and which parse to its `document` (`agent_document_mismatch`), and check
 secret or an egress entry's secret that no part of the unit declares, an egress entry whose part
 does not declare its destination, and a secret value, each by its name. It also refuses what the
 target cannot be asked to serve: a volume without an absolute mount (in the binding or in a unit),
-a local runtime image with neither tag nor digest, and a part isolated on the network of a target
-that enforces no network policy. Of a UI unit it hashes the archive the bundle carries and refuses
+a local runtime image with neither tag nor digest, a part isolated on the network of a target
+that enforces no network policy, and a scheduled unit whose `schedule` is not the rule of its
+binding or of its schedule's `every` (`schedule_not_cron`). Of a UI unit it hashes the archive the bundle carries and refuses
 an archive that is missing or whose SHA-256 is not the unit's `digest` (`ui_archive_mismatch`),
 and an `upstream` that names no other unit of the bundle (`ui_upstream_unknown`). A refusal exits
 1 with `not_admitted` and names every finding.
@@ -295,7 +301,9 @@ The bundle then has:
 
 - a unit `operator-ui`, `kind: service`, `roles: [operator-ui]`, no parts, `code: {kind: static,
   archive: operator-ui.tar, digest: sha256:<hex>}`, `upstream: {unit, port, path: /api/}`, and
-  `ready` and `alive` checks over HTTP at `/` on the export's port;
+  `ready` and `alive` checks over HTTP at `/` on the export's port, or on the port of
+  `checks.operator-ui.<check>.port`, and the claims of `claims.operator-ui` (500 millicores and
+  512 MiB when absent);
 - the archive under `files: {operator-ui.tar: {digest, size, base64}}`, inline like every other
   member;
 - the `ingress` entry of the operator ingress's `ui` export naming `unit: operator-ui` and `part:

@@ -336,15 +336,22 @@ pub fn units(
         };
         let digest = sha256(&tar);
         let archive = archive_name(k);
+        let name = unit_name(k);
         let port = ingress
             .iter()
             .find(|e| e["ingress"] == k.ingress && e["protocol"] == k.export)
             .and_then(|e| e["port"].as_u64());
-        let mut check = json!({ "kind": "http", "path": "/" });
-        if let Some(p) = port {
-            check["port"] = json!(p);
-        }
-        let name = unit_name(k);
+        // Each check on the export's port, unless `checks.<unit>.<check>.port` gives its own.
+        let given = &binding["checks"][name];
+        let check = |c: &str| {
+            let mut v = json!({ "kind": "http", "path": "/" });
+            if let Some(p) = given[c]["port"].as_u64().or(port) {
+                v["port"] = json!(p);
+            }
+            v
+        };
+        // The claims `claims.<unit>` gives, as for any other unit.
+        let c = &binding["claims"][name];
         units.push(json!({
             "name": name,
             "kind": "service",
@@ -353,13 +360,13 @@ pub fn units(
             "code": { "kind": "static", "archive": archive, "digest": digest },
             "upstream": upstream(k, binding, ingress),
             "claims": {
-                "cpu_millis": super::bundle::DEFAULT_CPU_MILLIS,
-                "memory_mib": super::bundle::DEFAULT_MEMORY_MIB,
-                "accelerators": 0,
+                "cpu_millis": c["cpu_millis"].as_u64().unwrap_or(super::bundle::DEFAULT_CPU_MILLIS),
+                "memory_mib": c["memory_mib"].as_u64().unwrap_or(super::bundle::DEFAULT_MEMORY_MIB),
+                "accelerators": c["accelerators"].as_u64().unwrap_or(0),
                 "volumes": [],
             },
             "isolation": "none",
-            "checks": { "ready": check.clone(), "alive": check },
+            "checks": { "ready": check("ready"), "alive": check("alive") },
             "secrets": [],
             "egress": [],
             "roles": [k.role],

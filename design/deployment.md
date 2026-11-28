@@ -125,6 +125,7 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `isolation_unmet` | a sandbox's isolation exceeds what the target gives a unit and the binding names no sandbox inside it |
 | `network_isolation_unmet` | a part the binding marks `network: isolated` on a target whose `network_policy` is `not_enforced` (an absent policy is unknown and refuses nothing) |
 | `scheduled_with_inputs` | a `scheduled` unit holds a part with an input other than its trigger, or neither a clock nor a cron rule wakes it |
+| `schedule_not_cron` | a `scheduled` unit without a cron rule of the binding whose clock's `every` no cron rule states exactly (K18); in a written bundle, also a unit whose `schedule` is not that rule |
 | `core_count` | not exactly one `core` |
 | `unit_not_hosted` | a unit kind or a role the copy of cloudspec's accepted list (K16) does not hold |
 | `image_unpinned` | with `target.images: local`, a runtime with neither `tag` nor `digest` (with `registry`, the default, a runtime without its repository digest is refused as a binding of the wrong form) |
@@ -351,6 +352,9 @@ additions are a unit, the optional member `files` and the unit of one ingress en
   `ui/runtime.openapi.yaml`) the page reads: the binding's `upstream.unit`, else the unit that
   serves the operator ingress's `http` export; its port, the binding's, else that export's when it
   is served by the same unit; `path`, the `api_base` of the UI's `config.json` (`/api/`).
+- Its claims and check ports come from the binding as for any other unit, by the unit's name:
+  `claims.operator-ui` (500 millicores, 512 MiB and no accelerator when absent) and
+  `checks.operator-ui.<ready|alive>.port` (the export's port when absent).
 - Refusals: an upstream that names no unit (`ui_upstream_unknown`, at bundle and check);
   `deploy check` hashes the carried archive against the unit's digest (`ui_archive_mismatch`);
   the role is in the accepted list (K16, `unit_not_hosted`); a UI that does not build is
@@ -381,8 +385,15 @@ Settled with the translator, names exact; the bundle stays `/1`.
   `packing.parts.<p>.schedule: <cron>`, or a listed unit's `schedule:`; a part given one is packed
   as a scheduled unit, and the rule counts as its clock (`scheduled_with_inputs` asks for a clock
   or a rule). Its clock in the architecture, the former `schedule` object, is `clock`.
-  `packing.parts.<p>.shape: job` is another spelling of `schedule: job`. A scheduled unit whose
-  binding gives no cron rule carries only `clock`; a target that needs a rule refuses it.
+  `packing.parts.<p>.shape: job` is another spelling of `schedule: job`.
+- **Cron from `every`.** A scheduled unit whose binding gives no cron rule carries the one that
+  states the `every` of its clock's schedule exactly: N minutes dividing 60 `*/N * * * *`, N hours
+  dividing 24 `0 */N * * *`, one day `0 0 * * *`, one week `0 0 * * 0`; `next_fire_at` is not
+  carried into the rule, it stays in `clock`. Any other interval (`90m`, `7h`, `45s`) is refused
+  as `schedule_not_cron`, naming the unit, the part, the interval and the schedule. A rule the
+  binding gives wins, whatever the `every`. The packing document keeps only the binding's rules.
+  `deploy check` derives the same rule and refuses a unit that carries another, or none where one
+  is due, as `schedule_not_cron`.
 
 ## Risks
 

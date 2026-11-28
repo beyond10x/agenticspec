@@ -3,7 +3,7 @@
 //! copy of cloudspec's accepted list (`bundles/cloudspec-accepts.yaml`, [`Accepts`]).
 
 use super::binding::{isolation_rank, target_isolation};
-use super::packing::{Packing, Unit, is_clock};
+use super::packing::{Packing, Unit, is_clock, schedule_of};
 use crate::check::value;
 use crate::contract::derive::link_name;
 use crate::doc::parse_yaml;
@@ -22,6 +22,7 @@ pub const REFUSALS: &[&str] = &[
     "isolation_unmet",
     "network_isolation_unmet",
     "scheduled_with_inputs",
+    "schedule_not_cron",
     "core_count",
     "unit_not_hosted",
     "agent_document_missing",
@@ -384,6 +385,11 @@ pub fn admit(
                     u.name
                 ),
             ));
+        }
+        // Without a cron rule of the binding, the clock's `every` is the unit's rule, when one
+        // states it exactly.
+        if let Err(detail) = schedule_of(arch, u) {
+            out.push(finding("schedule_not_cron", detail));
         }
     }
 

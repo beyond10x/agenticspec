@@ -33,7 +33,8 @@ pub struct Unit {
     /// The copies that run; `None` for a `job` or `scheduled` unit, which runs on demand.
     pub replicas: Option<u64>,
     /// The cron rule that starts a `scheduled` unit, when the binding gives one
-    /// (`packing.parts.<p>.schedule: <cron>`, or `schedule:` of a listed unit).
+    /// (`packing.parts.<p>.schedule: <cron>`, or `schedule:` of a listed unit). The bundle's
+    /// unit carries this one, else the one its clock's `every` states ([`schedule_of`]).
     pub schedule: Option<String>,
 }
 
@@ -46,6 +47,89 @@ pub fn is_cron(s: &str) -> bool {
             f.chars()
                 .all(|c| c.is_ascii_alphanumeric() || matches!(c, '*' | '/' | ',' | '-'))
         })
+}
+
+/// The cron rule that states an interval of `seconds` exactly: a number of minutes that divides
+/// 60 (`*/N * * * *`), a number of hours that divides 24 (`0 */N * * *`), one day (`0 0 * * *`)
+/// or one week (`0 0 * * 0`). `None` for any other interval (`90m`, `7h`, `45s`).
+pub fn cron_of(seconds: f64) -> Option<String> {
+    if seconds <= 0.0 || seconds.fract() != 0.0 {
+        return None;
+    }
+    let s = seconds as u64;
+    if !s.is_multiple_of(60) {
+        return None;
+    }
+    let m = s / 60;
+    if m < 60 && 60_u64.is_multiple_of(m) {
+        return Some(format!("*/{m} * * * *"));
+    }
+    if !m.is_multiple_of(60) {
+        return None;
+    }
+    match m / 60 {
+        24 => Some("0 0 * * *".into()),
+        168 => Some("0 0 * * 0".into()),
+        h if h < 24 && 24_u64.is_multiple_of(h) => Some(format!("0 */{h} * * *")),
+        _ => None,
+    }
+}
+
+/// The link that wakes one of `parts` from a clock: the first `trigger` link into one of them
+/// from a schedule part or an `on_schedule` trigger.
+pub fn clock_link<'a>(arch: &'a Value, parts: &[String]) -> Option<&'a Value> {
+    arch["links"].as_array()?.iter().find(|l| {
+        text(&l["carries"]) == "trigger"
+            && parts.iter().any(|p| p == text(&l["to"]))
+            && is_clock(arch, text(&l["from"]))
+    })
+}
+
+/// The schedule part a clock part reads its interval from: the part itself, or the `schedule`
+/// an `on_schedule` trigger names.
+pub fn schedule_part<'a>(arch: &'a Value, clock: &'a str) -> &'a str {
+    let p = &arch["parts"][clock];
+    if p["block"] == "trigger" {
+        value(&p["schedule"]).as_str().unwrap_or("")
+    } else {
+        clock
+    }
+}
+
+/// The cron rule a scheduled unit carries: the binding's, else the one that states the `every`
+/// of the schedule that wakes it exactly ([`cron_of`]); `None` without either. Refused, with
+/// what `schedule_not_cron` says, when that `every` is no exact cron rule.
+pub fn schedule_of(arch: &Value, unit: &Unit) -> Result<Option<String>, String> {
+    if unit.schedule.is_some() || unit.kind != "scheduled" {
+        return Ok(unit.schedule.clone());
+    }
+    let Some(l) = clock_link(arch, &unit.parts) else {
+        return Ok(None);
+    };
+    let (to, from) = (text(&l["to"]), text(&l["from"]));
+    let sched = schedule_part(arch, from);
+    let every = value(&arch["parts"][sched]["every"]);
+    if every.is_null() {
+        return Ok(None);
+    }
+    let secs = crate::doc::num(every);
+    if let Some(cron) = secs.and_then(cron_of) {
+        return Ok(Some(cron));
+    }
+    let interval = match (every.as_str(), secs) {
+        (Some(t), _) => t.to_owned(),
+        (None, Some(s)) => crate::doc::format_duration(s),
+        (None, None) => every.to_string(),
+    };
+    let by = if from == sched {
+        format!("schedule {sched}")
+    } else {
+        format!("trigger {from} of schedule {sched}")
+    };
+    Err(format!(
+        "unit {}: part {to} is woken every {interval} (by {by}), and a cron rule states only N minutes dividing 60, N hours dividing 24, one day or one week (give it one with `packing.parts.{to}.schedule: <cron>`)",
+        unit.name
+    ))
 }
 
 /// A resolved packing: the units, then the parts no target starts.

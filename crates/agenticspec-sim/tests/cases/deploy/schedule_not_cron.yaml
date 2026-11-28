@@ -1,0 +1,15 @@
+format: agenticspec-binding/1
+binding: schedule-not-cron
+architecture: scheduled-loops
+refines: egress/scheduled-loops.yaml
+summary: >-
+  The sweep runs as a scheduled unit without a cron rule of its own, and its schedule wakes it
+  every 90 minutes (schedule_not_cron.architecture.yaml), which no cron rule states exactly.
+parts:
+  gateway: {state: service}
+  builds: {state: service}
+  sweeper: {agent: ../../../../../bundles/agents/coder.yaml}
+transports: {model_call: http, claim: http, question: a2a}
+packing:
+  parts:
+    sweeper: {schedule: job}
