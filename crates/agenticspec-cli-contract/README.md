@@ -104,7 +104,7 @@ Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
 ### `ingress project`
 
-Write the ess-http/1 protocol binding and the OpenAPI document of each http export of an architecture, or compare them with --check
+Write the projection of each export of an architecture (for http the ess-http/1 binding and the OpenAPI document, for event_stream the stream list, for cli the ess-cli/2 binding, for tool the tool list, for agent the agent card, for metrics_scrape the metric list), or compare them with --check
 
 Callable: `ingress_project`. Input: `agenticspec.cli.IngressProjectInput`. Result: `agenticspec.cli.IngressProjectResult`.
 

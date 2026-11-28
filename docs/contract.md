@@ -377,22 +377,34 @@ document has (`jq -r .ingress`): paste it into the document and change it. Paste
 document has the same contract. A document that takes a reserved name is refused
 (`architecture_refused`).
 
-### Projections of an http export
+### Projections of the exports
 
-`agenticspec ingress project <architecture.yaml> --out <dir>` writes, for each ingress with an
-`http` export, two files:
+`agenticspec ingress project <architecture.yaml> --out <dir>` writes the projection of each
+export of each ingress, generated from the contract, the compiled blocks and the KPI catalogue:
 
-| file | what |
-|---|---|
-| `<ingress>.http.yaml` | the `ess-http/1` protocol binding over exactly the interface's commands (`post`) and views (`get`), pinned to the compiled blocks by their source digest. Every path is open: a server binding that `refines:` it fills them in |
-| `<ingress>.openapi.yaml` | the OpenAPI document of those operations: ESS's document of the component that serves the blocks, narrowed to them and the schemas they reference. Its paths are the ones ESS derives |
+| protocol | file | what |
+|---|---|---|
+| `http` | `<ingress>.http.yaml` | the `ess-http/1` protocol binding over exactly the interface's commands (`post`) and views (`get`), pinned to the compiled blocks by their source digest. Every path is open: a server binding that `refines:` it fills them in |
+| `http` | `<ingress>.openapi.yaml` | the OpenAPI document of those operations: ESS's document of the component that serves the blocks, narrowed to them and the schemas they reference. Its paths are the ones ESS derives |
+| `event_stream` | `<ingress>.streams.yaml` | the stream list (`agenticspec-streams/1`): one stream per architecture level, the `ess-ui/1` channel shape. It `carries` every event of the interface's feeds `server_to_client`, `every_event`, resumed `from_last_seen`; a cursor older than the retention is refused as `CursorExpired`. Its `scope` is a parameter (the part path), a `session` is per architecture instance |
+| `cli` | `<ingress>.cli.yaml` | an `ess-cli/2` binding: per command and view a command at the path `<domain> <wire name>`, forwarded to the component that serves the blocks (`service_forward`), one `--option` per input field or view parameter. It names the input `<command>.Input` or `<view>.Params`, the rows `List<<view>.Row>` and a command's answer `<command>.Outcome`; ESS 0.99.2 declares none of these types, so `ess specify cli` refuses the binding until a `service_forward` callable can name a command's input and a view's parameters and rows (`design/ess-repro/cli-service-forward/`). It is written, not validated |
+| `tool` | `<ingress>.tools.yaml` | the tool list (`agenticspec-tools/1`) for a model-context tool protocol: one tool per command and one read tool per view (`annotations.readOnlyHint`), each `name` the ESS wire name, `description` its `naming.summary` (else its display name), `inputSchema` its input as one JSON Schema that stands alone (a command's request body, a view's query parameters, every schema they reference under `$defs`, from ESS's OpenAPI document). A command's `errors` are the ESS errors its outcomes refuse with; a refused call answers a tool error naming one |
+| `agent` | `<ingress>.agent.yaml` | the agent card (`agenticspec-agent-card/1`) for an agent-to-agent protocol: the architecture's `name`, one skill per command (`id` the wire name, `name`, `description`, `errors`, `inputSchema` as for a tool) and the events of the feeds as the `updates` of a conversation. The address is open: the runtime binding gives it |
+| `metrics_scrape` | `<ingress>.metrics.yaml` | the metric list (`agenticspec-metrics/1`): per KPI its catalogue `id` as the metric's `name` (a runtime binding may set a prefix), `type: gauge` (a KPI is a value over a window, not a running total), its `summary` as `help`, its `unit`, block and status, and the `labels` of every sample: `architecture`, `part_path`, `instance` |
 
-It calls `ess` to compile the blocks (`--blocks`, `blocks` by default), to write their OpenAPI
-document and to validate each binding, and gives the same bytes on every run. `--check <dir>`
-compares the files in `<dir>` with a fresh projection and writes nothing: it exits 1
-(`projections_stale`) naming each changed, missing or extra file. The projections of
-[`workstation-ingress`](architectures/workstation-ingress.md) are kept in the repository and
-checked by the gate.
+Each projection pinned to the blocks carries `specification:` (`system`, `version`,
+`source_digest`), and each new format carries `ingress:` (architecture, name, audience,
+`authenticated`). A `ui` export has no projection here: `agenticspec ui derive` derives it.
+
+It calls `ess` once to compile the blocks (`--blocks`, `blocks` by default) and once to write
+their OpenAPI document, when an export reads them, validates each `ess-http/1` binding, and gives
+the same bytes on every run. A projection is refused (`projection_refused`), naming every
+operation, when the blocks or their OpenAPI document lack an operation of the interface, when two
+tools or skills would take one wire name or two commands one path, and when the catalogue lacks a
+KPI or gives it no unit or summary. `--check <dir>` compares the files in `<dir>` with a fresh
+projection and writes nothing: it exits 1 (`projections_stale`) naming each changed, missing or
+extra file. The projections of [`workstation-ingress`](architectures/workstation-ingress.md) are
+kept in the repository and checked by the gate.
 
 ### Nested architectures
 

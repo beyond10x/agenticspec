@@ -1,0 +1,25 @@
+format: ess-cli/2
+binary: shop-clerk
+about: The clerk ingress of a shop
+globals:
+  state: state-dir
+callables:
+  shop_retire_item:
+    target: {kind: service_forward, owner: shop, operation: repro.shop.RetireItem}
+    input: repro.shop.RetireItem.Input
+    result: repro.shop.RetireItem.Outcome
+  shop_item_by_id:
+    target: {kind: service_forward, owner: shop, operation: repro.shop.ItemById}
+    input: repro.shop.ItemById.Params
+    result: List<repro.shop.ItemById.Row>
+commands:
+  - path: [shop, retire-item]
+    callable: shop_retire_item
+    about: RetireItem
+    arguments:
+      - {field: item_id, source: {kind: option, long: item-id}}
+  - path: [shop, item-by-id]
+    callable: shop_item_by_id
+    about: ItemById
+    arguments:
+      - {field: item_id, source: {kind: option, long: item-id}}
