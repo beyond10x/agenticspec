@@ -185,6 +185,8 @@ change.
   --strict-requires`.
 - ESS declares no relation across two systems: `studio/` names an entity of `agentic` by its
   identifier only (`studio/domains/shared.yaml`).
+- Authored scenarios of `studio/` are in `studio/scenarios/`, listed in `studio/ess-inputs.yaml`;
+  `task check:mutation` runs them against every mutant of `studio/`.
 
 ## Layout of the hand-written crates
 
@@ -347,6 +349,8 @@ Beside the crates, `ui/` holds:
 |---|---|
 | `README.md`, `LICENSE`, `CHANGELOG.md` | for humans; Apache-2.0; the changelog in the Keep a Changelog 1.1.0 form, `## [Unreleased]` first. A change a user of the repository notices writes its line there |
 | `scripts/check-generated.sh` | one line per generated directory, the drift check and the regeneration |
+| `scripts/check-mutation.sh`, `check-mutation.test.sh`, `spec/mutation-known.txt`, `studio/mutation-known.txt` | `task check:mutation` (in the gate, about 20 s): the mutation audit of `spec/` and `studio/` on the interpreter (`ess verify conform mutate`, every class but `grant-add`, authored scenarios run against each mutant), passing only when the mutants not killed are exactly those the specification's `mutation-known.txt` lists, each with its reason. A survivor is answered by an authored scenario under `<dir>/scenarios/` or by making the rule observable, then its line is removed. `spec/` runs on a copy with Binary64 read as Decimal (the audit carries no Binary64). `check-mutation.test.sh` (in `task check:scripts`) plants two defects it must name. `blocks/` is not audited in the gate: one class takes longer than a pool job |
+| `scripts/spec-diff.sh`, `spec-diff.test.sh` | `task spec:diff [-- <revision>]`, not in the gate: `ess verify diff --compatibility` of `blocks/`, `spec/` and `studio/` against a git revision (the newest release tag by default), every breaking or unknown change listed, exit 4 on one; `--self-test` (run by `task check:scripts`) proves a removed enum variant is breaking |
 | `bundles/` | the fixture deployment bundles, `<architecture>.<binding>.yaml`, one per catalog architecture and test binding of `bindings/`, the agent documents they name (`agents/`), the bindings (`bindings/`: `local.yaml` is the base of one `local-<architecture>.yaml` per catalog architecture, which declares its egress, and `local-team-with-console.yaml`, the nested team-with-console under `local`; `operator-ui.yaml` refines `split.yaml` and asks for the operator UI, the control-plane UI and a UI of the consumer's own, `console`, from the fixture archive `console-ui.tar`, side by side), the digest of their sources (`sources.sha256`, held by `task check:bundles`) and the copy of the translator's accepted unit kinds and roles (`cloudspec-accepts.yaml`). A change of a bundle's sources runs `task bundles:generate` in the same change |
 | `scripts/ui-build.sh` | `task ui:build` |
 | `ui/operator/` | the generic operator app of `agenticspec ui build` (Vue over `ui/kit` and `/views`): it reads `config.json`, `views.json`, `contract.json` and `ports.json` beside it at start and calls the runtime interface at `config.json`'s `api_base`. Its browser test is `e2e/`, over one static server with a fixture adapter and over one `agenticspec ui serve` of the workstation (`e2e/serve.spec.ts`, the operator UI at `/` and the control-plane UI at `/control/`). `src/Control*.vue` and `src/control.ts` draw the pages across parts of a layout with a `control` key |

@@ -7,4 +7,5 @@ specification:
   - domains/evaluation.yaml
   - domains/session.yaml
   - components.yaml
-scenarios: []
+scenarios:
+  - scenarios/session/call-tool-dry-run-only-for-apply.yaml
