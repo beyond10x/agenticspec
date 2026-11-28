@@ -149,32 +149,104 @@ fn architecture_section(
         if o.is_some() { " and KPIs" } else { "" }
     );
     legend(h, arch);
+    // The graph is drawn at its natural size; the script shows the zoom tools when it is wider
+    // than its card, and the card then pans by drag, wheel and arrow keys.
+    h.push_str(
+        "<div class=\"graph-tools\" hidden role=\"toolbar\" aria-label=\"Zoom\">\
+<button type=\"button\" data-zoom=\"out\" aria-label=\"Zoom out\">−</button>\
+<output class=\"zoom-level\" aria-live=\"polite\">100 %</output>\
+<button type=\"button\" data-zoom=\"in\" aria-label=\"Zoom in\">+</button>\
+<button type=\"button\" data-zoom=\"fit\" aria-label=\"Fit to width\">Fit</button>\
+<button type=\"button\" data-zoom=\"actual\" aria-label=\"Actual size\">Actual size</button>\
+<span class=\"hint\">drag, scroll or use the arrow keys to move around</span></div>",
+    );
     let _ = write!(
         h,
-        "<div class=\"graph-wrap\" style=\"--graph-w:{}px\">{}</div>",
+        "<div class=\"graph-view\" style=\"--graph-w:{}px\">{}</div>",
         fmt::px(g.width),
         g.svg
     );
-    h.push_str("<ul class=\"sr-only\" aria-label=\"Links\">");
-    for l in &arch.links {
-        let over = l
-            .over
-            .as_ref()
-            .map(|c| format!(" over {c}"))
-            .unwrap_or_default();
-        let _ = write!(
-            h,
-            "<li>{} sends {} to {}{}</li>",
-            esc(&l.from),
-            esc(&l.carries),
-            esc(&l.to),
-            esc(&over)
-        );
-    }
-    h.push_str("</ul></div></div>\n<aside class=\"side\">");
+    h.push_str("</div></div>\n<aside class=\"side\">");
+    parts_table(h, arch);
     details(h, arch, o);
+    links_table(h, arch);
     policies(h, arch, o);
     h.push_str("</aside>\n</section>\n");
+}
+
+/// How many links start at, end at or pass over a part.
+fn link_count(arch: &Architecture, name: &str) -> usize {
+    arch.links
+        .iter()
+        .filter(|l| l.from == name || l.to == name || l.over.as_deref() == Some(name))
+        .count()
+}
+
+/// Every part, one row each, by block layer, then block, then name; a row selects its part.
+fn parts_table(h: &mut String, arch: &Architecture) {
+    let mut parts: Vec<&model::Part> = arch.parts.iter().collect();
+    parts.sort_by(|a, b| {
+        (family(&a.block).1, &a.block, &a.name).cmp(&(family(&b.block).1, &b.block, &b.name))
+    });
+    let _ = write!(
+        h,
+        "<div class=\"card parts-card\"><div class=\"card-head\"><h2>Parts</h2><span class=\"hint\">{} · select one</span></div><div class=\"table-wrap scroll-y\"><table class=\"data mini parts\"><thead><tr><th scope=\"col\">Part</th><th scope=\"col\">Block</th><th scope=\"col\" class=\"r\">Links</th></tr></thead><tbody>",
+        plural(parts.len(), "part")
+    );
+    for p in parts {
+        let _ = write!(
+            h,
+            "<tr data-part=\"{n}\"><th scope=\"row\"><button type=\"button\" class=\"pick\" data-pick=\"{n}\" aria-pressed=\"false\"><span class=\"swatch f-{}\"></span>{n}</button></th><td>{}</td><td class=\"r\">{}</td></tr>",
+            family(&p.block).0,
+            esc(&subtitle(p)),
+            link_count(arch, &p.name),
+            n = esc(&p.name)
+        );
+    }
+    h.push_str("</tbody></table></div></div>");
+}
+
+/// Every link, one row each, filtered by the part it touches.
+fn links_table(h: &mut String, arch: &Architecture) {
+    if arch.links.is_empty() {
+        return;
+    }
+    let _ = write!(
+        h,
+        "<div class=\"card links-card\"><div class=\"card-head\"><h2>Links</h2><span class=\"hint\" data-link-count>{}</span></div><div class=\"card-body filter-row\"><label>Part <select data-link-filter><option value=\"\">all parts</option>",
+        plural(arch.links.len(), "link")
+    );
+    let mut names: Vec<&str> = arch.parts.iter().map(|p| p.name.as_str()).collect();
+    names.sort_unstable();
+    for n in names {
+        let _ = write!(h, "<option>{}</option>", esc(n));
+    }
+    h.push_str("</select></label></div><div class=\"table-wrap scroll-y\"><table class=\"data mini links-table\"><thead><tr><th scope=\"col\">From</th><th scope=\"col\">Carries</th><th scope=\"col\">To</th></tr></thead><tbody>");
+    for l in &arch.links {
+        let (over_attr, over) = match &l.over {
+            Some(c) => (
+                format!(" data-over=\"{}\"", esc(c)),
+                format!(" <span class=\"muted\">over {}</span>", esc(c)),
+            ),
+            None => (String::new(), String::new()),
+        };
+        let _ = write!(
+            h,
+            "<tr data-from=\"{f}\" data-to=\"{t}\"{over_attr}><td>{f}</td><td><span class=\"carries\">{}</span>{over}</td><td>{t}</td></tr>",
+            esc(&l.carries),
+            f = esc(&l.from),
+            t = esc(&l.to)
+        );
+    }
+    h.push_str("</tbody></table></div></div>");
+}
+
+fn plural(n: usize, word: &str) -> String {
+    if n == 1 {
+        format!("1 {word}")
+    } else {
+        format!("{n} {word}s")
+    }
 }
 
 fn details(h: &mut String, arch: &Architecture, o: Option<&Outcome>) {

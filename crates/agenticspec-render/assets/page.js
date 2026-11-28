@@ -20,6 +20,7 @@
   var edges = document.querySelectorAll("svg.graph .edge");
   var details = document.querySelectorAll(".detail[data-detail]");
   var hint = document.getElementById("pin-hint");
+  var picks = document.querySelectorAll("button.pick[data-pick]");
   var pinned = "";
 
   function show(part) {
@@ -44,6 +45,9 @@
       var button = n.querySelector(":scope > [role=button]");
       if (button) button.setAttribute("aria-pressed", String(n.getAttribute("data-part") === pinned));
     });
+    picks.forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-pick") === pinned));
+    });
     if (hint) hint.textContent = pinned ? "selected · Esc clears" : "hover or select";
     show(pinned);
   }
@@ -63,13 +67,128 @@
     if (ev.key === "Escape" && pinned) pin(pinned);
   });
 
-  // A table wider than its card scrolls sideways: while it does, its box is a focusable region
+  // The graph at its natural size. Wider than its card, it pans by drag, wheel and arrow keys
+  // (the view is a focusable scroll region), and the zoom tools show: out, in, fit, actual size.
+  var view = document.querySelector(".graph-view");
+  var tools = document.querySelector(".graph-tools");
+  var level = tools && tools.querySelector(".zoom-level");
+  var natural = svg && svg.viewBox && svg.viewBox.baseVal;
+  var zoom = 1;
+  function fitZoom() {
+    return natural && natural.width ? Math.min(1, (view.clientWidth - 2) / natural.width) : 1;
+  }
+  function measureView() {
+    if (!view || !natural) return;
+    var wide = natural.width > view.clientWidth + 1;
+    if (tools) tools.hidden = !wide && zoom === 1;
+    var scrolls = view.scrollWidth > view.clientWidth + 1 || view.scrollHeight > view.clientHeight + 1;
+    view.classList.toggle("pannable", scrolls);
+    if (scrolls) {
+      view.setAttribute("tabindex", "0");
+      view.setAttribute("role", "region");
+      view.setAttribute("aria-label", "Graph: drag, scroll or use the arrow keys to move around");
+    } else {
+      view.removeAttribute("tabindex");
+      view.removeAttribute("role");
+      view.removeAttribute("aria-label");
+    }
+  }
+  function setZoom(z) {
+    if (!view || !natural) return;
+    var lo = Math.min(fitZoom(), 0.25);
+    z = Math.max(lo, Math.min(2, z));
+    var cx = (view.scrollLeft + view.clientWidth / 2) / zoom;
+    var cy = (view.scrollTop + view.clientHeight / 2) / zoom;
+    zoom = z;
+    svg.style.width = natural.width * z + "px";
+    svg.style.height = natural.height * z + "px";
+    view.scrollLeft = cx * z - view.clientWidth / 2;
+    view.scrollTop = cy * z - view.clientHeight / 2;
+    if (level) level.textContent = Math.round(z * 100) + " %";
+    measureView();
+  }
+  if (tools) {
+    tools.querySelectorAll("button[data-zoom]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var what = b.getAttribute("data-zoom");
+        if (what === "in") setZoom(zoom * 1.25);
+        else if (what === "out") setZoom(zoom / 1.25);
+        else if (what === "fit") setZoom(fitZoom());
+        else setZoom(1);
+      });
+    });
+  }
+  if (view) {
+    measureView();
+    if (typeof ResizeObserver !== "undefined") new ResizeObserver(measureView).observe(view);
+    var drag = null;
+    var moved = false;
+    view.addEventListener("pointerdown", function (ev) {
+      if (ev.pointerType !== "mouse" || ev.button !== 0 || !view.classList.contains("pannable")) return;
+      drag = {x: ev.clientX, y: ev.clientY, left: view.scrollLeft, top: view.scrollTop};
+      moved = false;
+    });
+    view.addEventListener("pointermove", function (ev) {
+      if (!drag) return;
+      var dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 5) return;
+      if (!moved) {
+        moved = true;
+        view.classList.add("dragging");
+        view.setPointerCapture(ev.pointerId);
+      }
+      view.scrollLeft = drag.left - dx;
+      view.scrollTop = drag.top - dy;
+    });
+    function stop() {
+      drag = null;
+      view.classList.remove("dragging");
+    }
+    view.addEventListener("pointerup", stop);
+    view.addEventListener("pointercancel", stop);
+    // A drag ends without selecting the part it started on.
+    view.addEventListener("click", function (ev) {
+      if (moved) { ev.stopPropagation(); moved = false; }
+    }, true);
+  }
+  function reveal(part) {
+    var node = svg && svg.querySelector('.node[data-part="' + CSS.escape(part) + '"]');
+    if (!node || !view) return;
+    var v = view.getBoundingClientRect(), r = node.getBoundingClientRect();
+    if (r.left < v.left || r.right > v.right) view.scrollLeft += r.left - v.left - (v.width - r.width) / 2;
+    if (r.top < v.top || r.bottom > v.bottom) view.scrollTop += r.top - v.top - (v.height - r.height) / 2;
+  }
+  picks.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var part = b.getAttribute("data-pick");
+      pin(part);
+      if (pinned) reveal(part);
+    });
+  });
+
+  // The links table, filtered by the part a link starts at, ends at or passes over.
+  var filter = document.querySelector("select[data-link-filter]");
+  if (filter) {
+    var rows = document.querySelectorAll(".links-table tbody tr");
+    var count = document.querySelector("[data-link-count]");
+    filter.addEventListener("change", function () {
+      var part = filter.value, shown = 0;
+      rows.forEach(function (r) {
+        var on = !part || r.getAttribute("data-from") === part || r.getAttribute("data-to") === part || r.getAttribute("data-over") === part;
+        r.hidden = !on;
+        if (on) shown++;
+      });
+      if (count) count.textContent = part ? shown + " of " + rows.length + " links" : rows.length + " links";
+    });
+  }
+
+  // A table wider (or, in a scrolling box, taller) than its box scrolls: while it does, its box is a focusable region
   // named for its card, so a keyboard can reach it and scroll it.
   document.querySelectorAll(".table-wrap").forEach(function (w) {
     var head = w.parentElement && w.parentElement.querySelector("h2");
     var label = head ? head.textContent : "Table";
     function measure() {
-      if (w.scrollWidth > w.clientWidth + 1) {
+      if (w.scrollWidth > w.clientWidth + 1 || w.scrollHeight > w.clientHeight + 1) {
         w.setAttribute("tabindex", "0");
         w.setAttribute("role", "region");
         w.setAttribute("aria-label", label);

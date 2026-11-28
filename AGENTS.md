@@ -121,7 +121,7 @@ change.
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
 | `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
 | `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
-| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
+| `agenticspec-render` | `lib.rs`, `graph.rs` | `page(architecture, result)`: one HTML page with the architecture graph (at natural size, with pan, zoom and fit), the tables of its parts and links and, when given, the search result. `graph.rs` lays the graph out in rows by block layer; links with one label into or out of one card share one label and a trunk |
 | `agenticspec-docs` | `lib.rs`, `main.rs` | the generated docs pages of the blocks, architectures and KPI catalogue (`task docs:generate`, `--check`) |
 
 Beside the crates, `ui/` holds:
@@ -166,6 +166,10 @@ Beside the crates, `ui/` holds:
   fast loop is `task check:site` (`scripts/check-site.sh`, specs in `website/e2e/`) on the built
   site, run as `slot task check:site`; only `task docs:generate` runs with `slot --here`. axe-core
   results are cached under `target/site-ux/axe/` by a digest of the built HTML.
+- `website/e2e/graph.spec.ts` checks the rendered page of a large architecture on the 37-part fixture
+  `crates/agenticspec-render/tests/fixtures/large-37.yaml`, which `scripts/check-site.sh` renders
+  into `target/site-ux/large-37.html` with `agenticspec sim render`. The fixture is not under
+  `architectures/`, so it is neither a docs page nor a catalog entry.
 
 ## Repository files
 

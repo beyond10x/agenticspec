@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The rendered page of an architecture stays readable when the architecture is large: the graph is drawn at its natural size and pans by drag, wheel and arrow keys, with zoom out, zoom in, fit and actual size when it is wider than its card. Beside it, a table of the parts (each selects its part) and a table of the links, filtered by part. Links that carry the same thing into or out of one part share one label and one line through the rows between, a part that several parts of its row send to sits in a row of its own below them, and long lines run straight. The page header wraps on a phone
 - `agenticspec sim` reads a part's profile role from its `role` (`coding` when an agent names none); `harness` names the kind of harness only. An agent that answers questions takes its delay from `roles.<role>.answer_seconds`, so renaming it changes no result; a profile with the old `agents` section, a model whose route the profile does not price and a runtime that executes runs without a `role` are refused with the name of what is missing
 
 ## [0.4.0] - 2026-11-28
