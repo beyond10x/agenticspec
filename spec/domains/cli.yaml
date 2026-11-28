@@ -1167,6 +1167,21 @@ types:
       - name: contract
         type: Optional<String>
         summary: The contract of the architecture with `--architecture`; derived from it when absent.
+      - name: origin
+        type: Optional<String>
+        summary: >-
+          The `Origin` every write (R4) carries, `scheme://host[:port]`; the source's own origin
+          by default, what a page served from the source sends.
+      - name: header
+        type: List<String>
+        summary: >-
+          A header `'Name: value'` every write carries beside `Origin`, such as the CSRF token of a
+          source that accepts only same-origin writes; repeatable.
+      - name: json
+        type: Boolean
+        summary: >-
+          Print the report (every check with its status and detail) on standard output, also when
+          a check failed; the command still exits non-zero then.
 
   - name: agenticspec.cli.UiConformCheck
     kind: struct

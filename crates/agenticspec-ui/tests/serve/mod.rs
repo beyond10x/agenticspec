@@ -11,6 +11,9 @@ use agenticspec_ui::operator;
 use agenticspec_ui::plane::Plane;
 use agenticspec_ui::serve::{self, Faults, Fixtures, Served};
 
+mod adapter;
+pub mod partial;
+
 const TOKEN: &str = "serve-test";
 
 fn root() -> PathBuf {
@@ -104,6 +107,7 @@ fn a_server_with_one_fault_per_obligation_fails_the_check_that_names_it() {
         conform::Options {
             timeout: Duration::from_secs(5),
             idle: Duration::from_millis(200),
+            ..conform::Options::default()
         },
     );
     let failed = report.failed();
@@ -144,6 +148,101 @@ fn a_server_with_one_fault_per_obligation_fails_the_check_that_names_it() {
         "{names:?}"
     );
     assert!(report.count(Status::Passed) > 50, "{names:?}");
+}
+
+/// Rows and events whose `scope` field names a scope of the architecture are answered at that
+/// scope and the scopes above it only; a `scope` that is no scope of the architecture, or none,
+/// leaves a row at every scope; an event keeps its cursor at every scope.
+#[test]
+fn ui_serve_answers_a_row_or_event_that_names_its_scope_only_there_and_above() {
+    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("serve-scope-field");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("scripts")).unwrap();
+    let view = "agentic.gateway.Gateways";
+    let rows = serde_json::json!({"view": view, "rows": [
+        {"gateway_id": "g1", "scope": "workstation/gateway"},
+        {"gateway_id": "g2", "scope": "workstation/worker/3"},
+        {"gateway_id": "g3", "scope": "Part"},
+    ]});
+    std::fs::write(dir.join(format!("{view}.json")), rows.to_string()).unwrap();
+    let event = "agentic.agent.AgentDefined";
+    let script = serde_json::json!({"channel": "agent", "events": [
+        {"event": event, "payload": {"agent_id": "a1", "scope": "workstation/gateway"}},
+        {"event": event, "payload": {"agent_id": "a2"}},
+        {"event": event, "payload": {"agent_id": "a3", "scope": "workstation/worker"}},
+    ]});
+    std::fs::write(dir.join("scripts/agent.json"), script.to_string()).unwrap();
+    let files = files();
+    let plane = Plane::from_files(&files).unwrap();
+    assert!(plane.feeds.contains(event) && plane.views.contains(view));
+    let served = Served::start(
+        plane,
+        files,
+        Fixtures::from_dir(&dir).unwrap(),
+        serve::Options {
+            port: 0,
+            token: TOKEN.into(),
+            faults: Faults::default(),
+        },
+    )
+    .unwrap();
+    let auth = format!("Bearer {TOKEN}");
+    let base = |scope: &str| format!("{}/scopes/{scope}/api", served.interface_root());
+    let ids = |scope: &str| -> Vec<String> {
+        let r = agenticspec_ui::wire::request(
+            "GET",
+            &format!("{}/views/{view}", base(scope)),
+            &[("Authorization", &auth)],
+            None,
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert_eq!(r.status, 200, "{}", r.text());
+        let v: serde_json::Value = serde_json::from_slice(&r.body).unwrap();
+        v["rows"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| r["gateway_id"].as_str().unwrap().to_string())
+            .collect()
+    };
+    assert_eq!(ids("workstation"), ["g1", "g2", "g3"]);
+    assert_eq!(ids("workstation/gateway"), ["g1", "g3"]);
+    assert_eq!(ids("workstation/worker"), ["g2", "g3"]);
+    assert_eq!(ids("workstation/worker/3"), ["g2", "g3"]);
+    assert_eq!(ids("workstation/worker/1"), ["g3"]);
+    let events = |scope: &str| -> Vec<(String, String)> {
+        let s = agenticspec_ui::wire::subscribe(
+            &format!("{}/channels/level", base(scope)),
+            &[("Authorization", &auth)],
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert_eq!(s.status, 200);
+        let mut got = Vec::new();
+        while let Some(e) = s.next(Duration::from_millis(300)) {
+            let data: serde_json::Value = serde_json::from_str(&e.data).unwrap();
+            got.push((
+                e.id.unwrap_or_default(),
+                data["agent_id"].as_str().unwrap().to_string(),
+            ));
+        }
+        got
+    };
+    let pair = |id: &str, agent: &str| (id.to_string(), agent.to_string());
+    assert_eq!(
+        events("workstation"),
+        [pair("1", "a1"), pair("2", "a2"), pair("3", "a3")]
+    );
+    assert_eq!(
+        events("workstation/gateway"),
+        [pair("1", "a1"), pair("2", "a2")]
+    );
+    assert_eq!(events("workstation/worker/2"), [pair("2", "a2")]);
+    assert_eq!(
+        events("workstation/worker"),
+        [pair("2", "a2"), pair("3", "a3")]
+    );
 }
 
 /// The fixtures built into the binary are the fixtures of the checkout, and the committed
@@ -348,6 +447,7 @@ fn each_ingress_with_a_ui_is_served_at_its_own_root_and_answers_its_own_plane() 
     let options = || conform::Options {
         timeout: Duration::from_secs(5),
         idle: Duration::from_millis(200),
+        ..conform::Options::default()
     };
     for (plane, at) in [
         (&user_plane, user_root.clone()),

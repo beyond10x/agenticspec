@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 83b278bc64e69d0ff14c4ad9938baf4c52e82aabbc26e337de7aa13ed6f4290f
+// contract digest c6c684ca144b5b2e24915b1b858713ed347824a267aeb8635984116e4a40d6d9
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -5085,6 +5085,21 @@ pub fn encode_agenticspec_cli_ui_conform_input(value: &agenticspec_types::cli::U
         json::member(out, "contract");
         json::push_text(out, &*held0);
     }
+    if let Some(held0) = &value.origin {
+        json::member(out, "origin");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "header");
+    out.push('[');
+    for (index0, item0) in value.header.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    json::member(out, "json");
+    json::push_bool(out, value.json);
     out.push('}');
 }
 
@@ -5094,7 +5109,7 @@ pub fn encode_agenticspec_cli_ui_conform_input(value: &agenticspec_types::cli::U
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_conform_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformInput, json::DecodeError> {
-    json::closed_at(value, at, &["source", "plan", "root", "architecture", "contract"])?;
+    json::closed_at(value, at, &["source", "plan", "root", "architecture", "contract", "origin", "header", "json"])?;
     Ok(agenticspec_types::cli::UiConformInput {
         source: match value.member("source") {
             None | Some(json::Value::Null) => None,
@@ -5130,6 +5145,30 @@ pub fn decode_agenticspec_cli_ui_conform_input(value: &json::Value, at: &str) ->
                 let at4 = json::nested(at, "contract");
                 Some(json::text_at(member4, &at4, "a string")?.to_owned())
             }
+        },
+        origin: match value.member("origin") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "origin");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+        header: {
+            let at6 = json::nested(at, "header");
+            let member6 = json::member_at(value, at, "header")?;
+            {
+                let mut items6 = Vec::new();
+                for (index6, element6) in json::items_at(member6, &at6, "an array")?.iter().enumerate() {
+                    let nested6 = json::nested(&at6, &index6.to_string());
+                    items6.push(json::text_at(element6, &nested6, "a string")?.to_owned());
+                }
+                items6
+            }
+        },
+        json: {
+            let at7 = json::nested(at, "json");
+            let member7 = json::member_at(value, at, "json")?;
+            json::bool_at(member7, &at7, "a boolean")?
         },
     })
 }

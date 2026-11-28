@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 83b278bc64e69d0ff14c4ad9938baf4c52e82aabbc26e337de7aa13ed6f4290f
+// contract digest c6c684ca144b5b2e24915b1b858713ed347824a267aeb8635984116e4a40d6d9
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -1339,6 +1339,12 @@ pub struct UiConformInput {
     pub architecture: Option<String>,
     /// `contract` — `Optional<String>`.
     pub contract: Option<String>,
+    /// `origin` — `Optional<String>`.
+    pub origin: Option<String>,
+    /// `header` — `List<String>`.
+    pub header: Vec<String>,
+    /// `json` — `Boolean`.
+    pub json: bool,
 }
 
 /// UiConformResult — `agenticspec.cli.UiConformResult`.

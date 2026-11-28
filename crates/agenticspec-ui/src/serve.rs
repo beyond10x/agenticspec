@@ -31,6 +31,11 @@
 //! scripted outcome. Every plane (the operator UI's, the control plane's, each other ingress's)
 //! answers from the one run, kept to its own views, channels and feeds.
 //!
+//! A row or event whose top-level `scope` field holds a scope of the architecture is answered
+//! only at that scope and the scopes above it, on fixtures and on a run alike
+//! ([`interface::named_in_scope`]). Every view of the plane is served, so the server never
+//! answers `view_not_served`.
+//!
 //! It listens on 127.0.0.1 only and answers only a request whose `Host` is `127.0.0.1` or
 //! `localhost`. Every request of the interface carries the token, as `Authorization: Bearer` or
 //! the session cookie, which the server sets when it serves the app's page.
@@ -955,14 +960,25 @@ impl Shared {
         if !plane.views.contains(view) {
             return None;
         }
+        let at = Self::scope_text(plane, scope);
+        let field = interface::scope_field();
+        let named =
+            |r: &Ordered| interface::named_in_scope(r.get(&field), &plane.architecture, &at);
         let Some(replay) = &self.fixtures.replay else {
-            return self.fixtures.views.get(view).cloned();
+            return self.fixtures.views.get(view).map(|rows| {
+                rows.iter()
+                    .filter(|r| named(r).unwrap_or(true))
+                    .cloned()
+                    .collect()
+            });
         };
         let rows = replay.views.get(view).map_or_else(Vec::new, |rows| {
             rows.iter()
                 .filter(|r| {
-                    r.at.iter()
-                        .any(|a| a.within(scope.part.as_deref(), scope.instance))
+                    named(&r.row).unwrap_or_else(|| {
+                        r.at.iter()
+                            .any(|a| a.within(scope.part.as_deref(), scope.instance))
+                    })
                 })
                 .map(|r| r.row.clone())
                 .collect()
@@ -1000,6 +1016,11 @@ impl Shared {
     ) -> Option<Vec<(u64, &String, &Value)>> {
         let level = plane.channels.iter().any(|c| c == channel);
         let feeds = &plane.feeds;
+        let at = Self::scope_text(plane, scope);
+        let field = interface::scope_field();
+        let named = |payload: &Value| {
+            interface::named_in_scope(payload.get(&field), &plane.architecture, &at)
+        };
         if let Some(replay) = &self.fixtures.replay {
             if !level && !replay.channels.contains(channel) {
                 return None;
@@ -1011,7 +1032,10 @@ impl Shared {
                     .iter()
                     .filter(|e| level || domain(&e.event).as_deref() == Some(channel))
                     .filter(|e| feeds.is_empty() || feeds.contains(&e.event))
-                    .filter(|e| e.at.within(scope.part.as_deref(), scope.instance))
+                    .filter(|e| {
+                        named(&e.payload)
+                            .unwrap_or_else(|| e.at.within(scope.part.as_deref(), scope.instance))
+                    })
                     .map(|e| (e.seq, &e.event, &e.payload))
                     .collect(),
             );
@@ -1031,6 +1055,7 @@ impl Shared {
                 .flat_map(|(_, events)| events.iter())
                 .filter(|(event, _)| feeds.is_empty() || feeds.contains(event))
                 .zip(1u64..)
+                .filter(|((_, payload), _)| named(payload).unwrap_or(true))
                 .map(|((event, payload), cursor)| (cursor, event, payload))
                 .collect(),
         )

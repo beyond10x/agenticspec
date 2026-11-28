@@ -17,14 +17,25 @@ info:
     holds the identifier of an entity, equals the `entity_id` of a placement
     (`agentic.architecture.Placements`) to that part (and copy); no second hop. At an
     architecture scope a row is in scope when such a field equals the `entity_id` of any placement
-    in the architecture. R3 is R1 on the views of `x-agentic-runtime.r3_views`, answered for the
-    architecture of the scope; `Placements` and `Parts` keep only the part (and copy) at a part
-    scope.
+    in the architecture. A row that names no entity says where it belongs in a top-level `scope`
+    field (`x-agentic-runtime.scope_field`), the scope id `{architecture_id}`,
+    `{architecture_id}/{part path}` or `{architecture_id}/{part path}/{instance}`; when present it
+    decides over the entity-id rule: the row is in scope at its own scope and at every scope above
+    it (`{architecture_id}/team.lead` is in scope at `{architecture_id}/team.lead` and at
+    `{architecture_id}`, not at `{architecture_id}/team.worker` or at a copy of `team.lead`). A
+    `scope` field whose value is no scope of the architecture (a view's own field of that name)
+    leaves the entity-id rule in force. A source may carry `scope` on any row, also where the view
+    does not declare the field. R3 is R1 on the views of `x-agentic-runtime.r3_views`, answered
+    for the architecture of the scope; `Placements` and `Parts` keep only the part (and copy) at a
+    part scope. A source that does not serve a view answers its read with 404 and
+    `{"error": "view_not_served", "view": "<view>"}` (`ViewNotServed`); `agenticspec ui conform`
+    counts such a view as skipped, and any other 404 of a view read as failed.
 
 
     R2 feed: `GET /api/channels/{channel}` is a stream of server-sent events, each with `event:`
     the event's qualified name, `data:` the event as JSON and `id:` its cursor. A channel at a
-    scope carries the events in scope by the rule of R1 applied to the event's fields. A reconnect
+    scope carries the events in scope by the rule of R1 applied to the event's fields, the `scope`
+    field of the event's data first. A reconnect
     with `Last-Event-ID: c` receives exactly the events that followed the event of cursor c, in
     order, and none at or before it.
 
@@ -50,6 +61,12 @@ info:
     dispatched, and its body holds no `rows` and no `row`. The generated client sends cookies
     (`credentials: include`, `withCredentials`), so a source on another origin than the page
     answers CORS with credentials for that origin.
+
+
+    A source may accept a write (R4) only from its own origin: it checks `Origin`, and may ask
+    for a proof such as a CSRF token in a header. `agenticspec ui conform` sends on every write
+    what a page of the source's origin sends: `Origin` the source's own origin (`--origin`
+    replaces it) and each `--header 'Name: value'` it is given.
 servers:
   - url: '{root}/scopes/{scope}'
     description: The adapter of the runtime that admitted the architecture, at one scope.
@@ -70,6 +87,8 @@ x-agentic-runtime:
     - agentic.architecture.Contracts
   cursor_header: Last-Event-ID
   session_cookie: agentic_session
+  scope_field: scope
+  view_not_served: view_not_served
 security:
   - bearer: []
   - session: []
@@ -88,7 +107,7 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/Rows'}
         '401': {$ref: '#/components/responses/Unauthenticated'}
-        '404': {$ref: '#/components/responses/NotFound'}
+        '404': {$ref: '#/components/responses/ViewNotFound'}
   /api/channels/{channel}:
     get:
       operationId: subscribe
@@ -203,6 +222,16 @@ components:
       content:
         application/json:
           schema: {$ref: '#/components/schemas/Error'}
+    ViewNotFound:
+      description: >-
+        The source does not serve the view (`ViewNotServed`, which `agenticspec ui conform`
+        counts as skipped), or there is no such scope or view (`Error`, which fails).
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/ViewNotServed'
+              - $ref: '#/components/schemas/Error'
   schemas:
     Rows:
       type: object
@@ -212,7 +241,24 @@ components:
           type: array
           items:
             type: object
-            description: A row of the view by its field names; its first field is the view's key.
+            description: >-
+              A row of the view by its field names; its first field is the view's key. It may
+              carry a top-level `scope`, the scope id it belongs to, which decides its scope over
+              the entity-id rule.
+            properties:
+              scope:
+                type: string
+                description: '`{architecture_id}`, `{architecture_id}/{part path}` or `{architecture_id}/{part path}/{instance}`.'
+    ViewNotServed:
+      type: object
+      required: [error, view]
+      properties:
+        error:
+          const: view_not_served
+        view:
+          type: string
+          description: The qualified name of the view the request named.
+      additionalProperties: false
     Answer:
       type: object
       required: [row]

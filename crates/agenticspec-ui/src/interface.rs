@@ -20,8 +20,10 @@ pub struct Operation {
     pub statuses: Vec<u16>,
 }
 
-fn document() -> Value {
-    serde_yaml_ng::from_str(INTERFACE).expect("ui/runtime.openapi.yaml is YAML")
+/// The document, parsed once per process.
+fn document() -> &'static Value {
+    static DOC: std::sync::OnceLock<Value> = std::sync::OnceLock::new();
+    DOC.get_or_init(|| serde_yaml_ng::from_str(INTERFACE).expect("ui/runtime.openapi.yaml is YAML"))
 }
 
 /// Every operation, ordered by path and method.
@@ -135,6 +137,59 @@ pub fn covers(grant_scope: &str, scope: &str) -> bool {
             .is_some_and(|rest| rest.starts_with('/'))
 }
 
+/// The top-level field a row or a change signal names its scope in (`x-agentic-runtime.scope_field`).
+pub fn scope_field() -> String {
+    runtime_ext("scope_field")
+        .as_str()
+        .unwrap_or("scope")
+        .to_string()
+}
+
+/// The error a source answers a view read with, with 404, when it does not serve the view
+/// (`x-agentic-runtime.view_not_served`).
+pub fn view_not_served() -> String {
+    runtime_ext("view_not_served")
+        .as_str()
+        .unwrap_or("view_not_served")
+        .to_string()
+}
+
+/// Whether a 404 body is the declared "not served" answer for `view`:
+/// `{"error": "view_not_served", "view": "<view>"}`. Any other 404 is not.
+pub fn is_view_not_served(body: &[u8], view: &str) -> bool {
+    let v: Value = serde_json::from_slice(body).unwrap_or(Value::Null);
+    v["error"].as_str() == Some(view_not_served().as_str()) && v["view"].as_str() == Some(view)
+}
+
+/// The scope a row (or an event's data) names in its top-level [`scope_field`]: its value when
+/// that is a scope of `architecture`, `{architecture}` or `{architecture}/…`. A field of that name
+/// holding anything else (a view's own `scope` such as `Part`) names no scope.
+pub fn named_scope<'a>(field: Option<&'a Value>, architecture: &str) -> Option<&'a str> {
+    field
+        .and_then(Value::as_str)
+        .filter(|s| covers(architecture, s))
+}
+
+/// Whether a row is in scope at `scope` when it names one: `Some(true)` when `scope` is the
+/// row's named scope or one above it, `Some(false)` when not, `None` when the row names no scope
+/// and the entity-id rule ([`in_scope`]) decides.
+pub fn named_in_scope(field: Option<&Value>, architecture: &str, scope: &str) -> Option<bool> {
+    named_scope(field, architecture).map(|named| covers(scope, named))
+}
+
+/// The scope rule of R1 and R2 at `scope` (text, `{architecture}[/{part}[/{instance}]]`): the
+/// row's named scope ([`named_scope`]) decides when it has one; else the entity-id rule over the
+/// entities `placed` to that scope.
+pub fn in_scope_at(
+    row: &serde_json::Map<String, Value>,
+    placed: &std::collections::BTreeSet<String>,
+    architecture: &str,
+    scope: &str,
+) -> bool {
+    named_in_scope(row.get(&scope_field()), architecture, scope)
+        .unwrap_or_else(|| in_scope(row, placed))
+}
+
 /// Whether a row (or an event's data) is in scope of the placed entities `placed`: its key or a
 /// top-level field that holds an entity's identifier equals one of them. One hop only.
 pub fn in_scope(
@@ -167,6 +222,17 @@ impl Ordered {
 
     pub fn values(&self) -> impl Iterator<Item = &Value> {
         self.0.iter().map(|(_, v)| v)
+    }
+
+    /// [`in_scope_at`] of this row.
+    pub fn in_scope_at(
+        &self,
+        placed: &std::collections::BTreeSet<String>,
+        architecture: &str,
+        scope: &str,
+    ) -> bool {
+        named_in_scope(self.get(&scope_field()), architecture, scope)
+            .unwrap_or_else(|| in_scope_values(self.values(), placed))
     }
 }
 

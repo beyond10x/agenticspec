@@ -19,6 +19,6 @@ fdfa33b041b6de068a0f0d813b8698ab6e39736199e292c7632e7a63dbd2a489  crates/agentic
 19ae456b0f61d5addcc270fa5853ab845a8b971e4fc18639c738f7cca2896be3  crates/agenticspec-sim/src/sim.rs
 7a57ecae2ce7cec45aa4c3a6269cf23fbc21a8152cd35af2220e64b43be6d264  crates/agenticspec-sim/src/whole.rs
 3ab4cec6c8c4d8dd6f3ec129b41b25e290df7eedfa54fb08fcaf214be9390d17  blocks/9-composition/architecture.yaml (PartKind, Carries)
-92b9c6d46b0a7d1ab34eed406dac1f16847f6edfff579d07c6fba467cfd08926  blocks/settings.yaml (names and types)
+79c138bda0b6faea35dfdc87cad0ff3d0380edb5beac012accf9552c5356fdf9  blocks/settings.yaml (names and types)
 8f92b89d4fb02010bfa05053b470b095867e9bf85a02c6a6417a31d4e32e9b07  Cargo.lock (rayon 1.12.0, serde_json 1.0.154, serde_yaml_ng 0.10.0)
 5e7517b95a2b4e810124f84091dd4a6e3f2192523fcac7b6d52abc7fc6aff91d  rust-toolchain.toml

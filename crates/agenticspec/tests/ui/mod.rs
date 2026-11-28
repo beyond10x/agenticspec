@@ -6,6 +6,7 @@ use std::process::Command;
 
 use serde_json::Value;
 
+mod conform;
 mod serve;
 
 fn repo() -> PathBuf {

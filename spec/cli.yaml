@@ -208,6 +208,8 @@ callables:
       document_refused: agenticspec.cli.Refusal
       source_unavailable: agenticspec.cli.Refusal
       conformance_failed: agenticspec.cli.Refusal
+      origin_invalid: agenticspec.cli.Refusal
+      header_invalid: agenticspec.cli.Refusal
   blocks_lift:
     target: {kind: local, owner: agenticspec.cli, action: blocks_lift}
     input: agenticspec.cli.BlocksLiftInput
@@ -468,6 +470,9 @@ commands:
       - {field: root, source: {kind: option, long: root}}
       - {field: architecture, source: {kind: option, long: architecture}}
       - {field: contract, source: {kind: option, long: contract}}
+      - {field: origin, source: {kind: option, long: origin}}
+      - {field: header, source: {kind: option, long: header, repeated: true}}
+      - {field: json, source: {kind: flag, long: json}}
   - path: [blocks, lift]
     callable: blocks_lift
     about: Lift one Claude Code session into rows of the building blocks, each naming the node it came from
