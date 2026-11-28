@@ -18,6 +18,8 @@ pub struct Shown {
 
 /// The contract of a document, or why there is none.
 pub fn derive(root: &Path, doc: &Value) -> Result<Shown, String> {
+    let flat = agenticspec_sim::nest::flatten(doc);
+    let doc = &flat;
     if !check(doc).is_empty() {
         return Err("the check refuses the architecture (see Check), so it has no contract".into());
     }

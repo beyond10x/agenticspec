@@ -8,7 +8,7 @@
 //! use       = port "@" part
 //! port      = word "." word
 //! word      = a lowercase letter, then lowercase letters, digits and "-"
-//! part      = a letter or "_", then letters, digits, "_" and "-"
+//! part      = a letter or "_", then letters, digits, "_", "-" and "." (`<part>.<inner part>`)
 //! ```
 //!
 //! Words are separated by spaces. `every model.inference@worker inside gateway.call@gateway`:
@@ -155,7 +155,7 @@ impl<'a> Parser<'a> {
     fn part(&mut self, what: &str) -> Result<String, String> {
         self.take(
             |c| c.is_ascii_alphabetic() || c == '_',
-            |c| c.is_ascii_alphanumeric() || c == '_' || c == '-',
+            |c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.',
         )
         .map(str::to_owned)
         .ok_or_else(|| self.expected(what))

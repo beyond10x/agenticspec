@@ -156,7 +156,7 @@ clause    = "every" use "inside" use
 use       = port "@" part
 port      = word "." word
 word      = a lowercase letter, then lowercase letters, digits and "-"
-part      = a letter or "_", then letters, digits, "_" and "-"
+part      = a letter or "_", then letters, digits, "_", "-" and "." (`<part>.<inner part>`)
 ```
 
 Words are separated by spaces. `every A@p inside B@q`: each use of port `A` by part `p` lies inside

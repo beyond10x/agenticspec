@@ -262,8 +262,12 @@ fn instances(parts: &Map<String, Value>, name: &str) -> u64 {
 }
 
 /// Derive the contract of a document. Refused, with every reason, when a part's block is not in
-/// the table or a port the rules name is not in the ports file.
+/// the table or a port the rules name is not in the ports file. A document whose nested
+/// architectures are resolved (`nest::load`) is read flattened, its inner parts as
+/// `<part>.<inner part>`.
 pub fn derive(doc: &Value, ports: &PortsFile) -> Result<Contract, Vec<String>> {
+    let flat = crate::nest::flatten(doc);
+    let doc = &flat;
     let empty = Map::new();
     let parts = doc["parts"].as_object().unwrap_or(&empty);
     let links = doc["links"].as_array().cloned().unwrap_or_default();
@@ -320,10 +324,14 @@ pub fn derive(doc: &Value, ports: &PortsFile) -> Result<Contract, Vec<String>> {
             refusals.push(format!("part {part}: port {port} is not in the ports file"));
             continue;
         };
-        let settings = narrowing(text(&parts[part]["block"]), port)
+        let Some(this) = parts.get(part) else {
+            refusals.push(format!("part {part}: not a part of the document"));
+            continue;
+        };
+        let settings = narrowing(text(&this["block"]), port)
             .iter()
             .filter_map(|s| {
-                let v = value(&parts[part][*s]);
+                let v = value(&this[*s]);
                 (!v.is_null()).then(|| ((*s).to_owned(), v.clone()))
             })
             .collect();
@@ -355,6 +363,8 @@ pub fn derive(doc: &Value, ports: &PortsFile) -> Result<Contract, Vec<String>> {
 /// invariant names a port its link's `from` part uses and its predicate parses, starting with
 /// that use. One line per refusal; empty when it passes.
 pub fn check(contract: &Contract, doc: &Value, ports: &PortsFile) -> Vec<String> {
+    let flat = crate::nest::flatten(doc);
+    let doc = &flat;
     let mut out = Vec::new();
     let empty = Map::new();
     let parts = doc["parts"].as_object().unwrap_or(&empty);

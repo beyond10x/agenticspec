@@ -426,7 +426,7 @@ pub struct ContractOptions<'a> {
 pub fn contract(o: &ContractOptions) -> Result<Value, Refusal> {
     use crate::contract::derive as d;
     use crate::contract::ports::PortsFile;
-    let arch = load_yaml(o.architecture).map_err(|e| refused("document_unreadable", e))?;
+    let arch = nest::flatten(&load_nested(o.architecture)?);
     let refusals = check_architecture(&arch);
     if !refusals.is_empty() {
         let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();

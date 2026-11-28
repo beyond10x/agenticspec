@@ -253,6 +253,10 @@ const ARCHITECTURES: &[(&str, [f64; 11])] = &[
         [10.0, 1.0, 1.0, 1.0, 3.0, 0.0, 2.0, 1.0, 1.0, 0.0, 0.5],
     ),
     (
+        "console",
+        [2.0, 0.0, 0.0, 1.0, 2.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.0],
+    ),
+    (
         "handoff",
         [2.0, 1.0, 2.0, 0.0, 2.0, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0],
     ),
@@ -285,6 +289,10 @@ const ARCHITECTURES: &[(&str, [f64; 11])] = &[
         [1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0],
     ),
     (
+        "team-with-console",
+        [5.0, 1.0, 1.0, 2.0, 3.0, 0.0, 4.0, 1.0, 0.0, 0.0, 0.0],
+    ),
+    (
         "workstation",
         [13.0, 1.0, 1.0, 1.0, 2.0, 0.0, 2.0, 1.0, 1.0, 0.0, 0.75],
     ),
@@ -303,8 +311,12 @@ fn every_architecture_has_its_committed_numbers() {
     let named: Vec<&str> = ARCHITECTURES.iter().map(|(n, _)| *n).collect();
     assert_eq!(files, named, "one row per architecture");
     for (name, want) in ARCHITECTURES {
-        let text = std::fs::read_to_string(dir.join(format!("{name}.yaml"))).unwrap();
-        let got: Vec<f64> = measure(&yaml(&text)).into_iter().map(|(_, v)| v).collect();
+        // As `sim check` measures it: nested architectures resolved and flattened.
+        let doc = agenticspec_sim::nest::load(&dir.join(format!("{name}.yaml"))).unwrap();
+        let got: Vec<f64> = measure(&agenticspec_sim::nest::flatten(&doc))
+            .into_iter()
+            .map(|(_, v)| v)
+            .collect();
         assert_eq!(got, want.to_vec(), "{name}");
     }
 }

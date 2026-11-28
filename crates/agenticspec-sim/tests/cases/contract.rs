@@ -15,7 +15,7 @@ fn ports() -> PortsFile {
 }
 
 fn document(path: &str) -> Value {
-    agenticspec_sim::doc::load_yaml(&repo_root().join(path)).unwrap()
+    agenticspec_sim::nest::load(&repo_root().join(path)).unwrap()
 }
 
 fn contract_of(path: &str) -> Contract {
@@ -26,7 +26,7 @@ fn workstation() -> Contract {
     contract_of("architectures/workstation.yaml")
 }
 
-/// The 19 documents `agenticspec sim check` accepts: the architectures and the ladder stages.
+/// The 21 documents `agenticspec sim check` accepts: the architectures and the ladder stages.
 fn accepted() -> Vec<PathBuf> {
     let root = repo_root();
     let mut out = Vec::new();
@@ -213,7 +213,7 @@ fn the_workstations_border_and_model_call_invariant() {
 fn every_protocol_is_the_ports_protocol() {
     let ports = ports();
     for path in accepted() {
-        let c = derive::derive(&agenticspec_sim::doc::load_yaml(&path).unwrap(), &ports).unwrap();
+        let c = derive::derive(&agenticspec_sim::nest::load(&path).unwrap(), &ports).unwrap();
         assert_eq!(c.ports_digest, ports.sources_sha256);
         for used in &c.ports {
             let port = ports.port(&used.port).unwrap();
@@ -240,10 +240,10 @@ fn a_schedule_gives_the_clock_port_and_a_board_the_board_port() {
 #[test]
 fn every_accepted_document_has_a_contract_that_passes_its_check_with_the_same_bytes() {
     let docs = accepted();
-    assert_eq!(docs.len(), 19, "{docs:?}");
+    assert_eq!(docs.len(), 21, "{docs:?}");
     let ports = ports();
     for path in docs {
-        let doc = agenticspec_sim::doc::load_yaml(&path).unwrap();
+        let doc = agenticspec_sim::nest::load(&path).unwrap();
         let first = derive::derive(&doc, &ports).unwrap();
         let second = derive::derive(&doc, &ports).unwrap();
         assert_eq!(first.text(), second.text(), "{}", path.display());

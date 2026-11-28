@@ -271,7 +271,7 @@ fn a_nested_architecture_is_one_box_with_its_border_parts_as_ports() {
         "an inner part is no box of its own"
     );
     assert!(
-        html.contains("<li>owner sends prompt to console.steward</li>"),
+        html.contains("<tr data-from=\"owner\" data-to=\"console.steward\""),
         "a link to a port is listed"
     );
     // Both links that address a port reach the box: an edge labelled with the port it reaches.
