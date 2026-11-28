@@ -34,9 +34,11 @@ const KEYS: &[&str] = &[
 /// The keys of one part's entry under `parts:`.
 const PART_KEYS: &[&str] = &[
     "agent", "digest", "state", "inside", "secrets", "egress", "size", "volumes", "network",
+    "image",
 ];
 
-/// The keys of a runtime pinned under `runtimes:`.
+/// The keys of a runtime pinned under `runtimes:`, and of an image a part or a listed unit
+/// names (`parts.<p>.image`, `packing.units[].image`).
 const RUNTIME_KEYS: &[&str] = &["image", "tag", "digest"];
 
 /// The runtime of the core and service units, under `runtimes:`.
@@ -175,6 +177,7 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
         _ => out.push("`target:` is a mapping".into()),
     }
     let parts = &arch["parts"];
+    let local = images(binding) == "local";
     if let Some(entries) = binding["parts"].as_object() {
         for (name, entry) in entries {
             if parts.get(name).is_none() {
@@ -195,6 +198,10 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                 }
                 if k == "volumes" {
                     volume_problems(name, v, parts, &mut out);
+                    continue;
+                }
+                if k == "image" {
+                    image_problems(&format!("parts: {name}: image"), v, local, &mut out);
                     continue;
                 }
                 let ok = match k.as_str() {
@@ -225,7 +232,6 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
     } else if !binding["transports"].is_null() {
         out.push("`transports:` is a mapping from a carried value to a transport".into());
     }
-    let local = images(binding) == "local";
     if let Some(r) = binding["runtimes"].as_object() {
         for (name, v) in r {
             if name == "agent" {
@@ -233,51 +239,20 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                     "runtimes: `agent` is named `{AGENT_RUNTIME}`, the role the agent units' runtime plays"
                 ));
             }
-            let Some(m) = v.as_object() else {
+            if !v.is_object() {
                 out.push(format!("runtimes: `{name}` is a mapping"));
                 continue;
-            };
-            for k in m.keys() {
-                if !RUNTIME_KEYS.contains(&k.as_str()) {
-                    out.push(format!("runtimes: {name}: unknown key `{k}`"));
-                }
             }
-            let digest = m.get("digest");
-            if local {
-                // A local image is pinned by its tag, its digest (the image's config id) or
-                // both; one with neither is refused by admission (`image_unpinned`).
-                if digest.is_some_and(|d| !d.as_str().is_some_and(is_digest)) {
-                    out.push(format!(
-                        "runtimes: {name}: `digest:` is sha256:<64 hex digits>, the image's config id"
-                    ));
-                }
-                if m.get("tag")
-                    .is_some_and(|t| !t.as_str().is_some_and(is_tag))
-                {
-                    out.push(format!(
-                        "runtimes: {name}: `tag:` is an image tag ([A-Za-z0-9_][A-Za-z0-9_.-]*, at most 128)"
-                    ));
-                }
-            } else {
-                if !digest.and_then(Value::as_str).is_some_and(is_digest) {
-                    out.push(format!(
-                        "runtimes: {name}: `digest:` is sha256:<64 hex digits>; a runtime is pinned by its digest"
-                    ));
-                }
-                if m.contains_key("tag") {
-                    out.push(format!(
-                        "runtimes: {name}: `tag:` goes with `target: {{images: local}}`; a registry image is pinned by its digest"
-                    ));
-                }
-            }
-            if !m.get("image").and_then(Value::as_str).is_some_and(is_image) {
-                out.push(format!(
-                    "runtimes: {name}: `image:` names the image without tag or digest (`registry/name`); the digest goes in `digest:`"
-                ));
-            }
+            image_problems(&format!("runtimes: {name}"), v, local, &mut out);
         }
     } else if !binding["runtimes"].is_null() {
         out.push("`runtimes:` is a mapping".into());
+    }
+    for u in binding["packing"]["units"].as_array().into_iter().flatten() {
+        if let Some(v) = u.get("image") {
+            let at = format!("packing: unit {}: image", u["name"].as_str().unwrap_or(""));
+            image_problems(&at, v, local, &mut out);
+        }
     }
     if let Some(c) = binding["claims"].as_object() {
         for (unit, v) in c {
@@ -341,6 +316,53 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
     }
     super::ui::problems(binding, &mut out);
     out
+}
+
+/// The problems of one image the binding pins, `{image, tag?, digest}`, at `at` (`runtimes:
+/// core`, `parts: <p>: image`, `packing: unit <u>: image`). From a registry it is pinned by its
+/// repository digest and takes no tag; from the target's local store by its tag, its digest (the
+/// image's config id) or both, and one with neither is refused by admission (`image_unpinned`).
+fn image_problems(at: &str, v: &Value, local: bool, out: &mut Vec<String>) {
+    let Some(m) = v.as_object() else {
+        out.push(format!("{at} is a mapping: {{image, tag, digest}}"));
+        return;
+    };
+    for k in m.keys() {
+        if !RUNTIME_KEYS.contains(&k.as_str()) {
+            out.push(format!("{at}: unknown key `{k}`"));
+        }
+    }
+    let digest = m.get("digest");
+    if local {
+        if digest.is_some_and(|d| !d.as_str().is_some_and(is_digest)) {
+            out.push(format!(
+                "{at}: `digest:` is sha256:<64 hex digits>, the image's config id"
+            ));
+        }
+        if m.get("tag")
+            .is_some_and(|t| !t.as_str().is_some_and(is_tag))
+        {
+            out.push(format!(
+                "{at}: `tag:` is an image tag ([A-Za-z0-9_][A-Za-z0-9_.-]*, at most 128)"
+            ));
+        }
+    } else {
+        if !digest.and_then(Value::as_str).is_some_and(is_digest) {
+            out.push(format!(
+                "{at}: `digest:` is sha256:<64 hex digits>; a runtime is pinned by its digest"
+            ));
+        }
+        if m.contains_key("tag") {
+            out.push(format!(
+                "{at}: `tag:` goes with `target: {{images: local}}`; a registry image is pinned by its digest"
+            ));
+        }
+    }
+    if !m.get("image").and_then(Value::as_str).is_some_and(is_image) {
+        out.push(format!(
+            "{at}: `image:` names the image without tag or digest (`registry/name`); the digest goes in `digest:`"
+        ));
+    }
 }
 
 /// The checks of a unit a binding may give a port.
@@ -485,6 +507,29 @@ pub fn served_problems(
                     "ingress: {name}: exports: {protocol}: part {p} is in no unit of the packing"
                 ));
             }
+        }
+    }
+    for (p, entry) in binding["parts"].as_object().into_iter().flatten() {
+        if entry.get("image").is_none() {
+            continue;
+        }
+        match packing.unit_of(p) {
+            Some(u) if IMAGE_KINDS.contains(&u.kind.as_str()) => {}
+            Some(u) => out.push(format!(
+                "parts: {p}: image is for a part of a core or service unit, and {p} is in the {} unit {}",
+                u.kind, u.name
+            )),
+            None => out.push(format!(
+                "parts: {p}: image is for a part of a core or service unit, and {p} is in no unit"
+            )),
+        }
+    }
+    for u in &packing.units {
+        if listed_image(binding, &u.name).is_some() && !IMAGE_KINDS.contains(&u.kind.as_str()) {
+            out.push(format!(
+                "packing: unit {}: image is for a core or service unit, and it is a {} unit",
+                u.name, u.kind
+            ));
         }
     }
     out.extend(super::ui::served_problems(
@@ -683,7 +728,12 @@ pub fn images(binding: &Value) -> &str {
 /// the target's local store `<image>:<tag>` when it names a tag, else its digest (the image's
 /// config id, which a local engine runs by). `None` when it is not pinned.
 pub fn image_reference(binding: &Value, runtime: &str) -> Option<String> {
-    let r = &binding["runtimes"][runtime];
+    pinned_reference(binding, &binding["runtimes"][runtime])
+}
+
+/// The image reference of one image the binding pins, `{image, tag?, digest}`, as
+/// [`image_reference`] gives it.
+pub fn pinned_reference(binding: &Value, r: &Value) -> Option<String> {
     let image = r["image"].as_str()?;
     if images(binding) == "local" {
         return match (r["tag"].as_str(), r["digest"].as_str()) {
@@ -693,6 +743,87 @@ pub fn image_reference(binding: &Value, runtime: &str) -> Option<String> {
         };
     }
     Some(format!("{image}@{}", r["digest"].as_str()?))
+}
+
+/// The key an image is carried under in a bundle's `runtimes`: from a registry its digest; from
+/// the target's local store its digest, else `<image>:<tag>`.
+pub fn image_key(binding: &Value, r: &Value) -> String {
+    let image = r["image"].as_str().unwrap_or("");
+    match (images(binding), r["digest"].as_str()) {
+        (_, Some(d)) => d.to_owned(),
+        ("local", None) => format!("{image}:{}", r["tag"].as_str().unwrap_or("")),
+        _ => String::new(),
+    }
+}
+
+/// The kinds of unit that take a runtime image of their own (`parts.<p>.image`,
+/// `packing.units[].image`).
+pub const IMAGE_KINDS: &[&str] = &["core", "service"];
+
+/// The block of a part that, held by a core or service unit, needs an image
+/// (`unit_image_missing`): a runtime part.
+pub const RUNTIME_BLOCK: &str = "runtime";
+
+/// Where the image of a core or service unit comes from.
+#[derive(Debug, Clone, PartialEq)]
+pub enum UnitImage<'a> {
+    /// `image:` of the unit as `packing.units` lists it; it wins over its parts' images.
+    Unit(&'a Value),
+    /// `parts.<p>.image` of the unit's parts that name one, all the same image.
+    Parts(&'a Value),
+    /// `runtimes.core`, for the core unit only.
+    Core(&'a Value),
+    /// The unit's parts that name an image, by name, when they do not all name the same one
+    /// (`unit_image_conflict`).
+    Conflict(Vec<String>),
+    /// None of them.
+    None,
+}
+
+impl<'a> UnitImage<'a> {
+    /// The image, when there is one.
+    pub fn image(&self) -> Option<&'a Value> {
+        match self {
+            UnitImage::Unit(v) | UnitImage::Parts(v) | UnitImage::Core(v) => Some(v),
+            UnitImage::Conflict(_) | UnitImage::None => None,
+        }
+    }
+}
+
+/// `image:` of a unit as the binding's `packing.units` lists it, by its name.
+pub fn listed_image<'a>(binding: &'a Value, unit: &str) -> Option<&'a Value> {
+    binding["packing"]["units"]
+        .as_array()?
+        .iter()
+        .find(|u| u["name"] == unit)
+        .and_then(|u| u.get("image"))
+}
+
+/// The image of a core or service unit: its own (`packing.units[].image`), else the one its
+/// parts name (`parts.<p>.image`, all alike), else for the core unit `runtimes.core`. `runtimes.core`
+/// is never the image of a service unit. Any other kind of unit has none.
+pub fn unit_image<'a>(binding: &'a Value, unit: &super::packing::Unit) -> UnitImage<'a> {
+    if !IMAGE_KINDS.contains(&unit.kind.as_str()) {
+        return UnitImage::None;
+    }
+    if let Some(v) = listed_image(binding, &unit.name) {
+        return UnitImage::Unit(v);
+    }
+    let named: Vec<(&String, &Value)> = unit
+        .parts
+        .iter()
+        .filter_map(|p| binding["parts"][p].get("image").map(|v| (p, v)))
+        .collect();
+    if let Some((_, first)) = named.first() {
+        if named.iter().all(|(_, v)| v == first) {
+            return UnitImage::Parts(first);
+        }
+        return UnitImage::Conflict(named.into_iter().map(|(p, _)| p.clone()).collect());
+    }
+    match &binding["runtimes"][CORE_RUNTIME] {
+        v @ Value::Object(_) if unit.kind == "core" => UnitImage::Core(v),
+        _ => UnitImage::None,
+    }
 }
 
 /// An image tag: `[A-Za-z0-9_][A-Za-z0-9_.-]*`, at most 128 characters.

@@ -1,0 +1,10 @@
+format: agenticspec-binding/1
+binding: unit-image-conflict
+architecture: workstation
+refines: egress/workstation.yaml
+summary: >-
+  Every part in the core unit, and its parts gateway and builds name two different images while
+  the unit names none.
+parts:
+  gateway: {image: {image: registry.example/gateway, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000002"}}
+  builds: {image: {image: registry.example/pool, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000003"}}

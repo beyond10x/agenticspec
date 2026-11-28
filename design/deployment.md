@@ -1,7 +1,7 @@
 # Deployment: from an agentic architecture to a running target
 
 Status: approved, every open point (Q1-Q17) at its recommended option; nothing built. Decisions
-K1-K18. Builds on `design/architecture-runtime.md`, `design/ingress.md` (I1-I12),
+K1-K19. Builds on `design/architecture-runtime.md`, `design/ingress.md` (I1-I12),
 `design/control-plane.md` (C1-C8), `design/view-layer.md` (D1-D11) and
 `design/events-and-storage.md` (E1-E10) without repeating them. Heads read: weft `main` at
 `4138723`, cited `weft:<path>:<line>`; Loom `main` at `b4b5de28c`, cited `loom:<path>:<line>`;
@@ -128,7 +128,9 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `schedule_not_cron` | a `scheduled` unit without a cron rule of the binding whose clock's `every` no cron rule states exactly (K18); in a written bundle, also a unit whose `schedule` is not that rule |
 | `core_count` | not exactly one `core` |
 | `unit_not_hosted` | a unit kind or a role the copy of cloudspec's accepted list (K16) does not hold |
-| `image_unpinned` | with `target.images: local`, a runtime with neither `tag` nor `digest` (with `registry`, the default, a runtime without its repository digest is refused as a binding of the wrong form) |
+| `image_unpinned` | with `target.images: local`, a runtime, a part's `image` or a listed unit's `image` with neither `tag` nor `digest` (with `registry`, the default, one without its repository digest is refused as a binding of the wrong form) |
+| `unit_image_conflict` | parts of one core or service unit name different images (`parts.<p>.image`) and the unit names none (`packing.units[].image`); K19 |
+| `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image of its own, of its parts or, for the core unit only, `runtimes.core`; names the unit and its runtime parts; K19 |
 | `volume_mount_missing` | a volume a unit claims that no part of the unit mounts (`parts.<p>.volumes[].mount`, matched by name), or mounts at a relative path; there is no default path |
 | `ui_upstream_unknown` | a UI unit (K17) reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have; in a written bundle, a UI unit's `upstream.unit` that is no other unit of the bundle |
 | `ui_archive_mismatch` | in a written bundle (`deploy check`) only: a UI unit's archive is not in `files`, or its SHA-256 is not the unit's `code.digest` |
@@ -153,7 +155,7 @@ with every member inline, each document keyed by its digest (Q2). Same inputs, s
 | `ingress` | one entry per export of each ingress of the contract: `ingress`, `protocol`, `audience`, `authenticated`; `unit` and `part` that serve it (the binding's `part`, else `control`, the control plane in the core unit; the UI unit for the export a UI serves, K17); `bind` (`loopback` or `all`, `loopback` when the binding names none); `port` (an integer) and `address` when the binding gives them, from `ingress.<name>.exports.<protocol>`. Without a port the entry has no entry point on the target, and nothing is refused | operations inside the contract digest; unit, part, port, bind and address in the binding digest |
 | `requirements` | the `requirements:` of K12, each with the stage it is decided at | inside the bundle digest |
 | `agents` | each `loom.agent/1` document the binding names: `document`, parsed, and `content_base64`, the file's exact bytes (K18) | the SHA-256 of those bytes (Q12) |
-| `runtimes` | each runtime artifact the binding pins: the core runtime image (`core`); an agent runtime image (`agent-runtime`, K18) only where the binding pins one (Q8). With `target.images: registry` (the default) by OCI repository digest, `<image>@sha256:<digest>`; with `local`, what the binding gave, `{image, tag, digest}` with a tag, a digest (the image's config id) or both | the image digest, or `<image>:<tag>` for a local image without one |
+| `runtimes` | each runtime artifact the binding pins: the core runtime image (`core`); an agent runtime image (`agent-runtime`, K18) only where the binding pins one (Q8); then each image a core or service unit runs of its own (K19), named by the unit, unless one of those carries it already. With `target.images: registry` (the default) by OCI repository digest, `<image>@sha256:<digest>`; with `local`, what the binding gave, `{image, tag, digest}` with a tag, a digest (the image's config id) or both | the image digest, or `<image>:<tag>` for a local image without one |
 | `files` | only with a UI unit (K17): each file a unit names, by file name: `{digest, size, base64}`, the bytes inline | its `digest`, the unit's `code.digest` |
 | `digest` | the bundle digest: SHA-256 of the canonical JSON of the document without this member | |
 
@@ -170,7 +172,7 @@ Each entry of `units`:
 | `shape` | an agent unit's: `service`, `job` or `scheduled` (K18) |
 | `parts` | the part instances, by path |
 | `replicas` | from `count`; `scheduled` and `job` units have none |
-| `code` | the artifact that runs, by digest. An `agent`, `job` or `scheduled` unit stays one agent: its agent document (instructions, tools, model route, authority, harness role) by digest and the role `agent-runtime`, never flattened into a process command; other units name a runtime of `runtimes`; a UI unit (K17) serves static files, `{kind: static, archive, digest}` |
+| `code` | the artifact that runs, by digest. An `agent`, `job` or `scheduled` unit stays one agent: its agent document (instructions, tools, model route, authority, harness role) by digest and the role `agent-runtime`, never flattened into a process command; a core or service unit names its image (K19) of `runtimes` as `runtime`, or the role `core-runtime` without one; a UI unit (K17) serves static files, `{kind: static, archive, digest}` |
 | `claims` | CPU, memory, accelerators: the unit's `Shape` (`blocks/8-place/runtime.yaml`), plus an accelerator for `model`; `volumes`, one per workspace (Q16), each with its access, size and `mount`, the absolute path from the binding's `parts.<p>.volumes[].mount` of a part of the unit, matched by name (no default path; `volume_mount_missing`) |
 | `isolation` | the least isolation level required, the highest of its sandboxes |
 | `checks` | `startup`, `ready`, `alive`, each with its kind and path or command, and `port` (an integer) where the binding gives one (`checks.<unit>.<check>.port`). An agent unit with `expose.a2a` uses Loom's readiness and liveness probes (`loom:README.md:727`); without it, `b10x-loom agent check` is its startup command |
@@ -394,6 +396,30 @@ Settled with the translator, names exact; the bundle stays `/1`.
   binding gives wins, whatever the `every`. The packing document keeps only the binding's rules.
   `deploy check` derives the same rule and refuses a unit that carries another, or none where one
   is due, as `schedule_not_cron`.
+
+## K19 A runtime image per unit
+
+An architecture may hold several runtime parts that are different programs, so each core and
+service unit may run an image of its own. Settled with the consumer (R83), names exact; the bundle
+stays `/1`.
+
+- **Binding.** `parts.<p>.image` or, on a unit listed under `packing.units`, its `image`, each
+  `{image, tag?, digest}` under the `target.images` rules of `runtimes.core` (registry: repository
+  digest, no tag; local: tag, config id or both, `image_unpinned` with neither). Only a part of a
+  core or service unit, or such a listed unit, may name one; anywhere else it is a binding of the
+  wrong form.
+- **Which image.** The unit's own wins over its parts'. Parts of one unit that name different
+  images, with none from the unit, are refused as `unit_image_conflict` (the finding names the
+  parts, never the images). Else the parts' image; else, for the core unit only, `runtimes.core`.
+  `runtimes.core` is never a default for a service unit.
+- **None.** A core or service unit that holds a runtime part (block `runtime`) and has no image is
+  refused as `unit_image_missing`, naming the unit and its runtime parts. One without a runtime
+  part keeps the role `core-runtime`, which the target binds, as before.
+- **Bundle.** The unit's `code.runtime` names its image by the reference of `runtimes.core`
+  (`<image>@<digest>`; local `<image>:<tag>`, else the config id). `runtimes` carries every image
+  used, keyed as `runtimes.core` is: the binding's runtimes by their names, then each unit's own by
+  the unit's name, unless an entry of the same key is there already.
+- **Check.** `deploy check` reads the binding the bundle carries and applies the same rules.
 
 ## Risks
 

@@ -1,0 +1,21 @@
+format: agenticspec-architecture/1
+architecture: runtimes
+summary: >-
+  A lead hands work to a workflow runtime and to a notifier runtime, two different programs; the
+  lead and the workflow call the hosted model through a gateway.
+
+parts:
+  owner:    { block: principal, kind: human }
+  lead:     { block: agent }
+  flow:     { block: runtime, role: workflow }
+  notifier: { block: runtime, role: notify }
+  gateway:  { block: gateway }
+  model:    { block: model, route: frontier }
+
+links:
+  - { from: owner,   to: lead,     carries: prompt }
+  - { from: lead,    to: flow,     carries: run }
+  - { from: lead,    to: notifier, carries: run }
+  - { from: lead,    to: gateway,  carries: model_call }
+  - { from: flow,    to: gateway,  carries: model_call }
+  - { from: gateway, to: model,    carries: model_call }

@@ -151,6 +151,9 @@ pub fn values(binding: &Value) -> Vec<Finding> {
     for (part, entry) in binding["parts"].as_object().into_iter().flatten() {
         let Some(m) = entry.as_object() else { continue };
         value_keys(m, &format!("parts: {part}"), &mut out);
+        if let Some(im) = m.get("image").and_then(Value::as_object) {
+            value_keys(im, &format!("parts: {part}: image"), &mut out);
+        }
         match m.get("secrets") {
             None => {}
             Some(Value::Array(list)) => {
@@ -210,6 +213,9 @@ pub fn without_values(binding: &Value) -> Value {
         for entry in parts.values_mut() {
             let Value::Object(m) = entry else { continue };
             strip(m);
+            if let Some(Value::Object(im)) = m.get_mut("image") {
+                strip(im);
+            }
             match m.get_mut("secrets") {
                 Some(Value::Array(list)) => list.retain(|s| s.as_str().is_some_and(is_name)),
                 Some(_) => {

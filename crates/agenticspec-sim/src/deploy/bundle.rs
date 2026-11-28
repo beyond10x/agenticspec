@@ -6,7 +6,7 @@
 //! provider or target.
 
 use super::admit::{Accepts, Finding, Plan, PlannedUnit, admit, sort};
-use super::binding::{self as binding_form, Binding};
+use super::binding::{self as binding_form, Binding, UnitImage};
 use super::grants;
 use super::packing::{self, Packing, clock_link, schedule_of, schedule_part};
 use super::ui;
@@ -244,8 +244,26 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
     }
     let mut runtimes = Map::new();
     let local = binding_form::images(binding) == "local";
-    for (name, r) in binding["runtimes"].as_object().into_iter().flatten() {
-        if local {
+    // Every runtime the binding pins, by its name, then the image of each core or service unit
+    // that is not one of them, by the unit's name; an image already carried keeps its entry.
+    let pinned = binding["runtimes"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(name, r)| (name.as_str(), r, true));
+    let own =
+        plan.units
+            .iter()
+            .filter_map(|pu| match binding_form::unit_image(binding, &pu.unit) {
+                UnitImage::Unit(r) | UnitImage::Parts(r) => Some((pu.unit.name.as_str(), r, false)),
+                _ => None,
+            });
+    for (name, r, is_pinned) in pinned.chain(own) {
+        let key = binding_form::image_key(binding, r);
+        if !is_pinned && runtimes.contains_key(&key) {
+            continue;
+        }
+        let entry = if local {
             // What the binding gave: the image, and its tag, its digest (config id) or both;
             // keyed by the digest, else by `<image>:<tag>`.
             let mut entry = json!({ "name": name, "image": text(&r["image"]) });
@@ -254,18 +272,12 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
                     entry[k] = json!(x);
                 }
             }
-            let key = match r["digest"].as_str() {
-                Some(d) => d.to_owned(),
-                None => format!("{}:{}", text(&r["image"]), text(&r["tag"])),
-            };
-            runtimes.insert(key, entry);
+            entry
         } else {
-            let image = binding_form::image_reference(binding, name).unwrap_or_default();
-            runtimes.insert(
-                text(&r["digest"]).to_owned(),
-                json!({ "name": name, "image": image }),
-            );
-        }
+            let image = binding_form::pinned_reference(binding, r).unwrap_or_default();
+            json!({ "name": name, "image": image })
+        };
+        runtimes.insert(key, entry);
     }
     let packing = inputs.packing.to_value(inputs.arch);
     let mut bundle = json!({
@@ -400,9 +412,12 @@ fn absolute(v: &Value) -> bool {
 
 /// The findings of what the target is asked to serve, from the architecture, the binding and
 /// the packing: `network_isolation_unmet`, a part marked `network: isolated` on a target that
-/// enforces no network policy; `image_unpinned`, a runtime from the target's local store with
-/// neither tag nor digest; `volume_mount_missing`, a volume of a unit no part of it mounts at an
-/// absolute path. A finding names the part, runtime or volume, never a value.
+/// enforces no network policy; `image_unpinned`, a runtime, part or unit image from the target's
+/// local store with neither tag nor digest; `unit_image_conflict`, a core or service unit whose
+/// parts name different images and which names none itself; `unit_image_missing`, a core or
+/// service unit that holds a runtime part and has no image ([`binding_form::unit_image`]);
+/// `volume_mount_missing`, a volume of a unit no part of it mounts at an absolute path. A finding
+/// names the unit, part, runtime or volume, never a value.
 pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> {
     let mut out = Vec::new();
     if binding["target"]["network_policy"] == "not_enforced" {
@@ -418,15 +433,67 @@ pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> 
         }
     }
     if binding_form::images(binding) == "local" {
-        for (name, r) in binding["runtimes"].as_object().into_iter().flatten() {
+        let runtimes = binding["runtimes"]
+            .as_object()
+            .into_iter()
+            .flatten()
+            .map(|(name, r)| (format!("runtimes: {name}"), r));
+        let parts = binding["parts"]
+            .as_object()
+            .into_iter()
+            .flatten()
+            .filter_map(|(p, e)| e.get("image").map(|r| (format!("parts: {p}: image"), r)));
+        let units = packing.units.iter().filter_map(|u| {
+            binding_form::listed_image(binding, &u.name)
+                .map(|r| (format!("packing: unit {}: image", u.name), r))
+        });
+        for (at, r) in runtimes.chain(parts).chain(units) {
             if r["tag"].is_null() && r["digest"].is_null() {
                 out.push(Finding {
                     refusal: "image_unpinned",
                     detail: format!(
-                        "runtimes: {name}: an image of the target's local store is pinned by its tag, its digest or both, and names neither"
+                        "{at}: an image of the target's local store is pinned by its tag, its digest or both, and names neither"
                     ),
                 });
             }
+        }
+    }
+    for u in &packing.units {
+        match binding_form::unit_image(binding, u) {
+            UnitImage::Conflict(named) => out.push(Finding {
+                refusal: "unit_image_conflict",
+                detail: format!(
+                    "unit {}: its parts {} name different images under `parts.<p>.image`, and the unit names none under `packing.units`",
+                    u.name,
+                    named.join(", ")
+                ),
+            }),
+            UnitImage::None if binding_form::IMAGE_KINDS.contains(&u.kind.as_str()) => {
+                let runtimes: Vec<&str> = u
+                    .parts
+                    .iter()
+                    .filter(|p| arch["parts"][*p]["block"] == binding_form::RUNTIME_BLOCK)
+                    .map(String::as_str)
+                    .collect();
+                if runtimes.is_empty() {
+                    continue;
+                }
+                let from = if u.kind == "core" {
+                    "`packing.units[].image`, `parts.<p>.image` or `runtimes.core`"
+                } else {
+                    "`packing.units[].image` or `parts.<p>.image` (`runtimes.core` is the core unit's only)"
+                };
+                out.push(Finding {
+                    refusal: "unit_image_missing",
+                    detail: format!(
+                        "{} unit {} holds the runtime part {} and has no image: name one in {from}",
+                        u.kind,
+                        u.name,
+                        runtimes.join(", ")
+                    ),
+                });
+            }
+            _ => {}
         }
     }
     for u in &packing.units {
@@ -778,12 +845,13 @@ fn unit(
         c
     } else {
         match u.kind.as_str() {
-            "core" | "service" => {
-                match binding_form::image_reference(binding, binding_form::CORE_RUNTIME) {
-                    Some(r) => json!({ "runtime": r }),
-                    None => json!({ "role": "core-runtime" }),
-                }
-            }
+            "core" | "service" => match binding_form::unit_image(binding, u)
+                .image()
+                .and_then(|r| binding_form::pinned_reference(binding, r))
+            {
+                Some(r) => json!({ "runtime": r }),
+                None => json!({ "role": "core-runtime" }),
+            },
             "model" => json!({ "role": "model-server" }),
             _ => json!({ "role": "store" }),
         }
