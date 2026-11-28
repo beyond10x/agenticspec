@@ -197,14 +197,38 @@ jobs:
       - name: Install Rosetta 2 to run the x86_64 binary
         if: matrix.target == 'x86_64-apple-darwin'
         run: sudo softwareupdate --install-rosetta --agree-to-license
+      # The runner's home, cargo home and checkout are compiled into panic locations and C
+      # assertions; they are mapped to neutral prefixes so no runner path ships. RUSTFLAGS
+      # replaces target.<triple>.rustflags of .cargo/config.toml, so crt-static is repeated here.
       - name: Build agenticspec and write its archive
         env:
           TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
+          home=$HOME
+          cargo_home=${CARGO_HOME:-$HOME/.cargo}
+          workspace=$GITHUB_WORKSPACE
+          if [ "$RUNNER_OS" = Windows ]; then
+            home=$(cygpath -w "$home")
+            cargo_home=$(cygpath -w "$cargo_home")
+            workspace=$(cygpath -w "$workspace")
+          fi
+          flags="--remap-path-prefix=$home=/home --remap-path-prefix=$cargo_home=/cargo --remap-path-prefix=$workspace=/build"
+          case "$TARGET" in *-windows-*) flags="$flags -C target-feature=+crt-static" ;; esac
+          export RUSTFLAGS="$flags"
+          if [ "$RUNNER_OS" != Windows ]; then
+            export CFLAGS="-ffile-prefix-map=$cargo_home=/cargo -ffile-prefix-map=$workspace=/build -ffile-prefix-map=$home=/home"
+          fi
           cargo build --locked --release --bin agenticspec --target "$TARGET"
           case "$TARGET" in *-windows-*) exe=.exe ;; *) exe= ;; esac
           sh scripts/release-package.sh archive "$VERSION" "$TARGET" "target/$TARGET/release/agenticspec$exe" dist
+      - name: The binary names no runner home or checkout path
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          case "$TARGET" in *-windows-*) exe=.exe ;; *) exe= ;; esac
+          sh scripts/release-paths.sh "target/$TARGET/release/agenticspec$exe"
       - name: The musl binary is static and runs in a plain Alpine container
         if: contains(matrix.target, '-linux-musl')
         env:
