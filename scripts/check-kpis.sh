@@ -16,7 +16,10 @@
 #      `research/<id>`;
 #   5. every event in `reads` is declared in the `events:` section of a block the catalogue may
 #      read, or of the session IR: the core reads core blocks; a pack reads core blocks, its own
-#      and those of the packs its pack.yaml `uses:`.
+#      and those of the packs its pack.yaml `uses:`;
+#   6. every KPI of the architecture as a whole that `agenticspec sim check` reports (`whole` below,
+#      the list of crates/agenticspec-sim/src/whole.rs) is listed in the core catalogue with block
+#      architecture and source design.
 # Needs yq (mikefarah, v4).
 #
 # Usage: scripts/check-kpis.sh          every catalogue
@@ -25,6 +28,8 @@ set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 planned="verification memory plan monitor"
+whole="agents_total principals_total human_touchpoints autonomy_depth model_call_paths ungated_model_calls
+single_points border_parts egress_targets shared_workspaces capacity_ratio"
 
 command -v yq >/dev/null 2>&1 || { echo "check-kpis: yq is needed" >&2; exit 2; }
 work="$(mktemp -d)"
@@ -119,7 +124,13 @@ check() {
 events "$root"/blocks/*/*.yaml "$root"/spec/domains/session.yaml | sort -u >"$work/core-events"
 
 core_blocks="$(yq '.domains[]' "$root/blocks/system.yaml" | sed -n 's/^agentic\.//p' | grep -v '^shared$') $planned"
-check "${1:-$root/kpis/catalogue.yaml}" "$core_blocks" "$work/core-events"
+core_file="${1:-$root/kpis/catalogue.yaml}"
+check "$core_file" "$core_blocks" "$work/core-events"
+yq '.kpis[] | .id + " " + .block + " " + .source' "$core_file" >"$work/id-block-source" 2>/dev/null || : >"$work/id-block-source"
+for id in $whole; do
+  grep -q -x "$id architecture design" "$work/id-block-source" ||
+    say "$id: agenticspec sim check reports it; list it with block architecture and source design"
+done
 
 if [ $# -eq 0 ]; then
   for manifest in "$root"/packs/*/pack.yaml; do

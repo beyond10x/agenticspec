@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- KPIs of an architecture as a whole, read from its document before any simulation: `agents_total`, `principals_total`, `human_touchpoints`, `autonomy_depth`, `model_call_paths`, `ungated_model_calls`, `single_points`, `border_parts`, `egress_targets`, `shared_workspaces` and `capacity_ratio`. `agenticspec sim check` reports them (and names the single points), `result.json` carries them for every variant, the KPI catalogue lists them under the block `architecture`, each architecture page and catalog entry has a section "The architecture as a whole", and the catalog index compares every architecture on them in a sortable table
+
 ## [0.4.1] - 2026-11-28
 
 ### Fixed
