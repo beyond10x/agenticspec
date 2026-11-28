@@ -1146,6 +1146,9 @@
           "fields": {
             "architecture": {
               "kind": "string"
+            },
+            "json": {
+              "kind": "boolean"
             }
           }
         }
@@ -1158,11 +1161,64 @@
             "architecture": {
               "kind": "string"
             },
+            "counts": {
+              "kind": "optional",
+              "of": {
+                "kind": "map",
+                "value": {
+                  "kind": "integer"
+                }
+              }
+            },
+            "format": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
             "links": {
               "kind": "integer"
             },
             "parts": {
               "kind": "integer"
+            },
+            "valid": {
+              "kind": "optional",
+              "of": {
+                "kind": "boolean"
+              }
+            },
+            "violations": {
+              "kind": "optional",
+              "of": {
+                "kind": "list",
+                "of": {
+                  "kind": "struct",
+                  "fields": {
+                    "gate": {
+                      "kind": "boolean"
+                    },
+                    "link": {
+                      "kind": "optional",
+                      "of": {
+                        "kind": "integer"
+                      }
+                    },
+                    "message": {
+                      "kind": "string"
+                    },
+                    "part": {
+                      "kind": "string"
+                    },
+                    "rule": {
+                      "kind": "string"
+                    },
+                    "subject": {
+                      "kind": "string"
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -1780,6 +1836,13 @@
           "source": {
             "kind": "positional",
             "index": 1
+          }
+        },
+        {
+          "field": "json",
+          "source": {
+            "kind": "flag",
+            "long": "json"
           }
         }
       ]

@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest 0586c4afccde7c34e4335638010b0f68c1c60e78f3c71df0f6f99461306f7cb2
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -589,11 +589,13 @@ pub struct SessionSummary {
 pub struct SimCheckInput {
     /// `architecture` — `String`.
     pub architecture: String,
+    /// `json` — `Boolean`.
+    pub json: bool,
 }
 
 /// SimCheckResult — `agenticspec.cli.SimCheckResult`.
 ///
-/// The architecture the check accepted, with its counts of parts and links.
+/// The architecture the check accepted, with its counts of parts and links. With `--json`, the `agenticspec-check/1` document, which carries the fields after `links` too; a refused architecture prints the same document before its refusal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCheckResult {
     /// `architecture` — `String`.
@@ -602,6 +604,33 @@ pub struct SimCheckResult {
     pub parts: i64,
     /// `links` — `Integer`.
     pub links: i64,
+    /// `format` — `Optional<String>`.
+    pub format: Option<String>,
+    /// `valid` — `Optional<Boolean>`.
+    pub valid: Option<bool>,
+    /// `violations` — `Optional<List<agenticspec.cli.SimCheckViolation>>`.
+    pub violations: Option<Vec<SimCheckViolation>>,
+    /// `counts` — `Optional<Map<String, Integer>>`.
+    pub counts: Option<std::collections::BTreeMap<String, i64>>,
+}
+
+/// SimCheckViolation — `agenticspec.cli.SimCheckViolation`.
+///
+/// One violation of a rule of the architecture check.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimCheckViolation {
+    /// `rule` — `String`.
+    pub rule: String,
+    /// `gate` — `Boolean`.
+    pub gate: bool,
+    /// `subject` — `String`.
+    pub subject: String,
+    /// `part` — `String`.
+    pub part: String,
+    /// `link` — `Optional<Integer>`.
+    pub link: Option<i64>,
+    /// `message` — `String`.
+    pub message: String,
 }
 
 /// SimLadderInput — `agenticspec.cli.SimLadderInput`.

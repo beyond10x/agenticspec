@@ -5,7 +5,7 @@ summary: >-
   ess-cli/2 binding in `spec/cli.yaml`. It declares no entity. The KPI report is typed here, so
   every figure the report carries is a declared field.
 
-# ess-cli projects String, Boolean, Integer, enums, newtypes and structs, Optional, List and Json
+# ess-cli projects String, Boolean, Integer, enums, newtypes and structs, Optional, List, Map and Json
 # in results only. A ratio is an Integer in permille; a time is RFC 3339 text.
 
 types:
@@ -495,15 +495,55 @@ types:
       - name: architecture
         type: String
         summary: An `agenticspec-architecture/1` file.
+      - name: json
+        type: Boolean
+        summary: >-
+          Print the `agenticspec-check/1` document on standard output, also when the check
+          refuses the architecture.
 
   - name: agenticspec.cli.SimCheckResult
     kind: struct
     naming:
-      summary: The architecture the check accepted, with its counts of parts and links.
+      summary: >-
+        The architecture the check accepted, with its counts of parts and links. With `--json`,
+        the `agenticspec-check/1` document, which carries the fields after `links` too; a refused
+        architecture prints the same document before its refusal.
     fields:
       - {name: architecture, type: String}
       - {name: parts, type: Integer}
       - {name: links, type: Integer}
+      - name: format
+        type: Optional<String>
+        summary: "`agenticspec-check/1`."
+      - name: valid
+        type: Optional<Boolean>
+        summary: No violation of a gate rule.
+      - name: violations
+        type: Optional<List<agenticspec.cli.SimCheckViolation>>
+        summary: Every violation, sorted by rule, subject, part, link and message.
+      - name: counts
+        type: Optional<Map<String, Integer>>
+        summary: The count of violations of every rule of the check, 0 included.
+
+  - name: agenticspec.cli.SimCheckViolation
+    kind: struct
+    naming:
+      summary: One violation of a rule of the architecture check.
+    fields:
+      - {name: rule, type: String}
+      - name: gate
+        type: Boolean
+        summary: The rule refuses the architecture; false for a rule that only warns.
+      - name: subject
+        type: String
+        summary: The part, or the link as `<from>-><to>:<carries>`.
+      - name: part
+        type: String
+        summary: The part the violation names; for a link, the end at fault.
+      - name: link
+        type: Optional<Integer>
+        summary: The index of the link in `links`, counted from 0, when the subject is a link.
+      - {name: message, type: String}
 
   - name: agenticspec.cli.SimRunInput
     kind: struct

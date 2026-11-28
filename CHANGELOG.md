@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `agenticspec sim check --json <architecture>` prints one `agenticspec-check/1` JSON document on standard output, also when the architecture is refused: `valid`, every violation with its `rule`, `gate`, `subject` (the part, or the link as `<from>-><to>:<carries>`), `part`, `link` and `message`, sorted, and the count of every rule. The exit code and the output without `--json` are unchanged
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
 
 ### Changed

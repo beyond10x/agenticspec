@@ -4,7 +4,7 @@
 //! binds to the command. The parser and the process adapter are the generated
 //! `agenticspec-cli-contract` of the `agenticspec` crate.
 
-use crate::check::check as check_architecture;
+use crate::check::{GATE_KPIS, Refusal as ArchRefusal, check as check_architecture};
 use crate::doc::load_yaml;
 use crate::{Experiment, ladder as ladder_doc, run as run_experiment};
 use serde_json::{Value, json};
@@ -35,6 +35,7 @@ fn write(path: &Path, text: &str) -> Result<(), Refusal> {
 }
 
 /// `sim check <architecture>`: the architecture with its counts, or every refusal of the check.
+/// With `--json`, [`check_json`].
 pub fn check(path: &Path) -> Result<Value, Refusal> {
     let arch = load_yaml(path).map_err(|e| refused("document_unreadable", e))?;
     let refusals = check_architecture(&arch);
@@ -42,11 +43,114 @@ pub fn check(path: &Path) -> Result<Value, Refusal> {
         let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
         return Err(refused("architecture_refused", names.join("; ")));
     }
-    Ok(json!({
+    Ok(summary(&arch))
+}
+
+fn summary(arch: &Value) -> Value {
+    json!({
         "architecture": arch["architecture"].as_str().unwrap_or("architecture"),
         "parts": arch["parts"].as_object().map_or(0, |p| p.len()),
         "links": arch["links"].as_array().map_or(0, |l| l.len()),
-    }))
+    })
+}
+
+/// The format of the document `sim check --json` prints.
+pub const CHECK_FORMAT: &str = "agenticspec-check/1";
+
+/// What `sim check --json` says about a readable architecture: the `agenticspec-check/1`
+/// document, and the refusal the command ends with when a gate rule is violated.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Checked {
+    pub document: Value,
+    pub refusal: Option<Refusal>,
+}
+
+/// Whether a rule of the check refuses the architecture. Every rule of the check is a gate.
+pub fn is_gate(rule: &str) -> bool {
+    GATE_KPIS.contains(&rule)
+}
+
+/// The index of the link a refusal concerns, when its subject is a link.
+fn link_of(r: &ArchRefusal) -> Option<usize> {
+    match r {
+        ArchRefusal::UnknownLinkPart { link, .. }
+        | ArchRefusal::QuestionWithoutAnswerer { link, .. }
+        | ArchRefusal::ReviewWithoutReviewer { link, .. }
+        | ArchRefusal::TriggerSourceNotTrigger { link, .. }
+        | ArchRefusal::TriggerTargetNotAgent { link, .. } => Some(*link),
+        _ => None,
+    }
+}
+
+/// One violation as the document carries it.
+fn violation(arch: &Value, r: &ArchRefusal) -> Value {
+    let line = r.to_string();
+    let prefix = format!("{}: part `{}`: ", r.rule(), r.part());
+    let message = line.strip_prefix(&prefix).unwrap_or(&line);
+    let link = link_of(r);
+    let subject = link.map_or_else(
+        || r.part().to_string(),
+        |i| {
+            let l = &arch["links"][i];
+            let end = |k: &str| l[k].as_str().unwrap_or("").to_string();
+            format!("{}->{}:{}", end("from"), end("to"), end("carries"))
+        },
+    );
+    let mut v = json!({
+        "rule": r.rule(),
+        "gate": is_gate(r.rule()),
+        "subject": subject,
+        "part": r.part(),
+        "message": message,
+    });
+    if let Some(i) = link {
+        v["link"] = json!(i);
+    }
+    v
+}
+
+/// The `agenticspec-check/1` document of an architecture: its summary, `valid`, every violation
+/// sorted by rule, subject, part, link and message, and the count of every rule.
+pub fn check_document(arch: &Value) -> Value {
+    let refusals = check_architecture(arch);
+    let mut violations: Vec<Value> = refusals.iter().map(|r| violation(arch, r)).collect();
+    let key = |v: &Value| {
+        (
+            v["rule"].as_str().unwrap_or("").to_string(),
+            v["subject"].as_str().unwrap_or("").to_string(),
+            v["part"].as_str().unwrap_or("").to_string(),
+            v["link"].as_u64(),
+            v["message"].as_str().unwrap_or("").to_string(),
+        )
+    };
+    violations.sort_by_key(key);
+    let counts: serde_json::Map<String, Value> = GATE_KPIS
+        .iter()
+        .map(|g| {
+            let n = refusals.iter().filter(|r| r.rule() == *g).count();
+            ((*g).to_string(), json!(n))
+        })
+        .collect();
+    let mut doc = summary(arch);
+    doc["format"] = json!(CHECK_FORMAT);
+    doc["valid"] = json!(!violations.iter().any(|v| v["gate"] == true));
+    doc["violations"] = Value::Array(violations);
+    doc["counts"] = Value::Object(counts);
+    doc
+}
+
+/// `sim check --json <architecture>`: the document, also for a refused architecture; only an
+/// unreadable file is refused without one.
+pub fn check_json(path: &Path) -> Result<Checked, Refusal> {
+    let arch = load_yaml(path).map_err(|e| refused("document_unreadable", e))?;
+    let document = check_document(&arch);
+    let gates: Vec<String> = check_architecture(&arch)
+        .iter()
+        .filter(|r| is_gate(r.rule()))
+        .map(ToString::to_string)
+        .collect();
+    let refusal = (!gates.is_empty()).then(|| refused("architecture_refused", gates.join("; ")));
+    Ok(Checked { document, refusal })
 }
 
 /// KPIs of triggers and swarms, printed only when a run has them.

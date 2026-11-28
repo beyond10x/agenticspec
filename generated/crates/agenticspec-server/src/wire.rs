@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest 0586c4afccde7c34e4335638010b0f68c1c60e78f3c71df0f6f99461306f7cb2
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -2297,6 +2297,8 @@ pub fn encode_agenticspec_cli_sim_check_input(value: &agenticspec_types::cli::Si
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
+    json::member(out, "json");
+    json::push_bool(out, value.json);
     out.push('}');
 }
 
@@ -2306,12 +2308,17 @@ pub fn encode_agenticspec_cli_sim_check_input(value: &agenticspec_types::cli::Si
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckInput, json::DecodeError> {
-    json::closed_at(value, at, &["architecture"])?;
+    json::closed_at(value, at, &["architecture", "json"])?;
     Ok(agenticspec_types::cli::SimCheckInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
             let member0 = json::member_at(value, at, "architecture")?;
             json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        json: {
+            let at1 = json::nested(at, "json");
+            let member1 = json::member_at(value, at, "json")?;
+            json::bool_at(member1, &at1, "a boolean")?
         },
     })
 }
@@ -2325,6 +2332,38 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
     json::push_integer(out, value.parts);
     json::member(out, "links");
     json::push_integer(out, value.links);
+    if let Some(held0) = &value.format {
+        json::member(out, "format");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.valid {
+        json::member(out, "valid");
+        json::push_bool(out, *held0);
+    }
+    if let Some(held0) = &value.violations {
+        json::member(out, "violations");
+        out.push('[');
+        for (index1, item1) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            encode_agenticspec_cli_sim_check_violation(&*item1, out);
+        }
+        out.push(']');
+    }
+    if let Some(held0) = &value.counts {
+        json::member(out, "counts");
+        out.push('{');
+        for (index1, (key1, item1)) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            json::push_text(out, key1);
+            out.push(':');
+            json::push_integer(out, *item1);
+        }
+        out.push('}');
+    }
     out.push('}');
 }
 
@@ -2334,7 +2373,7 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckResult, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "parts", "links"])?;
+    json::closed_at(value, at, &["architecture", "parts", "links", "format", "valid", "violations", "counts"])?;
     Ok(agenticspec_types::cli::SimCheckResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -2350,6 +2389,111 @@ pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) ->
             let at2 = json::nested(at, "links");
             let member2 = json::member_at(value, at, "links")?;
             json::integer_at(member2, &at2, "an integer")?
+        },
+        format: match value.member("format") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "format");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        valid: match value.member("valid") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "valid");
+                Some(json::bool_at(member4, &at4, "a boolean")?)
+            }
+        },
+        violations: match value.member("violations") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "violations");
+                Some({
+                let mut items5 = Vec::new();
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
+                    let nested5 = json::nested(&at5, &index5.to_string());
+                    items5.push(decode_agenticspec_cli_sim_check_violation(element5, &nested5)?);
+                }
+                items5
+            })
+            }
+        },
+        counts: match value.member("counts") {
+            None | Some(json::Value::Null) => None,
+            Some(member6) => {
+                let at6 = json::nested(at, "counts");
+                Some({
+                let mut entries6 = std::collections::BTreeMap::new();
+                for (key6, element6) in json::members_at(member6, &at6, "an object")? {
+                    let nested6 = json::nested(&at6, key6);
+                    entries6.insert(key6.clone(), json::integer_at(element6, &nested6, "an integer")?);
+                }
+                entries6
+            })
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimCheckViolation` as JSON.
+pub fn encode_agenticspec_cli_sim_check_violation(value: &agenticspec_types::cli::SimCheckViolation, out: &mut String) {
+    out.push('{');
+    json::member(out, "rule");
+    json::push_text(out, &value.rule);
+    json::member(out, "gate");
+    json::push_bool(out, value.gate);
+    json::member(out, "subject");
+    json::push_text(out, &value.subject);
+    json::member(out, "part");
+    json::push_text(out, &value.part);
+    if let Some(held0) = &value.link {
+        json::member(out, "link");
+        json::push_integer(out, *held0);
+    }
+    json::member(out, "message");
+    json::push_text(out, &value.message);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimCheckViolation` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_check_violation(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckViolation, json::DecodeError> {
+    json::closed_at(value, at, &["rule", "gate", "subject", "part", "link", "message"])?;
+    Ok(agenticspec_types::cli::SimCheckViolation {
+        rule: {
+            let at0 = json::nested(at, "rule");
+            let member0 = json::member_at(value, at, "rule")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        gate: {
+            let at1 = json::nested(at, "gate");
+            let member1 = json::member_at(value, at, "gate")?;
+            json::bool_at(member1, &at1, "a boolean")?
+        },
+        subject: {
+            let at2 = json::nested(at, "subject");
+            let member2 = json::member_at(value, at, "subject")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        part: {
+            let at3 = json::nested(at, "part");
+            let member3 = json::member_at(value, at, "part")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
+        },
+        link: match value.member("link") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "link");
+                Some(json::integer_at(member4, &at4, "an integer")?)
+            }
+        },
+        message: {
+            let at5 = json::nested(at, "message");
+            let member5 = json::member_at(value, at, "message")?;
+            json::text_at(member5, &at5, "a string")?.to_owned()
         },
     })
 }
