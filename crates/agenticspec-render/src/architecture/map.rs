@@ -222,6 +222,7 @@ pub fn to_page(arch: &Architecture, o: Option<&Outcome>) -> (Page, Decor) {
                 properties,
                 outline: border.then(|| "border".to_string()),
                 description: Some(label_for(arch, p)),
+                opens: false,
             },
         ));
         for address in p.nested.iter().flat_map(|n| n.ports.iter()) {
@@ -279,6 +280,7 @@ pub fn to_page(arch: &Architecture, o: Option<&Outcome>) -> (Page, Decor) {
             label: name.to_string(),
             r#in: None,
             per: Some(name.to_string()),
+            collapsed: false,
             regions: hosts
                 .iter()
                 .filter(|h| within(h).as_deref() == Some(name))

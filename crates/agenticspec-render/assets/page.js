@@ -16,12 +16,17 @@
   if (asked === "light" || asked === "dark") theme(asked);
 
   var svg = document.querySelector("svg.graph");
-  var nodes = document.querySelectorAll("svg.graph .node[data-part]");
-  var edges = document.querySelectorAll("svg.graph .edge");
+  var nodes = [];
+  var edges = [];
   var details = document.querySelectorAll(".detail[data-detail]");
   var hint = document.getElementById("pin-hint");
   var picks = document.querySelectorAll("button.pick[data-pick]");
   var pinned = "";
+  function collect() {
+    nodes = svg ? svg.querySelectorAll(".node[data-part]") : [];
+    edges = svg ? svg.querySelectorAll(".edge") : [];
+  }
+  collect();
 
   function show(part) {
     var found = false;
@@ -39,11 +44,10 @@
       e.classList.toggle("hot", hot);
     });
   }
-  function pin(part) {
-    pinned = pinned === part ? "" : part;
+  function marks() {
     nodes.forEach(function (n) {
       var button = n.querySelector(":scope > [role=button]");
-      if (button) button.setAttribute("aria-pressed", String(n.getAttribute("data-part") === pinned));
+      if (button && !n.hasAttribute("data-open")) button.setAttribute("aria-pressed", String(n.getAttribute("data-part") === pinned));
     });
     picks.forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.getAttribute("data-pick") === pinned));
@@ -51,27 +55,79 @@
     if (hint) hint.textContent = pinned ? "selected · Esc clears" : "hover or select";
     show(pinned);
   }
-  nodes.forEach(function (n) {
-    var part = n.getAttribute("data-part");
-    n.addEventListener("mouseenter", function () { show(part); });
-    n.addEventListener("mouseleave", function () { show(pinned); });
-    // The button of a part is its card's background, so focus arrives from inside the group.
-    n.addEventListener("focusin", function (ev) { ev.stopPropagation(); show(part); });
-    n.addEventListener("focusout", function (ev) { ev.stopPropagation(); show(pinned); });
-    n.addEventListener("click", function (ev) { ev.stopPropagation(); pin(part); });
-    n.addEventListener("keydown", function (ev) {
-      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.stopPropagation(); pin(part); }
+  function pin(part) {
+    pinned = pinned === part ? "" : part;
+    marks();
+  }
+  function activate(el, act) {
+    el.addEventListener("click", function (ev) { ev.stopPropagation(); act(); });
+    el.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.stopPropagation(); act(); }
     });
-  });
+  }
+  // The handlers of the graph shown; a state of the graph swapped in gets its own once.
+  function bind() {
+    if (!svg || svg.__bound) return;
+    svg.__bound = true;
+    svg.querySelectorAll(".node[data-part]").forEach(function (n) {
+      var part = n.getAttribute("data-part");
+      var opens = n.getAttribute("data-open");
+      n.addEventListener("mouseenter", function () { show(part); });
+      n.addEventListener("mouseleave", function () { show(pinned); });
+      // The button of a part is its card's background, so focus arrives from inside the group.
+      n.addEventListener("focusin", function (ev) { ev.stopPropagation(); show(part); });
+      n.addEventListener("focusout", function (ev) { ev.stopPropagation(); show(pinned); });
+      // The card of a collapsed region opens it; any other card is selected.
+      activate(n, opens ? function () { go(opens, '[data-close="' + CSS.escape(opens) + '"] [role=button]'); } : function () { pin(part); });
+    });
+    svg.querySelectorAll("[data-close]").forEach(function (c) {
+      var id = c.getAttribute("data-close");
+      activate(c, function () { go(up[id] || "", '.node[data-open="' + CSS.escape(id) + '"] > [role=button]'); });
+    });
+  }
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape" && pinned) pin(pinned);
   });
+
+  // The states of a graph with collapsed regions: the page as served, and one per region with
+  // that region open, each laid out in full in a template beside the graph. Opening a region
+  // swaps its state in; its control swaps in the state it was opened from.
+  var view = document.querySelector(".graph-view");
+  var states = {"": svg};
+  var up = {};
+  if (view) {
+    view.querySelectorAll("template[data-state]").forEach(function (t) {
+      up[t.getAttribute("data-state")] = t.getAttribute("data-up") || "";
+    });
+  }
+  function go(id, focus) {
+    var next = states[id];
+    if (!next) {
+      var t = view.querySelector('template[data-state="' + CSS.escape(id) + '"]');
+      var s = t && t.content.querySelector("svg.graph");
+      if (!s) return;
+      next = states[id] = document.importNode(s, true);
+    }
+    svg.replaceWith(next);
+    svg = next;
+    svg.style.width = "";
+    svg.style.height = "";
+    natural = svg.viewBox && svg.viewBox.baseVal;
+    collect();
+    bind();
+    if (pinned && !svg.querySelector('.node[data-part="' + CSS.escape(pinned) + '"]')) pinned = "";
+    marks();
+    if (initial === "fit") opening();
+    else setZoom(zoom);
+    var el = focus && svg.querySelector(focus);
+    if (el) el.focus();
+  }
+  bind();
 
   // The graph opens whole: larger than its view (wider than the card or taller than the view's
   // highest), it opens at Fit; else at its natural size. It pans by drag, wheel and arrow keys
   // while it overflows (the view is then a focusable scroll region), and the zoom tools show:
   // out, in, fit, actual size. Until a zoom tool is used, a resized view fits again.
-  var view = document.querySelector(".graph-view");
   var tools = document.querySelector(".graph-tools");
   var level = tools && tools.querySelector(".zoom-level");
   var natural = svg && svg.viewBox && svg.viewBox.baseVal;

@@ -4884,7 +4884,7 @@
       ],
       "aliases": [],
       "callable": "sim_render",
-      "about": "Write the page of an architecture, with the result of a run when given",
+      "about": "Write the page of an architecture, with the result of a run when given, or of a render model page",
       "arguments": [
         {
           "field": "architecture",

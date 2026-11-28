@@ -396,7 +396,7 @@ commands:
       - {field: events, source: {kind: flag, long: events}}
   - path: [sim, render]
     callable: sim_render
-    about: Write the page of an architecture, with the result of a run when given
+    about: Write the page of an architecture, with the result of a run when given, or of a render model page
     arguments:
       - {field: architecture, source: {kind: positional, index: 1}}
       - {field: result, source: {kind: option, long: result}}

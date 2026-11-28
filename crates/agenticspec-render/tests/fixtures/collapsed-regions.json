@@ -1,0 +1,42 @@
+{
+  "format": "agenticspec-render-model/1",
+  "title": "collapsed regions",
+  "summary": "Two subsystems drawn collapsed, one of them holding a collapsed region of its own.",
+  "layout": "bands",
+  "regions": [
+    { "id": "gateway", "label": "gateway", "collapsed": true },
+    {
+      "id": "agents",
+      "label": "agents",
+      "collapsed": true,
+      "regions": [{ "id": "workers", "label": "workers", "per": "task", "collapsed": true }]
+    },
+    { "id": "stores", "label": "stores" }
+  ],
+  "nodes": [
+    { "id": "user", "label": "user", "group": "principal" },
+    { "id": "edge", "label": "edge", "group": "capability", "region": "gateway" },
+    { "id": "auth", "label": "auth", "group": "capability", "region": "gateway" },
+    { "id": "rate", "label": "rate limit", "group": "capability", "region": "gateway" },
+    { "id": "plan", "label": "planner", "group": "agent", "region": "agents" },
+    { "id": "review", "label": "reviewer", "group": "agent", "region": "agents" },
+    { "id": "w1", "label": "worker 1", "group": "agent", "region": "workers" },
+    { "id": "w2", "label": "worker 2", "group": "agent", "region": "workers" },
+    { "id": "w3", "label": "worker 3", "group": "agent", "region": "workers" },
+    { "id": "db", "label": "database", "group": "resource", "region": "stores" },
+    { "id": "blob", "label": "blob store", "group": "resource", "region": "stores" }
+  ],
+  "edges": [
+    { "from": "user", "to": "edge", "label": "request" },
+    { "from": "edge", "to": "auth", "label": "check" },
+    { "from": "auth", "to": "plan", "label": "admit" },
+    { "from": "rate", "to": "plan", "label": "admit" },
+    { "from": "plan", "to": "w1", "label": "assign" },
+    { "from": "plan", "to": "w2", "label": "assign" },
+    { "from": "plan", "to": "w3", "label": "assign" },
+    { "from": "w1", "to": "db", "label": "write" },
+    { "from": "w2", "to": "db", "label": "write" },
+    { "from": "w3", "to": "blob", "label": "store" },
+    { "from": "review", "to": "db", "label": "read" }
+  ]
+}

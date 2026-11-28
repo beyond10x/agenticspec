@@ -86,3 +86,32 @@ fn render_writes_a_page_for_an_architecture() {
     assert_eq!(rendered["out"], page.display().to_string());
     assert!(std::fs::read_to_string(&page).unwrap().contains("<html"));
 }
+
+#[test]
+fn render_draws_a_render_model_page_and_refuses_one_its_check_refuses() {
+    let dir = scratch("render-model");
+    let fixture =
+        repo_root().join("crates/agenticspec-render/tests/fixtures/collapsed-regions.json");
+    let page = dir.join("page.html");
+    cli::render(&fixture, None, &page).unwrap();
+    let html = std::fs::read_to_string(&page).unwrap();
+    assert!(
+        html.contains("data-open=\"gateway\""),
+        "a collapsed region is a card"
+    );
+    assert!(html.contains("<template data-state=\"workers\" data-up=\"agents\">"));
+
+    let text = std::fs::read_to_string(&fixture).unwrap();
+    std::fs::write(
+        dir.join("bad.json"),
+        text.replacen("\"collapsed\": true", "\"collapsed\": \"yes\"", 1),
+    )
+    .unwrap();
+    let err = cli::render(&dir.join("bad.json"), None, &dir.join("bad.html")).unwrap_err();
+    assert_eq!(err.code, "document_unreadable");
+    assert!(
+        err.detail.contains("region_collapsed_invalid"),
+        "{}",
+        err.detail
+    );
+}

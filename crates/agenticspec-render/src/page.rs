@@ -31,8 +31,25 @@
 //!   it. A cell value longer than 32 characters wraps its long words instead of being cut, and
 //!   has its full value as its title.
 //!
+//! A region with `"collapsed": true` is drawn as one card until it is opened:
+//!
+//! - The card shows the region's label and the count of the nodes inside it, nested regions
+//!   included; it is a button named `Open region <label>, <n> nodes`. A refusal inside rings it.
+//! - An edge between two collapsed regions, or between one and a node outside it, is drawn once
+//!   per pair of visible ends. It reads `×<n>` when it stands for more than one edge; one edge
+//!   keeps its own label. An edge inside a collapsed region is not drawn.
+//! - Selecting the card (click, Enter or Space) opens the region in place: its nodes and inner
+//!   regions, each edge on its own. A `close` control on its frame (or band) closes it again.
+//! - A region inside an open one keeps its own `collapsed`. One collapsible region is open at a
+//!   time, with the collapsible regions around it; opening another closes it.
+//! - The state lives in the page only. The page as served shows every collapsible region
+//!   collapsed, and holds each opened state laid out in full in a `<template>` beside the graph,
+//!   which the script swaps in.
+//!
 //! An edge end names a node, or a port the page declares as `node.port`. A page read from JSON
-//! with an end that names neither is refused as `edge_end_unknown` ([`Page::check`]).
+//! with an end that names neither is refused as `edge_end_unknown` ([`Page::check`]). A
+//! `collapsed` that is no boolean is refused as `region_collapsed_invalid`, and a collapsed region
+//! that holds no node besides its own as `region_collapsed_empty`.
 //!
 //! With `"layout": "bands"` the graph is drawn in bands instead (`"graph"`, the default, draws it
 //! as above; any other value is refused):
@@ -424,7 +441,10 @@ impl Page {
 
     /// Whether every edge end resolves: to a node's id, or as `node.port` to a port the page
     /// declares on that node. The first end that does not is refused as `edge_end_unknown`,
-    /// naming the edge and the end. Reading a page from JSON runs this check.
+    /// naming the edge and the end. A region with `collapsed: true` that holds no node besides
+    /// its own (in it or in a region inside it) would be a card that opens onto nothing; it is
+    /// refused as `region_collapsed_empty`, naming the region. Reading a page from JSON runs this
+    /// check.
     pub fn check(&self) -> Result<(), String> {
         for e in &self.edges {
             for end in [&e.from, &e.to] {
@@ -434,6 +454,15 @@ impl Page {
                         e.from, e.to
                     ));
                 }
+            }
+        }
+        let tree = crate::collapse::Tree::of(self);
+        for r in tree.regions.iter().filter(|r| r.collapsed) {
+            if tree.inside(self, &r.id) == 0 {
+                return Err(format!(
+                    "region_collapsed_empty: the region {:?} is collapsed but holds no node",
+                    r.id
+                ));
             }
         }
         Ok(())
@@ -451,8 +480,11 @@ impl Page {
 /// A region: a box that holds nodes. A region whose `id` is a node's id is that node's card; any
 /// other outermost region is drawn as a card of its own. The nodes inside are headed `per <per>`
 /// or `in <in>` (`in <label>` when neither is given).
+///
+/// Read from JSON, a `collapsed` that is not `true` or `false` is refused as
+/// `region_collapsed_invalid`, naming the region.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, try_from = "RawRegion")]
 pub struct Region {
     pub id: String,
     pub label: String,
@@ -460,9 +492,60 @@ pub struct Region {
     pub r#in: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub per: Option<String>,
+    /// Drawn as one card (its label and the count of the nodes inside it, nested regions
+    /// included) until it is opened on the page; edges into it are merged per pair of visible
+    /// ends. A collapsed region holds at least one node besides its own.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub collapsed: bool,
     /// The regions inside this one.
     #[serde(default)]
     pub regions: Vec<Region>,
+}
+
+/// A [`Region`] as read: `collapsed` as any value, so that one that is no boolean is refused
+/// naming its region.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawRegion {
+    id: String,
+    label: String,
+    #[serde(default)]
+    r#in: Option<String>,
+    #[serde(default)]
+    per: Option<String>,
+    #[serde(default, deserialize_with = "present")]
+    collapsed: Option<serde_json::Value>,
+    #[serde(default)]
+    regions: Vec<Region>,
+}
+
+/// A field that is present, `null` included.
+fn present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<serde_json::Value>, D::Error> {
+    serde_json::Value::deserialize(d).map(Some)
+}
+
+impl TryFrom<RawRegion> for Region {
+    type Error = String;
+    fn try_from(r: RawRegion) -> Result<Self, String> {
+        let collapsed = match r.collapsed {
+            None => false,
+            Some(serde_json::Value::Bool(b)) => b,
+            Some(other) => {
+                return Err(format!(
+                    "region_collapsed_invalid: the region {:?}: collapsed is {other}, not true or false",
+                    r.id
+                ));
+            }
+        };
+        Ok(Region {
+            id: r.id,
+            label: r.label,
+            r#in: r.r#in,
+            per: r.per,
+            collapsed,
+            regions: r.regions,
+        })
+    }
 }
 
 /// A node: one card of the graph.
@@ -694,7 +777,15 @@ impl Shell {
             },
             section: "Graph".to_string(),
             graph_heading: "Graph".to_string(),
-            graph_hint: "Select a node to follow its edges".to_string(),
+            graph_hint: if crate::collapse::Tree::of(page)
+                .regions
+                .iter()
+                .any(|r| r.collapsed)
+            {
+                "Select a node to follow its edges, or the card of a region to open it".to_string()
+            } else {
+                "Select a node to follow its edges".to_string()
+            },
             legend: legend(page),
             side,
             after: below + &details(page),
@@ -732,7 +823,7 @@ pub(crate) fn plural(n: usize, word: &str) -> String {
 
 /// The page around its graph.
 pub(crate) fn render_with(page: &Page, shell: &Shell) -> String {
-    let g = graph::render(page, &shell.decor);
+    let (g, states) = crate::collapse::render(page, &shell.decor);
     let mut h = String::with_capacity(64 * 1024);
     let _ = write!(
         h,
@@ -764,10 +855,22 @@ pub(crate) fn render_with(page: &Page, shell: &Shell) -> String {
     );
     let _ = write!(
         h,
-        "<div class=\"graph-view\" data-initial=\"fit\" style=\"--graph-w:{}px\">{}</div>",
+        "<div class=\"graph-view\" data-initial=\"fit\" style=\"--graph-w:{}px\">{}",
         fmt::px(g.width),
         g.svg
     );
+    // Each state of the graph with one collapsed region open, laid out in full: the script swaps
+    // it in when the card of that region is selected, and back when its control closes it.
+    for s in &states {
+        let _ = write!(
+            h,
+            "<template data-state=\"{}\" data-up=\"{}\">{}</template>",
+            esc(&s.id),
+            esc(&s.up),
+            s.graph.svg
+        );
+    }
+    h.push_str("</div>");
     h.push_str("</div></div>\n");
     if !shell.side.is_empty() {
         let _ = writeln!(h, "<aside class=\"side\">{}</aside>", shell.side);
@@ -831,6 +934,15 @@ fn legend(page: &Page) -> String {
     if page.nodes.iter().any(|n| n.region.is_some()) {
         h.push_str(
             "<li><span class=\"swatch per-sample\"></span>a region, framed around its nodes</li>",
+        );
+    }
+    if crate::collapse::Tree::of(page)
+        .regions
+        .iter()
+        .any(|r| r.collapsed)
+    {
+        h.push_str(
+            "<li><span class=\"swatch collapsed-sample\"></span>a collapsed region: its card opens it</li>",
         );
     }
     if page.marks.iter().any(|m| m.level == Level::Refusal) {

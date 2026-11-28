@@ -62,6 +62,8 @@ echo "$digest" > "../$stamp"
 # The page of the 37-part fixture that e2e/graph.spec.ts opens, rendered by the simulator.
 cargo build --quiet --locked -p agenticspec
 ../target/debug/agenticspec sim render ../crates/agenticspec-render/tests/fixtures/large-37.yaml --out "../$scratch/large-37.html" >/dev/null
+# The render model page with collapsed regions that e2e/graph.spec.ts opens and closes.
+../target/debug/agenticspec sim render ../crates/agenticspec-render/tests/fixtures/collapsed-regions.json --out "../$scratch/collapsed-regions.html" >/dev/null
 
 npx playwright install --only-shell chromium >/dev/null
 started=$(date +%s)
