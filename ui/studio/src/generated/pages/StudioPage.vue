@@ -2,9 +2,10 @@
      the document and generate again. -->
 <script setup lang="ts">
 import { KitButton, KitLink, KitPanel, KitSelect, KitShell, KitStack, KitTable, KitToolbar, type FieldDef } from '@kit';
-import { options, useCommand, usePage, useRead, useRouter, useShell } from '../runtime';
+import { options, useActions, useCommand, usePage, useRead, useRouter, useShell } from '../runtime';
 
 const shell = useShell();
+const may = useActions();
 const router = useRouter();
 const page = usePage({ params: [], state: { architecture: { store: 'url', initial: '' } } });
 const r_bar_architecture = useRead('studio.Architectures', () => ({}));
@@ -22,7 +23,7 @@ const fields_drafts: FieldDef[] = [
     <template #bar>
       <KitToolbar label="Filters">
         <KitSelect label="Architecture" placeholder="Choose an architecture" :options="options(r_bar_architecture.rows, 'source', 'name')" :model-value="page.state['architecture']" @update:model-value="page.state['architecture'] = $event" />
-        <KitButton tone="primary" :busy="c_bar_open.busy" :disabled="c_bar_open.blocked" @click="c_bar_open.run()">Open draft</KitButton>
+        <KitButton v-if="may.allows('studio.draft.OpenDraft')" tone="primary" :busy="c_bar_open.busy" :disabled="c_bar_open.blocked" @click="c_bar_open.run()">Open draft</KitButton>
       </KitToolbar>
     </template>
     <KitStack>

@@ -349,3 +349,4 @@ fn a_message_is_priced_by_the_longest_model_prefix() {
 
 mod sim;
 mod store;
+mod ui;

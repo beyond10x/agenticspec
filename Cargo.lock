@@ -124,6 +124,7 @@ version = "1.0.0"
 name = "agenticspec-ui"
 version = "0.4.1"
 dependencies = [
+ "regex",
  "serde",
  "serde_json",
  "serde_path_to_error",

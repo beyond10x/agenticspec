@@ -1,0 +1,64 @@
+# A desk of open questions: a widget scoped to a part with two row actions, one of them with a
+# condition of its own, and a page whose header sends a command and links on a condition of the
+# action set. Each action that sends a command shows only while the action set (R5) of its scope
+# allows it.
+format: ess-ui/1
+app: desk
+title: Desk
+model: desk
+placement_profile: fat
+
+shells:
+  app:
+    regions:
+      main: {kind: page_outlet}
+
+navigation:
+  home: questions
+  sections:
+    - {name: desk, label: Desk, pages: [questions]}
+
+page_kinds:
+  desk_page:
+    purpose: a page with commands in its header
+    header: {filters: bar}
+    sections:
+      - name: bar
+        component: filter_bar
+        actions:
+          - {name: ask, does: desk.Ask, label: Ask}
+          - {name: all, navigate: {to: questions}, label: All questions, visible: "actor.may(desk.Ask)"}
+
+widgets:
+  desk.OpenQuestions:
+    summary: Rows of the view desk.OpenQuestions, keyed by question_id, with the actions on a question.
+    params:
+      source: {type: {optional: string}, note: the base URL of the adapter that answers this scope}
+      architecture: {type: {optional: string}, note: the architecture the rows are scoped to}
+      part: {type: {optional: string}, note: the path of the part}
+      instance: {type: {optional: integer}, note: the copy of a part}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: desk.OpenQuestions, key: question_id}
+        columns:
+          - question_id
+          - {field: kind, as: badge}
+        row_actions:
+          - {name: answer, does: desk.Answer, label: Answer, bind: {question_id: row.question_id, option: "'A'"}}
+          - {name: withdraw, does: desk.Withdraw, label: Withdraw, bind: {question_id: row.question_id}, visible: row.open}
+
+pages:
+  questions:
+    kind: desk_page
+    title: Questions
+    sections:
+      - name: lead
+        title: Lead
+        component: desk.OpenQuestions
+        args: {architecture: "'a1'", part: "'team.lead'"}
+      - name: worker
+        title: Worker
+        component: desk.OpenQuestions
+        args: {architecture: "'a1'", part: "'team.worker'", instance: 2}

@@ -479,6 +479,63 @@ fn the_server_answers_views_and_streams_events() {
     assert_eq!(events[1], "agenticspec.view.AgentUpdated");
 }
 
+/// R2 of the runtime interface on `agenticspec serve`: a reconnect with the cursor of event 3
+/// receives exactly events 4, 5, … in order, each named by its qualified name, and a publish of
+/// the same events again (a sync racing the reconnect) sends none of them twice.
+#[test]
+fn the_server_resumes_a_channel_from_a_cursor_exactly() {
+    use agenticspec_ui::{conform, wire};
+    let st = Arc::new(store("resume"));
+    st.sync(&root(), 0).unwrap();
+    let id = st.sessions().unwrap()[0].session_id.0.clone();
+    let shared = Arc::new(Shared {
+        system: Mutex::new(serve::system(Arc::clone(&st))),
+        hub: Hub::default(),
+        store: Arc::clone(&st),
+        ui: None,
+    });
+    let listener = serve::bind(0).unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let server = Arc::clone(&shared);
+    std::thread::spawn(move || {
+        for conn in listener.incoming().flatten() {
+            let s = Arc::clone(&server);
+            std::thread::spawn(move || serve::connection(&s, conn));
+        }
+    });
+    let url = format!("http://127.0.0.1:{port}/view/channels/session_events?session_id={id}");
+    let t = Duration::from_secs(5);
+    let with_cursor = |s: &wire::EventStream| {
+        let mut got = Vec::new();
+        while let Some(e) = s.next(Duration::from_millis(300)) {
+            if e.id.is_some() {
+                got.push(e);
+            }
+        }
+        got
+    };
+
+    let first = wire::subscribe(&url, &[], t).unwrap();
+    assert_eq!(first.status, 200);
+    std::thread::sleep(Duration::from_millis(100));
+    serve::publish_changes(&shared, &mut Seen::default());
+    let sent = with_cursor(&first);
+    drop(first);
+    assert!(sent.len() >= 5, "{} events with a cursor", sent.len());
+    assert!(
+        sent.iter()
+            .all(|e| e.event == "agenticspec.view.EventAppended")
+    );
+
+    let cursor = sent[2].id.clone().unwrap();
+    let again = wire::subscribe(&url, &[("Last-Event-ID", &cursor)], t).unwrap();
+    std::thread::sleep(Duration::from_millis(100));
+    serve::publish_changes(&shared, &mut Seen::default());
+    let got = with_cursor(&again);
+    conform::judge_resume(&sent, 3, &got).unwrap();
+    assert_eq!(got, sent[3..].to_vec());
+}
+
 /// Without `--out`, `analyze` writes its file beside the store, not in the working directory.
 #[test]
 fn analyze_writes_beside_the_store_by_default() {

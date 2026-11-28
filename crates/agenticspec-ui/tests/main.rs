@@ -5,11 +5,16 @@
 //! - `refusals`: a construct the generator does not draw is refused by its node path.
 //! - `output`: the properties every generation holds (deterministic, only kit components and host
 //!   slots, no look of its own), on the cases and on the studio's document.
+//! - `runtime`: the runtime interface of `ui/runtime.openapi.yaml`: the fixture source, the
+//!   conformance suite against it and against a source with one fault, and the generated client
+//!   held to the document.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use agenticspec_ui::{Refusal, generate};
+
+mod runtime;
 
 fn cases() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/cases")
@@ -109,6 +114,11 @@ mod golden {
     #[test]
     fn two_widgets_on_a_gallery_page_with_a_navigation_and_live_updates() {
         check("widgets");
+    }
+
+    #[test]
+    fn actions_shown_by_the_action_set_of_their_scope_and_a_condition_of_their_own() {
+        check("actions");
     }
 }
 

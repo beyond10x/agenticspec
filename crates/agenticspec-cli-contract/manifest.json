@@ -31,6 +31,7 @@
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_conform: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_generate: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract"
   ],

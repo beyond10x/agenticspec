@@ -519,9 +519,64 @@ impl Handler for Commands {
                     check: check.as_deref(),
                 }))
             }
+            "ui_conform" => ui_conform(&inv.input),
             _ => HandlerReply::Unavailable,
         }
     }
+}
+
+/// `agenticspec ui conform`: the conformance suite of the runtime interface against `--source`,
+/// or against the fixture source started here when there is none.
+fn ui_conform(input: &Value) -> HandlerReply {
+    use agenticspec_ui::{conform, source};
+    let s = |k: &str| input.get(k).and_then(Value::as_str);
+    let root = std::path::Path::new(s("root").unwrap_or("."));
+    let plan_path = s("plan")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| root.join(source::PLAN_FILE));
+    let plan = match std::fs::read_to_string(&plan_path)
+        .map_err(|e| e.to_string())
+        .and_then(|t| conform::Plan::parse(&t))
+    {
+        Ok(p) => p,
+        Err(e) => return refusal("plan_unreadable", format!("{}: {e}", plan_path.display())),
+    };
+    let token = std::env::var("AGENTICSPEC_UI_TOKEN")
+        .ok()
+        .filter(|t| !t.is_empty())
+        .or_else(|| plan.token.clone());
+    let fixture;
+    let url = match s("source") {
+        Some(u) => u.trim_end_matches('/').to_string(),
+        None => {
+            let started = source::Data::load(root)
+                .map_err(|e| e.to_string())
+                .and_then(|d| {
+                    source::FixtureSource::start(d, source::Faults::default())
+                        .map_err(|e| e.to_string())
+                });
+            fixture = match started {
+                Ok(f) => f,
+                Err(e) => return refusal("source_unavailable", e),
+            };
+            fixture.url().to_string()
+        }
+    };
+    let report = conform::run(&url, &plan, token.as_deref(), conform::Options::default());
+    let failed = report.failed();
+    if !failed.is_empty() {
+        let lines: Vec<String> = failed.iter().map(ToString::to_string).collect();
+        return refusal(
+            "conformance_failed",
+            format!(
+                "{url}: {} of {} checks failed\n{}",
+                failed.len(),
+                report.checks.len(),
+                lines.join("\n")
+            ),
+        );
+    }
+    HandlerReply::Success(report.to_json())
 }
 
 /// A path field of the input; the parser has made every required one present.

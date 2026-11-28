@@ -807,3 +807,41 @@ types:
       - name: files
         type: List<String>
         summary: The files written, by their path below `out`.
+  - name: agenticspec.cli.UiConformInput
+    kind: struct
+    fields:
+      - name: source
+        type: Optional<String>
+        summary: >-
+          The root of a runtime's adapter, `http://host:port`, with the scopes below `/scopes/`;
+          the fixture source of `ui/views/source/` when absent. The bearer token is read from
+          `AGENTICSPEC_UI_TOKEN`, else from the plan.
+      - name: plan
+        type: Optional<String>
+        summary: A conformance plan (`agenticspec-runtime-conformance/1`); `ui/views/source/plan.json` below the root by default.
+      - name: root
+        type: Optional<String>
+        summary: The repository root that holds `ui/views/`; the current directory by default.
+
+  - name: agenticspec.cli.UiConformCheck
+    kind: struct
+    fields:
+      - {name: name, type: String}
+      - name: status
+        type: String
+        summary: passed, failed or skipped.
+      - {name: detail, type: String}
+
+  - name: agenticspec.cli.UiConformResult
+    kind: struct
+    naming:
+      summary: >-
+        The checks of the runtime interface (`ui/runtime.openapi.yaml`) against one source: scoped
+        reads (R1), the placement views (R3), resuming a channel from a cursor (R2), command
+        answers and refusals (R4), the action set (R5) and requests without credentials.
+    fields:
+      - {name: source, type: String}
+      - {name: passed, type: Integer}
+      - {name: failed, type: Integer}
+      - {name: skipped, type: Integer}
+      - {name: checks, type: List<agenticspec.cli.UiConformCheck>}

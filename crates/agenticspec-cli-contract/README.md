@@ -224,6 +224,18 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `ui conform`
+
+Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)
+
+Callable: `ui_conform`. Input: `agenticspec.cli.UiConformInput`. Result: `agenticspec.cli.UiConformResult`.
+
+Error `conformance_failed`: `agenticspec.cli.Refusal`.
+
+Error `plan_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `source_unavailable`: `agenticspec.cli.Refusal`.
+
 ### `ui generate`
 
 Generate the Vue app of an ess-ui/1 document over the components of ui/kit
@@ -268,5 +280,6 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_conform: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_generate: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_panels: implement the owner-qualified callable and its declared result/error contract

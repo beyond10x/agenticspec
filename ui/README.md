@@ -133,3 +133,41 @@ its channel scripts in the browser, so the gallery needs no server (`?still` kee
 A widget reads through the client of its scope: the adapter at `source`, else the app's own under
 `/scopes/<architecture>[/<part>[/<instance>]]`. `task views:build` builds it into
 `target/views/gallery`; `task check:views` runs its unit tests and its browser test.
+
+## The runtime interface
+
+`runtime.openapi.yaml` (OpenAPI 3.1) is what a host serving the panels answers: the adapter of the
+runtime that admitted the architecture, at `{root}/scopes/{architecture_id}[/{part path}[/{instance}]]`.
+The generated client calls exactly its operations (a test in `crates/agenticspec-ui` holds them
+equal):
+
+| request | wire |
+|---|---|
+| R1 read | `GET {source}/api/views/{view}?{params}` answers `{"rows": [...]}`, only the rows in scope: the row's key, or a field of it that holds an entity's identifier, is the `entity_id` of a placement (`agentic.architecture.Placements`) to that part and copy |
+| R2 feed | `GET {source}/api/channels/{channel}?{params}`, server-sent events with `event:` the qualified name, `data:` the event JSON and `id:` its cursor; a reconnect with `Last-Event-ID` gets exactly the events after it, in order |
+| R3 placements | R1 on `Placements`, `Parts`, `Reach`, `Revisions` and `Contracts` of the scope's architecture |
+| R4 command | `POST {source}/api/commands/{command}` answers `{"row"}`, or 422 with the refusal's row (`error` its qualified name) |
+| R5 action set | `GET {source}/api/actions` answers `[{command, allowed, grant_id?}]` for the signed-in principal; 404 when the source has none |
+
+Every request carries `Authorization: Bearer <token>` or the session cookie of the host's sign-in
+(the client sends cookies, also to another origin); without them the answer is 401, with no row,
+before anything is dispatched. An action that sends a command shows only while R5 of its scope
+allows the command (and its own `visible`, which may read `actor.may(<command>)`); with no R5 every
+action shows. Hiding is a convenience: R4 refuses what the grants do not allow.
+
+`views/source/` is the fixture source: `source.json` holds the principals by token, the placements,
+the parts of the architecture, the grants, the action class of each command (standing in for a
+catalog of action classes) and the answers of the commands; with the panels' fixtures it answers
+R1-R5 at a scope, in the gallery (`src/fixtures.ts`) and as a local server in tests.
+`plan.json` is its conformance plan (`agenticspec-runtime-conformance/1`): the scopes and their
+views, a channel and the cursor to resume from, commands with their expected answer, and the
+principal's grants with an input for each command R5 may hide.
+
+```console
+agenticspec ui conform                                   # against the fixture source
+AGENTICSPEC_UI_TOKEN=<token> agenticspec ui conform --source http://127.0.0.1:7430 --plan <plan.json>
+```
+
+It checks scoped reads (a row out of scope or left out fails, named by view and key), resuming a
+channel from a cursor, the R3 views, the shape of an answer and a refusal, R5 against the grants
+(and R4 refusing what R5 hides), and a request without credentials. Plain `http://` only.

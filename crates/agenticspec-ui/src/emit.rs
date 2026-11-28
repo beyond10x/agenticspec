@@ -85,7 +85,7 @@ fn prop(name: &str) -> String {
 fn client(app: &App) -> String {
     let mut s = head_ts(app);
     s.push_str(
-        "//\n// The typed client of the reads, commands and channels the document names. A read is\n// `GET /api/views/<view>?<params>`, answered `{\"rows\": [...]}`; a command is\n// `POST /api/commands/<command>` with its input as JSON, answered `{\"row\": ...}` (a refusal the\n// command declares is status 422 with its row); a channel is `GET /api/channels/<channel>`, a\n// stream of server-sent events named by the event they carry.\n\n",
+        "//\n// The typed client of the reads, commands and channels the document names. A read is\n// `GET /api/views/<view>?<params>`, answered `{\"rows\": [...]}`; a command is\n// `POST /api/commands/<command>` with its input as JSON, answered `{\"row\": ...}` (a refusal the\n// command declares is status 422 with its row); a channel is `GET /api/channels/<channel>`, a\n// stream of server-sent events named by the event they carry; the action set is `GET /api/actions`\n// (404 when the source has none). The interface is `ui/runtime.openapi.yaml` of agenticspec.\n\n",
     );
     s.push_str("export type Value = string | number | boolean | null | Value[] | { [key: string]: Value };\nexport type Row = Record<string, Value>;\n\n");
     for (view, sig) in &app.reads {
@@ -218,10 +218,19 @@ export class Refused extends Error {
   }
 }
 
+/** One command of the action set (R5): whether the signed-in principal may issue it at the scope. */
+export interface ActionEntry {
+  command: string;
+  allowed: boolean;
+  grant_id?: string;
+}
+
 export interface Client {
   read<V extends keyof Reads>(view: V, params: Reads[V]['params']): Promise<Row[]>;
   command<C extends keyof Commands>(command: C, input: Commands[C]['input']): Promise<CommandAnswer>;
   subscribe(channel: ChannelName, params: Record<string, Value>, onEvent: (event: string, data: Value) => void): () => void;
+  /** The action set at the client's scope, or null when the source has none (404). */
+  actions(): Promise<ActionEntry[] | null>;
   /** The same client under `path` below its base: the scope a widget reads (`/scopes/<architecture>/<part>`). */
   scope(path: string): Client;
 }
@@ -244,10 +253,14 @@ async function body(r: Response): Promise<Record<string, Value>> {
   }
 }
 
+/**
+ * The client of the source at `base` (`{root}/scopes/{scope}` for a runtime's adapter). Every
+ * request sends the cookies of the host's sign-in, also to a source on another origin.
+ */
 export function createClient(base = '', fetcher: typeof fetch = (input, init) => fetch(input, init)): Client {
   return {
     async read(view, params) {
-      const r = await fetcher(`${base}/api/views/${view}${query(params)}`);
+      const r = await fetcher(`${base}/api/views/${view}${query(params)}`, { credentials: 'include' });
       const b = await body(r);
       if (!r.ok) throw new Refused(r.status, String(b.error ?? r.status), String(b.message ?? ''));
       return (Array.isArray(b.rows) ? b.rows : []) as Row[];
@@ -255,6 +268,7 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
     async command(command, input) {
       const r = await fetcher(`${base}/api/commands/${command}`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
@@ -264,7 +278,7 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
       throw new Refused(r.status, String(b.error ?? r.status), String(b.message ?? ''));
     },
     subscribe(channel, params, onEvent) {
-      const source = new EventSource(`${base}/api/channels/${channel}${query(params)}`);
+      const source = new EventSource(`${base}/api/channels/${channel}${query(params)}`, { withCredentials: true });
       const handler = (e: MessageEvent<string>) => {
         let data: Value;
         try {
@@ -277,6 +291,23 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
       for (const ev of (CHANNEL_EVENTS as Record<string, readonly string[]>)[channel] ?? []) source.addEventListener(ev, handler as EventListener);
       source.onmessage = handler;
       return () => source.close();
+    },
+    async actions() {
+      const r = await fetcher(`${base}/api/actions`, { credentials: 'include' });
+      if (r.status === 404) return null;
+      const t = await r.text();
+      let b: Value;
+      try {
+        b = JSON.parse(t) as Value;
+      } catch {
+        throw new Refused(r.status, 'InvalidAnswer', t.slice(0, 200));
+      }
+      if (!r.ok) {
+        const e = (b ?? {}) as Record<string, Value>;
+        throw new Refused(r.status, String(e.error ?? r.status), String(e.message ?? ''));
+      }
+      if (!Array.isArray(b)) throw new Refused(r.status, 'InvalidAnswer', 'an action set is a list');
+      return b as unknown as ActionEntry[];
     },
     scope(path) {
       return createClient(`${base}${path}`, fetcher);
@@ -594,8 +625,33 @@ impl PageOut<'_> {
         );
     }
 
-    /// An action as template: a link, a copy button or a button that sends a command.
+    /// An action as template: a link, a copy button or a button that sends a command. A button
+    /// that sends a command shows only while the action set of the scope allows the command
+    /// (`may`, R5); `visible` adds its own condition.
     fn action(&mut self, a: &ActionModel, in_row: bool) -> String {
+        let mut conds: Vec<String> = Vec::new();
+        if let ActionKind::Does { command, .. } = &a.kind {
+            conds.push(format!("may.allows({})", ts_str(command)));
+        }
+        if let Some(v) = &a.visible {
+            conds.push(if conds.is_empty() {
+                v.clone()
+            } else {
+                format!("({v})")
+            });
+        }
+        let tpl = self.action_tag(a, in_row);
+        if conds.is_empty() {
+            return tpl;
+        }
+        let cond = conds.join(" && ");
+        match tpl.find(' ') {
+            Some(i) => format!("{} v-if=\"{cond}\"{}", &tpl[..i], &tpl[i..]),
+            None => tpl,
+        }
+    }
+
+    fn action_tag(&mut self, a: &ActionModel, in_row: bool) -> String {
         match &a.kind {
             ActionKind::Navigate { page, params } => {
                 self.kit("KitLink");
@@ -1086,9 +1142,18 @@ fn widget_vue(w: &WidgetModel) -> String {
     if !uses("args[") {
         decls.push_str("void args;\n");
     }
-    if scoped && out.script.contains(", client)") {
+    let may = uses("may.");
+    if scoped && (out.script.contains(", client)") || may) {
         out.rt.insert("useWidget");
         decls.push_str("const client = useWidget(args);\n");
+    }
+    if may {
+        out.rt.insert("useActions");
+        decls.push_str(if scoped {
+            "const may = useActions(client);\n"
+        } else {
+            "const may = useActions();\n"
+        });
     }
     if uses("router.") {
         out.rt.insert("useRouter");
@@ -1158,6 +1223,10 @@ fn page_vue(app: &App, page: &PageModel) -> String {
     out.rt.insert("useShell");
     let uses = |needle: &str| tpl.contains(needle) || out.script.contains(needle);
     let mut decls = String::from("const shell = useShell();\n");
+    if uses("may.") {
+        out.rt.insert("useActions");
+        decls.push_str("const may = useActions();\n");
+    }
     if uses("router.") {
         out.rt.insert("useRouter");
         decls.push_str("const router = useRouter();\n");

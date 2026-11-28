@@ -2,9 +2,10 @@
      the document and generate again. -->
 <script setup lang="ts">
 import { KitButton, KitField, KitForm, KitList, KitPanel, KitRecord, KitSearch, KitSelect, KitShell, KitSplit, KitStack, KitSwitch, KitToolbar, type FieldDef } from '@kit';
-import { contains, flag, options, text, useCommand, useForm, useHosts, usePage, useRead, useShell } from '../runtime';
+import { contains, flag, options, text, useActions, useCommand, useForm, useHosts, usePage, useRead, useShell } from '../runtime';
 
 const shell = useShell();
+const may = useActions();
 const hosts = useHosts();
 const page = usePage({ params: [], state: { book: { store: 'url', initial: '' }, search: { store: 'memory', initial: '' } } });
 const r_bar_book = useRead('pad.Books', () => ({}));
@@ -26,7 +27,7 @@ const fields_notes: FieldDef[] = [
     <template #bar>
       <KitToolbar label="Filters">
         <KitSelect label="Book" placeholder="Choose a book" :options="options(r_bar_book.rows, 'book_id', 'title')" :model-value="page.state['book']" @update:model-value="page.state['book'] = $event" />
-        <KitButton tone="primary" :busy="c_bar_start.busy" :disabled="c_bar_start.blocked" @click="c_bar_start.run()">Start</KitButton>
+        <KitButton v-if="may.allows('pad.StartBook')" tone="primary" :busy="c_bar_start.busy" :disabled="c_bar_start.blocked" @click="c_bar_start.run()">Start</KitButton>
       </KitToolbar>
     </template>
     <KitSplit>

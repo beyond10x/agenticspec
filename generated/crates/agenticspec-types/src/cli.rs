@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest de45a1588278fcf1dc83bd81af5a6dba537efb8a99a7871009ea128ff0ed7e2f
+// contract digest ab30f76d73cc7b84aeb93fa478445cbc93fac7f9fb8bca1dd5e1af485cbef06c
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -951,6 +951,45 @@ pub struct ToolFigures {
     pub refused: i64,
     /// `failed` — `Integer`.
     pub failed: i64,
+}
+
+/// UiConformCheck — `agenticspec.cli.UiConformCheck`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiConformCheck {
+    /// `name` — `String`.
+    pub name: String,
+    /// `status` — `String`.
+    pub status: String,
+    /// `detail` — `String`.
+    pub detail: String,
+}
+
+/// UiConformInput — `agenticspec.cli.UiConformInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiConformInput {
+    /// `source` — `Optional<String>`.
+    pub source: Option<String>,
+    /// `plan` — `Optional<String>`.
+    pub plan: Option<String>,
+    /// `root` — `Optional<String>`.
+    pub root: Option<String>,
+}
+
+/// UiConformResult — `agenticspec.cli.UiConformResult`.
+///
+/// The checks of the runtime interface (`ui/runtime.openapi.yaml`) against one source: scoped reads (R1), the placement views (R3), resuming a channel from a cursor (R2), command answers and refusals (R4), the action set (R5) and requests without credentials.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiConformResult {
+    /// `source` — `String`.
+    pub source: String,
+    /// `passed` — `Integer`.
+    pub passed: i64,
+    /// `failed` — `Integer`.
+    pub failed: i64,
+    /// `skipped` — `Integer`.
+    pub skipped: i64,
+    /// `checks` — `List<agenticspec.cli.UiConformCheck>`.
+    pub checks: Vec<UiConformCheck>,
 }
 
 /// UiGenerateInput — `agenticspec.cli.UiGenerateInput`.
