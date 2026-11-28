@@ -390,6 +390,13 @@ beyond10x/agenticspec -- <git command>`; every other GitHub write goes through `
 with the gates policy file of the primary checkout. Every commit has a body. A tag and a release are
 publications and wait for the owner's order.
 
+Work lands in batches, not one pull request per story: each story is built on its own branch in its
+own worktree, the finished branches are merged into one branch `integration/<date>` based on
+`main`, the batch's gate (`slot --timeout 30m task check`) runs once on that branch, and one pull
+request opens for it. A story's branch is not pushed and gets no pull request of its own. Open pull
+requests that overlap (the same `CHANGELOG.md`, `blocks/`, generated files) conflict with each other
+after every merge and each costs a full CI run; one batch costs one.
+
 ## Release
 
 A release is the workspace version at a bare tag (`0.1.0`): one archive of the `agenticspec`
