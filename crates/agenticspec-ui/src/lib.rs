@@ -13,6 +13,9 @@
 //! - `wire`: the small HTTP client and server both use.
 //! - `operator`: `agenticspec ui build`, the embedded operator app with the data files of one
 //!   architecture, and their reproducible archive.
+//! - `plane`: the default control plane of an architecture as that interface sees it, read from
+//!   the files of its operator UI.
+//! - `serve`: `agenticspec ui serve`, the operator app and that plane answered from fixtures.
 //!
 //! The output is a function of the document alone: the same document gives the same bytes.
 
@@ -25,6 +28,8 @@ pub mod conform;
 pub mod derive;
 pub mod interface;
 pub mod operator;
+pub mod plane;
+pub mod serve;
 pub mod source;
 pub mod wire;
 // The document types hold every property the schema gives a construct the generator accepts; some

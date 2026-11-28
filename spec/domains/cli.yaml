@@ -856,6 +856,29 @@ types:
         type: Optional<String>
         summary: The sha256 of the tar, the digest a deployment bundle carries for it.
 
+  - name: agenticspec.cli.UiServeInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: An architecture document (`agenticspec-architecture/1`); the documents its nested parts reference are read too.
+      - name: contract
+        type: Optional<String>
+        summary: The contract of the architecture (`agenticspec-contract/1`); derived from the architecture when absent.
+      - name: port
+        type: Optional<Integer>
+        summary: The local port; 7430 by default, 0 for one the system picks. The server listens on 127.0.0.1 only.
+
+  - name: agenticspec.cli.UiServeResult
+    kind: struct
+    naming:
+      summary: >-
+        Where the operator UI was served, `http://127.0.0.1:<port>/`, and the root of its runtime
+        interface, `<url>ingress/operator`. The server runs until it is stopped.
+    fields:
+      - {name: url, type: String}
+      - {name: interface, type: String}
+
   - name: agenticspec.cli.SimPortsInput
     kind: struct
     fields:
@@ -1025,7 +1048,8 @@ types:
       - name: source
         type: Optional<String>
         summary: >-
-          The root of a runtime's adapter, `http://host:port`, with the scopes below `/scopes/`;
+          The root of a runtime's adapter, `http://host:port[/path]`, with the scopes below
+          `<root>/scopes/` (`http://127.0.0.1:<port>/ingress/operator` for `agenticspec ui serve`);
           the fixture source of `ui/views/source/` when absent. The bearer token is read from
           `AGENTICSPEC_UI_TOKEN`, else from the plan.
       - name: plan
@@ -1034,6 +1058,17 @@ types:
       - name: root
         type: Optional<String>
         summary: The repository root that holds `ui/views/`; the current directory by default.
+      - name: architecture
+        type: Optional<String>
+        summary: >-
+          An architecture document (`agenticspec-architecture/1`): check the source against its
+          default control plane instead of a plan. Each read of each part answers rows of the
+          view's declared shape, a level's channel resumes from a cursor, R4 carries out a command
+          R5 allows and refuses one it withholds, and R5 answers at every scope. With no
+          `--source`, `agenticspec ui serve` of the architecture is started here and checked.
+      - name: contract
+        type: Optional<String>
+        summary: The contract of the architecture with `--architecture`; derived from it when absent.
 
   - name: agenticspec.cli.UiConformCheck
     kind: struct

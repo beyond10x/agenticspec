@@ -139,12 +139,12 @@ pub struct Data {
     file: SourceFile,
 }
 
-fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<T, String> {
+pub(crate) fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<T, String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
     serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))
 }
 
-fn json_files(dir: &Path) -> Result<Vec<std::path::PathBuf>, String> {
+pub(crate) fn json_files(dir: &Path) -> Result<Vec<std::path::PathBuf>, String> {
     let mut files: Vec<_> = std::fs::read_dir(dir)
         .map_err(|e| format!("{}: {e}", dir.display()))?
         .flatten()

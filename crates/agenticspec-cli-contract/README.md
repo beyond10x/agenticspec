@@ -374,11 +374,15 @@ Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 ### `ui conform`
 
-Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)
+Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml), by a plan or, with --architecture, against the default control plane of an architecture
 
 Callable: `ui_conform`. Input: `agenticspec.cli.UiConformInput`. Result: `agenticspec.cli.UiConformResult`.
 
 Error `conformance_failed`: `agenticspec.cli.Refusal`.
+
+Error `document_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `plan_unreadable`: `agenticspec.cli.Refusal`.
 
@@ -422,6 +426,20 @@ Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 Error `panels_stale`: `agenticspec.cli.Refusal`.
 
+### `ui serve`
+
+Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action
+
+Callable: `ui_serve`. Input: `agenticspec.cli.UiServeInput`. Result: `agenticspec.cli.UiServeResult`.
+
+Error `document_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `fixtures_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `port_unavailable`: `agenticspec.cli.Refusal`.
+
 ## Runtime obligations
 
 - handler:analyze: implement the owner-qualified callable and its declared result/error contract
@@ -455,3 +473,4 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:ui_derive: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_generate: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_panels: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_serve: implement the owner-qualified callable and its declared result/error contract

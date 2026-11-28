@@ -6,6 +6,8 @@ use std::process::Command;
 
 use serde_json::Value;
 
+mod serve;
+
 fn repo() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }

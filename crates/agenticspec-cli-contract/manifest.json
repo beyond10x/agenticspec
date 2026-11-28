@@ -43,7 +43,8 @@
     "handler:ui_conform: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_derive: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_generate: implement the owner-qualified callable and its declared result/error contract",
-    "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract"
+    "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_serve: implement the owner-qualified callable and its declared result/error contract"
   ],
   "package": "agenticspec-cli-contract"
 }

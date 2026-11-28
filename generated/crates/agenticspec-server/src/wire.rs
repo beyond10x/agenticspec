@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest abc2efe4b9124d3590d1cfd5ec8ac7618eaf3901e79a176eb47162dd06b4b4ff
+// contract digest badffce15a018ac8eabdda142520088510bba1f575c2b4393aa6b064f6d9d91f
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -5041,6 +5041,14 @@ pub fn encode_agenticspec_cli_ui_conform_input(value: &agenticspec_types::cli::U
         json::member(out, "root");
         json::push_text(out, &*held0);
     }
+    if let Some(held0) = &value.architecture {
+        json::member(out, "architecture");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.contract {
+        json::member(out, "contract");
+        json::push_text(out, &*held0);
+    }
     out.push('}');
 }
 
@@ -5050,7 +5058,7 @@ pub fn encode_agenticspec_cli_ui_conform_input(value: &agenticspec_types::cli::U
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_conform_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformInput, json::DecodeError> {
-    json::closed_at(value, at, &["source", "plan", "root"])?;
+    json::closed_at(value, at, &["source", "plan", "root", "architecture", "contract"])?;
     Ok(agenticspec_types::cli::UiConformInput {
         source: match value.member("source") {
             None | Some(json::Value::Null) => None,
@@ -5071,6 +5079,20 @@ pub fn decode_agenticspec_cli_ui_conform_input(value: &json::Value, at: &str) ->
             Some(member2) => {
                 let at2 = json::nested(at, "root");
                 Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+        architecture: match value.member("architecture") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "architecture");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        contract: match value.member("contract") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "contract");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
             }
         },
     })
@@ -5424,6 +5446,83 @@ pub fn decode_agenticspec_cli_ui_panels_result(value: &json::Value, at: &str) ->
             let at3 = json::nested(at, "written");
             let member3 = json::member_at(value, at, "written")?;
             json::bool_at(member3, &at3, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiServeInput` as JSON.
+pub fn encode_agenticspec_cli_ui_serve_input(value: &agenticspec_types::cli::UiServeInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    if let Some(held0) = &value.contract {
+        json::member(out, "contract");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.port {
+        json::member(out, "port");
+        json::push_integer(out, *held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiServeInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_serve_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiServeInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "contract", "port"])?;
+    Ok(agenticspec_types::cli::UiServeInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        contract: match value.member("contract") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "contract");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        port: match value.member("port") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "port");
+                Some(json::integer_at(member2, &at2, "an integer")?)
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiServeResult` as JSON.
+pub fn encode_agenticspec_cli_ui_serve_result(value: &agenticspec_types::cli::UiServeResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "url");
+    json::push_text(out, &value.url);
+    json::member(out, "interface");
+    json::push_text(out, &value.interface);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiServeResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_serve_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiServeResult, json::DecodeError> {
+    json::closed_at(value, at, &["url", "interface"])?;
+    Ok(agenticspec_types::cli::UiServeResult {
+        url: {
+            let at0 = json::nested(at, "url");
+            let member0 = json::member_at(value, at, "url")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        interface: {
+            let at1 = json::nested(at, "interface");
+            let member1 = json::member_at(value, at, "interface")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
         },
     })
 }

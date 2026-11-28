@@ -33,7 +33,7 @@ pub const APP: &[(&str, &[u8])] = &[
 ];
 
 /// The panels document a derivation copies from.
-const PANELS: &str = include_str!("../../../ui/views/blocks.ui.yaml");
+pub const PANELS: &str = include_str!("../../../ui/views/blocks.ui.yaml");
 /// The port catalogue of the blocks this binary was built with.
 const PORTS: &str = include_str!("../../../blocks/ports.json");
 /// The part of the compiled blocks a derivation reads (`agenticspec ui panels` writes it).
@@ -53,7 +53,13 @@ pub struct Inputs {
     pub api_base: String,
 }
 
-fn read_doc(path: &Path) -> Result<Value, Failure> {
+/// An architecture document or contract read from `path`, as JSON when it ends in `.json` and as
+/// YAML otherwise.
+///
+/// # Errors
+///
+/// The file cannot be read or parsed.
+pub fn read_doc(path: &Path) -> Result<Value, Failure> {
     let text = std::fs::read_to_string(path)
         .map_err(|e| Failure::Unreadable(format!("{}: {e}", path.display())))?;
     let parsed = if path.extension().is_some_and(|x| x == "json") {
@@ -62,6 +68,15 @@ fn read_doc(path: &Path) -> Result<Value, Failure> {
         serde_yaml_ng::from_str(&text).map_err(|e| e.to_string())
     };
     parsed.map_err(|e| Failure::Unreadable(format!("{}: {e}", path.display())))
+}
+
+/// A contract held as YAML text (what `agenticspec sim contract` prints), as JSON.
+///
+/// # Errors
+///
+/// The text is not YAML.
+pub fn parse_contract(text: &str) -> Result<Value, Failure> {
+    serde_yaml_ng::from_str(text).map_err(|e| Failure::Unreadable(format!("the contract: {e}")))
 }
 
 fn pretty(v: &Value) -> Vec<u8> {

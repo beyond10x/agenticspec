@@ -10,6 +10,8 @@
 //!   held to the document.
 //! - `derive`: `agenticspec ui derive` on the committed examples and the documents of
 //!   `tests/derive/`.
+//! - `serve`: the default control plane `agenticspec ui serve` answers, and `ui conform
+//!   --architecture` against a server with one fault per obligation.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -18,6 +20,7 @@ use agenticspec_ui::{Refusal, generate};
 
 mod derive;
 mod runtime;
+mod serve;
 
 fn cases() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/cases")

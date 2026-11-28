@@ -1,0 +1,9 @@
+{
+  "format": "agenticspec-command-outcomes/1",
+  "outcomes": [
+    {"command": "agentic.gateway.DrainGateway", "input": {"gateway_id": "00000000-0000-4000-8000-9121f2990000"}, "refused": {"error": "agentic.gateway.GatewayNotServing", "gateway_id": "00000000-0000-4000-8000-9121f2990000"}},
+    {"command": "agentic.gateway.DrainGateway", "accepted": {"gateway_id": "00000000-0000-4000-8000-9121f2990001", "name": "name 2", "state": "Draining"}},
+    {"command": "agentic.gateway.StopGateway", "accepted": {"gateway_id": "00000000-0000-4000-8000-9121f2990001", "name": "name 2", "state": "Stopped"}},
+    {"command": "agentic.question.Answer", "accepted": {"question_id": "00000000-0000-4000-8000-d74009500000", "state": "Answered"}}
+  ]
+}

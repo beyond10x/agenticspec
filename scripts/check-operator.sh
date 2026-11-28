@@ -2,8 +2,8 @@
 # The gate of the operator UI of `agenticspec ui build`: the committed build of the operator app
 # matches the digest of its sources (scripts/operator-app.sh, no node), the app's types, then
 # `agenticspec ui build` of the workstation into target/operator/workstation and the browser test
-# of that directory (ui/operator/e2e) over one static server and fixture adapter. Playwright ends
-# a test at 60 s and the run at 120 s.
+# of that directory (ui/operator/e2e) over one static server and fixture adapter, and of one
+# `agenticspec ui serve` of the workstation. Playwright ends a test at 60 s and the run at 120 s.
 set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$root"

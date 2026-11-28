@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import path from 'node:path';
@@ -10,6 +11,10 @@ import type { AddressInfo } from 'node:net';
 // 204, R4 answers `{"row": {}}`, and R5 answers 404 (no action set, every action shows) unless
 // the request carries the cookie `r5=deny`, which withholds every command. GET /seen lists the
 // commands it was sent.
+//
+// Beside it, one `agenticspec ui serve architectures/workstation.yaml` (target/debug/agenticspec,
+// which check-operator.sh builds) on a port the system picks, handed to the tests in SERVE_URL:
+// the same operator app over the default control plane on fixtures.
 const ui = path.resolve(import.meta.dirname, '../..');
 const dir = path.resolve(ui, '..', process.env.OPERATOR_DIR ?? 'target/operator/workstation');
 const fixtures = path.join(ui, 'views/fixtures');
@@ -58,7 +63,27 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address() as AddressInfo;
   process.env.OPERATOR_URL = `http://127.0.0.1:${port}`;
+  const repo = path.resolve(ui, '..');
+  const bin = path.join(repo, 'target/debug/agenticspec');
+  if (!existsSync(bin)) throw new Error(`${bin} is not built; run task check:operator`);
+  const env = { ...process.env };
+  delete env.AGENTICSPEC_UI_TOKEN;
+  const serve = spawn(bin, ['ui', 'serve', 'architectures/workstation.yaml', '--port', '0'], { cwd: repo, env, stdio: ['ignore', 'ignore', 'pipe'] });
+  process.env.SERVE_URL = await new Promise<string>((resolve, reject) => {
+    let seen = '';
+    const timer = setTimeout(() => reject(new Error(`ui serve did not start: ${seen}`)), 30_000);
+    serve.stderr.on('data', (chunk: Buffer) => {
+      seen += chunk.toString();
+      const m = seen.match(/serving (http:\/\/127\.0\.0\.1:\d+)\//);
+      if (m) {
+        clearTimeout(timer);
+        resolve(m[1]);
+      }
+    });
+    serve.on('exit', (code) => reject(new Error(`ui serve ended with ${code}: ${seen}`)));
+  });
   return async () => {
+    serve.kill();
     await new Promise<void>((resolve) => server.close(() => resolve()));
   };
 }

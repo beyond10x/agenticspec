@@ -316,6 +316,37 @@ the `ui` export; with `not_admitted`, an upstream that names no unit of the pack
 (`unit_not_hosted`), and a UI that does not build (`ui_build_refused`, for example a contract
 from other ports than the binary's). `bundles/bindings/operator-ui.yaml` is the worked example.
 
+### Before a runtime: the UI on fixtures
+
+`agenticspec ui serve <architecture> [--contract <file>] [--port <n>]` serves the same operator
+app on 127.0.0.1 (port 7430 by default) over the architecture's default control plane, answered
+from the block fixtures of this repository: rows from the panels' fixtures, the feed from the
+channel scripts, each command recorded and answered with a scripted outcome, every action allowed.
+Open the printed URL to see the operator UI with no runtime; the runtime interface is below
+`/ingress/operator`. `ui/README.md` § "Served on fixtures" lists its paths.
+
+### Proving the runtime answers the interface
+
+A runtime proves that its adapter answers what the operator UI calls (`ui/runtime.openapi.yaml`)
+by running `agenticspec ui conform` against itself, with the architecture it admitted and a token
+its authenticator accepts:
+
+```sh
+AGENTICSPEC_UI_TOKEN=<token> agenticspec ui conform --architecture workstation.yaml \
+  --contract workstation.contract.yaml --source http://127.0.0.1:<port>/ingress/operator
+```
+
+`--source` is the root of the adapter, the `api_base` of the UI, with the scopes below
+`<root>/scopes/`. The command derives the default control plane as `ui build` does and checks: each
+view of each part's page answers rows of the view's declared shape (R1, and the R3 views at the
+architecture), the level's channel resumes from a cursor without repeating an event (R2), the
+action set answers at the architecture and at each part (R5), a command it allows is not refused
+by the authority evaluator and a command it withholds is refused (R4), and a request without
+credentials gets 401. Commands are posted with the input `{}`, which the model refuses, so nothing
+changes. It exits non-zero on a failed check and prints one line per failure, named by the
+request (`R1 agentic.gateway.Gateways at workstation/gateway: …`). Without `--source` it checks
+`ui serve` of the architecture, started for the run.
+
 ## Fixture bundles
 
 `bundles/` holds a bundle of each catalog architecture under each test binding of

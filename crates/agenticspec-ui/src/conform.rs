@@ -18,6 +18,9 @@
 //! - `R5 at <scope>`: every allowed command names a grant of the principal that covers it, and
 //!   no covered command is withheld. `R5 hidden <command> at <scope>`: a command R5 does not
 //!   allow is refused by R4.
+//!
+//! [`run_plane`] needs no plan: it checks a running server against the default control plane of
+//! an architecture ([`crate::plane::Plane`]), the mode a runtime runs against itself.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -1008,5 +1011,477 @@ pub fn run(root: &str, plan: &Plan, token: Option<&str>, options: Options) -> Re
     Report {
         source: root.to_string(),
         checks: s.checks,
+    }
+}
+
+/// The checks of a running server against the default control plane of an architecture
+/// (`agenticspec ui conform --architecture`), each named by what it requested:
+///
+/// - `unauthenticated R1|R2|R4|R5 …`: without credentials the answer is 401 with no row.
+/// - `R1 <view>[?params] at <scope>`: each read of each part's page answers `{"rows": [...]}`,
+///   every row an object of the view's declared shape: its key first, and no field the view does
+///   not declare. A failure names the row's key and the field.
+/// - `R3 <view> at <architecture>`: the placement views answer rows of their shape.
+/// - `R2 resume <channel> at <architecture>`: a level's channel sends events with a cursor, a
+///   qualified name and JSON data, and a reconnect from the cursor of event k gets exactly the
+///   events after it, in order, none at or before it.
+/// - `R5 at <scope>`: the action set of the architecture and of each part is a list of
+///   `{command, allowed}`, each allowed command naming its grant; skipped on 404.
+/// - `R4 allowed <command> at <scope>`: a command R5 allows there is carried out (`{"row"}`) or
+///   refused by the model (422 with an error outside `agentic.authority`), never by the
+///   authority evaluator. `R4 withheld <command> at <scope>`: a command R5 withholds is refused,
+///   422 with the refusal's row. Both post the input `{}`, which a runtime's model refuses, so
+///   nothing changes. With no R5 at all, `R4 <command> at <architecture>` checks the shape of
+///   the answer to the first command of the plane.
+pub fn run_plane(
+    root: &str,
+    plane: &crate::plane::Plane,
+    token: Option<&str>,
+    options: Options,
+) -> Report {
+    let mut s = PlaneSuite {
+        root,
+        plane,
+        token,
+        options,
+        checks: Vec::new(),
+    };
+    s.unauthenticated();
+    s.reads();
+    s.feed();
+    s.actions_and_commands();
+    Report {
+        source: root.to_string(),
+        checks: s.checks,
+    }
+}
+
+struct PlaneSuite<'a> {
+    root: &'a str,
+    plane: &'a crate::plane::Plane,
+    token: Option<&'a str>,
+    options: Options,
+    checks: Vec<Check>,
+}
+
+/// How a 401 without credentials is judged.
+fn judge_unauthenticated(r: Result<wire::Response, String>) -> (Status, String) {
+    match r {
+        Err(e) => (Status::Failed, e),
+        Ok(r) if r.status != 401 => (
+            Status::Failed,
+            format!("answered {} without credentials, not 401", r.status),
+        ),
+        Ok(r) => {
+            let body: Value = serde_json::from_slice(&r.body).unwrap_or(Value::Null);
+            if body.get("rows").is_some() || body.get("row").is_some() {
+                (Status::Failed, "answered 401 with a row".into())
+            } else {
+                (Status::Passed, "401, no row".into())
+            }
+        }
+    }
+}
+
+impl PlaneSuite<'_> {
+    fn push(&mut self, name: String, status: Status, detail: impl Into<String>) {
+        self.checks.push(Check {
+            name,
+            status,
+            detail: detail.into(),
+        });
+    }
+
+    fn url(&self, part: Option<&str>) -> String {
+        interface::scope_url(self.root, &self.plane.architecture, part, None)
+    }
+
+    fn scope_name(&self, part: Option<&str>) -> String {
+        interface::scope_path(&self.plane.architecture, part, None)
+    }
+
+    fn auth(&self) -> Option<String> {
+        self.token.map(|t| format!("Bearer {t}"))
+    }
+
+    fn get(&self, url: &str, authed: bool) -> Result<wire::Response, String> {
+        let auth = self.auth();
+        let headers: Vec<(&str, &str)> = match (&auth, authed) {
+            (Some(a), true) => vec![("Authorization", a.as_str())],
+            _ => vec![],
+        };
+        wire::request("GET", url, &headers, None, self.options.timeout)
+            .map_err(|e| format!("GET {url}: {e}"))
+    }
+
+    fn post(&self, url: &str, authed: bool) -> Result<wire::Response, String> {
+        let auth = self.auth();
+        let mut headers: Vec<(&str, &str)> = vec![("Content-Type", "application/json")];
+        if let (Some(a), true) = (&auth, authed) {
+            headers.push(("Authorization", a.as_str()));
+        }
+        wire::request("POST", url, &headers, Some(b"{}"), self.options.timeout)
+            .map_err(|e| format!("POST {url}: {e}"))
+    }
+
+    fn unauthenticated(&mut self) {
+        let part = self.plane.parts.iter().find(|p| !p.reads.is_empty());
+        let (path, view) = match part {
+            Some(p) => (Some(p.path.clone()), p.reads[0].view.clone()),
+            None => (None, "agentic.architecture.Parts".to_string()),
+        };
+        let scope = self.scope_name(path.as_deref());
+        let base = self.url(path.as_deref());
+        let (s, d) = judge_unauthenticated(self.get(&format!("{base}/api/views/{view}"), false));
+        self.push(format!("unauthenticated R1 {view} at {scope}"), s, d);
+        if let Some(channel) = self.plane.channels.first().cloned() {
+            let url = format!("{base}/api/channels/{channel}");
+            let (s, d) = match wire::subscribe(&url, &[], self.options.timeout) {
+                Err(e) => (Status::Failed, format!("GET {url}: {e}")),
+                Ok(st) if st.status != 401 => (
+                    Status::Failed,
+                    format!("answered {} without credentials, not 401", st.status),
+                ),
+                Ok(st) if st.next(Duration::from_millis(100)).is_some() => (
+                    Status::Failed,
+                    "streamed an event without credentials".into(),
+                ),
+                Ok(_) => (Status::Passed, "401, no event".into()),
+            };
+            self.push(format!("unauthenticated R2 {channel} at {scope}"), s, d);
+        }
+        if let Some(command) = self.plane.commands.first().cloned() {
+            let url = format!("{base}/api/commands/{command}");
+            let (s, d) = judge_unauthenticated(self.post(&url, false));
+            self.push(format!("unauthenticated R4 {command} at {scope}"), s, d);
+        }
+        let (s, d) = judge_unauthenticated(self.get(&format!("{base}/api/actions"), false));
+        self.push(format!("unauthenticated R5 at {scope}"), s, d);
+    }
+
+    /// Whether the answer to a read is `{"rows": [...]}` of the view's declared shape.
+    fn judge_rows(
+        &self,
+        view: &str,
+        url: &str,
+        r: Result<wire::Response, String>,
+    ) -> (Status, String) {
+        let r = match r {
+            Ok(r) => r,
+            Err(e) => return (Status::Failed, e),
+        };
+        if r.status != 200 {
+            return (
+                Status::Failed,
+                format!("GET {url} answered {}: {}", r.status, r.text()),
+            );
+        }
+        let rows = match serde_json::from_slice::<Rows>(&r.body) {
+            Ok(b) => b.rows,
+            Err(e) => {
+                return (
+                    Status::Failed,
+                    format!("GET {url} is not {{\"rows\": [...]}} of row objects: {e}"),
+                );
+            }
+        };
+        let Some(shape) = self.plane.shapes.get(view) else {
+            return (
+                Status::Passed,
+                format!(
+                    "{}; the view declares no shape here",
+                    count(rows.len(), "row")
+                ),
+            );
+        };
+        for (i, row) in rows.iter().enumerate() {
+            if row.first.as_deref() != Some(shape.key.as_str()) {
+                return (
+                    Status::Failed,
+                    format!(
+                        "row {} of {view} starts with {}, not the view's key {}",
+                        i + 1,
+                        row.first.as_deref().unwrap_or("no field"),
+                        shape.key
+                    ),
+                );
+            }
+            if let Some(f) = row.map.keys().find(|f| !shape.fields.contains(*f)) {
+                return (
+                    Status::Failed,
+                    format!(
+                        "{view} returned the row {} with the field {f}, which the view does not declare",
+                        row.key()
+                    ),
+                );
+            }
+        }
+        (
+            Status::Passed,
+            format!("{} of the declared shape", count(rows.len(), "row")),
+        )
+    }
+
+    fn reads(&mut self) {
+        let plane = self.plane;
+        for part in &plane.parts {
+            let scope = self.scope_name(Some(&part.path));
+            for read in &part.reads {
+                let q = query(&read.params);
+                let url = format!("{}/api/views/{}{q}", self.url(Some(&part.path)), read.view);
+                let (s, d) = self.judge_rows(&read.view, &url, self.get(&url, true));
+                self.push(format!("R1 {}{q} at {scope}", read.view), s, d);
+            }
+        }
+        let arch = self.scope_name(None);
+        for view in interface::r3_views() {
+            let url = format!("{}/api/views/{view}", self.url(None));
+            let (s, d) = self.judge_rows(&view, &url, self.get(&url, true));
+            self.push(format!("R3 {view} at {arch}"), s, d);
+        }
+    }
+
+    fn collect(&self, stream: &wire::EventStream, n: usize, deadline: Instant) -> Vec<wire::Event> {
+        let mut got = Vec::new();
+        while got.len() < n {
+            let now = Instant::now();
+            if now >= deadline {
+                break;
+            }
+            match stream.next(deadline - now) {
+                Some(e) => got.push(e),
+                None => break,
+            }
+        }
+        got
+    }
+
+    fn feed(&mut self) {
+        let Some(channel) = self.plane.channels.first().cloned() else {
+            return;
+        };
+        let scope = self.scope_name(None);
+        let name = format!("R2 resume {channel} at {scope}");
+        let url = format!("{}/api/channels/{channel}", self.url(None));
+        let auth = self.auth();
+        let mut headers: Vec<(&str, &str)> = Vec::new();
+        if let Some(a) = &auth {
+            headers.push(("Authorization", a.as_str()));
+        }
+        let wait = Duration::from_secs(3);
+        let first = match wire::subscribe(&url, &headers, self.options.timeout) {
+            Err(e) => return self.push(name, Status::Failed, format!("GET {url}: {e}")),
+            Ok(s) if s.status != 200 => {
+                let d = format!(
+                    "GET {url} answered {}: {}",
+                    s.status,
+                    String::from_utf8_lossy(&s.body)
+                );
+                return self.push(name, Status::Failed, d);
+            }
+            Ok(s) => self.collect(&s, 5, Instant::now() + wait),
+        };
+        if first.len() < 2 {
+            let d = format!(
+                "the channel sent {} within {} s; resuming needs 2",
+                count(first.len(), "event"),
+                wait.as_secs()
+            );
+            return self.push(name, Status::Failed, d);
+        }
+        for (i, e) in first.iter().enumerate() {
+            let bad = if e.id.as_deref().is_none_or(str::is_empty) {
+                Some("has no id:")
+            } else if !e.event.contains('.') {
+                Some("is not named by a qualified event name")
+            } else if serde_json::from_str::<Value>(&e.data).is_err() {
+                Some("carries data that is not JSON")
+            } else {
+                None
+            };
+            if let Some(why) = bad {
+                return self.push(
+                    name,
+                    Status::Failed,
+                    format!("event {} ({}) {why}", i + 1, e.event),
+                );
+            }
+        }
+        let k = (first.len() - 1).min(3);
+        let cursor = first[k - 1].id.clone().unwrap_or_default();
+        let header = interface::cursor_header();
+        let mut again_headers = headers.clone();
+        again_headers.push((header.as_str(), cursor.as_str()));
+        let want = first.len() - k;
+        let again = match wire::subscribe(&url, &again_headers, self.options.timeout) {
+            Err(e) => return self.push(name, Status::Failed, format!("GET {url}: {e}")),
+            Ok(s) if s.status != 200 => {
+                let d = format!(
+                    "a reconnect answered {}: {}",
+                    s.status,
+                    String::from_utf8_lossy(&s.body)
+                );
+                return self.push(name, Status::Failed, d);
+            }
+            Ok(s) => {
+                let mut got = self.collect(&s, want, Instant::now() + wait);
+                while let Some(e) = s.next(self.options.idle) {
+                    got.push(e);
+                    if got.len() > want + 8 {
+                        break;
+                    }
+                }
+                got
+            }
+        };
+        match judge_resume(&first, k, &again) {
+            Ok(d) => self.push(name, Status::Passed, d),
+            Err(d) => self.push(name, Status::Failed, d),
+        }
+    }
+
+    fn actions_and_commands(&mut self) {
+        let plane = self.plane;
+        let mut scopes: Vec<Option<String>> = vec![None];
+        scopes.extend(self.plane.parts.iter().map(|p| Some(p.path.clone())));
+        let mut any_r5 = false;
+        let mut any_withheld = false;
+        for part in scopes {
+            let part = part.as_deref();
+            let scope = self.scope_name(part);
+            let name = format!("R5 at {scope}");
+            let url = format!("{}/api/actions", self.url(part));
+            let r = match self.get(&url, true) {
+                Ok(r) => r,
+                Err(e) => {
+                    self.push(name, Status::Failed, e);
+                    continue;
+                }
+            };
+            if r.status == 404 {
+                self.push(name, Status::Skipped, "the source has no R5 (404)");
+                continue;
+            }
+            if r.status != 200 {
+                let d = format!("answered {}: {}", r.status, r.text());
+                self.push(name, Status::Failed, d);
+                continue;
+            }
+            let list = match parse_actions(&r.body) {
+                Ok(l) => l,
+                Err(e) => {
+                    self.push(name, Status::Failed, e);
+                    continue;
+                }
+            };
+            any_r5 = true;
+            if let Some((cmd, _, _)) = list.iter().find(|(_, a, g)| *a && g.is_none()) {
+                let d = format!("R5 allows {cmd} at {scope} without the grant it relied on");
+                self.push(name, Status::Failed, d);
+                continue;
+            }
+            let allowed = list.iter().filter(|(_, a, _)| *a).count();
+            self.push(
+                name,
+                Status::Passed,
+                format!("{allowed} of {} commands allowed", list.len()),
+            );
+            let prefer = |want: bool| {
+                list.iter()
+                    .filter(|(_, a, _)| *a == want)
+                    .map(|(c, _, _)| c.clone())
+                    .min_by_key(|c| !plane.commands.contains(c))
+            };
+            if let Some(cmd) = prefer(true) {
+                let url = format!("{}/api/commands/{cmd}", self.url(part));
+                let (s, d) = match self.post(&url, true) {
+                    Err(e) => (Status::Failed, e),
+                    Ok(r) => judge_allowed(&r, &cmd, &scope),
+                };
+                self.push(format!("R4 allowed {cmd} at {scope}"), s, d);
+            }
+            if let Some(cmd) = prefer(false) {
+                any_withheld = true;
+                let url = format!("{}/api/commands/{cmd}", self.url(part));
+                let (s, d) = match self.post(&url, true) {
+                    Err(e) => (Status::Failed, e),
+                    Ok(r) => {
+                        let body: Value = serde_json::from_slice(&r.body).unwrap_or(Value::Null);
+                        match refusal(&r, &body, None) {
+                            (Status::Failed, d) => (
+                                Status::Failed,
+                                format!("R5 withholds {cmd} at {scope}, and R4 {d}"),
+                            ),
+                            ok => ok,
+                        }
+                    }
+                };
+                self.push(format!("R4 withheld {cmd} at {scope}"), s, d);
+            }
+        }
+        let arch = self.scope_name(None);
+        if any_r5 && !any_withheld {
+            self.push(
+                format!("R4 withheld at {arch}"),
+                Status::Skipped,
+                "R5 withholds no command at any scope",
+            );
+        }
+        if !any_r5 && let Some(cmd) = self.plane.commands.first().cloned() {
+            let url = format!("{}/api/commands/{cmd}", self.url(None));
+            let (s, d) = match self.post(&url, true) {
+                Err(e) => (Status::Failed, e),
+                Ok(r) => {
+                    let body: Value = serde_json::from_slice(&r.body).unwrap_or(Value::Null);
+                    match (r.status, body.get("row")) {
+                        (200, Some(Value::Object(_) | Value::Null)) => {
+                            (Status::Passed, "200 {\"row\"}".to_string())
+                        }
+                        (422, _) => refusal(&r, &body, None),
+                        (s, _) => (
+                            Status::Failed,
+                            format!("answered {s}, not 200 {{\"row\"}} or 422: {}", r.text()),
+                        ),
+                    }
+                }
+            };
+            self.push(format!("R4 {cmd} at {arch}"), s, d);
+        }
+    }
+}
+
+/// How the answer to a command R5 allows is judged: carried out, or refused by the model but not
+/// by the authority evaluator.
+fn judge_allowed(r: &wire::Response, cmd: &str, scope: &str) -> (Status, String) {
+    let body: Value = serde_json::from_slice(&r.body).unwrap_or(Value::Null);
+    match (r.status, body.get("row")) {
+        (200, Some(Value::Object(_) | Value::Null)) => (Status::Passed, "200 {\"row\"}".into()),
+        (200, _) => (
+            Status::Failed,
+            format!("200 without {{\"row\"}}: {}", r.text()),
+        ),
+        (422, _) => match body["row"]["error"].as_str() {
+            None => (
+                Status::Failed,
+                format!("422 without the refusal's row: {}", r.text()),
+            ),
+            Some(e) if e.starts_with("agentic.authority.") => (
+                Status::Failed,
+                format!(
+                    "R5 allows {cmd} at {scope}, but R4 refused it by the authority evaluator with {e}"
+                ),
+            ),
+            Some(e) => (
+                Status::Passed,
+                format!("422, refused by the model with {e}; the authority let it through"),
+            ),
+        },
+        (s, _) => (
+            Status::Failed,
+            format!(
+                "R5 allows {cmd} at {scope}, but R4 answered {s}: {}",
+                r.text()
+            ),
+        ),
     }
 }
