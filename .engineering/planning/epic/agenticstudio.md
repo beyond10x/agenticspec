@@ -10,7 +10,8 @@ tags:
 relations:
 - depends_on: epic:simulator-and-search
 - depends_on: epic:docs-site
-revision: 7
+- informed_by: epic:architecture-deployment
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T21:51:12Z", actor: "human:operator", revision: 3}
 - {from: "proposed", to: "active", at: "2026-11-27T21:51:12Z", actor: "human:operator", revision: 4}
@@ -137,4 +138,16 @@ The stories that share `crates/agenticstudio`, `ui/studio`, `docs/studio.md`, `s
 `crates/agenticspec-sim` are ordered by `depends_on` edges; each story's § "Shared surfaces"
 names the others.
 
+## Lifecycle stories
 
+The operations on an architecture from design to operation (`design/lifecycle.md`, decisions
+L1-L6, open points LQ1-LQ6, each with its recommended option): the studio records verifications
+and releases, derives each revision's stage from evidence, follows its files and deploys through
+`epic:architecture-deployment`. The stories below are drafts on the design's recommended options;
+the open points are not recorded here as decided.
+
+- `story:studio-verification`: `Verification` and the `test` tool; `NotChecked` on evaluations.
+- `story:studio-release`: `Release`, `RevisionStages`, the `release` tool, write-back.
+- `story:studio-file-follow`: a change on disk becomes a revision with caller `File`.
+- `story:studio-deploy`: the `deploy` tool over the deployment epic's packing, admission, domain
+  and bundle.

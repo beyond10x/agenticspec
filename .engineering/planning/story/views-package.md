@@ -8,6 +8,7 @@ summary: The generated panels, part pages and overviews ship as a Vue package an
 relations:
 - decomposes: epic:view-layer
 - depends_on: story:architecture-ui
+- informed_by: epic:control-plane
 scope:
 - confidence: inferred
   path: CHANGELOG.md
@@ -21,7 +22,7 @@ scope:
   path: ui/studio
 - confidence: inferred
   path: ui/views
-revision: 3
+revision: 4
 ---
 ## Outcome
 
@@ -80,3 +81,20 @@ any panel. Nothing at this commit packages a generated component for another app
 
 Scoped reads and live data from a runtime (`story:runtime-ui-interface`); action sets
 (`story:action-sets`); the `embed` pages, which remain for a host that cannot load scripts.
+
+## Control plane shell
+
+From `design/control-plane.md` C6 and P8 A (`epic:control-plane`): the views package also ships
+the app frame of a control plane as one shell component (navigation, scope switcher, theme tokens,
+R5 wiring, the `embed` shell). The control plane and agenticstudio both mount it, as two apps.
+The studio's draft view previews the draft's default control plane through
+`agenticspec ui serve --sim` (`story:ui-serve-fixtures`, `story:sim-event-log`), with no copy of
+any page.
+
+- Scope: `ui/views/` (the shell component), `ui/studio/` (the draft view mounts it).
+- Acceptance: given a Vue test app that mounts the shell with a fixture `source`, it shows the
+  navigation of the default control plane's pages and switches scope; given agenticstudio's draft
+  view, it mounts the same shell, and no shell component exists under `ui/studio/`.
+- Order: the shell lands with this story; the studio's preview of the default control plane needs
+  `story:ui-serve-fixtures` and `story:sim-event-log` and follows them, so this story does not wait
+  on them.

@@ -11,6 +11,7 @@ relations:
 - depends_on: story:port-derivation
 - depends_on: story:block-bindings
 - depends_on: story:architecture-kpis
+- informed_by: epic:control-plane
 scope:
 - confidence: cited
   path: CHANGELOG.md
@@ -38,7 +39,7 @@ scope:
   path: website/static/architectures
 - confidence: cited
   path: website/static/catalog
-revision: 8
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:33:37Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-11-27T23:33:37Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"review_outcome":1}}}
@@ -117,3 +118,16 @@ invariants and its border, and a link to download the contract file. The pages s
 
 A contract on the ladder page; the contract of a catalog entry's best variant; filtering
 conformance (`story:contract-conformance`); invariants on a trace (`story:routing-invariants`).
+
+## Default control plane operations
+
+From `design/control-plane.md` C8 (`epic:control-plane`): each architecture page also lists the
+default control plane's resolved operations beside its contract (per default ingress its audience
+and operations); no control-plane UI is built per catalog entry.
+
+- Scope: the generated Contract section of `docs/architectures/` and the catalog entries.
+- Acceptance: given `architectures/workstation.yaml` without `ingress:`, its page lists ingress
+  `operator` with `DrainGateway`, `StopGateway` and `DetachUpstream` and ingress `metrics` with its
+  `computed` KPIs.
+- Order: this addition needs `story:control-plane-default`; the rest of this story does not wait on
+  it, and the addition lands as a follow-up change under this story once that story is in.
