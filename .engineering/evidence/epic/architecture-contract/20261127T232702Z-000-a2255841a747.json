@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:02Z",
+  "actor": "human:operator",
+  "artifact": "epic:architecture-contract",
+  "kind": "epic",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-acceptance-1",
+    "reference": "acceptance 1 (no Acceptance section): added ## Acceptance with 8 checkable lines (task check, ports --check, 19 contracts with protocol, docs test over 10 pages and 6 entries, contract:conform, trace check, UNMAPPED count 3 to 0, Cross-block causation C1-C10)",
+    "review": "review-result:architecture-contract-acceptance-1",
+    "outcome": "fixed"
+  }
+}

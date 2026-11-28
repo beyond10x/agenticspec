@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:02Z",
+  "actor": "human:operator",
+  "artifact": "story:contract-derivation",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-design-1",
+    "reference": "design 1 (predicate parser): new src/contract/predicate.rs owns grammar and parser (typed Predicate, refusal with offset); contract check verifies every predicate parses; acceptance for 19 documents and a malformed fixture; routing-invariants evaluates the parsed Predicate and parses no text",
+    "review": "review-result:architecture-contract-design-1",
+    "outcome": "fixed"
+  }
+}

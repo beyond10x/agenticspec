@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:03Z",
+  "actor": "human:operator",
+  "artifact": "story:port-derivation",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-parallel-safety-1",
+    "reference": "parallel-safety 1 (manifest omitted): scope --add crates/agenticspec-sim/Cargo.toml and Cargo.lock (regex, sha2 as workspace deps), named under Shared surfaces; SIM_DEPS unchanged so no catalog digest moves. Critic note on SIM_EXCLUDED exact match: story now extends the match to prefixes (entry ending in / excludes the tree), adds contract/, docs test proves digests stable, acceptance: git diff of website/static/catalog empty",
+    "review": "review-result:architecture-contract-parallel-safety-1",
+    "outcome": "fixed"
+  }
+}

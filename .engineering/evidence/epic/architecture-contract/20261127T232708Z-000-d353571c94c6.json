@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:08Z",
+  "actor": "human:operator",
+  "artifact": "epic:architecture-contract",
+  "kind": "epic",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-scope-1",
+    "reference": "scope 1 (protocol promise unclaimed, finding filed on the epic at line 16): story:contract-derivation now writes protocol per port into agenticspec-contract/1 and story:contract-docs shows it; epic Nouns and Stories table say so (same fix also recorded on story:contract-derivation)",
+    "review": "review-result:architecture-contract-scope-1",
+    "outcome": "fixed"
+  }
+}

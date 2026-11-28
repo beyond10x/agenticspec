@@ -10,18 +10,21 @@ relations:
 - depends_on: story:studio-live
 - depends_on: story:studio-editor
 - depends_on: story:architecture-patches
+- depends_on: story:studio-mcp
 scope:
 - confidence: cited
   path: crates/agenticspec-sim
 - confidence: cited
   path: crates/agenticstudio
 - confidence: cited
+  path: crates/agenticstudio-mcp
+- confidence: cited
   path: docs/studio.md
 - confidence: cited
   path: studio
 - confidence: cited
   path: ui/studio
-revision: 7
+revision: 10
 ---
 ## Outcome
 
@@ -30,7 +33,9 @@ the simulator on the draft's current revision, as a short simulation or a search
 places, and records an evaluation (`studio/domains/evaluation.yaml`). Its result shows the KPIs
 per part, baseline against best, and the user accepts any variant of the search into the draft as
 a patch, not only the best. A finished evaluation's per-part KPIs become the draft's `kpi` facts,
-and a dry run answers the KPI change of a short simulation.
+and a dry run answers the KPI change of a short simulation. This story adds the `simulate` tool
+to the agent channel of `story:studio-mcp` and the KPI change to its `apply` dry run (decision A,
+taken on default 2026-11-28: the channel lands right after the editor).
 
 ## Scope
 
@@ -45,7 +50,7 @@ and a dry run answers the KPI change of a short simulation.
   experiment.
 - `crates/agenticstudio`: `StartEvaluation`, `CompleteEvaluation`, `FailEvaluation`; the run on a
   worker thread, its progress on the draft's event channel; the `simulate` tool call answers with
-  the evaluation; the result page at `/evaluations/<id>` from `crates/agenticspec-render`.
+  the evaluation, and `crates/agenticstudio-mcp` gains `simulate(budget)` as its fourth tool; the result page at `/evaluations/<id>` from `crates/agenticspec-render`.
 - `kpi` facts: when an evaluation is `Done`, the draft's facts gain `kpi{part, id, value}` from
   its `result.json` as `story:studio-first-slice` § "Facts of an architecture" fixes them, built
   by the relation of `story:architecture-patches`; they replace those of the draft's previous
@@ -60,6 +65,9 @@ and a dry run answers the KPI change of a short simulation.
   result, the run KPIs (`kpis` of the run) of a short simulation of the current revision and of
   the patched document. Open point: the editor sends a dry run on every edit, and the cost of a
   simulation per edit is not measured; taken: one seed and the experiment's horizon.
+- Explaining a KPI: each KPI a `simulate` or dry-run answer reports carries the `summary`, `unit`
+  and `direction` of its entry in `kpis/catalogue.yaml`; a KPI with no entry is answered with its
+  id and says it has none. The catalogue is read, not changed.
 - `ui/studio`: the run control in the editor (simulate or search, with a budget), the result
   panel of an evaluation (KPIs per part, baseline against best; the variants), an accept button
   per variant, the KPI change in the dry run view.
@@ -69,16 +77,16 @@ and a dry run answers the KPI change of a short simulation.
 
 ## Shared surfaces
 
-- `crates/agenticstudio`: after `story:studio-first-slice`, `story:studio-live` and
-  `story:studio-editor` (depends on live and editor); before `story:studio-mcp`,
-  `story:studio-drafts` and `story:studio-chat`.
+- `crates/agenticstudio`, `crates/agenticstudio-mcp`: after `story:studio-first-slice`,
+  `story:studio-live`, `story:studio-editor` and `story:studio-mcp` (depends on live, editor and
+  mcp); before `story:studio-drafts` and `story:studio-chat`.
 - `crates/agenticspec-sim`: after `story:guards-and-limits` and `story:architecture-patches`
   (depends on patches, which depends on guards); before `story:studio-state-space`, which
   depends on this story.
 - `ui/studio`: after `story:studio-editor`; before `story:studio-drafts`,
   `story:studio-state-space` and `story:studio-chat`.
-- `docs/studio.md`: after `story:studio-first-slice` and `story:studio-live`; before
-  `story:studio-mcp` and `story:studio-drafts`.
+- `docs/studio.md`: after `story:studio-first-slice`, `story:studio-live` and `story:studio-mcp`;
+  before `story:studio-drafts`.
 - `studio`: after `story:studio-first-slice`; before `story:studio-drafts`, which settles the
   `UNMAPPED:` of `studio.draft.Draft`.
 
@@ -101,3 +109,8 @@ and a dry run answers the KPI change of a short simulation.
   control, an evaluation of the draft's current revision appears as `Running`.
 - Given a `Done` evaluation, its result panel shows for each part the KPIs of `baseline.per_part`
   and `best.per_part` of its `result.json`.
+- Given a draft at revision 1, when an MCP client calls `apply` with `dry_run: true`, the answer
+  carries the diff, the check result and the KPI change, and the draft stays at revision 1.
+- Given a draft of `architectures/workstation.yaml`, when an MCP client calls `simulate`, the
+  answer carries for the KPI `tasks_correct` the `summary`, `unit` and `direction` written for
+  it in `kpis/catalogue.yaml`.

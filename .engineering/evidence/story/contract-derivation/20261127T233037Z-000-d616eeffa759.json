@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:30:37Z",
+  "actor": "human:operator",
+  "artifact": "story:contract-derivation",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-acceptance-2",
+    "reference": "answers review-result:architecture-contract-acceptance-2 finding 1 (unverifiable comment clause): dropped; the line ends at the UNMAPPED count 3 -> 0",
+    "review": "review-result:architecture-contract-acceptance-2",
+    "outcome": "fixed"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:30:37Z",
+  "actor": "human:operator",
+  "artifact": "story:routing-invariants",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-acceptance-2",
+    "reference": "answers review-result:architecture-contract-acceptance-2 finding 2 (not_checked uncovered): acceptance line added, an unevaluable predicate is reported not_checked, never held",
+    "review": "review-result:architecture-contract-acceptance-2",
+    "outcome": "fixed"
+  }
+}
