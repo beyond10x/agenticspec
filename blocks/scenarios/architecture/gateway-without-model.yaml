@@ -1,0 +1,85 @@
+# A gateway part is a path to a model only when it links to one. Synthesis arranges no part and
+# link rows for the guards of a commit (ESS-SYNTH-003), so this scenario walks them by hand: an
+# agent whose model calls go to a gateway that links to no model is refused at commit; once the
+# gateway links to a model part, the same architecture commits.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: gateway-without-model
+summary: An architecture whose gateway part links to no model part is refused at commit; with the gateway's link to a model it commits.
+
+arrange:
+  - instance: desk
+    entity: agentic.architecture.Architecture
+
+timeline:
+  - at: 2026-11-28T14:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: desk}
+    outcome: created
+    capture: {instance: desk, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+  - at: 2026-11-28T14:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000aa1
+      architecture_id: {$instance: desk}
+      name: worker
+      kind: Agent
+      count: 1
+      settings: []
+    outcome: added
+  - at: 2026-11-28T14:00:02Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000aa2
+      architecture_id: {$instance: desk}
+      name: gateway
+      kind: Gateway
+      count: 1
+      settings: []
+    outcome: added
+  - at: 2026-11-28T14:00:03Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: desk}
+      from_part_id: 00000000-0000-4000-8000-000000000aa1
+      to_part_id: 00000000-0000-4000-8000-000000000aa2
+      carries: ModelCall
+    outcome: added
+
+  # the gateway reaches no model
+  - at: 2026-11-28T14:00:04Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: desk}}
+    outcome: gateway-without-model
+    error:
+      name: agentic.architecture.GatewayWithoutModel
+    no_events: [agentic.architecture.RevisionCommitted]
+
+  # the gateway links to a model part
+  - at: 2026-11-28T14:00:05Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000aa3
+      architecture_id: {$instance: desk}
+      name: model
+      kind: Model
+      count: 1
+      settings: [{name: route, value: frontier}]
+    outcome: added
+  - at: 2026-11-28T14:00:06Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: desk}
+      from_part_id: 00000000-0000-4000-8000-000000000aa2
+      to_part_id: 00000000-0000-4000-8000-000000000aa3
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T14:00:07Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: desk}}
+    outcome: committed
+
+assert:
+  - view: agentic.architecture.Revisions
+    contains:
+      architecture_id: {$instance: desk}

@@ -39,6 +39,10 @@ types:
   # `<part>.<border part>`.
   # UNMAPPED: whether the other resource kinds (queue, rate limit, cache) are parts of an
   # architecture or only of a run. No architecture places them. Taken: they are not parts.
+  # UNMAPPED: a store of agentic.store is no part kind, and Carries has no Event, so an
+  # architecture cannot place a store or an event bus, though Carries has Record and Read.
+  # Adding them changes the command line's check, the settings table, the contract's port table
+  # and every catalog digest. Open question for the owner.
   # The command line's structural check reads this list and Carries from this file, so a block
   # or a carries value that is not declared here is refused there.
   - name: agentic.architecture.PartKind
@@ -707,6 +711,8 @@ errors:
     summary: An agent part has no link carrying model calls to a model or gateway part, so no revision was recorded.
   - name: agentic.architecture.QuestionWithoutAnswerer
     summary: A link carries questions to an agent part that acts for no principal, so no party may answer and no revision was recorded.
+  - name: agentic.architecture.GatewayWithoutModel
+    summary: A gateway part has no link carrying model calls to a model part, so the calls it passes reach no model and no revision was recorded.
   - name: agentic.architecture.EmptyPatch
     summary: A patch has at least one rule, and nothing was recorded.
   - name: agentic.architecture.NoSuchPatch
@@ -1205,7 +1211,8 @@ commands:
             architecture_id: input.architecture_id
 
   # Freeze the current parts, links and border into a revision. Refused when nothing is declared,
-  # when an agent part has no path to a model, and when a question has no party that may answer.
+  # when an agent part has no path to a model, when a question has no party that may answer, and
+  # when a gateway part links to no model.
   - name: agentic.architecture.CommitRevision
     naming:
       display: Commit an architecture revision
@@ -1265,6 +1272,26 @@ commands:
                         - defined(target.acts_for_part_id)
           exists: true
         error: agentic.architecture.QuestionWithoutAnswerer
+      # A gateway part passes model calls on, so agent-without-model counts it as a path to a
+      # model only because this guard holds: every gateway part links to a model part.
+      - name: gateway-without-model
+        when_related:
+          entity: agentic.architecture.Part
+          where:
+            all:
+              - architecture_id == input.architecture_id
+              - kind == Gateway
+              - not:
+                  exists:
+                    in: {entity: agentic.architecture.Link}
+                    as: link
+                    that:
+                      all:
+                        - link.from_part_id == part_id
+                        - link.carries == ModelCall
+                        - link.to_kind == Model
+          exists: true
+        error: agentic.architecture.GatewayWithoutModel
       - name: committed
         creates: agentic.architecture.ArchitectureRevision
         instance: revision_id

@@ -1,0 +1,110 @@
+# One content is stored once in an artifact store, even when two puts of it race. Synthesis
+# arranges no record (ESS-SYNTH-004), so this scenario walks the path by hand: a put of the
+# digest is Writing, a second put of the same digest before the service confirms the first is
+# refused, the first is confirmed, and once a put fails its key takes a put again.
+type: ess-scenario/7
+domain: agentic.store
+scenario: artifact-put-once
+summary: A second put of a digest while the first is still being written is refused, so an artifact store never holds one content twice.
+
+arrange:
+  - instance: store
+    entity: agentic.store.Store
+  - instance: first
+    entity: agentic.store.Record
+  - instance: other
+    entity: agentic.store.Record
+  - instance: retry
+    entity: agentic.store.Record
+
+timeline:
+  - at: 2026-11-28T11:00:00Z
+    command: agentic.store.CreateStore
+    actor: agentic.store.StoreOwner
+    input: {name: artifacts, kind: Artifact, scope: Architecture, retention: Forever}
+    outcome: created
+    capture: {instance: store, event: agentic.store.StoreCreated, field: store_id}
+
+  - at: 2026-11-28T11:00:01Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: sha256-report-1
+      content: {digest: sha256-report-1, length: 900, class: report}
+      recorded_by: 00000000-0000-4000-8000-0000000000d1
+      derived_from: []
+      at: 2026-11-28T11:00:01Z
+    outcome: requested
+    capture: {instance: first, event: agentic.store.PutRequested, field: record_id}
+
+  # the same content again while the first put is Writing
+  - at: 2026-11-28T11:00:02Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: sha256-report-1
+      content: {digest: sha256-report-1, length: 900, class: report}
+      recorded_by: 00000000-0000-4000-8000-0000000000d2
+      derived_from: []
+      at: 2026-11-28T11:00:02Z
+    outcome: key-taken
+    error:
+      name: agentic.store.KeyTaken
+    no_events: [agentic.store.PutRequested]
+
+  - at: 2026-11-28T11:00:03Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: first}, at: 2026-11-28T11:00:03Z}
+    outcome: confirmed
+    events:
+      - event: agentic.store.RecordPut
+        payload: {record_id: {$instance: first}, key: sha256-report-1, revision: 1}
+
+  # a put that fails frees its key
+  - at: 2026-11-28T11:00:04Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: sha256-report-2
+      content: {digest: sha256-report-2, length: 910, class: report}
+      recorded_by: 00000000-0000-4000-8000-0000000000d1
+      derived_from: []
+      at: 2026-11-28T11:00:04Z
+    outcome: requested
+    capture: {instance: other, event: agentic.store.PutRequested, field: record_id}
+  - at: 2026-11-28T11:00:05Z
+    command: agentic.store.FailPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: other}, reason: disk full, at: 2026-11-28T11:00:05Z}
+    outcome: failed
+  - at: 2026-11-28T11:00:06Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: sha256-report-2
+      content: {digest: sha256-report-2, length: 910, class: report}
+      recorded_by: 00000000-0000-4000-8000-0000000000d1
+      derived_from: []
+      at: 2026-11-28T11:00:06Z
+    outcome: requested
+    capture: {instance: retry, event: agentic.store.PutRequested, field: record_id}
+
+assert:
+  - view: agentic.store.Artifacts
+    contains:
+      record_id: {$instance: first}
+      recorded_by: 00000000-0000-4000-8000-0000000000d1
+      state: Present
+  - view: agentic.store.Artifacts
+    contains:
+      record_id: {$instance: other}
+      state: Failed
+  - view: agentic.store.Artifacts
+    contains:
+      record_id: {$instance: retry}
+      state: Writing

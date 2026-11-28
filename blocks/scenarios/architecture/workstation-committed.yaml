@@ -1,6 +1,7 @@
 # The workstation of design/building-blocks.md § "An architecture document", lowered to commands
 # in the design's fixed order: declare the parts, declare the links, set the border, commit.
-# One link is added to the design's list: operator -> gateway carrying ModelCall. Without it the
+# Two links and a part are added to the design's list: operator -> gateway carrying ModelCall, and
+# the model part behind the gateway with gateway -> model carrying ModelCall. Without the first the
 # operator agent has no path to a model and the commit is refused (workstation-no-model-path.yaml).
 type: ess-scenario/7
 domain: agentic.architecture
@@ -183,7 +184,28 @@ timeline:
       part_id: 00000000-0000-4000-8000-000000000002
     outcome: bordered
 
+  # The design's gateway names its upstream as a setting; the model behind it is a part, and the
+  # gateway's link to it is its path to a model.
   - at: 2026-11-27T09:00:19Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000009
+      architecture_id: {$instance: ws}
+      name: model
+      kind: Model
+      count: 1
+      settings: [{name: route, value: frontier}]
+    outcome: added
+  - at: 2026-11-27T09:00:20Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: ws}
+      from_part_id: 00000000-0000-4000-8000-000000000004
+      to_part_id: 00000000-0000-4000-8000-000000000009
+      carries: ModelCall
+    outcome: added
+
+  - at: 2026-11-27T09:00:21Z
     command: agentic.architecture.CommitRevision
     input:
       architecture_id: {$instance: ws}
@@ -200,8 +222,8 @@ assert:
     params:
       architecture_id: {$instance: ws}
     counts:
-      at_least: 6
-      at_most: 6
+      at_least: 7
+      at_most: 7
   - view: agentic.architecture.Reach
     params:
       architecture_id: {$instance: ws}

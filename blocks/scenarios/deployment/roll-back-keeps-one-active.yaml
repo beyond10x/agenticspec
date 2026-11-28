@@ -1,0 +1,148 @@
+# A rollback ends the current installation only when the one it replaced takes runs again. Walked
+# by hand: synthesis cannot reach a committed architecture revision. Five installations of one
+# runtime: a replaces z, b and c both replace a while it drains. c rolls back to a, a rolls back
+# to z, and d rolls back to b, so b is Active and the installation it replaced, a, is rolled back
+# itself. Rolling b back is refused: the reactivation would skip a, and the runtime would hold no
+# Active installation. b stays Active.
+type: ess-scenario/7
+domain: agentic.deployment
+scenario: roll-back-keeps-one-active
+summary: A rollback whose replaced installation was rolled back itself is refused, so the runtime keeps its Active installation.
+
+arrange:
+  - instance: arch
+    entity: agentic.architecture.Architecture
+  - instance: rev
+    entity: agentic.architecture.ArchitectureRevision
+  - instance: rt
+    entity: agentic.runtime.Runtime
+  - instance: z
+    entity: agentic.deployment.Installation
+  - instance: a
+    entity: agentic.deployment.Installation
+  - instance: b
+    entity: agentic.deployment.Installation
+  - instance: c
+    entity: agentic.deployment.Installation
+  - instance: d
+    entity: agentic.deployment.Installation
+
+timeline:
+  - at: 2026-11-28T09:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: review-desk}
+    outcome: created
+    capture: {instance: arch, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+  - at: 2026-11-28T09:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-0000000007a1
+      architecture_id: {$instance: arch}
+      name: owner
+      kind: Principal
+      count: 1
+      settings: [{name: principal_kind, value: human}]
+    outcome: added
+  - at: 2026-11-28T09:00:02Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: arch}}
+    outcome: committed
+    capture: {instance: rev, event: agentic.architecture.RevisionCommitted, field: revision_id}
+  - at: 2026-11-28T09:00:03Z
+    command: agentic.runtime.RegisterRuntime
+    input: {name: desk-runtime, kinds: [Agent], min_isolation: Container}
+    outcome: registered
+    capture: {instance: rt, event: agentic.runtime.RuntimeRegistered, field: runtime_id}
+
+  # z, then a in its place
+  - at: 2026-11-28T09:01:00Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rt}, revision_id: {$instance: rev}, binding: sha256-binding-z}
+    outcome: installed
+    capture: {instance: z, event: agentic.deployment.RevisionInstalled, field: installation_id}
+  - at: 2026-11-28T09:01:01Z
+    command: agentic.deployment.DrainInstallation
+    input: {installation_id: {$instance: z}}
+    outcome: draining
+  - at: 2026-11-28T09:01:02Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rt}, revision_id: {$instance: rev}, binding: sha256-binding-a, replaces: {$instance: z}}
+    outcome: installed
+    capture: {instance: a, event: agentic.deployment.RevisionInstalled, field: installation_id}
+
+  # b and c both replace a while it drains
+  - at: 2026-11-28T09:02:00Z
+    command: agentic.deployment.DrainInstallation
+    input: {installation_id: {$instance: a}}
+    outcome: draining
+  - at: 2026-11-28T09:02:01Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rt}, revision_id: {$instance: rev}, binding: sha256-binding-b, replaces: {$instance: a}}
+    outcome: installed
+    capture: {instance: b, event: agentic.deployment.RevisionInstalled, field: installation_id}
+  - at: 2026-11-28T09:02:02Z
+    command: agentic.deployment.DrainInstallation
+    input: {installation_id: {$instance: b}}
+    outcome: draining
+  - at: 2026-11-28T09:02:03Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rt}, revision_id: {$instance: rev}, binding: sha256-binding-c, replaces: {$instance: a}}
+    outcome: installed
+    capture: {instance: c, event: agentic.deployment.RevisionInstalled, field: installation_id}
+
+  # c rolls back to a, a rolls back to z: a is rolled back
+  - at: 2026-11-28T09:03:00Z
+    command: agentic.deployment.RollBack
+    input: {installation_id: {$instance: c}}
+    outcome: rolled-back
+    events:
+      - event: agentic.deployment.InstallationRolledBack
+        payload: {installation_id: {$instance: c}, reactivated: {$instance: a}}
+  - at: 2026-11-28T09:03:01Z
+    command: agentic.deployment.RollBack
+    input: {installation_id: {$instance: a}}
+    outcome: rolled-back
+    events:
+      - event: agentic.deployment.InstallationRolledBack
+        payload: {installation_id: {$instance: a}, reactivated: {$instance: z}}
+
+  # d replaces b and rolls back to it: b is Active again
+  - at: 2026-11-28T09:04:00Z
+    command: agentic.deployment.DrainInstallation
+    input: {installation_id: {$instance: z}}
+    outcome: draining
+  - at: 2026-11-28T09:04:01Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rt}, revision_id: {$instance: rev}, binding: sha256-binding-d, replaces: {$instance: b}}
+    outcome: installed
+    capture: {instance: d, event: agentic.deployment.RevisionInstalled, field: installation_id}
+  - at: 2026-11-28T09:04:02Z
+    command: agentic.deployment.RollBack
+    input: {installation_id: {$instance: d}}
+    outcome: rolled-back
+    events:
+      - event: agentic.deployment.InstallationRolledBack
+        payload: {installation_id: {$instance: d}, reactivated: {$instance: b}}
+
+  # b replaced a, which is rolled back: nothing to roll back to, b stays Active
+  - at: 2026-11-28T09:05:00Z
+    command: agentic.deployment.RollBack
+    input: {installation_id: {$instance: b}}
+    outcome: replaced-not-reactivatable
+    error:
+      name: agentic.deployment.NothingToRollBackTo
+    no_events: [agentic.deployment.InstallationRolledBack]
+
+assert:
+  - view: agentic.deployment.InstallationsOfRuntime
+    params:
+      runtime_id: {$instance: rt}
+    contains:
+      installation_id: {$instance: b}
+      state: Active
+  - view: agentic.deployment.InstallationsOfRuntime
+    params:
+      runtime_id: {$instance: rt}
+    contains:
+      installation_id: {$instance: a}
+      state: RolledBack
