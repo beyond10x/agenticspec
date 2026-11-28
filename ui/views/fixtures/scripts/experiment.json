@@ -1,0 +1,10 @@
+{
+  "channel": "experiment",
+  "events": [
+    {"at": "1s", "event": "agentic.experiment.ExperimentDone", "payload": {"experiment_id": "00000000-0000-4000-8000-fb0bcb550000"}},
+    {"at": "2s", "event": "agentic.experiment.ExperimentFailed", "payload": {"experiment_id": "00000000-0000-4000-8000-fb0bcb550000", "reason": "reason 1"}},
+    {"at": "3s", "event": "agentic.experiment.ExperimentPlanned", "payload": {"experiment_id": "00000000-0000-4000-8000-fb0bcb550000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "work_mode_id": "00000000-0000-4000-8000-63f5f35e0000", "profile_id": "00000000-0000-4000-8000-049add430000", "mode": "Exhaustive"}},
+    {"at": "4s", "event": "agentic.experiment.ExperimentStarted", "payload": {"experiment_id": "00000000-0000-4000-8000-fb0bcb550000"}},
+    {"at": "5s", "event": "agentic.experiment.VariantRecorded", "payload": {"variant_id": "00000000-0000-4000-8000-bb4be1160000", "experiment_id": "00000000-0000-4000-8000-fb0bcb550000", "fitness": "1.50", "feasible": true}}
+  ]
+}

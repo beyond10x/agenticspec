@@ -1,0 +1,8 @@
+{
+  "view": "agentic.experiment.BestVariant",
+  "rows": [
+    {"variant_id": "00000000-0000-4000-8000-bb4be1160000", "experiment_id": "00000000-0000-4000-8000-fb0bcb550000", "values": [{"field":"field 1","part":"part 1","value":"value 1"}], "fitness": "1.50"},
+    {"variant_id": "00000000-0000-4000-8000-bb4be1160001", "experiment_id": "00000000-0000-4000-8000-fb0bcb550000", "values": [{"field":"field 2","value":"value 2"}], "fitness": "2.50"},
+    {"variant_id": "00000000-0000-4000-8000-bb4be1160002", "experiment_id": "00000000-0000-4000-8000-fb0bcb550000", "values": [{"field":"field 3","part":"part 3","value":"value 3"}], "fitness": "3.50"}
+  ]
+}

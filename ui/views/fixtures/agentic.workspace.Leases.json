@@ -1,0 +1,8 @@
+{
+  "view": "agentic.workspace.Leases",
+  "rows": [
+    {"lease_id": "00000000-0000-4000-8000-33e91c530000", "workspace_id": "00000000-0000-4000-8000-881697980000", "holder": "00000000-0000-4000-8000-761908b00000", "sharing": "Exclusive", "expires_at": "2026-11-20T09:04:00Z", "writes": 1, "state": "Expired"},
+    {"lease_id": "00000000-0000-4000-8000-33e91c530001", "workspace_id": "00000000-0000-4000-8000-881697980001", "holder": "00000000-0000-4000-8000-761908b00001", "sharing": "SharedReadOnly", "expires_at": "2026-11-20T10:04:00Z", "writes": 2, "state": "Live"},
+    {"lease_id": "00000000-0000-4000-8000-33e91c530002", "workspace_id": "00000000-0000-4000-8000-881697980002", "holder": "00000000-0000-4000-8000-761908b00002", "sharing": "SharedReadWrite", "expires_at": "2026-11-20T11:04:00Z", "writes": 3, "state": "Released"}
+  ]
+}

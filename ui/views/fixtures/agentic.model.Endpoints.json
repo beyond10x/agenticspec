@@ -1,0 +1,8 @@
+{
+  "view": "agentic.model.Endpoints",
+  "rows": [
+    {"endpoint_id": "00000000-0000-4000-8000-b24dcd040000", "model_id": "00000000-0000-4000-8000-83c6d66d0000", "address": "address 1", "wire": "Messages", "hosting": "Vendor", "start_wait_seconds": 1, "state": "Closed"},
+    {"endpoint_id": "00000000-0000-4000-8000-b24dcd040001", "model_id": "00000000-0000-4000-8000-83c6d66d0001", "address": "address 2", "wire": "Chat", "hosting": "Managed", "state": "Open"},
+    {"endpoint_id": "00000000-0000-4000-8000-b24dcd040002", "model_id": "00000000-0000-4000-8000-83c6d66d0002", "address": "address 3", "wire": "Responses", "hosting": "Local", "start_wait_seconds": 3, "state": "Closed"}
+  ]
+}

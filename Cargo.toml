@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/agenticspec", "crates/agenticspec-records", "crates/agenticspec-sim", "crates/agenticspec-render", "crates/agenticspec-docs", "crates/agenticspec-patch", "crates/agenticstudio", "crates/agenticspec-ui"]
+members = ["crates/agenticspec", "crates/agenticspec-records", "crates/agenticspec-sim", "crates/agenticspec-render", "crates/agenticspec-docs", "crates/agenticspec-patch", "crates/agenticstudio", "crates/agenticspec-ui", "crates/agenticspec-views"]
 exclude = ["generated", "crates/agenticspec-cli-contract"]
 
 [workspace.package]
@@ -22,6 +22,7 @@ agenticspec-render = { path = "crates/agenticspec-render" }
 agenticspec-sim = { path = "crates/agenticspec-sim" }
 agenticspec-patch = { path = "crates/agenticspec-patch" }
 agenticspec-ui = { path = "crates/agenticspec-ui" }
+agenticspec-views = { path = "crates/agenticspec-views" }
 serde_json = "1"
 sha2 = "0.10"
 regex = "1"

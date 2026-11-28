@@ -114,6 +114,17 @@ entities:
           from: [Active]
           to: Expired
 
+actors:
+  - name: agentic.delegation.Viewer
+    naming:
+      display: Delegation viewer
+      summary: >-
+        Whoever looks at the delegations and which of them are active, such as an operator's view
+        of a running system. It reads the views of this block and issues none of its commands.
+    may:
+      - agentic.delegation.Delegations
+      - agentic.delegation.ActiveDelegations
+
 errors:
   - name: agentic.delegation.UnknownPrincipal
     summary: No principal of this identity is registered.

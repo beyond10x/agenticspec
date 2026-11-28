@@ -1,0 +1,7 @@
+{
+  "channel": "process",
+  "events": [
+    {"at": "1s", "event": "agentic.process.ProcessPublished", "payload": {"process_id": "00000000-0000-4000-8000-e3cac2430000", "name": "name 1", "version": 1, "source_digest": "source digest 1", "at": "2026-11-20T09:04:00Z"}},
+    {"at": "2s", "event": "agentic.process.ProcessWithdrawn", "payload": {"process_id": "00000000-0000-4000-8000-e3cac2430000", "at": "2026-11-20T09:01:00Z"}}
+  ]
+}

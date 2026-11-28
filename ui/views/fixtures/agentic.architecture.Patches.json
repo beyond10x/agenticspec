@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.Patches",
+  "rows": [
+    {"patch_id": "00000000-0000-4000-8000-31ae02680000", "name": "name 1", "rules": [{"text":"text 1","verb":"Set"}], "digest": "digest 1"},
+    {"patch_id": "00000000-0000-4000-8000-31ae02680001", "rules": [{"text":"text 2","verb":"Add"}], "digest": "digest 2"},
+    {"patch_id": "00000000-0000-4000-8000-31ae02680002", "name": "name 3", "rules": [{"text":"text 3","verb":"Remove"}], "digest": "digest 3"}
+  ]
+}

@@ -116,6 +116,8 @@ Error `ladder_refused`: `agenticspec.cli.Refusal`.
 
 Error `ladder_stale`: `agenticspec.cli.Refusal`.
 
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
 ### `sim render`
 
 Write the page of an architecture, with the result of a run when given
@@ -158,6 +160,18 @@ Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
+### `ui panels`
+
+Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check
+
+Callable: `ui_panels`. Input: `agenticspec.cli.UiPanelsInput`. Result: `agenticspec.cli.UiPanelsResult`.
+
+Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `panels_stale`: `agenticspec.cli.Refusal`.
+
 ## Runtime obligations
 
 - handler:analyze: implement the owner-qualified callable and its declared result/error contract
@@ -174,3 +188,4 @@ Error `out_unwritable`: `agenticspec.cli.Refusal`.
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_generate: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_panels: implement the owner-qualified callable and its declared result/error contract

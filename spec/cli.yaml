@@ -102,6 +102,7 @@ callables:
       document_unreadable: agenticspec.cli.Refusal
       ladder_refused: agenticspec.cli.Refusal
       ladder_stale: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
   ui_generate:
     target: {kind: local, owner: agenticspec.cli, action: ui_generate}
     input: agenticspec.cli.UiGenerateInput
@@ -109,6 +110,14 @@ callables:
     errors:
       document_unreadable: agenticspec.cli.Refusal
       document_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  ui_panels:
+    target: {kind: local, owner: agenticspec.cli, action: ui_panels}
+    input: agenticspec.cli.UiPanelsInput
+    result: agenticspec.cli.UiPanelsResult
+    errors:
+      blocks_unreadable: agenticspec.cli.Refusal
+      panels_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
@@ -208,3 +217,9 @@ commands:
     arguments:
       - {field: path, source: {kind: option, long: path}}
       - {field: out, source: {kind: option, long: out}}
+  - path: [ui, panels]
+    callable: ui_panels
+    about: Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check
+    arguments:
+      - {field: root, source: {kind: option, long: root}}
+      - {field: check, source: {kind: flag, long: check}}

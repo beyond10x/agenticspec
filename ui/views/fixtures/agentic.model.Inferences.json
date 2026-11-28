@@ -1,0 +1,8 @@
+{
+  "view": "agentic.model.Inferences",
+  "rows": [
+    {"inference_id": "00000000-0000-4000-8000-d56952c90000", "route_id": "00000000-0000-4000-8000-176f59df0000", "request": {"class":"class 1","digest":"digest 1","length":1}, "usage": {"cache_read_tokens":1,"cache_write_tokens":1,"input_tokens":1,"output_tokens":1}, "latency": {"first_token_ms":1,"total_ms":1}, "outcome": "Ok", "state": "Finished"},
+    {"inference_id": "00000000-0000-4000-8000-d56952c90001", "route_id": "00000000-0000-4000-8000-176f59df0001", "request": {"class":"class 2","digest":"digest 2","length":2}, "state": "Started"},
+    {"inference_id": "00000000-0000-4000-8000-d56952c90002", "route_id": "00000000-0000-4000-8000-176f59df0002", "request": {"class":"class 3","digest":"digest 3","length":3}, "usage": {"cache_read_tokens":3,"cache_write_tokens":3,"input_tokens":3,"output_tokens":3}, "latency": {"first_token_ms":3,"total_ms":3}, "outcome": "RateLimited", "state": "Finished"}
+  ]
+}

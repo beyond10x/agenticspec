@@ -1,0 +1,8 @@
+{
+  "view": "agentic.tool.Tools",
+  "rows": [
+    {"tool_id": "00000000-0000-4000-8000-b84588820000", "tool_provider_id": "00000000-0000-4000-8000-bb81f3180000", "name": "name 1", "input_contract": {"class":"class 1","digest":"digest 1","length":1}, "output_contract": {"class":"class 1","digest":"digest 1","length":1}, "category": "Read", "leaves_sandbox": true, "state": "Published"},
+    {"tool_id": "00000000-0000-4000-8000-b84588820001", "tool_provider_id": "00000000-0000-4000-8000-bb81f3180001", "name": "name 2", "input_contract": {"class":"class 2","digest":"digest 2","length":2}, "output_contract": {"class":"class 2","digest":"digest 2","length":2}, "category": "Search", "leaves_sandbox": false, "state": "Withdrawn"},
+    {"tool_id": "00000000-0000-4000-8000-b84588820002", "tool_provider_id": "00000000-0000-4000-8000-bb81f3180002", "name": "name 3", "input_contract": {"class":"class 3","digest":"digest 3","length":3}, "output_contract": {"class":"class 3","digest":"digest 3","length":3}, "category": "Edit", "leaves_sandbox": true, "state": "Published"}
+  ]
+}

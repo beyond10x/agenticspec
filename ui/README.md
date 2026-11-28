@@ -99,3 +99,28 @@ A script is
 is the offset from the start of the script; a payload is the event's fields, which are the fields
 of the row it adds or replaces. A live source (the gateway) sends the same payloads on the
 channel.
+
+## Block panels
+
+`views/` holds the panels of the building blocks, generated from `blocks/` and never edited by
+hand:
+
+```console
+agenticspec ui panels           # task ui:panels: write views/
+agenticspec ui panels --check   # held by task check:ui
+ess ui check --path ui/views/blocks.ui.yaml --model blocks
+ess ui run --tui --path ui/views/blocks.ui.yaml
+```
+
+| file | what |
+|---|---|
+| `views/blocks.ui.yaml` | an `ess-ui/1` document over the system `agentic`: one widget per view, named as the view (`agentic.agent.Agents`), and a gallery page per block that places each of its widgets |
+| `views/fixtures/` | three synthetic rows per view, in the format above, and one script per block channel that plays each event once |
+| `views/blocks.sources.sha256` | the SHA-256 of every input: `ess --version`, `blocks/ess-inputs.yaml` and each file it lists, and the generator's sources |
+
+A panel is a `collection` of its view's rows: one column per field, the first field as row key,
+an enum (the `state` among them) as a badge, a time as a timestamp. It takes a scope, `source`,
+`architecture`, `part` and `instance`, which no read binds: the runtime that answers the read
+narrows the rows. A view parameter is a required parameter of the panel. When events change the
+view's rows, the panel takes them on the channel its page names (`channel`): it inserts or patches
+a row when each event carries every field of the view, and re-reads the view otherwise.

@@ -1,0 +1,8 @@
+{
+  "view": "agentic.tool.ToolProviders",
+  "rows": [
+    {"tool_provider_id": "00000000-0000-4000-8000-bb81f3180000", "name": "name 1", "kind": "BuiltIn", "state": "Registered"},
+    {"tool_provider_id": "00000000-0000-4000-8000-bb81f3180001", "name": "name 2", "kind": "ToolServer", "state": "Registered"},
+    {"tool_provider_id": "00000000-0000-4000-8000-bb81f3180002", "name": "name 3", "kind": "Shell", "state": "Registered"}
+  ]
+}

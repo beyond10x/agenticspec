@@ -1,0 +1,19 @@
+{
+  "channel": "architecture",
+  "events": [
+    {"at": "1s", "event": "agentic.architecture.AgentActsFor", "payload": {"part_id": "00000000-0000-4000-8000-7784d89c0000", "principal_part_id": "00000000-0000-4000-8000-7784d89c0000"}},
+    {"at": "2s", "event": "agentic.architecture.ArchitectureCreated", "payload": {"architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "name 1"}},
+    {"at": "3s", "event": "agentic.architecture.ArchitectureRetired", "payload": {"architecture_id": "00000000-0000-4000-8000-463ec9280000"}},
+    {"at": "4s", "event": "agentic.architecture.DryRunApplied", "payload": {"application_id": "00000000-0000-4000-8000-1c3c8ce60000", "changed_rows": 1}},
+    {"at": "5s", "event": "agentic.architecture.LinkAdded", "payload": {"link_id": "00000000-0000-4000-8000-44bdfca50000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "from_part_id": "00000000-0000-4000-8000-7784d89c0000", "to_part_id": "00000000-0000-4000-8000-7784d89c0000", "carries": "Prompt"}},
+    {"at": "6s", "event": "agentic.architecture.PartAdded", "payload": {"part_id": "00000000-0000-4000-8000-7784d89c0000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "name 1", "kind": "Principal", "count": 1}},
+    {"at": "7s", "event": "agentic.architecture.PartBordered", "payload": {"part_id": "00000000-0000-4000-8000-7784d89c0000", "architecture_id": "00000000-0000-4000-8000-463ec9280000"}},
+    {"at": "8s", "event": "agentic.architecture.PartPerSet", "payload": {"part_id": "00000000-0000-4000-8000-7784d89c0000", "per_part_id": "00000000-0000-4000-8000-7784d89c0000"}},
+    {"at": "9s", "event": "agentic.architecture.PatchApplied", "payload": {"application_id": "00000000-0000-4000-8000-1c3c8ce60000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "changed_rows": 1}},
+    {"at": "10s", "event": "agentic.architecture.PatchRecorded", "payload": {"patch_id": "00000000-0000-4000-8000-31ae02680000", "digest": "digest 1"}},
+    {"at": "11s", "event": "agentic.architecture.PatchRefused", "payload": {"application_id": "00000000-0000-4000-8000-1c3c8ce60000", "rule_index": 1, "error": "error 1"}},
+    {"at": "12s", "event": "agentic.architecture.PatchRequested", "payload": {"application_id": "00000000-0000-4000-8000-1c3c8ce60000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "patch_id": "00000000-0000-4000-8000-31ae02680000", "dry_run": true}},
+    {"at": "13s", "event": "agentic.architecture.RevisionCommitted", "payload": {"revision_id": "00000000-0000-4000-8000-8dac41280000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "number": 1, "digest": "digest 1"}},
+    {"at": "14s", "event": "agentic.architecture.SwarmSet", "payload": {"part_id": "00000000-0000-4000-8000-7784d89c0000", "coordination": "Orchestrator", "start_stagger": "PT5M"}}
+  ]
+}

@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest cbeec308ed7f2f09e1949e424571e922f7db168a87b5203f047e7c4a572da298
+// contract digest 0e951ba410076a4e5161979a4da48480077b83c4a512a275e83d6ead40028338
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -759,4 +759,28 @@ pub struct UiGenerateResult {
     pub out: String,
     /// `files` — `List<String>`.
     pub files: Vec<String>,
+}
+
+/// UiPanelsInput — `agenticspec.cli.UiPanelsInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiPanelsInput {
+    /// `root` — `Optional<String>`.
+    pub root: Option<String>,
+    /// `check` — `Boolean`.
+    pub check: bool,
+}
+
+/// UiPanelsResult — `agenticspec.cli.UiPanelsResult`.
+///
+/// The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`, a gallery page per block, a fixture per view and a script per channel under `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiPanelsResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `panels` — `Integer`.
+    pub panels: i64,
+    /// `files` — `Integer`.
+    pub files: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
 }
