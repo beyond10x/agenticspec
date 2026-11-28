@@ -2,7 +2,7 @@
 title: resource
 sidebar_label: resource
 slug: /blocks/8-place/resource
-description: "What agents share and wait for: a pool of a fixed capacity (build slots, a rate limit, a cache, seats) and the claims on it."
+description: "What agents share and wait for: a pool of a fixed capacity (build slots, a rate limit, a cache, seats, a work queue) and the claims on it."
 kicker: "Layer 8 · place"
 source: "blocks/8-place/resource.yaml"
 source_url: "https://github.com/beyond10x/agenticspec/blob/main/blocks/8-place/resource.yaml"
@@ -14,7 +14,7 @@ mdx:
 
 <BlockHeader name={"resource"} family={"resource"} layer={8} layerName={"place"} counts={{"commands":7,"entities":2,"events":7,"kpis":5,"refusals":27,"views":3}} />
 
-What agents share and wait for: a pool of a fixed capacity (build slots, a rate limit, a cache, seats) and the claims on it. A claim waits in the queue until the pool grants it, holds for at most its time limit, and ends released, expired or killed; its holder may withdraw it while it is queued. A claim over capacity waits; it is never refused for that. The queue publishes when each claim joined it (queued_at), the order the pool grants in.
+What agents share and wait for: a pool of a fixed capacity (build slots, a rate limit, a cache, seats, a work queue) and the claims on it. A claim waits in the queue until the pool grants it, holds for at most its time limit, and ends released, expired or killed; its holder may withdraw it while it is queued. A claim over capacity waits; it is never refused for that. The queue publishes when each claim joined it (queued_at), the order the pool grants in.
 
 ## Depends on
 
@@ -227,7 +227,7 @@ Called by: Claimant.
 
 | type | is | values or fields |
 |---|---|---|
-| `PoolKind` | one of | `BuildSlots`, `RateLimit`, `Cache`, `Seats` |
+| `PoolKind`<br/>What a pool hands out: build slots, calls under a rate limit, cache entries, seats of a licence, or the places of a work queue whose claims are the items waiting to be taken. | one of | `BuildSlots`, `RateLimit`, `Cache`, `Seats`, `Queue` |
 
 ## KPIs
 
@@ -246,15 +246,17 @@ Called by: Claimant.
 
 ## Settings
 
-The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes. What no setting here types (a file, a path, an audience, the use of a model) goes into the part's `notes`, a map with free keys and values that the check takes as written and nothing reads.
 
 A part `pool`:
 
 | setting | type | unit | default | contract | what |
 |---|---|---|---|---|---|
-| `kind` | enum `PoolKind`: `build_slots`, `rate_limit`, `cache`, `seats` |  |  | `resource.claim` | What the pool hands out. |
+| `kind` | enum `PoolKind`: `build_slots`, `rate_limit`, `cache`, `seats`, `queue` |  |  | `resource.claim` | What the pool hands out. |
 | `capacity` | integer of at least 0 | slots |  | `resource.claim` | How many claims the pool holds at once; without it, no limit. |
 | `job_limit` | duration of at least 0s |  |  | `resource.claim` | How long one claim may hold a slot; without it, no limit. |
+| `order` | enum: `fifo`, `lifo`, `priority` |  | `fifo` |  | The order the pool grants waiting claims in: first come first served (fifo), newest first (lifo), or by the claim's priority. |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+| `notes` | notes |  |  |  | Free notes on the part, a map with keys and values of any kind: what no setting of its block types. The check takes any map; the simulator, the search and the contract never read it. |
 

@@ -35,14 +35,15 @@ types:
 
   - name: agentic.channel.ChannelKind
     kind: enum
-    variants: [Prompt, Operator, AgentMessage, AgentToAgent, Chat, Notification, Control]
+    variants: [Prompt, Operator, AgentMessage, AgentToAgent, Chat, Notification, Control, Screen]
     naming:
       summary: >-
         Prompt is a human typing into a session; Operator a human's private channel to the agent
         that acts for it; AgentMessage a message between agents on one host; AgentToAgent the same
         over a network; Chat a chat adapter; Notification one-way news to a party; Control a page
         or panel outside any session where a human acts by a button (send, pick, run, retry), each
-        act one Request message or post.
+        act one Request message or post; Screen a page of a user interface that shows a party what
+        the system holds, each page shown one post.
 
   # The kinds Topic, Queue and Board (design/research-findings.md, `channel`) are held beside the
   # medium, not in ChannelKind: a board between agents on one host is an AgentMessage channel

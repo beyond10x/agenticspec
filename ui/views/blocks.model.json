@@ -3960,7 +3960,8 @@
           "AgentToAgent",
           "Chat",
           "Notification",
-          "Control"
+          "Control",
+          "Screen"
         ]
       }
     },
@@ -4602,7 +4603,8 @@
           "BuildSlots",
           "RateLimit",
           "Cache",
-          "Seats"
+          "Seats",
+          "Queue"
         ]
       }
     },

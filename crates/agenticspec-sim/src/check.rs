@@ -388,7 +388,12 @@ fn settings(parts: &serde_json::Map<String, Value>) -> Vec<Refusal> {
                 });
                 continue;
             };
-            let v = value(raw);
+            // Notes are taken as written: a `vary` key in them marks no place.
+            let v = if key == crate::settings::NOTES {
+                raw
+            } else {
+                value(raw)
+            };
             if v.is_null() {
                 continue;
             }
