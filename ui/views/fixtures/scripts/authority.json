@@ -1,0 +1,13 @@
+{
+  "channel": "authority",
+  "events": [
+    {"at": "1s", "event": "agentic.authority.ApprovalGranted", "payload": {"decision_id": "00000000-0000-4000-8000-589c34980000", "approver": "PermissionMode", "delegation": "00000000-0000-4000-8000-e045564d0000", "at": "2026-11-20T09:03:00Z"}},
+    {"at": "2s", "event": "agentic.authority.ApprovalRejected", "payload": {"decision_id": "00000000-0000-4000-8000-589c34980000", "rejecter": "PermissionMode", "at": "2026-11-20T09:02:00Z"}},
+    {"at": "3s", "event": "agentic.authority.BudgetExhausted", "payload": {"budget_id": "00000000-0000-4000-8000-c10228030000", "at": "2026-11-20T09:01:00Z"}},
+    {"at": "4s", "event": "agentic.authority.BudgetOpened", "payload": {"budget_id": "00000000-0000-4000-8000-c10228030000", "owner_kind": "Principal", "owner_id": "00000000-0000-4000-8000-8b848a680000", "resource": "Tokens", "window": "Total", "limit": 1, "at": "2026-11-20T09:06:00Z"}},
+    {"at": "5s", "event": "agentic.authority.DecisionRecorded", "payload": {"decision_id": "00000000-0000-4000-8000-589c34980000", "requester_kind": "Principal", "requester_id": "00000000-0000-4000-8000-742181700000", "action_class": "Read", "scope": "scope 1", "verdict": "Allow", "decider": "PermissionMode", "attribution": "Known", "delegation": "00000000-0000-4000-8000-e045564d0000", "grant_id": "00000000-0000-4000-8000-69f9b46e0000", "at": "2026-11-20T09:10:00Z"}},
+    {"at": "6s", "event": "agentic.authority.GrantIssued", "payload": {"grant_id": "00000000-0000-4000-8000-69f9b46e0000", "grantee_kind": "Principal", "grantee_id": "00000000-0000-4000-8000-339d668c0000", "action_class": "Read", "scope": "scope 1", "expires_at": "2026-11-20T09:05:00Z", "granted_by": "00000000-0000-4000-8000-322d9f1c0000", "effect": "Allow", "supersedes": "00000000-0000-4000-8000-69f9b46e0000", "at": "2026-11-20T09:09:00Z"}},
+    {"at": "7s", "event": "agentic.authority.GrantRevoked", "payload": {"grant_id": "00000000-0000-4000-8000-69f9b46e0000", "revoked_by": "00000000-0000-4000-8000-322d9f1c0000", "at": "2026-11-20T09:02:00Z"}},
+    {"at": "8s", "event": "agentic.authority.SpendRecorded", "payload": {"budget_id": "00000000-0000-4000-8000-c10228030000", "spent_total": 1, "at": "2026-11-20T09:02:00Z"}}
+  ]
+}

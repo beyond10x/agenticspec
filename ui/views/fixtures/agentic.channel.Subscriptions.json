@@ -1,0 +1,8 @@
+{
+  "view": "agentic.channel.Subscriptions",
+  "rows": [
+    {"subscription_id": "00000000-0000-4000-8000-f489e8720000", "channel_id": "00000000-0000-4000-8000-f4f3536e0000", "party": "00000000-0000-4000-8000-761908b00000", "party_kind": "Principal", "filter_act": "Request", "filter_entry": "Observed", "filter_scope": "filter scope 1", "subscribed_at": "2026-11-20T09:07:00Z", "relays_for": "00000000-0000-4000-8000-322d9f1c0000", "last_beat_at": "2026-11-20T09:09:00Z", "state": "Active"},
+    {"subscription_id": "00000000-0000-4000-8000-f489e8720001", "channel_id": "00000000-0000-4000-8000-f4f3536e0001", "party": "00000000-0000-4000-8000-761908b00001", "party_kind": "Session", "subscribed_at": "2026-11-20T10:07:00Z", "state": "Ended"},
+    {"subscription_id": "00000000-0000-4000-8000-f489e8720002", "channel_id": "00000000-0000-4000-8000-f4f3536e0002", "party": "00000000-0000-4000-8000-761908b00002", "party_kind": "Principal", "filter_act": "Request", "filter_entry": "Fail", "filter_scope": "filter scope 3", "subscribed_at": "2026-11-20T11:07:00Z", "relays_for": "00000000-0000-4000-8000-322d9f1c0002", "last_beat_at": "2026-11-20T11:09:00Z", "state": "Active"}
+  ]
+}

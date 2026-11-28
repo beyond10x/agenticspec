@@ -1,0 +1,8 @@
+{
+  "view": "agentic.runtime.Instances",
+  "rows": [
+    {"instance_id": "00000000-0000-4000-8000-149d54dd0000", "workload_id": "00000000-0000-4000-8000-160df8830000", "exit_code": 1, "reason": "reason 1", "budget_id": "00000000-0000-4000-8000-c10228030000", "state": "Exited"},
+    {"instance_id": "00000000-0000-4000-8000-149d54dd0001", "workload_id": "00000000-0000-4000-8000-160df8830001", "state": "Failed"},
+    {"instance_id": "00000000-0000-4000-8000-149d54dd0002", "workload_id": "00000000-0000-4000-8000-160df8830002", "exit_code": 3, "reason": "reason 3", "budget_id": "00000000-0000-4000-8000-c10228030002", "state": "Pending"}
+  ]
+}

@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
+- `agenticspec ui panels` writes the block panels from the building blocks: `ui/views/blocks.ui.yaml`, an `ess-ui/1` document with one panel per view of `blocks/` (its fields as columns, its first field as row key, an enum such as `state` as a badge, live updates from the events of the view's entity, a scope of architecture, part and instance) and a gallery page per block, the fixtures the panels render against in `ui/views/fixtures/`, and the digest of its inputs in `ui/views/blocks.sources.sha256`. `--check` compares a fresh generation byte for byte; `task check:ui` runs it and holds `ess ui check --model blocks` at 0 errors and 0 warnings
+- `blocks/components.yaml`: one component owning every block, served over HTTP, and a `Viewer` actor for the agent, architecture, delegation, experiment, KPI, principal and process blocks, so every view of `blocks/` is readable from an `ess-ui/1` document
 
 ### Changed
 

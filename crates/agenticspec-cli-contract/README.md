@@ -148,6 +148,18 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `ui panels`
+
+Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check
+
+Callable: `ui_panels`. Input: `agenticspec.cli.UiPanelsInput`. Result: `agenticspec.cli.UiPanelsResult`.
+
+Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `panels_stale`: `agenticspec.cli.Refusal`.
+
 ## Runtime obligations
 
 - handler:analyze: implement the owner-qualified callable and its declared result/error contract
@@ -163,3 +175,4 @@ Error `store_unavailable`: `agenticspec.cli.Refusal`.
 - handler:sim_render: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_panels: implement the owner-qualified callable and its declared result/error contract

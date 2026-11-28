@@ -1,0 +1,12 @@
+{
+  "channel": "runtime",
+  "events": [
+    {"at": "1s", "event": "agentic.runtime.InstanceExited", "payload": {"instance_id": "00000000-0000-4000-8000-149d54dd0000", "exit_code": 1}},
+    {"at": "2s", "event": "agentic.runtime.InstanceFailed", "payload": {"instance_id": "00000000-0000-4000-8000-149d54dd0000", "reason": "reason 1"}},
+    {"at": "3s", "event": "agentic.runtime.InstanceRunning", "payload": {"instance_id": "00000000-0000-4000-8000-149d54dd0000"}},
+    {"at": "4s", "event": "agentic.runtime.InstanceStarted", "payload": {"instance_id": "00000000-0000-4000-8000-149d54dd0000", "workload_id": "00000000-0000-4000-8000-160df8830000", "budget_id": "00000000-0000-4000-8000-c10228030000"}},
+    {"at": "5s", "event": "agentic.runtime.InstanceStopped", "payload": {"instance_id": "00000000-0000-4000-8000-149d54dd0000"}},
+    {"at": "6s", "event": "agentic.runtime.RuntimeRegistered", "payload": {"runtime_id": "00000000-0000-4000-8000-303c84bb0000", "name": "name 1", "min_isolation": "None"}},
+    {"at": "7s", "event": "agentic.runtime.WorkloadDefined", "payload": {"workload_id": "00000000-0000-4000-8000-160df8830000", "runtime_id": "00000000-0000-4000-8000-303c84bb0000", "kind": "Agent", "package": "package 1", "sandbox_id": "00000000-0000-4000-8000-df1af3610000", "endpoint_id": "00000000-0000-4000-8000-b24dcd040000"}}
+  ]
+}

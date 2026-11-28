@@ -1,0 +1,8 @@
+{
+  "view": "agentic.runtime.Runtimes",
+  "rows": [
+    {"runtime_id": "00000000-0000-4000-8000-303c84bb0000", "name": "name 1", "kinds": ["Agent"], "min_isolation": "None", "state": "Available"},
+    {"runtime_id": "00000000-0000-4000-8000-303c84bb0001", "name": "name 2", "kinds": ["Service"], "min_isolation": "Process", "state": "Available"},
+    {"runtime_id": "00000000-0000-4000-8000-303c84bb0002", "name": "name 3", "kinds": ["Job"], "min_isolation": "Container", "state": "Available"}
+  ]
+}

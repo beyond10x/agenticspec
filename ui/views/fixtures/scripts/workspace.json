@@ -1,0 +1,15 @@
+{
+  "channel": "workspace",
+  "events": [
+    {"at": "1s", "event": "agentic.workspace.ChangeProposed", "payload": {"proposal_id": "00000000-0000-4000-8000-87b5c6d60000", "lease_id": "00000000-0000-4000-8000-33e91c530000", "proposed_by": "00000000-0000-4000-8000-761908b00000", "base_revision": "base revision 1", "branch": "branch 1", "head_revision": "head revision 1", "review_ref": "review ref 1"}},
+    {"at": "2s", "event": "agentic.workspace.LeaseExpired", "payload": {"lease_id": "00000000-0000-4000-8000-33e91c530000"}},
+    {"at": "3s", "event": "agentic.workspace.LeaseGranted", "payload": {"lease_id": "00000000-0000-4000-8000-33e91c530000", "workspace_id": "00000000-0000-4000-8000-881697980000"}},
+    {"at": "4s", "event": "agentic.workspace.LeaseReleased", "payload": {"lease_id": "00000000-0000-4000-8000-33e91c530000"}},
+    {"at": "5s", "event": "agentic.workspace.LeaseRequested", "payload": {"lease_id": "00000000-0000-4000-8000-33e91c530000", "workspace_id": "00000000-0000-4000-8000-881697980000", "holder": "00000000-0000-4000-8000-761908b00000", "expires_at": "2026-11-20T09:03:00Z"}},
+    {"at": "6s", "event": "agentic.workspace.PathWritten", "payload": {"lease_id": "00000000-0000-4000-8000-33e91c530000", "workspace_id": "00000000-0000-4000-8000-881697980000", "path": "path 1"}},
+    {"at": "7s", "event": "agentic.workspace.ProposalMerged", "payload": {"proposal_id": "00000000-0000-4000-8000-87b5c6d60000", "merged_revision": "merged revision 1", "merged_under": "00000000-0000-4000-8000-69f9b46e0000"}},
+    {"at": "8s", "event": "agentic.workspace.ProposalRejected", "payload": {"proposal_id": "00000000-0000-4000-8000-87b5c6d60000"}},
+    {"at": "9s", "event": "agentic.workspace.ProposalSuperseded", "payload": {"proposal_id": "00000000-0000-4000-8000-87b5c6d60000", "superseded_by": "00000000-0000-4000-8000-87b5c6d60000"}},
+    {"at": "10s", "event": "agentic.workspace.WorkspaceCreated", "payload": {"workspace_id": "00000000-0000-4000-8000-881697980000", "kind": "Checkout", "sharing": "Exclusive", "base_revision": "base revision 1"}}
+  ]
+}

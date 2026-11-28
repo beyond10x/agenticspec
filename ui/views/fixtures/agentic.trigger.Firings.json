@@ -1,0 +1,8 @@
+{
+  "view": "agentic.trigger.Firings",
+  "rows": [
+    {"firing_id": "00000000-0000-4000-8000-c34510b90000", "trigger_id": "00000000-0000-4000-8000-85d720f50000", "fired_at": "2026-11-20T09:02:00Z", "post_id": "00000000-0000-4000-8000-936344e80000", "tick": "2026-11-20T09:04:00Z", "run_id": "00000000-0000-4000-8000-1bc1b0c90000", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000", "started_at": "2026-11-20T09:07:00Z", "ended_at": "2026-11-20T09:08:00Z", "failure": "failure 1", "subject_key": "subject key 1", "state": "Ended"},
+    {"firing_id": "00000000-0000-4000-8000-c34510b90001", "trigger_id": "00000000-0000-4000-8000-85d720f50001", "fired_at": "2026-11-20T10:02:00Z", "state": "Failed"},
+    {"firing_id": "00000000-0000-4000-8000-c34510b90002", "trigger_id": "00000000-0000-4000-8000-85d720f50002", "fired_at": "2026-11-20T11:02:00Z", "post_id": "00000000-0000-4000-8000-936344e80002", "tick": "2026-11-20T11:04:00Z", "run_id": "00000000-0000-4000-8000-1bc1b0c90002", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0002", "started_at": "2026-11-20T11:07:00Z", "ended_at": "2026-11-20T11:08:00Z", "failure": "failure 3", "subject_key": "subject key 3", "state": "Fired"}
+  ]
+}

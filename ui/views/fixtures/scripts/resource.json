@@ -1,0 +1,12 @@
+{
+  "channel": "resource",
+  "events": [
+    {"at": "1s", "event": "agentic.resource.ClaimExpired", "payload": {"claim_id": "00000000-0000-4000-8000-3daec4520000", "pool_id": "00000000-0000-4000-8000-e7e96cf90000"}},
+    {"at": "2s", "event": "agentic.resource.ClaimGranted", "payload": {"claim_id": "00000000-0000-4000-8000-3daec4520000", "pool_id": "00000000-0000-4000-8000-e7e96cf90000", "held_until": "2026-11-20T09:02:00Z"}},
+    {"at": "3s", "event": "agentic.resource.ClaimKilled", "payload": {"claim_id": "00000000-0000-4000-8000-3daec4520000", "pool_id": "00000000-0000-4000-8000-e7e96cf90000"}},
+    {"at": "4s", "event": "agentic.resource.ClaimQueued", "payload": {"claim_id": "00000000-0000-4000-8000-3daec4520000", "pool_id": "00000000-0000-4000-8000-e7e96cf90000", "holder": "00000000-0000-4000-8000-761908b00000", "time_limit_seconds": 1}},
+    {"at": "5s", "event": "agentic.resource.ClaimReleased", "payload": {"claim_id": "00000000-0000-4000-8000-3daec4520000", "pool_id": "00000000-0000-4000-8000-e7e96cf90000"}},
+    {"at": "6s", "event": "agentic.resource.ClaimWithdrawn", "payload": {"claim_id": "00000000-0000-4000-8000-3daec4520000"}},
+    {"at": "7s", "event": "agentic.resource.PoolCreated", "payload": {"pool_id": "00000000-0000-4000-8000-e7e96cf90000", "kind": "BuildSlots", "capacity": 1}}
+  ]
+}

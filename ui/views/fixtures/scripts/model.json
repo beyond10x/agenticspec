@@ -1,0 +1,13 @@
+{
+  "channel": "model",
+  "events": [
+    {"at": "1s", "event": "agentic.model.EndpointClosed", "payload": {"endpoint_id": "00000000-0000-4000-8000-b24dcd040000"}},
+    {"at": "2s", "event": "agentic.model.EndpointOpened", "payload": {"endpoint_id": "00000000-0000-4000-8000-b24dcd040000", "model_id": "00000000-0000-4000-8000-83c6d66d0000", "address": "address 1", "wire": "Messages", "hosting": "Vendor"}},
+    {"at": "3s", "event": "agentic.model.InferenceFinished", "payload": {"inference_id": "00000000-0000-4000-8000-d56952c90000", "outcome": "Ok", "usage": {"cache_read_tokens":1,"cache_write_tokens":1,"input_tokens":1,"output_tokens":1}, "latency": {"first_token_ms":1,"total_ms":1}}},
+    {"at": "4s", "event": "agentic.model.InferenceStarted", "payload": {"inference_id": "00000000-0000-4000-8000-d56952c90000", "route_id": "00000000-0000-4000-8000-176f59df0000", "request": {"class":"class 1","digest":"digest 1","length":1}}},
+    {"at": "5s", "event": "agentic.model.ModelDeclared", "payload": {"model_id": "00000000-0000-4000-8000-83c6d66d0000", "provider_id": "00000000-0000-4000-8000-3841e4610000", "name": "name 1", "context_window": 1}},
+    {"at": "6s", "event": "agentic.model.ModelRetired", "payload": {"model_id": "00000000-0000-4000-8000-83c6d66d0000"}},
+    {"at": "7s", "event": "agentic.model.RouteDefined", "payload": {"route_id": "00000000-0000-4000-8000-176f59df0000", "name": "name 1", "endpoint_id": "00000000-0000-4000-8000-b24dcd040000", "model_id": "00000000-0000-4000-8000-83c6d66d0000"}},
+    {"at": "8s", "event": "agentic.model.RouteRetired", "payload": {"route_id": "00000000-0000-4000-8000-176f59df0000"}}
+  ]
+}

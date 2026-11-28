@@ -1,0 +1,8 @@
+{
+  "view": "agentic.channel.Messages",
+  "rows": [
+    {"message_id": "00000000-0000-4000-8000-783eb9330000", "channel_id": "00000000-0000-4000-8000-f4f3536e0000", "from": "00000000-0000-4000-8000-761908b00000", "to": "00000000-0000-4000-8000-761908b00000", "act": "Request", "content": {"class":"class 1","digest":"digest 1","length":1}, "in_reply_to": "00000000-0000-4000-8000-783eb9330000", "sent_at": "2026-11-20T09:07:00Z", "delivered_at": "2026-11-20T09:08:00Z", "read_at": "2026-11-20T09:09:00Z", "delegation_id": "00000000-0000-4000-8000-e045564d0000", "proof": "None", "sent_by_call": "00000000-0000-4000-8000-b72db82b0000", "state": "Delivered"},
+    {"message_id": "00000000-0000-4000-8000-783eb9330001", "channel_id": "00000000-0000-4000-8000-f4f3536e0001", "from": "00000000-0000-4000-8000-761908b00001", "to": "00000000-0000-4000-8000-761908b00001", "act": "Inform", "content": {"class":"class 2","digest":"digest 2","length":2}, "sent_at": "2026-11-20T10:07:00Z", "state": "Lost"},
+    {"message_id": "00000000-0000-4000-8000-783eb9330002", "channel_id": "00000000-0000-4000-8000-f4f3536e0002", "from": "00000000-0000-4000-8000-761908b00002", "to": "00000000-0000-4000-8000-761908b00002", "act": "Request", "content": {"class":"class 3","digest":"digest 3","length":3}, "in_reply_to": "00000000-0000-4000-8000-783eb9330002", "sent_at": "2026-11-20T11:07:00Z", "delivered_at": "2026-11-20T11:08:00Z", "read_at": "2026-11-20T11:09:00Z", "delegation_id": "00000000-0000-4000-8000-e045564d0002", "proof": "ProcessIdentity", "sent_by_call": "00000000-0000-4000-8000-b72db82b0002", "state": "Read"}
+  ]
+}

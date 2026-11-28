@@ -35,6 +35,16 @@ entities:
           from: [Active]
           to: Retired
 
+actors:
+  - name: agentic.principal.Viewer
+    naming:
+      display: Principal viewer
+      summary: >-
+        Whoever looks at the registered principals, such as an operator's view of a running
+        system. It reads the views of this block and issues none of its commands.
+    may:
+      - agentic.principal.Principals
+
 errors:
   - name: agentic.principal.PrincipalNotFound
     summary: No principal of this identity is registered.

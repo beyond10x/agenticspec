@@ -1,0 +1,8 @@
+{
+  "view": "agentic.work.Steps",
+  "rows": [
+    {"step_id": "00000000-0000-4000-8000-8342af610000", "run_id": "00000000-0000-4000-8000-1bc1b0c90000", "action": "action 1", "kind": "Program", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000", "result": "Passed", "recorded_at": "2026-11-20T09:06:00Z", "state": "Recorded"},
+    {"step_id": "00000000-0000-4000-8000-8342af610001", "run_id": "00000000-0000-4000-8000-1bc1b0c90001", "action": "action 2", "kind": "Agent", "result": "Failed", "recorded_at": "2026-11-20T10:06:00Z", "state": "Recorded"},
+    {"step_id": "00000000-0000-4000-8000-8342af610002", "run_id": "00000000-0000-4000-8000-1bc1b0c90002", "action": "action 3", "kind": "Person", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0002", "result": "Skipped", "recorded_at": "2026-11-20T11:06:00Z", "state": "Recorded"}
+  ]
+}

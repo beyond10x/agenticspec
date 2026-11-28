@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.PatchApplications",
+  "rows": [
+    {"application_id": "00000000-0000-4000-8000-1c3c8ce60000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "patch_id": "00000000-0000-4000-8000-31ae02680000", "dry_run": true, "revision_id": "00000000-0000-4000-8000-8dac41280000", "changed_rows": 1, "rule_index": 1, "error": "error 1", "state": {"name":"Applied","summary":"Every rule applied; committed as one revision unless a dry run."}},
+    {"application_id": "00000000-0000-4000-8000-1c3c8ce60001", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "patch_id": "00000000-0000-4000-8000-31ae02680001", "dry_run": false, "state": {"name":"Refused","summary":"One rule or the check refused; nothing changed."}},
+    {"application_id": "00000000-0000-4000-8000-1c3c8ce60002", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "patch_id": "00000000-0000-4000-8000-31ae02680002", "dry_run": true, "revision_id": "00000000-0000-4000-8000-8dac41280002", "changed_rows": 3, "rule_index": 3, "error": "error 3", "state": {"name":"Requested","summary":"Submitted; the applier has not reported."}}
+  ]
+}

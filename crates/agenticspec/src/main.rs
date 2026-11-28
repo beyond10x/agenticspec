@@ -425,6 +425,18 @@ impl Handler for Commands {
                     .and_then(Value::as_bool)
                     .unwrap_or(false),
             )),
+            "ui_panels" => {
+                let root = inv.input.get("root").and_then(Value::as_str).unwrap_or(".");
+                let check = inv
+                    .input
+                    .get("check")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                match agenticspec_views::run(std::path::Path::new(root), check) {
+                    Ok(result) => HandlerReply::Success(result),
+                    Err(r) => refusal(r.code, r.detail),
+                }
+            }
             _ => HandlerReply::Unavailable,
         }
     }

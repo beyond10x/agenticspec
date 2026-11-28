@@ -1,0 +1,8 @@
+{
+  "view": "agentic.experiment.Experiments",
+  "rows": [
+    {"experiment_id": "00000000-0000-4000-8000-fb0bcb550000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "work_mode_id": "00000000-0000-4000-8000-63f5f35e0000", "profile_id": "00000000-0000-4000-8000-049add430000", "load": {"tasks_per_hour":1}, "mode": "Exhaustive", "failure": "failure 1", "state": "Done"},
+    {"experiment_id": "00000000-0000-4000-8000-fb0bcb550001", "architecture_id": "00000000-0000-4000-8000-463ec9280001", "work_mode_id": "00000000-0000-4000-8000-63f5f35e0001", "profile_id": "00000000-0000-4000-8000-049add430001", "load": {"tasks_per_hour":2}, "mode": "Fit", "state": "Failed"},
+    {"experiment_id": "00000000-0000-4000-8000-fb0bcb550002", "architecture_id": "00000000-0000-4000-8000-463ec9280002", "work_mode_id": "00000000-0000-4000-8000-63f5f35e0002", "profile_id": "00000000-0000-4000-8000-049add430002", "load": {"tasks_per_hour":3}, "mode": "Exhaustive", "failure": "failure 3", "state": "Planned"}
+  ]
+}

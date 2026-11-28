@@ -1,0 +1,8 @@
+{
+  "view": "agentic.work.Tasks",
+  "rows": [
+    {"task_id": "00000000-0000-4000-8000-7b7975d50000", "goal": {"class":"class 1","digest":"digest 1","length":1}, "requested_by": "00000000-0000-4000-8000-322d9f1c0000", "process_id": "00000000-0000-4000-8000-e3cac2430000", "parent_task_id": "00000000-0000-4000-8000-7b7975d50000", "closed_as": "Done", "state": "Assigned"},
+    {"task_id": "00000000-0000-4000-8000-7b7975d50001", "goal": {"class":"class 2","digest":"digest 2","length":2}, "requested_by": "00000000-0000-4000-8000-322d9f1c0001", "process_id": "00000000-0000-4000-8000-e3cac2430001", "state": "Closed"},
+    {"task_id": "00000000-0000-4000-8000-7b7975d50002", "goal": {"class":"class 3","digest":"digest 3","length":3}, "requested_by": "00000000-0000-4000-8000-322d9f1c0002", "process_id": "00000000-0000-4000-8000-e3cac2430002", "parent_task_id": "00000000-0000-4000-8000-7b7975d50002", "closed_as": "Done", "state": "Open"}
+  ]
+}

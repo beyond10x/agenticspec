@@ -1494,6 +1494,85 @@
           }
         }
       }
+    },
+    "ui_panels": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_panels"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiPanelsInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "check": {
+              "kind": "boolean"
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiPanelsResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "files": {
+              "kind": "integer"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "panels": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "blocks_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "panels_stale": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "commands": [
@@ -1903,6 +1982,31 @@
           }
         }
       ]
+    },
+    {
+      "path": [
+        "ui",
+        "panels"
+      ],
+      "aliases": [],
+      "callable": "ui_panels",
+      "about": "Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check",
+      "arguments": [
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "flag",
+            "long": "check"
+          }
+        }
+      ]
     }
   ],
   "obligations": [
@@ -1918,6 +2022,7 @@
     "handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
-    "handler:sync: implement the owner-qualified callable and its declared result/error contract"
+    "handler:sync: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract"
   ]
 }

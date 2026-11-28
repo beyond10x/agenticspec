@@ -1,0 +1,11 @@
+format: ess/37
+system: mini
+version: v1
+
+summary: >-
+  A small system the tests of the block panels generate from: things that are made and retired,
+  and notes written on a thing.
+
+domains:
+  - mini.shared
+  - mini.thing

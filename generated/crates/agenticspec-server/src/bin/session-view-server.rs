@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest 41e9c005b76957761f24dfc9a536d7a79fd2c2239034fafe677d82369f35eed3
 // do not edit: regenerate with `ess synthesize`
 
 //! Ephemeral generated server. Durable storage and production authentication remain ports.

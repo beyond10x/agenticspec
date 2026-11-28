@@ -1,0 +1,10 @@
+{
+  "channel": "agent",
+  "events": [
+    {"at": "1s", "event": "agentic.agent.AgentDefined", "payload": {"agent_id": "00000000-0000-4000-8000-41b79aa10000", "principal_id": "00000000-0000-4000-8000-322d9f1c0000", "name": "name 1", "at": "2026-11-20T09:03:00Z"}},
+    {"at": "2s", "event": "agentic.agent.AgentRetired", "payload": {"agent_id": "00000000-0000-4000-8000-41b79aa10000", "at": "2026-11-20T09:01:00Z"}},
+    {"at": "3s", "event": "agentic.agent.AgentRevisionPublished", "payload": {"agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000", "agent_id": "00000000-0000-4000-8000-41b79aa10000", "number": 1, "role": "role 1", "at": "2026-11-20T09:04:00Z"}},
+    {"at": "4s", "event": "agentic.agent.AgentRevisionRetired", "payload": {"agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000", "at": "2026-11-20T09:01:00Z"}},
+    {"at": "5s", "event": "agentic.agent.AgentRevisionUsed", "payload": {"agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000", "at": "2026-11-20T09:01:00Z"}}
+  ]
+}

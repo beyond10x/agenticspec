@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.Revisions",
+  "rows": [
+    {"revision_id": "00000000-0000-4000-8000-8dac41280000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "number": 1, "digest": "digest 1"},
+    {"revision_id": "00000000-0000-4000-8000-8dac41280001", "architecture_id": "00000000-0000-4000-8000-463ec9280001", "number": 2, "digest": "digest 2"},
+    {"revision_id": "00000000-0000-4000-8000-8dac41280002", "architecture_id": "00000000-0000-4000-8000-463ec9280002", "number": 3, "digest": "digest 3"}
+  ]
+}
