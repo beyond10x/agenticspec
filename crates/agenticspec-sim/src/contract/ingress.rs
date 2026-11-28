@@ -130,6 +130,10 @@ impl fmt::Display for Refusal {
 pub struct Kpi {
     pub block: String,
     pub status: String,
+    /// Its `unit`, as a metric list gives it.
+    pub unit: String,
+    /// Its `summary`, the help of its metric.
+    pub summary: String,
 }
 
 /// The KPI catalogue (`kpis/catalogue.yaml`, `agenticspec-kpis/1`) by id.
@@ -149,6 +153,8 @@ impl Kpis {
                 Kpi {
                     block: k["block"].as_str().unwrap_or_default().to_owned(),
                     status: k["status"].as_str().unwrap_or_default().to_owned(),
+                    unit: k["unit"].as_str().unwrap_or_default().to_owned(),
+                    summary: k["summary"].as_str().unwrap_or_default().to_owned(),
                 },
             );
         }

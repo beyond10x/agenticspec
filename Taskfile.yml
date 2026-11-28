@@ -109,7 +109,7 @@ tasks:
       - target/debug/agenticspec-docs --root . --bundles --slow
 
   projections:generate:
-    desc: Write the projections of the http exports of the worked example architectures/workstation-ingress.yaml (per ingress its ess-http/1 protocol binding and OpenAPI document) into architectures/projections/workstation-ingress/.
+    desc: Write the projections of the exports of the worked example architectures/workstation-ingress.yaml (per http export its ess-http/1 protocol binding and OpenAPI document, per event_stream its stream list, per tool its tool list, per metrics_scrape its metric list) into architectures/projections/workstation-ingress/.
     cmds:
       - cargo build --quiet --locked -p agenticspec
       - target/debug/agenticspec ingress project architectures/workstation-ingress.yaml --out architectures/projections/workstation-ingress

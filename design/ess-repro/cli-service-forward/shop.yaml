@@ -1,0 +1,83 @@
+# One component reached by network serves a command and a view. agenticspec projects a `cli`
+# export of an ingress as an `ess-cli/2` binding that forwards each command and view to that
+# component (`service_forward`), one `--option` per input field or view parameter. `binding.yaml`
+# is such a binding for `RetireItem` and `ItemById`:
+#
+#   ess specify cli --path design/ess-repro/cli-service-forward --binding design/ess-repro/cli-service-forward/binding.yaml
+#
+# answers `unresolved input type `repro.shop.ItemById.Params``. A `service_forward` callable
+# takes an `input:` struct whose fields exactly match the command's input or the view's
+# parameters, and a `result:` type, but a command's input and a view's parameters and rows are
+# declared inline and have no type name to give. The same binding is valid once the model
+# declares a struct of each of the four names, which would copy every command input and view
+# into the blocks.
+# `agenticspec ingress project` therefore writes the binding with the names `<command>.Input`,
+# `<view>.Params`, `List<<view>.Row>` and `<command>.Outcome` and does not validate it.
+domain: repro.shop
+
+types:
+  - {name: repro.shop.ItemId, kind: newtype, of: String}
+
+entities:
+  - name: repro.shop.Item
+    identity: {name: item_id, type: repro.shop.ItemId}
+    fields:
+      - {name: price, type: Integer}
+    lifecycle:
+      initial: Listed
+      states: [Listed, Retired]
+      terminal: [Retired]
+      transitions:
+        - {name: retire, from: [Listed], to: Retired}
+
+commands:
+  - name: repro.shop.ListItem
+    input:
+      - {name: item_id, type: repro.shop.ItemId}
+      - {name: price, type: Integer}
+    outcomes:
+      - name: listed
+        creates: repro.shop.Item
+        instance: item_id
+        sets: {price: input.price}
+        emits: [repro.shop.ItemListed]
+        payload:
+          repro.shop.ItemListed: {item_id: input.item_id}
+  - name: repro.shop.RetireItem
+    input:
+      - {name: item_id, type: repro.shop.ItemId}
+    outcomes:
+      - name: retired
+        moves: repro.shop.Item.retire
+        instance: item_id
+        emits: [repro.shop.ItemWithdrawn]
+        payload:
+          repro.shop.ItemWithdrawn: {item_id: input.item_id}
+
+events:
+  - name: repro.shop.ItemListed
+    fields:
+      - {name: item_id, type: repro.shop.ItemId}
+  - name: repro.shop.ItemWithdrawn
+    fields:
+      - {name: item_id, type: repro.shop.ItemId}
+
+views:
+  - name: repro.shop.ItemById
+    source: repro.shop.Item
+    params:
+      - {name: item_id, type: repro.shop.ItemId}
+    filter: item_id == param.item_id
+    fields:
+      - {name: item_id, type: repro.shop.ItemId}
+
+actors:
+  - name: repro.shop.Clerk
+    may: [repro.shop.ListItem, repro.shop.RetireItem]
+
+components:
+  - component: shop
+    reached_by: network
+    owns: {domains: [repro.shop]}
+    accepts: {commands: [repro.shop.ListItem, repro.shop.RetireItem]}
+    publishes: {events: [repro.shop.ItemListed, repro.shop.ItemWithdrawn]}
