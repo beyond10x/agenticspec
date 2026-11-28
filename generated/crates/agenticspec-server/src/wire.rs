@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 00fb71ae170fbec426a26c46270451dd7c59b5683dc2c912b0f53ea80bf7d891
+// contract digest 6fe62bda181356b04d69fc00f84d369dcee348a22b96d0ee2e86070b3dfd1233
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -4887,6 +4887,12 @@ pub fn encode_agenticspec_cli_ui_build_input(value: &agenticspec_types::cli::UiB
     }
     json::member(out, "archive");
     json::push_bool(out, value.archive);
+    json::member(out, "control_plane");
+    json::push_bool(out, value.control_plane);
+    if let Some(held0) = &value.prediction {
+        json::member(out, "prediction");
+        json::push_text(out, &*held0);
+    }
     out.push('}');
 }
 
@@ -4896,7 +4902,7 @@ pub fn encode_agenticspec_cli_ui_build_input(value: &agenticspec_types::cli::UiB
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_build_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiBuildInput, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "contract", "out", "api_base", "archive"])?;
+    json::closed_at(value, at, &["architecture", "contract", "out", "api_base", "archive", "control_plane", "prediction"])?;
     Ok(agenticspec_types::cli::UiBuildInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -4924,6 +4930,18 @@ pub fn decode_agenticspec_cli_ui_build_input(value: &json::Value, at: &str) -> R
             let at4 = json::nested(at, "archive");
             let member4 = json::member_at(value, at, "archive")?;
             json::bool_at(member4, &at4, "a boolean")?
+        },
+        control_plane: {
+            let at5 = json::nested(at, "control_plane");
+            let member5 = json::member_at(value, at, "control_plane")?;
+            json::bool_at(member5, &at5, "a boolean")?
+        },
+        prediction: match value.member("prediction") {
+            None | Some(json::Value::Null) => None,
+            Some(member6) => {
+                let at6 = json::nested(at, "prediction");
+                Some(json::text_at(member6, &at6, "a string")?.to_owned())
+            }
         },
     })
 }
@@ -5185,6 +5203,12 @@ pub fn encode_agenticspec_cli_ui_derive_input(value: &agenticspec_types::cli::Ui
     }
     json::member(out, "check");
     json::push_bool(out, value.check);
+    json::member(out, "control_plane");
+    json::push_bool(out, value.control_plane);
+    if let Some(held0) = &value.prediction {
+        json::member(out, "prediction");
+        json::push_text(out, &*held0);
+    }
     out.push('}');
 }
 
@@ -5194,7 +5218,7 @@ pub fn encode_agenticspec_cli_ui_derive_input(value: &agenticspec_types::cli::Ui
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_derive_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiDeriveInput, json::DecodeError> {
-    json::closed_at(value, at, &["path", "contract", "ports", "out", "root", "check"])?;
+    json::closed_at(value, at, &["path", "contract", "ports", "out", "root", "check", "control_plane", "prediction"])?;
     Ok(agenticspec_types::cli::UiDeriveInput {
         path: {
             let at0 = json::nested(at, "path");
@@ -5231,6 +5255,18 @@ pub fn decode_agenticspec_cli_ui_derive_input(value: &json::Value, at: &str) -> 
             let at5 = json::nested(at, "check");
             let member5 = json::member_at(value, at, "check")?;
             json::bool_at(member5, &at5, "a boolean")?
+        },
+        control_plane: {
+            let at6 = json::nested(at, "control_plane");
+            let member6 = json::member_at(value, at, "control_plane")?;
+            json::bool_at(member6, &at6, "a boolean")?
+        },
+        prediction: match value.member("prediction") {
+            None | Some(json::Value::Null) => None,
+            Some(member7) => {
+                let at7 = json::nested(at, "prediction");
+                Some(json::text_at(member7, &at7, "a string")?.to_owned())
+            }
         },
     })
 }
@@ -5512,6 +5548,8 @@ pub fn encode_agenticspec_cli_ui_serve_result(value: &agenticspec_types::cli::Ui
     out.push('{');
     json::member(out, "url");
     json::push_text(out, &value.url);
+    json::member(out, "control");
+    json::push_text(out, &value.control);
     json::member(out, "interface");
     json::push_text(out, &value.interface);
     out.push('}');
@@ -5523,17 +5561,22 @@ pub fn encode_agenticspec_cli_ui_serve_result(value: &agenticspec_types::cli::Ui
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_serve_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiServeResult, json::DecodeError> {
-    json::closed_at(value, at, &["url", "interface"])?;
+    json::closed_at(value, at, &["url", "control", "interface"])?;
     Ok(agenticspec_types::cli::UiServeResult {
         url: {
             let at0 = json::nested(at, "url");
             let member0 = json::member_at(value, at, "url")?;
             json::text_at(member0, &at0, "a string")?.to_owned()
         },
-        interface: {
-            let at1 = json::nested(at, "interface");
-            let member1 = json::member_at(value, at, "interface")?;
+        control: {
+            let at1 = json::nested(at, "control");
+            let member1 = json::member_at(value, at, "control")?;
             json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        interface: {
+            let at2 = json::nested(at, "interface");
+            let member2 = json::member_at(value, at, "interface")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
         },
     })
 }

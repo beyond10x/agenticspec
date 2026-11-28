@@ -6,7 +6,10 @@
 //! its export of an ingress (the operator's `ui`); the other exports stay where they were.
 //!
 //! A UI is one row of [`KINDS`]: its key under `ui:`, its role, the ingress and export it serves
-//! and how its files are built. A binding without `ui:` gives the bundle it gave before.
+//! and how its files are built. The operator UI and the control-plane UI (the operator UI with the
+//! pages across parts, `ui build --control-plane`) serve the same export: the first one the binding
+//! asks for serves it, and the other listens beside it on the port `ui.<ui>.port` gives it. A
+//! binding without `ui:` gives the bundle it gave before.
 
 use super::admit::{Accepts, Finding};
 use super::binding::{BIND, is_port, is_text};
@@ -35,14 +38,24 @@ pub struct Kind {
 }
 
 /// The UIs a binding may ask for.
-pub const KINDS: &[Kind] = &[Kind {
-    key: "operator",
-    role: "operator-ui",
-    ingress: "operator",
-    export: "ui",
-    api: "http",
-    build: operator_files,
-}];
+pub const KINDS: &[Kind] = &[
+    Kind {
+        key: "operator",
+        role: "operator-ui",
+        ingress: "operator",
+        export: "ui",
+        api: "http",
+        build: operator_files,
+    },
+    Kind {
+        key: "control-plane",
+        role: "control-plane-ui",
+        ingress: "operator",
+        export: "ui",
+        api: "http",
+        build: control_plane_files,
+    },
+];
 
 /// The base path of the runtime's adapter a UI reads, written into its `config.json`.
 pub const API_BASE: &str = agenticspec_ui::operator::API_BASE;
@@ -62,9 +75,28 @@ fn operator_files(
     contract: &Value,
     api_base: &str,
 ) -> Result<Vec<(String, Vec<u8>)>, String> {
+    ui_files(architecture, contract, api_base, None)
+}
+
+fn control_plane_files(
+    architecture: &Path,
+    contract: &Value,
+    api_base: &str,
+) -> Result<Vec<(String, Vec<u8>)>, String> {
+    let control = agenticspec_ui::derive::ControlInputs::default();
+    ui_files(architecture, contract, api_base, Some(&control))
+}
+
+/// The files of `agenticspec ui build` (with `--control-plane` when `control` is given).
+fn ui_files(
+    architecture: &Path,
+    contract: &Value,
+    api_base: &str,
+    control: Option<&agenticspec_ui::derive::ControlInputs<'_>>,
+) -> Result<Vec<(String, Vec<u8>)>, String> {
     use agenticspec_ui::derive::Failure;
     let root = architecture.parent().unwrap_or(Path::new("."));
-    agenticspec_ui::operator::build_with(root, architecture, contract, "contract", api_base)
+    agenticspec_ui::operator::build_ui(root, architecture, contract, "contract", api_base, control)
         .map_err(|f| match f {
             Failure::Unreadable(e) => e,
             Failure::Refused(rs) => rs
@@ -73,6 +105,15 @@ fn operator_files(
                 .collect::<Vec<_>>()
                 .join("; "),
         })
+}
+
+/// Whether the unit of `k` serves its export: the first UI the binding asks for that serves that
+/// export of that ingress does; another one beside it listens on a port of its own.
+pub fn serves_export(k: &Kind, binding: &Value) -> bool {
+    asked(binding)
+        .into_iter()
+        .find(|x| x.ingress == k.ingress && x.export == k.export)
+        .is_some_and(|x| x.key == k.key)
 }
 
 /// The name of a UI's unit: its role.
@@ -186,6 +227,9 @@ pub fn served_problems(
                 unit_name(k)
             ));
         }
+        if !serves_export(k, binding) {
+            continue;
+        }
         let e = &binding["ingress"][k.ingress]["exports"][k.export];
         if !e["part"].is_null() {
             out.push(format!(
@@ -209,7 +253,10 @@ pub fn served_problems(
 /// Point each export a UI serves at the UI's unit and the reserved part [`CONTROL`], with the
 /// port and bind of `ui.<ui>` where the binding's export gives none.
 pub fn serve(entries: &mut [Value], binding: &Value) {
-    for k in asked(binding) {
+    for k in asked(binding)
+        .into_iter()
+        .filter(|k| serves_export(k, binding))
+    {
         let ui = &binding["ui"][k.key];
         let e = &binding["ingress"][k.ingress]["exports"][k.export];
         for entry in entries
@@ -337,10 +384,15 @@ pub fn units(
         let digest = sha256(&tar);
         let archive = archive_name(k);
         let name = unit_name(k);
-        let port = ingress
-            .iter()
-            .find(|e| e["ingress"] == k.ingress && e["protocol"] == k.export)
-            .and_then(|e| e["port"].as_u64());
+        // The export's port when the unit serves the export, else the port `ui.<ui>` gives it.
+        let port = if serves_export(k, binding) {
+            ingress
+                .iter()
+                .find(|e| e["ingress"] == k.ingress && e["protocol"] == k.export)
+                .and_then(|e| e["port"].as_u64())
+        } else {
+            binding["ui"][k.key]["port"].as_u64()
+        };
         // Each check on the export's port, unless `checks.<unit>.<check>.port` gives its own.
         let given = &binding["checks"][name];
         let check = |c: &str| {

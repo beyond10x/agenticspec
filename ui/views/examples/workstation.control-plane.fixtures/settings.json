@@ -1,0 +1,35 @@
+{
+  "rows": [
+    {
+      "architecture": "workstation",
+      "place": "policies.operator_answers_alone",
+      "search": "false, true",
+      "value": "false"
+    },
+    {
+      "architecture": "workstation",
+      "place": "policies.question_default_after",
+      "search": "5m, 15m, 60m",
+      "value": "15m"
+    },
+    {
+      "architecture": "workstation",
+      "place": "parts.builds.capacity",
+      "search": "8, 16, 24, 32",
+      "value": "16"
+    },
+    {
+      "architecture": "workstation",
+      "place": "parts.gateway.rate_limit_per_minute",
+      "search": "60, 120, 240",
+      "value": "120"
+    },
+    {
+      "architecture": "workstation",
+      "place": "parts.worker.count",
+      "search": "2 to 24 by 2",
+      "value": "12"
+    }
+  ],
+  "view": "agentic.architecture.Settings"
+}

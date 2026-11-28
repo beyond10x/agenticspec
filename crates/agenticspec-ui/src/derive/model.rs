@@ -483,6 +483,8 @@ pub struct Port {
     /// answers (`reports` the principal actor may issue); a principal port becomes a row action
     /// only then, since the first command of a protocol is the asker's.
     pub explicit: bool,
+    /// The entity the port opens: the entity of its waiting state.
+    pub opens: Option<String>,
 }
 
 /// The actor of `actors` in the port catalogue whose commands a principal part may send.
@@ -548,6 +550,10 @@ pub fn ports(doc: &Value, model: &Model<'_>) -> BTreeMap<String, Port> {
                 kind,
                 explicit,
                 intent,
+                opens: p["waiting_state"]
+                    .as_str()
+                    .and_then(|s| s.rsplit_once('.'))
+                    .map(|(e, _)| e.to_string()),
             },
         );
     }

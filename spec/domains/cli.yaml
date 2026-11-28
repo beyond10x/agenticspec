@@ -804,6 +804,19 @@ types:
       - name: check
         type: Boolean
         summary: Compare a fresh derivation with the files instead of writing them.
+      - name: control_plane
+        type: Boolean
+        summary: >-
+          Derive the control-plane UI: beside the overviews and part pages, the pages across parts
+          (Inbox, Activity, Operations, Metrics, Architecture, Events) and the overview's tiles,
+          selected by port class and the configuration and administration split. Needs the
+          contract.
+      - name: prediction
+        type: Optional<String>
+        summary: >-
+          A simulator result of the same revision of the architecture
+          (`agenticspec-sim-result/1`); with `--control-plane` the Metrics page shows its
+          predicted value beside each KPI. A result of another revision is refused.
 
   - name: agenticspec.cli.UiDeriveResult
     kind: struct
@@ -840,6 +853,18 @@ types:
       - name: archive
         type: Boolean
         summary: Also write `<out>.tar`, the same files as a tar with sorted entries, mode 0644, owner 0 and time 0, and print its sha256.
+      - name: control_plane
+        type: Boolean
+        summary: >-
+          Build the control-plane UI: the operator UI with the pages across parts (Inbox,
+          Activity, Operations, Metrics, Architecture, Events) and the overview's tiles;
+          `config.json` says `mode: control-plane`.
+      - name: prediction
+        type: Optional<String>
+        summary: >-
+          A simulator result of the same revision of the architecture
+          (`agenticspec-sim-result/1`); with `--control-plane` the Metrics page shows its
+          predicted value beside each KPI. A result of another revision is refused.
 
   - name: agenticspec.cli.UiBuildResult
     kind: struct
@@ -883,10 +908,12 @@ types:
     kind: struct
     naming:
       summary: >-
-        Where the operator UI was served, `http://127.0.0.1:<port>/`, and the root of its runtime
-        interface, `<url>ingress/operator`. The server runs until it is stopped.
+        Where the operator UI was served, `http://127.0.0.1:<port>/`, the control-plane UI,
+        `<url>control/`, and the root of their runtime interface, `<url>ingress/operator`. The
+        server runs until it is stopped.
     fields:
       - {name: url, type: String}
+      - {name: control, type: String}
       - {name: interface, type: String}
 
   - name: agenticspec.cli.SimPortsInput

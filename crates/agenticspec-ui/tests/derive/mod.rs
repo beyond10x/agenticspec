@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 use agenticspec_ui::derive::{self, Derivation, Failure, Inputs};
 use serde_yaml_ng::Value;
 
+mod control;
+
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -27,6 +29,8 @@ fn inputs(arch: &Path, contract: Option<&str>, ports: Option<PathBuf>, out: Path
         contract: contract.map(|c| r.join(c)),
         ports,
         out,
+        control_plane: false,
+        prediction: None,
     }
 }
 

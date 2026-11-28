@@ -1,0 +1,305 @@
+{
+  "rows": [
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.agent.AgentDefined"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.agent.AgentRetired"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.agent.AgentRevisionPublished"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.agent.AgentRevisionRetired"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.agent.AgentRevisionUsed"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.AgentActsFor"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.ArchitectureCreated"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.ArchitectureRetired"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.ContractRecorded"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.DryRunApplied"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.EntityPlaced"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.IngressAdded"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.LinkAdded"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.PartAdded"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.PartBordered"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.PartPerSet"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.PatchApplied"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.PatchRecorded"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.PatchRefused"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.PatchRequested"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.PortDeclared"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.RevisionCommitted"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.architecture.SwarmSet"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.CallCompleted"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.CallDecided"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.GatewayDrained"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.GatewayOpened"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.GatewayStopped"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.UpstreamAttached"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.UpstreamDetached"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.UpstreamRestored"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.gateway.UpstreamSaturated"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.HarnessRegistered"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.HarnessRetired"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.PermissionModeRegistered"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.PermissionModeRetired"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.SessionEnded"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.SessionOpened"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.SessionRestarted"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.SubAgentSpawned"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.ToolCallCompleted"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.ToolCallDecided"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.ToolCallRequested"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.ToolResultNotRead"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.harness.TurnRecorded"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.model.EndpointClosed"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.model.EndpointOpened"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.model.InferenceFinished"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.model.InferenceStarted"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.model.ModelDeclared"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.model.ModelRetired"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.model.RouteDefined"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.model.RouteRetired"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.principal.PrincipalRegistered"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.principal.PrincipalRetired"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.question.AnswerNotRead"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.question.DefaultTaken"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.question.QuestionAnswered"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.question.QuestionAsked"
+    },
+    {
+      "architecture": "team-with-console",
+      "channel": "level",
+      "event": "agentic.question.QuestionWithdrawn"
+    }
+  ],
+  "view": "agentic.architecture.ControlEvents"
+}

@@ -5,6 +5,8 @@ refines: split.yaml
 summary: >-
   The split workstation with its operator UI as a unit of its own: the static files of `agenticspec
   ui build` serve the operator ingress's ui export on its port, and read the adapter of the core
-  unit.
+  unit. Its control-plane UI (`ui build --control-plane`) is a second unit beside it on a port of
+  its own, reading the same adapter.
 ui:
   operator: {}
+  control-plane: {port: 8090}

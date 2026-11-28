@@ -42,6 +42,7 @@ const GENERATOR: &[&str] = &[
 /// What the archive of a UI is built from, a source of each bundle whose binding asks for a UI
 /// (`ui:`): the embedded operator app, panels and model, and the UI's derivation.
 const UI_SOURCES: &[&str] = &[
+    "crates/agenticspec-ui/src/derive/control.rs",
     "crates/agenticspec-ui/src/derive/mod.rs",
     "crates/agenticspec-ui/src/derive/model.rs",
     "crates/agenticspec-ui/src/derive/view_key.rs",

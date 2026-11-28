@@ -124,6 +124,61 @@ fn the_operator_ui_is_a_service_unit_with_static_code_carried_in_files() {
     );
 }
 
+/// `ui: {control-plane: {port: 8090}}` adds the control-plane UI beside the operator UI: a
+/// service unit of its own with static code, listening on its own port, the same upstream.
+#[test]
+fn the_control_plane_ui_is_a_second_service_unit_beside_the_operator_ui() {
+    let v = fixture();
+    let u = unit(&v, "control-plane-ui");
+    assert_eq!(u["kind"], "service");
+    assert_eq!(u["roles"], json!(["control-plane-ui"]));
+    assert_eq!(u["parts"], json!([]));
+    assert_eq!(u["egress"], json!([]));
+    assert_eq!(u["code"]["kind"], "static");
+    assert_eq!(u["code"]["archive"], "control-plane-ui.tar");
+    assert_ne!(
+        u["code"]["digest"],
+        unit(&v, "operator-ui")["code"]["digest"]
+    );
+    for check in ["ready", "alive"] {
+        assert_eq!(
+            u["checks"][check],
+            json!({ "kind": "http", "path": "/", "port": 8090 }),
+            "{check}"
+        );
+    }
+    assert_eq!(
+        u["upstream"],
+        json!({ "unit": "core", "port": 8080, "path": "/api/" })
+    );
+    let file = &v["files"]["control-plane-ui.tar"];
+    assert_eq!(file["digest"], u["code"]["digest"]);
+    // The operator UI serves the `ui` export when both are asked.
+    assert_eq!(entry(&v, "operator", "ui")["unit"], "operator-ui");
+}
+
+/// Asked alone, the control-plane UI serves the `ui` export of the operator ingress.
+#[test]
+fn the_control_plane_ui_alone_serves_the_ui_export() {
+    let dir = scratch("deploy-ui-control-alone");
+    let text = refining("bundles/bindings/split.yaml", "ui:\n  control-plane: {}\n");
+    let v = bundle_of(&dir, &text).unwrap();
+    assert!(
+        v["units"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|u| u["name"] != "operator-ui")
+    );
+    let e = entry(&v, "operator", "ui");
+    assert_eq!(e["unit"], "control-plane-ui");
+    assert_eq!(e["port"], 8080);
+    assert_eq!(
+        unit(&v, "control-plane-ui")["checks"]["ready"]["port"],
+        8080
+    );
+}
+
 #[test]
 fn the_ui_export_of_the_operator_ingress_names_the_ui_unit_and_the_rest_stay_in_core() {
     let v = fixture();
@@ -212,23 +267,30 @@ fn the_archive_digest_is_the_one_ui_build_archive_writes_for_the_same_inputs() {
         &mut std::io::sink(),
     )
     .unwrap();
-    let files = agenticspec_ui::operator::build(&agenticspec_ui::operator::Inputs {
-        root: root.clone(),
-        architecture,
-        contract,
-        api_base: agenticspec_ui::operator::API_BASE.to_string(),
-    })
-    .unwrap_or_else(|e| panic!("{e:?}"));
-    let tar = agenticspec_ui::operator::archive(&files).unwrap();
     let v = fixture();
-    assert_eq!(
-        unit(&v, "operator-ui")["code"]["digest"],
-        format!("sha256:{}", agenticspec_ui::operator::sha256(&tar))
-    );
-    assert_eq!(
-        ui::unbase64(v["files"]["operator-ui.tar"]["base64"].as_str().unwrap()).unwrap(),
-        tar
-    );
+    for (name, control_plane) in [("operator-ui", false), ("control-plane-ui", true)] {
+        let files = agenticspec_ui::operator::build(&agenticspec_ui::operator::Inputs {
+            root: root.clone(),
+            architecture: architecture.clone(),
+            contract: contract.clone(),
+            api_base: agenticspec_ui::operator::API_BASE.to_string(),
+            control_plane,
+            prediction: None,
+        })
+        .unwrap_or_else(|e| panic!("{e:?}"));
+        let tar = agenticspec_ui::operator::archive(&files).unwrap();
+        assert_eq!(
+            unit(&v, name)["code"]["digest"],
+            format!("sha256:{}", agenticspec_ui::operator::sha256(&tar)),
+            "{name}"
+        );
+        let archive = format!("{name}.tar");
+        assert_eq!(
+            ui::unbase64(v["files"][&archive]["base64"].as_str().unwrap()).unwrap(),
+            tar,
+            "{name}"
+        );
+    }
 }
 
 #[test]

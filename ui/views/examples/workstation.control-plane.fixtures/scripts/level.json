@@ -1,0 +1,871 @@
+{
+  "channel": "level",
+  "events": [
+    {
+      "at": "1s",
+      "event": "agentic.agent.AgentDefined",
+      "payload": {
+        "agent_id": "00000000-0000-4000-8000-41b79aa10000",
+        "at": "2026-11-20T09:03:00Z",
+        "name": "name 1",
+        "principal_id": "00000000-0000-4000-8000-322d9f1c0000"
+      }
+    },
+    {
+      "at": "2s",
+      "event": "agentic.agent.AgentRetired",
+      "payload": {
+        "agent_id": "00000000-0000-4000-8000-41b79aa10000",
+        "at": "2026-11-20T09:01:00Z"
+      }
+    },
+    {
+      "at": "3s",
+      "event": "agentic.agent.AgentRevisionPublished",
+      "payload": {
+        "agent_id": "00000000-0000-4000-8000-41b79aa10000",
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:04:00Z",
+        "number": 1,
+        "role": "role 1"
+      }
+    },
+    {
+      "at": "4s",
+      "event": "agentic.agent.AgentRevisionRetired",
+      "payload": {
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:01:00Z"
+      }
+    },
+    {
+      "at": "5s",
+      "event": "agentic.agent.AgentRevisionUsed",
+      "payload": {
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:01:00Z"
+      }
+    },
+    {
+      "at": "6s",
+      "event": "agentic.architecture.AgentActsFor",
+      "payload": {
+        "part_id": "00000000-0000-4000-8000-7784d89c0000",
+        "principal_part_id": "00000000-0000-4000-8000-7784d89c0000"
+      }
+    },
+    {
+      "at": "7s",
+      "event": "agentic.architecture.ArchitectureCreated",
+      "payload": {
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+        "name": "name 1"
+      }
+    },
+    {
+      "at": "8s",
+      "event": "agentic.architecture.ArchitectureRetired",
+      "payload": {
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000"
+      }
+    },
+    {
+      "at": "9s",
+      "event": "agentic.architecture.ContractRecorded",
+      "payload": {
+        "contract_id": "00000000-0000-4000-8000-8a714f2c0000",
+        "digest": "digest 1",
+        "revision_id": "00000000-0000-4000-8000-8dac41280000"
+      }
+    },
+    {
+      "at": "10s",
+      "event": "agentic.architecture.DryRunApplied",
+      "payload": {
+        "application_id": "00000000-0000-4000-8000-1c3c8ce60000",
+        "changed_rows": 1
+      }
+    },
+    {
+      "at": "11s",
+      "event": "agentic.architecture.EntityPlaced",
+      "payload": {
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+        "entity_id": "00000000-0000-4000-8000-5364bf080000",
+        "entity_name": "entity name 1",
+        "instance": 1,
+        "part_id": "00000000-0000-4000-8000-7784d89c0000",
+        "part_path": "part path 1",
+        "placement_id": "00000000-0000-4000-8000-6752068c0000",
+        "revision_id": "00000000-0000-4000-8000-8dac41280000"
+      }
+    },
+    {
+      "at": "12s",
+      "event": "agentic.architecture.IngressAdded",
+      "payload": {
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+        "audience_part_id": "00000000-0000-4000-8000-7784d89c0000",
+        "ingress_id": "00000000-0000-4000-8000-db6201a80000",
+        "name": "name 1"
+      }
+    },
+    {
+      "at": "13s",
+      "event": "agentic.architecture.LinkAdded",
+      "payload": {
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+        "carries": "Prompt",
+        "from_part_id": "00000000-0000-4000-8000-7784d89c0000",
+        "link_id": "00000000-0000-4000-8000-44bdfca50000",
+        "to_part_id": "00000000-0000-4000-8000-7784d89c0000"
+      }
+    },
+    {
+      "at": "14s",
+      "event": "agentic.architecture.PartAdded",
+      "payload": {
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+        "count": 1,
+        "kind": "Principal",
+        "name": "name 1",
+        "part_id": "00000000-0000-4000-8000-7784d89c0000"
+      }
+    },
+    {
+      "at": "15s",
+      "event": "agentic.architecture.PartBordered",
+      "payload": {
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+        "part_id": "00000000-0000-4000-8000-7784d89c0000"
+      }
+    },
+    {
+      "at": "16s",
+      "event": "agentic.architecture.PartPerSet",
+      "payload": {
+        "part_id": "00000000-0000-4000-8000-7784d89c0000",
+        "per_part_id": "00000000-0000-4000-8000-7784d89c0000"
+      }
+    },
+    {
+      "at": "17s",
+      "event": "agentic.architecture.PatchApplied",
+      "payload": {
+        "application_id": "00000000-0000-4000-8000-1c3c8ce60000",
+        "changed_rows": 1,
+        "revision_id": "00000000-0000-4000-8000-8dac41280000"
+      }
+    },
+    {
+      "at": "18s",
+      "event": "agentic.architecture.PatchRecorded",
+      "payload": {
+        "digest": "digest 1",
+        "patch_id": "00000000-0000-4000-8000-31ae02680000"
+      }
+    },
+    {
+      "at": "19s",
+      "event": "agentic.architecture.PatchRefused",
+      "payload": {
+        "application_id": "00000000-0000-4000-8000-1c3c8ce60000",
+        "error": "error 1",
+        "rule_index": 1
+      }
+    },
+    {
+      "at": "20s",
+      "event": "agentic.architecture.PatchRequested",
+      "payload": {
+        "application_id": "00000000-0000-4000-8000-1c3c8ce60000",
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+        "dry_run": true,
+        "patch_id": "00000000-0000-4000-8000-31ae02680000"
+      }
+    },
+    {
+      "at": "21s",
+      "event": "agentic.architecture.PortDeclared",
+      "payload": {
+        "block": "block 1",
+        "name": "name 1",
+        "port_id": "00000000-0000-4000-8000-04ab06340000"
+      }
+    },
+    {
+      "at": "22s",
+      "event": "agentic.architecture.RevisionCommitted",
+      "payload": {
+        "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+        "digest": "digest 1",
+        "number": 1,
+        "revision_id": "00000000-0000-4000-8000-8dac41280000"
+      }
+    },
+    {
+      "at": "23s",
+      "event": "agentic.architecture.SwarmSet",
+      "payload": {
+        "coordination": "Orchestrator",
+        "part_id": "00000000-0000-4000-8000-7784d89c0000",
+        "start_stagger": "PT5M"
+      }
+    },
+    {
+      "at": "24s",
+      "event": "agentic.channel.ChannelClosed",
+      "payload": {
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000"
+      }
+    },
+    {
+      "at": "25s",
+      "event": "agentic.channel.ChannelOpened",
+      "payload": {
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "kind": "Prompt",
+        "party_a": "00000000-0000-4000-8000-761908b00000",
+        "party_b": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "26s",
+      "event": "agentic.channel.HeartbeatRecorded",
+      "payload": {
+        "subscription_id": "00000000-0000-4000-8000-f489e8720000"
+      }
+    },
+    {
+      "at": "27s",
+      "event": "agentic.channel.MessageDelivered",
+      "payload": {
+        "message_id": "00000000-0000-4000-8000-783eb9330000"
+      }
+    },
+    {
+      "at": "28s",
+      "event": "agentic.channel.MessageLost",
+      "payload": {
+        "message_id": "00000000-0000-4000-8000-783eb9330000"
+      }
+    },
+    {
+      "at": "29s",
+      "event": "agentic.channel.MessageRead",
+      "payload": {
+        "message_id": "00000000-0000-4000-8000-783eb9330000",
+        "turn_id": "00000000-0000-4000-8000-391e34cb0000"
+      }
+    },
+    {
+      "at": "30s",
+      "event": "agentic.channel.MessageSent",
+      "payload": {
+        "act": "Request",
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "content": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "delegation_id": "00000000-0000-4000-8000-e045564d0000",
+        "from": "00000000-0000-4000-8000-761908b00000",
+        "in_reply_to": "00000000-0000-4000-8000-783eb9330000",
+        "message_id": "00000000-0000-4000-8000-783eb9330000",
+        "proof": "None",
+        "sent_by_call": "00000000-0000-4000-8000-b72db82b0000",
+        "to": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "31s",
+      "event": "agentic.channel.PostTaken",
+      "payload": {
+        "post_id": "00000000-0000-4000-8000-936344e80000",
+        "reader": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "32s",
+      "event": "agentic.channel.Posted",
+      "payload": {
+        "act": "Request",
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "content": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "delegation_id": "00000000-0000-4000-8000-e045564d0000",
+        "entry": "Observed",
+        "from": "00000000-0000-4000-8000-761908b00000",
+        "in_reply_to": "00000000-0000-4000-8000-936344e80000",
+        "post_id": "00000000-0000-4000-8000-936344e80000",
+        "proof": "None"
+      }
+    },
+    {
+      "at": "33s",
+      "event": "agentic.channel.SharedChannelOpened",
+      "payload": {
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "distribution": "Direct",
+        "kind": "Prompt",
+        "party_a": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "34s",
+      "event": "agentic.channel.Subscribed",
+      "payload": {
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "party": "00000000-0000-4000-8000-761908b00000",
+        "relays_for": "00000000-0000-4000-8000-322d9f1c0000",
+        "subscription_id": "00000000-0000-4000-8000-f489e8720000"
+      }
+    },
+    {
+      "at": "35s",
+      "event": "agentic.channel.SubscriptionEnded",
+      "payload": {
+        "subscription_id": "00000000-0000-4000-8000-f489e8720000"
+      }
+    },
+    {
+      "at": "36s",
+      "event": "agentic.gateway.CallCompleted",
+      "payload": {
+        "inference_id": "00000000-0000-4000-8000-d56952c90000",
+        "outcome": "Ok",
+        "usage": {
+          "cache_read_tokens": 1,
+          "cache_write_tokens": 1,
+          "input_tokens": 1,
+          "output_tokens": 1
+        }
+      }
+    },
+    {
+      "at": "37s",
+      "event": "agentic.gateway.CallDecided",
+      "payload": {
+        "admission": "Admitted",
+        "caller": "00000000-0000-4000-8000-322d9f1c0000",
+        "gateway_id": "00000000-0000-4000-8000-9121f2990000",
+        "inference_id": "00000000-0000-4000-8000-d56952c90000",
+        "request": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "route_id": "00000000-0000-4000-8000-176f59df0000",
+        "upstream_id": "00000000-0000-4000-8000-0085ef940000"
+      }
+    },
+    {
+      "at": "38s",
+      "event": "agentic.gateway.GatewayDrained",
+      "payload": {
+        "gateway_id": "00000000-0000-4000-8000-9121f2990000"
+      }
+    },
+    {
+      "at": "39s",
+      "event": "agentic.gateway.GatewayOpened",
+      "payload": {
+        "gateway_id": "00000000-0000-4000-8000-9121f2990000",
+        "name": "name 1"
+      }
+    },
+    {
+      "at": "40s",
+      "event": "agentic.gateway.GatewayStopped",
+      "payload": {
+        "gateway_id": "00000000-0000-4000-8000-9121f2990000"
+      }
+    },
+    {
+      "at": "41s",
+      "event": "agentic.gateway.UpstreamAttached",
+      "payload": {
+        "endpoint_id": "00000000-0000-4000-8000-b24dcd040000",
+        "gateway_id": "00000000-0000-4000-8000-9121f2990000",
+        "upstream_id": "00000000-0000-4000-8000-0085ef940000"
+      }
+    },
+    {
+      "at": "42s",
+      "event": "agentic.gateway.UpstreamDetached",
+      "payload": {
+        "upstream_id": "00000000-0000-4000-8000-0085ef940000"
+      }
+    },
+    {
+      "at": "43s",
+      "event": "agentic.gateway.UpstreamRestored",
+      "payload": {
+        "upstream_id": "00000000-0000-4000-8000-0085ef940000"
+      }
+    },
+    {
+      "at": "44s",
+      "event": "agentic.gateway.UpstreamSaturated",
+      "payload": {
+        "upstream_id": "00000000-0000-4000-8000-0085ef940000"
+      }
+    },
+    {
+      "at": "45s",
+      "event": "agentic.harness.HarnessRegistered",
+      "payload": {
+        "at": "2026-11-20T09:04:00Z",
+        "context_window": 1,
+        "harness_id": "00000000-0000-4000-8000-a444a03c0000",
+        "kind": "Vendor",
+        "max_depth": 1
+      }
+    },
+    {
+      "at": "46s",
+      "event": "agentic.harness.HarnessRetired",
+      "payload": {
+        "at": "2026-11-20T09:01:00Z",
+        "harness_id": "00000000-0000-4000-8000-a444a03c0000"
+      }
+    },
+    {
+      "at": "47s",
+      "event": "agentic.harness.PermissionModeRegistered",
+      "payload": {
+        "at": "2026-11-20T09:02:00Z",
+        "name": "name 1",
+        "permission_mode_id": "00000000-0000-4000-8000-1551be920000"
+      }
+    },
+    {
+      "at": "48s",
+      "event": "agentic.harness.PermissionModeRetired",
+      "payload": {
+        "at": "2026-11-20T09:01:00Z",
+        "permission_mode_id": "00000000-0000-4000-8000-1551be920000"
+      }
+    },
+    {
+      "at": "49s",
+      "event": "agentic.harness.SessionEnded",
+      "payload": {
+        "at": "2026-11-20T09:01:00Z",
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000"
+      }
+    },
+    {
+      "at": "50s",
+      "event": "agentic.harness.SessionOpened",
+      "payload": {
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:06:00Z",
+        "harness_id": "00000000-0000-4000-8000-a444a03c0000",
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "name": "name 1",
+        "permission_mode": "00000000-0000-4000-8000-1551be920000",
+        "principal_id": "00000000-0000-4000-8000-322d9f1c0000"
+      }
+    },
+    {
+      "at": "51s",
+      "event": "agentic.harness.SessionRestarted",
+      "payload": {
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "lineage": "00000000-0000-4000-8000-a83fcb5e0000",
+        "replaces": "00000000-0000-4000-8000-a83fcb5e0000"
+      }
+    },
+    {
+      "at": "52s",
+      "event": "agentic.harness.SubAgentSpawned",
+      "payload": {
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:06:00Z",
+        "depth": 1,
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "name": "name 1",
+        "parent_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "requested_route": "00000000-0000-4000-8000-176f59df0000"
+      }
+    },
+    {
+      "at": "53s",
+      "event": "agentic.harness.ToolCallCompleted",
+      "payload": {
+        "ok": true,
+        "output": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "tool_call_id": "00000000-0000-4000-8000-b72db82b0000"
+      }
+    },
+    {
+      "at": "54s",
+      "event": "agentic.harness.ToolCallDecided",
+      "payload": {
+        "attribution": "Known",
+        "decider": "PermissionMode",
+        "tool_call_id": "00000000-0000-4000-8000-b72db82b0000",
+        "verdict": "Allow"
+      }
+    },
+    {
+      "at": "55s",
+      "event": "agentic.harness.ToolCallRequested",
+      "payload": {
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "input": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "tool_call_id": "00000000-0000-4000-8000-b72db82b0000",
+        "tool_id": "00000000-0000-4000-8000-b84588820000"
+      }
+    },
+    {
+      "at": "56s",
+      "event": "agentic.harness.ToolResultNotRead",
+      "payload": {
+        "read_failure": "read failure 1",
+        "tool_call_id": "00000000-0000-4000-8000-b72db82b0000"
+      }
+    },
+    {
+      "at": "57s",
+      "event": "agentic.harness.TurnRecorded",
+      "payload": {
+        "at": "2026-11-20T09:05:00Z",
+        "context_tokens": 1,
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "inference_id": "00000000-0000-4000-8000-d56952c90000",
+        "turn_id": "00000000-0000-4000-8000-391e34cb0000",
+        "usage": {
+          "cache_read_tokens": 1,
+          "cache_write_tokens": 1,
+          "input_tokens": 1,
+          "output_tokens": 1
+        }
+      }
+    },
+    {
+      "at": "58s",
+      "event": "agentic.model.EndpointClosed",
+      "payload": {
+        "endpoint_id": "00000000-0000-4000-8000-b24dcd040000"
+      }
+    },
+    {
+      "at": "59s",
+      "event": "agentic.model.EndpointOpened",
+      "payload": {
+        "address": "address 1",
+        "endpoint_id": "00000000-0000-4000-8000-b24dcd040000",
+        "hosting": "Vendor",
+        "model_id": "00000000-0000-4000-8000-83c6d66d0000",
+        "wire": "Messages"
+      }
+    },
+    {
+      "at": "60s",
+      "event": "agentic.model.InferenceFinished",
+      "payload": {
+        "inference_id": "00000000-0000-4000-8000-d56952c90000",
+        "latency": {
+          "first_token_ms": 1,
+          "total_ms": 1
+        },
+        "outcome": "Ok",
+        "usage": {
+          "cache_read_tokens": 1,
+          "cache_write_tokens": 1,
+          "input_tokens": 1,
+          "output_tokens": 1
+        }
+      }
+    },
+    {
+      "at": "61s",
+      "event": "agentic.model.InferenceStarted",
+      "payload": {
+        "inference_id": "00000000-0000-4000-8000-d56952c90000",
+        "request": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "route_id": "00000000-0000-4000-8000-176f59df0000"
+      }
+    },
+    {
+      "at": "62s",
+      "event": "agentic.model.ModelDeclared",
+      "payload": {
+        "context_window": 1,
+        "model_id": "00000000-0000-4000-8000-83c6d66d0000",
+        "name": "name 1",
+        "provider_id": "00000000-0000-4000-8000-3841e4610000"
+      }
+    },
+    {
+      "at": "63s",
+      "event": "agentic.model.ModelRetired",
+      "payload": {
+        "model_id": "00000000-0000-4000-8000-83c6d66d0000"
+      }
+    },
+    {
+      "at": "64s",
+      "event": "agentic.model.RouteDefined",
+      "payload": {
+        "endpoint_id": "00000000-0000-4000-8000-b24dcd040000",
+        "model_id": "00000000-0000-4000-8000-83c6d66d0000",
+        "name": "name 1",
+        "route_id": "00000000-0000-4000-8000-176f59df0000"
+      }
+    },
+    {
+      "at": "65s",
+      "event": "agentic.model.RouteRetired",
+      "payload": {
+        "route_id": "00000000-0000-4000-8000-176f59df0000"
+      }
+    },
+    {
+      "at": "66s",
+      "event": "agentic.principal.PrincipalRegistered",
+      "payload": {
+        "at": "2026-11-20T09:03:00Z",
+        "kind": "Human",
+        "name": "name 1",
+        "principal_id": "00000000-0000-4000-8000-322d9f1c0000"
+      }
+    },
+    {
+      "at": "67s",
+      "event": "agentic.principal.PrincipalRetired",
+      "payload": {
+        "at": "2026-11-20T09:01:00Z",
+        "principal_id": "00000000-0000-4000-8000-322d9f1c0000"
+      }
+    },
+    {
+      "at": "68s",
+      "event": "agentic.question.AnswerNotRead",
+      "payload": {
+        "answered_by": "00000000-0000-4000-8000-761908b00000",
+        "answered_via": "00000000-0000-4000-8000-e045564d0000",
+        "question_id": "00000000-0000-4000-8000-d74009500000",
+        "read_failure": "read failure 1"
+      }
+    },
+    {
+      "at": "69s",
+      "event": "agentic.question.DefaultTaken",
+      "payload": {
+        "option": "option 1",
+        "question_id": "00000000-0000-4000-8000-d74009500000"
+      }
+    },
+    {
+      "at": "70s",
+      "event": "agentic.question.QuestionAnswered",
+      "payload": {
+        "answered_by": "00000000-0000-4000-8000-761908b00000",
+        "answered_via": "00000000-0000-4000-8000-e045564d0000",
+        "option": "option 1",
+        "question_id": "00000000-0000-4000-8000-d74009500000"
+      }
+    },
+    {
+      "at": "71s",
+      "event": "agentic.question.QuestionAsked",
+      "payload": {
+        "addressee": "00000000-0000-4000-8000-761908b00000",
+        "asked_by": "00000000-0000-4000-8000-761908b00000",
+        "deadline": "2026-11-20T09:05:00Z",
+        "default_option": "default option 1",
+        "kind": "Choice",
+        "question_id": "00000000-0000-4000-8000-d74009500000",
+        "run_id": "00000000-0000-4000-8000-1bc1b0c90000",
+        "topic": "topic 1"
+      }
+    },
+    {
+      "at": "72s",
+      "event": "agentic.question.QuestionWithdrawn",
+      "payload": {
+        "question_id": "00000000-0000-4000-8000-d74009500000"
+      }
+    },
+    {
+      "at": "73s",
+      "event": "agentic.resource.ClaimExpired",
+      "payload": {
+        "claim_id": "00000000-0000-4000-8000-3daec4520000",
+        "pool_id": "00000000-0000-4000-8000-e7e96cf90000"
+      }
+    },
+    {
+      "at": "74s",
+      "event": "agentic.resource.ClaimGranted",
+      "payload": {
+        "claim_id": "00000000-0000-4000-8000-3daec4520000",
+        "held_until": "2026-11-20T09:02:00Z",
+        "pool_id": "00000000-0000-4000-8000-e7e96cf90000"
+      }
+    },
+    {
+      "at": "75s",
+      "event": "agentic.resource.ClaimKilled",
+      "payload": {
+        "claim_id": "00000000-0000-4000-8000-3daec4520000",
+        "pool_id": "00000000-0000-4000-8000-e7e96cf90000"
+      }
+    },
+    {
+      "at": "76s",
+      "event": "agentic.resource.ClaimQueued",
+      "payload": {
+        "claim_id": "00000000-0000-4000-8000-3daec4520000",
+        "holder": "00000000-0000-4000-8000-761908b00000",
+        "pool_id": "00000000-0000-4000-8000-e7e96cf90000",
+        "time_limit_seconds": 1
+      }
+    },
+    {
+      "at": "77s",
+      "event": "agentic.resource.ClaimReleased",
+      "payload": {
+        "claim_id": "00000000-0000-4000-8000-3daec4520000",
+        "pool_id": "00000000-0000-4000-8000-e7e96cf90000"
+      }
+    },
+    {
+      "at": "78s",
+      "event": "agentic.resource.ClaimWithdrawn",
+      "payload": {
+        "claim_id": "00000000-0000-4000-8000-3daec4520000"
+      }
+    },
+    {
+      "at": "79s",
+      "event": "agentic.resource.PoolCreated",
+      "payload": {
+        "capacity": 1,
+        "kind": "BuildSlots",
+        "pool_id": "00000000-0000-4000-8000-e7e96cf90000"
+      }
+    },
+    {
+      "at": "80s",
+      "event": "agentic.sandbox.SandboxDefined",
+      "payload": {
+        "isolation": "None",
+        "sandbox_id": "00000000-0000-4000-8000-df1af3610000"
+      }
+    },
+    {
+      "at": "81s",
+      "event": "agentic.sandbox.SandboxRetired",
+      "payload": {
+        "sandbox_id": "00000000-0000-4000-8000-df1af3610000"
+      }
+    },
+    {
+      "at": "82s",
+      "event": "agentic.workspace.ChangeProposed",
+      "payload": {
+        "base_revision": "base revision 1",
+        "handback": "00000000-0000-4000-8000-ad68d5e40000",
+        "head_revision": "head revision 1",
+        "lease_id": "00000000-0000-4000-8000-33e91c530000",
+        "proposal_id": "00000000-0000-4000-8000-87b5c6d60000",
+        "proposed_by": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "83s",
+      "event": "agentic.workspace.LeaseExpired",
+      "payload": {
+        "lease_id": "00000000-0000-4000-8000-33e91c530000"
+      }
+    },
+    {
+      "at": "84s",
+      "event": "agentic.workspace.LeaseGranted",
+      "payload": {
+        "lease_id": "00000000-0000-4000-8000-33e91c530000",
+        "workspace_id": "00000000-0000-4000-8000-881697980000"
+      }
+    },
+    {
+      "at": "85s",
+      "event": "agentic.workspace.LeaseReleased",
+      "payload": {
+        "lease_id": "00000000-0000-4000-8000-33e91c530000"
+      }
+    },
+    {
+      "at": "86s",
+      "event": "agentic.workspace.LeaseRequested",
+      "payload": {
+        "expires_at": "2026-11-20T09:03:00Z",
+        "holder": "00000000-0000-4000-8000-761908b00000",
+        "lease_id": "00000000-0000-4000-8000-33e91c530000",
+        "workspace_id": "00000000-0000-4000-8000-881697980000"
+      }
+    },
+    {
+      "at": "87s",
+      "event": "agentic.workspace.PathWritten",
+      "payload": {
+        "lease_id": "00000000-0000-4000-8000-33e91c530000",
+        "path": "path 1",
+        "workspace_id": "00000000-0000-4000-8000-881697980000"
+      }
+    },
+    {
+      "at": "88s",
+      "event": "agentic.workspace.ProposalMerged",
+      "payload": {
+        "merged_revision": "merged revision 1",
+        "merged_under": "00000000-0000-4000-8000-69f9b46e0000",
+        "proposal_id": "00000000-0000-4000-8000-87b5c6d60000"
+      }
+    },
+    {
+      "at": "89s",
+      "event": "agentic.workspace.ProposalRejected",
+      "payload": {
+        "proposal_id": "00000000-0000-4000-8000-87b5c6d60000"
+      }
+    },
+    {
+      "at": "90s",
+      "event": "agentic.workspace.ProposalSuperseded",
+      "payload": {
+        "proposal_id": "00000000-0000-4000-8000-87b5c6d60000",
+        "superseded_by": "00000000-0000-4000-8000-87b5c6d60000"
+      }
+    },
+    {
+      "at": "91s",
+      "event": "agentic.workspace.WorkspaceCreated",
+      "payload": {
+        "base_revision": "base revision 1",
+        "kind": "Checkout",
+        "sharing": "Exclusive",
+        "workspace_id": "00000000-0000-4000-8000-881697980000"
+      }
+    }
+  ]
+}

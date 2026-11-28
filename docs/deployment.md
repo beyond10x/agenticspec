@@ -29,10 +29,10 @@ but `format` and `binding` is optional.
 | `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists) |
 | `transports` | per carried value (`model_call`, `order`, `question`, `claim`, ...), the transport a link that crosses units uses |
 | `runtimes` | runtime images: `core` for the core and service units, `agent-runtime` for the agent units (the role it plays; without it the target binds the role, and the older name `agent` is refused). Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both |
-| `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui` |
-| `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below); the operator UI's unit, `operator-ui`, has `ready` and `alive` |
+| `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui`, the control-plane UI's `control-plane-ui` |
+| `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below); the UI units, `operator-ui` and `control-plane-ui`, have `ready` and `alive` |
 | `ingress` | per ingress of the contract and per protocol it exports, where it listens: `{operator: {exports: {http: {port: 8080, bind: all}}}}`. `port` (1 to 65535), `bind` (`loopback`, the default, or `all`), `address` (the address it is reached at, text) and `part` (a part of a unit that serves it, when not the control plane of the core) |
-| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) |
+| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port}}, control-plane: {port, bind, upstream: {unit, port}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) and [the control-plane UI](#the-control-plane-ui) |
 | `packing` | the packing section below |
 
 A binding never changes the architecture: promoting a revision to another target is a new binding
@@ -219,7 +219,7 @@ Each unit:
 | `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (`/api/`) |
 | `secrets` | the secret names its parts declare, never a value |
 | `egress` | every destination its parts declare, each with the part it starts at (`from`), the secret it authenticates with, when declared (`secret`), and `name`, what the target resolves: a link to another unit, with its transport, named by that unit; a link to an external part (`external: true`), named by its reach (its name, or its address, which is then also `address`); or a destination outside the architecture (`named: true`, no link), named by its own name, with the `address` the binding gives it, else `unresolved: true`. Nothing that is not listed is granted |
-| `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime`, `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls, `operator-ui` for the operator UI's unit |
+| `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime`, `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls, `operator-ui` for the operator UI's unit, `control-plane-ui` for the control-plane UI's unit |
 | `ports` | the contract ports its parts use, by their derived names, with their settings and instances |
 | `source` | the unit and its parts, carried into what the translator makes of it |
 
@@ -315,6 +315,39 @@ the `ui` export; with `not_admitted`, an upstream that names no unit of the pack
 (`ui_upstream_unknown`), a role `operator-ui` the accepted list does not hold
 (`unit_not_hosted`), and a UI that does not build (`ui_build_refused`, for example a contract
 from other ports than the binary's). `bundles/bindings/operator-ui.yaml` is the worked example.
+
+### The control-plane UI
+
+`agenticspec ui build ... --control-plane [--prediction <result.json>]` writes the control-plane
+UI: the same app and files, with pages across parts beside the overviews and part pages, and
+`config.json` in `mode: control-plane`. `ui derive --control-plane` derives the same layout,
+by the same code path. The pages are chosen by port class and by the split of entry commands into
+configuration and administration, read from the contract and the port catalogue, never by a view
+name:
+
+| page | shows |
+|---|---|
+| Inbox | per principal part (kind `human` or `service`), the views over the entity each of its principal ports opens, with the port's answers as row actions |
+| Activity | the views over the entities the other ports the parts use open, across parts, newest first |
+| Operations | per part, the views over the entities a configuration command of its blocks creates or an administration command moves, with the administration commands of the operator ingress as row actions; then the placements |
+| Metrics | the KPIs of the `metrics` ingress, each with the simulator's prediction from `--prediction` (a result of the same revision; another is refused) |
+| Architecture | the views of the architecture block, read-only |
+| Events | the top level's channel as a live log |
+
+The top overview gets tiles: the open rows of each Inbox view, the rows per state of each
+Operations view, and each KPI. A page never offers a configuration command, a command that only
+actors holding the report of a non-principal port may issue, or machine traffic (the commands of
+a port that a `model_call`, `tool_call` or `claim` link stands for), whatever the operator ingress
+lists. `ui serve` serves the control-plane UI at `/control/` beside the operator UI, and
+`ui conform --architecture` checks its reads across parts at the architecture's scope.
+
+A binding with `ui: {control-plane: {port, bind, upstream}}` adds the unit `control-plane-ui`:
+`roles: [control-plane-ui]`, `code: {kind: static, archive: control-plane-ui.tar, digest}`, the
+archive under `files`, the same keys, defaults and refusals as `ui.operator`. Both UIs can run
+side by side: the operator UI then serves the operator ingress's `ui` export, and the
+control-plane UI listens on `ui.control-plane.port` (its checks on that port) and reads the same
+upstream. Asked alone, the control-plane UI serves the export. `bundles/bindings/operator-ui.yaml`
+asks for both.
 
 ### Before a runtime: the UI on fixtures
 
