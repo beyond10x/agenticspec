@@ -18,6 +18,7 @@ export { default as KitLink } from './components/KitLink.vue';
 export { default as KitList } from './components/KitList.vue';
 export { default as KitLoading } from './components/KitLoading.vue';
 export { default as KitMetric } from './components/KitMetric.vue';
+export { default as KitNav } from './components/KitNav.vue';
 export { default as KitPage } from './components/KitPage.vue';
 export { default as KitPanel } from './components/KitPanel.vue';
 export { default as KitRecord } from './components/KitRecord.vue';

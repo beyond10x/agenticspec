@@ -59,6 +59,8 @@ export interface Client {
   read<V extends keyof Reads>(view: V, params: Reads[V]['params']): Promise<Row[]>;
   command<C extends keyof Commands>(command: C, input: Commands[C]['input']): Promise<CommandAnswer>;
   subscribe(channel: ChannelName, params: Record<string, Value>, onEvent: (event: string, data: Value) => void): () => void;
+  /** The same client under `path` below its base: the scope a widget reads (`/scopes/<architecture>/<part>`). */
+  scope(path: string): Client;
 }
 
 function query(params: object): string {
@@ -112,6 +114,9 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
       for (const ev of (CHANNEL_EVENTS as Record<string, readonly string[]>)[channel] ?? []) source.addEventListener(ev, handler as EventListener);
       source.onmessage = handler;
       return () => source.close();
+    },
+    scope(path) {
+      return createClient(`${base}${path}`, fetcher);
     },
   };
 }

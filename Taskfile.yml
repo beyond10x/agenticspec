@@ -10,6 +10,7 @@ tasks:
       - task: check:app
       - task: check:ui-kit
       - task: check:studio
+      - task: check:views
       - task: check:generated
       - task: check:docs
       - task: check:ladder
@@ -145,9 +146,20 @@ tasks:
       - sh scripts/check-studio.sh
 
   ui:generate:
-    desc: Generate the pages, router, client and runtime of the studio app (ui/studio/src/generated) from studio/studio.ui.yaml with agenticspec ui generate. task check:generated holds them.
+    desc: Generate the pages, router, client and runtime of the studio app (ui/studio/src/generated) from studio/studio.ui.yaml, and the widgets and pages of the block panels' gallery (ui/views/gallery/src/generated) from ui/views/blocks.ui.yaml, with agenticspec ui generate. task check:generated holds them.
     cmds:
       - cargo run --quiet --locked -p agenticspec -- ui generate --path studio/studio.ui.yaml --out ui/studio/src/generated
+      - cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/blocks.ui.yaml --out ui/views/gallery/src/generated
+
+  check:views:
+    desc: The gallery of the block panels - the types and unit tests of ui/views/gallery (live re-read and patch, the scope of a widget, the fixture client), a build into target/views/gallery, then its browser test (every panel shows its fixture rows; axe-core and overflow at 1366x768 and 390x844 in both themes). Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-views.sh.
+    cmds:
+      - sh scripts/check-views.sh
+
+  views:build:
+    desc: Build the gallery of the block panels (ui/views/gallery, generated from ui/views/blocks.ui.yaml by agenticspec ui generate and held by task check:generated) into target/views/gallery; it reads the fixtures of ui/views/fixtures in the browser and needs no server.
+    cmds:
+      - cd ui && ([ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund --loglevel=error) && npx vite build --config views/gallery/vite.config.ts --logLevel warn
 
   studio:build:
     desc: Build the studio app of ui/studio into target/studio/www, which agenticstudio serve serves.

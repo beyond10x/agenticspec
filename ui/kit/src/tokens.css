@@ -151,6 +151,7 @@
   --kit-control-height-sm: 1.85rem;
   --kit-header-height: 3.5rem;
   --kit-side-width: 23rem;
+  --kit-nav-width: 15rem;
 
   --kit-motion: 160ms ease;
   --kit-motion-slow: 240ms ease;

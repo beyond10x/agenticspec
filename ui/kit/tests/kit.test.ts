@@ -9,7 +9,9 @@ import KitSelect from '../src/components/KitSelect.vue';
 import KitRecord from '../src/components/KitRecord.vue';
 import KitSwitch from '../src/components/KitSwitch.vue';
 import KitPanel from '../src/components/KitPanel.vue';
-import { formatValue, isDigest, shortDigest, toneOf } from '../src/format';
+import KitShell from '../src/components/KitShell.vue';
+import KitValue from '../src/components/KitValue.vue';
+import { formatValue, isDigest, isUuid, shortDigest, toneOf } from '../src/format';
 import { fitScale, initialView, zoomAt } from '../src/zoom';
 import type { FieldDef } from '../src/types';
 
@@ -99,6 +101,33 @@ describe('values', () => {
     expect(formatValue({ as: 'toggle' }, true)).toBe('yes');
     expect(formatValue({ as: 'text' }, null)).toBe('—');
     expect(formatValue({ as: 'timestamp' }, '2026-11-28T09:05:00Z')).toBe('2026-11-28 09:05 UTC');
+  });
+
+  it('shows a UUID short, a JSON value by its entries and a named state by its name', () => {
+    const id = '7f3c2a10-4b1d-4e8a-9c2f-391e34cb0000';
+    expect(isUuid(id)).toBe(true);
+    expect(formatValue({ as: 'text' }, id)).toBe('…391e34cb0000');
+    expect(formatValue({ as: 'json' }, { input_tokens: 2, output_tokens: 1 })).toBe('input_tokens: 2, output_tokens: 1');
+    const state: FieldDef = { field: 'state', label: 'State', as: 'badge', tones: { Draft: 'info' } };
+    expect(formatValue(state, { name: 'Draft', summary: 'Takes parts.' })).toBe('Draft');
+    expect(toneOf(state, { name: 'Draft', summary: 'Takes parts.' })).toBe('info');
+    const w = mount(KitValue, { props: { def: state, value: { name: 'Draft', summary: 'Takes parts.' } } });
+    expect(w.get('.kit-badge').attributes('title')).toBe('Takes parts.');
+  });
+
+  it('a shell with a navigation marks the current page and opens it from a button', async () => {
+    const nav = [{ label: 'Layer 4', items: [{ label: 'Agent', href: '#/agent', current: false }, { label: 'Harness', href: '#/harness', current: true }] }];
+    const w = mount(KitShell, { props: { title: 'Blocks', nav }, slots: { default: '<p>page</p>' } });
+    expect(w.get('nav').attributes('aria-label')).toBe('Pages');
+    expect(w.get('a[aria-current="page"]').text()).toBe('Harness');
+    const button = w.get('button[aria-controls]');
+    expect(button.attributes('aria-expanded')).toBe('false');
+    await button.trigger('click');
+    expect(button.attributes('aria-expanded')).toBe('true');
+    expect(w.get(`#${button.attributes('aria-controls')}`).classes()).toContain('open');
+    const plain = mount(KitShell, { props: { title: 'Blocks' }, slots: { default: '<p>page</p>' } });
+    expect(plain.find('nav').exists()).toBe(false);
+    expect(plain.find('button[aria-controls]').exists()).toBe(false);
   });
 
   it('shows a digest short and keeps the whole value', async () => {

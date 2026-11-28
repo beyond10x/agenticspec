@@ -15,6 +15,7 @@ import {
   KitList,
   KitLoading,
   KitMetric,
+  KitNav,
   KitPage,
   KitPanel,
   KitRecord,
@@ -32,6 +33,7 @@ import {
   KitZoomCanvas,
   type CodeToken,
   type FieldDef,
+  type KitNavSection,
   type KitScalar,
   type Tone,
 } from '@kit';
@@ -98,6 +100,23 @@ const refusal = {
   message: 'Refused at rule 2: UnknownVerb — frobnicate is no verb of agenticspec-patch/1',
   diff: ['parts.worker.count.value: 12 → 3'],
 };
+const navSections: KitNavSection[] = [
+  {
+    label: 'Layer 4: agent',
+    items: [
+      { label: 'Agent', href: '#agent', current: false },
+      { label: 'Harness', href: '#harness', current: true },
+    ],
+  },
+];
+const valueColumns: FieldDef[] = [
+  { field: 'id', label: 'Turn', as: 'text' },
+  { field: 'usage', label: 'Usage', as: 'json' },
+  { field: 'state', label: 'State', as: 'badge', tones: { Open: 'success' } },
+];
+const valueRows = [
+  { id: '7f3c2a10-4b1d-4e8a-9c2f-391e34cb0000', usage: { input_tokens: 812, output_tokens: 96 }, state: { name: 'Open', summary: 'Takes turns.' } },
+];
 const toasts = [
   { id: 1, tone: 'success' as Tone, text: 'Applied as revision 2.' },
   { id: 2, tone: 'danger' as Tone, text: 'NoSuchSource: architectures/none.yaml' },
@@ -191,6 +210,11 @@ const toasts = [
         <KitPanel name="list" title="List and search">
           <KitSearch v-model="search" label="Find in parts" />
           <KitList label="Parts" :columns="columns" :rows="rows.filter((r) => r.id.includes(search))" row-key="id" />
+        </KitPanel>
+
+        <KitPanel name="nav" title="Navigation and values">
+          <KitNav :label="`Pages, ${theme}`" :sections="navSections" />
+          <KitTable label="Values" :columns="valueColumns" :rows="valueRows" row-key="id" />
         </KitPanel>
 
         <KitPanel name="states" title="States">

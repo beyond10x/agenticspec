@@ -124,3 +124,12 @@ an enum (the `state` among them) as a badge, a time as a timestamp. It takes a s
 narrows the rows. A view parameter is a required parameter of the panel. When events change the
 view's rows, the panel takes them on the channel its page names (`channel`): it inserts or patches
 a row when each event carries every field of the view, and re-reads the view otherwise.
+
+`views/gallery/` draws the panels: `agenticspec ui generate` writes one Vue component per widget
+(`src/generated/widgets/`, the same file for the same widget in any document), a page per block and
+the navigation of the layers into `src/generated/` (`task ui:generate`, held by
+`task check:generated`), and `src/fixtures.ts` answers every read from `views/fixtures/` and plays
+its channel scripts in the browser, so the gallery needs no server (`?still` keeps it from playing).
+A widget reads through the client of its scope: the adapter at `source`, else the app's own under
+`/scopes/<architecture>[/<part>[/<instance>]]`. `task views:build` builds it into
+`target/views/gallery`; `task check:views` runs its unit tests and its browser test.

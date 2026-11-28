@@ -4,7 +4,6 @@
 // The host slots of the document: the components the host registers by these names, and the
 // props each is given. ESS does not draw them; each says why the generator cannot.
 
-import type { Component } from 'vue';
 
 /** The components the host registers, one per host slot. */
 export interface HostComponents {

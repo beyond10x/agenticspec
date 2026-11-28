@@ -6,7 +6,7 @@
 
 import { createApp, type Component } from 'vue';
 import App from './App.vue';
-import { createClient } from './client';
+import { createClient, type Client } from './client';
 import type { HostComponents } from './hosts';
 import { install, type CommandHooks } from './runtime';
 import { routes } from './router';
@@ -16,6 +16,8 @@ export interface GeneratedAppOptions {
   hooks?: CommandHooks;
   /** The origin of the server, empty for the one that served the app. */
   base?: string;
+  /** A client of the host's own, such as one over fixtures; it replaces the one of `base`. */
+  client?: Client;
 }
 
 export function createGeneratedApp(options: GeneratedAppOptions) {
@@ -25,7 +27,7 @@ export function createGeneratedApp(options: GeneratedAppOptions) {
     title: 'Pad',
     home: 'pad',
     routes,
-    client: createClient(options.base ?? ''),
+    client: options.client ?? createClient(options.base ?? ''),
     hosts: options.hosts as unknown as Record<string, Component>,
     hooks: options.hooks ?? {},
     shell: { theme: { store: 'local_storage', initial: '' } },

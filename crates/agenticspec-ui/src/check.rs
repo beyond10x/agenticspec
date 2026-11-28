@@ -7,8 +7,8 @@ use serde_json::Value;
 
 use crate::Refusal;
 use crate::doc::{
-    self, Action, Component, Document, Field, FieldAs, Labels, Layout, Node, Store, Style, Tone,
-    Width,
+    self, Action, Component, Document, Effect, Field, FieldAs, Labels, Layout, Node, Store, Style,
+    Tone, Width,
 };
 
 // ------------------------------------------------------------------------------------------
@@ -19,12 +19,41 @@ pub struct App {
     pub title: String,
     pub home: String,
     pub pages: Vec<PageModel>,
+    pub widgets: Vec<WidgetModel>,
     pub reads: BTreeMap<String, ReadSig>,
     pub commands: BTreeMap<String, CommandSig>,
     pub channels: BTreeMap<String, ChannelSig>,
     pub hosts: BTreeMap<String, HostSig>,
     pub theme: Option<ThemeModel>,
     pub shell_state: Vec<(String, StateModel)>,
+    /// The navigation, when a shell has a region of kind `navigation`.
+    pub nav: Option<Vec<NavModel>>,
+}
+
+/// One section of the navigation: its label and its pages, each by name and label.
+pub struct NavModel {
+    pub label: String,
+    pub pages: Vec<(String, String)>,
+}
+
+/// The parameters a widget reads its scope from (D7 of the view layer): the base URL of the
+/// adapter that answers the scope, or the scope under the renderer's own base.
+pub const SCOPE_PARAMS: [&str; 4] = ["source", "architecture", "part", "instance"];
+
+/// A widget: one single-file component, named by the widget alone.
+pub struct WidgetModel {
+    pub name: String,
+    pub component: String,
+    pub summary: String,
+    pub params: Vec<ParamModel>,
+    pub body: Vec<SectionModel>,
+}
+
+pub struct ParamModel {
+    pub name: String,
+    /// `string`, `number` or `boolean`.
+    pub ts_type: &'static str,
+    pub required: bool,
 }
 
 #[derive(Default)]
@@ -82,6 +111,10 @@ pub struct SectionModel {
     pub name: String,
     pub var: String,
     pub title: Option<String>,
+    /// What a table or list is called for a reader: the title, else the name.
+    pub label: String,
+    /// Drawn without a card of its own: a node of a widget's body, framed where it is used.
+    pub bare: bool,
     pub collapsed: bool,
     pub kind: SectionKind,
     pub read: Option<ReadUse>,
@@ -114,6 +147,11 @@ pub enum SectionKind {
     Host {
         host: String,
     },
+    /// A use of a widget: its component and each argument as an expression.
+    Widget {
+        component: String,
+        args: Vec<(String, String)>,
+    },
 }
 
 pub struct ReadUse {
@@ -122,7 +160,20 @@ pub struct ReadUse {
     pub params: Vec<(String, String)>,
     pub key: Option<String>,
     pub filter: Option<(String, String)>,
-    pub live: Option<(String, Vec<String>)>,
+    pub live: Option<LiveUse>,
+}
+
+/// How a read takes the events of a channel: re-read (coalesced over `coalesce` milliseconds) or
+/// patch the row whose `match` field the event carries, inserting it when no row has it.
+pub struct LiveUse {
+    /// The channel as an expression: a name, or a widget parameter.
+    pub channel: String,
+    pub on: Vec<String>,
+    pub effect: Effect,
+    pub match_: Option<String>,
+    /// `only_if: matches(params)`: an event whose field of a read parameter differs is dropped.
+    pub only_params: bool,
+    pub coalesce: Option<u64>,
 }
 
 pub struct FieldModel {
@@ -226,27 +277,28 @@ const COMPONENTS: [&str; 5] = ["collection", "record", "form", "filter_bar", "ch
 /// Refuses a node whose `component` this generator does not draw, by the path of that key, before
 /// the node's other keys are read (the keys of a node are read in their order of names, so an
 /// unknown key of a chart would otherwise be named first).
-fn components(raw: &Value, path: &str, out: &mut Vec<Refusal>) {
+fn components(raw: &Value, path: &str, widgets: &BTreeSet<String>, out: &mut Vec<Refusal>) {
     let Some(map) = raw.as_object() else { return };
     if let Some(Value::String(c)) = map.get("component")
         && !COMPONENTS.contains(&c.as_str())
+        && !widgets.contains(c)
     {
         out.push(refusal(
             format!("{path}/component"),
             format!(
-                "`{c}` is no component this generator draws (it draws {})",
+                "`{c}` is no component this generator draws (it draws {}) and no widget of the document",
                 COMPONENTS.join(", ")
             ),
         ));
     }
-    for key in ["sections", "choices"] {
+    for key in ["sections", "choices", "body"] {
         for n in map.get(key).and_then(Value::as_array).into_iter().flatten() {
             let name = n.get("name").and_then(Value::as_str).unwrap_or("");
-            components(n, &format!("{path}/{key}/{name}"), out);
+            components(n, &format!("{path}/{key}/{name}"), widgets, out);
         }
     }
     if let Some(r) = map.get("result") {
-        components(r, &format!("{path}/result"), out);
+        components(r, &format!("{path}/result"), widgets, out);
     }
 }
 
@@ -258,14 +310,19 @@ pub fn parse(text: &str) -> Result<(Document, Value), Vec<Refusal>> {
         )]
     })?;
     let mut early = Vec::new();
-    for group in ["pages", "page_kinds"] {
+    let widgets: BTreeSet<String> = raw
+        .get("widgets")
+        .and_then(Value::as_object)
+        .map(|m| m.keys().cloned().collect())
+        .unwrap_or_default();
+    for group in ["pages", "page_kinds", "widgets"] {
         for (name, v) in raw
             .get(group)
             .and_then(Value::as_object)
             .into_iter()
             .flatten()
         {
-            components(v, &format!("{group}/{name}"), &mut early);
+            components(v, &format!("{group}/{name}"), &widgets, &mut early);
         }
     }
     if !early.is_empty() {
@@ -376,12 +433,35 @@ pub fn ts_value(v: &Value) -> String {
     }
 }
 
+/// `ActiveDelegations` → `Active delegations`.
+fn humanize_camel(name: &str) -> String {
+    let mut out = String::new();
+    for (i, c) in name.chars().enumerate() {
+        if c.is_ascii_uppercase() && i > 0 {
+            out.push(' ');
+            out.push(c.to_ascii_lowercase());
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
+/// A widget parameter as its body reads it.
+#[derive(Clone)]
+struct Arg {
+    required: bool,
+    channel: bool,
+}
+
 #[derive(Clone, Default)]
 struct Scope {
     state: BTreeSet<String>,
     params: BTreeSet<String>,
     shell: BTreeSet<String>,
     row: bool,
+    /// Inside a widget's body: its parameters, read as `args.<name>`.
+    args: Option<BTreeMap<String, Arg>>,
 }
 
 /// A row field an expression reads, to type the read it reads.
@@ -424,6 +504,11 @@ fn compile(e: &str, scope: &Scope, path: &str) -> Result<Compiled, Refusal> {
                         row_field: Some(name.to_string()),
                     });
                 }
+                "args" => match scope.args.as_ref().and_then(|a| a.get(name)) {
+                    Some(a) if a.required => Some(format!("args[{}]", ts_str(name))),
+                    Some(_) => Some(format!("(args[{}] ?? null)", ts_str(name))),
+                    None => None,
+                },
                 _ => None,
             };
             return found.map(plain).ok_or_else(|| {
@@ -436,7 +521,7 @@ fn compile(e: &str, scope: &Scope, path: &str) -> Result<Compiled, Refusal> {
         return Err(refusal(
             path,
             format!(
-                "expression `{e}` is not one this generator compiles (state.<name>, params.<name>, shell.<name>, row.<field> or a literal)"
+                "expression `{e}` is not one this generator compiles (state.<name>, params.<name>, shell.<name>, row.<field>, args.<name> in a widget or a literal)"
             ),
         ));
     }
@@ -449,15 +534,18 @@ fn compile(e: &str, scope: &Scope, path: &str) -> Result<Compiled, Refusal> {
     Err(refusal(
         path,
         format!(
-            "expression `{e}` is not one this generator compiles (state.<name>, params.<name>, shell.<name>, row.<field> or a literal)"
+            "expression `{e}` is not one this generator compiles (state.<name>, params.<name>, shell.<name>, row.<field>, args.<name> in a widget or a literal)"
         ),
     ))
 }
 
 /// The properties a node of each kind takes besides `name`, `title`, `collapsed` and `states`.
-fn allowed(component: Option<Component>, host: bool) -> &'static [&'static str] {
+fn allowed(component: Option<Component>, host: bool, widget: bool) -> &'static [&'static str] {
     if host {
         return &["host", "reason", "stands_in_for", "reads"];
+    }
+    if widget {
+        return &["component", "args"];
     }
     match component {
         Some(Component::Collection) => &[
@@ -492,6 +580,7 @@ fn present(n: &Node) -> Vec<&'static str> {
         }
     };
     add("component", n.component.is_some());
+    add("args", n.args.is_some());
     add("host", n.host.is_some());
     add("reason", n.reason.is_some());
     add("stands_in_for", n.stands_in_for.is_some());
@@ -522,11 +611,247 @@ struct Resolver<'a> {
     reads: BTreeMap<String, ReadSig>,
     commands: BTreeMap<String, CommandSig>,
     hosts: BTreeMap<String, HostSig>,
+    /// The events each channel parameter of the widget being resolved is taken for.
+    channel_uses: BTreeMap<String, BTreeSet<String>>,
+    /// The same, by widget, for the check of each use.
+    widget_channels: BTreeMap<String, BTreeMap<String, BTreeSet<String>>>,
+}
+
+/// `500ms`, `1s`, `2m` in milliseconds.
+fn duration_ms(d: &str) -> Option<u64> {
+    let d = d.trim();
+    let (n, unit) = if let Some(n) = d.strip_suffix("ms") {
+        (n, 1)
+    } else if let Some(n) = d.strip_suffix('s') {
+        (n, 1000)
+    } else {
+        let n = d.strip_suffix('m')?;
+        (n, 60_000)
+    };
+    n.parse::<u64>().ok().map(|n| n * unit)
+}
+
+/// `agentic.harness.Turns` → `AgenticHarnessTurns`: the file of a widget, by its name alone.
+pub fn widget_component(name: &str) -> String {
+    let mut out = String::new();
+    for part in name.split(|c: char| !c.is_ascii_alphanumeric()) {
+        let mut cs = part.chars();
+        if let Some(c) = cs.next() {
+            out.push(c.to_ascii_uppercase());
+            out.extend(cs);
+        }
+    }
+    out
+}
+
+/// A parameter's type as a prop: (TypeScript type, optional, a channel), or why it is refused.
+fn param_type(ty: &Value) -> Result<(&'static str, bool, bool), String> {
+    match ty {
+        Value::String(t) => Ok((
+            match t.as_str() {
+                "integer" | "number" | "Integer" | "Float" => "number",
+                "boolean" | "Boolean" => "boolean",
+                _ => "string",
+            },
+            false,
+            false,
+        )),
+        Value::Object(m) if m.len() == 1 => {
+            if let Some(inner) = m.get("optional") {
+                let (t, _, channel) = param_type(inner)?;
+                return Ok((t, true, channel));
+            }
+            if m.get("ref").and_then(Value::as_str) == Some("channel") {
+                return Ok(("string", false, true));
+            }
+            Err(format!(
+                "a parameter of type {} is not drawn here (a scalar, {{optional: ...}} or {{ref: channel}})",
+                serde_json::to_string(ty).unwrap_or_default()
+            ))
+        }
+        _ => Err(format!(
+            "a parameter of type {} is not drawn here (a scalar, {{optional: ...}} or {{ref: channel}})",
+            serde_json::to_string(ty).unwrap_or_default()
+        )),
+    }
 }
 
 impl<'a> Resolver<'a> {
     fn refuse(&mut self, path: impl Into<String>, message: impl Into<String>) {
         self.refusals.push(refusal(path, message));
+    }
+
+    /// The parameters of a widget as its body reads them, with their prop types.
+    fn params_of(&self, w: &doc::Widget) -> BTreeMap<String, (Arg, &'static str)> {
+        w.params
+            .iter()
+            .filter_map(|(p, def)| {
+                let (ts, optional, channel) = param_type(&def.ty).ok()?;
+                Some((
+                    p.clone(),
+                    (
+                        Arg {
+                            required: def.required == Some(true) && !optional,
+                            channel,
+                        },
+                        ts,
+                    ),
+                ))
+            })
+            .collect()
+    }
+
+    fn widget(&mut self, name: &str, w: &doc::Widget) -> Option<WidgetModel> {
+        let path = format!("widgets/{name}");
+        let mut params = Vec::new();
+        for (p, def) in &w.params {
+            let ppath = format!("{path}/params/{p}");
+            let ident_ok = !p.is_empty()
+                && p.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+                && !p.starts_with(|c: char| c.is_ascii_digit());
+            if !ident_ok {
+                self.refuse(
+                    &ppath,
+                    "a parameter's name is a word of letters, digits and _",
+                );
+            }
+            if def.default.is_some() {
+                self.refuse(
+                    format!("{ppath}/default"),
+                    "this generator takes no default for a widget parameter; give the value at each use",
+                );
+            }
+            match param_type(&def.ty) {
+                Ok((ts, optional, channel)) => {
+                    let required = def.required == Some(true) && !optional;
+                    if channel && !required {
+                        self.refuse(
+                            format!("{ppath}/required"),
+                            "a channel parameter is required, since the live updates of the body take it",
+                        );
+                    }
+                    params.push(ParamModel {
+                        name: p.clone(),
+                        ts_type: ts,
+                        required,
+                    });
+                }
+                Err(m) => self.refuse(format!("{ppath}/type"), m),
+            }
+        }
+        if w.body.is_empty() {
+            self.refuse(
+                format!("{path}/body"),
+                "a widget's body holds at least one node",
+            );
+            return None;
+        }
+        let scope = Scope {
+            args: Some(
+                self.params_of(w)
+                    .into_iter()
+                    .map(|(k, (a, _))| (k, a))
+                    .collect(),
+            ),
+            ..Scope::default()
+        };
+        self.channel_uses.clear();
+        let mut body = Vec::new();
+        for n in &w.body {
+            let npath = format!("{path}/body/{}", n.name.as_deref().unwrap_or(""));
+            if let Some(m) = self.node(n, &npath, &scope, None) {
+                body.push(m);
+            }
+        }
+        if let [only] = body.as_mut_slice()
+            && only.title.is_none()
+        {
+            only.label = humanize_camel(name.rsplit('.').next().unwrap_or(name));
+        }
+        let uses = std::mem::take(&mut self.channel_uses);
+        self.widget_channels.insert(name.to_string(), uses);
+        Some(WidgetModel {
+            name: name.to_string(),
+            component: widget_component(name),
+            summary: w.summary.clone(),
+            params,
+            body,
+        })
+    }
+
+    /// A section that uses a widget: every required parameter given, each argument one the
+    /// widget declares, and a channel argument a channel that carries what the body takes.
+    fn widget_use(&mut self, n: &Node, widget: &str, path: &str, scope: &Scope) -> SectionKind {
+        let component = widget_component(widget);
+        let Some(w) = self.doc.widgets.get(widget) else {
+            self.refuse(format!("{path}/component"), format!("no widget `{widget}`"));
+            return SectionKind::Widget {
+                component,
+                args: Vec::new(),
+            };
+        };
+        let params = self.params_of(w);
+        let given = n.args.clone().unwrap_or_default();
+        for (p, (a, _)) in &params {
+            if a.required && !given.contains_key(p) {
+                self.refuse(
+                    format!("{path}/args"),
+                    format!("the widget `{widget}` takes `{p}`, which is required and not given"),
+                );
+            }
+        }
+        let uses = self
+            .widget_channels
+            .get(widget)
+            .cloned()
+            .unwrap_or_default();
+        let mut args = Vec::new();
+        for (k, v) in &given {
+            let apath = format!("{path}/args/{k}");
+            let Some((a, _)) = params.get(k) else {
+                self.refuse(
+                    &apath,
+                    format!("the widget `{widget}` declares no parameter `{k}`"),
+                );
+                continue;
+            };
+            let ts = if a.channel {
+                match v
+                    .as_str()
+                    .and_then(|c| self.doc.channels.get(c).map(|ch| (c, ch)))
+                {
+                    Some((c, ch)) => {
+                        for e in uses.get(k).into_iter().flatten() {
+                            if !ch.carries.events.is_empty() && !ch.carries.events.contains(e) {
+                                self.refuse(
+                                    &apath,
+                                    format!("channel `{c}` does not carry `{e}`, which the widget's body takes"),
+                                );
+                            }
+                        }
+                        ts_str(c)
+                    }
+                    None => {
+                        self.refuse(
+                            &apath,
+                            "a channel parameter takes the name of a channel of the document",
+                        );
+                        continue;
+                    }
+                }
+            } else {
+                match v {
+                    Value::String(e) => self.expr(e, scope, &apath, None),
+                    Value::Number(_) | Value::Bool(_) | Value::Null => v.to_string(),
+                    _ => {
+                        self.refuse(&apath, "a list or a map is not passed to a widget here");
+                        continue;
+                    }
+                }
+            };
+            args.push((k.clone(), ts));
+        }
+        SectionKind::Widget { component, args }
     }
 
     fn expr(&mut self, e: &str, scope: &Scope, path: &str, read: Option<&str>) -> String {
@@ -656,14 +981,114 @@ impl<'a> Resolver<'a> {
             }
         });
         let live = n.live.as_ref().and_then(|l| {
-            if !self.doc.channels.contains_key(&l.channel) {
-                self.refuse(
-                    format!("{path}/live/channel"),
-                    format!("no channel `{}`", l.channel),
-                );
-                return None;
+            let lpath = format!("{path}/live");
+            let channel = match l.channel.strip_prefix("args.") {
+                Some(p) => match scope.args.as_ref().and_then(|a| a.get(p)) {
+                    Some(a) if a.channel && a.required => format!("args[{}]", ts_str(p)),
+                    Some(_) => {
+                        self.refuse(
+                            format!("{lpath}/channel"),
+                            format!("`{}` is no required widget parameter of type {{ref: channel}}", l.channel),
+                        );
+                        return None;
+                    }
+                    None => {
+                        self.refuse(
+                            format!("{lpath}/channel"),
+                            format!("expression `{}` reads a parameter the widget does not declare", l.channel),
+                        );
+                        return None;
+                    }
+                },
+                None => match self.doc.channels.get(&l.channel) {
+                    Some(c) => {
+                        for e in &l.on {
+                            if !c.carries.events.is_empty() && !c.carries.events.contains(e) {
+                                self.refuse(
+                                    format!("{lpath}/on"),
+                                    format!("channel `{}` does not carry `{e}`", l.channel),
+                                );
+                            }
+                        }
+                        ts_str(&l.channel)
+                    }
+                    None => {
+                        self.refuse(
+                            format!("{lpath}/channel"),
+                            format!("no channel `{}`", l.channel),
+                        );
+                        return None;
+                    }
+                },
+            };
+            if let Some(p) = l.channel.strip_prefix("args.") {
+                self.channel_uses
+                    .entry(p.to_string())
+                    .or_default()
+                    .extend(l.on.iter().cloned());
             }
-            Some((l.channel.clone(), l.on.clone()))
+            let coalesce = match &l.coalesce {
+                None => None,
+                Some(d) => match duration_ms(d) {
+                    Some(ms) => Some(ms),
+                    None => {
+                        self.refuse(
+                            format!("{lpath}/coalesce"),
+                            format!("`{d}` is no duration this generator reads (such as 500ms, 1s or 2m)"),
+                        );
+                        None
+                    }
+                },
+            };
+            let match_ = match l.effect {
+                Effect::Refetch => {
+                    if l.match_.is_some() {
+                        self.refuse(
+                            format!("{lpath}/match"),
+                            "`match` picks the row an event patches; a refetch reads every row again",
+                        );
+                    }
+                    None
+                }
+                Effect::InsertOrPatch => {
+                    if l.coalesce.is_some() {
+                        self.refuse(
+                            format!("{lpath}/coalesce"),
+                            "this generator coalesces re-reads; a patch is applied as its event comes",
+                        );
+                    }
+                    let m = l
+                        .match_
+                        .clone()
+                        .or_else(|| r.key.clone())
+                        .unwrap_or_else(|| "id".into());
+                    self.reads
+                        .entry(view.clone())
+                        .or_default()
+                        .fields
+                        .insert(m.clone());
+                    Some(m)
+                }
+            };
+            let only_params = match l.only_if.as_deref().map(str::trim) {
+                None => false,
+                Some("matches(params)") => true,
+                Some(e) => {
+                    self.refuse(
+                        format!("{lpath}/only_if"),
+                        format!("expression `{e}` is not one this generator compiles here (matches(params))"),
+                    );
+                    false
+                }
+            };
+            Some(LiveUse {
+                channel,
+                on: l.on.clone(),
+                effect: l.effect,
+                match_,
+                only_params,
+                coalesce,
+            })
         });
         Some(ReadUse {
             var: var.to_string(),
@@ -747,14 +1172,16 @@ impl<'a> Resolver<'a> {
             self.refuse(path, "a node names its component (or is a host slot)");
             return false;
         }
-        let ok = allowed(n.component, host);
+        let ok = allowed(n.kind(), host, n.widget().is_some());
         let mut good = true;
         for k in present(n) {
             if !ok.contains(&k) {
                 let what = if host {
                     "host slot"
+                } else if n.widget().is_some() {
+                    "widget instance"
                 } else {
-                    n.component.map_or("", Component::word)
+                    n.kind().map_or("", Component::word)
                 };
                 self.refuse(
                     format!("{path}/{k}"),
@@ -788,10 +1215,53 @@ impl<'a> Resolver<'a> {
         if !self.check_keys(n, path) {
             return None;
         }
+        let in_widget = scope.args.is_some();
+        if in_widget {
+            let what = if n.host.is_some() {
+                Some("a host slot")
+            } else if n.widget().is_some() {
+                Some("a widget instance")
+            } else {
+                match n.kind() {
+                    Some(Component::Collection | Component::Record) => None,
+                    Some(c) => Some(c.word()),
+                    None => None,
+                }
+            };
+            if let Some(what) = what {
+                self.refuse(
+                    path,
+                    format!("{what} stands in a page section here; a widget's body holds collections and records"),
+                );
+                return None;
+            }
+        }
         let var = match owner {
             Some(o) => format!("{}_{}", ident(o), ident(&name)),
             None => ident(&name),
         };
+        let label = n.title.clone().unwrap_or_else(|| name.clone());
+        if let Some(widget) = n.widget() {
+            if n.states.is_some() {
+                self.refuse(
+                    format!("{path}/states"),
+                    "a widget instance reads nothing itself; the states are its body's",
+                );
+            }
+            let kind = self.widget_use(n, widget, path, scope);
+            return Some(SectionModel {
+                name,
+                var,
+                title: n.title.clone(),
+                label,
+                bare: false,
+                collapsed: n.collapsed.unwrap_or(false),
+                kind,
+                read: None,
+                empty: None,
+                failed: None,
+            });
+        }
         let (empty, failed) = Self::states(n);
         let read = self.read(n, &format!("r_{var}"), scope, path);
         let view = read.as_ref().map(|r| r.view.clone());
@@ -825,7 +1295,7 @@ impl<'a> Resolver<'a> {
             );
             SectionKind::Host { host: host.clone() }
         } else {
-            match n.component.unwrap_or(Component::Record) {
+            match n.kind().unwrap_or(Component::Record) {
                 Component::Collection => {
                     let columns = n
                         .columns
@@ -895,6 +1365,8 @@ impl<'a> Resolver<'a> {
             name,
             var,
             title: n.title.clone(),
+            label,
+            bare: in_widget,
             collapsed: n.collapsed.unwrap_or(false),
             kind,
             read,
@@ -986,7 +1458,7 @@ impl<'a> Resolver<'a> {
             Some(r) => {
                 let rname = r.name.clone().unwrap_or_else(|| "result".into());
                 let rpath = format!("{path}/result");
-                if r.component != Some(Component::Record) || r.host.is_some() {
+                if r.kind() != Some(Component::Record) || r.host.is_some() {
                     self.refuse(&rpath, "a form's result is a record here");
                     None
                 } else if !self.check_keys(r, &rpath) {
@@ -1040,7 +1512,7 @@ impl<'a> Resolver<'a> {
                 continue;
             };
             let cpath = format!("{path}/choices/{cname}");
-            if c.component != Some(Component::Choice) {
+            if c.kind() != Some(Component::Choice) {
                 self.refuse(&cpath, "a filter bar's choices are choices");
                 continue;
             }
@@ -1177,6 +1649,7 @@ impl<'a> Resolver<'a> {
             params: page.params.keys().cloned().collect(),
             shell: shell.clone(),
             row: false,
+            args: None,
         };
         // Sections: the kind's in their order, a page's of the same name in its place, then the
         // page's new ones.
@@ -1350,6 +1823,8 @@ pub fn resolve(doc: &Document) -> Result<App, Vec<Refusal>> {
         reads: BTreeMap::new(),
         commands: BTreeMap::new(),
         hosts: BTreeMap::new(),
+        channel_uses: BTreeMap::new(),
+        widget_channels: BTreeMap::new(),
     };
     if !doc.pages.contains_key(&doc.navigation.home) {
         r.refuse(
@@ -1411,12 +1886,57 @@ pub fn resolve(doc: &Document) -> Result<App, Vec<Refusal>> {
             state,
         }
     });
+    let mut widgets: Vec<WidgetModel> = Vec::new();
+    let mut files: BTreeMap<String, String> = BTreeMap::new();
+    for (name, w) in &doc.widgets {
+        if let Some(model) = r.widget(name, w) {
+            if let Some(other) = files.insert(model.component.clone(), name.clone()) {
+                r.refuse(
+                    format!("widgets/{name}"),
+                    format!(
+                        "the widget writes `widgets/{}.vue`, the file of widget `{other}` too",
+                        model.component
+                    ),
+                );
+            }
+            widgets.push(model);
+        }
+    }
     let mut pages = Vec::new();
     for (name, page) in &doc.pages {
         if let Some(p) = r.page(name, page, &shell_names) {
             pages.push(p);
         }
     }
+    let nav = doc
+        .shells
+        .values()
+        .any(|s| {
+            s.regions
+                .values()
+                .any(|reg| reg.kind == doc::RegionKind::Navigation)
+        })
+        .then(|| {
+            doc.navigation
+                .sections
+                .iter()
+                .map(|s| NavModel {
+                    label: s.label.clone().unwrap_or_else(|| humanize(&s.name)),
+                    pages: s
+                        .pages
+                        .iter()
+                        .map(|p| {
+                            let page = doc.pages.get(p);
+                            let label = page
+                                .and_then(|pg| pg.nav.as_ref().and_then(|n| n.label.clone()))
+                                .or_else(|| page.and_then(|pg| pg.title.clone()))
+                                .unwrap_or_else(|| humanize(p));
+                            (p.clone(), label)
+                        })
+                        .collect(),
+                })
+                .collect()
+        });
     let channels = doc
         .channels
         .iter()
@@ -1439,11 +1959,13 @@ pub fn resolve(doc: &Document) -> Result<App, Vec<Refusal>> {
         title: doc.title.clone().unwrap_or_else(|| doc.app.clone()),
         home: doc.navigation.home.clone(),
         pages,
+        widgets,
         reads: r.reads,
         commands: r.commands,
         channels,
         hosts: r.hosts,
         theme,
         shell_state,
+        nav,
     })
 }

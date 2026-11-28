@@ -111,7 +111,44 @@ pub struct Document {
     pub navigation: Navigation,
     #[serde(default)]
     pub page_kinds: BTreeMap<String, PageKind>,
+    #[serde(default)]
+    pub widgets: BTreeMap<String, Widget>,
     pub pages: BTreeMap<String, Page>,
+}
+
+/// An app-defined composite with typed parameters. The generator writes one single-file component
+/// per widget, named by the widget, so the same widget gives the same file in every document.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Widget {
+    pub summary: String,
+    #[serde(default)]
+    pub doc: Option<String>,
+    #[serde(default)]
+    pub params: BTreeMap<String, WidgetParam>,
+    #[serde(default)]
+    pub arrange: Option<Arrange>,
+    pub body: Vec<Node>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WidgetParam {
+    #[serde(rename = "type")]
+    pub ty: Value,
+    #[serde(default)]
+    pub required: Option<bool>,
+    #[serde(default)]
+    pub default: Option<Value>,
+    #[serde(default)]
+    pub note: Option<String>,
+}
+
+/// How a widget's body nodes are arranged; this generator stacks them in a column.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Arrange {
+    Column,
 }
 
 #[derive(Debug, Deserialize)]
@@ -165,6 +202,7 @@ pub struct Region {
 pub enum RegionKind {
     PageOutlet,
     Notifications,
+    Navigation,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -424,6 +462,36 @@ impl Component {
             Component::Choice => "choice",
         }
     }
+
+    pub fn from_word(word: &str) -> Option<Component> {
+        [
+            Component::Collection,
+            Component::Record,
+            Component::Form,
+            Component::FilterBar,
+            Component::Choice,
+        ]
+        .into_iter()
+        .find(|c| c.word() == word)
+    }
+}
+
+/// What a node's `component` names: a composite this generator draws, or a widget of the
+/// document (any other name; `check::parse` refuses one the document does not declare).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ComponentRef {
+    Kind(Component),
+    Widget(String),
+}
+
+impl<'de> Deserialize<'de> for ComponentRef {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(d)?;
+        Ok(match Component::from_word(&s) {
+            Some(c) => ComponentRef::Kind(c),
+            None => ComponentRef::Widget(s),
+        })
+    }
 }
 
 /// A section, a nested node or a host slot: every property any of them takes. Which properties
@@ -435,7 +503,9 @@ pub struct Node {
     #[serde(default)]
     pub name: Option<String>,
     #[serde(default)]
-    pub component: Option<Component>,
+    pub component: Option<ComponentRef>,
+    #[serde(default)]
+    pub args: Option<BTreeMap<String, Value>>,
     #[serde(default)]
     pub host: Option<String>,
     #[serde(default)]
@@ -484,6 +554,24 @@ pub struct Node {
     pub placeholder: Option<String>,
     #[serde(default)]
     pub options: Option<Vec<ChoiceOption>>,
+}
+
+impl Node {
+    /// The composite the node draws, when it names one rather than a widget.
+    pub fn kind(&self) -> Option<Component> {
+        match &self.component {
+            Some(ComponentRef::Kind(c)) => Some(*c),
+            _ => None,
+        }
+    }
+
+    /// The widget the node uses, when it names one.
+    pub fn widget(&self) -> Option<&str> {
+        match &self.component {
+            Some(ComponentRef::Widget(w)) => Some(w),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -562,6 +650,7 @@ pub enum FieldAs {
     Date,
     Time,
     Percent,
+    Json,
 }
 
 impl FieldAs {
@@ -576,6 +665,7 @@ impl FieldAs {
             FieldAs::Date => "date",
             FieldAs::Time => "time",
             FieldAs::Percent => "percent",
+            FieldAs::Json => "json",
         }
     }
 }
@@ -681,6 +771,10 @@ pub struct Live {
     #[serde(default)]
     pub on: Vec<String>,
     pub effect: Effect,
+    #[serde(default, rename = "match")]
+    pub match_: Option<String>,
+    #[serde(default)]
+    pub only_if: Option<String>,
     #[serde(default)]
     pub coalesce: Option<String>,
 }
@@ -689,6 +783,7 @@ pub struct Live {
 #[serde(rename_all = "snake_case")]
 pub enum Effect {
     Refetch,
+    InsertOrPatch,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

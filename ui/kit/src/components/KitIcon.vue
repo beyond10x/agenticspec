@@ -14,7 +14,8 @@ export type IconName =
   | 'close'
   | 'alert'
   | 'refresh'
-  | 'inbox';
+  | 'inbox'
+  | 'menu';
 
 defineProps<{ name: IconName }>();
 
@@ -33,6 +34,7 @@ const paths: Record<IconName, string> = {
   alert: 'M12 8v5M12 16.5v.5M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
   refresh: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
   inbox: 'M3 13h5l1.5 3h5l1.5-3h5M5 5h14l2 8v6H3v-6z',
+  menu: 'M4 7h16M4 12h16M4 17h16',
 };
 </script>
 

@@ -7,15 +7,54 @@ export function isEmpty(v: unknown): boolean {
   return v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
 }
 
+/** A value that is a named object, such as a state with its summary: `{ name, ... }`. */
+function named(v: unknown): string | null {
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return null;
+  const n = (v as Record<string, unknown>).name;
+  return typeof n === 'string' ? n : null;
+}
+
 /** The key of a value in a field's `labels` and `tones`. */
 export function key(v: unknown): string {
   if (v === null || v === undefined) return '';
   return typeof v === 'object' ? JSON.stringify(v) : String(v);
 }
 
+/** The key of a badge's value: a named object (a state with its summary) by its name. */
+export function badgeKey(v: unknown): string {
+  return named(v) ?? key(v);
+}
+
+/** The words a named object carries beside its name (its `summary`), for a title. */
+export function summaryOf(v: unknown): string | undefined {
+  if (named(v) === null) return undefined;
+  const s = (v as Record<string, unknown>).summary;
+  return typeof s === 'string' ? s : undefined;
+}
+
 /** A digest of 32 or more hex digits, which the kit shows short. */
 export function isDigest(v: unknown): v is string {
   return typeof v === 'string' && /^(sha256:)?[0-9a-f]{32,}$/i.test(v);
+}
+
+/** A UUID (`8-4-4-4-12` hex digits), which the kit shows short. */
+export function isUuid(v: unknown): v is string {
+  return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
+
+/** An ellipsis and the last 12 hex digits of a UUID, the part that tells two apart. */
+export function shortUuid(v: string): string {
+  return `…${v.slice(-12)}`;
+}
+
+/** The entries of a JSON value as `key: value` lines: an object's fields, a list's items, or the value. */
+export function jsonEntries(v: unknown): string[] {
+  if (isEmpty(v)) return [];
+  if (Array.isArray(v)) return v.map((x) => (typeof x === 'object' && x !== null ? JSON.stringify(x) : key(x)));
+  if (typeof v === 'object' && v !== null) {
+    return Object.entries(v as Record<string, unknown>).map(([k, x]) => `${k}: ${typeof x === 'object' && x !== null ? JSON.stringify(x) : key(x)}`);
+  }
+  return [key(v)];
 }
 
 /** The first 12 hex digits of a digest and an ellipsis. */
@@ -44,7 +83,8 @@ export function formatNumber(v: unknown): string {
 /** The text of one value as a field shows it (badges and lists take their own components). */
 export function formatValue(def: Pick<FieldDef, 'as' | 'labels'>, v: unknown): string {
   if (isEmpty(v)) return '—';
-  const label = def.labels?.[key(v)];
+  const k = def.as === 'badge' ? badgeKey(v) : key(v);
+  const label = def.labels?.[k];
   if (label !== undefined) return label;
   switch (def.as) {
     case 'number':
@@ -71,8 +111,12 @@ export function formatValue(def: Pick<FieldDef, 'as' | 'labels'>, v: unknown): s
     }
     case 'list':
       return Array.isArray(v) ? v.map(key).join(', ') : key(v);
+    case 'badge':
+      return k;
+    case 'json':
+      return jsonEntries(v).join(', ');
     default:
-      return isDigest(v) ? shortDigest(v) : key(v);
+      return isDigest(v) ? shortDigest(v) : isUuid(v) ? shortUuid(v) : key(v);
   }
 }
 
@@ -84,7 +128,7 @@ export function listItems(v: unknown): string[] {
 
 /** The tone of a badge value. */
 export function toneOf(def: Pick<FieldDef, 'tones' | 'tone'>, v: unknown): Tone {
-  return def.tones?.[key(v)] ?? def.tone ?? 'neutral';
+  return def.tones?.[badgeKey(v)] ?? def.tone ?? 'neutral';
 }
 
 /** A text long enough that a record shows it clamped to two lines. */

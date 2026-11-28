@@ -105,6 +105,149 @@ mod golden {
     fn a_form_with_host_slots_a_filter_bar_columns_and_a_channel() {
         check("form");
     }
+
+    #[test]
+    fn two_widgets_on_a_gallery_page_with_a_navigation_and_live_updates() {
+        check("widgets");
+    }
+}
+
+mod widgets {
+    use super::*;
+
+    /// A document holding `widgets` (YAML under `widgets:`) and one page that uses each by `uses`.
+    fn doc(app: &str, widgets: &str, sections: &str) -> String {
+        format!(
+            "format: ess-ui/1\napp: {app}\nmodel: t\nplacement_profile: fat\nshells: {{app: {{regions: {{main: {{kind: page_outlet}}}}}}}}\nnavigation: {{home: p, sections: [{{name: s, pages: [p]}}]}}\npage_kinds: {{plain: {{purpose: plain}}}}\nchannels:\n  feed:\n    carries: {{events: [t.Added, t.Removed]}}\n    direction: server_to_client\n    delivery: every_event\n    resume: from_last_seen\nwidgets:\n{widgets}pages:\n  p:\n    kind: plain\n    sections:\n{sections}"
+        )
+    }
+
+    const ROWS: &str = "  t.Rows:\n    summary: Rows of t.V.\n    params:\n      channel: {type: {ref: channel}, required: true, note: the channel}\n      id: {type: Id, required: true, note: the parameter id}\n    body:\n      - name: rows\n        component: collection\n        reads: {view: t.V, key: id, params: {id: args.id}}\n        live: {channel: args.channel, on: [t.Added], effect: refetch, coalesce: 500ms}\n        columns: [id, {field: n, as: number}]\n";
+
+    const USE: &str = "      - {name: rows, title: Rows, component: t.Rows, args: {channel: feed, id: \"'a'\"}}\n";
+
+    #[test]
+    fn each_widget_is_one_file_the_page_imports_and_generation_is_stable() {
+        let files = generated("widgets");
+        let page = &files["pages/CratesPage.vue"];
+        for w in ["DepotCrates", "DepotMovesOfCrate"] {
+            assert!(
+                files.contains_key(&format!("widgets/{w}.vue")),
+                "{w} in {:?}",
+                files.keys()
+            );
+            assert!(
+                page.contains(&format!("import {w} from '../widgets/{w}.vue';")),
+                "{page}"
+            );
+        }
+        assert_eq!(generated("widgets"), files);
+    }
+
+    #[test]
+    fn the_same_widget_in_two_documents_gives_the_same_file() {
+        let other = "  t.Other:\n    summary: Another.\n    body:\n      - {name: one, component: record, reads: {view: t.W}, fields: [a]}\n";
+        let a = generate(&doc("first", ROWS, USE)).expect("first");
+        let b = generate(&doc(
+            "second",
+            &format!("{ROWS}{other}"),
+            &format!("{USE}      - {{name: other, component: t.Other}}\n"),
+        ))
+        .expect("second");
+        assert_eq!(a["widgets/TRows.vue"], b["widgets/TRows.vue"]);
+        assert_ne!(a["pages/PPage.vue"], b["pages/PPage.vue"]);
+    }
+
+    #[test]
+    fn a_use_without_a_required_argument_or_with_an_unknown_one_is_refused() {
+        let text = doc(
+            "t",
+            ROWS,
+            "      - {name: rows, component: t.Rows, args: {channel: feed}}\n",
+        );
+        assert_refused_at(&text, "pages/p/sections/rows/args", "`id`");
+        let text = doc(
+            "t",
+            ROWS,
+            "      - {name: rows, component: t.Rows, args: {channel: feed, id: \"'a'\", colour: red}}\n",
+        );
+        assert_refused_at(&text, "pages/p/sections/rows/args/colour", "no parameter");
+    }
+
+    #[test]
+    fn a_channel_argument_names_a_channel_that_carries_what_the_body_takes() {
+        let text = doc(
+            "t",
+            ROWS,
+            "      - {name: rows, component: t.Rows, args: {channel: nowhere, id: \"'a'\"}}\n",
+        );
+        assert_refused_at(
+            &text,
+            "pages/p/sections/rows/args/channel",
+            "name of a channel",
+        );
+        let text = doc("t", &ROWS.replace("on: [t.Added]", "on: [t.Gone]"), USE);
+        assert_refused_at(
+            &text,
+            "pages/p/sections/rows/args/channel",
+            "does not carry `t.Gone`",
+        );
+    }
+
+    #[test]
+    fn a_construct_a_widget_body_cannot_hold_is_refused_by_its_path() {
+        let form = "  t.F:\n    summary: A form.\n    body:\n      - {name: f, component: form, does: t.Do}\n";
+        assert_refused_at(
+            &doc("t", form, "      - {name: f, component: t.F}\n"),
+            "widgets/t.F/body/f",
+            "form",
+        );
+        let with_default = ROWS.replace(
+            "id: {type: Id, required: true, note: the parameter id}",
+            "id: {type: Id, default: x, note: the parameter id}",
+        );
+        assert_refused_at(
+            &doc("t", &with_default, USE),
+            "widgets/t.Rows/params/id/default",
+            "default",
+        );
+        let list = ROWS.replace("type: Id, required", "type: {list: Id}, required");
+        assert_refused_at(
+            &doc("t", &list, USE),
+            "widgets/t.Rows/params/id/type",
+            "not drawn",
+        );
+    }
+
+    #[test]
+    fn a_live_effect_or_condition_the_generator_does_not_carry_out_is_refused() {
+        let text = doc(
+            "t",
+            &ROWS.replace("effect: refetch, coalesce: 500ms", "effect: patch_row"),
+            USE,
+        );
+        assert_refused_at(&text, "widgets/t.Rows/body/rows/live/effect", "patch_row");
+        let text = doc("t", &ROWS.replace("500ms", "soon"), USE);
+        assert_refused_at(&text, "widgets/t.Rows/body/rows/live/coalesce", "soon");
+        let text = doc(
+            "t",
+            &ROWS.replace("coalesce: 500ms", "only_if: row.n > 1"),
+            USE,
+        );
+        assert_refused_at(&text, "widgets/t.Rows/body/rows/live/only_if", "row.n");
+        let text = doc("t", &ROWS.replace("args.channel", "args.id"), USE);
+        assert_refused_at(&text, "widgets/t.Rows/body/rows/live/channel", "channel");
+    }
+
+    #[test]
+    fn a_widget_parameter_is_read_only_inside_its_widget() {
+        let text = doc(
+            "t",
+            ROWS,
+            "      - {name: rows, component: t.Rows, args: {channel: feed, id: args.id}}\n",
+        );
+        assert_refused_at(&text, "pages/p/sections/rows/args/id", "args.id");
+    }
 }
 
 mod refusals {
@@ -211,8 +354,15 @@ mod output {
         .unwrap()
     }
 
+    fn blocks() -> String {
+        std::fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ui/views/blocks.ui.yaml"),
+        )
+        .unwrap()
+    }
+
     fn all() -> Vec<(String, BTreeMap<String, String>)> {
-        let mut out: Vec<(String, BTreeMap<String, String>)> = ["list", "form"]
+        let mut out: Vec<(String, BTreeMap<String, String>)> = ["list", "form", "widgets"]
             .iter()
             .map(|c| (c.to_string(), generated(c)))
             .collect();
@@ -220,15 +370,47 @@ mod output {
             "studio".into(),
             generate(&studio()).expect("the studio document"),
         ));
+        out.push((
+            "blocks".into(),
+            generate(&blocks()).expect("the block panels"),
+        ));
         out
     }
 
     #[test]
     fn the_same_document_generates_the_same_bytes() {
-        for case in ["list", "form"] {
+        for case in ["list", "form", "widgets"] {
             assert_eq!(generated(case), generated(case), "{case}");
         }
         assert_eq!(generate(&studio()).unwrap(), generate(&studio()).unwrap());
+        assert_eq!(generate(&blocks()).unwrap(), generate(&blocks()).unwrap());
+    }
+
+    /// The block panels of ui/views: a component per widget, a page per block, and every widget
+    /// placed on its block's page with its channel.
+    #[test]
+    fn the_block_panels_generate_a_component_per_widget_and_a_page_per_block() {
+        let text = blocks();
+        let files = generate(&text).unwrap();
+        let widgets = text
+            .lines()
+            .skip_while(|l| *l != "widgets:")
+            .take_while(|l| *l != "pages:")
+            .filter(|l| l.starts_with("  ") && !l.starts_with("   ") && l.ends_with(':'))
+            .count();
+        assert!(widgets >= 60, "{widgets} widgets");
+        assert_eq!(
+            files.keys().filter(|k| k.starts_with("widgets/")).count(),
+            widgets
+        );
+        let pages: Vec<&String> = files.keys().filter(|k| k.starts_with("pages/")).collect();
+        assert!(pages.len() >= 20, "{pages:?}");
+        let harness = &files["pages/HarnessPage.vue"];
+        assert!(
+            harness.contains("<AgenticHarnessTurns :channel=\"'harness'\" />"),
+            "{harness}"
+        );
+        assert!(files["app.ts"].contains("nav: ["));
     }
 
     #[test]
@@ -267,11 +449,16 @@ mod output {
     }
 
     /// Every element of a generated template is a component of ui/kit (`Kit…`), a host slot
-    /// (`component :is`) or a Vue built-in; no HTML element, so the look is all ui/kit's.
+    /// (`component :is`), a widget of the document (itself drawn so) or a Vue built-in; no HTML
+    /// element, so the look is all ui/kit's.
     #[test]
-    fn templates_use_only_kit_components_host_slots_and_vue_built_ins() {
+    fn templates_use_only_kit_components_host_slots_widgets_and_vue_built_ins() {
         for (case, files) in all() {
             for (name, text) in files.iter().filter(|(n, _)| n.ends_with(".vue")) {
+                let widget = |w: &str| {
+                    text.contains(&format!("import {w} from '../widgets/{w}.vue';"))
+                        && files.contains_key(&format!("widgets/{w}.vue"))
+                };
                 let template = text
                     .split_once("<template>")
                     .and_then(|(_, rest)| rest.rsplit_once("</template>"))
@@ -288,8 +475,9 @@ mod output {
                     }
                     assert!(
                         word.starts_with("Kit")
-                            || ["component", "template", "Teleport"].contains(&word.as_str()),
-                        "{case}/{name}: <{word}> is neither a kit component nor a host slot"
+                            || ["component", "template", "Teleport"].contains(&word.as_str())
+                            || widget(&word),
+                        "{case}/{name}: <{word}> is neither a kit component, a host slot nor a widget"
                     );
                 }
             }

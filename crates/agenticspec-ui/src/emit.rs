@@ -12,9 +12,9 @@ use serde_json::Value;
 use crate::Files;
 use crate::check::{
     ActionKind, ActionModel, App, ChoiceModel, FieldModel, FormInput, PageModel, ReadUse,
-    SectionKind, SectionModel, component_name, ident, ts_str, ts_value,
+    SCOPE_PARAMS, SectionKind, SectionModel, WidgetModel, component_name, ident, ts_str, ts_value,
 };
-use crate::doc::Store;
+use crate::doc::{Effect, Store};
 
 const RUNTIME: &str = include_str!("runtime.ts");
 
@@ -222,6 +222,8 @@ export interface Client {
   read<V extends keyof Reads>(view: V, params: Reads[V]['params']): Promise<Row[]>;
   command<C extends keyof Commands>(command: C, input: Commands[C]['input']): Promise<CommandAnswer>;
   subscribe(channel: ChannelName, params: Record<string, Value>, onEvent: (event: string, data: Value) => void): () => void;
+  /** The same client under `path` below its base: the scope a widget reads (`/scopes/<architecture>/<part>`). */
+  scope(path: string): Client;
 }
 
 function query(params: object): string {
@@ -276,6 +278,9 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
       source.onmessage = handler;
       return () => source.close();
     },
+    scope(path) {
+      return createClient(`${base}${path}`, fetcher);
+    },
   };
 }
 "#;
@@ -285,7 +290,9 @@ fn hosts(app: &App) -> String {
     s.push_str("//\n// The host slots of the document: the components the host registers by these names, and the\n// props each is given. ESS does not draw them; each says why the generator cannot.\n\n");
     let field = app.hosts.values().any(|h| h.field);
     let reads = app.hosts.values().any(|h| h.reads.is_some());
-    let _ = writeln!(s, "import type {{ Component }} from 'vue';");
+    if !app.hosts.is_empty() {
+        let _ = writeln!(s, "import type {{ Component }} from 'vue';");
+    }
     if reads {
         let _ = writeln!(s, "import type {{ ReadState }} from './runtime';");
     }
@@ -388,13 +395,30 @@ fn scalar(v: &Value) -> String {
 fn app_ts(app: &App) -> String {
     let mut s = head_ts(app);
     s.push_str("//\n// The app: its client, its routes and the host's components and hooks. The host calls\n// `createGeneratedApp({ hosts, hooks })` and mounts what it returns.\n\n");
-    s.push_str("import { createApp, type Component } from 'vue';\nimport App from './App.vue';\nimport { createClient } from './client';\nimport type { HostComponents } from './hosts';\nimport { install, type CommandHooks } from './runtime';\nimport { routes } from './router';\n\n");
-    s.push_str("export interface GeneratedAppOptions {\n  hosts: HostComponents;\n  hooks?: CommandHooks;\n  /** The origin of the server, empty for the one that served the app. */\n  base?: string;\n}\n\n");
+    s.push_str("import { createApp, type Component } from 'vue';\nimport App from './App.vue';\nimport { createClient, type Client } from './client';\nimport type { HostComponents } from './hosts';\nimport { install, type CommandHooks } from './runtime';\nimport { routes } from './router';\n\n");
+    s.push_str("export interface GeneratedAppOptions {\n  hosts: HostComponents;\n  hooks?: CommandHooks;\n  /** The origin of the server, empty for the one that served the app. */\n  base?: string;\n  /** A client of the host's own, such as one over fixtures; it replaces the one of `base`. */\n  client?: Client;\n}\n\n");
     s.push_str("export function createGeneratedApp(options: GeneratedAppOptions) {\n  const app = createApp(App);\n  install(app, {\n");
     let _ = writeln!(s, "    app: {},", ts_str(&app.name));
     let _ = writeln!(s, "    title: {},", ts_str(&app.title));
     let _ = writeln!(s, "    home: {},", ts_str(&app.home));
-    s.push_str("    routes,\n    client: createClient(options.base ?? ''),\n    hosts: options.hosts as unknown as Record<string, Component>,\n    hooks: options.hooks ?? {},\n");
+    s.push_str("    routes,\n    client: options.client ?? createClient(options.base ?? ''),\n    hosts: options.hosts as unknown as Record<string, Component>,\n    hooks: options.hooks ?? {},\n");
+    if let Some(nav) = &app.nav {
+        s.push_str("    nav: [\n");
+        for section in nav {
+            let _ = writeln!(
+                s,
+                "      {{ label: {}, pages: [{}] }},",
+                ts_str(&section.label),
+                section
+                    .pages
+                    .iter()
+                    .map(|(p, l)| format!("{{ name: {}, label: {} }}", ts_str(p), ts_str(l)))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        }
+        s.push_str("    ],\n");
+    }
     s.push_str("    shell: {");
     let defs: Vec<String> = app
         .shell_state
@@ -445,12 +469,18 @@ fn app_vue(app: &App) -> String {
 // ------------------------------------------------------------------------------------------
 // Pages.
 
+/// What a page or a widget's component is written from: the kit components and runtime functions
+/// it imports, the widgets it places and its script so far.
 struct PageOut<'a> {
     kit: BTreeSet<&'static str>,
     rt: BTreeSet<&'static str>,
+    widgets: BTreeSet<String>,
     field_defs: bool,
     script: String,
-    page: &'a PageModel,
+    /// The page's path parameters, which a form sends; none in a widget.
+    params: &'a [String],
+    /// The client a widget's reads and commands go to, when it reads its scope.
+    client: Option<&'static str>,
 }
 
 fn field_def(f: &FieldModel) -> String {
@@ -522,14 +552,35 @@ impl PageOut<'_> {
             .iter()
             .map(|(k, v)| format!("{}: {v}", prop(k)))
             .collect();
-        let live = match &r.live {
-            Some((channel, on)) => format!(
-                ", {{ channel: {}, on: [{}] }}",
-                ts_str(channel),
-                on.iter().map(|e| ts_str(e)).collect::<Vec<_>>().join(", ")
-            ),
+        let mut live = match &r.live {
+            Some(l) => {
+                let mut extra = String::new();
+                if let (Effect::InsertOrPatch, Some(m)) = (l.effect, &l.match_) {
+                    let _ = write!(extra, ", effect: 'insert_or_patch', match: {}", ts_str(m));
+                }
+                if l.only_params {
+                    extra.push_str(", onlyIf: 'params'");
+                }
+                if let Some(ms) = l.coalesce {
+                    let _ = write!(extra, ", coalesce: {ms}");
+                }
+                format!(
+                    ", {{ channel: {}, on: [{}]{extra} }}",
+                    l.channel,
+                    l.on.iter()
+                        .map(|e| ts_str(e))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            }
             None => String::new(),
         };
+        if let Some(c) = self.client {
+            if live.is_empty() {
+                live.push_str(", undefined");
+            }
+            let _ = write!(live, ", {c}");
+        }
         let _ = writeln!(
             self.script,
             "const {} = useRead({}, () => ({{{}}}){live});",
@@ -583,6 +634,7 @@ impl PageOut<'_> {
                 } else {
                     format!("{{ {} }}", fields.join(", "))
                 };
+                let client = self.client.map(|c| format!(", {c}")).unwrap_or_default();
                 if in_row {
                     let nulls: Vec<String> = input
                         .iter()
@@ -590,7 +642,7 @@ impl PageOut<'_> {
                         .collect();
                     let _ = writeln!(
                         self.script,
-                        "const {var} = useCommand({}, () => ({}));",
+                        "const {var} = useCommand({}, () => ({}){client});",
                         ts_str(command),
                         if nulls.is_empty() {
                             "{}".to_string()
@@ -605,7 +657,7 @@ impl PageOut<'_> {
                 } else {
                     let _ = writeln!(
                         self.script,
-                        "const {var} = useCommand({}, () => ({object}));",
+                        "const {var} = useCommand({}, () => ({object}){client});",
                         ts_str(command)
                     );
                     format!(
@@ -720,7 +772,7 @@ impl PageOut<'_> {
         if fill {
             attrs.push_str(" fill");
         }
-        if host && s.title.is_none() {
+        if (host && s.title.is_none()) || s.bare {
             attrs.push_str(" bare");
         }
         if let (Some(r), false) = (&s.read, host) {
@@ -741,6 +793,14 @@ impl PageOut<'_> {
             let _ = write!(attrs, " @retry=\"{}.reload()\"", r.var);
         }
         let body = match &s.kind {
+            SectionKind::Widget { component, args } => {
+                self.widgets.insert(component.clone());
+                let mut attrs = String::new();
+                for (k, v) in args {
+                    let _ = write!(attrs, " :{k}=\"{v}\"");
+                }
+                format!("<{component}{attrs} />\n")
+            }
             SectionKind::Host { host } => match &s.read {
                 Some(r) => format!("<component :is=\"hosts.{host}\" :read=\"{}\" />\n", r.var),
                 None => format!("<component :is=\"hosts.{host}\" />\n"),
@@ -786,14 +846,14 @@ impl PageOut<'_> {
                     let _ = writeln!(
                         out,
                         "<{tag} label=\"{}\" :columns=\"{var}\" :rows=\"{rows}\" row-key=\"{}\"{empty} />",
-                        html(s.title.as_deref().unwrap_or(&s.name)),
+                        html(&s.label),
                         html(&key)
                     );
                 } else {
                     let _ = write!(
                         out,
                         "<{tag} label=\"{}\" :columns=\"{var}\" :rows=\"{rows}\" row-key=\"{}\"{empty}>\n{}</{tag}>\n",
-                        html(s.title.as_deref().unwrap_or(&s.name)),
+                        html(&s.label),
                         html(&key),
                         indent(&actions, 2)
                     );
@@ -852,7 +912,6 @@ impl PageOut<'_> {
             })
             .collect();
         let context: Vec<String> = self
-            .page
             .params
             .iter()
             .map(|p| format!("{}: page.params[{}]", prop(p), ts_str(p)))
@@ -951,13 +1010,110 @@ impl PageOut<'_> {
     }
 }
 
+/// The import lines of a page or widget component: the kit, the runtime and the widgets it places.
+fn imports(out: &PageOut, widgets_dir: &str) -> String {
+    let mut s = String::new();
+    let mut kit: Vec<String> = out.kit.iter().map(|k| k.to_string()).collect();
+    if out.field_defs {
+        kit.push("type FieldDef".into());
+    }
+    let _ = writeln!(s, "import {{ {} }} from '@kit';", kit.join(", "));
+    let _ = writeln!(
+        s,
+        "import {{ {} }} from '../runtime';",
+        out.rt.iter().copied().collect::<Vec<_>>().join(", ")
+    );
+    for w in &out.widgets {
+        let _ = writeln!(s, "import {w} from '{widgets_dir}{w}.vue';");
+    }
+    s.push('\n');
+    s
+}
+
+fn head_widget(w: &WidgetModel) -> String {
+    format!(
+        "<!-- Generated by agenticspec ui generate from the widget `{}` of an ess-ui/1\n     document; the same widget gives the same file in every document. Never edit: change the\n     widget and generate again. -->\n",
+        w.name
+    )
+}
+
+/// A widget: its parameters as props (`args` in its body), its scope's client when it declares
+/// one, and its body nodes, each drawn without a card of its own.
+fn widget_vue(w: &WidgetModel) -> String {
+    let scoped = w
+        .params
+        .iter()
+        .any(|p| SCOPE_PARAMS.contains(&p.name.as_str()));
+    let mut out = PageOut {
+        kit: BTreeSet::new(),
+        rt: BTreeSet::new(),
+        widgets: BTreeSet::new(),
+        field_defs: false,
+        script: String::new(),
+        params: &[],
+        client: scoped.then_some("client"),
+    };
+    let body = if let [only] = w.body.as_slice() {
+        out.section(only, false)
+    } else {
+        out.column(&w.body, false)
+    };
+    let tpl = body.replace("<KitStack>", "<KitStack :padded=\"false\">");
+    let uses = |needle: &str| tpl.contains(needle) || out.script.contains(needle);
+    let mut decls = String::new();
+    let props: Vec<String> = w
+        .params
+        .iter()
+        .map(|p| {
+            format!(
+                "{}{}: {}",
+                prop(&p.name),
+                if p.required { "" } else { "?" },
+                p.ts_type
+            )
+        })
+        .collect();
+    let _ = writeln!(decls, "/** {} */", w.summary.replace("*/", "* /"));
+    if props.is_empty() {
+        decls.push_str("const args = defineProps<Record<string, never>>();\n");
+    } else {
+        let _ = writeln!(
+            decls,
+            "const args = defineProps<{{ {} }}>();",
+            props.join("; ")
+        );
+    }
+    if !uses("args[") {
+        decls.push_str("void args;\n");
+    }
+    if scoped && out.script.contains(", client)") {
+        out.rt.insert("useWidget");
+        decls.push_str("const client = useWidget(args);\n");
+    }
+    if uses("router.") {
+        out.rt.insert("useRouter");
+        decls.push_str("const router = useRouter();\n");
+    }
+    let mut s = head_widget(w);
+    s.push_str("<script setup lang=\"ts\">\n");
+    s.push_str(&imports(&out, "./"));
+    s.push_str(&decls);
+    s.push_str(&out.script);
+    s.push_str("</script>\n\n<template>\n");
+    s.push_str(&indent(&tpl, 2));
+    s.push_str("</template>\n");
+    s
+}
+
 fn page_vue(app: &App, page: &PageModel) -> String {
     let mut out = PageOut {
         kit: BTreeSet::new(),
         rt: BTreeSet::new(),
+        widgets: BTreeSet::new(),
         field_defs: false,
         script: String::new(),
-        page,
+        params: &page.params,
+        client: None,
     };
     out.kit("KitShell");
     let bar = page.bar.as_ref().map(|b| out.bar(b));
@@ -984,8 +1140,13 @@ fn page_vue(app: &App, page: &PageModel) -> String {
         }
         None => format!("page-title=\"{}\"", html(&page.title)),
     };
+    let nav = if app.nav.is_some() {
+        " :nav=\"shell.nav\""
+    } else {
+        ""
+    };
     let mut tpl = format!(
-        "<KitShell :title=\"shell.title\" {title} :theme=\"shell.theme\" :themes=\"shell.themes\" :toasts=\"shell.toasts\" @update:theme=\"shell.setTheme\" @dismiss=\"shell.dismiss\">\n"
+        "<KitShell :title=\"shell.title\" {title} :theme=\"shell.theme\" :themes=\"shell.themes\"{nav} :toasts=\"shell.toasts\" @update:theme=\"shell.setTheme\" @dismiss=\"shell.dismiss\">\n"
     );
     if let Some(b) = bar {
         let _ = write!(tpl, "  <template #bar>\n{}  </template>\n", indent(&b, 4));
@@ -1037,16 +1198,7 @@ fn page_vue(app: &App, page: &PageModel) -> String {
 
     let mut s = head_vue(app);
     s.push_str("<script setup lang=\"ts\">\n");
-    let mut kit: Vec<String> = out.kit.iter().map(|k| k.to_string()).collect();
-    if out.field_defs {
-        kit.push("type FieldDef".into());
-    }
-    let _ = writeln!(s, "import {{ {} }} from '@kit';", kit.join(", "));
-    let _ = writeln!(
-        s,
-        "import {{ {} }} from '../runtime';\n",
-        out.rt.iter().copied().collect::<Vec<_>>().join(", ")
-    );
+    s.push_str(&imports(&out, "../widgets/"));
     s.push_str(&decls);
     s.push_str(&out.script);
     s.push_str("</script>\n\n<template>\n");
@@ -1066,6 +1218,9 @@ pub fn emit(app: &App) -> Files {
     for p in &app.pages {
         debug_assert_eq!(p.component, component_name(&p.name));
         files.insert(format!("pages/{}.vue", p.component), page_vue(app, p));
+    }
+    for w in &app.widgets {
+        files.insert(format!("widgets/{}.vue", w.component), widget_vue(w));
     }
     files
 }
