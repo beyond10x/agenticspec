@@ -334,7 +334,7 @@ Filed in beyond10x/cloudspec under `epic:translation` (pull request 2); each req
 story there. Nothing is written in weft; weft gets what it needs from the cloudspec side. weft's
 own epic `agent-workloads` runs a vendored fixture bundle from a hand-written formation until the
 translator exists (`story:agent-architecture-run`), and frames `agenticspec sim render` output by
-its `data-part` attribute per part (`story:agenticspec-render-contract`; the attribute exists).
+its `data-part` attribute per part (`story:agenticspec-render-contract`; the attribute exists). The agent workload kind is cloudspec `story:agent-workload-kind` (C2 depends on it); weft binds `agent-runtime` to Loom in `story:agent-loom-runtime`. weft accepts Q16 A and Q17 A.
 
 - C1 (`story:architecture-format-constructs`) An architecture format with K13's constructs:
   component; package (an agent document with a runtime by digest, an ESS system, an image); shape
