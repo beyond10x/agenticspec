@@ -29,6 +29,7 @@ What an agent is asked to do. A task states a goal for a principal and follows a
 
 - [question](../7-collaboration/question.md) · layer 7 · 5 references
 - [trigger](../7-collaboration/trigger.md) · layer 7 · 6 references
+- [deployment](../9-composition/deployment.md) · layer 9 · 6 references
 
 ## Entities
 

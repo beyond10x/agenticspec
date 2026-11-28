@@ -14,7 +14,7 @@
   "target": { "kind": "lifecycle", "entity": "ToolCall" },
   "truth": {
     "path": "/docs/blocks/4-agent/harness",
-    "terminal": ["Completed", "Denied", "Failed"]
+    "terminal": ["Completed", "CouldNotRead", "Denied", "Failed"]
   },
-  "expectations": ["the lifecycle diagram of ToolCall is in view and marks Completed, Denied and Failed as the end states"]
+  "expectations": ["the lifecycle diagram of ToolCall is in view and marks Completed, CouldNotRead, Denied and Failed as the end states"]
 }

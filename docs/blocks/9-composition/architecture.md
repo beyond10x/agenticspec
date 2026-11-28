@@ -22,6 +22,7 @@ An architecture composes building blocks into one concrete setup: parts (named i
 
 ## Used by
 
+- [deployment](deployment.md) · layer 9 · 14 references
 - [experiment](../10-evaluation/experiment.md) · layer 10 · 5 references
 - [kpi](../10-evaluation/kpi.md) · layer 10 · 4 references
 

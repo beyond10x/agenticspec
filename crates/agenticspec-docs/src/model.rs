@@ -74,7 +74,7 @@ pub fn family(block: &str) -> &'static str {
         "workspace" | "sandbox" | "runtime" => "place",
         "pool" | "resource" => "resource",
         "shared" => "foundation",
-        "architecture" => "composition",
+        "architecture" | "deployment" => "composition",
         "run" | "kpi" | "experiment" => "evaluation",
         _ => "other",
     }

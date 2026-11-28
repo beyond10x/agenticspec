@@ -3,7 +3,9 @@ domain: agentic.question
 summary: >-
   A message that needs an answer. A question offers lettered options, names the option it takes by
   default and a deadline; past the deadline the default is taken. Only the addressee, or a delegate
-  acting for it, answers. An approval is a question whose two options are approve and reject.
+  acting for it, answers. A reply that could not be read is recorded as could not read, and the
+  default is not taken in its place. An approval is a question whose two options are approve and
+  reject.
 
 naming:
   wire: question
@@ -81,6 +83,11 @@ entities:
       - name: run_id
         type: Optional<agentic.shared.RunId>
         summary: The run that waits on the question, suspended AwaitingAnswer, when a step of a run asks it.
+      - name: read_failure
+        type: Optional<String>
+        summary: >-
+          Why the reply could not be read, when it could not (CouldNotRead). The question then has
+          no chosen option: an unreadable reply is never read as empty or as the default.
       # UNMAPPED: the addressee holds the decision. A decision a rule holds is an
       # agentic.authority Decision with decider Rule, not a question. A question the addressee
       # only advises on, with the asker deciding, has no field here (consumer gap G7).
@@ -95,8 +102,8 @@ entities:
         via: run_id
     lifecycle:
       initial: Open
-      states: [Open, Answered, DefaultTaken, Withdrawn]
-      terminal: [Answered, DefaultTaken, Withdrawn]
+      states: [Open, Answered, DefaultTaken, Withdrawn, CouldNotRead]
+      terminal: [Answered, DefaultTaken, Withdrawn, CouldNotRead]
       transitions:
         - name: answer
           from: [Open]
@@ -107,6 +114,9 @@ entities:
         - name: withdraw
           from: [Open]
           to: Withdrawn
+        - name: could_not_read
+          from: [Open]
+          to: CouldNotRead
 
 actors:
   - name: agentic.question.Asker
@@ -127,6 +137,7 @@ actors:
       - {name: party, type: agentic.channel.PartyId}
     may:
       - agentic.question.Answer
+      - agentic.question.RecordUnreadableAnswer
 
   - name: agentic.question.Clock
     naming:
@@ -318,6 +329,53 @@ commands:
           agentic.question.QuestionStateConflict:
             state: {subject: state}
 
+  # A reply came from the addressee, or a delegate acting for it, and it could not be read as one
+  # of the options (M36). It is recorded as could not read, with why: the question has no chosen
+  # option and ends, so its default is not taken in its place; the asker asks again.
+  - name: agentic.question.RecordUnreadableAnswer
+    naming:
+      wire: record-unreadable-answer
+      display: Record that an answer could not be read
+    input:
+      - name: question_id
+        type: agentic.shared.QuestionId
+      - name: read_failure
+        type: String
+      - name: delegation_id
+        type: Optional<agentic.shared.DelegationId>
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.question.UnknownQuestion
+        payload:
+          agentic.question.UnknownQuestion:
+            question_id: input.question_id
+      - name: not-the-addressee
+        when: not defined(delegation_id)
+        when_subject:
+          predicate: addressee != caller.party
+        error: agentic.question.NotTheAddressee
+      - name: recorded
+        moves: agentic.question.Question.could_not_read
+        instance: question_id
+        sets:
+          read_failure: input.read_failure
+          answered_by: {caller: party}
+          answered_via: input.delegation_id
+        emits: [agentic.question.AnswerNotRead]
+        payload:
+          agentic.question.AnswerNotRead:
+            question_id: input.question_id
+            read_failure: input.read_failure
+            answered_by: {caller: party}
+            answered_via: input.delegation_id
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.question.QuestionStateConflict
+        payload:
+          agentic.question.QuestionStateConflict:
+            state: {subject: state}
+
   # An answer that arrives after the deadline and before the default is taken is accepted.
   # UNMAPPED: whether an answer past the deadline is refused is not stated by the design.
   - name: agentic.question.TakeDefault
@@ -407,6 +465,13 @@ events:
       - {name: answered_by, type: agentic.channel.PartyId}
       - {name: answered_via, type: Optional<agentic.shared.DelegationId>}
 
+  - name: agentic.question.AnswerNotRead
+    fields:
+      - {name: question_id, type: agentic.shared.QuestionId}
+      - {name: read_failure, type: String}
+      - {name: answered_by, type: agentic.channel.PartyId}
+      - {name: answered_via, type: Optional<agentic.shared.DelegationId>}
+
   - name: agentic.question.DefaultTaken
     fields:
       - {name: question_id, type: agentic.shared.QuestionId}
@@ -434,6 +499,7 @@ views:
       - {name: answered_via, type: Optional<agentic.shared.DelegationId>}
       - {name: topic, type: Optional<agentic.shared.Name>}
       - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: read_failure, type: Optional<String>}
       - {name: state, type: agentic.question.Question.State}
     naming:
       wire: questions

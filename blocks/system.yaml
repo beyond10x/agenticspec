@@ -29,5 +29,6 @@ domains:
   - agentic.runtime
   - agentic.resource
   - agentic.architecture
+  - agentic.deployment
   - agentic.kpi
   - agentic.experiment

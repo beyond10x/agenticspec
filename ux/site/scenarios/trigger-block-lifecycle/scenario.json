@@ -14,7 +14,7 @@
   "target": { "kind": "lifecycle", "entity": "Firing" },
   "truth": {
     "path": "/docs/blocks/7-collaboration/trigger",
-    "terminal": ["Ended", "Failed", "Skipped"]
+    "terminal": ["Ended", "Failed", "Replaced", "Skipped"]
   },
-  "expectations": ["the lifecycle diagram of Firing is in view and marks Ended, Skipped and Failed as the end states"]
+  "expectations": ["the lifecycle diagram of Firing is in view and marks Ended, Skipped, Replaced and Failed as the end states"]
 }

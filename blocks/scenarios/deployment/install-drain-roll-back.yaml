@@ -1,0 +1,271 @@
+# The lifecycle of a runtime's installations and of the runs started under them, walked by hand
+# (M29, M30, M32, M33): synthesis cannot reach a committed architecture revision. A runtime installs
+# revision 1 and takes runs under it: one goes through waiting to done, one fails, one is cancelled,
+# and a repeated run identity starts nothing. A second install beside the active one is refused.
+# The installation drains: it takes no new run, reports drained only once its runs ended, and a run
+# it took before keeps going and keeps revision 1 after revision 2 is installed in its place.
+# Revision 2 rolls back, and revision 1 is active again.
+type: ess-scenario/7
+domain: agentic.deployment
+scenario: install-drain-roll-back
+summary: An installation takes runs pinned to its revision, refuses a repeated run identity, drains before a newer revision replaces it, and comes back when that one rolls back.
+
+arrange:
+  - instance: arch
+    entity: agentic.architecture.Architecture
+  - instance: rev1
+    entity: agentic.architecture.ArchitectureRevision
+  - instance: rev2
+    entity: agentic.architecture.ArchitectureRevision
+  - instance: rt
+    entity: agentic.runtime.Runtime
+  - instance: inst1
+    entity: agentic.deployment.Installation
+  - instance: inst2
+    entity: agentic.deployment.Installation
+
+timeline:
+  # an architecture with one part, committed twice: revisions 1 and 2
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: review-desk}
+    outcome: created
+    capture: {instance: arch, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-0000000006a1
+      architecture_id: {$instance: arch}
+      name: owner
+      kind: Principal
+      count: 1
+      settings: [{name: principal_kind, value: human}]
+    outcome: added
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: arch}}
+    outcome: committed
+    capture: {instance: rev1, event: agentic.architecture.RevisionCommitted, field: revision_id}
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: arch}}
+    outcome: committed
+    capture: {instance: rev2, event: agentic.architecture.RevisionCommitted, field: revision_id}
+
+  # the runtime installs revision 1
+  - at: 2026-11-27T09:01:00Z
+    command: agentic.runtime.RegisterRuntime
+    input: {name: desk-runtime, kinds: [Agent], min_isolation: Container}
+    outcome: registered
+    capture: {instance: rt, event: agentic.runtime.RuntimeRegistered, field: runtime_id}
+  - at: 2026-11-27T09:01:01Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rt}, revision_id: {$instance: rev1}, binding: sha256-binding-1}
+    outcome: installed
+    capture: {instance: inst1, event: agentic.deployment.RevisionInstalled, field: installation_id}
+
+  # a second installation beside the active one is refused
+  - at: 2026-11-27T09:01:02Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rt}, revision_id: {$instance: rev2}, binding: sha256-binding-2, replaces: {$instance: inst1}}
+    outcome: runtime-has-active
+    error:
+      name: agentic.deployment.RuntimeHasActiveInstallation
+    no_events: [agentic.deployment.RevisionInstalled]
+
+  # the first installation has nothing to roll back to
+  - at: 2026-11-27T09:01:03Z
+    command: agentic.deployment.RollBack
+    input: {installation_id: {$instance: inst1}}
+    outcome: nothing-to-roll-back-to
+    error:
+      name: agentic.deployment.NothingToRollBackTo
+    no_events: [agentic.deployment.InstallationRolledBack]
+
+  # run a: queued, running, waiting for an answer, running, done
+  - at: 2026-11-27T10:00:00Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c1, installation_id: {$instance: inst1}, subject_key: review-1}
+    outcome: queued
+    events:
+      - event: agentic.deployment.RunQueued
+        payload: {run_id: 00000000-0000-4000-8000-0000000006c1, revision_id: {$instance: rev1}, binding: sha256-binding-1}
+  - at: 2026-11-27T10:00:01Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c1, installation_id: {$instance: inst1}, subject_key: review-1}
+    outcome: repeated
+    error:
+      name: agentic.deployment.RunKeyUsed
+      fields: {run_id: 00000000-0000-4000-8000-0000000006c1}
+    no_events: [agentic.deployment.RunQueued]
+  - at: 2026-11-27T10:00:02Z
+    command: agentic.deployment.StartRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c1}
+    outcome: started
+  - at: 2026-11-27T10:00:03Z
+    command: agentic.deployment.WaitRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c1, reason: Answer}
+    outcome: waiting
+  - at: 2026-11-27T10:00:04Z
+    command: agentic.deployment.StartRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c1}
+    outcome: wrong-state
+    error:
+      name: agentic.deployment.RunStateConflict
+    no_events: [agentic.deployment.RunStarted]
+  - at: 2026-11-27T10:00:05Z
+    command: agentic.deployment.ResumeRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c1}
+    outcome: resumed
+  - at: 2026-11-27T10:00:06Z
+    command: agentic.deployment.FinishRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c1}
+    outcome: done
+  - at: 2026-11-27T10:00:07Z
+    command: agentic.deployment.CancelRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c1, reason: Requested}
+    outcome: wrong-state
+    error:
+      name: agentic.deployment.RunStateConflict
+    no_events: [agentic.deployment.RunCancelled]
+
+  # run b fails, run c is cancelled while queued
+  - at: 2026-11-27T10:01:00Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c2, installation_id: {$instance: inst1}, subject_key: review-2}
+    outcome: queued
+  - at: 2026-11-27T10:01:01Z
+    command: agentic.deployment.StartRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c2}
+    outcome: started
+  - at: 2026-11-27T10:01:02Z
+    command: agentic.deployment.FailRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c2, failure: model route unreachable}
+    outcome: failed
+  - at: 2026-11-27T10:02:00Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c3, installation_id: {$instance: inst1}, subject_key: review-3}
+    outcome: queued
+  - at: 2026-11-27T10:02:01Z
+    command: agentic.deployment.CancelRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c3, reason: Requested}
+    outcome: cancelled
+
+  # run d is queued, then the installation drains: no new run, run d still starts
+  - at: 2026-11-27T11:00:00Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c4, installation_id: {$instance: inst1}, subject_key: review-4}
+    outcome: queued
+  - at: 2026-11-27T11:00:01Z
+    command: agentic.deployment.DrainInstallation
+    input: {installation_id: {$instance: inst1}}
+    outcome: draining
+  - at: 2026-11-27T11:00:02Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c5, installation_id: {$instance: inst1}, subject_key: review-5}
+    outcome: installation-draining
+    error:
+      name: agentic.deployment.InstallationDraining
+    no_events: [agentic.deployment.RunQueued]
+  - at: 2026-11-27T11:00:03Z
+    command: agentic.deployment.StartRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c4}
+    outcome: started
+  - at: 2026-11-27T11:00:04Z
+    command: agentic.deployment.ReportDrained
+    input: {installation_id: {$instance: inst1}}
+    outcome: runs-not-ended
+    error:
+      name: agentic.deployment.RunsNotEnded
+    no_events: [agentic.deployment.InstallationDrained]
+  - at: 2026-11-27T11:00:05Z
+    command: agentic.deployment.FinishRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c4}
+    outcome: done
+  - at: 2026-11-27T11:00:06Z
+    command: agentic.deployment.ReportDrained
+    input: {installation_id: {$instance: inst1}}
+    outcome: drained
+
+  # revision 2 replaces the drained installation; a drained one takes no run
+  - at: 2026-11-27T12:00:00Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rt}, revision_id: {$instance: rev2}, binding: sha256-binding-2, replaces: {$instance: inst1}}
+    outcome: installed
+    capture: {instance: inst2, event: agentic.deployment.RevisionInstalled, field: installation_id}
+  - at: 2026-11-27T12:00:01Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c6, installation_id: {$instance: inst1}, subject_key: review-6}
+    outcome: installation-not-active
+    error:
+      name: agentic.deployment.InstallationNotActive
+    no_events: [agentic.deployment.RunQueued]
+  - at: 2026-11-27T12:00:02Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c7, installation_id: {$instance: inst2}, subject_key: review-7}
+    outcome: queued
+    events:
+      - event: agentic.deployment.RunQueued
+        payload: {run_id: 00000000-0000-4000-8000-0000000006c7, revision_id: {$instance: rev2}, binding: sha256-binding-2}
+
+  # revision 2 rolls back: revision 1 is active again
+  - at: 2026-11-27T13:00:00Z
+    command: agentic.deployment.RollBack
+    input: {installation_id: {$instance: inst2}}
+    outcome: rolled-back
+    events:
+      - event: agentic.deployment.InstallationRolledBack
+        payload: {installation_id: {$instance: inst2}, reactivated: {$instance: inst1}}
+  - at: 2026-11-27T13:00:01Z
+    command: agentic.deployment.StartRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c7}
+    outcome: installation-not-active
+    error:
+      name: agentic.deployment.InstallationNotActive
+    no_events: [agentic.deployment.RunStarted]
+  - at: 2026-11-27T13:00:02Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000006c8, installation_id: {$instance: inst1}, subject_key: review-8}
+    outcome: queued
+
+assert:
+  - view: agentic.deployment.ArchitectureRuns
+    contains:
+      run_id: 00000000-0000-4000-8000-0000000006c4
+      revision_id: {$instance: rev1}
+      binding: sha256-binding-1
+      state: Done
+  - view: agentic.deployment.ArchitectureRuns
+    contains:
+      run_id: 00000000-0000-4000-8000-0000000006c2
+      state: Failed
+      failure: model route unreachable
+  - view: agentic.deployment.ArchitectureRuns
+    contains:
+      run_id: 00000000-0000-4000-8000-0000000006c3
+      state: Cancelled
+      cancelled_for: Requested
+  - view: agentic.deployment.ArchitectureRuns
+    contains:
+      run_id: 00000000-0000-4000-8000-0000000006c7
+      revision_id: {$instance: rev2}
+      state: Queued
+  - view: agentic.deployment.InstallationsOfRuntime
+    params:
+      runtime_id: {$instance: rt}
+    contains:
+      installation_id: {$instance: inst1}
+      state: Active
+  - view: agentic.deployment.InstallationsOfRuntime
+    params:
+      runtime_id: {$instance: rt}
+    contains:
+      installation_id: {$instance: inst2}
+      state: RolledBack
+  - view: agentic.deployment.RunsOfSubject
+    params:
+      subject_key: review-8
+    contains:
+      run_id: 00000000-0000-4000-8000-0000000006c8
+      revision_id: {$instance: rev1}
+      state: Queued

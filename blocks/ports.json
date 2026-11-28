@@ -69,6 +69,24 @@
       "agentic.channel.MarkLost"
     ],
     "agentic.delegation.Viewer": [],
+    "agentic.deployment.Deployer": [
+      "agentic.deployment.DrainInstallation",
+      "agentic.deployment.InstallRevision",
+      "agentic.deployment.RollBack"
+    ],
+    "agentic.deployment.Requester": [
+      "agentic.deployment.CancelRun"
+    ],
+    "agentic.deployment.Runner": [
+      "agentic.deployment.CancelRun",
+      "agentic.deployment.FailRun",
+      "agentic.deployment.FinishRun",
+      "agentic.deployment.QueueRun",
+      "agentic.deployment.ReportDrained",
+      "agentic.deployment.ResumeRun",
+      "agentic.deployment.StartRun",
+      "agentic.deployment.WaitRun"
+    ],
     "agentic.experiment.Viewer": [],
     "agentic.gateway.GatewayOperator": [
       "agentic.gateway.AttachUpstream",
@@ -88,6 +106,7 @@
     ],
     "agentic.harness.CallingHarness": [
       "agentic.harness.CompleteToolCall",
+      "agentic.harness.RecordUnreadableResult",
       "agentic.harness.RequestToolCall"
     ],
     "agentic.knowledge.KnowledgeAuthor": [
@@ -112,7 +131,8 @@
     "agentic.principal.Viewer": [],
     "agentic.process.Viewer": [],
     "agentic.question.Answerer": [
-      "agentic.question.Answer"
+      "agentic.question.Answer",
+      "agentic.question.RecordUnreadableAnswer"
     ],
     "agentic.question.Asker": [
       "agentic.question.Ask",
@@ -163,6 +183,7 @@
     "agentic.trigger.Dispatcher": [
       "agentic.trigger.RecordEnd",
       "agentic.trigger.RecordFailure",
+      "agentic.trigger.RecordReplaced",
       "agentic.trigger.RecordStart",
       "agentic.trigger.SkipFiring"
     ],
@@ -381,6 +402,41 @@
         "agentic.delegation.Delegations"
       ]
     },
+    "agentic.deployment": {
+      "commands": {
+        "agentic.deployment.CancelRun": "report",
+        "agentic.deployment.DrainInstallation": "report",
+        "agentic.deployment.FailRun": "report",
+        "agentic.deployment.FinishRun": "report",
+        "agentic.deployment.InstallRevision": "intent",
+        "agentic.deployment.QueueRun": "intent",
+        "agentic.deployment.ReportDrained": "report",
+        "agentic.deployment.ResumeRun": "report",
+        "agentic.deployment.RollBack": "report",
+        "agentic.deployment.StartRun": "report",
+        "agentic.deployment.WaitRun": "report"
+      },
+      "events": [
+        "agentic.deployment.DrainStarted",
+        "agentic.deployment.InstallationDrained",
+        "agentic.deployment.InstallationRolledBack",
+        "agentic.deployment.RevisionInstalled",
+        "agentic.deployment.RunCancelled",
+        "agentic.deployment.RunDone",
+        "agentic.deployment.RunFailed",
+        "agentic.deployment.RunQueued",
+        "agentic.deployment.RunResumed",
+        "agentic.deployment.RunStarted",
+        "agentic.deployment.RunWaiting"
+      ],
+      "views": [
+        "agentic.deployment.ArchitectureRuns",
+        "agentic.deployment.Installations",
+        "agentic.deployment.InstallationsOfRuntime",
+        "agentic.deployment.RunsOfInstallation",
+        "agentic.deployment.RunsOfSubject"
+      ]
+    },
     "agentic.experiment": {
       "commands": {
         "agentic.experiment.CompleteExperiment": "report",
@@ -438,7 +494,9 @@
         "agentic.harness.DecideToolCall": "internal",
         "agentic.harness.EndSession": "report",
         "agentic.harness.OpenSession": "intent",
+        "agentic.harness.RecordRestart": "report",
         "agentic.harness.RecordTurn": "report",
+        "agentic.harness.RecordUnreadableResult": "report",
         "agentic.harness.RegisterHarness": "configuration",
         "agentic.harness.RequestToolCall": "configuration",
         "agentic.harness.RetireHarness": "administration",
@@ -450,10 +508,12 @@
         "agentic.harness.HarnessRetired",
         "agentic.harness.SessionEnded",
         "agentic.harness.SessionOpened",
+        "agentic.harness.SessionRestarted",
         "agentic.harness.SubAgentSpawned",
         "agentic.harness.ToolCallCompleted",
         "agentic.harness.ToolCallDecided",
         "agentic.harness.ToolCallRequested",
+        "agentic.harness.ToolResultNotRead",
         "agentic.harness.TurnRecorded"
       ],
       "views": [
@@ -560,10 +620,12 @@
       "commands": {
         "agentic.question.Answer": "report",
         "agentic.question.Ask": "intent",
+        "agentic.question.RecordUnreadableAnswer": "report",
         "agentic.question.TakeDefault": "report",
         "agentic.question.Withdraw": "report"
       },
       "events": [
+        "agentic.question.AnswerNotRead",
         "agentic.question.DefaultTaken",
         "agentic.question.QuestionAnswered",
         "agentic.question.QuestionAsked",
@@ -669,6 +731,7 @@
         "agentic.trigger.PassScheduleChecks": "administration",
         "agentic.trigger.RecordEnd": "report",
         "agentic.trigger.RecordFailure": "report",
+        "agentic.trigger.RecordReplaced": "report",
         "agentic.trigger.RecordStart": "report",
         "agentic.trigger.SkipFiring": "report"
       },
@@ -676,6 +739,7 @@
         "agentic.trigger.FiringEnded",
         "agentic.trigger.FiringFailed",
         "agentic.trigger.FiringQueued",
+        "agentic.trigger.FiringReplaced",
         "agentic.trigger.FiringSkipped",
         "agentic.trigger.FiringStarted",
         "agentic.trigger.ScheduleAdvanced",
@@ -868,6 +932,35 @@
       "waiting_state": "agentic.delegation.Delegation.Active"
     },
     {
+      "block": "deployment",
+      "intent_event": "agentic.deployment.RunQueued",
+      "kind": "Outbound",
+      "name": "deployment.architecture-run",
+      "protocol": "QueueRun (CancelRun | FailRun | StartRun (WaitRun ResumeRun)* (CancelRun | FailRun | FinishRun | WaitRun (CancelRun | FailRun)))",
+      "reports": [
+        "agentic.deployment.CancelRun",
+        "agentic.deployment.FailRun",
+        "agentic.deployment.FinishRun",
+        "agentic.deployment.ResumeRun",
+        "agentic.deployment.StartRun",
+        "agentic.deployment.WaitRun"
+      ],
+      "waiting_state": "agentic.deployment.ArchitectureRun.Queued"
+    },
+    {
+      "block": "deployment",
+      "intent_event": "agentic.deployment.RevisionInstalled",
+      "kind": "Outbound",
+      "name": "deployment.installation",
+      "protocol": "(InstallRevision | RollBack) (DrainInstallation ReportDrained | RollBack)",
+      "reports": [
+        "agentic.deployment.DrainInstallation",
+        "agentic.deployment.ReportDrained",
+        "agentic.deployment.RollBack"
+      ],
+      "waiting_state": "agentic.deployment.Installation.Active"
+    },
+    {
       "block": "experiment",
       "intent_event": "agentic.experiment.ExperimentPlanned",
       "kind": "Outbound",
@@ -909,10 +1002,11 @@
       "intent_event": "agentic.harness.SessionOpened",
       "kind": "Outbound",
       "name": "harness.session",
-      "protocol": "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession",
+      "protocol": "(OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession",
       "reports": [
         "agentic.harness.CompactContext",
         "agentic.harness.EndSession",
+        "agentic.harness.RecordRestart",
         "agentic.harness.RecordTurn"
       ],
       "waiting_state": "agentic.harness.HarnessSession.Open"
@@ -922,9 +1016,10 @@
       "intent_event": "agentic.harness.ToolCallDecided",
       "kind": "Outbound",
       "name": "harness.tool-call",
-      "protocol": "DecideToolCall CompleteToolCall",
+      "protocol": "DecideToolCall (CompleteToolCall | RecordUnreadableResult)",
       "reports": [
-        "agentic.harness.CompleteToolCall"
+        "agentic.harness.CompleteToolCall",
+        "agentic.harness.RecordUnreadableResult"
       ],
       "waiting_state": "agentic.harness.ToolCall.Allowed"
     },
@@ -955,9 +1050,10 @@
       "intent_event": "agentic.question.QuestionAsked",
       "kind": "Principal",
       "name": "question.question",
-      "protocol": "Ask (Answer | TakeDefault | Withdraw)",
+      "protocol": "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)",
       "reports": [
         "agentic.question.Answer",
+        "agentic.question.RecordUnreadableAnswer",
         "agentic.question.TakeDefault",
         "agentic.question.Withdraw"
       ],
@@ -1010,10 +1106,11 @@
       "intent_event": "agentic.trigger.TriggerFired",
       "kind": "Outbound",
       "name": "trigger.firing",
-      "protocol": "FireTrigger (RecordFailure | RecordStart RecordEnd | SkipFiring)",
+      "protocol": "FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)",
       "reports": [
         "agentic.trigger.RecordEnd",
         "agentic.trigger.RecordFailure",
+        "agentic.trigger.RecordReplaced",
         "agentic.trigger.RecordStart",
         "agentic.trigger.SkipFiring"
       ],
@@ -1108,5 +1205,5 @@
       "waiting_state": "agentic.workspace.Proposal.Proposed"
     }
   ],
-  "sources_sha256": "49ae08137ef40592ee5daee5672a4b43da9c966d9801787120430ae88794718e"
+  "sources_sha256": "4a4b92b3f6ac2e0b0b87be77148ae27f8e8ef6463f7b3fcb5b9994b0d385db53"
 }

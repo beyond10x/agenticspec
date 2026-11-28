@@ -1643,3 +1643,99 @@ kpis:
     reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
     status: simulated
     source: design
+
+  - id: run_failure_share
+    block: deployment
+    kind: quality
+    unit: share
+    summary: Share of architecture runs that failed.
+    how: RunFailed events divided by RunQueued events, per installation and per architecture revision, so a revision that fails more than the one it replaced shows before a rollback.
+    direction: lower
+    gate: false
+    reads: [agentic.deployment.RunQueued, agentic.deployment.RunFailed]
+    status: planned
+    source: design
+
+  - id: run_queue_wait_p50_seconds
+    block: deployment
+    kind: quality
+    unit: seconds
+    summary: Median time an architecture run waits queued before it starts.
+    how: Seconds between RunQueued and RunStarted of one run, median per installation.
+    direction: lower
+    gate: false
+    reads: [agentic.deployment.RunQueued, agentic.deployment.RunStarted]
+    status: planned
+    source: design
+
+  - id: rollback_share
+    block: deployment
+    kind: quality
+    unit: share
+    summary: Share of installations that were rolled back.
+    how: InstallationRolledBack events divided by RevisionInstalled events that replaced an installation, per runtime.
+    direction: lower
+    gate: false
+    reads: [agentic.deployment.RevisionInstalled, agentic.deployment.InstallationRolledBack]
+    status: planned
+    source: design
+
+  - id: drain_p90_seconds
+    block: deployment
+    kind: quality
+    unit: seconds
+    summary: 90th percentile of the time an installation takes to drain.
+    how: Seconds between DrainStarted and InstallationDrained of one installation, 90th percentile per runtime. Long drains hold an old revision running beside the new one.
+    direction: lower
+    gate: false
+    reads: [agentic.deployment.DrainStarted, agentic.deployment.InstallationDrained]
+    status: planned
+    source: design
+
+  - id: session_restart_share
+    block: harness
+    kind: quality
+    unit: share
+    summary: Share of opened sessions that restart an ended one.
+    how: SessionRestarted events divided by SessionOpened events, per principal. Time and tokens of a lineage are summed over its sessions, grouped by the lineage each restart names.
+    direction: lower
+    gate: false
+    reads: [agentic.harness.SessionOpened, agentic.harness.SessionRestarted]
+    status: planned
+    source: design
+
+  - id: tool_results_not_read
+    block: harness
+    kind: quality
+    unit: count
+    summary: Tool calls whose result could not be read.
+    how: ToolResultNotRead events per session and per tool. Each is recorded as could not read, never as an empty result.
+    direction: lower
+    gate: false
+    reads: [agentic.harness.ToolResultNotRead]
+    status: planned
+    source: design
+
+  - id: answers_not_read_share
+    block: question
+    kind: quality
+    unit: share
+    summary: Share of questions whose answer could not be read.
+    how: AnswerNotRead events divided by QuestionAsked events, per addressee. A reply that could not be read ends the question; its default is never taken in its place.
+    direction: lower
+    gate: false
+    reads: [agentic.question.QuestionAsked, agentic.question.AnswerNotRead]
+    status: planned
+    source: design
+
+  - id: firings_replaced_share
+    block: trigger
+    kind: quality
+    unit: share
+    summary: Share of started firings that a newer firing for the same subject replaced.
+    how: FiringReplaced events divided by FiringStarted events, per trigger with the Replace subject policy. High means work is started and thrown away.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.FiringStarted, agentic.trigger.FiringReplaced]
+    status: planned
+    source: design
