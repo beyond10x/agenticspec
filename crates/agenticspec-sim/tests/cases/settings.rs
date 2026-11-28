@@ -196,8 +196,35 @@ fn a_shares_setting_maps_parts_to_shares() {
 }
 
 #[test]
+fn a_runtime_part_may_keep_durable_state_off_by_default() {
+    let s = settings::table()
+        .setting("runtime", "durable_state")
+        .unwrap();
+    assert_eq!(s.ty.kind, Kind::Boolean);
+    assert_eq!(s.default, Some(json!(false)));
+    assert_eq!(s.narrows, Narrows::None);
+    assert!(!s.summary.is_empty());
+    let path = repo_root().join(
+        "crates/agenticspec-sim/tests/cases/deploy/durable_state_unplaceable.architecture.yaml",
+    );
+    let mut a = agenticspec_sim::doc::load_yaml(&path).unwrap();
+    assert_eq!(check(&a), Vec::<Refusal>::new());
+    a["parts"]["flow"]["durable_state"] = json!("yes");
+    assert_eq!(
+        refused(&a),
+        vec![("setting_invalid".to_string(), "flow".to_string())]
+    );
+    a["parts"]["lead"]["durable_state"] = json!(true);
+    a["parts"]["flow"]["durable_state"] = json!(true);
+    assert_eq!(
+        refused(&a),
+        vec![("setting_unknown".to_string(), "lead".to_string())]
+    );
+}
+
+#[test]
 fn a_boolean_setting_takes_true_or_false() {
-    // No block declares a boolean setting yet: the type is read from a table of its own.
+    // The type read from a table of its own, beside the runtime's `durable_state`.
     let t = settings::parse(
         "format: agenticspec-settings/1\nevery_part: []\nblocks:\n  - kind: gate\n    domain: agentic.gate\n    settings:\n      - {name: open, type: boolean, default: false, summary: Whether the gate is open.}\n",
     )

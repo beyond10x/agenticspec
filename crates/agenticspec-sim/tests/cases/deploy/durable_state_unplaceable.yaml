@@ -1,0 +1,17 @@
+format: agenticspec-binding/1
+binding: durable-state-unplaceable
+architecture: durable-state
+summary: >-
+  The workflow runtime keeps durable state (beside durable_state_unplaceable.architecture.yaml)
+  and is packed into a job unit, which runs until done and holds no volume; its state volume is
+  mounted, every crossing has a transport and every destination is declared.
+transports: {run: http, model_call: http}
+parts:
+  lead: {egress: [flow, gateway]}
+  flow: {egress: [gateway], volumes: [{name: flow-state, mount: /var/lib/flow}]}
+  gateway: {egress: [model]}
+packing:
+  units:
+    - {name: core, kind: core, parts: [lead, gateway]}
+    - {name: flow, kind: job, parts: [flow]}
+  external: [owner, model]
