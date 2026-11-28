@@ -267,6 +267,7 @@ A part `runtime`:
 |---|---|---|---|---|---|
 | `kind` | string |  |  | every port | What kind of runtime the part is. |
 | `role` | string |  |  |  | The role of the behaviour profile the runtime's runs play. |
+| `model_share` | shares |  |  |  | The share of the runtime's model calls each model part it reaches gets; without it, equal shares. |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
 

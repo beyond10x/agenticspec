@@ -85,6 +85,7 @@ blocks:
     settings:
       - {name: kind, type: string, narrows: all, summary: "What kind of runtime the part is."}
       - {name: role, type: string, summary: "The role of the behaviour profile the runtime's runs play."}
+      - {name: model_share, type: shares, summary: "The share of the runtime's model calls each model part it reaches gets; without it, equal shares."}
 
   - kind: pool
     domain: agentic.resource
@@ -144,6 +145,7 @@ blocks:
     settings:
       - {name: steps, type: integer, unit: steps, min: 1, default: 1, summary: "The steps of the process's program; a run executes each once."}
       - {name: role, type: string, summary: "The role of the behaviour profile whose turn_seconds a step of a run takes."}
+      - {name: model_share, type: shares, summary: "The share of the process's model calls each model part it reaches gets; without it, equal shares."}
 
   - kind: delegation
     domain: agentic.delegation

@@ -793,7 +793,7 @@ Each page shows the result of the structural check and the architecture drawn as
 Its behaviour is the profile role its `role` names (`coding` when it names none); `harness` names the kind of harness and picks no role.\n\
 - **Questions.** The part a `question` link ends at answers: a principal with the delay of its kind, an agent with the \
 `answer_seconds` of its own role, whatever the part is called. An agent that acts for a principal passes questions that need the owner on to it.\n\
-- **Models.** Each model call goes to one of the model parts the agent reaches over `model_call` links, drawn by the agent's \
+- **Models.** Each model call goes to one of the model parts the agent, runtime or process part reaches over `model_call` links, drawn by the part's \
 `model_share` (a share per model part; equal shares when it gives none), and is priced by that model's `route` in the profile. \
 A route the profile does not price is refused, by name.\n\
 - **Runtimes.** A runtime part that is given runs (a `run` or `order` link, or a trigger) executes them with the profile role \

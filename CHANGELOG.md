@@ -96,6 +96,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `agenticspec sim check` accepts `model_share` on a runtime or process part, as on an agent: the simulator already split such a part's model calls by it, and the check refused it (`setting_unknown`). The simulator reads `coordination`, `start_stagger` and `partition` only on agent parts; a runtime or process part's copies take the defaults, as the check's `swarm_needs_agent` and the settings table already said
 - The render model (`agenticspec-render-model/1`) draws every edge between two nodes of one region: one between cards that do not stand side by side, or that crosses the frame of a region inside it, runs on a lane of its own below what the region holds. Before, such edges were not drawn at all
 
 ## [0.4.1] - 2026-11-28
