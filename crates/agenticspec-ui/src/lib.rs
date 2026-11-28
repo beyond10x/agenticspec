@@ -5,6 +5,8 @@
 //!   refuses a key it does not declare.
 //! - `check`: parsing with refusals by node path, merging each page over its kind, resolving
 //!   references and compiling expressions into the model the emitter writes.
+//! - `filter`: the row predicate of a read and the condition of a confirm, the grammar of released
+//!   ess-ui/1 compiled into TypeScript.
 //! - `emit`: the files: one page component per page, `App.vue`, the router, the typed client of
 //!   the reads, commands and channels, the host slots' names and props, and the runtime.
 //! - `interface`: the runtime interface the generated client calls, `ui/runtime.openapi.yaml`.
@@ -38,6 +40,7 @@ pub mod wire;
 #[allow(dead_code)]
 mod doc;
 mod emit;
+mod filter;
 
 /// A construct the generator refuses, named by its node path (`pages/draft/sections/patch`).
 #[derive(Debug, Clone, PartialEq, Eq)]

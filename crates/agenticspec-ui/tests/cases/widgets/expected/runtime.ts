@@ -2,8 +2,9 @@
 //
 // The runtime every generated page calls, the same bytes for every document: the hash router,
 // page and shell state, the navigation, the lifecycle of a read (idle, loading, ready, empty,
-// failed) and its live updates, the scope of a widget, commands and forms, toasts, and the
-// command hooks of the host.
+// failed) and its live updates, the scope of a widget, commands and forms, toasts, the command
+// hooks of the host, and what a section does with the rows it read: its row predicate, sort,
+// groups, poll interval, metrics and the confirm of an action.
 
 import {
   computed,
@@ -12,6 +13,7 @@ import {
   onMounted,
   reactive,
   ref,
+  shallowReactive,
   watch,
   type App as VueApp,
   type Component,
@@ -618,4 +620,202 @@ export function text(v: unknown): string {
 
 export function flag(v: unknown): boolean {
   return v === true || v === 'true';
+}
+
+// ------------------------------------------------------------------------------------------
+// The rows a section draws, as released ess-ui/1 defines them: the row predicate of its read
+// (`reads.filter`), its sort and groups, its poll interval, its metrics, and the confirm of an
+// action.
+
+function plain(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+/** Whether a value counts as true in a predicate: null, false, 0, NaN, empty text and an empty list do not. */
+export function truthy(v: unknown): boolean {
+  if (v === null || v === undefined) return false;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0 && !Number.isNaN(v);
+  if (typeof v === 'string') return v !== '';
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+}
+
+/** A value as a comparison key: a list by its members, a map by its fields in key order. */
+function canonical(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(canonical).join(',')}]`;
+  if (plain(v)) {
+    const keys = Object.keys(v).sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
+  }
+  if (typeof v === 'number') return String(v);
+  return JSON.stringify(v ?? null);
+}
+
+/** `a == b`: two lists by their members in any order, a map by its fields, any other value by its text. */
+export function same(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    const l = a.map(canonical).sort();
+    const r = b.map(canonical).sort();
+    return l.length === r.length && l.every((x, i) => x === r[i]);
+  }
+  if (plain(a) || plain(b)) return canonical(a) === canonical(b);
+  return text(a) === text(b);
+}
+
+/** `a in [..]`: whether the list holds a value equal to `a`. */
+export function member(a: unknown, list: readonly unknown[]): boolean {
+  return list.some((v) => same(a, v));
+}
+
+/** A path below a value as the browser walks it: through a list, each member's field (`length` is its size). */
+export function at(v: unknown, path: readonly string[]): unknown {
+  let cur = v;
+  for (const seg of path) {
+    if (Array.isArray(cur)) {
+      cur = seg === 'length' ? cur.length : cur.map((e) => at(e, [seg]));
+      continue;
+    }
+    if (!plain(cur)) return undefined;
+    cur = cur[seg];
+  }
+  return cur;
+}
+
+/** A field of a row by its dotted path; `.` is a plain row itself. */
+function display(row: unknown, field: string): unknown {
+  if (field === '.') return row !== null && typeof row === 'object' ? undefined : row;
+  return at(row, field.split('.'));
+}
+
+function stableKey(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stableKey).join(',')}]`;
+  if (plain(v)) {
+    const keys = Object.keys(v)
+      .sort()
+      .filter((k) => v[k] !== undefined && typeof v[k] !== 'function');
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${stableKey(v[k])}`).join(',')}}`;
+  }
+  if (v === undefined || typeof v === 'function') return 'null';
+  return JSON.stringify(v);
+}
+
+function numeric(v: unknown, asNumber: boolean): number | undefined {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+  if (asNumber && typeof v === 'string' && v.trim() !== '') {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Orders two values, a total order: numbers (and, under a number column, text that reads as one)
+ * by value and before every other value; the others by their text.
+ */
+export function compareValues(a: unknown, b: unknown, asNumber = false): number {
+  const x = numeric(a, asNumber);
+  const y = numeric(b, asNumber);
+  if (x !== undefined && y !== undefined) return x < y ? -1 : x > y ? 1 : 0;
+  if (x !== undefined || y !== undefined) return x !== undefined ? -1 : 1;
+  const l = stableKey(a);
+  const r = stableKey(b);
+  return l < r ? -1 : l > r ? 1 : 0;
+}
+
+/** The rows sorted by a field (`sort: {by, dir}`); the sort is stable. */
+export function sortRows<T>(rows: readonly T[], by: string, dir: 'asc' | 'desc', asNumber: boolean): T[] {
+  const sign = dir === 'desc' ? -1 : 1;
+  return [...rows].sort((a, b) => compareValues(display(a, by), display(b, by), asNumber) * sign);
+}
+
+/** The rows under one value of the field they are grouped by. */
+export interface RowGroup<T> {
+  name: string;
+  rows: T[];
+}
+
+/**
+ * Rows under their `by` value (`group_by`): the `order` values first, in that order, then every
+ * other value in the order it first appears. With `showEmpty` an `order` value no row has is
+ * kept, empty.
+ */
+export function groupRows<T>(rows: readonly T[], by: string, order: readonly string[] = [], showEmpty = false): RowGroup<T>[] {
+  const names: string[] = [];
+  for (const n of order) if (!names.includes(n)) names.push(n);
+  for (const row of rows) {
+    const n = String(display(row, by));
+    if (!names.includes(n)) names.push(n);
+  }
+  return names
+    .map((name) => ({ name, rows: rows.filter((row) => String(display(row, by)) === name) }))
+    .filter((g) => g.rows.length > 0 || (showEmpty && order.includes(g.name)));
+}
+
+/** Reads again every `ms` milliseconds while the page shows the read (`reads.refresh`). */
+export function usePoll(read: { reload(): void }, ms: number): void {
+  const timer = setInterval(() => read.reload(), ms);
+  onBeforeUnmount(() => clearInterval(timer));
+}
+
+export type Aggregate = 'count' | 'sum' | 'min' | 'max' | 'avg';
+
+/** An aggregate over the rows: the count, or the sum, least, most or mean of a field's numbers. */
+export function aggregateRows(rows: readonly unknown[], aggregate: Aggregate, field: string | null): number | undefined {
+  if (aggregate === 'count') return rows.length;
+  const numbers = rows
+    .map((row) => (field === null ? undefined : at(row, field.split('.'))))
+    .filter((v): v is number => typeof v === 'number');
+  if (numbers.length === 0) return aggregate === 'sum' ? 0 : undefined;
+  switch (aggregate) {
+    case 'sum':
+      return numbers.reduce((t, v) => t + v, 0);
+    case 'min':
+      return Math.min(...numbers);
+    case 'max':
+      return Math.max(...numbers);
+    case 'avg':
+      return numbers.reduce((t, v) => t + v, 0) / numbers.length;
+  }
+}
+
+/**
+ * The number a metric shows: an aggregate over the rows of its read, else the first row's `match`
+ * field, else its `value`, else its first number. `…` while the read loads, `Error` when it failed,
+ * `–` when there is no value.
+ */
+export function metricValue(
+  read: { state: SectionState; rows: readonly unknown[] },
+  aggregate: Aggregate | null,
+  field: string | null,
+  match: string | null,
+): string | number {
+  if (read.state === 'idle' || read.state === 'loading') return '…';
+  if (read.state === 'failed') return 'Error';
+  let v: unknown;
+  if (aggregate !== null) {
+    v = aggregateRows(read.rows, aggregate, field);
+  } else {
+    const row = read.rows[0];
+    v = plain(row)
+      ? match !== null
+        ? at(row, match.split('.'))
+        : (row.value ?? Object.values(row).find((e) => typeof e === 'number'))
+      : row;
+  }
+  if (v === undefined || v === null) return '–';
+  return typeof v === 'number' ? v : text(v);
+}
+
+/** The confirm of an action: what it is open for (the row, or `true` for a page's action), or null. */
+export function useConfirm() {
+  const c = shallowReactive({ at: null as unknown });
+  return Object.assign(c, {
+    ask: (key: unknown) => {
+      c.at = key;
+    },
+    close: () => {
+      c.at = null;
+    },
+  });
 }
