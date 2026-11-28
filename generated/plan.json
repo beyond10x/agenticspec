@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "53930047fd3f159d4ddf171fc8bc5e6ce5dd48f66b097e55919a8cc6e506fc32",
-    "contract_digest": "90fcbfa17c5fb1a9f501de5125201a571c9c685b523fe085bb71ac08a299e348"
+    "source_digest": "8e00e1f25acb73456c1e1834a020f8c3dafc76ced84abd4c8a058abc10a30f4b",
+    "contract_digest": "ff3d430b7893bcfbc8144fd1e0402235fa7d1a631daed5029b075ff291390c4b"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -33,6 +33,34 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.AutonomyFigures",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.BlocksLiftInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.BlocksLiftResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.BlocksScenarioInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.BlocksScenarioResult",
       "disposition": {
         "disposition": "generated"
       }
@@ -103,6 +131,13 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.DecisionFigures",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.EntityRows",
       "disposition": {
         "disposition": "generated"
       }

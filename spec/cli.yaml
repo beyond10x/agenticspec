@@ -190,6 +190,23 @@ callables:
       plan_unreadable: agenticspec.cli.Refusal
       source_unavailable: agenticspec.cli.Refusal
       conformance_failed: agenticspec.cli.Refusal
+  blocks_lift:
+    target: {kind: local, owner: agenticspec.cli, action: blocks_lift}
+    input: agenticspec.cli.BlocksLiftInput
+    result: agenticspec.cli.BlocksLiftResult
+    errors:
+      transcript_unreadable: agenticspec.cli.Refusal
+      rows_invalid: agenticspec.cli.Refusal
+  blocks_scenario:
+    target: {kind: local, owner: agenticspec.cli, action: blocks_scenario}
+    input: agenticspec.cli.BlocksScenarioInput
+    result: agenticspec.cli.BlocksScenarioResult
+    errors:
+      transcript_unreadable: agenticspec.cli.Refusal
+      document_unreadable: agenticspec.cli.Refusal
+      map_invalid: agenticspec.cli.Refusal
+      scenario_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -349,3 +366,18 @@ commands:
       - {field: source, source: {kind: option, long: source}}
       - {field: plan, source: {kind: option, long: plan}}
       - {field: root, source: {kind: option, long: root}}
+  - path: [blocks, lift]
+    callable: blocks_lift
+    about: Lift one Claude Code session into rows of the building blocks, each naming the node it came from
+    arguments:
+      - {field: transcript, source: {kind: positional, index: 1}}
+  - path: [blocks, scenario]
+    callable: blocks_scenario
+    about: Write a draft scenario of a session's outside inputs and the block events of the turns they started
+    arguments:
+      - {field: transcript, source: {kind: positional, index: 1}}
+      - {field: architecture, source: {kind: option, long: architecture}}
+      - {field: profile, source: {kind: option, long: profile}}
+      - {field: map, source: {kind: option, long: map}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: name, source: {kind: option, long: name}}

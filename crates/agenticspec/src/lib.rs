@@ -5,8 +5,11 @@
 //! The records modules are re-exported under their own names, so `agenticspec::claude`,
 //! `agenticspec::kpi` and the others keep their paths.
 
-pub use agenticspec_records::{Load, claude, kpi, pricing, redact, replay, sq, store, time, view};
+pub use agenticspec_records::{
+    Load, blocks, claude, kpi, pricing, redact, replay, sq, store, time, view,
+};
 
+pub mod draft;
 pub mod export;
 pub mod html;
 pub mod mine;

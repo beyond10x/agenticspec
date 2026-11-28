@@ -477,6 +477,10 @@ impl Handler for Commands {
                     &mut err,
                 ))
             }
+            "blocks_lift" => {
+                draft_reply(agenticspec::draft::lift(&path_of(&inv.input, "transcript")))
+            }
+            "blocks_scenario" => draft_reply(agenticspec::draft::draft(&inv.input)),
             "sim_ladder" => sim_reply(sim::ladder(
                 &path_of(&inv.input, "ladder"),
                 &path_of(&inv.input, "out"),
@@ -622,6 +626,14 @@ fn ui_conform(input: &Value) -> HandlerReply {
 /// A path field of the input; the parser has made every required one present.
 fn path_of(input: &Value, field: &str) -> PathBuf {
     PathBuf::from(input.get(field).and_then(Value::as_str).unwrap_or(""))
+}
+
+/// The reply of an `agenticspec blocks` command.
+fn draft_reply(outcome: Result<Value, agenticspec::draft::Refused>) -> HandlerReply {
+    match outcome {
+        Ok(result) => HandlerReply::Success(result),
+        Err((code, detail)) => refusal(code, detail),
+    }
 }
 
 /// The reply of an `agenticspec sim` command.

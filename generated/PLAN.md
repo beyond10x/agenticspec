@@ -1,13 +1,13 @@
 <!--
   generated from agenticspec v1
-  contract digest 90fcbfa17c5fb1a9f501de5125201a571c9c685b523fe085bb71ac08a299e348
+  contract digest ff3d430b7893bcfbc8144fd1e0402235fa7d1a631daed5029b075ff291390c4b
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-211 capabilities: **208 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+216 capabilities: **213 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -17,6 +17,10 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.AnalyzeInput` |
 | domain type | `agenticspec.cli.AnalyzeResult` |
 | domain type | `agenticspec.cli.AutonomyFigures` |
+| domain type | `agenticspec.cli.BlocksLiftInput` |
+| domain type | `agenticspec.cli.BlocksLiftResult` |
+| domain type | `agenticspec.cli.BlocksScenarioInput` |
+| domain type | `agenticspec.cli.BlocksScenarioResult` |
 | domain type | `agenticspec.cli.BustCause` |
 | domain type | `agenticspec.cli.BustFigures` |
 | domain type | `agenticspec.cli.CacheFigures` |
@@ -27,6 +31,7 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.CorpusAction` |
 | domain type | `agenticspec.cli.Dashboard` |
 | domain type | `agenticspec.cli.DecisionFigures` |
+| domain type | `agenticspec.cli.EntityRows` |
 | domain type | `agenticspec.cli.ExportInput` |
 | domain type | `agenticspec.cli.ExportResult` |
 | domain type | `agenticspec.cli.ExposureFigures` |

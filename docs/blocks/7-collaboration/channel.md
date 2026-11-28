@@ -18,7 +18,7 @@ How parties exchange messages. A direct channel joins exactly two parties, each 
 
 ## Depends on
 
-- [harness](../4-agent/harness.md) · layer 4 · 5 references
+- [harness](../4-agent/harness.md) · layer 4 · 8 references
 - [delegation](../1-principals/delegation.md) · layer 1 · 14 references
 - [principal](../1-principals/principal.md) · layer 1 · 9 references
 - [shared](../0-foundation/shared.md) · layer 0 · 8 references
@@ -80,6 +80,7 @@ Identified by `message_id` (`MessageId`).
 | `delegation_id` | `optional DelegationId` | The delegation under which the sender sends for its delegator; the message then counts as the delegator's, and absent it counts as the sender's own. |
 | `proof` | `optional Proof` |  |
 | `sent_by_call` | `optional ToolCallId` | The tool call of the sending session that sent the message, so the two records join. |
+| `received_in_turn` | `optional TurnId` | The turn of the receiving session that read the message, when the recipient is a session; it joins the message to what that turn did. |
 
 Relations:
 
@@ -87,6 +88,7 @@ Relations:
 - `reply_to` references **Message** (one, by `in_reply_to`)
 - `on_behalf` references **Delegation** of [delegation](../1-principals/delegation.md) (one, by `delegation_id`)
 - `send_call` references **ToolCall** of [harness](../4-agent/harness.md) (one, by `sent_by_call`)
+- `received_in` references **Turn** of [harness](../4-agent/harness.md) (one, by `received_in_turn`)
 
 <Lifecycle entity={"Message"} initial={"Sent"} states={["Delivered","Lost","Read","Sent"]} terminal={["Delivered","Lost","Read"]} transitions={[{"from":["Sent"],"name":"deliver","to":"Delivered"},{"from":["Delivered"],"name":"read","to":"Read"},{"from":["Sent"],"name":"lose","to":"Lost"}]} />
 
@@ -258,10 +260,11 @@ Called by: Transport.
 
 Called by: Participant.
 
-| field | type |
-|---|---|
-| `message_id` | `MessageId` |
-| `reader` | `PartyId` |
+| field | type | meaning |
+|---|---|---|
+| `message_id` | `MessageId` |  |
+| `reader` | `PartyId` |  |
+| `turn_id` | `optional TurnId` | The turn in which a reading session read the message. |
 
 | outcome | when | result |
 |---|---|---|
@@ -423,7 +426,7 @@ Called by: Participant.
 | `HeartbeatRecorded` | `subscription_id` SubscriptionId | `Beat` |
 | `MessageDelivered` | `message_id` MessageId | `MarkDelivered` |
 | `MessageLost` | `message_id` MessageId | `MarkLost` |
-| `MessageRead` | `message_id` MessageId | `MarkRead` |
+| `MessageRead` | `message_id` MessageId, `turn_id` optional TurnId | `MarkRead` |
 | `MessageSent` | `message_id` MessageId, `channel_id` ChannelId, `from` PartyId, `to` PartyId, `act` Act, `content` Content, `in_reply_to` optional MessageId, `delegation_id` optional DelegationId, `proof` optional Proof, `sent_by_call` optional ToolCallId | `SendMessage` |
 | `PostTaken` | `post_id` PostId, `reader` PartyId | `TakePost` |
 | `Posted` | `post_id` PostId, `channel_id` ChannelId, `from` PartyId, `act` Act, `entry` optional EntryKind, `content` Content, `in_reply_to` optional PostId, `delegation_id` optional DelegationId, `proof` optional Proof | `PostMessage` |

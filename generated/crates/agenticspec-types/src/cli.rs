@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 90fcbfa17c5fb1a9f501de5125201a571c9c685b523fe085bb71ac08a299e348
+// contract digest ff3d430b7893bcfbc8144fd1e0402235fa7d1a631daed5029b075ff291390c4b
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -52,6 +52,64 @@ pub struct AutonomyFigures {
     pub prompts: Vec<PromptFigures>,
     /// `decisions` — `List<agenticspec.cli.DecisionFigures>`.
     pub decisions: Vec<DecisionFigures>,
+}
+
+/// BlocksLiftInput — `agenticspec.cli.BlocksLiftInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlocksLiftInput {
+    /// `transcript` — `String`.
+    pub transcript: String,
+}
+
+/// BlocksLiftResult — `agenticspec.cli.BlocksLiftResult`.
+///
+/// The rows of one session, in the form of a scenario's `given`, each checked against the building blocks, with the count per entity and the entities the session cannot show.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlocksLiftResult {
+    /// `session_id` — `String`.
+    pub session_id: String,
+    /// `given` — `Json`.
+    pub given: crate::json::Value,
+    /// `entities` — `List<agenticspec.cli.EntityRows>`.
+    pub entities: Vec<EntityRows>,
+    /// `not_observable` — `List<String>`.
+    pub not_observable: Vec<String>,
+}
+
+/// BlocksScenarioInput — `agenticspec.cli.BlocksScenarioInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlocksScenarioInput {
+    /// `transcript` — `String`.
+    pub transcript: String,
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `profile` — `String`.
+    pub profile: String,
+    /// `map` — `String`.
+    pub map: String,
+    /// `out` — `String`.
+    pub out: String,
+    /// `name` — `Optional<String>`.
+    pub name: Option<String>,
+}
+
+/// BlocksScenarioResult — `agenticspec.cli.BlocksScenarioResult`.
+///
+/// The draft scenario written and checked against its architecture and profile, with the inputs no turn followed and the inputs whose author plays no part.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlocksScenarioResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `scenario` — `String`.
+    pub scenario: String,
+    /// `inputs` — `Integer`.
+    pub inputs: i64,
+    /// `expectations` — `Integer`.
+    pub expectations: i64,
+    /// `unjoined` — `List<String>`.
+    pub unjoined: Vec<String>,
+    /// `unmapped` — `List<String>`.
+    pub unmapped: Vec<String>,
 }
 
 /// BustCause — `agenticspec.cli.BustCause`: one of a closed set of names.
@@ -180,6 +238,15 @@ pub struct DecisionFigures {
     pub decision: crate::session::Decision,
     /// `count` — `Integer`.
     pub count: i64,
+}
+
+/// EntityRows — `agenticspec.cli.EntityRows`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EntityRows {
+    /// `entity` — `String`.
+    pub entity: String,
+    /// `rows` — `Integer`.
+    pub rows: i64,
 }
 
 /// ExportInput — `agenticspec.cli.ExportInput`.

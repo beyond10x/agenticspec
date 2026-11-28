@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 90fcbfa17c5fb1a9f501de5125201a571c9c685b523fe085bb71ac08a299e348
+// contract digest ff3d430b7893bcfbc8144fd1e0402235fa7d1a631daed5029b075ff291390c4b
 // do not edit: regenerate with `ess synthesize`
 
 //! The typed refusal of an unmet obligation, and the conversion seams owed between contexts.

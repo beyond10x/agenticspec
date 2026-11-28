@@ -13,6 +13,7 @@ mod ladder;
 mod marked;
 mod nest;
 mod ports;
+mod rows;
 mod scenario;
 mod search;
 mod sim;

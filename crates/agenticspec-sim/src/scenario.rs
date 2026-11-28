@@ -11,6 +11,7 @@ use crate::events::{self, REFUSAL};
 use crate::marked::resolve;
 use crate::profile::Profile;
 use crate::reader::{DocRef, Reader, sha256_hex};
+use crate::rows::{Row, blocks, check_row, read_row};
 use crate::search::kind as kpi_kind;
 use crate::sim::{Arrival, Model, RUN_KPIS, RunOut, RunOutcome, Script, TaskScript, simulate};
 use serde_json::{Map, Value, json};
@@ -114,6 +115,8 @@ pub struct GivenQuestion {
 pub struct Given {
     pub tasks: Vec<GivenTask>,
     pub questions: Vec<GivenQuestion>,
+    /// Rows of block entities, checked against the blocks; the simulator does not read them.
+    pub rows: Vec<Row>,
 }
 
 pub const OUTCOMES: &[(&str, RunOutcome)] = &[
@@ -275,7 +278,7 @@ fn read_given(r: &mut Reader, v: Option<&Value>) -> Given {
     let Some(v) = v.filter(|v| !v.is_null()) else {
         return g;
     };
-    let Some(m) = r.obj(v, "given", &["tasks", "questions"], &[]) else {
+    let Some(m) = r.obj(v, "given", &["tasks", "questions", "rows"], &[]) else {
         return g;
     };
     for (i, t) in r.list(m, "tasks", "given").iter().enumerate() {
@@ -323,6 +326,11 @@ fn read_given(r: &mut Reader, v: Option<&Value>) -> Given {
                 options,
                 default,
             });
+        }
+    }
+    for (i, row) in r.list(m, "rows", "given").iter().enumerate() {
+        if let Some(row) = read_row(r, row, &format!("given.rows.{i}")) {
+            g.rows.push(row);
         }
     }
     g
@@ -712,6 +720,17 @@ pub fn check(l: &Loaded) -> Vec<String> {
                 q.addressee
             ));
         }
+    }
+    let mut rows = BTreeSet::new();
+    for (i, row) in s.given.rows.iter().enumerate() {
+        let p = format!("given.rows.{i}");
+        if !rows.insert((row.entity.as_str(), row.id.as_str())) {
+            out.push(format!(
+                "{p}.id: {} `{}` is given twice",
+                row.entity, row.id
+            ));
+        }
+        out.extend(check_row(blocks(), row, &p));
     }
     for (i, m) in s.fixtures.model.iter().enumerate() {
         if let Some(p) = &m.part

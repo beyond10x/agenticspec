@@ -25,6 +25,7 @@ agenticspec sim corpus run scenarios/workstation/workstation.corpus.yaml
 | `sim scenario check <scenario>` | reads the scenario and checks it against its architecture and profile | the scenario name, the architecture, the number of inputs and of expectations |
 | `sim scenario run <scenario> --out <dir>` | checks the scenario, runs it and writes `<dir>/scenario-result.json` | the same, with the verdict, the predicted class and the counts of expectations held, failed and not checked |
 | `sim corpus run <corpus>` | runs every entry of the corpus | the rows as JSON; the table goes to standard error |
+| `blocks scenario <session> ...` | writes a draft scenario of a session (below) | the file, the counts, the inputs left unjoined or unmapped |
 
 `task check:scenarios` runs every `scenarios/*/*.scenario.yaml` and every
 `scenarios/*/*.corpus.yaml`.
@@ -134,6 +135,34 @@ given:
 A given task waits in the backlog at the start. A given question is open at the start: a copy of
 `asked_by` holds it and waits for the answer of `addressee`. Neither records a creation event; the
 events that follow carry the row's `id` as their task.
+
+`rows` holds rows of any block entity, such as the rows `agenticspec blocks lift` writes for a
+session ([Queries](queries.md)):
+
+```yaml
+given:
+  rows:
+    - entity: agentic.question.Question
+      id: e77e1af7-84f9-f4c4-12b9-2c0d99596d5c
+      state: Answered
+      fields: { asked_by: 19faf7cc-c2aa-c558-1b93-cdd35cd4c467, addressee: c1582bfa-36f6-f8ad-4777-2e7feb7f5a80, text: { digest: cc780a105da069ae2ec1b36669e62f7891da7c136719992ea3752c419d572b56, length: 100, class: tool_input } }
+      not_recorded: [kind, options, default_option, deadline]
+      evidence: "lift-demo#16"
+```
+
+| key | required | what |
+|---|---|---|
+| `entity` | yes | a block entity, by its full name |
+| `id` | yes | its identifier |
+| `state` | no | a state of the entity's lifecycle |
+| `fields` | no | field values, each a field the entity declares, of its type |
+| `not_recorded` | no | required fields the record the row comes from does not hold |
+| `evidence` | no | where the row comes from, such as a node of a session |
+
+`scenario check` refuses a row of an entity no block declares, a field the entity does not have,
+a value of the wrong type, a state outside its lifecycle, and a required field that is neither in
+`fields` nor in `not_recorded`, each by its path (`given.rows.0.fields.pool_id`). The simulator
+does not read `rows`.
 
 ### Fixtures
 
@@ -327,3 +356,42 @@ Tasks still arrive at `tasks_per_hour`. Each arrival draws one entry by its weig
 class decides how the task's first run ends: `correct`, `wrong`, `false_completion` and `question`
 as the model fixture of that name, `refused` makes no task, and `open` leaves the run to the
 profile. The path is relative to the profile file.
+
+## A draft scenario from a session
+
+```sh
+agenticspec blocks scenario <session>.jsonl --architecture architectures/workstation.yaml \
+  --profile fields/coding/profiles/coding.yaml --map main=operator,sub=worker --out drafts/session.scenario.yaml
+```
+
+`blocks scenario` lifts the session, writes each of its outside inputs as an entry of `when`, and
+the block events of the rows each input caused as `then`. An outside input is a prompt of the
+main agent by a human (kind `prompt`), a delegate or another session (kind `message`), with proof
+`none` and the time since the input before it. A prompt of the harness or a hook, such as a task
+notification, is no input. What an input caused is every row lifted from the turn that received it
+and from every step after it, up to the next input: a task makes `task_created`, a run
+`run_started`, a question `question_asked` (and `question_answered`), a sent message `post_sent`,
+each with the input's task, `when.<n>`. A comment beside each entry names the node it comes from.
+
+`--map` names the part each side of the session plays, as `key=part` pairs:
+
+| key | the part of |
+|---|---|
+| `main` | the main agent; required, and a border part of the architecture, where every input arrives |
+| `sub` | every sub-agent |
+| `human` | the human who prompts; the part `main` acts for when not given |
+| `delegate` | a delegate's prompts; the human's part when not given |
+| `peer` | another session's messages |
+
+The draft is checked like any scenario before it is written; a draft the check refuses exits 1
+with `scenario_refused` and writes nothing. It prints:
+
+| field | what |
+|---|---|
+| `out`, `scenario` | the file written and the scenario's name (`--name`, or the file name) |
+| `inputs`, `expectations` | the entries of `when` and of `then.events` |
+| `unjoined` | inputs no turn received, as `when.<n> (<node>)`: in the scenario, with no expectation |
+| `unmapped` | inputs whose author plays no part, as `<node> (<author>)`: left out of the scenario |
+
+Other refusals: `transcript_unreadable`, `document_unreadable` (the architecture or profile),
+`map_invalid` (a pair that is not `key=part`, an unknown key, no `main`) and `out_unwritable`.
