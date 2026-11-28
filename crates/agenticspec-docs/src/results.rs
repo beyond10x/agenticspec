@@ -23,9 +23,10 @@ pub const REGENERATE: &str = "task catalog:generate";
 
 /// Files of the simulator that do not change a result: the commands of `agenticspec sim`, the
 /// module list, the ladder, the best variant as a document (derived from the result by the docs
-/// generator), the scenario runner and the rows of its `given`, and the contract module.
-/// `events.rs` counts: its table names the events an `on_event` trigger fires on. An entry ending
-/// in `/` leaves out every file under it.
+/// generator), the scenario runner and the rows of its `given`, the contract module, and the event
+/// log of a recorded run (`event_log.rs`, written beside the result, never into it). `events.rs`
+/// counts: its table names the events an `on_event` trigger fires on. An entry ending in `/` leaves
+/// out every file under it.
 const SIM_EXCLUDED: &[&str] = &[
     "cli.rs",
     "lib.rs",
@@ -33,6 +34,7 @@ const SIM_EXCLUDED: &[&str] = &[
     "best.rs",
     "scenario.rs",
     "rows.rs",
+    "event_log.rs",
     "contract/",
 ];
 

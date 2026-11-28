@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest ff3d430b7893bcfbc8144fd1e0402235fa7d1a631daed5029b075ff291390c4b
+// contract digest 90a28fd2ce03bd7799575535ea810907bbdeaae9a8cbb396b9cb4727e5d2ede2
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -3604,6 +3604,8 @@ pub fn encode_agenticspec_cli_sim_run_input(value: &agenticspec_types::cli::SimR
         json::member(out, "threads");
         json::push_integer(out, *held0);
     }
+    json::member(out, "events");
+    json::push_bool(out, value.events);
     out.push('}');
 }
 
@@ -3613,7 +3615,7 @@ pub fn encode_agenticspec_cli_sim_run_input(value: &agenticspec_types::cli::SimR
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_run_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimRunInput, json::DecodeError> {
-    json::closed_at(value, at, &["experiment", "out", "threads"])?;
+    json::closed_at(value, at, &["experiment", "out", "threads", "events"])?;
     Ok(agenticspec_types::cli::SimRunInput {
         experiment: {
             let at0 = json::nested(at, "experiment");
@@ -3632,6 +3634,11 @@ pub fn decode_agenticspec_cli_sim_run_input(value: &json::Value, at: &str) -> Re
                 Some(json::integer_at(member2, &at2, "an integer")?)
             }
         },
+        events: {
+            let at3 = json::nested(at, "events");
+            let member3 = json::member_at(value, at, "events")?;
+            json::bool_at(member3, &at3, "a boolean")?
+        },
     })
 }
 
@@ -3648,6 +3655,10 @@ pub fn encode_agenticspec_cli_sim_run_result(value: &agenticspec_types::cli::Sim
     json::push_integer(out, value.threads);
     json::member(out, "best_written");
     json::push_bool(out, value.best_written);
+    if let Some(held0) = &value.events {
+        json::member(out, "events");
+        json::push_integer(out, *held0);
+    }
     out.push('}');
 }
 
@@ -3657,7 +3668,7 @@ pub fn encode_agenticspec_cli_sim_run_result(value: &agenticspec_types::cli::Sim
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_run_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimRunResult, json::DecodeError> {
-    json::closed_at(value, at, &["out", "variants", "seeds", "threads", "best_written"])?;
+    json::closed_at(value, at, &["out", "variants", "seeds", "threads", "best_written", "events"])?;
     Ok(agenticspec_types::cli::SimRunResult {
         out: {
             let at0 = json::nested(at, "out");
@@ -3683,6 +3694,13 @@ pub fn decode_agenticspec_cli_sim_run_result(value: &json::Value, at: &str) -> R
             let at4 = json::nested(at, "best_written");
             let member4 = json::member_at(value, at, "best_written")?;
             json::bool_at(member4, &at4, "a boolean")?
+        },
+        events: match value.member("events") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "events");
+                Some(json::integer_at(member5, &at5, "an integer")?)
+            }
         },
     })
 }

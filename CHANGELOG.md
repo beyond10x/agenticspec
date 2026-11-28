@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `agenticspec blocks scenario <session> --architecture <a> --profile <p> --map main=<part>` writes a draft scenario: each outside input of the session (a prompt by a human, a delegate or another session; not a harness prompt) at the main agent's part, and the block events of the rows its turn caused as `then`; inputs no turn received are listed as `unjoined`
 - A scenario's `given` holds `rows` of any block entity, each checked against the blocks: entity, field names and types, lifecycle state, and every required field given or named in `not_recorded`
 - `agentic.channel.Message` names the turn of the receiving session that read it (`received_in_turn`, set by `MarkRead`)
+- `agenticspec sim run --events` also writes `events.jsonl`, the run the result's timeline samples as an event log: one line per moment that is a block event (`agentic.work.TaskCreated`, `agentic.resource.ClaimQueued`, ...), with its sequence number, time, architecture, part path, copy and subject key (`task-3`, `claim-5`), the same bytes for the same seed. `result.json` stays byte for byte the same with or without it
 
 ### Changed
 

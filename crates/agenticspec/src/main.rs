@@ -444,6 +444,10 @@ impl Handler for Commands {
                     &path_of(&inv.input, "experiment"),
                     &path_of(&inv.input, "out"),
                     threads,
+                    inv.input
+                        .get("events")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(false),
                     &mut err,
                 ))
             }

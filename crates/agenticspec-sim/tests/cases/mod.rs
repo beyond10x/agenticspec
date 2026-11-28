@@ -6,6 +6,7 @@ mod contract;
 mod corpus;
 mod determinism;
 mod dynamics;
+mod event_log;
 mod events;
 mod fidelity;
 mod ingress;

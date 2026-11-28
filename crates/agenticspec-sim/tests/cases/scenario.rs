@@ -185,7 +185,8 @@ fn check_names_an_input_outside_the_border_an_unknown_author_and_a_digest_that_d
     );
     let text = std::fs::read_to_string(&path).unwrap();
     let wrong = sha256_hex(b"another file");
-    let digest = sha256_hex(&std::fs::read(repo_root().join("fields/coding/profiles/coding.yaml")).unwrap());
+    let digest =
+        sha256_hex(&std::fs::read(repo_root().join("fields/coding/profiles/coding.yaml")).unwrap());
     std::fs::write(&path, text.replace(&digest, &wrong)).unwrap();
     let err = cli::scenario("check", &path, None).unwrap_err();
     assert_eq!(err.code, "scenario_refused");

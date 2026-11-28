@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest ff3d430b7893bcfbc8144fd1e0402235fa7d1a631daed5029b075ff291390c4b
+// contract digest 90a28fd2ce03bd7799575535ea810907bbdeaae9a8cbb396b9cb4727e5d2ede2
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -942,6 +942,8 @@ pub struct SimRunInput {
     pub out: String,
     /// `threads` — `Optional<Integer>`.
     pub threads: Option<i64>,
+    /// `events` — `Boolean`.
+    pub events: bool,
 }
 
 /// SimRunResult — `agenticspec.cli.SimRunResult`.
@@ -959,6 +961,8 @@ pub struct SimRunResult {
     pub threads: i64,
     /// `best_written` — `Boolean`.
     pub best_written: bool,
+    /// `events` — `Optional<Integer>`.
+    pub events: Option<i64>,
 }
 
 /// SimScenarioInput — `agenticspec.cli.SimScenarioInput`.

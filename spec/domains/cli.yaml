@@ -573,6 +573,11 @@ types:
       - name: threads
         type: Optional<Integer>
         summary: Threads of the search; the available parallelism, at most 8, by default.
+      - name: events
+        type: Boolean
+        summary: >-
+          Also write `events.jsonl`: the run the result's timeline samples, every moment that is
+          a block event written as that event with its part and subject key, one per line.
 
   - name: agenticspec.cli.SimRunResult
     kind: struct
@@ -588,6 +593,9 @@ types:
       - name: best_written
         type: Boolean
         summary: "`best.yaml`, the best variant as an architecture document, was written."
+      - name: events
+        type: Optional<Integer>
+        summary: The events written to `events.jsonl`; absent without `--events`.
 
   - name: agenticspec.cli.SimRenderInput
     kind: struct

@@ -7,6 +7,7 @@ pub mod cli;
 pub mod contract;
 pub mod corpus;
 pub mod doc;
+pub mod event_log;
 pub mod events;
 pub mod ladder;
 pub mod marked;
@@ -20,4 +21,4 @@ pub mod search;
 pub mod sim;
 pub mod whole;
 
-pub use search::{Experiment, run};
+pub use search::{Experiment, Shown, run, run_shown};
