@@ -324,3 +324,61 @@ fn ui_build_refuses_a_foreign_directory_and_a_contract_of_other_ports() {
     assert!(text.contains("ports_digest"), "{text}");
     assert!(!tmp.join("ui").exists());
 }
+
+/// `ui generate --project` writes the generated app under `src/generated/` with the kit, the host
+/// page, the build config, the manifest and lock and the packer beside it; without `--project`
+/// the command writes the app alone, as before.
+#[test]
+fn ui_generate_project_writes_a_project_that_builds_on_its_own() {
+    let tmp = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("ui-generate-project");
+    let _ = std::fs::remove_dir_all(&tmp);
+    let generate = |out: &std::path::Path, extra: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_agenticspec"))
+            .current_dir(repo())
+            .args([
+                "--output",
+                "json",
+                "ui",
+                "generate",
+                "--path",
+                "ui/views/examples/workstation.ui.yaml",
+                "--out",
+            ])
+            .arg(out)
+            .args(extra)
+            .output()
+            .unwrap()
+    };
+    let names = |r: &Value| -> Vec<String> {
+        r["files"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|f| f.as_str().unwrap().to_string())
+            .collect()
+    };
+    let project = tmp.join("project");
+    let files = names(&result(&generate(&project, &["--project"])));
+    for name in [
+        "README.md",
+        "index.html",
+        "kit/index.ts",
+        "pack.mjs",
+        "package-lock.json",
+        "package.json",
+        "src/generated/app.ts",
+        "src/main.ts",
+        "vite.config.ts",
+    ] {
+        assert!(files.iter().any(|f| f == name), "{name} in {files:?}");
+        assert!(project.join(name).is_file(), "{name} written");
+    }
+    let pkg: Value =
+        serde_json::from_str(&std::fs::read_to_string(project.join("package.json")).unwrap())
+            .unwrap();
+    assert!(pkg["scripts"]["build"].is_string(), "{pkg}");
+
+    let files = names(&result(&generate(&tmp.join("app"), &[])));
+    assert!(files.iter().any(|f| f == "app.ts"), "{files:?}");
+    assert!(!files.iter().any(|f| f == "package.json"), "{files:?}");
+}

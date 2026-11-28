@@ -496,12 +496,38 @@ it listens on `ui.<name>.port`. The accepted list must hold the role `ui`.
 
 `{ess_ui: <file>}` is refused with `ui_build_needs_toolchain`: the pages `agenticspec ui generate`
 writes from an `ess-ui/1` document are Vue components that need node and vite to build, and the
-binary does not run them. Generate and build the app yourself, pack its output as a tar and name it
-as `{archive, digest}`. Besides the refusals of `ui.operator`, `deploy bundle` refuses, with
+binary does not run them. Build the app on a host with node (below) and name its archive as
+`{archive, digest}`. Besides the refusals of `ui.operator`, `deploy bundle` refuses, with
 `binding_invalid`, a `ui.<name>` without `source` or `export` or of the wrong form, and a name that
 is a unit of the packing or of another UI; with `not_admitted`, an export no ingress has
 (`ui_export_unknown`) and an archive that is not its digest (`ui_archive_mismatch`). The `console`
 UI of `bundles/bindings/operator-ui.yaml` is the worked example.
+
+#### Building a UI of your own from an ess-ui/1 document
+
+`agenticspec ui generate --path <document> --out <dir> --project` writes a project that builds the
+document's app on its own. On a host with node (20.19 or later, or 22.12 or later), the one
+command is:
+
+```sh
+agenticspec ui generate --path console.ui.yaml --out console-ui --project
+cd console-ui && npm ci && npm run build
+```
+
+The build writes `dist/` (`index.html`, `app.js`, `app.css`) and `dist.tar`, packed as `ui build
+--archive` packs (sorted entries, mode 0644, owner 0, time 0), and prints the archive's sha256 as
+`archive_sha256`. The same project gives the same archive. Name it in the binding as `source:
+{archive: dist.tar, digest: "sha256:<hex>"}`, with the path relative to the binding file.
+
+| in the project | holds |
+|---|---|
+| `src/generated/` | the app, the files `ui generate` writes without `--project` |
+| `index.html`, `src/main.ts` | the host page; each host slot of the document shows a placeholder naming it until you pass a component of your own |
+| `kit/` | the sources of the components the pages draw with, the kit the operator UI of `ui build` is built from |
+| `package.json`, `package-lock.json` | the versions of vue, vite and its vue plugin the operator UI is built with, and the lock of exactly those |
+| `vite.config.ts`, `pack.mjs` | the build, with the operator UI's output options, and the packer |
+
+Generating again replaces the directory, `node_modules/` and `dist/` included.
 
 ### Before a runtime: the UI on fixtures
 
