@@ -27,7 +27,24 @@
 //! - A badge is a pill on its card, or with `on: panel` a row of the table "Details" under the
 //!   graph.
 //! - A mark is a chip on its card. A refusal also rings the card, or marks its port.
-//! - A panel is a table in a card beside the graph.
+//! - A panel is a table in a card beside the graph, or with `place: below` across the page under
+//!   it. A cell value longer than 32 characters wraps its long words instead of being cut, and
+//!   has its full value as its title.
+//!
+//! An edge end names a node, or a port the page declares as `node.port`. A page read from JSON
+//! with an end that names neither is refused as `edge_end_unknown` ([`Page::check`]).
+//!
+//! With `"layout": "bands"` the graph is drawn in bands instead (`"graph"`, the default, draws it
+//! as above; any other value is refused):
+//!
+//! - Each top-level region is one horizontal band, labelled like a region's frame, the bands top
+//!   to bottom in the order `regions` lists them and each as wide as the page.
+//! - Inside a band, its nodes and nested regions are laid out as above, as if they were a page of
+//!   their own; the region's own node, if any, is a card of the band.
+//! - An edge between two bands leaves its card toward the other band, runs along the gap next to
+//!   its band, where its label sits, and enters the other band from the gap next to that one. Past
+//!   a band between, it runs down (or up) beside the bands, never through one.
+//! - Nodes in no top-level region fill a last band without a label.
 //!
 //! One page:
 //!
@@ -69,8 +86,10 @@ const JS: &str = include_str!("../assets/page.js");
 pub const FORMAT: &str = "agenticspec-render-model/1";
 
 /// One page: a titled graph and the panels beside it.
+///
+/// Read from JSON, a page is checked as [`Page::check`] says, and refused when it fails.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, try_from = "Unchecked")]
 pub struct Page {
     /// Always [`FORMAT`].
     pub format: String,
@@ -93,6 +112,77 @@ pub struct Page {
     /// The colour and icon of a group, by its name. A group not listed keeps the palette.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub groups: Vec<Group>,
+    /// How the graph is laid out: in rows (the default), or in one band per top-level region.
+    #[serde(default, skip_serializing_if = "Layout::is_graph")]
+    pub layout: Layout,
+}
+
+/// How the graph of a [`Page`] is laid out.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Layout {
+    /// Rows by the longest chain of edges that leads to a node; a top-level region is a card of
+    /// its row.
+    #[default]
+    Graph,
+    /// One horizontal band per top-level region, top to bottom in the order of `regions`, each
+    /// as wide as the page. What a band holds is laid out inside it as [`Layout::Graph`] lays out
+    /// a page; an edge between two bands runs through the gaps between the bands. Nodes in no
+    /// top-level region fill a last band without a label.
+    Bands,
+}
+
+impl Layout {
+    fn is_graph(&self) -> bool {
+        *self == Layout::Graph
+    }
+}
+
+/// A [`Page`] as read, before [`Page::check`].
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Unchecked {
+    format: String,
+    title: String,
+    #[serde(default)]
+    summary: Option<String>,
+    #[serde(default)]
+    regions: Vec<Region>,
+    #[serde(default)]
+    nodes: Vec<Node>,
+    #[serde(default)]
+    ports: Vec<Port>,
+    #[serde(default)]
+    edges: Vec<Edge>,
+    #[serde(default)]
+    marks: Vec<Mark>,
+    #[serde(default)]
+    panels: Vec<Panel>,
+    #[serde(default)]
+    groups: Vec<Group>,
+    #[serde(default)]
+    layout: Layout,
+}
+
+impl TryFrom<Unchecked> for Page {
+    type Error = String;
+    fn try_from(u: Unchecked) -> Result<Self, String> {
+        let page = Page {
+            format: u.format,
+            title: u.title,
+            summary: u.summary,
+            regions: u.regions,
+            nodes: u.nodes,
+            ports: u.ports,
+            edges: u.edges,
+            marks: u.marks,
+            panels: u.panels,
+            groups: u.groups,
+            layout: u.layout,
+        };
+        page.check()?;
+        Ok(page)
+    }
 }
 
 /// The look of the nodes of one group: a colour for card, frame and legend swatch, an icon for
@@ -331,6 +421,31 @@ impl Page {
             ..Page::default()
         }
     }
+
+    /// Whether every edge end resolves: to a node's id, or as `node.port` to a port the page
+    /// declares on that node. The first end that does not is refused as `edge_end_unknown`,
+    /// naming the edge and the end. Reading a page from JSON runs this check.
+    pub fn check(&self) -> Result<(), String> {
+        for e in &self.edges {
+            for end in [&e.from, &e.to] {
+                if !self.resolves(end) {
+                    return Err(format!(
+                        "edge_end_unknown: the edge from {:?} to {:?}: {end:?} is no node and no port of a node",
+                        e.from, e.to
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn resolves(&self, end: &str) -> bool {
+        self.nodes.iter().any(|n| n.id == end)
+            || self.ports.iter().any(|p| {
+                end.strip_prefix(p.node.as_str()) == Some(&format!(".{}", p.name))
+                    && self.nodes.iter().any(|n| n.id == p.node)
+            })
+    }
 }
 
 /// A region: a box that holds nodes. A region whose `id` is a node's id is that node's card; any
@@ -475,6 +590,25 @@ pub struct Panel {
     pub title: String,
     pub columns: Vec<String>,
     pub rows: Vec<Vec<String>>,
+    /// Where the panel is drawn: in the column beside the graph (the default), or across the
+    /// page under it.
+    #[serde(default, skip_serializing_if = "Place::is_side")]
+    pub place: Place,
+}
+
+/// Where a [`Panel`] is drawn.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Place {
+    #[default]
+    Side,
+    Below,
+}
+
+impl Place {
+    fn is_side(&self) -> bool {
+        *self == Place::Side
+    }
 }
 
 /// The page of `page`: one complete HTML document.
@@ -530,8 +664,20 @@ impl Shell {
             facts.push(plural(refusals, "refusal"));
         }
         let mut side = String::new();
+        let mut below = String::new();
         for p in &page.panels {
-            panel(&mut side, p);
+            match p.place {
+                Place::Side => panel(&mut side, p),
+                Place::Below => {
+                    let _ = write!(
+                        below,
+                        "<section class=\"section-gap\" aria-label=\"{}\">",
+                        esc(&p.title)
+                    );
+                    panel(&mut below, p);
+                    below.push_str("</section>\n");
+                }
+            }
         }
         let format = if page.format.is_empty() {
             FORMAT
@@ -551,7 +697,7 @@ impl Shell {
             graph_hint: "Select a node to follow its edges".to_string(),
             legend: legend(page),
             side,
-            after: details(page),
+            after: below + &details(page),
             footer: format!(
                 "{} · rendered by agenticspec, self-contained, no network",
                 esc(format)
@@ -561,8 +707,12 @@ impl Shell {
                 words: graph::Words {
                     title: format!("Graph {}", page.title),
                     desc: format!(
-                        "{} in rows, {} as arrows with their labels.",
+                        "{} {}, {} as arrows with their labels.",
                         plural(page.nodes.len(), "node"),
+                        match page.layout {
+                            Layout::Graph => "in rows",
+                            Layout::Bands => "in bands, one per region",
+                        },
                         plural(page.edges.len(), "edge")
                     ),
                 },
@@ -710,10 +860,26 @@ fn details(page: &Page) -> String {
             title: "Details".to_string(),
             columns: vec!["node".to_string(), "name".to_string(), "value".to_string()],
             rows,
+            place: Place::Side,
         },
     );
     h.push_str("</section>\n");
     h
+}
+
+/// A cell value longer than this many characters may not fit its column.
+const LONG: usize = 32;
+
+/// The attributes of a cell that may not fit its column, each with a leading space: its full
+/// value as a title, and its long words wrapped instead of cut. None for a short value.
+fn long(cell: &str) -> String {
+    if cell.chars().count() <= LONG {
+        return String::new();
+    }
+    format!(
+        " title=\"{}\" style=\"white-space:normal;overflow-wrap:anywhere;min-width:12ch\"",
+        esc(cell)
+    )
 }
 
 /// A panel as a card with one table; the first cell of a row heads it.
@@ -731,11 +897,12 @@ fn panel(h: &mut String, p: &Panel) {
     for row in &p.rows {
         h.push_str("<tr>");
         for (i, cell) in row.iter().enumerate() {
-            if i == 0 {
-                let _ = write!(h, "<th scope=\"row\">{}</th>", esc(cell));
+            let (tag, scope) = if i == 0 {
+                ("th", " scope=\"row\"")
             } else {
-                let _ = write!(h, "<td>{}</td>", esc(cell));
-            }
+                ("td", "")
+            };
+            let _ = write!(h, "<{tag}{scope}{}>{}</{tag}>", long(cell), esc(cell));
         }
         h.push_str("</tr>");
     }

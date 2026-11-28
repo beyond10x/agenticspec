@@ -18,7 +18,12 @@
         "edges": { "type": "array", "items": { "$ref": "#/$defs/Edge" } },
         "marks": { "type": "array", "items": { "$ref": "#/$defs/Mark" } },
         "panels": { "type": "array", "items": { "$ref": "#/$defs/Panel" } },
-        "groups": { "type": "array", "items": { "$ref": "#/$defs/Group" } }
+        "groups": { "type": "array", "items": { "$ref": "#/$defs/Group" } },
+        "layout": {
+          "description": "graph (the default): rows by the longest chain of edges. bands: one horizontal band per top-level region, top to bottom in the order of regions, each as wide as the page; what a band holds is laid out inside it, an edge between two bands runs through the gaps between them, and nodes in no top-level region fill a last band without a label.",
+          "enum": ["graph", "bands"],
+          "default": "graph"
+        }
       }
     },
     "Group": {
@@ -100,7 +105,7 @@
       }
     },
     "Edge": {
-      "description": "From and to name a node id, or 'node.port'. The stroke grows with count: up to 1, 2 or 3, 4 or more.",
+      "description": "From and to name a node id, or 'node.port' of a port the page declares on that node; a page with an end that names neither is refused (edge_end_unknown). The stroke grows with count: up to 1, 2 or 3, 4 or more.",
       "type": "object",
       "additionalProperties": false,
       "required": ["from", "to", "label"],
@@ -139,7 +144,8 @@
       "properties": {
         "title": { "type": "string" },
         "columns": { "type": "array", "items": { "type": "string" } },
-        "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } }
+        "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } },
+        "place": { "description": "side (the default): in the column beside the graph. below: across the page under the graph.", "enum": ["side", "below"], "default": "side" }
       }
     }
   }

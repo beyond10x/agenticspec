@@ -3,8 +3,8 @@
 //! the renderer names no agenticspec term.
 
 use agenticspec_render::page::{
-    Badge, Colour, Direction, Edge, FORMAT, Group, ICONS, Icon, Level, Mark, NAMED_COLOURS, Node,
-    On, Page, Panel, Port, Region, Target, render,
+    Badge, Colour, Direction, Edge, FORMAT, Group, ICONS, Icon, Layout, Level, Mark, NAMED_COLOURS,
+    Node, On, Page, Panel, Place, Port, Region, Target, render,
 };
 use serde_json::{Value, json};
 
@@ -57,6 +57,7 @@ fn minimal() -> Page {
         title: "Owners".to_string(),
         columns: vec!["node".to_string(), "owner".to_string()],
         rows: vec![vec!["shop".to_string(), "team-cell-a".to_string()]],
+        ..Panel::default()
     }];
     p
 }
@@ -619,6 +620,14 @@ fn the_schema_accepts_a_page_and_refuses_an_unknown_field() {
     let mut level = serde_json::to_value(full()).expect("serializes");
     level["marks"][0]["level"] = json!("warning");
     assert!(!validate(&s, &level, false).is_empty());
+    let mut layout = serde_json::to_value(full()).expect("serializes");
+    layout["layout"] = json!("bands");
+    assert!(validate(&s, &layout, false).is_empty(), "bands is a layout");
+    layout["layout"] = json!("grid");
+    assert!(
+        !validate(&s, &layout, false).is_empty(),
+        "grid is no layout"
+    );
 }
 
 /// The schema names exactly the fields of the types: a page with every field set has every
@@ -627,6 +636,8 @@ fn the_schema_accepts_a_page_and_refuses_an_unknown_field() {
 fn the_schema_and_the_types_name_the_same_fields() {
     let mut page = full();
     page.edges[1].count = Some(1);
+    page.layout = Layout::Bands;
+    page.panels[0].place = Place::Below;
     page.nodes[0].badges[0].on = On::Panel;
     for n in &mut page.nodes {
         n.region = Some("zone".to_string());
