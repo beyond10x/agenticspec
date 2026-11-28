@@ -82,6 +82,16 @@ types:
       - {name: verb, type: agentic.architecture.PatchVerb}
       - {name: text, type: String}
 
+  # Placements (M45). The qualified name of the entity a placement names: the entity a part
+  # stands for (`agentic.harness.HarnessSession`, `agentic.workspace.Workspace`, ...). A lower
+  # block's entity is named by text, since this block cannot list the entities of every block
+  # below it as a closed type.
+  - name: agentic.architecture.EntityName
+    kind: newtype
+    of: String
+    naming:
+      summary: The qualified name of an entity of a building block, such as agentic.harness.HarnessSession.
+
   # The ports and the contract. Source: design/architecture-runtime.md § "The boundary: ports"
   # and § "The contract of one architecture". A port is a leaf of the blocks with effects outside
   # them, the part a runtime must implement; everything else is behaviour or computation that the
@@ -363,6 +373,61 @@ entities:
         - {name: apply, from: [Requested], to: Applied}
         - {name: refuse, from: [Requested], to: Refused}
 
+  # Placements (M45). Where an entity of a lower block sits: on which part of one revision of an
+  # architecture, and on which copy of it. A lower block cannot name a part: a block names only
+  # its own layer or a lower one, and parts are layer 9. So the edge is turned around and this
+  # block records the placement. The runtime records one through PlaceEntity when it creates an
+  # entity for a part (a harness session for an agent part, a workspace for a workspace part).
+  # Immutable once recorded.
+  #
+  # The part path is the part's name, copied from the part when the placement is recorded. A
+  # nested architecture (story architecture-references, `team.lead`) is lowered to these commands
+  # flat, its parts named by their path, so `team.lead` is the name of one part here.
+  # UNMAPPED: a nested part as a part of its own (a part kind that is an architecture) does not
+  # exist in this block yet. Taken: the flat lowering above, until story
+  # architecture-references gives the block one.
+  #
+  # The instance is the 1-based copy of a part that runs several (`count` above 1, or `per`
+  # another part), absent for a placement on the part as a whole.
+  #
+  # The scope rule (O3 A). A row of a block view is in scope of a part, or of one copy of it, when
+  #   1. the row's own identity is the entity id of a placement to that part (and copy), or
+  #   2. an id field of the row's view, one hop away, is: a turn of agentic.harness.Turns is in
+  #      scope of `team.lead` when its `harness_session_id` names a harness session placed to
+  #      `team.lead`.
+  # A row that matches neither is out of scope. A placement of the same entity to another part
+  # puts the row in that part's scope too. No second hop is followed: a row reached only through a
+  # chain of two references (a step of a run of a harness session) is in scope only when the
+  # runtime places the middle entity as well. A read scoped to an architecture and no part keeps
+  # every row with a placement in that architecture. The runtime answers a scoped read with the
+  # rows of this rule; this block records the placements the rule reads, and the Placements view
+  # serves them.
+  - name: agentic.architecture.Placement
+    naming:
+      summary: >-
+        Where one entity of a lower block sits in an architecture: the revision, the part's path,
+        the copy of the part, and the entity's name and id. A row of a block view is in scope of
+        a part when its own id, or an id field of its view one hop away, is placed to that part.
+    identity:
+      name: placement_id
+      type: agentic.shared.PlacementId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: part_path, type: agentic.shared.Name}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: agentic.architecture.EntityName}
+      - {name: entity_id, type: Uuid}
+    relations:
+      - {name: architecture, kind: references, target: agentic.architecture.Architecture, cardinality: one, via: architecture_id}
+      - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
+      - {name: part, kind: references, target: agentic.architecture.Part, cardinality: one, via: part_id}
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
   # A port of a block, derived from this system (`model.infer`: the exit event InferenceStarted
   # leaves an inference Started, which only the entry command FinishInference leaves). A runtime
   # implements ports; everything else of a block it gets from the specification. Immutable: a
@@ -560,6 +625,20 @@ errors:
   - name: agentic.architecture.ContractExists
     summary: The revision already has a contract, and nothing was recorded.
 
+  # Placements (M45).
+  - name: agentic.architecture.ForeignRevision
+    summary: The revision belongs to another architecture, and nothing was placed.
+  - name: agentic.architecture.PartNotInRevision
+    summary: The part belongs to another architecture than the revision, so it is not in that revision; nothing was placed.
+  - name: agentic.architecture.InvalidInstance
+    summary: A copy of a part is counted from 1, and nothing was placed.
+  - name: agentic.architecture.InstanceWithoutCopies
+    summary: The part runs one copy and is per no other part, so a placement names no copy of it; nothing was placed.
+  - name: agentic.architecture.InstanceOutOfRange
+    summary: The part runs fewer copies than the copy named, and nothing was placed.
+  - name: agentic.architecture.PlacementExists
+    summary: The entity is already placed to this part of this revision, and nothing was placed.
+
 events:
   - name: agentic.architecture.ArchitectureCreated
     fields:
@@ -639,6 +718,18 @@ events:
       - {name: contract_id, type: agentic.shared.ContractId}
       - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
       - {name: digest, type: agentic.architecture.Digest}
+
+  # Placements (M45).
+  - name: agentic.architecture.EntityPlaced
+    fields:
+      - {name: placement_id, type: agentic.shared.PlacementId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: part_path, type: agentic.shared.Name}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: agentic.architecture.EntityName}
+      - {name: entity_id, type: Uuid}
 
 commands:
   - name: agentic.architecture.CreateArchitecture
@@ -1241,6 +1332,101 @@ commands:
         wrong_state: true
         error: agentic.architecture.PatchApplicationSettled
 
+  # Placements (M45). The runtime records where an entity it created for a part sits: the part of
+  # a committed revision, and the copy of the part when it runs several. An entity sits on one
+  # copy of a part once per revision; the same entity may sit on another part as well (a gateway
+  # two agent parts share). A retired architecture's revisions still run, so retirement refuses no
+  # placement.
+  # UNMAPPED: a part declared after the revision was committed is not in that revision, and no
+  # row says when a part was declared (parts carry no revision). Taken: a part is in a revision
+  # when it belongs to the revision's architecture; the runtime places entities only for the parts
+  # of the revision it admitted.
+  # UNMAPPED: the copies of a part that is `per` another part number the copies of that part,
+  # which a chain of `per` can multiply. Taken: the range is checked for a part with a count and
+  # no `per` only.
+  - name: agentic.architecture.PlaceEntity
+    naming:
+      display: Place an entity on a part
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: agentic.architecture.EntityName}
+      - {name: entity_id, type: Uuid}
+    outcomes:
+      - name: invalid-instance
+        when:
+          all: [defined(instance), instance < 1]
+        error: agentic.architecture.InvalidInstance
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: no-such-revision
+        when_related: {via: input.revision_id, exists: false}
+        error: agentic.architecture.NoSuchRevision
+      - name: no-such-part
+        when_related: {via: input.part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: foreign-revision
+        when_related: {via: input.revision_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignRevision
+      - name: part-not-in-revision
+        when_related: {via: input.part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.PartNotInRevision
+      - name: instance-without-copies
+        when_related:
+          via: input.part_id
+          predicate:
+            all:
+              - defined(input.instance)
+              - count == 1
+              - not defined(per_part_id)
+        error: agentic.architecture.InstanceWithoutCopies
+      - name: instance-out-of-range
+        when_related:
+          via: input.part_id
+          predicate:
+            all:
+              - defined(input.instance)
+              - count > 1
+              - not defined(per_part_id)
+              - input.instance > count
+        error: agentic.architecture.InstanceOutOfRange
+      - name: exists
+        when_related:
+          entity: agentic.architecture.Placement
+          where:
+            all:
+              - revision_id == input.revision_id
+              - part_id == input.part_id
+              - entity_name == input.entity_name
+              - entity_id == input.entity_id
+          exists: true
+        error: agentic.architecture.PlacementExists
+      - name: placed
+        creates: agentic.architecture.Placement
+        instance: placement_id
+        sets:
+          architecture_id: input.architecture_id
+          revision_id: input.revision_id
+          part_id: input.part_id
+          part_path: {related: {via: input.part_id, field: name}}
+          instance: input.instance
+          entity_name: input.entity_name
+          entity_id: input.entity_id
+        emits: [agentic.architecture.EntityPlaced]
+        payload:
+          agentic.architecture.EntityPlaced:
+            placement_id: {generated: true}
+            architecture_id: input.architecture_id
+            revision_id: input.revision_id
+            part_id: input.part_id
+            part_path: {related: {via: input.part_id, field: name}}
+            instance: input.instance
+            entity_name: input.entity_name
+            entity_id: input.entity_id
+
   # Record one port the derivation found in the blocks.
   - name: agentic.architecture.DeclarePort
     naming:
@@ -1400,6 +1586,33 @@ views:
       - {name: rule_index, type: Optional<Integer>}
       - {name: error, type: Optional<String>}
       - {name: state, type: agentic.architecture.PatchApplication.State}
+
+  # Placements (M45). The placements of one architecture, narrowed to one part path, one copy and
+  # one entity name when the read names them. The runtime reads it to answer a read scoped to a
+  # part under the scope rule written at the entity Placement.
+  - name: agentic.architecture.Placements
+    source: agentic.architecture.Placement
+    consistency: read_your_writes
+    params:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: part_path, type: Optional<agentic.shared.Name>}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: Optional<agentic.architecture.EntityName>}
+    filter:
+      all:
+        - architecture_id == param.architecture_id
+        - any: [not defined(param.part_path), part_path == param.part_path]
+        - any: [not defined(param.instance), instance == param.instance]
+        - any: [not defined(param.entity_name), entity_name == param.entity_name]
+    fields:
+      - {name: placement_id, type: agentic.shared.PlacementId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: part_path, type: agentic.shared.Name}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: agentic.architecture.EntityName}
+      - {name: entity_id, type: Uuid}
 
   # The marked ports of the blocks: what a runtime may have to implement.
   - name: agentic.architecture.Ports
