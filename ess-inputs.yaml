@@ -1,0 +1,45 @@
+format: ess-inputs/2
+requires: ess 0.99
+specification:
+  - packs/system.yaml
+  - blocks/0-foundation/shared.yaml
+  - blocks/1-principals/principal.yaml
+  - blocks/1-principals/delegation.yaml
+  - blocks/2-intelligence/model.yaml
+  - blocks/2-intelligence/gateway.yaml
+  - blocks/3-capability/tool.yaml
+  - blocks/3-capability/knowledge.yaml
+  - blocks/4-agent/agent.yaml
+  - blocks/4-agent/harness.yaml
+  - blocks/5-work/work.yaml
+  - blocks/5-work/process.yaml
+  - blocks/6-governance/authority.yaml
+  - blocks/7-collaboration/channel.yaml
+  - blocks/7-collaboration/question.yaml
+  - blocks/7-collaboration/trigger.yaml
+  - blocks/8-place/workspace.yaml
+  - blocks/8-place/sandbox.yaml
+  - blocks/8-place/runtime.yaml
+  - blocks/8-place/resource.yaml
+  - blocks/9-composition/architecture.yaml
+  - blocks/10-evaluation/kpi.yaml
+  - blocks/10-evaluation/experiment.yaml
+  - packs/source-control/blocks/forge.yaml
+  - packs/source-control/blocks/repository.yaml
+  - packs/source-control/blocks/check.yaml
+  - packs/source-control/blocks/change.yaml
+  - packs/tracking/blocks/issue.yaml
+  - packs/tracking/blocks/board.yaml
+  - packs/tracking/blocks/queue.yaml
+  - packs/files/blocks/toolset.yaml
+  - packs/shell/blocks/toolset.yaml
+scenarios:
+  - packs/source-control/scenarios/merge-needs-approval-of-head.yaml
+  - packs/source-control/scenarios/reference-moves-by-compare-and-set.yaml
+  - packs/files/scenarios/file-tools-under-a-lease.yaml
+  - packs/shell/scenarios/run-command-under-a-lease.yaml
+  - packs/tracking/scenarios/queue-item-held-by-its-claimer.yaml
+  - packs/tracking/scenarios/board-card-moves-between-columns.yaml
+  - packs/source-control/scenarios/approval-needs-an-approving-review-of-the-head.yaml
+  - packs/source-control/scenarios/check-run-ends-once.yaml
+  - packs/files/scenarios/file-tools-refuse-without-a-live-lease.yaml

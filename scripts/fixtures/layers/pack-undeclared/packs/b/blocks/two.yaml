@@ -1,0 +1,13 @@
+domain: fixture.b.two
+summary: Fixture.
+naming:
+  wire: two
+  display: two
+types:
+  - {name: fixture.b.two.TwoId, kind: newtype, of: Uuid}
+entities:
+  - name: fixture.b.two.Two
+    identity: {name: id, type: fixture.b.two.TwoId}
+    fields:
+      - {name: other, type: fixture.base.BaseId}
+    lifecycle: {initial: Live, states: [Live], terminal: [Live]}

@@ -1,0 +1,15 @@
+format: agenticspec-pack/1
+pack: tracking
+namespace: agentic.tracking
+summary: >-
+  Work written down and laid out: issues with assignees, labels and links to change requests,
+  boards of columns, and work queues whose items are claimed and released.
+uses: [source-control]
+blocks:
+  - blocks/issue.yaml
+  - blocks/board.yaml
+  - blocks/queue.yaml
+kpis: kpis.yaml
+scenarios:
+  - scenarios/board-card-moves-between-columns.yaml
+  - scenarios/queue-item-held-by-its-claimer.yaml

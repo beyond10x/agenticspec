@@ -1,0 +1,186 @@
+# run_command, walked by hand: a command runs in a workspace under a live lease of it, and synthesis
+# reaches no live lease, so it reaches no started command and none of the ends that follow one.
+# Under a granted lease one command exits, one times out and one is killed; a run that ended takes
+# no second end and its identity no second start; a time limit under one second, a run that does
+# not exist, a lease of another workspace and a released lease are refused.
+type: ess-scenario/7
+domain: agentic.shell.toolset
+scenario: run-command-under-a-lease
+summary: Under a live lease of its workspace a command starts and ends once, by exit, time limit or kill; a foreign or released lease is refused.
+
+arrange:
+  - instance: ws
+    entity: agentic.workspace.Workspace
+  - instance: other
+    entity: agentic.workspace.Workspace
+  - instance: lease
+    entity: agentic.workspace.Lease
+  - instance: foreign
+    entity: agentic.workspace.Lease
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.workspace.CreateWorkspace
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000e01}
+    input: {kind: Worktree, sharing: Exclusive, base_revision: rev-1}
+    outcome: created
+    capture: {instance: ws, event: agentic.workspace.WorkspaceCreated, field: workspace_id}
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.workspace.CreateWorkspace
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000e01}
+    input: {kind: Worktree, sharing: Exclusive, base_revision: rev-1}
+    outcome: created
+    capture: {instance: other, event: agentic.workspace.WorkspaceCreated, field: workspace_id}
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000e01}
+    input: {workspace_id: {$instance: ws}, expires_at: 2026-11-27T10:00:00Z}
+    outcome: requested
+    capture: {instance: lease, event: agentic.workspace.LeaseRequested, field: lease_id}
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: lease}}
+    outcome: granted-exclusive
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.workspace.RequestLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000e01}
+    input: {workspace_id: {$instance: other}, expires_at: 2026-11-27T10:00:00Z}
+    outcome: requested
+    capture: {instance: foreign, event: agentic.workspace.LeaseRequested, field: lease_id}
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.workspace.GrantLease
+    actor: agentic.workspace.Keeper
+    input: {lease_id: {$instance: foreign}}
+    outcome: granted-exclusive
+
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.shell.toolset.RunCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e11, workspace_id: {$instance: ws}, lease_id: {$instance: foreign}, command: {digest: sha256-cmd-1, length: 9, class: command}, directory: ., time_limit_seconds: 60, at: 2026-11-27T09:00:06Z}
+    outcome: lease-of-other-workspace
+    error: {name: agentic.shell.toolset.LeaseOfOtherWorkspace}
+    no_events: [agentic.shell.toolset.CommandStarted]
+
+  # exits
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.shell.toolset.RunCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e11, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, command: {digest: sha256-cmd-1, length: 9, class: command}, directory: ., time_limit_seconds: 60, at: 2026-11-27T09:00:07Z}
+    outcome: started
+    events:
+      - event: agentic.shell.toolset.CommandStarted
+        payload: {command_run_id: 00000000-0000-4000-8000-000000000e11, lease_id: {$instance: lease}, time_limit_seconds: 60}
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.shell.toolset.ReportExit
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e11, exit_code: 0, output: {digest: sha256-out-1, length: 40, class: output}, at: 2026-11-27T09:00:08Z}
+    outcome: exited
+    events:
+      - event: agentic.shell.toolset.CommandEnded
+        payload: {command_run_id: 00000000-0000-4000-8000-000000000e11, exit_code: 0}
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.shell.toolset.KillCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e11, at: 2026-11-27T09:00:09Z}
+    outcome: wrong-state
+    error: {name: agentic.shell.toolset.CommandRunStateConflict}
+    no_events: [agentic.shell.toolset.CommandEnded]
+
+  # times out
+  - at: 2026-11-27T09:00:10Z
+    command: agentic.shell.toolset.RunCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e12, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, command: {digest: sha256-cmd-2, length: 9, class: command}, directory: ., time_limit_seconds: 1, at: 2026-11-27T09:00:10Z}
+    outcome: started
+  - at: 2026-11-27T09:00:11Z
+    command: agentic.shell.toolset.ReportTimeout
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e12, output: {digest: sha256-out-2, length: 0, class: output}, at: 2026-11-27T09:00:11Z}
+    outcome: timed-out
+
+  # is killed
+  - at: 2026-11-27T09:00:12Z
+    command: agentic.shell.toolset.RunCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e13, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, command: {digest: sha256-cmd-3, length: 9, class: command}, directory: ., time_limit_seconds: 60, at: 2026-11-27T09:00:12Z}
+    outcome: started
+  - at: 2026-11-27T09:00:13Z
+    command: agentic.shell.toolset.KillCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e13, at: 2026-11-27T09:00:13Z}
+    outcome: killed
+
+  # an ended run takes no second end, and its identity no second start
+  - at: 2026-11-27T09:00:14Z
+    command: agentic.shell.toolset.ReportTimeout
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e11, output: {digest: sha256-out-1, length: 40, class: output}, at: 2026-11-27T09:00:13Z}
+    outcome: wrong-state
+    error: {name: agentic.shell.toolset.CommandRunStateConflict}
+  - at: 2026-11-27T09:00:15Z
+    command: agentic.shell.toolset.ReportExit
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e12, exit_code: 1, output: {digest: sha256-out-2, length: 0, class: output}, at: 2026-11-27T09:00:13Z}
+    outcome: wrong-state
+    error: {name: agentic.shell.toolset.CommandRunStateConflict}
+  - at: 2026-11-27T09:00:16Z
+    command: agentic.shell.toolset.ReportExit
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e13, exit_code: 137, output: {digest: sha256-out-3, length: 0, class: output}, at: 2026-11-27T09:00:13Z}
+    outcome: wrong-state
+    error: {name: agentic.shell.toolset.CommandRunStateConflict}
+  - at: 2026-11-27T09:00:17Z
+    command: agentic.shell.toolset.RunCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e11, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, command: {digest: sha256-cmd-1, length: 9, class: command}, directory: ., time_limit_seconds: 60, at: 2026-11-27T09:00:13Z}
+    outcome: exists
+    error: {name: agentic.shell.toolset.CommandRunExists}
+
+  # a time limit under one second, and a run that does not exist
+  - at: 2026-11-27T09:00:18Z
+    command: agentic.shell.toolset.RunCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e15, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, command: {digest: sha256-cmd-5, length: 9, class: command}, directory: ., time_limit_seconds: 0, at: 2026-11-27T09:00:13Z}
+    outcome: invalid-time-limit
+    error: {name: agentic.shell.toolset.InvalidTimeLimit}
+  - at: 2026-11-27T09:00:19Z
+    command: agentic.shell.toolset.RunCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e15, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, command: {digest: sha256-cmd-5, length: 9, class: command}, directory: ., time_limit_seconds: 60, run_id: 00000000-0000-4000-8000-000000000e99, at: 2026-11-27T09:00:13Z}
+    outcome: unknown-run
+    error: {name: agentic.shell.toolset.UnknownRun}
+
+  # no command after the lease ends
+  - at: 2026-11-27T09:00:20Z
+    command: agentic.workspace.ReleaseLease
+    actor: agentic.workspace.Worker
+    caller: {party: 00000000-0000-4000-8000-000000000e01}
+    input: {lease_id: {$instance: lease}}
+    outcome: released
+  - at: 2026-11-27T09:00:21Z
+    command: agentic.shell.toolset.RunCommand
+    actor: agentic.shell.toolset.ShellTool
+    input: {command_run_id: 00000000-0000-4000-8000-000000000e14, workspace_id: {$instance: ws}, lease_id: {$instance: lease}, command: {digest: sha256-cmd-4, length: 9, class: command}, directory: ., time_limit_seconds: 60, at: 2026-11-27T09:00:15Z}
+    outcome: lease-not-live
+    error: {name: agentic.shell.toolset.LeaseNotLive}
+    no_events: [agentic.shell.toolset.CommandStarted]
+
+assert:
+  - view: agentic.shell.toolset.CommandRuns
+    contains:
+      command_run_id: 00000000-0000-4000-8000-000000000e11
+      state: Exited
+      exit_code: 0
+  - view: agentic.shell.toolset.CommandRuns
+    contains:
+      command_run_id: 00000000-0000-4000-8000-000000000e12
+      state: TimedOut
+  - view: agentic.shell.toolset.CommandRuns
+    contains:
+      command_run_id: 00000000-0000-4000-8000-000000000e13
+      state: Killed

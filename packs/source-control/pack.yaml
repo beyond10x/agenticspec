@@ -1,0 +1,18 @@
+format: agenticspec-pack/1
+pack: source-control
+namespace: agentic.scm
+summary: >-
+  Repositories and the work a forge hosts around them: revisions, references, checkouts, change
+  requests with their reviews and approvals, and check runs, named without any product.
+uses: []
+blocks:
+  - blocks/forge.yaml
+  - blocks/repository.yaml
+  - blocks/check.yaml
+  - blocks/change.yaml
+kpis: kpis.yaml
+scenarios:
+  - scenarios/merge-needs-approval-of-head.yaml
+  - scenarios/reference-moves-by-compare-and-set.yaml
+  - scenarios/approval-needs-an-approving-review-of-the-head.yaml
+  - scenarios/check-run-ends-once.yaml

@@ -1,0 +1,92 @@
+# A check run's life, walked by hand: synthesis arranges no run for the state refusals of
+# StartCheck (ESS-SYNTH-008) and none for its unknown run. A run is queued for a revision, started
+# once, completed once and then neither started nor cancelled; a second run is cancelled while
+# queued; a start of a run never queued is refused.
+type: ess-scenario/7
+domain: agentic.scm.check
+scenario: check-run-ends-once
+summary: A check run starts once and ends once, by completion or cancellation; an ended run takes neither again.
+
+timeline:
+  - at: 2026-11-27T11:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000ca1, kind: Human, name: owner, at: 2026-11-27T11:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T11:00:01Z
+    command: agentic.scm.forge.RegisterForge
+    actor: agentic.scm.forge.ForgeAdministrator
+    input: {forge_id: 00000000-0000-4000-8000-000000000ca2, name: forge, registered_by: 00000000-0000-4000-8000-000000000ca1, at: 2026-11-27T11:00:01Z}
+    outcome: registered
+  - at: 2026-11-27T11:00:02Z
+    command: agentic.scm.repository.CreateRepository
+    actor: agentic.scm.repository.RepositoryManager
+    input: {repository_id: 00000000-0000-4000-8000-000000000ca3, forge_id: 00000000-0000-4000-8000-000000000ca2, name: service, default_reference: main, created_by: 00000000-0000-4000-8000-000000000ca1, at: 2026-11-27T11:00:02Z}
+    outcome: created
+
+  - at: 2026-11-27T11:00:03Z
+    command: agentic.scm.check.StartCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb9, at: 2026-11-27T11:00:03Z}
+    outcome: no-such-run
+    error: {name: agentic.scm.check.CheckRunNotFound}
+  - at: 2026-11-27T11:00:04Z
+    command: agentic.scm.check.QueueCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb1, repository_id: 00000000-0000-4000-8000-000000000ca3, revision: rev-1, name: unit, at: 2026-11-27T11:00:04Z}
+    outcome: queued
+  - at: 2026-11-27T11:00:05Z
+    command: agentic.scm.check.StartCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb1, at: 2026-11-27T11:00:05Z}
+    outcome: started
+  - at: 2026-11-27T11:00:06Z
+    command: agentic.scm.check.StartCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb1, at: 2026-11-27T11:00:06Z}
+    outcome: wrong-state
+    error: {name: agentic.scm.check.CheckRunStateConflict}
+  - at: 2026-11-27T11:00:07Z
+    command: agentic.scm.check.CompleteCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb1, outcome: Passed, report: {digest: sha256-report, length: 300, class: report}, at: 2026-11-27T11:00:07Z}
+    outcome: completed
+  - at: 2026-11-27T11:00:08Z
+    command: agentic.scm.check.StartCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb1, at: 2026-11-27T11:00:08Z}
+    outcome: wrong-state
+    error: {name: agentic.scm.check.CheckRunStateConflict}
+  - at: 2026-11-27T11:00:09Z
+    command: agentic.scm.check.CancelCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb1, at: 2026-11-27T11:00:09Z}
+    outcome: wrong-state
+    error: {name: agentic.scm.check.CheckRunStateConflict}
+
+  - at: 2026-11-27T11:00:10Z
+    command: agentic.scm.check.QueueCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb2, repository_id: 00000000-0000-4000-8000-000000000ca3, revision: rev-1, name: lint, at: 2026-11-27T11:00:10Z}
+    outcome: queued
+  - at: 2026-11-27T11:00:11Z
+    command: agentic.scm.check.CancelCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb2, at: 2026-11-27T11:00:11Z}
+    outcome: cancelled
+  - at: 2026-11-27T11:00:12Z
+    command: agentic.scm.check.StartCheck
+    actor: agentic.scm.check.CheckRunner
+    input: {check_run_id: 00000000-0000-4000-8000-000000000cb2, at: 2026-11-27T11:00:12Z}
+    outcome: wrong-state
+    error: {name: agentic.scm.check.CheckRunStateConflict}
+
+assert:
+  - view: agentic.scm.check.CheckRuns
+    contains:
+      check_run_id: 00000000-0000-4000-8000-000000000cb1
+      state: Completed
+      outcome: Passed
+  - view: agentic.scm.check.CheckRuns
+    contains:
+      check_run_id: 00000000-0000-4000-8000-000000000cb2
+      state: Cancelled

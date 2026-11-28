@@ -1,0 +1,80 @@
+# A reference moves by compare and set, walked by hand: synthesis creates the reference at one
+# revision and moves it expecting another, so it reaches neither a move nor the refusal of an
+# unknown mover. A movable reference is refused a move that expects a revision it no longer points
+# at and a move by a principal never registered; it moves when the mover names the revision it
+# points at, and the next move must expect the new one. A fixed reference never moves.
+type: ess-scenario/7
+domain: agentic.scm.repository
+scenario: reference-moves-by-compare-and-set
+summary: A reference moves only when the mover names the revision it points at; a fixed reference never moves.
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-000000000a01, kind: Agent, name: committer, at: 2026-11-27T09:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.scm.forge.RegisterForge
+    actor: agentic.scm.forge.ForgeAdministrator
+    input: {forge_id: 00000000-0000-4000-8000-000000000a10, name: forge, registered_by: 00000000-0000-4000-8000-000000000a01, at: 2026-11-27T09:00:01Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.scm.repository.CreateRepository
+    actor: agentic.scm.repository.RepositoryManager
+    input: {repository_id: 00000000-0000-4000-8000-000000000a20, forge_id: 00000000-0000-4000-8000-000000000a10, name: service, default_reference: main, created_by: 00000000-0000-4000-8000-000000000a01, at: 2026-11-27T09:00:02Z}
+    outcome: created
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.scm.repository.CreateReference
+    actor: agentic.scm.repository.Committer
+    input: {reference_id: 00000000-0000-4000-8000-000000000a30, repository_id: 00000000-0000-4000-8000-000000000a20, name: main, kind: Movable, target: rev-1, by: 00000000-0000-4000-8000-000000000a01, at: 2026-11-27T09:00:03Z}
+    outcome: created
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.scm.repository.CreateReference
+    actor: agentic.scm.repository.Committer
+    input: {reference_id: 00000000-0000-4000-8000-000000000a31, repository_id: 00000000-0000-4000-8000-000000000a20, name: v1, kind: Fixed, target: rev-1, by: 00000000-0000-4000-8000-000000000a01, at: 2026-11-27T09:00:04Z}
+    outcome: created
+
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.scm.repository.MoveReference
+    actor: agentic.scm.repository.Committer
+    input: {reference_id: 00000000-0000-4000-8000-000000000a30, expected: rev-0, to: rev-2, by: 00000000-0000-4000-8000-000000000a01, at: 2026-11-27T09:00:05Z}
+    outcome: moved-since
+    error: {name: agentic.scm.repository.ReferenceMoved}
+    no_events: [agentic.scm.repository.ReferenceMovedEvent]
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.scm.repository.MoveReference
+    actor: agentic.scm.repository.Committer
+    input: {reference_id: 00000000-0000-4000-8000-000000000a30, expected: rev-1, to: rev-2, by: 00000000-0000-4000-8000-000000000a99, at: 2026-11-27T09:00:06Z}
+    outcome: unknown-principal
+    error: {name: agentic.scm.repository.UnknownPrincipal}
+    no_events: [agentic.scm.repository.ReferenceMovedEvent]
+  - at: 2026-11-27T09:00:07Z
+    command: agentic.scm.repository.MoveReference
+    actor: agentic.scm.repository.Committer
+    input: {reference_id: 00000000-0000-4000-8000-000000000a30, expected: rev-1, to: rev-2, by: 00000000-0000-4000-8000-000000000a01, at: 2026-11-27T09:00:07Z}
+    outcome: moved
+    events:
+      - event: agentic.scm.repository.ReferenceMovedEvent
+        payload: {reference_id: 00000000-0000-4000-8000-000000000a30, from: rev-1, to: rev-2}
+  - at: 2026-11-27T09:00:08Z
+    command: agentic.scm.repository.MoveReference
+    actor: agentic.scm.repository.Committer
+    input: {reference_id: 00000000-0000-4000-8000-000000000a30, expected: rev-1, to: rev-3, by: 00000000-0000-4000-8000-000000000a01, at: 2026-11-27T09:00:08Z}
+    outcome: moved-since
+    error: {name: agentic.scm.repository.ReferenceMoved}
+  - at: 2026-11-27T09:00:09Z
+    command: agentic.scm.repository.MoveReference
+    actor: agentic.scm.repository.Committer
+    input: {reference_id: 00000000-0000-4000-8000-000000000a31, expected: rev-1, to: rev-2, by: 00000000-0000-4000-8000-000000000a01, at: 2026-11-27T09:00:09Z}
+    outcome: fixed
+    error: {name: agentic.scm.repository.ReferenceFixed}
+
+assert:
+  - view: agentic.scm.repository.References
+    contains:
+      reference_id: 00000000-0000-4000-8000-000000000a30
+      target: rev-2
+  - view: agentic.scm.repository.References
+    contains:
+      reference_id: 00000000-0000-4000-8000-000000000a31
+      target: rev-1

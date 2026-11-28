@@ -1,0 +1,22 @@
+# Synthesized scenarios of the packs that ESS 0.99.2's interpreter fails, because synthesis arranged
+# them wrong: the step before the act does not establish what synthesis assumed. The specification
+# is not at fault; the path each one claims is walked by an authored scenario that passes.
+# scripts/check-blocks-conform.sh --path . passes when the failed scenarios are exactly these, and
+# fails when one more fails or one of these passes (then remove its line).
+#
+# <scenario id> <authored scenario that walks the path>: <what synthesis got wrong>
+agentic.scm.change.ChangeRequest/transition/merge/by/agentic.scm.change.MergeChangeRequest/merged packs/source-control/scenarios/merge-needs-approval-of-head.yaml: merges a change request it only opened, as if `approved_head` were set; the interpreter answers not-approved
+agentic.scm.change.MergeChangeRequest/outcome/grant-not-active packs/source-control/scenarios/merge-needs-approval-of-head.yaml: the same arrangement, no approval
+agentic.scm.change.MergeChangeRequest/outcome/merged packs/source-control/scenarios/merge-needs-approval-of-head.yaml: the same arrangement, no approval
+agentic.scm.change.MergeChangeRequest/outcome/unknown-grant packs/source-control/scenarios/merge-needs-approval-of-head.yaml: the same arrangement, no approval
+agentic.scm.repository.MoveReference/outcome/moved packs/source-control/scenarios/reference-moves-by-compare-and-set.yaml: creates the reference at one revision and moves it expecting another, so the compare-and-set answers moved-since
+agentic.scm.repository.MoveReference/outcome/unknown-principal packs/source-control/scenarios/reference-moves-by-compare-and-set.yaml: the same arrangement, so moved-since answers first
+agentic.tracking.board.Card/invariant/after/agentic.tracking.board.ArchiveBoard/archived packs/tracking/scenarios/board-card-moves-between-columns.yaml: adds the card for a task it did not create; the interpreter answers unknown-task
+agentic.tracking.board.Card/invariant/after/agentic.tracking.board.CreateBoard/created packs/tracking/scenarios/board-card-moves-between-columns.yaml: the same, unknown-task
+agentic.tracking.board.Card/invariant/after/agentic.tracking.board.MoveCard/moved packs/tracking/scenarios/board-card-moves-between-columns.yaml: adds the card to one board under a column of another board; unknown-column
+agentic.tracking.board.MoveCard/outcome/archived packs/tracking/scenarios/board-card-moves-between-columns.yaml: the same, unknown-column
+agentic.tracking.board.MoveCard/outcome/moved packs/tracking/scenarios/board-card-moves-between-columns.yaml: the same, unknown-column
+agentic.tracking.board.MoveCard/outcome/negative-position packs/tracking/scenarios/board-card-moves-between-columns.yaml: the same, unknown-column
+agentic.tracking.board.MoveCard/outcome/unknown-column packs/tracking/scenarios/board-card-moves-between-columns.yaml: the same, unknown-column
+agentic.tracking.queue.QueueItem/state/Claimed/refuses/agentic.tracking.queue.Withdraw packs/tracking/scenarios/queue-item-held-by-its-claimer.yaml: claims the item by a principal it never registered; unknown-claimer
+agentic.tracking.queue.QueueItem/state/Done/refuses/agentic.tracking.queue.Withdraw packs/tracking/scenarios/queue-item-held-by-its-claimer.yaml: the same, unknown-claimer

@@ -1,0 +1,398 @@
+domain: agentic.scm.forge
+
+summary: >-
+  A service that hosts repositories and the work around them: change requests, checks and the
+  roles principals hold on it. A forge is registered, may be retired, and a retired forge hosts no
+  new repository. A principal's role on a forge is a membership: granted by a principal, changed,
+  revoked. A role says what the forge lets the principal do; what the system lets an agent do is
+  still an authority grant (`agentic.authority`). Which product plays the forge is a binding, not
+  this block.
+
+naming:
+  wire: forge
+  display: Forge
+
+types:
+  - {name: agentic.scm.forge.ForgeId, kind: newtype, of: Uuid}
+  - {name: agentic.scm.forge.MembershipId, kind: newtype, of: Uuid}
+
+  # UNMAPPED: the role ladder. No source names the roles a forge gives; four ordered roles are the
+  # draft's proposal (read, push, merge and settings, administration). Open question for the owner.
+  - name: agentic.scm.forge.ForgeRole
+    kind: enum
+    ordered: true
+    variants: [Reader, Writer, Maintainer, Administrator]
+    naming:
+      summary: >-
+        What the forge lets a principal do on it. Reader reads repositories, Writer also pushes
+        references and opens change requests, Maintainer also merges and approves, Administrator
+        also manages memberships.
+
+entities:
+  - name: agentic.scm.forge.Forge
+    naming:
+      summary: One hosting service for repositories.
+    identity:
+      name: forge_id
+      type: agentic.scm.forge.ForgeId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: registered_by
+        type: agentic.shared.PrincipalId
+      - name: registered_at
+        type: Timestamp
+    relations:
+      - name: registrar
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: registered_by
+      - name: memberships
+        kind: owns
+        target: agentic.scm.forge.Membership
+        cardinality: many
+        via: forge_id
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Active]
+          to: Retired
+
+  - name: agentic.scm.forge.Membership
+    naming:
+      summary: >-
+        One principal's role on one forge. A human, a service and an agent hold a role the same
+        way; an agent's role is that of its principal.
+    identity:
+      name: membership_id
+      type: agentic.scm.forge.MembershipId
+    fields:
+      - name: forge_id
+        type: agentic.scm.forge.ForgeId
+      - name: principal_id
+        type: agentic.shared.PrincipalId
+      - name: role
+        type: agentic.scm.forge.ForgeRole
+      - name: granted_by
+        type: agentic.shared.PrincipalId
+      - name: granted_at
+        type: Timestamp
+    relations:
+      - name: member
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: principal_id
+      - name: grantor
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: granted_by
+    lifecycle:
+      initial: Active
+      states: [Active, Revoked]
+      terminal: [Revoked]
+      transitions:
+        - name: revoke
+          from: [Active]
+          to: Revoked
+
+actors:
+  - name: agentic.scm.forge.ForgeAdministrator
+    naming:
+      display: Forge administrator
+      summary: Whoever registers forges and keeps the roles on them.
+    may:
+      - agentic.scm.forge.RegisterForge
+      - agentic.scm.forge.RetireForge
+      - agentic.scm.forge.GrantRole
+      - agentic.scm.forge.ChangeRole
+      - agentic.scm.forge.RevokeRole
+      - agentic.scm.forge.Forges
+      - agentic.scm.forge.Memberships
+
+errors:
+  - name: agentic.scm.forge.ForgeNotFound
+    summary: No forge of this identity is registered.
+    fields:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+
+  - name: agentic.scm.forge.ForgeStateConflict
+    summary: The forge is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.scm.forge.Forge.State}
+
+  - name: agentic.scm.forge.ForgeRetired
+    summary: The forge is retired; it takes no new membership.
+    fields:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+
+  - name: agentic.scm.forge.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+
+  - name: agentic.scm.forge.PrincipalNotActive
+    summary: The principal is retired; it takes no new role.
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+
+  - name: agentic.scm.forge.MembershipNotFound
+    summary: No membership of this identity exists.
+    fields:
+      - {name: membership_id, type: agentic.scm.forge.MembershipId}
+
+  - name: agentic.scm.forge.MembershipStateConflict
+    summary: The membership is revoked.
+    fields:
+      - {name: state, type: agentic.scm.forge.Membership.State}
+
+commands:
+  - name: agentic.scm.forge.RegisterForge
+    naming:
+      wire: register-forge
+      display: Register a forge
+    input:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: registered_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: unknown-principal
+        when_related: {via: input.registered_by, exists: false}
+        error: agentic.scm.forge.UnknownPrincipal
+        payload:
+          agentic.scm.forge.UnknownPrincipal: {principal_id: input.registered_by}
+      - name: registered
+        creates: agentic.scm.forge.Forge
+        instance: forge_id
+        sets:
+          name: input.name
+          registered_by: input.registered_by
+          registered_at: input.at
+        emits: [agentic.scm.forge.ForgeRegistered]
+        payload:
+          agentic.scm.forge.ForgeRegistered:
+            forge_id: input.forge_id
+            name: input.name
+            registered_by: input.registered_by
+            at: input.at
+        summary: The forge is Active and hosts nothing yet.
+
+  - name: agentic.scm.forge.RetireForge
+    naming:
+      wire: retire-forge
+      display: Retire a forge
+    input:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-forge
+        unknown_instance: true
+        error: agentic.scm.forge.ForgeNotFound
+        payload:
+          agentic.scm.forge.ForgeNotFound: {forge_id: input.forge_id}
+      - name: retired
+        moves: agentic.scm.forge.Forge.retire
+        instance: forge_id
+        emits: [agentic.scm.forge.ForgeRetiredEvent]
+        payload:
+          agentic.scm.forge.ForgeRetiredEvent:
+            forge_id: input.forge_id
+            at: input.at
+        summary: The forge hosts no new repository and takes no new membership.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.forge.ForgeStateConflict
+        payload:
+          agentic.scm.forge.ForgeStateConflict: {state: {subject: state}}
+        summary: The forge was already retired.
+
+  - name: agentic.scm.forge.GrantRole
+    naming:
+      wire: grant-role
+      display: Grant a principal a role on a forge
+    input:
+      - {name: membership_id, type: agentic.scm.forge.MembershipId}
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: role, type: agentic.scm.forge.ForgeRole}
+      - {name: granted_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-forge
+        when_related: {via: input.forge_id, exists: false}
+        error: agentic.scm.forge.ForgeNotFound
+        payload:
+          agentic.scm.forge.ForgeNotFound: {forge_id: input.forge_id}
+      - name: unknown-principal
+        when_related: {via: input.principal_id, exists: false}
+        error: agentic.scm.forge.UnknownPrincipal
+        payload:
+          agentic.scm.forge.UnknownPrincipal: {principal_id: input.principal_id}
+      - name: unknown-grantor
+        when_related: {via: input.granted_by, exists: false}
+        error: agentic.scm.forge.UnknownPrincipal
+        payload:
+          agentic.scm.forge.UnknownPrincipal: {principal_id: input.granted_by}
+      - name: forge-retired
+        when_related: {via: input.forge_id, predicate: state == Retired}
+        error: agentic.scm.forge.ForgeRetired
+        payload:
+          agentic.scm.forge.ForgeRetired: {forge_id: input.forge_id}
+      - name: principal-retired
+        when_related: {via: input.principal_id, predicate: state == Retired}
+        error: agentic.scm.forge.PrincipalNotActive
+        payload:
+          agentic.scm.forge.PrincipalNotActive: {principal_id: input.principal_id}
+      # UNMAPPED: only an Administrator of the forge may grant a role, and a principal holds one
+      # live membership per forge. Both are row-set guards over Membership; the draft leaves them
+      # to the forge's binding. Open question for the owner.
+      - name: granted
+        creates: agentic.scm.forge.Membership
+        instance: membership_id
+        sets:
+          forge_id: input.forge_id
+          principal_id: input.principal_id
+          role: input.role
+          granted_by: input.granted_by
+          granted_at: input.at
+        emits: [agentic.scm.forge.RoleGranted]
+        payload:
+          agentic.scm.forge.RoleGranted:
+            membership_id: input.membership_id
+            forge_id: input.forge_id
+            principal_id: input.principal_id
+            role: input.role
+            granted_by: input.granted_by
+            at: input.at
+        summary: The principal holds the role on the forge.
+
+  - name: agentic.scm.forge.ChangeRole
+    naming:
+      wire: change-role
+      display: Change a principal's role on a forge
+    input:
+      - {name: membership_id, type: agentic.scm.forge.MembershipId}
+      - {name: role, type: agentic.scm.forge.ForgeRole}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-membership
+        unknown_instance: true
+        error: agentic.scm.forge.MembershipNotFound
+        payload:
+          agentic.scm.forge.MembershipNotFound: {membership_id: input.membership_id}
+      - name: revoked
+        when_subject:
+          predicate: state == Revoked
+        error: agentic.scm.forge.MembershipStateConflict
+        payload:
+          agentic.scm.forge.MembershipStateConflict: {state: {subject: state}}
+      - name: changed
+        updates: agentic.scm.forge.Membership
+        instance: membership_id
+        sets:
+          role: input.role
+        emits: [agentic.scm.forge.RoleChanged]
+        payload:
+          agentic.scm.forge.RoleChanged:
+            membership_id: input.membership_id
+            from: {subject: role}
+            to: input.role
+            at: input.at
+
+  - name: agentic.scm.forge.RevokeRole
+    naming:
+      wire: revoke-role
+      display: Revoke a principal's role on a forge
+    input:
+      - {name: membership_id, type: agentic.scm.forge.MembershipId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-membership
+        unknown_instance: true
+        error: agentic.scm.forge.MembershipNotFound
+        payload:
+          agentic.scm.forge.MembershipNotFound: {membership_id: input.membership_id}
+      - name: revoked
+        moves: agentic.scm.forge.Membership.revoke
+        instance: membership_id
+        emits: [agentic.scm.forge.RoleRevoked]
+        payload:
+          agentic.scm.forge.RoleRevoked:
+            membership_id: input.membership_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.forge.MembershipStateConflict
+        payload:
+          agentic.scm.forge.MembershipStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.scm.forge.ForgeRegistered
+    fields:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: registered_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.forge.ForgeRetiredEvent
+    naming:
+      wire: forge-retired
+    fields:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.forge.RoleGranted
+    fields:
+      - {name: membership_id, type: agentic.scm.forge.MembershipId}
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: role, type: agentic.scm.forge.ForgeRole}
+      - {name: granted_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.forge.RoleChanged
+    fields:
+      - {name: membership_id, type: agentic.scm.forge.MembershipId}
+      - {name: from, type: agentic.scm.forge.ForgeRole}
+      - {name: to, type: agentic.scm.forge.ForgeRole}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.forge.RoleRevoked
+    fields:
+      - {name: membership_id, type: agentic.scm.forge.MembershipId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.scm.forge.Forges
+    source: agentic.scm.forge.Forge
+    consistency: read_your_writes
+    fields:
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: registered_by, type: agentic.shared.PrincipalId}
+      - {name: registered_at, type: Timestamp}
+      - {name: state, type: agentic.scm.forge.Forge.State}
+    naming:
+      wire: forges
+      display: Forges
+
+  - name: agentic.scm.forge.Memberships
+    source: agentic.scm.forge.Membership
+    consistency: read_your_writes
+    fields:
+      - {name: membership_id, type: agentic.scm.forge.MembershipId}
+      - {name: forge_id, type: agentic.scm.forge.ForgeId}
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+      - {name: role, type: agentic.scm.forge.ForgeRole}
+      - {name: granted_by, type: agentic.shared.PrincipalId}
+      - {name: granted_at, type: Timestamp}
+      - {name: state, type: agentic.scm.forge.Membership.State}
+    naming:
+      wire: memberships
+      display: Memberships

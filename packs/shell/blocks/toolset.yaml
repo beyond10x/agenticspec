@@ -1,0 +1,382 @@
+domain: agentic.shell.toolset
+
+summary: >-
+  The conceptual tool run_command: run one command line in a workspace (`agentic.workspace`) under a
+  live lease of it, with a time limit. A command run starts, then ends once: it exits with a code
+  and the digest of its output, runs out of time, or is killed. It may change any file of the
+  workspace; which files it changed is not known before it ran, so the file tools
+  (`agentic.files`) record what a harness observes afterwards. A run may name the tool call of a
+  harness session (`agentic.harness`) and the work run (`agentic.work`) it belongs to. Which shell
+  plays the tool is a binding, not this block.
+
+naming:
+  wire: shell
+  display: Shell tool
+
+types:
+  - {name: agentic.shell.toolset.CommandRunId, kind: newtype, of: Uuid}
+
+  - name: agentic.shell.toolset.CommandEnd
+    kind: enum
+    variants: [Exited, TimedOut, Killed]
+    naming:
+      summary: >-
+        Exited means the command ended by itself with an exit code. TimedOut means it ran past its
+        time limit and was stopped. Killed means a principal or the runtime stopped it.
+
+entities:
+  - name: agentic.shell.toolset.CommandRun
+    naming:
+      summary: One run of one command line in one workspace.
+    identity:
+      name: command_run_id
+      type: agentic.shell.toolset.CommandRunId
+    fields:
+      - name: workspace_id
+        type: agentic.shared.WorkspaceId
+      - name: lease_id
+        type: agentic.shared.LeaseId
+      - name: command
+        type: agentic.shared.Content
+        summary: The digest of the command line, never the text.
+      - name: directory
+        type: agentic.workspace.Path
+        summary: The working directory, inside the workspace.
+      - name: time_limit_seconds
+        type: Integer
+      - name: tool_call_id
+        type: Optional<agentic.shared.ToolCallId>
+      - name: run_id
+        type: Optional<agentic.shared.RunId>
+      - name: started_at
+        type: Timestamp
+      - name: exit_code
+        type: Optional<Integer>
+      - name: output
+        type: Optional<agentic.shared.Content>
+        summary: The digest of what the command wrote, standard output and error together.
+      - name: ended_at
+        type: Optional<Timestamp>
+    invariants:
+      - time_limit_seconds >= 1
+    relations:
+      - name: workspace
+        kind: references
+        target: agentic.workspace.Workspace
+        cardinality: one
+        via: workspace_id
+      - name: lease
+        kind: references
+        target: agentic.workspace.Lease
+        cardinality: one
+        via: lease_id
+      - name: tool_call
+        kind: references
+        target: agentic.harness.ToolCall
+        cardinality: one
+        via: tool_call_id
+      - name: run
+        kind: references
+        target: agentic.work.Run
+        cardinality: one
+        via: run_id
+    lifecycle:
+      initial: Running
+      states: [Running, Exited, TimedOut, Killed]
+      terminal: [Exited, TimedOut, Killed]
+      transitions:
+        - name: exit
+          from: [Running]
+          to: Exited
+        - name: time_out
+          from: [Running]
+          to: TimedOut
+        - name: kill
+          from: [Running]
+          to: Killed
+
+actors:
+  - name: agentic.shell.toolset.ShellTool
+    naming:
+      display: Shell tool
+      summary: The harness acting on an agent's run_command call, and reporting how it ended.
+    may:
+      - agentic.shell.toolset.RunCommand
+      - agentic.shell.toolset.ReportExit
+      - agentic.shell.toolset.ReportTimeout
+      - agentic.shell.toolset.KillCommand
+      - agentic.shell.toolset.CommandRuns
+
+errors:
+  - name: agentic.shell.toolset.CommandRunExists
+    summary: A command run of this identity exists.
+    fields:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+
+  - name: agentic.shell.toolset.CommandRunNotFound
+    summary: No command run of this identity exists.
+    fields:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+
+  - name: agentic.shell.toolset.CommandRunStateConflict
+    summary: The command run has already ended.
+    fields:
+      - {name: state, type: agentic.shell.toolset.CommandRun.State}
+
+  - name: agentic.shell.toolset.InvalidTimeLimit
+    summary: A time limit is at least one second.
+
+  - name: agentic.shell.toolset.UnknownWorkspace
+    summary: No workspace of this identity exists.
+    fields:
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+
+  - name: agentic.shell.toolset.UnknownLease
+    summary: No lease of this identity exists.
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+
+  - name: agentic.shell.toolset.LeaseNotLive
+    summary: The lease is requested, released or expired; nothing runs under it.
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+
+  - name: agentic.shell.toolset.LeaseOfOtherWorkspace
+    summary: The lease is a lease of another workspace.
+    fields:
+      - {name: lease_id, type: agentic.shared.LeaseId}
+
+  - name: agentic.shell.toolset.UnknownToolCall
+    summary: No tool call of this identity was requested.
+    fields:
+      - {name: tool_call_id, type: agentic.shared.ToolCallId}
+
+  - name: agentic.shell.toolset.UnknownRun
+    summary: No work run of this identity exists.
+    fields:
+      - {name: run_id, type: agentic.shared.RunId}
+
+commands:
+  - name: agentic.shell.toolset.RunCommand
+    naming:
+      wire: run_command
+      display: run_command
+      summary: >-
+        Starts one command line. Input: workspace, lease, the command's digest, working directory,
+        time limit, and optionally the tool call and work run it serves. Effect: a Running
+        CommandRun; the files it changes are reported by the file tools.
+    input:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: command, type: agentic.shared.Content}
+      - {name: directory, type: agentic.workspace.Path}
+      - {name: time_limit_seconds, type: Integer}
+      - {name: tool_call_id, type: Optional<agentic.shared.ToolCallId>}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: invalid-time-limit
+        when: time_limit_seconds < 1
+        error: agentic.shell.toolset.InvalidTimeLimit
+      - name: exists
+        existing_instance: true
+        error: agentic.shell.toolset.CommandRunExists
+        payload:
+          agentic.shell.toolset.CommandRunExists: {command_run_id: input.command_run_id}
+      - name: unknown-workspace
+        when_related: {via: input.workspace_id, exists: false}
+        error: agentic.shell.toolset.UnknownWorkspace
+        payload:
+          agentic.shell.toolset.UnknownWorkspace: {workspace_id: input.workspace_id}
+      - name: unknown-lease
+        when_related: {via: input.lease_id, exists: false}
+        error: agentic.shell.toolset.UnknownLease
+        payload:
+          agentic.shell.toolset.UnknownLease: {lease_id: input.lease_id}
+      - name: unknown-tool-call
+        when_related: {via: input.tool_call_id, exists: false}
+        error: agentic.shell.toolset.UnknownToolCall
+        payload:
+          agentic.shell.toolset.UnknownToolCall: {tool_call_id: input.tool_call_id}
+      - name: unknown-run
+        when_related: {via: input.run_id, exists: false}
+        error: agentic.shell.toolset.UnknownRun
+        payload:
+          agentic.shell.toolset.UnknownRun: {run_id: input.run_id}
+      - name: lease-not-live
+        when_related: {via: input.lease_id, predicate: state != Live}
+        error: agentic.shell.toolset.LeaseNotLive
+        payload:
+          agentic.shell.toolset.LeaseNotLive: {lease_id: input.lease_id}
+      - name: lease-of-other-workspace
+        when_related: {via: input.lease_id, predicate: workspace_id != input.workspace_id}
+        error: agentic.shell.toolset.LeaseOfOtherWorkspace
+        payload:
+          agentic.shell.toolset.LeaseOfOtherWorkspace: {lease_id: input.lease_id}
+      # UNMAPPED: whether a read-only (shared) workspace may run a command at all, and whether a
+      # tool call must be Allowed (`agentic.harness`) before its command starts, are not settled.
+      # Open questions for the owner.
+      - name: started
+        creates: agentic.shell.toolset.CommandRun
+        instance: command_run_id
+        sets:
+          workspace_id: input.workspace_id
+          lease_id: input.lease_id
+          command: input.command
+          directory: input.directory
+          time_limit_seconds: input.time_limit_seconds
+          tool_call_id: input.tool_call_id
+          run_id: input.run_id
+          started_at: input.at
+        emits: [agentic.shell.toolset.CommandStarted]
+        payload:
+          agentic.shell.toolset.CommandStarted:
+            command_run_id: input.command_run_id
+            workspace_id: input.workspace_id
+            lease_id: input.lease_id
+            command: input.command
+            time_limit_seconds: input.time_limit_seconds
+            tool_call_id: input.tool_call_id
+            run_id: input.run_id
+            at: input.at
+
+  - name: agentic.shell.toolset.ReportExit
+    naming:
+      wire: report-exit
+      display: Report that a command exited
+    input:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+      - {name: exit_code, type: Integer}
+      - {name: output, type: agentic.shared.Content}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.shell.toolset.CommandRunNotFound
+        payload:
+          agentic.shell.toolset.CommandRunNotFound: {command_run_id: input.command_run_id}
+      - name: exited
+        moves: agentic.shell.toolset.CommandRun.exit
+        instance: command_run_id
+        sets:
+          exit_code: input.exit_code
+          output: input.output
+          ended_at: input.at
+        emits: [agentic.shell.toolset.CommandEnded]
+        payload:
+          agentic.shell.toolset.CommandEnded:
+            command_run_id: input.command_run_id
+            end: Exited
+            exit_code: input.exit_code
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.shell.toolset.CommandRunStateConflict
+        payload:
+          agentic.shell.toolset.CommandRunStateConflict: {state: {subject: state}}
+
+  - name: agentic.shell.toolset.ReportTimeout
+    naming:
+      wire: report-timeout
+      display: Report that a command ran out of time
+    input:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+      - {name: output, type: agentic.shared.Content}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.shell.toolset.CommandRunNotFound
+        payload:
+          agentic.shell.toolset.CommandRunNotFound: {command_run_id: input.command_run_id}
+      - name: timed-out
+        moves: agentic.shell.toolset.CommandRun.time_out
+        instance: command_run_id
+        sets:
+          output: input.output
+          ended_at: input.at
+        emits: [agentic.shell.toolset.CommandEnded]
+        payload:
+          agentic.shell.toolset.CommandEnded:
+            command_run_id: input.command_run_id
+            end: TimedOut
+            exit_code: {subject: exit_code}
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.shell.toolset.CommandRunStateConflict
+        payload:
+          agentic.shell.toolset.CommandRunStateConflict: {state: {subject: state}}
+
+  - name: agentic.shell.toolset.KillCommand
+    naming:
+      wire: kill-command
+      display: Kill a running command
+    input:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.shell.toolset.CommandRunNotFound
+        payload:
+          agentic.shell.toolset.CommandRunNotFound: {command_run_id: input.command_run_id}
+      - name: killed
+        moves: agentic.shell.toolset.CommandRun.kill
+        instance: command_run_id
+        sets:
+          ended_at: input.at
+        emits: [agentic.shell.toolset.CommandEnded]
+        payload:
+          agentic.shell.toolset.CommandEnded:
+            command_run_id: input.command_run_id
+            end: Killed
+            exit_code: {subject: exit_code}
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.shell.toolset.CommandRunStateConflict
+        payload:
+          agentic.shell.toolset.CommandRunStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.shell.toolset.CommandStarted
+    fields:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: command, type: agentic.shared.Content}
+      - {name: time_limit_seconds, type: Integer}
+      - {name: tool_call_id, type: Optional<agentic.shared.ToolCallId>}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.shell.toolset.CommandEnded
+    fields:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+      - {name: end, type: agentic.shell.toolset.CommandEnd}
+      - {name: exit_code, type: Optional<Integer>}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.shell.toolset.CommandRuns
+    source: agentic.shell.toolset.CommandRun
+    consistency: read_your_writes
+    fields:
+      - {name: command_run_id, type: agentic.shell.toolset.CommandRunId}
+      - {name: workspace_id, type: agentic.shared.WorkspaceId}
+      - {name: lease_id, type: agentic.shared.LeaseId}
+      - {name: command, type: agentic.shared.Content}
+      - {name: directory, type: agentic.workspace.Path}
+      - {name: time_limit_seconds, type: Integer}
+      - {name: tool_call_id, type: Optional<agentic.shared.ToolCallId>}
+      - {name: run_id, type: Optional<agentic.shared.RunId>}
+      - {name: started_at, type: Timestamp}
+      - {name: exit_code, type: Optional<Integer>}
+      - {name: output, type: Optional<agentic.shared.Content>}
+      - {name: ended_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.shell.toolset.CommandRun.State}
+    naming:
+      wire: command-runs
+      display: Command runs

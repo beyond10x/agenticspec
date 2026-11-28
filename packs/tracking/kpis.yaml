@@ -1,0 +1,97 @@
+format: agenticspec-kpis/1
+kpis:
+  - id: issue_close_seconds
+    block: tracking.issue
+    kind: quality
+    unit: seconds
+    summary: Seconds from an issue being opened to it being closed as resolved.
+    how: Median of IssueClosed time minus IssueOpened time over issues closed with resolution Resolved; declined issues are counted apart.
+    direction: lower
+    gate: false
+    reads: [agentic.tracking.issue.IssueOpened, agentic.tracking.issue.IssueClosed]
+    status: planned
+    source: design
+
+  - id: issue_reopen_share
+    block: tracking.issue
+    kind: quality
+    unit: share
+    summary: Share of closed issues that were opened again.
+    how: Issues with an IssueReopened after an IssueClosed, divided by issues with an IssueClosed. A reopened issue was closed before its work was done.
+    direction: lower
+    gate: false
+    reads: [agentic.tracking.issue.IssueClosed, agentic.tracking.issue.IssueReopened]
+    status: planned
+    source: design
+
+  - id: fixed_issue_open_after_merge
+    block: tracking.issue
+    kind: completeness
+    unit: count
+    summary: Issues still open after a change request that fixes them was merged.
+    how: ChangeRequestLinked events of kind Fixes whose change request has a ChangeRequestMerged while the issue has no later IssueClosed, at the end of the window.
+    direction: lower
+    gate: false
+    reads: [agentic.tracking.issue.ChangeRequestLinked, agentic.scm.change.ChangeRequestMerged, agentic.tracking.issue.IssueClosed]
+    status: planned
+    source: design
+
+  - id: card_cycle_seconds
+    block: tracking.board
+    kind: quality
+    unit: seconds
+    summary: Seconds from a card being added to the board to it reaching the board's last column.
+    how: Median of the time of the first CardMoved to the board's last column (by BoardCreated columns) minus CardAdded time, per card.
+    direction: lower
+    gate: false
+    reads: [agentic.tracking.board.BoardCreated, agentic.tracking.board.CardAdded, agentic.tracking.board.CardMoved]
+    status: planned
+    source: design
+
+  - id: backward_move_share
+    block: tracking.board
+    kind: quality
+    unit: share
+    summary: Share of card moves to an earlier column.
+    how: CardMoved events whose target column comes before the source column in the board's columns, divided by all CardMoved events between columns.
+    direction: lower
+    gate: false
+    reads: [agentic.tracking.board.BoardCreated, agentic.tracking.board.CardMoved]
+    status: planned
+    source: design
+
+  - id: queue_wait_seconds
+    block: tracking.queue
+    kind: quality
+    unit: seconds
+    summary: Seconds an item waits in a queue before its first claim.
+    how: Median of the first ItemClaimed time minus ItemEnqueued time per item.
+    direction: lower
+    gate: false
+    reads: [agentic.tracking.queue.ItemEnqueued, agentic.tracking.queue.ItemClaimed]
+    status: planned
+    source: design
+
+  - id: claim_release_share
+    block: tracking.queue
+    kind: quality
+    unit: share
+    summary: Share of claims given back without finishing the item.
+    how: ItemReleased events divided by ItemClaimed events. A released claim is work started and dropped.
+    direction: lower
+    gate: false
+    reads: [agentic.tracking.queue.ItemClaimed, agentic.tracking.queue.ItemReleased]
+    status: planned
+    source: design
+
+  - id: claim_out_of_order
+    block: tracking.queue
+    kind: quality
+    unit: count
+    summary: Claims of an item while an older item of the same queue was waiting.
+    how: ItemClaimed events where an item of the same queue with an earlier ItemEnqueued was waiting (enqueued, not claimed, withdrawn or finished). Whether this is an error depends on the queue's order rule, which the pack leaves open.
+    direction: lower
+    gate: false
+    reads: [agentic.tracking.queue.ItemEnqueued, agentic.tracking.queue.ItemClaimed, agentic.tracking.queue.ItemReleased, agentic.tracking.queue.ItemWithdrawn]
+    status: planned
+    source: design

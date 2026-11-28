@@ -47,3 +47,7 @@ The specification declares 22 blocks in 11 layers, with 60 entities, 155 command
 ## Planned blocks
 
 The KPI catalogue already measures blocks the specification does not declare yet: [memory](planned.md#memory), [monitor](planned.md#monitor), [plan](planned.md#plan), [verification](planned.md#verification). See [planned blocks](planned.md).
+
+## Packs and fields
+
+These blocks are the core: what every agentic system has. Above them, [packs](../packs/index.md) hold the blocks more than one field of work reuses (source control, tracking, file tools, a shell), and [fields](../fields/index.md) name one kind of work, the packs it uses and its example architectures. No core block depends on a pack or a field.

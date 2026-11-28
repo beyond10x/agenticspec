@@ -1,0 +1,311 @@
+domain: agentic.scm.check
+
+summary: >-
+  An automated verdict on one revision of a repository: a build, a test suite, a linter, a whole
+  pipeline. A check run is queued for a revision, starts (optionally as an instance of a workload,
+  `agentic.runtime`), and completes once with an outcome; a queued or running check may be
+  cancelled. A check run never changes after it completes; a new verdict is a new run.
+
+naming:
+  wire: check
+  display: Check
+
+types:
+  - {name: agentic.scm.check.CheckRunId, kind: newtype, of: Uuid}
+
+  - name: agentic.scm.check.CheckOutcome
+    kind: enum
+    variants: [Passed, Failed, Errored]
+    naming:
+      summary: >-
+        Passed means the revision met the check. Failed means it did not. Errored means the check
+        itself could not judge (its runner broke), which says nothing about the revision.
+
+entities:
+  - name: agentic.scm.check.CheckRun
+    naming:
+      summary: One run of one named check on one revision.
+    identity:
+      name: check_run_id
+      type: agentic.scm.check.CheckRunId
+    fields:
+      - name: repository_id
+        type: agentic.scm.repository.RepositoryId
+      - name: revision
+        type: agentic.workspace.Revision
+        summary: The revision the check judges.
+      - name: name
+        type: agentic.shared.Name
+        summary: The check's name, the same for every run of it.
+      - name: queued_at
+        type: Timestamp
+      - name: instance_id
+        type: Optional<agentic.shared.InstanceId>
+        summary: The running copy of the workload that carries out the check, when it runs as one.
+      - name: outcome
+        type: Optional<agentic.scm.check.CheckOutcome>
+      - name: report
+        type: Optional<agentic.shared.Content>
+        summary: The digest of the check's report.
+      - name: completed_at
+        type: Optional<Timestamp>
+    relations:
+      - name: repository
+        kind: references
+        target: agentic.scm.repository.Repository
+        cardinality: one
+        via: repository_id
+      - name: instance
+        kind: references
+        target: agentic.runtime.Instance
+        cardinality: one
+        via: instance_id
+    lifecycle:
+      initial: Queued
+      states: [Queued, Running, Completed, Cancelled]
+      terminal: [Completed, Cancelled]
+      transitions:
+        - name: start
+          from: [Queued]
+          to: Running
+        - name: complete
+          from: [Running]
+          to: Completed
+        - name: cancel
+          from: [Queued, Running]
+          to: Cancelled
+
+actors:
+  - name: agentic.scm.check.CheckRunner
+    naming:
+      display: Check runner
+      summary: What runs checks on revisions and reports their outcome.
+    may:
+      - agentic.scm.check.QueueCheck
+      - agentic.scm.check.StartCheck
+      - agentic.scm.check.CompleteCheck
+      - agentic.scm.check.CancelCheck
+      - agentic.scm.check.CheckRuns
+
+errors:
+  - name: agentic.scm.check.UnknownRepository
+    summary: No repository of this identity exists.
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+
+  - name: agentic.scm.check.RepositoryNotActive
+    summary: The repository is archived; no new check runs on it.
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+
+  - name: agentic.scm.check.CheckRunExists
+    summary: A check run of this identity exists.
+    fields:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+
+  - name: agentic.scm.check.CheckRunNotFound
+    summary: No check run of this identity exists.
+    fields:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+
+  - name: agentic.scm.check.CheckRunStateConflict
+    summary: The check run is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.scm.check.CheckRun.State}
+
+  - name: agentic.scm.check.UnknownInstance
+    summary: No workload instance of this identity exists.
+    fields:
+      - {name: instance_id, type: agentic.shared.InstanceId}
+
+commands:
+  - name: agentic.scm.check.QueueCheck
+    naming:
+      wire: queue-check
+      display: Queue a check on a revision
+    input:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: revision, type: agentic.workspace.Revision}
+      - {name: name, type: agentic.shared.Name}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: already-queued
+        existing_instance: true
+        error: agentic.scm.check.CheckRunExists
+        payload:
+          agentic.scm.check.CheckRunExists: {check_run_id: input.check_run_id}
+      - name: unknown-repository
+        when_related: {via: input.repository_id, exists: false}
+        error: agentic.scm.check.UnknownRepository
+        payload:
+          agentic.scm.check.UnknownRepository: {repository_id: input.repository_id}
+      - name: archived
+        when_related: {via: input.repository_id, predicate: state == Archived}
+        error: agentic.scm.check.RepositoryNotActive
+        payload:
+          agentic.scm.check.RepositoryNotActive: {repository_id: input.repository_id}
+      - name: queued
+        creates: agentic.scm.check.CheckRun
+        instance: check_run_id
+        sets:
+          repository_id: input.repository_id
+          revision: input.revision
+          name: input.name
+          queued_at: input.at
+        emits: [agentic.scm.check.CheckQueued]
+        payload:
+          agentic.scm.check.CheckQueued:
+            check_run_id: input.check_run_id
+            repository_id: input.repository_id
+            revision: input.revision
+            name: input.name
+            at: input.at
+
+  - name: agentic.scm.check.StartCheck
+    naming:
+      wire: start-check
+      display: Start a queued check
+    input:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: instance_id, type: Optional<agentic.shared.InstanceId>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.scm.check.CheckRunNotFound
+        payload:
+          agentic.scm.check.CheckRunNotFound: {check_run_id: input.check_run_id}
+      - name: unknown-instance
+        when_related: {via: input.instance_id, exists: false}
+        error: agentic.scm.check.UnknownInstance
+        payload:
+          agentic.scm.check.UnknownInstance: {instance_id: input.instance_id}
+      - name: started
+        moves: agentic.scm.check.CheckRun.start
+        instance: check_run_id
+        sets:
+          instance_id: input.instance_id
+        emits: [agentic.scm.check.CheckStarted]
+        payload:
+          agentic.scm.check.CheckStarted:
+            check_run_id: input.check_run_id
+            instance_id: input.instance_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.check.CheckRunStateConflict
+        payload:
+          agentic.scm.check.CheckRunStateConflict: {state: {subject: state}}
+
+  - name: agentic.scm.check.CompleteCheck
+    naming:
+      wire: complete-check
+      display: Complete a running check with its outcome
+    input:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: outcome, type: agentic.scm.check.CheckOutcome}
+      - {name: report, type: agentic.shared.Content}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.scm.check.CheckRunNotFound
+        payload:
+          agentic.scm.check.CheckRunNotFound: {check_run_id: input.check_run_id}
+      - name: completed
+        moves: agentic.scm.check.CheckRun.complete
+        instance: check_run_id
+        sets:
+          outcome: input.outcome
+          report: input.report
+          completed_at: input.at
+        emits: [agentic.scm.check.CheckCompleted]
+        payload:
+          agentic.scm.check.CheckCompleted:
+            check_run_id: input.check_run_id
+            repository_id: {subject: repository_id}
+            revision: {subject: revision}
+            name: {subject: name}
+            outcome: input.outcome
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.check.CheckRunStateConflict
+        payload:
+          agentic.scm.check.CheckRunStateConflict: {state: {subject: state}}
+
+  - name: agentic.scm.check.CancelCheck
+    naming:
+      wire: cancel-check
+      display: Cancel a check
+    input:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-run
+        unknown_instance: true
+        error: agentic.scm.check.CheckRunNotFound
+        payload:
+          agentic.scm.check.CheckRunNotFound: {check_run_id: input.check_run_id}
+      - name: cancelled
+        moves: agentic.scm.check.CheckRun.cancel
+        instance: check_run_id
+        emits: [agentic.scm.check.CheckCancelled]
+        payload:
+          agentic.scm.check.CheckCancelled:
+            check_run_id: input.check_run_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.check.CheckRunStateConflict
+        payload:
+          agentic.scm.check.CheckRunStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.scm.check.CheckQueued
+    fields:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: revision, type: agentic.workspace.Revision}
+      - {name: name, type: agentic.shared.Name}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.check.CheckStarted
+    fields:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: instance_id, type: Optional<agentic.shared.InstanceId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.check.CheckCompleted
+    fields:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: revision, type: agentic.workspace.Revision}
+      - {name: name, type: agentic.shared.Name}
+      - {name: outcome, type: agentic.scm.check.CheckOutcome}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.check.CheckCancelled
+    fields:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.scm.check.CheckRuns
+    source: agentic.scm.check.CheckRun
+    consistency: read_your_writes
+    fields:
+      - {name: check_run_id, type: agentic.scm.check.CheckRunId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: revision, type: agentic.workspace.Revision}
+      - {name: name, type: agentic.shared.Name}
+      - {name: queued_at, type: Timestamp}
+      - {name: instance_id, type: Optional<agentic.shared.InstanceId>}
+      - {name: outcome, type: Optional<agentic.scm.check.CheckOutcome>}
+      - {name: report, type: Optional<agentic.shared.Content>}
+      - {name: completed_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.scm.check.CheckRun.State}
+    naming:
+      wire: check-runs
+      display: Check runs

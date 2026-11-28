@@ -35,6 +35,11 @@ case_ code generated/README.md
 case_ code spec/domains/session.yaml
 case_ code ui/agenticspec.ui.yaml
 case_ code queries/session.sq
+# The packs, the fields and the root manifest of the whole system are validated and synthesized.
+case_ code ess-inputs.yaml
+case_ code packs/source-control/blocks/change.yaml
+case_ code fields/coding/architectures/auto-merger.yaml
+case_ planning fields/coding/README.md
 case_ code Cargo.toml
 case_ code .github/workflows/pages.yml
 case_ code docs/queries.md crates/agenticspec-records/src/wire.rs

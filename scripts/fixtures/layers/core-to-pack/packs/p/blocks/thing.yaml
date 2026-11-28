@@ -1,0 +1,13 @@
+domain: fixture.p.thing
+summary: Fixture.
+naming:
+  wire: thing
+  display: thing
+types:
+  - {name: fixture.p.thing.ThingId, kind: newtype, of: Uuid}
+entities:
+  - name: fixture.p.thing.Thing
+    identity: {name: id, type: fixture.p.thing.ThingId}
+    fields:
+      - {name: label, type: String}
+    lifecycle: {initial: Live, states: [Live], terminal: [Live]}

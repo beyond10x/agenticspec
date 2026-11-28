@@ -1,0 +1,12 @@
+format: agenticspec-pack/1
+pack: shell
+namespace: agentic.shell
+summary: >-
+  The conceptual tool run_command: one command line in a workspace under a lease, with a time
+  limit, ending exited, timed out or killed.
+uses: []
+blocks:
+  - blocks/toolset.yaml
+kpis: kpis.yaml
+scenarios:
+  - scenarios/run-command-under-a-lease.yaml

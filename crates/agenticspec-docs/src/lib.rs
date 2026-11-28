@@ -3,7 +3,9 @@
 //! From the compiled `agentic` system (`blocks/`), the KPI catalogue (`kpis/catalogue.yaml`), the
 //! architectures and the experiments that name them, it writes the layer map, one page per block,
 //! one page per architecture with its rendered graph, the KPI catalogue page, and the data the
-//! site's components draw. The output is a function of those inputs only.
+//! site's components draw; and, from the whole system (the root `ess-inputs.yaml`), one page per
+//! block of a pack, the index of the packs, and the pages of the fields with their architectures.
+//! The output is a function of those inputs only.
 
 mod arch;
 mod blocks;
@@ -12,6 +14,7 @@ mod kpis;
 mod layout;
 mod md;
 mod model;
+mod packs;
 mod results;
 
 pub use kpis::{Catalogue, Kpi};
@@ -34,6 +37,9 @@ pub const OWNED_DIRS: &[&str] = &[
     "docs/catalog",
     "website/static/catalog",
     "website/src/generated",
+    "docs/packs",
+    "docs/fields",
+    "website/static/fields",
 ];
 
 /// Generated files outside those directories, and the ones every run writes.
@@ -46,6 +52,8 @@ pub const OWNED_FILES: &[&str] = &[
     "website/src/generated/blocks.json",
     "website/src/generated/kpis.json",
     "website/src/generated/sidebar.json",
+    "docs/packs/index.md",
+    "docs/fields/index.md",
 ];
 
 #[derive(Debug)]
@@ -58,9 +66,15 @@ pub struct Generated {
 
 /// `ess specify compile --path <root>/blocks --format json`.
 pub fn compile(root: &Path) -> Result<Value, String> {
+    compile_at(&root.join("blocks"))
+}
+
+/// `ess specify compile --path <path> --format json`: `<root>/blocks` for the core, `<root>` for
+/// the whole system.
+pub fn compile_at(path: &Path) -> Result<Value, String> {
     let out = Command::new("ess")
         .args(["specify", "compile", "--format", "json", "--path"])
-        .arg(root.join("blocks"))
+        .arg(path)
         .output()
         .map_err(|e| format!("ess: {e}"))?;
     if !out.status.success() {
@@ -174,9 +188,31 @@ pub fn generate(root: &Path, catalogue: Option<Catalogue>) -> Result<Generated, 
         files.extend(catalog::files(e)?);
     }
     let entries: Vec<String> = cat.entries.iter().map(|e| e.name.clone()).collect();
+
+    let (sidebar_packs, sidebar_fields) = match packs::generate(root, &catalogue)? {
+        Some(out) => {
+            if let Some(index) = files.get_mut("docs/blocks/index.md") {
+                index.push_str(
+                    "\n## Packs and fields\n\n\
+These blocks are the core: what every agentic system has. Above them, [packs](../packs/index.md) hold the blocks more than one field of work reuses \
+(source control, tracking, file tools, a shell), and [fields](../fields/index.md) name one kind of work, the packs it uses and its example architectures. \
+No core block depends on a pack or a field.\n",
+                );
+            }
+            files.extend(out.files);
+            (out.sidebar_packs, out.sidebar_fields)
+        }
+        None => (Vec::new(), Vec::new()),
+    };
     files.insert(
         "website/src/generated/sidebar.json".to_string(),
-        json_text(&blocks::sidebar_json(&blocks, &names, &entries)),
+        json_text(&blocks::sidebar_json(
+            &blocks,
+            &names,
+            &entries,
+            sidebar_packs,
+            sidebar_fields,
+        )),
     );
     Ok(Generated { ir, files })
 }

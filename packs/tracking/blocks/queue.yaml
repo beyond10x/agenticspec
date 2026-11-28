@@ -1,0 +1,535 @@
+domain: agentic.tracking.queue
+
+summary: >-
+  Work waiting to be taken, in the order it came. A work queue holds items, each standing for one
+  issue (`agentic.tracking.issue`) or one task (`agentic.work`). A principal claims a waiting item
+  and holds it until it finishes it or releases it back; only the claimer finishes or releases. The
+  queue publishes when each item joined (`enqueued_at`), the order it is meant to be taken in. A
+  closed queue takes no new item.
+
+naming:
+  wire: queue
+  display: Work queue
+
+types:
+  - {name: agentic.tracking.queue.QueueId, kind: newtype, of: Uuid}
+  - {name: agentic.tracking.queue.QueueItemId, kind: newtype, of: Uuid}
+
+entities:
+  - name: agentic.tracking.queue.WorkQueue
+    naming:
+      summary: One queue of work.
+    identity:
+      name: queue_id
+      type: agentic.tracking.queue.QueueId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: owner
+        type: agentic.shared.PrincipalId
+      - name: created_at
+        type: Timestamp
+    relations:
+      - name: owned_by
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: owner
+      - name: items
+        kind: owns
+        target: agentic.tracking.queue.QueueItem
+        cardinality: many
+        via: queue_id
+    lifecycle:
+      initial: Open
+      states: [Open, Closed]
+      terminal: [Closed]
+      transitions:
+        - name: close
+          from: [Open]
+          to: Closed
+
+  - name: agentic.tracking.queue.QueueItem
+    naming:
+      summary: One issue or task in a queue, waiting, claimed, done or withdrawn.
+    identity:
+      name: item_id
+      type: agentic.tracking.queue.QueueItemId
+    fields:
+      - name: queue_id
+        type: agentic.tracking.queue.QueueId
+      - name: issue_id
+        type: Optional<agentic.tracking.issue.IssueId>
+      - name: task_id
+        type: Optional<agentic.shared.TaskId>
+      - name: enqueued_at
+        type: Timestamp
+      - name: claimed_by
+        type: Optional<agentic.shared.PrincipalId>
+      - name: claimed_at
+        type: Optional<Timestamp>
+    relations:
+      - name: issue
+        kind: references
+        target: agentic.tracking.issue.Issue
+        cardinality: one
+        via: issue_id
+      - name: task
+        kind: references
+        target: agentic.work.Task
+        cardinality: one
+        via: task_id
+      - name: claimer
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: claimed_by
+    # UNMAPPED: whether a claim must take the oldest waiting item (strict order) or may take any
+    # waiting one is not settled; the draft publishes the order and does not enforce it, as
+    # `agentic.resource` does for its queue. Open question for the owner.
+    lifecycle:
+      initial: Waiting
+      states: [Waiting, Claimed, Done, Withdrawn]
+      terminal: [Done, Withdrawn]
+      transitions:
+        - name: claim
+          from: [Waiting]
+          to: Claimed
+        - name: release
+          from: [Claimed]
+          to: Waiting
+        - name: finish
+          from: [Claimed]
+          to: Done
+        - name: withdraw
+          from: [Waiting]
+          to: Withdrawn
+
+actors:
+  - name: agentic.tracking.queue.Dispatcher
+    naming:
+      display: Dispatcher
+      summary: Whoever creates queues and puts work into them.
+    may:
+      - agentic.tracking.queue.CreateQueue
+      - agentic.tracking.queue.CloseQueue
+      - agentic.tracking.queue.Enqueue
+      - agentic.tracking.queue.Withdraw
+      - agentic.tracking.queue.WorkQueues
+      - agentic.tracking.queue.QueueItems
+
+  - name: agentic.tracking.queue.Taker
+    naming:
+      display: Taker
+      summary: A principal that claims queued work, a human or an agent.
+    may:
+      - agentic.tracking.queue.Claim
+      - agentic.tracking.queue.Release
+      - agentic.tracking.queue.Finish
+      - agentic.tracking.queue.QueueItems
+
+errors:
+  - name: agentic.tracking.queue.QueueExists
+    summary: A queue of this identity exists.
+    fields:
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+
+  - name: agentic.tracking.queue.QueueNotFound
+    summary: No queue of this identity exists.
+    fields:
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+
+  - name: agentic.tracking.queue.QueueClosed
+    summary: The queue is closed; it takes no new item.
+    fields:
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+
+  - name: agentic.tracking.queue.QueueStateConflict
+    summary: The queue is already closed.
+    fields:
+      - {name: state, type: agentic.tracking.queue.WorkQueue.State}
+
+  - name: agentic.tracking.queue.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+
+  - name: agentic.tracking.queue.UnknownIssue
+    summary: No issue of this identity exists.
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+
+  - name: agentic.tracking.queue.UnknownTask
+    summary: No task of this identity exists.
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+
+  - name: agentic.tracking.queue.ItemMissing
+    summary: An item stands for exactly one issue or one task; the request names none or both.
+
+  - name: agentic.tracking.queue.ItemExists
+    summary: An item of this identity exists.
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+
+  - name: agentic.tracking.queue.ItemNotFound
+    summary: No item of this identity exists.
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+
+  - name: agentic.tracking.queue.ItemStateConflict
+    summary: The item is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.tracking.queue.QueueItem.State}
+
+  - name: agentic.tracking.queue.NotTheClaimer
+    summary: Only the principal that claimed the item finishes or releases it.
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+
+commands:
+  - name: agentic.tracking.queue.CreateQueue
+    naming:
+      wire: create-queue
+      display: Create a work queue
+    input:
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: owner, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: already-exists
+        existing_instance: true
+        error: agentic.tracking.queue.QueueExists
+        payload:
+          agentic.tracking.queue.QueueExists: {queue_id: input.queue_id}
+      - name: unknown-owner
+        when_related: {via: input.owner, exists: false}
+        error: agentic.tracking.queue.UnknownPrincipal
+        payload:
+          agentic.tracking.queue.UnknownPrincipal: {principal_id: input.owner}
+      - name: created
+        creates: agentic.tracking.queue.WorkQueue
+        instance: queue_id
+        sets:
+          name: input.name
+          owner: input.owner
+          created_at: input.at
+        emits: [agentic.tracking.queue.QueueCreated]
+        payload:
+          agentic.tracking.queue.QueueCreated:
+            queue_id: input.queue_id
+            name: input.name
+            owner: input.owner
+            at: input.at
+
+  - name: agentic.tracking.queue.CloseQueue
+    naming:
+      wire: close-queue
+      display: Close a work queue
+    input:
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-queue
+        unknown_instance: true
+        error: agentic.tracking.queue.QueueNotFound
+        payload:
+          agentic.tracking.queue.QueueNotFound: {queue_id: input.queue_id}
+      - name: closed
+        moves: agentic.tracking.queue.WorkQueue.close
+        instance: queue_id
+        emits: [agentic.tracking.queue.QueueClosedEvent]
+        payload:
+          agentic.tracking.queue.QueueClosedEvent:
+            queue_id: input.queue_id
+            at: input.at
+        summary: The queue takes no new item; items already in it can still be claimed and finished.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.tracking.queue.QueueStateConflict
+        payload:
+          agentic.tracking.queue.QueueStateConflict: {state: {subject: state}}
+
+  - name: agentic.tracking.queue.Enqueue
+    naming:
+      wire: enqueue
+      display: Put an issue or a task into a queue
+    input:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+      - {name: issue_id, type: Optional<agentic.tracking.issue.IssueId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-item
+        when:
+          all:
+            - not defined(issue_id)
+            - not defined(task_id)
+        error: agentic.tracking.queue.ItemMissing
+      - name: two-items
+        when:
+          all:
+            - defined(issue_id)
+            - defined(task_id)
+        error: agentic.tracking.queue.ItemMissing
+      - name: already-exists
+        existing_instance: true
+        error: agentic.tracking.queue.ItemExists
+        payload:
+          agentic.tracking.queue.ItemExists: {item_id: input.item_id}
+      - name: no-such-queue
+        when_related: {via: input.queue_id, exists: false}
+        error: agentic.tracking.queue.QueueNotFound
+        payload:
+          agentic.tracking.queue.QueueNotFound: {queue_id: input.queue_id}
+      - name: unknown-issue
+        when_related: {via: input.issue_id, exists: false}
+        error: agentic.tracking.queue.UnknownIssue
+        payload:
+          agentic.tracking.queue.UnknownIssue: {issue_id: input.issue_id}
+      - name: unknown-task
+        when_related: {via: input.task_id, exists: false}
+        error: agentic.tracking.queue.UnknownTask
+        payload:
+          agentic.tracking.queue.UnknownTask: {task_id: input.task_id}
+      - name: queue-closed
+        when_related: {via: input.queue_id, predicate: state == Closed}
+        error: agentic.tracking.queue.QueueClosed
+        payload:
+          agentic.tracking.queue.QueueClosed: {queue_id: input.queue_id}
+      - name: enqueued
+        creates: agentic.tracking.queue.QueueItem
+        instance: item_id
+        sets:
+          queue_id: input.queue_id
+          issue_id: input.issue_id
+          task_id: input.task_id
+          enqueued_at: input.at
+        emits: [agentic.tracking.queue.ItemEnqueued]
+        payload:
+          agentic.tracking.queue.ItemEnqueued:
+            item_id: input.item_id
+            queue_id: input.queue_id
+            issue_id: input.issue_id
+            task_id: input.task_id
+            at: input.at
+
+  - name: agentic.tracking.queue.Claim
+    naming:
+      wire: claim
+      display: Claim a waiting item
+    input:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-item
+        unknown_instance: true
+        error: agentic.tracking.queue.ItemNotFound
+        payload:
+          agentic.tracking.queue.ItemNotFound: {item_id: input.item_id}
+      - name: not-waiting
+        when_subject:
+          predicate: state != Waiting
+        error: agentic.tracking.queue.ItemStateConflict
+        payload:
+          agentic.tracking.queue.ItemStateConflict: {state: {subject: state}}
+      - name: unknown-claimer
+        when_related: {via: input.by, exists: false}
+        error: agentic.tracking.queue.UnknownPrincipal
+        payload:
+          agentic.tracking.queue.UnknownPrincipal: {principal_id: input.by}
+      - name: claimed
+        moves: agentic.tracking.queue.QueueItem.claim
+        instance: item_id
+        sets:
+          claimed_by: input.by
+          claimed_at: input.at
+        emits: [agentic.tracking.queue.ItemClaimed]
+        payload:
+          agentic.tracking.queue.ItemClaimed:
+            item_id: input.item_id
+            by: input.by
+            at: input.at
+        summary: The item is Claimed by this principal; a second claim is refused.
+
+  - name: agentic.tracking.queue.Release
+    naming:
+      wire: release
+      display: Release a claimed item back to the queue
+    input:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-item
+        unknown_instance: true
+        error: agentic.tracking.queue.ItemNotFound
+        payload:
+          agentic.tracking.queue.ItemNotFound: {item_id: input.item_id}
+      - name: not-claimed
+        when_subject:
+          predicate: state != Claimed
+        error: agentic.tracking.queue.ItemStateConflict
+        payload:
+          agentic.tracking.queue.ItemStateConflict: {state: {subject: state}}
+      - name: not-the-claimer
+        when_subject:
+          predicate: claimed_by != input.by
+        error: agentic.tracking.queue.NotTheClaimer
+        payload:
+          agentic.tracking.queue.NotTheClaimer: {item_id: input.item_id}
+      - name: released
+        moves: agentic.tracking.queue.QueueItem.release
+        instance: item_id
+        sets:
+          claimed_by: {cleared: true}
+          claimed_at: {cleared: true}
+        emits: [agentic.tracking.queue.ItemReleased]
+        payload:
+          agentic.tracking.queue.ItemReleased:
+            item_id: input.item_id
+            by: input.by
+            at: input.at
+        summary: The item waits again, at its old place in the order.
+
+  - name: agentic.tracking.queue.Finish
+    naming:
+      wire: finish
+      display: Finish a claimed item
+    input:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-item
+        unknown_instance: true
+        error: agentic.tracking.queue.ItemNotFound
+        payload:
+          agentic.tracking.queue.ItemNotFound: {item_id: input.item_id}
+      - name: not-claimed
+        when_subject:
+          predicate: state != Claimed
+        error: agentic.tracking.queue.ItemStateConflict
+        payload:
+          agentic.tracking.queue.ItemStateConflict: {state: {subject: state}}
+      - name: not-the-claimer
+        when_subject:
+          predicate: claimed_by != input.by
+        error: agentic.tracking.queue.NotTheClaimer
+        payload:
+          agentic.tracking.queue.NotTheClaimer: {item_id: input.item_id}
+      - name: finished
+        moves: agentic.tracking.queue.QueueItem.finish
+        instance: item_id
+        emits: [agentic.tracking.queue.ItemFinished]
+        payload:
+          agentic.tracking.queue.ItemFinished:
+            item_id: input.item_id
+            by: input.by
+            at: input.at
+
+  - name: agentic.tracking.queue.Withdraw
+    naming:
+      wire: withdraw
+      display: Withdraw a waiting item
+    input:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-item
+        unknown_instance: true
+        error: agentic.tracking.queue.ItemNotFound
+        payload:
+          agentic.tracking.queue.ItemNotFound: {item_id: input.item_id}
+      - name: withdrawn
+        moves: agentic.tracking.queue.QueueItem.withdraw
+        instance: item_id
+        emits: [agentic.tracking.queue.ItemWithdrawn]
+        payload:
+          agentic.tracking.queue.ItemWithdrawn:
+            item_id: input.item_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.tracking.queue.ItemStateConflict
+        payload:
+          agentic.tracking.queue.ItemStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.tracking.queue.QueueCreated
+    fields:
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: owner, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.queue.QueueClosedEvent
+    naming:
+      wire: queue-closed
+    fields:
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.queue.ItemEnqueued
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+      - {name: issue_id, type: Optional<agentic.tracking.issue.IssueId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.queue.ItemClaimed
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.queue.ItemReleased
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.queue.ItemFinished
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.queue.ItemWithdrawn
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.tracking.queue.WorkQueues
+    source: agentic.tracking.queue.WorkQueue
+    consistency: read_your_writes
+    fields:
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: owner, type: agentic.shared.PrincipalId}
+      - {name: created_at, type: Timestamp}
+      - {name: state, type: agentic.tracking.queue.WorkQueue.State}
+    naming:
+      wire: work-queues
+      display: Work queues
+
+  - name: agentic.tracking.queue.QueueItems
+    source: agentic.tracking.queue.QueueItem
+    consistency: read_your_writes
+    fields:
+      - {name: item_id, type: agentic.tracking.queue.QueueItemId}
+      - {name: queue_id, type: agentic.tracking.queue.QueueId}
+      - {name: issue_id, type: Optional<agentic.tracking.issue.IssueId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: enqueued_at, type: Timestamp}
+      - {name: claimed_by, type: Optional<agentic.shared.PrincipalId>}
+      - {name: claimed_at, type: Optional<Timestamp>}
+      - {name: state, type: agentic.tracking.queue.QueueItem.State}
+    naming:
+      wire: queue-items
+      display: Queue items

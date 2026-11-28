@@ -65,14 +65,16 @@ impl Ctx<'_> {
 
 /// A link from the page of `from` to the page of `to`.
 fn rel(from: &Block, to: &Block) -> String {
-    if from.dir == to.dir {
-        format!("{}.md", to.name)
+    if from.section != to.section {
+        format!("../../{}/{}/{}.md", to.section, to.dir, to.page)
+    } else if from.dir == to.dir {
+        format!("{}.md", to.page)
     } else {
-        format!("../{}/{}.md", to.dir, to.name)
+        format!("../{}/{}.md", to.dir, to.page)
     }
 }
 
-fn front(out: &mut String, fields: &[(&str, String)]) {
+pub(crate) fn front(out: &mut String, fields: &[(&str, String)]) {
     out.push_str("---\n");
     for (k, v) in fields {
         let _ = writeln!(out, "{k}: {v}");
@@ -487,30 +489,44 @@ pub fn page(ctx: &Ctx, b: &Block) -> String {
         &[
             ("title", yaml(&b.name)),
             ("sidebar_label", yaml(&b.name)),
-            ("slug", format!("/blocks/{}/{}", b.dir, b.name)),
+            ("slug", format!("/{}/{}/{}", b.section, b.dir, b.page)),
             ("description", yaml(&first_sentence(&b.summary))),
             (
                 "kicker",
-                yaml(&format!("Layer {} · {}", b.layer, b.layer_name())),
+                yaml(&if b.in_pack() {
+                    format!("Pack · {}", b.dir)
+                } else {
+                    format!("Layer {} · {}", b.layer, b.layer_name())
+                }),
             ),
             ("source", yaml(&b.file)),
             ("source_url", yaml(&format!("{SOURCE_BASE}{}", b.file))),
         ],
     );
-    s.push_str(GENERATED_NOTE);
+    if b.in_pack() {
+        s.push_str(&GENERATED_NOTE.replace(
+            "the specification in blocks/",
+            &format!("the specification in packs/{}/", b.dir),
+        ));
+    } else {
+        s.push_str(GENERATED_NOTE);
+    }
     let entities = members(ir, &b.domain, "entities");
     let commands = members(ir, &b.domain, "commands");
     let events = members(ir, &b.domain, "events");
     let views = members(ir, &b.domain, "views");
     let actors = members(ir, &b.domain, "actors");
     let kpis: Vec<&Kpi> = ctx.catalogue.of(&b.name).collect();
+    let place = if b.in_pack() {
+        format!("pack={}", attr(&b.dir))
+    } else {
+        format!("layer={{{}}} layerName={}", b.layer, attr(b.layer_name()))
+    };
     let _ = writeln!(
         s,
-        "<BlockHeader name={} family={} layer={{{}}} layerName={} counts={{{}}} />\n",
+        "<BlockHeader name={} family={} {place} counts={{{}}} />\n",
         attr(&b.name),
         attr(b.family),
-        b.layer,
-        attr(b.layer_name()),
         json!({
             "entities": entities.len(),
             "commands": commands.len(),
@@ -530,10 +546,10 @@ pub fn page(ctx: &Ctx, b: &Block) -> String {
         for (d, n) in deps {
             let _ = writeln!(
                 s,
-                "- [{}]({}) · layer {} · {} reference{}",
+                "- [{}]({}) · {} · {} reference{}",
                 d.name,
                 rel(b, d),
-                d.layer,
+                d.place(),
                 n,
                 if n == 1 { "" } else { "s" }
             );
@@ -548,10 +564,10 @@ pub fn page(ctx: &Ctx, b: &Block) -> String {
         for (d, n) in users {
             let _ = writeln!(
                 s,
-                "- [{}]({}) · layer {} · {} reference{}",
+                "- [{}]({}) · {} · {} reference{}",
                 d.name,
                 rel(b, d),
-                d.layer,
+                d.place(),
                 n,
                 if n == 1 { "" } else { "s" }
             );
@@ -584,7 +600,7 @@ pub fn page(ctx: &Ctx, b: &Block) -> String {
                 s.push_str("Relations:\n\n");
                 for r in relations {
                     let target = r["target"].as_str().unwrap_or("?");
-                    let target_text = match ctx.block(&crate::model::prefix(target)) {
+                    let target_text = match ctx.block(&crate::model::entity_domain(ir, target)) {
                         Some(tb) if tb.domain != b.domain => {
                             format!("**{}** of [{}]({})", short(target), tb.name, rel(b, tb))
                         }
@@ -805,9 +821,17 @@ pub fn page(ctx: &Ctx, b: &Block) -> String {
     if kpis.is_empty() {
         s.push_str("No KPI of this block is in the catalogue yet.\n");
     } else {
+        let from = if b.in_pack() {
+            format!(
+                "the pack's catalogue, [packs/{0}/kpis.yaml]({SOURCE_BASE}packs/{0}/kpis.yaml)",
+                b.dir
+            )
+        } else {
+            "the [KPI catalogue](../../kpis-catalogue.md)".to_string()
+        };
         let _ = writeln!(
             s,
-            "{} KPI{} from the [KPI catalogue](../../kpis-catalogue.md). A gate must be zero for a variant of an architecture to count.\n",
+            "{} KPI{} from {from}. A gate must be zero for a variant of an architecture to count.\n",
             kpis.len(),
             if kpis.len() == 1 { "" } else { "s" }
         );
@@ -919,7 +943,15 @@ The status says where a KPI is computed: by `agenticspec kpi` on observed sessio
     s
 }
 
-pub fn sidebar_json(blocks: &[Block], architectures: &[String], catalog: &[String]) -> Value {
+/// The generated parts of the sidebar. `packs` and `fields` are the items of the categories Packs
+/// and Fields: one category per pack with its block pages, and the pages of each field.
+pub fn sidebar_json(
+    blocks: &[Block],
+    architectures: &[String],
+    catalog: &[String],
+    packs: Vec<Value>,
+    fields: Vec<Value>,
+) -> Value {
     let mut layers: Vec<Value> = Vec::new();
     let mut by: BTreeMap<u32, Vec<&Block>> = BTreeMap::new();
     for b in blocks {
@@ -938,5 +970,7 @@ pub fn sidebar_json(blocks: &[Block], architectures: &[String], catalog: &[Strin
         "blocks": layers,
         "architectures": architectures.iter().map(|a| format!("docs/architectures/{a}")).collect::<Vec<_>>(),
         "catalog": catalog.iter().map(|c| format!("docs/catalog/{c}")).collect::<Vec<_>>(),
+        "packs": packs,
+        "fields": fields,
     })
 }

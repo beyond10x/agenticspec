@@ -1,0 +1,611 @@
+domain: agentic.tracking.issue
+
+summary: >-
+  A piece of work or a problem somebody wrote down: opened by a principal, assigned to one, labelled,
+  closed with a resolution and reopened. An issue may become a task (`agentic.work`) and may be
+  linked to the change requests (`agentic.scm.change`) that fix it or relate to it. The block holds
+  no text, only the digests of the title and the body.
+
+naming:
+  wire: issue
+  display: Issue
+
+types:
+  - {name: agentic.tracking.issue.IssueId, kind: newtype, of: Uuid}
+  - {name: agentic.tracking.issue.IssueLinkId, kind: newtype, of: Uuid}
+
+  - name: agentic.tracking.issue.Label
+    kind: newtype
+    of: String
+    naming:
+      summary: A short tag that sorts issues, such as `defect` or `area/docs`.
+
+  - name: agentic.tracking.issue.Resolution
+    kind: enum
+    variants: [Resolved, Declined]
+    naming:
+      summary: Resolved means the work was done or the problem fixed; Declined means it will not be.
+
+  - name: agentic.tracking.issue.LinkKind
+    kind: enum
+    variants: [Fixes, RelatesTo]
+    naming:
+      summary: >-
+        Fixes means merging the change request resolves the issue; RelatesTo is a pointer only.
+
+entities:
+  - name: agentic.tracking.issue.Issue
+    naming:
+      summary: One issue, open or closed.
+    identity:
+      name: issue_id
+      type: agentic.tracking.issue.IssueId
+    fields:
+      - name: title
+        type: agentic.shared.Content
+      - name: body
+        type: agentic.shared.Content
+      - name: opened_by
+        type: agentic.shared.PrincipalId
+      - name: opened_at
+        type: Timestamp
+      - name: assignee
+        type: Optional<agentic.shared.PrincipalId>
+      - name: labels
+        type: List<agentic.tracking.issue.Label>
+      - name: task_id
+        type: Optional<agentic.shared.TaskId>
+        summary: The task the issue became, when work on it was asked for.
+      - name: closed_as
+        type: Optional<agentic.tracking.issue.Resolution>
+    relations:
+      - name: opener
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: opened_by
+      - name: assigned_to
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: assignee
+      - name: task
+        kind: references
+        target: agentic.work.Task
+        cardinality: one
+        via: task_id
+      - name: links
+        kind: owns
+        target: agentic.tracking.issue.IssueLink
+        cardinality: many
+        via: issue_id
+    lifecycle:
+      initial: Open
+      states: [Open, Closed]
+      terminal: []
+      transitions:
+        - name: close
+          from: [Open]
+          to: Closed
+        - name: reopen
+          from: [Closed]
+          to: Open
+
+  - name: agentic.tracking.issue.IssueLink
+    naming:
+      summary: A link from an issue to a change request.
+    identity:
+      name: link_id
+      type: agentic.tracking.issue.IssueLinkId
+    fields:
+      - name: issue_id
+        type: agentic.tracking.issue.IssueId
+      - name: change_request_id
+        type: agentic.scm.change.ChangeRequestId
+      - name: kind
+        type: agentic.tracking.issue.LinkKind
+      - name: linked_by
+        type: agentic.shared.PrincipalId
+      - name: linked_at
+        type: Timestamp
+    relations:
+      - name: change_request
+        kind: references
+        target: agentic.scm.change.ChangeRequest
+        cardinality: one
+        via: change_request_id
+      - name: linker
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: linked_by
+    lifecycle:
+      initial: Linked
+      states: [Linked, Unlinked]
+      terminal: [Unlinked]
+      transitions:
+        - name: unlink
+          from: [Linked]
+          to: Unlinked
+
+actors:
+  - name: agentic.tracking.issue.Reporter
+    naming:
+      display: Reporter
+      summary: A principal that opens issues and comments on them, a human or an agent.
+    may:
+      - agentic.tracking.issue.OpenIssue
+      - agentic.tracking.issue.LabelIssue
+      - agentic.tracking.issue.SetLabels
+      - agentic.tracking.issue.LinkChangeRequest
+      - agentic.tracking.issue.UnlinkChangeRequest
+      - agentic.tracking.issue.Issues
+      - agentic.tracking.issue.IssueLinks
+
+  - name: agentic.tracking.issue.Triager
+    naming:
+      display: Triager
+      summary: A principal that assigns, closes and reopens issues.
+    may:
+      - agentic.tracking.issue.AssignIssue
+      - agentic.tracking.issue.UnassignIssue
+      - agentic.tracking.issue.LabelIssue
+      - agentic.tracking.issue.SetLabels
+      - agentic.tracking.issue.CloseIssue
+      - agentic.tracking.issue.ReopenIssue
+      - agentic.tracking.issue.Issues
+      - agentic.tracking.issue.IssueLinks
+
+errors:
+  - name: agentic.tracking.issue.IssueExists
+    summary: An issue of this identity exists.
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+
+  - name: agentic.tracking.issue.IssueNotFound
+    summary: No issue of this identity exists.
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+
+  - name: agentic.tracking.issue.IssueNotOpen
+    summary: The issue is closed.
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+
+  - name: agentic.tracking.issue.IssueStateConflict
+    summary: The issue is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.tracking.issue.Issue.State}
+
+  - name: agentic.tracking.issue.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+
+  - name: agentic.tracking.issue.PrincipalNotActive
+    summary: The principal is retired; it takes no new issue.
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+
+  - name: agentic.tracking.issue.UnknownTask
+    summary: No task of this identity exists.
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+
+  - name: agentic.tracking.issue.UnknownChangeRequest
+    summary: No change request of this identity exists.
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+
+  - name: agentic.tracking.issue.LinkExists
+    summary: A link of this identity exists.
+    fields:
+      - {name: link_id, type: agentic.tracking.issue.IssueLinkId}
+
+  - name: agentic.tracking.issue.LinkNotFound
+    summary: No link of this identity exists.
+    fields:
+      - {name: link_id, type: agentic.tracking.issue.IssueLinkId}
+
+  - name: agentic.tracking.issue.LinkStateConflict
+    summary: The link is already removed.
+    fields:
+      - {name: state, type: agentic.tracking.issue.IssueLink.State}
+
+commands:
+  - name: agentic.tracking.issue.OpenIssue
+    naming:
+      wire: open-issue
+      display: Open an issue
+    input:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: title, type: agentic.shared.Content}
+      - {name: body, type: agentic.shared.Content}
+      - {name: opened_by, type: agentic.shared.PrincipalId}
+      - {name: labels, type: List<agentic.tracking.issue.Label>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: already-open
+        existing_instance: true
+        error: agentic.tracking.issue.IssueExists
+        payload:
+          agentic.tracking.issue.IssueExists: {issue_id: input.issue_id}
+      - name: unknown-opener
+        when_related: {via: input.opened_by, exists: false}
+        error: agentic.tracking.issue.UnknownPrincipal
+        payload:
+          agentic.tracking.issue.UnknownPrincipal: {principal_id: input.opened_by}
+      - name: unknown-task
+        when_related: {via: input.task_id, exists: false}
+        error: agentic.tracking.issue.UnknownTask
+        payload:
+          agentic.tracking.issue.UnknownTask: {task_id: input.task_id}
+      - name: opened
+        creates: agentic.tracking.issue.Issue
+        instance: issue_id
+        sets:
+          title: input.title
+          body: input.body
+          opened_by: input.opened_by
+          opened_at: input.at
+          labels: input.labels
+          task_id: input.task_id
+        emits: [agentic.tracking.issue.IssueOpened]
+        payload:
+          agentic.tracking.issue.IssueOpened:
+            issue_id: input.issue_id
+            opened_by: input.opened_by
+            labels: input.labels
+            task_id: input.task_id
+            at: input.at
+        summary: The issue is Open and assigned to nobody.
+
+  - name: agentic.tracking.issue.AssignIssue
+    naming:
+      wire: assign-issue
+      display: Assign an issue to a principal
+    input:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: assignee, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-issue
+        unknown_instance: true
+        error: agentic.tracking.issue.IssueNotFound
+        payload:
+          agentic.tracking.issue.IssueNotFound: {issue_id: input.issue_id}
+      - name: closed
+        when_subject:
+          predicate: state == Closed
+        error: agentic.tracking.issue.IssueNotOpen
+        payload:
+          agentic.tracking.issue.IssueNotOpen: {issue_id: input.issue_id}
+      - name: unknown-assignee
+        when_related: {via: input.assignee, exists: false}
+        error: agentic.tracking.issue.UnknownPrincipal
+        payload:
+          agentic.tracking.issue.UnknownPrincipal: {principal_id: input.assignee}
+      - name: assignee-retired
+        when_related: {via: input.assignee, predicate: state == Retired}
+        error: agentic.tracking.issue.PrincipalNotActive
+        payload:
+          agentic.tracking.issue.PrincipalNotActive: {principal_id: input.assignee}
+      - name: assigned
+        updates: agentic.tracking.issue.Issue
+        instance: issue_id
+        sets:
+          assignee: input.assignee
+        emits: [agentic.tracking.issue.IssueAssigned]
+        payload:
+          agentic.tracking.issue.IssueAssigned:
+            issue_id: input.issue_id
+            assignee: input.assignee
+            at: input.at
+        summary: The issue has this one assignee; an earlier one is replaced.
+
+  - name: agentic.tracking.issue.UnassignIssue
+    naming:
+      wire: unassign-issue
+      display: Take the assignee off an issue
+    input:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-issue
+        unknown_instance: true
+        error: agentic.tracking.issue.IssueNotFound
+        payload:
+          agentic.tracking.issue.IssueNotFound: {issue_id: input.issue_id}
+      - name: unassigned
+        updates: agentic.tracking.issue.Issue
+        instance: issue_id
+        sets:
+          assignee: {cleared: true}
+        emits: [agentic.tracking.issue.IssueUnassigned]
+        payload:
+          agentic.tracking.issue.IssueUnassigned:
+            issue_id: input.issue_id
+            at: input.at
+
+  - name: agentic.tracking.issue.LabelIssue
+    naming:
+      wire: label-issue
+      display: Add a label to an issue
+    input:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: label, type: agentic.tracking.issue.Label}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-issue
+        unknown_instance: true
+        error: agentic.tracking.issue.IssueNotFound
+        payload:
+          agentic.tracking.issue.IssueNotFound: {issue_id: input.issue_id}
+      - name: labelled
+        updates: agentic.tracking.issue.Issue
+        instance: issue_id
+        sets:
+          labels: {append: input.label}
+        emits: [agentic.tracking.issue.IssueLabelled]
+        payload:
+          agentic.tracking.issue.IssueLabelled:
+            issue_id: input.issue_id
+            label: input.label
+            at: input.at
+
+  - name: agentic.tracking.issue.SetLabels
+    naming:
+      wire: set-labels
+      display: Replace the labels of an issue
+      summary: Replaces the whole list; this is how a label is taken off.
+    input:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: labels, type: List<agentic.tracking.issue.Label>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-issue
+        unknown_instance: true
+        error: agentic.tracking.issue.IssueNotFound
+        payload:
+          agentic.tracking.issue.IssueNotFound: {issue_id: input.issue_id}
+      - name: set
+        updates: agentic.tracking.issue.Issue
+        instance: issue_id
+        sets:
+          labels: input.labels
+        emits: [agentic.tracking.issue.IssueLabelsSet]
+        payload:
+          agentic.tracking.issue.IssueLabelsSet:
+            issue_id: input.issue_id
+            labels: input.labels
+            at: input.at
+
+  - name: agentic.tracking.issue.CloseIssue
+    naming:
+      wire: close-issue
+      display: Close an issue
+    input:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: resolution, type: agentic.tracking.issue.Resolution}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-issue
+        unknown_instance: true
+        error: agentic.tracking.issue.IssueNotFound
+        payload:
+          agentic.tracking.issue.IssueNotFound: {issue_id: input.issue_id}
+      - name: closed
+        moves: agentic.tracking.issue.Issue.close
+        instance: issue_id
+        sets:
+          closed_as: input.resolution
+        emits: [agentic.tracking.issue.IssueClosed]
+        payload:
+          agentic.tracking.issue.IssueClosed:
+            issue_id: input.issue_id
+            resolution: input.resolution
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.tracking.issue.IssueStateConflict
+        payload:
+          agentic.tracking.issue.IssueStateConflict: {state: {subject: state}}
+
+  - name: agentic.tracking.issue.ReopenIssue
+    naming:
+      wire: reopen-issue
+      display: Reopen an issue
+    input:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-issue
+        unknown_instance: true
+        error: agentic.tracking.issue.IssueNotFound
+        payload:
+          agentic.tracking.issue.IssueNotFound: {issue_id: input.issue_id}
+      - name: reopened
+        moves: agentic.tracking.issue.Issue.reopen
+        instance: issue_id
+        sets:
+          closed_as: {cleared: true}
+        emits: [agentic.tracking.issue.IssueReopened]
+        payload:
+          agentic.tracking.issue.IssueReopened:
+            issue_id: input.issue_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.tracking.issue.IssueStateConflict
+        payload:
+          agentic.tracking.issue.IssueStateConflict: {state: {subject: state}}
+
+  - name: agentic.tracking.issue.LinkChangeRequest
+    naming:
+      wire: link-change-request
+      display: Link an issue to a change request
+    input:
+      - {name: link_id, type: agentic.tracking.issue.IssueLinkId}
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: kind, type: agentic.tracking.issue.LinkKind}
+      - {name: linked_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: already-linked
+        existing_instance: true
+        error: agentic.tracking.issue.LinkExists
+        payload:
+          agentic.tracking.issue.LinkExists: {link_id: input.link_id}
+      - name: no-such-issue
+        when_related: {via: input.issue_id, exists: false}
+        error: agentic.tracking.issue.IssueNotFound
+        payload:
+          agentic.tracking.issue.IssueNotFound: {issue_id: input.issue_id}
+      - name: unknown-change-request
+        when_related: {via: input.change_request_id, exists: false}
+        error: agentic.tracking.issue.UnknownChangeRequest
+        payload:
+          agentic.tracking.issue.UnknownChangeRequest: {change_request_id: input.change_request_id}
+      - name: unknown-linker
+        when_related: {via: input.linked_by, exists: false}
+        error: agentic.tracking.issue.UnknownPrincipal
+        payload:
+          agentic.tracking.issue.UnknownPrincipal: {principal_id: input.linked_by}
+      # UNMAPPED: whether merging a change request that Fixes an issue closes the issue by itself
+      # is the forge's behaviour; the draft leaves it to an explicit CloseIssue. Open question.
+      - name: linked
+        creates: agentic.tracking.issue.IssueLink
+        instance: link_id
+        sets:
+          issue_id: input.issue_id
+          change_request_id: input.change_request_id
+          kind: input.kind
+          linked_by: input.linked_by
+          linked_at: input.at
+        emits: [agentic.tracking.issue.ChangeRequestLinked]
+        payload:
+          agentic.tracking.issue.ChangeRequestLinked:
+            link_id: input.link_id
+            issue_id: input.issue_id
+            change_request_id: input.change_request_id
+            kind: input.kind
+            at: input.at
+
+  - name: agentic.tracking.issue.UnlinkChangeRequest
+    naming:
+      wire: unlink-change-request
+      display: Remove a link from an issue
+    input:
+      - {name: link_id, type: agentic.tracking.issue.IssueLinkId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-link
+        unknown_instance: true
+        error: agentic.tracking.issue.LinkNotFound
+        payload:
+          agentic.tracking.issue.LinkNotFound: {link_id: input.link_id}
+      - name: unlinked
+        moves: agentic.tracking.issue.IssueLink.unlink
+        instance: link_id
+        emits: [agentic.tracking.issue.ChangeRequestUnlinked]
+        payload:
+          agentic.tracking.issue.ChangeRequestUnlinked:
+            link_id: input.link_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.tracking.issue.LinkStateConflict
+        payload:
+          agentic.tracking.issue.LinkStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.tracking.issue.IssueOpened
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: opened_by, type: agentic.shared.PrincipalId}
+      - {name: labels, type: List<agentic.tracking.issue.Label>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.issue.IssueAssigned
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: assignee, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.issue.IssueUnassigned
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.issue.IssueLabelled
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: label, type: agentic.tracking.issue.Label}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.issue.IssueLabelsSet
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: labels, type: List<agentic.tracking.issue.Label>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.issue.IssueClosed
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: resolution, type: agentic.tracking.issue.Resolution}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.issue.IssueReopened
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.issue.ChangeRequestLinked
+    fields:
+      - {name: link_id, type: agentic.tracking.issue.IssueLinkId}
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: kind, type: agentic.tracking.issue.LinkKind}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.tracking.issue.ChangeRequestUnlinked
+    fields:
+      - {name: link_id, type: agentic.tracking.issue.IssueLinkId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.tracking.issue.Issues
+    source: agentic.tracking.issue.Issue
+    consistency: read_your_writes
+    fields:
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: title, type: agentic.shared.Content}
+      - {name: body, type: agentic.shared.Content}
+      - {name: opened_by, type: agentic.shared.PrincipalId}
+      - {name: opened_at, type: Timestamp}
+      - {name: assignee, type: Optional<agentic.shared.PrincipalId>}
+      - {name: labels, type: List<agentic.tracking.issue.Label>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: closed_as, type: Optional<agentic.tracking.issue.Resolution>}
+      - {name: state, type: agentic.tracking.issue.Issue.State}
+    naming:
+      wire: issues
+      display: Issues
+
+  - name: agentic.tracking.issue.IssueLinks
+    source: agentic.tracking.issue.IssueLink
+    consistency: read_your_writes
+    fields:
+      - {name: link_id, type: agentic.tracking.issue.IssueLinkId}
+      - {name: issue_id, type: agentic.tracking.issue.IssueId}
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: kind, type: agentic.tracking.issue.LinkKind}
+      - {name: linked_by, type: agentic.shared.PrincipalId}
+      - {name: linked_at, type: Timestamp}
+      - {name: state, type: agentic.tracking.issue.IssueLink.State}
+    naming:
+      wire: issue-links
+      display: Issue links

@@ -1,0 +1,849 @@
+domain: agentic.scm.change
+
+summary: >-
+  A change request: the ask to bring the revisions of a source reference into a target reference of
+  one repository, what a forge calls a merge request or a pull request. It is opened at a head
+  revision; every push moves the head. Checks and reviews are about one head: a check verdict or a
+  review for an older head is refused, and an approval stays bound to the head it was given for. A
+  merge names the head it saw and the authority grant it acts under, and is refused unless that is
+  still the head, the head is approved, its checks passed and the grant is active. A change request
+  may carry a proposal of a workspace (`agentic.workspace`) and deliver a task (`agentic.work`).
+
+naming:
+  wire: change
+  display: Change request
+
+types:
+  - {name: agentic.scm.change.ChangeRequestId, kind: newtype, of: Uuid}
+  - {name: agentic.scm.change.ReviewId, kind: newtype, of: Uuid}
+
+  - name: agentic.scm.change.ChecksVerdict
+    kind: enum
+    variants: [Pending, Passed, Failed]
+    naming:
+      summary: >-
+        The combined verdict of the checks a merge requires, for the current head. Pending until
+        they all completed; a push makes it Pending again.
+
+  - name: agentic.scm.change.ReviewVerdict
+    kind: enum
+    variants: [Approve, RequestChanges, Comment]
+    naming:
+      summary: >-
+        Approve binds an approval to the reviewed head; RequestChanges and Comment are recorded and
+        approve nothing.
+
+entities:
+  - name: agentic.scm.change.ChangeRequest
+    naming:
+      summary: >-
+        The ask to merge a source reference into a target reference, at a head revision, with the
+        checks verdict and the approval of that head.
+    identity:
+      name: change_request_id
+      type: agentic.scm.change.ChangeRequestId
+    fields:
+      - name: repository_id
+        type: agentic.scm.repository.RepositoryId
+      - name: source_reference
+        type: agentic.scm.repository.ReferenceName
+      - name: target_reference
+        type: agentic.scm.repository.ReferenceName
+      - name: head
+        type: agentic.workspace.Revision
+        summary: The revision the source reference pointed at when last pushed.
+      - name: title
+        type: agentic.shared.Content
+      - name: opened_by
+        type: agentic.shared.PrincipalId
+      - name: opened_at
+        type: Timestamp
+      - name: checks
+        type: agentic.scm.change.ChecksVerdict
+      - name: approved_head
+        type: Optional<agentic.workspace.Revision>
+        summary: The head the last approval was given for; a later push leaves it on the older head.
+      - name: approved_by
+        type: Optional<agentic.shared.PrincipalId>
+      - name: proposal_id
+        type: Optional<agentic.shared.ProposalId>
+        summary: The workspace proposal this change request carries to the forge, when it came from one.
+      - name: task_id
+        type: Optional<agentic.shared.TaskId>
+        summary: The task the change delivers, when it delivers one.
+      - name: merged_revision
+        type: Optional<agentic.workspace.Revision>
+      - name: merged_by
+        type: Optional<agentic.shared.PrincipalId>
+      - name: merged_under
+        type: Optional<agentic.shared.GrantId>
+    relations:
+      - name: repository
+        kind: references
+        target: agentic.scm.repository.Repository
+        cardinality: one
+        via: repository_id
+      - name: opener
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: opened_by
+      - name: approver
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: approved_by
+      - name: merger
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: merged_by
+      - name: proposal
+        kind: references
+        target: agentic.workspace.Proposal
+        cardinality: one
+        via: proposal_id
+      - name: task
+        kind: references
+        target: agentic.work.Task
+        cardinality: one
+        via: task_id
+      - name: grant
+        kind: references
+        target: agentic.authority.Grant
+        cardinality: one
+        via: merged_under
+      - name: reviews
+        kind: owns
+        target: agentic.scm.change.Review
+        cardinality: many
+        via: change_request_id
+    # UNMAPPED: which checks a merge requires, and how their outcomes combine into `checks`, is a
+    # rule of the repository the draft does not hold; the verdict is recorded as given. How many
+    # approvals a merge needs (here: one, the last) is open too. Open questions for the owner.
+    lifecycle:
+      initial: Open
+      states: [Open, Merged, Closed]
+      terminal: [Merged]
+      transitions:
+        - name: merge
+          from: [Open]
+          to: Merged
+        - name: close
+          from: [Open]
+          to: Closed
+        - name: reopen
+          from: [Closed]
+          to: Open
+
+  - name: agentic.scm.change.Review
+    naming:
+      summary: One principal's review of one head of a change request.
+    identity:
+      name: review_id
+      type: agentic.scm.change.ReviewId
+    fields:
+      - name: change_request_id
+        type: agentic.scm.change.ChangeRequestId
+      - name: reviewer
+        type: agentic.shared.PrincipalId
+      - name: head
+        type: agentic.workspace.Revision
+      - name: verdict
+        type: agentic.scm.change.ReviewVerdict
+      - name: body
+        type: agentic.shared.Content
+      - name: submitted_at
+        type: Timestamp
+    relations:
+      - name: reviewer_principal
+        kind: references
+        target: agentic.principal.Principal
+        cardinality: one
+        via: reviewer
+    lifecycle:
+      initial: Submitted
+      states: [Submitted]
+      terminal: [Submitted]
+
+actors:
+  - name: agentic.scm.change.Contributor
+    naming:
+      display: Contributor
+      summary: A principal that opens change requests and pushes to them, a human or an agent.
+    may:
+      - agentic.scm.change.OpenChangeRequest
+      - agentic.scm.change.PushHead
+      - agentic.scm.change.CloseChangeRequest
+      - agentic.scm.change.ReopenChangeRequest
+      - agentic.scm.change.ChangeRequests
+      - agentic.scm.change.Reviews
+
+  - name: agentic.scm.change.Reviewer
+    naming:
+      display: Reviewer
+      summary: A principal that reviews and approves heads.
+    may:
+      - agentic.scm.change.SubmitReview
+      - agentic.scm.change.ApproveHead
+      - agentic.scm.change.ChangeRequests
+      - agentic.scm.change.Reviews
+
+  - name: agentic.scm.change.Merger
+    naming:
+      display: Merger
+      summary: A principal that merges change requests under a grant, a human or an auto-merger.
+    may:
+      - agentic.scm.change.MergeChangeRequest
+      - agentic.scm.change.CloseChangeRequest
+      - agentic.scm.change.ChangeRequests
+      - agentic.scm.change.Reviews
+
+  - name: agentic.scm.change.CheckReporter
+    naming:
+      display: Check reporter
+      summary: What combines the check runs of a head into the change request's verdict.
+    may:
+      - agentic.scm.change.RecordChecks
+      - agentic.scm.change.ChangeRequests
+
+errors:
+  - name: agentic.scm.change.ChangeRequestExists
+    summary: A change request of this identity exists.
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+
+  - name: agentic.scm.change.ChangeRequestNotFound
+    summary: No change request of this identity exists.
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+
+  - name: agentic.scm.change.ChangeRequestNotOpen
+    summary: The change request is merged or closed.
+    fields:
+      - {name: state, type: agentic.scm.change.ChangeRequest.State}
+
+  - name: agentic.scm.change.ChangeRequestStateConflict
+    summary: The change request is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.scm.change.ChangeRequest.State}
+
+  - name: agentic.scm.change.UnknownRepository
+    summary: No repository of this identity exists.
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+
+  - name: agentic.scm.change.RepositoryArchived
+    summary: The repository is archived; it takes no new change request.
+    fields:
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+
+  - name: agentic.scm.change.UnknownPrincipal
+    summary: No principal of this identity is registered.
+    fields:
+      - {name: principal_id, type: agentic.shared.PrincipalId}
+
+  - name: agentic.scm.change.UnknownProposal
+    summary: No workspace proposal of this identity exists.
+    fields:
+      - {name: proposal_id, type: agentic.shared.ProposalId}
+
+  - name: agentic.scm.change.UnknownTask
+    summary: No task of this identity exists.
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+
+  - name: agentic.scm.change.StaleHead
+    summary: >-
+      The request names a head that is no longer the change request's head: someone pushed since.
+      A check verdict, a review or a merge is about one head only.
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: head, type: agentic.workspace.Revision}
+
+  - name: agentic.scm.change.NotApproved
+    summary: No approval was given for any head of the change request.
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+
+  - name: agentic.scm.change.ApprovalForOtherHead
+    summary: >-
+      The approval was given for another head than the one to merge; a push after the approval
+      needs a new approval.
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: approved_head, type: Optional<agentic.workspace.Revision>}
+
+  - name: agentic.scm.change.ChecksNotPassed
+    summary: The checks of the current head are pending or failed.
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: checks, type: agentic.scm.change.ChecksVerdict}
+
+  - name: agentic.scm.change.UnknownGrant
+    summary: No authority grant of this identity exists.
+    fields:
+      - {name: grant_id, type: agentic.shared.GrantId}
+
+  - name: agentic.scm.change.GrantNotActive
+    summary: The authority grant the merge names is revoked.
+    fields:
+      - {name: grant_id, type: agentic.shared.GrantId}
+
+  - name: agentic.scm.change.ReviewNotFound
+    summary: No review of this identity exists.
+    fields:
+      - {name: review_id, type: agentic.scm.change.ReviewId}
+
+  - name: agentic.scm.change.ReviewNotApproving
+    summary: The review is not an approval of this head of this change request.
+    fields:
+      - {name: review_id, type: agentic.scm.change.ReviewId}
+
+  - name: agentic.scm.change.ReviewExists
+    summary: A review of this identity exists.
+    fields:
+      - {name: review_id, type: agentic.scm.change.ReviewId}
+
+commands:
+  - name: agentic.scm.change.OpenChangeRequest
+    naming:
+      wire: open-change-request
+      display: Open a change request
+    input:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: source_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: target_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: title, type: agentic.shared.Content}
+      - {name: opened_by, type: agentic.shared.PrincipalId}
+      - {name: proposal_id, type: Optional<agentic.shared.ProposalId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: already-open
+        existing_instance: true
+        error: agentic.scm.change.ChangeRequestExists
+        payload:
+          agentic.scm.change.ChangeRequestExists: {change_request_id: input.change_request_id}
+      - name: unknown-repository
+        when_related: {via: input.repository_id, exists: false}
+        error: agentic.scm.change.UnknownRepository
+        payload:
+          agentic.scm.change.UnknownRepository: {repository_id: input.repository_id}
+      - name: unknown-opener
+        when_related: {via: input.opened_by, exists: false}
+        error: agentic.scm.change.UnknownPrincipal
+        payload:
+          agentic.scm.change.UnknownPrincipal: {principal_id: input.opened_by}
+      - name: unknown-proposal
+        when_related: {via: input.proposal_id, exists: false}
+        error: agentic.scm.change.UnknownProposal
+        payload:
+          agentic.scm.change.UnknownProposal: {proposal_id: input.proposal_id}
+      - name: unknown-task
+        when_related: {via: input.task_id, exists: false}
+        error: agentic.scm.change.UnknownTask
+        payload:
+          agentic.scm.change.UnknownTask: {task_id: input.task_id}
+      - name: archived
+        when_related: {via: input.repository_id, predicate: state == Archived}
+        error: agentic.scm.change.RepositoryArchived
+        payload:
+          agentic.scm.change.RepositoryArchived: {repository_id: input.repository_id}
+      # UNMAPPED: that the source and target references exist in the repository and differ is a
+      # rule over Reference rows by name; the draft does not enforce it. Open question for the owner.
+      - name: opened
+        creates: agentic.scm.change.ChangeRequest
+        instance: change_request_id
+        sets:
+          repository_id: input.repository_id
+          source_reference: input.source_reference
+          target_reference: input.target_reference
+          head: input.head
+          title: input.title
+          opened_by: input.opened_by
+          opened_at: input.at
+          checks: Pending
+          approved_head: {cleared: true}
+          approved_by: {cleared: true}
+          proposal_id: input.proposal_id
+          task_id: input.task_id
+        emits: [agentic.scm.change.ChangeRequestOpened]
+        payload:
+          agentic.scm.change.ChangeRequestOpened:
+            change_request_id: input.change_request_id
+            repository_id: input.repository_id
+            source_reference: input.source_reference
+            target_reference: input.target_reference
+            head: input.head
+            opened_by: input.opened_by
+            proposal_id: input.proposal_id
+            task_id: input.task_id
+            at: input.at
+        summary: The change request is Open at its head, with checks Pending and no approval.
+
+  - name: agentic.scm.change.PushHead
+    naming:
+      wire: push-head
+      display: Push a new head to a change request
+    input:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-change-request
+        unknown_instance: true
+        error: agentic.scm.change.ChangeRequestNotFound
+        payload:
+          agentic.scm.change.ChangeRequestNotFound: {change_request_id: input.change_request_id}
+      - name: not-open
+        when_subject:
+          predicate: state != Open
+        error: agentic.scm.change.ChangeRequestNotOpen
+        payload:
+          agentic.scm.change.ChangeRequestNotOpen: {state: {subject: state}}
+      - name: pushed
+        updates: agentic.scm.change.ChangeRequest
+        instance: change_request_id
+        sets:
+          head: input.head
+          checks: Pending
+        emits: [agentic.scm.change.HeadPushed]
+        payload:
+          agentic.scm.change.HeadPushed:
+            change_request_id: input.change_request_id
+            from: {subject: head}
+            to: input.head
+            at: input.at
+        summary: >-
+          The head moves and its checks are Pending again. An approval stays where it was, on the
+          older head, so it no longer allows a merge.
+
+  - name: agentic.scm.change.RecordChecks
+    naming:
+      wire: record-checks
+      display: Record the checks verdict of a head
+    input:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: verdict, type: agentic.scm.change.ChecksVerdict}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-change-request
+        unknown_instance: true
+        error: agentic.scm.change.ChangeRequestNotFound
+        payload:
+          agentic.scm.change.ChangeRequestNotFound: {change_request_id: input.change_request_id}
+      - name: not-open
+        when_subject:
+          predicate: state != Open
+        error: agentic.scm.change.ChangeRequestNotOpen
+        payload:
+          agentic.scm.change.ChangeRequestNotOpen: {state: {subject: state}}
+      - name: stale-head
+        when_subject:
+          predicate: head != input.head
+        error: agentic.scm.change.StaleHead
+        payload:
+          agentic.scm.change.StaleHead:
+            change_request_id: input.change_request_id
+            head: {subject: head}
+      - name: recorded
+        updates: agentic.scm.change.ChangeRequest
+        instance: change_request_id
+        sets:
+          checks: input.verdict
+        emits: [agentic.scm.change.ChecksRecorded]
+        payload:
+          agentic.scm.change.ChecksRecorded:
+            change_request_id: input.change_request_id
+            head: input.head
+            verdict: input.verdict
+            at: input.at
+
+  - name: agentic.scm.change.SubmitReview
+    naming:
+      wire: submit-review
+      display: Submit a review of a head
+    input:
+      - {name: review_id, type: agentic.scm.change.ReviewId}
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: reviewer, type: agentic.shared.PrincipalId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: verdict, type: agentic.scm.change.ReviewVerdict}
+      - {name: body, type: agentic.shared.Content}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: already-submitted
+        existing_instance: true
+        error: agentic.scm.change.ReviewExists
+        payload:
+          agentic.scm.change.ReviewExists: {review_id: input.review_id}
+      - name: no-such-change-request
+        when_related: {via: input.change_request_id, exists: false}
+        error: agentic.scm.change.ChangeRequestNotFound
+        payload:
+          agentic.scm.change.ChangeRequestNotFound: {change_request_id: input.change_request_id}
+      - name: unknown-reviewer
+        when_related: {via: input.reviewer, exists: false}
+        error: agentic.scm.change.UnknownPrincipal
+        payload:
+          agentic.scm.change.UnknownPrincipal: {principal_id: input.reviewer}
+      - name: not-open
+        when_related: {via: input.change_request_id, predicate: state != Open}
+        error: agentic.scm.change.ChangeRequestNotOpen
+        payload:
+          agentic.scm.change.ChangeRequestNotOpen:
+            state: {related: {via: input.change_request_id, field: state}}
+      - name: stale-head
+        when_related: {via: input.change_request_id, predicate: head != input.head}
+        error: agentic.scm.change.StaleHead
+        payload:
+          agentic.scm.change.StaleHead:
+            change_request_id: input.change_request_id
+            head: {related: {via: input.change_request_id, field: head}}
+      - name: reviewed
+        creates: agentic.scm.change.Review
+        instance: review_id
+        sets:
+          change_request_id: input.change_request_id
+          reviewer: input.reviewer
+          head: input.head
+          verdict: input.verdict
+          body: input.body
+          submitted_at: input.at
+        emits: [agentic.scm.change.ReviewSubmitted]
+        payload:
+          agentic.scm.change.ReviewSubmitted:
+            review_id: input.review_id
+            change_request_id: input.change_request_id
+            reviewer: input.reviewer
+            head: input.head
+            verdict: input.verdict
+            at: input.at
+        summary: The review is recorded. A review that approves binds its head through ApproveHead.
+
+  - name: agentic.scm.change.ApproveHead
+    naming:
+      wire: approve-head
+      display: Approve a head on the strength of a review
+      summary: >-
+        Binds the change request's approval to the head an approving review of it was given for.
+        The approval stays on that head; a later push leaves it behind.
+    input:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: review_id, type: agentic.scm.change.ReviewId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-change-request
+        unknown_instance: true
+        error: agentic.scm.change.ChangeRequestNotFound
+        payload:
+          agentic.scm.change.ChangeRequestNotFound: {change_request_id: input.change_request_id}
+      - name: not-open
+        when_subject:
+          predicate: state != Open
+        error: agentic.scm.change.ChangeRequestNotOpen
+        payload:
+          agentic.scm.change.ChangeRequestNotOpen: {state: {subject: state}}
+      - name: stale-head
+        when_subject:
+          predicate: head != input.head
+        error: agentic.scm.change.StaleHead
+        payload:
+          agentic.scm.change.StaleHead:
+            change_request_id: input.change_request_id
+            head: {subject: head}
+      - name: no-such-review
+        when_related: {via: input.review_id, exists: false}
+        error: agentic.scm.change.ReviewNotFound
+        payload:
+          agentic.scm.change.ReviewNotFound: {review_id: input.review_id}
+      - name: review-of-other-change-request
+        when_related: {via: input.review_id, predicate: change_request_id != input.change_request_id}
+        error: agentic.scm.change.ReviewNotApproving
+        payload:
+          agentic.scm.change.ReviewNotApproving: {review_id: input.review_id}
+      - name: review-of-other-head
+        when_related: {via: input.review_id, predicate: head != input.head}
+        error: agentic.scm.change.ReviewNotApproving
+        payload:
+          agentic.scm.change.ReviewNotApproving: {review_id: input.review_id}
+      - name: review-not-approving
+        when_related: {via: input.review_id, predicate: verdict != Approve}
+        error: agentic.scm.change.ReviewNotApproving
+        payload:
+          agentic.scm.change.ReviewNotApproving: {review_id: input.review_id}
+      - name: approved
+        updates: agentic.scm.change.ChangeRequest
+        instance: change_request_id
+        sets:
+          approved_head: input.head
+          approved_by: {related: {via: input.review_id, field: reviewer}}
+        emits: [agentic.scm.change.HeadApproved]
+        payload:
+          agentic.scm.change.HeadApproved:
+            change_request_id: input.change_request_id
+            review_id: input.review_id
+            head: input.head
+            approved_by: {related: {via: input.review_id, field: reviewer}}
+            at: input.at
+
+  - name: agentic.scm.change.MergeChangeRequest
+    naming:
+      wire: merge-change-request
+      display: Merge a change request
+      summary: >-
+        Brings the head into the target reference. Refused unless the named head is still the head,
+        an approval was given for exactly that head, its checks passed, and the grant the merger acts
+        under is active.
+    input:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: merged_revision, type: agentic.workspace.Revision}
+      - {name: merged_by, type: agentic.shared.PrincipalId}
+      - {name: merged_under, type: agentic.shared.GrantId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-change-request
+        unknown_instance: true
+        error: agentic.scm.change.ChangeRequestNotFound
+        payload:
+          agentic.scm.change.ChangeRequestNotFound: {change_request_id: input.change_request_id}
+      - name: not-open
+        when_subject:
+          predicate: state != Open
+        error: agentic.scm.change.ChangeRequestNotOpen
+        payload:
+          agentic.scm.change.ChangeRequestNotOpen: {state: {subject: state}}
+      - name: stale-head
+        when_subject:
+          predicate: head != input.head
+        error: agentic.scm.change.StaleHead
+        payload:
+          agentic.scm.change.StaleHead:
+            change_request_id: input.change_request_id
+            head: {subject: head}
+      - name: not-approved
+        when_subject:
+          predicate: not defined(approved_head)
+        error: agentic.scm.change.NotApproved
+        payload:
+          agentic.scm.change.NotApproved: {change_request_id: input.change_request_id}
+      - name: approval-for-other-head
+        when_subject:
+          predicate: approved_head != input.head
+        error: agentic.scm.change.ApprovalForOtherHead
+        payload:
+          agentic.scm.change.ApprovalForOtherHead:
+            change_request_id: input.change_request_id
+            approved_head: {subject: approved_head}
+      - name: checks-not-passed
+        when_subject:
+          predicate: checks != Passed
+        error: agentic.scm.change.ChecksNotPassed
+        payload:
+          agentic.scm.change.ChecksNotPassed:
+            change_request_id: input.change_request_id
+            checks: {subject: checks}
+      # UNMAPPED: that `merged_by` is a registered principal is not checked here: ESS 0.99.2 refuses a
+      # second related row (the principal beside the grant) next to the subject guards above as
+      # ESS-COMMAND-004. The caller is the merger; its binding proves who it is.
+      - name: unknown-grant
+        when_related: {via: input.merged_under, exists: false}
+        error: agentic.scm.change.UnknownGrant
+        payload:
+          agentic.scm.change.UnknownGrant: {grant_id: input.merged_under}
+      - name: grant-not-active
+        when_related: {via: input.merged_under, predicate: state != Active}
+        error: agentic.scm.change.GrantNotActive
+        payload:
+          agentic.scm.change.GrantNotActive: {grant_id: input.merged_under}
+      # UNMAPPED: that the grant is the merger's own (its grantee is `merged_by`, or the agent
+      # revision acting for it) and covers this repository (its scope) is decided by the authority
+      # evaluator; the draft only requires an active grant. Open question for the owner.
+      - name: merged
+        moves: agentic.scm.change.ChangeRequest.merge
+        instance: change_request_id
+        sets:
+          merged_revision: input.merged_revision
+          merged_by: input.merged_by
+          merged_under: input.merged_under
+        emits: [agentic.scm.change.ChangeRequestMerged]
+        payload:
+          agentic.scm.change.ChangeRequestMerged:
+            change_request_id: input.change_request_id
+            repository_id: {subject: repository_id}
+            target_reference: {subject: target_reference}
+            head: input.head
+            merged_revision: input.merged_revision
+            merged_by: input.merged_by
+            merged_under: input.merged_under
+            at: input.at
+        summary: >-
+          The change request is Merged. Moving the target reference is the repository's
+          MoveReference; merging a carried proposal is the workspace's MergeProposal.
+
+  - name: agentic.scm.change.CloseChangeRequest
+    naming:
+      wire: close-change-request
+      display: Close a change request without merging
+    input:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-change-request
+        unknown_instance: true
+        error: agentic.scm.change.ChangeRequestNotFound
+        payload:
+          agentic.scm.change.ChangeRequestNotFound: {change_request_id: input.change_request_id}
+      - name: closed
+        moves: agentic.scm.change.ChangeRequest.close
+        instance: change_request_id
+        emits: [agentic.scm.change.ChangeRequestClosed]
+        payload:
+          agentic.scm.change.ChangeRequestClosed:
+            change_request_id: input.change_request_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.change.ChangeRequestStateConflict
+        payload:
+          agentic.scm.change.ChangeRequestStateConflict: {state: {subject: state}}
+
+  - name: agentic.scm.change.ReopenChangeRequest
+    naming:
+      wire: reopen-change-request
+      display: Reopen a closed change request
+    input:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-change-request
+        unknown_instance: true
+        error: agentic.scm.change.ChangeRequestNotFound
+        payload:
+          agentic.scm.change.ChangeRequestNotFound: {change_request_id: input.change_request_id}
+      - name: reopened
+        moves: agentic.scm.change.ChangeRequest.reopen
+        instance: change_request_id
+        emits: [agentic.scm.change.ChangeRequestReopened]
+        payload:
+          agentic.scm.change.ChangeRequestReopened:
+            change_request_id: input.change_request_id
+            at: input.at
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.scm.change.ChangeRequestStateConflict
+        payload:
+          agentic.scm.change.ChangeRequestStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.scm.change.ChangeRequestOpened
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: source_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: target_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: opened_by, type: agentic.shared.PrincipalId}
+      - {name: proposal_id, type: Optional<agentic.shared.ProposalId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.change.HeadPushed
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: from, type: agentic.workspace.Revision}
+      - {name: to, type: agentic.workspace.Revision}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.change.ChecksRecorded
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: verdict, type: agentic.scm.change.ChecksVerdict}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.change.ReviewSubmitted
+    fields:
+      - {name: review_id, type: agentic.scm.change.ReviewId}
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: reviewer, type: agentic.shared.PrincipalId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: verdict, type: agentic.scm.change.ReviewVerdict}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.change.HeadApproved
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: review_id, type: agentic.scm.change.ReviewId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: approved_by, type: agentic.shared.PrincipalId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.change.ChangeRequestMerged
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: target_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: merged_revision, type: agentic.workspace.Revision}
+      - {name: merged_by, type: agentic.shared.PrincipalId}
+      - {name: merged_under, type: agentic.shared.GrantId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.change.ChangeRequestClosed
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.scm.change.ChangeRequestReopened
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agentic.scm.change.ChangeRequests
+    source: agentic.scm.change.ChangeRequest
+    consistency: read_your_writes
+    fields:
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: repository_id, type: agentic.scm.repository.RepositoryId}
+      - {name: source_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: target_reference, type: agentic.scm.repository.ReferenceName}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: title, type: agentic.shared.Content}
+      - {name: opened_by, type: agentic.shared.PrincipalId}
+      - {name: opened_at, type: Timestamp}
+      - {name: checks, type: agentic.scm.change.ChecksVerdict}
+      - {name: approved_head, type: Optional<agentic.workspace.Revision>}
+      - {name: approved_by, type: Optional<agentic.shared.PrincipalId>}
+      - {name: proposal_id, type: Optional<agentic.shared.ProposalId>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: merged_revision, type: Optional<agentic.workspace.Revision>}
+      - {name: merged_by, type: Optional<agentic.shared.PrincipalId>}
+      - {name: merged_under, type: Optional<agentic.shared.GrantId>}
+      - {name: state, type: agentic.scm.change.ChangeRequest.State}
+    naming:
+      wire: change-requests
+      display: Change requests
+
+  - name: agentic.scm.change.Reviews
+    source: agentic.scm.change.Review
+    consistency: read_your_writes
+    fields:
+      - {name: review_id, type: agentic.scm.change.ReviewId}
+      - {name: change_request_id, type: agentic.scm.change.ChangeRequestId}
+      - {name: reviewer, type: agentic.shared.PrincipalId}
+      - {name: head, type: agentic.workspace.Revision}
+      - {name: verdict, type: agentic.scm.change.ReviewVerdict}
+      - {name: body, type: agentic.shared.Content}
+      - {name: submitted_at, type: Timestamp}
+      - {name: state, type: agentic.scm.change.Review.State}
+    naming:
+      wire: reviews
+      display: Reviews
