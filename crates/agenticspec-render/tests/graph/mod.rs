@@ -2,7 +2,7 @@
 //! carry the same thing into one part share one label, and the page lists every part and link in
 //! tables beside the graph. Inputs: every document under `architectures/` and the 37-part fixture.
 
-use agenticspec_render::page;
+use agenticspec_render::architecture::page;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

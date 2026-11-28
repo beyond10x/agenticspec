@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     std::fs::write(
         &out,
-        agenticspec_render::page(&architecture, result.as_ref()),
+        agenticspec_render::architecture::page(&architecture, result.as_ref()),
     )?;
     println!("{}", out.display());
     Ok(())

@@ -1,18 +1,18 @@
-//! The architecture as an SVG graph, laid out deterministically.
+//! A page's graph as an SVG, laid out deterministically.
 //!
-//! Parts sit in rows by block layer. Between two rows lies a label row, where every edge that
-//! crosses it passes through an item of its own width: its label, a channel card, or a narrow
-//! gap. Items are ordered by barycentre sweeps and placed by isotonic regression, so no two items
-//! of a row overlap and every edge label has the room its text needs.
+//! Nodes sit in rows by rank. Between two rows lies a label row, where every edge that crosses it
+//! passes through an item of its own width: its label, a node drawn on the edge, or a narrow gap.
+//! Items are ordered by barycentre sweeps and placed by isotonic regression, so no two items of a
+//! row overlap and every edge label has the room its text needs.
 //!
-//! A large architecture stays legible at its natural size: links with one label into or out of
-//! one card form a fan, with one label beside the card and one trunk through the rows between,
-//! which each link joins on a track of its own label row; a card that several cards of its row
-//! send to drops to a row of its own; the passing items of a long line take one x where they fit,
-//! and a line leaves a card shorter than its row straight, so no line crosses a card.
+//! A large graph stays legible at its natural size: edges with one label into or out of one card
+//! form a fan, with one label beside the card and one trunk through the rows between, which each
+//! edge joins on a track of its own label row; a card that several cards of its row send to drops
+//! to a row of its own; the passing items of a long line take one x where they fit, and a line
+//! leaves a card shorter than its row straight, so no line crosses a card.
 
-use crate::fmt::{self, esc, mono_w, px, text_w};
-use crate::model::{Architecture, Outcome, Part, Place};
+use crate::fmt::{esc, mono_w, px, text_w};
+use crate::page::{self, Direction, Mark, Page, Region};
 use std::fmt::Write as _;
 
 const MARGIN: f64 = 18.0;
@@ -29,139 +29,262 @@ const LINE_GAP: f64 = 12.0;
 const ROW_GAP: f64 = 20.0;
 const PILL_H: f64 = 20.0;
 
-/// Colour family and row of a block.
-pub fn family(block: &str) -> (&'static str, usize) {
-    match block {
-        "principal" | "delegation" => ("principal", 0),
-        "agent" | "harness" => ("agent", 1),
-        "channel" | "question" => ("collab", 2),
-        "work" | "process" | "authority" => ("work", 2),
-        "gateway" | "model" => ("intel", 3),
-        "tool" | "knowledge" => ("capability", 4),
-        "workspace" | "sandbox" | "runtime" => ("place", 5),
-        "pool" | "resource" => ("resource", 5),
-        "architecture" => ("nested", 2),
-        _ => ("other", 6),
+/// The accessible title and description of the SVG.
+#[derive(Default)]
+pub(crate) struct Words {
+    pub title: String,
+    pub desc: String,
+}
+
+/// What a page of this crate draws beyond the render model: the rank and label of each group,
+/// and per node, edge and mark what its card, line or chip shows besides. [`crate::page::render`]
+/// draws with none of it.
+#[derive(Default)]
+pub(crate) struct Decor {
+    pub words: Words,
+    /// Group id, legend label, row. Without any, a node's row is the longest chain of edges that
+    /// leads to it.
+    pub groups: Vec<(String, String, u32)>,
+    /// By node id.
+    pub nodes: Vec<(String, NodeDecor)>,
+    /// By edge index: a node the edge passes through. A node that is only ever passed through,
+    /// between nodes of two rows, is drawn on the edge.
+    pub vias: Vec<Option<String>>,
+    /// By mark index: the chip drawn for the mark.
+    pub chips: Vec<Option<Chip>>,
+}
+
+#[derive(Default)]
+pub(crate) struct NodeDecor {
+    /// The line under the label; the group's label without it.
+    pub subtitle: Option<String>,
+    pub icon: Option<&'static str>,
+    /// `key value` lines on the card.
+    pub properties: Vec<(String, String)>,
+    /// A dashed ring around the card and this text as its tag.
+    pub outline: Option<String>,
+    /// The accessible name of the card.
+    pub description: Option<String>,
+}
+
+/// The colour slots of the stylesheet: a card of slot `s` has the class `f-s`.
+const PALETTE: [&str; 10] = [
+    "principal",
+    "agent",
+    "collab",
+    "work",
+    "intel",
+    "capability",
+    "place",
+    "resource",
+    "nested",
+    "other",
+];
+
+/// The colour slot of each group name of a page.
+pub(crate) struct Palette {
+    extra: Vec<(String, &'static str)>,
+}
+
+impl Palette {
+    /// A group named as a slot takes that slot; any other name takes the next slot no group of
+    /// the page names, in order of first appearance; an empty name is `other`.
+    pub fn of(page: &Page, declared: &[(String, String, u32)]) -> Self {
+        let names: Vec<&str> = declared
+            .iter()
+            .map(|g| g.0.as_str())
+            .chain(page.nodes.iter().map(|n| n.group.as_str()))
+            .collect();
+        let free: Vec<&'static str> = PALETTE[..8]
+            .iter()
+            .copied()
+            .filter(|s| !names.contains(s))
+            .collect();
+        let free = if free.is_empty() {
+            PALETTE[..8].to_vec()
+        } else {
+            free
+        };
+        let mut extra: Vec<(String, &'static str)> = Vec::new();
+        for n in names {
+            if n.is_empty() || PALETTE.contains(&n) || extra.iter().any(|(e, _)| e == n) {
+                continue;
+            }
+            let slot = free[extra.len() % free.len()];
+            extra.push((n.to_string(), slot));
+        }
+        Palette { extra }
+    }
+
+    pub fn slot(&self, group: &str) -> &'static str {
+        if let Some(s) = PALETTE.iter().find(|s| **s == group) {
+            return s;
+        }
+        self.extra
+            .iter()
+            .find(|(n, _)| n == group)
+            .map(|(_, s)| *s)
+            .unwrap_or("other")
     }
 }
 
-/// Names of the colour families, in legend order, with what they hold.
-pub const FAMILIES: [(&str, &str); 10] = [
-    ("principal", "principal"),
-    ("agent", "agent, harness"),
-    ("collab", "channel, question"),
-    ("work", "work, authority"),
-    ("intel", "gateway, model"),
-    ("capability", "tool, knowledge"),
-    ("place", "workspace, sandbox, runtime"),
-    ("resource", "pool, resource"),
-    ("nested", "nested architecture"),
-    ("other", "other block"),
-];
+/// Every region of a page with the id of the region it lies in.
+fn all_regions(page: &Page) -> Vec<(&Region, Option<String>)> {
+    fn walk<'a>(
+        r: &'a Region,
+        parent: Option<String>,
+        out: &mut Vec<(&'a Region, Option<String>)>,
+    ) {
+        out.push((r, parent));
+        for inner in &r.regions {
+            walk(inner, Some(r.id.clone()), out);
+        }
+    }
+    let mut out = Vec::new();
+    for r in &page.regions {
+        walk(r, None, &mut out);
+    }
+    out
+}
 
-/// A 14 by 14 stroke icon for a block.
-pub fn icon(block: &str) -> &'static str {
-    match block {
-        "principal" | "delegation" => {
+/// A 14 by 14 stroke icon by name.
+fn icon(name: &str) -> &'static str {
+    match name {
+        "person" => {
             "M7 6.6a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM2.4 12.6c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2"
         }
-        "agent" | "harness" => {
+        "bot" => {
             "M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01"
         }
-        "channel" | "question" => "M2 2.5h10v7H6.5L3.5 12V9.5H2z",
+        "bubble" => "M2 2.5h10v7H6.5L3.5 12V9.5H2z",
         "gateway" => "M2 2.5v9M5 7h7M9 4l3 3-3 3",
-        "model" => {
+        "chip" => {
             "M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5"
         }
-        "tool" | "knowledge" => {
+        "wrench" => {
             "M9.6 1.8a3 3 0 0 0-3.4 4.1L2 10.1 3.9 12l4.2-4.2a3 3 0 0 0 4.1-3.4L10.4 6.2 8.6 5.4 7.8 3.6z"
         }
-        "workspace" => "M1.5 3.5h4l1.5 1.5h5.5v6.5h-11z",
-        "sandbox" => "M7 1.5l5 2v3.6c0 2.9-2.1 4.7-5 5.4-2.9-.7-5-2.5-5-5.4V3.5z",
-        "runtime" => "M4 2.5v9l7.5-4.5z",
-        "pool" | "resource" => "M2 2.5h10v2.5H2zM2 6.25h10v2.5H2zM2 10h10v2H2z",
-        "work" | "process" => "M2 3.8l1.4 1.4L6 2.6M2 9l1.4 1.4L6 7.8M8 4.2h4.5M8 9.4h4.5",
-        "authority" => "M3.5 6.5h7v5.5h-7zM5 6.5V4.8a2 2 0 0 1 4 0v1.7",
-        "architecture" => "M1.5 2.5h11v9h-11zM4 5h6v4H4zM1.5 7H4M10 7h2.5",
+        "folder" => "M1.5 3.5h4l1.5 1.5h5.5v6.5h-11z",
+        "shield" => "M7 1.5l5 2v3.6c0 2.9-2.1 4.7-5 5.4-2.9-.7-5-2.5-5-5.4V3.5z",
+        "play" => "M4 2.5v9l7.5-4.5z",
+        "stack" => "M2 2.5h10v2.5H2zM2 6.25h10v2.5H2zM2 10h10v2H2z",
+        "checklist" => "M2 3.8l1.4 1.4L6 2.6M2 9l1.4 1.4L6 7.8M8 4.2h4.5M8 9.4h4.5",
+        "lock" => "M3.5 6.5h7v5.5h-7zM5 6.5V4.8a2 2 0 0 1 4 0v1.7",
+        "frame" => "M1.5 2.5h11v9h-11zM4 5h6v4H4zM1.5 7H4M10 7h2.5",
         _ => "M7 12A5 5 0 1 0 7 2a5 5 0 0 0 0 10z",
     }
 }
 
-/// What a chip at a marked place shows.
-pub struct Chip {
-    pub path: String,
+/// What a chip on a card (or beside the graph) shows: a field, its value and the value it would
+/// change to, a range in brackets or a plain detail.
+#[derive(Clone, Default)]
+pub(crate) struct Chip {
     pub field: String,
-    pub value: String,
+    pub value: Option<String>,
     pub best: Option<String>,
-    pub changed: bool,
     pub range: String,
+    pub detail: String,
+    /// Written as `data-place`.
+    pub id: Option<String>,
+    pub refusal: bool,
 }
 
 impl Chip {
-    pub fn new(place: &Place, outcome: Option<&Outcome>) -> Self {
-        let mut value = fmt::value(&place.value);
-        let mut best = None;
-        let mut range = place.range();
-        if let Some(o) = outcome {
-            let (b, w) = o.at(place);
-            if let Some(b) = b {
-                value = fmt::value(b);
-            }
-            best = w.map(fmt::value);
-            if range.is_empty()
-                && let Some(m) = o
-                    .marked
-                    .iter()
-                    .find(|m| crate::model::norm(&m.path) == crate::model::norm(&place.path))
-            {
-                range = crate::model::range_text(&m.range);
-            }
-        }
-        let changed = best.as_ref().is_some_and(|b| *b != value);
+    /// The chip of a mark of the page.
+    fn of(m: &Mark) -> Self {
         Chip {
-            path: place.path.clone(),
-            field: place.field.clone(),
-            value,
-            best,
-            changed,
-            range,
+            field: match &m.target.port {
+                Some(p) => format!("{p} · {}", m.name),
+                None => m.name.clone(),
+            },
+            detail: m.detail.clone().unwrap_or_default(),
+            refusal: m.level == page::Level::Refusal,
+            ..Chip::default()
         }
     }
 
+    pub fn changed(&self) -> bool {
+        self.best
+            .as_ref()
+            .is_some_and(|b| Some(b) != self.value.as_ref())
+    }
+
+    fn class(&self) -> &'static str {
+        match (self.changed(), self.refusal) {
+            (true, _) => "chip changed",
+            (false, true) => "chip refusal",
+            (false, false) => "chip",
+        }
+    }
+
+    /// The attributes, each with a leading space.
+    fn attrs(&self) -> String {
+        let mut s = String::new();
+        if let Some(id) = &self.id {
+            let _ = write!(s, " data-place=\"{}\"", esc(id));
+        }
+        let value = self.value.as_deref().unwrap_or("");
+        match &self.best {
+            Some(b) => {
+                let _ = write!(
+                    s,
+                    " data-baseline=\"{}\" data-best=\"{}\"",
+                    esc(value),
+                    esc(b)
+                );
+            }
+            None if self.value.is_some() => {
+                let _ = write!(s, " data-value=\"{}\"", esc(value));
+            }
+            None => {}
+        }
+        s
+    }
+
+    /// One line of text: `capacity 16, best 24, range 8…32`, or `name: detail`.
+    pub fn describe(&self) -> String {
+        let Some(v) = &self.value else {
+            return if self.detail.is_empty() {
+                self.field.clone()
+            } else {
+                format!("{}: {}", self.field, self.detail)
+            };
+        };
+        let mut s = format!("{} {v}", self.field);
+        if let Some(b) = &self.best {
+            s.push_str(&format!(", best {b}"));
+        }
+        if !self.range.is_empty() {
+            s.push_str(&format!(", range {}", self.range));
+        }
+        s
+    }
+
     fn width(&self) -> f64 {
-        let mut w = 9.0 + text_w(&self.field, 11.5, false) + 7.0 + mono_w(&self.value, 11.5);
+        let mut w = 9.0 + text_w(&self.field, 11.5, false);
+        if let Some(v) = &self.value {
+            w += 7.0;
+            w += mono_w(v, 11.5);
+        }
         if let Some(b) = &self.best {
             w += 6.0 + mono_w("→", 11.5) + 6.0 + mono_w(b, 11.5) + 4.0;
         }
         if !self.range.is_empty() {
             w += 7.0 + mono_w(&format!("[{}]", self.range), 11.0);
         }
-        w + 9.0
-    }
-
-    fn attrs(&self) -> String {
-        match &self.best {
-            Some(b) => format!(
-                "data-place=\"{}\" data-baseline=\"{}\" data-best=\"{}\"",
-                esc(&self.path),
-                esc(&self.value),
-                esc(b)
-            ),
-            None => format!(
-                "data-place=\"{}\" data-value=\"{}\"",
-                esc(&self.path),
-                esc(&self.value)
-            ),
+        if !self.detail.is_empty() {
+            w += 7.0 + mono_w(&self.detail, 11.0);
         }
+        w + 9.0
     }
 
     /// The chip as SVG, its left edge at `x`, its top at `y`.
     fn svg(&self, out: &mut String, x: f64, y: f64) {
         let w = self.width();
-        let class = if self.changed { "chip changed" } else { "chip" };
         let _ = write!(
             out,
-            "<g class=\"{class}\" {}><title>{}</title><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{PILL_H}\" rx=\"10\"/>",
+            "<g class=\"{}\"{}><title>{}</title><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{PILL_H}\" rx=\"10\"/>",
+            self.class(),
             self.attrs(),
             esc(&self.describe()),
             px(x),
@@ -177,16 +300,20 @@ impl Chip {
             px(base),
             esc(&self.field)
         );
-        cx += text_w(&self.field, 11.5, false) + 7.0;
-        let was = if self.changed { "chip-v was" } else { "chip-v" };
-        let _ = write!(
-            out,
-            "<text class=\"{was}\" x=\"{}\" y=\"{}\">{}</text>",
-            px(cx),
-            px(base),
-            esc(&self.value)
-        );
-        cx += mono_w(&self.value, 11.5);
+        cx += text_w(&self.field, 11.5, false);
+        let changed = self.changed();
+        if let Some(v) = &self.value {
+            cx += 7.0;
+            let was = if changed { "chip-v was" } else { "chip-v" };
+            let _ = write!(
+                out,
+                "<text class=\"{was}\" x=\"{}\" y=\"{}\">{}</text>",
+                px(cx),
+                px(base),
+                esc(v)
+            );
+            cx += mono_w(v, 11.5);
+        }
         if let Some(b) = &self.best {
             cx += 6.0;
             let _ = write!(
@@ -196,7 +323,7 @@ impl Chip {
                 px(base)
             );
             cx += mono_w("→", 11.5) + 6.0;
-            let now = if self.changed { "chip-v now" } else { "chip-v" };
+            let now = if changed { "chip-v now" } else { "chip-v" };
             let _ = write!(
                 out,
                 "<text class=\"{now}\" x=\"{}\" y=\"{}\">{}</text>",
@@ -215,39 +342,42 @@ impl Chip {
                 px(base),
                 esc(&self.range)
             );
+            cx += mono_w(&format!("[{}]", self.range), 11.0);
+        }
+        if !self.detail.is_empty() {
+            cx += 7.0;
+            let _ = write!(
+                out,
+                "<text class=\"chip-r\" x=\"{}\" y=\"{}\">{}</text>",
+                px(cx),
+                px(base),
+                esc(&self.detail)
+            );
         }
         out.push_str("</g>");
     }
 
-    pub fn describe(&self) -> String {
-        let mut s = format!("{} {}", self.field, self.value);
-        if let Some(b) = &self.best {
-            s.push_str(&format!(", best {b}"));
-        }
-        if !self.range.is_empty() {
-            s.push_str(&format!(", range {}", self.range));
-        }
-        s
-    }
-
-    /// The chip as HTML, for the side panel.
+    /// The chip as HTML, with or without its field.
     pub fn html(&self, with_field: bool) -> String {
-        let field = if with_field {
+        let changed = self.changed();
+        let field = if with_field || self.value.is_none() {
             format!("<span class=\"chip-k\">{}</span> ", esc(&self.field))
         } else {
             String::new()
         };
-        let mut s = format!(
-            "<span class=\"chip{}\" {}>{field}<span class=\"chip-v{}\">{}</span>",
-            if self.changed { " changed" } else { "" },
-            self.attrs(),
-            if self.changed { " was" } else { "" },
-            esc(&self.value)
-        );
+        let mut s = format!("<span class=\"{}\"{}>{field}", self.class(), self.attrs(),);
+        if let Some(v) = &self.value {
+            let _ = write!(
+                s,
+                "<span class=\"chip-v{}\">{}</span>",
+                if changed { " was" } else { "" },
+                esc(v)
+            );
+        }
         if let Some(b) = &self.best {
             s.push_str(&format!(
                 " <span class=\"chip-arrow\">→</span> <span class=\"chip-v{}\">{}</span>",
-                if self.changed { " now" } else { "" },
+                if changed { " now" } else { "" },
                 esc(b)
             ));
         }
@@ -257,155 +387,393 @@ impl Chip {
                 esc(&self.range)
             ));
         }
+        if !self.detail.is_empty() {
+            s.push_str(&format!(
+                " <span class=\"chip-r\">{}</span>",
+                esc(&self.detail)
+            ));
+        }
         s.push_str("</span>");
         s
     }
 }
 
-/// The subtitle of a part: `pool · build_slots`.
-pub fn subtitle(p: &Part) -> String {
-    if let Some(n) = &p.nested {
-        return match (&n.name, n.parts, &n.reference) {
-            (Some(name), Some(c), _) => {
-                format!("{name} · {c} part{}", if c == 1 { "" } else { "s" })
-            }
-            (_, _, Some(r)) => r.clone(),
-            _ => p.block.clone(),
+/// A node as the layout reads it.
+struct Part {
+    id: String,
+    label: String,
+    slot: &'static str,
+    icon: &'static str,
+    subtitle: String,
+    badges: Vec<String>,
+    outline: Option<String>,
+    refused: bool,
+    /// ` region` or ` region per` for the card of a region that is no node.
+    class: &'static str,
+    props: Vec<(String, String)>,
+    description: String,
+    region: Option<String>,
+    row: usize,
+    /// Full address `node.port`, the port's own name, its title, whether a refusal marks it.
+    ports: Vec<(String, String, String, bool)>,
+    chips: Vec<Chip>,
+}
+
+/// An edge as the layout reads it.
+struct Link {
+    from: String,
+    to: String,
+    label: String,
+    via: Option<String>,
+    /// Whether the edge stands for more than one.
+    multi: bool,
+}
+
+/// The nodes and edges of a page, resolved for layout.
+struct Scene {
+    parts: Vec<Part>,
+    links: Vec<Link>,
+    /// Each region with the region it lies in and the heading of the nodes inside it.
+    regions: Vec<(String, Option<String>, String)>,
+}
+
+impl Scene {
+    fn part(&self, id: &str) -> Option<&Part> {
+        self.parts.iter().find(|p| p.id == id)
+    }
+
+    fn read(page: &Page, decor: &Decor) -> Self {
+        let palette = Palette::of(page, &decor.groups);
+        let group_label = |g: &str| -> String {
+            decor
+                .groups
+                .iter()
+                .find(|d| d.0 == g)
+                .map(|d| d.1.clone())
+                .unwrap_or_else(|| {
+                    if g.is_empty() {
+                        "other".to_string()
+                    } else {
+                        g.to_string()
+                    }
+                })
         };
-    }
-    match (&p.kind, sub_prop(p)) {
-        (Some(k), _) => format!("{} · {}", p.block, k),
-        (None, Some(v)) => format!("{} · {}", p.block, v),
-        (None, None) => p.block.clone(),
-    }
-}
-
-/// The plain property that reads in the subtitle when a part has no kind.
-fn sub_prop(p: &Part) -> Option<&str> {
-    sub_key(p).and_then(|key| {
-        p.props
+        let regions: Vec<(String, Option<String>, String)> = all_regions(page)
+            .into_iter()
+            .map(|(r, parent)| {
+                let heading = match (&r.per, &r.r#in) {
+                    (Some(p), _) => format!("per {p}"),
+                    (None, Some(i)) => format!("in {i}"),
+                    (None, None) => format!("in {}", r.label),
+                };
+                (r.id.clone(), parent, heading)
+            })
+            .collect();
+        let rows = rows(page, &decor.groups);
+        let none = NodeDecor::default();
+        let mut parts: Vec<Part> = page
+            .nodes
             .iter()
-            .find(|(k, _)| k == key)
-            .map(|(_, v)| v.as_str())
-    })
-}
-
-fn sub_key(p: &Part) -> Option<&'static str> {
-    if p.kind.is_some() {
-        return None;
+            .zip(&rows)
+            .map(|(n, &row)| {
+                let d = decor
+                    .nodes
+                    .iter()
+                    .find(|(id, _)| *id == n.id)
+                    .map(|(_, d)| d)
+                    .unwrap_or(&none);
+                let subtitle = d.subtitle.clone().unwrap_or_else(|| group_label(&n.group));
+                let badges: Vec<String> = n
+                    .badges
+                    .iter()
+                    .map(|b| {
+                        if b.name == "count" {
+                            format!("×{}", b.value)
+                        } else {
+                            format!("{} {}", b.name, b.value)
+                        }
+                    })
+                    .collect();
+                let description = d.description.clone().unwrap_or_else(|| {
+                    let mut s = format!("{}, {subtitle}", n.label);
+                    for b in &badges {
+                        s.push_str(&format!(", {b}"));
+                    }
+                    s
+                });
+                Part {
+                    id: n.id.clone(),
+                    label: n.label.clone(),
+                    slot: palette.slot(&n.group),
+                    icon: icon(d.icon.unwrap_or("")),
+                    description,
+                    subtitle,
+                    badges,
+                    outline: d.outline.clone(),
+                    refused: false,
+                    class: "",
+                    props: d.properties.clone(),
+                    region: n.region.clone(),
+                    row,
+                    ports: Vec::new(),
+                    chips: Vec::new(),
+                }
+            })
+            .collect();
+        // An outermost region that is no node is drawn as a card of its own, in the top row of
+        // the nodes it holds.
+        let top = |id: &str| -> String {
+            let mut cur = id.to_string();
+            for _ in 0..16 {
+                match regions
+                    .iter()
+                    .find(|r| r.0 == cur)
+                    .and_then(|r| r.1.clone())
+                {
+                    Some(p) => cur = p,
+                    None => break,
+                }
+            }
+            cur
+        };
+        for (r, parent) in all_regions(page) {
+            if parent.is_some() || page.nodes.iter().any(|n| n.id == r.id) {
+                continue;
+            }
+            let row = page
+                .nodes
+                .iter()
+                .zip(&rows)
+                .filter(|(n, _)| n.region.as_deref().is_some_and(|x| top(x) == r.id))
+                .map(|(_, &row)| row)
+                .min()
+                .unwrap_or(0);
+            parts.push(Part {
+                id: r.id.clone(),
+                label: r.label.clone(),
+                slot: "other",
+                icon: icon("frame"),
+                description: format!("{}, region", r.label),
+                subtitle: "region".to_string(),
+                badges: Vec::new(),
+                outline: None,
+                refused: false,
+                class: if r.per.is_some() {
+                    " region per"
+                } else {
+                    " region"
+                },
+                props: Vec::new(),
+                region: None,
+                row,
+                ports: Vec::new(),
+                chips: Vec::new(),
+            });
+        }
+        for port in &page.ports {
+            let Some(p) = parts.iter_mut().find(|p| p.id == port.node) else {
+                continue;
+            };
+            let address = format!("{}.{}", port.node, port.name);
+            let mut title = if port.kind.is_empty() {
+                address.clone()
+            } else {
+                format!("{} {address}", port.kind)
+            };
+            match port.direction {
+                Direction::In => title.push_str(", in"),
+                Direction::Out => title.push_str(", out"),
+                Direction::Both => {}
+            }
+            if let Some(c) = &port.contract {
+                title.push_str(&format!(", contract {c}"));
+            }
+            p.ports.push((address, port.name.clone(), title, false));
+        }
+        for (i, m) in page.marks.iter().enumerate() {
+            let Some(p) = parts.iter_mut().find(|p| p.id == m.target.node) else {
+                continue;
+            };
+            if m.level == page::Level::Refusal {
+                match &m.target.port {
+                    Some(name) => {
+                        for port in p.ports.iter_mut().filter(|x| x.1 == *name) {
+                            port.3 = true;
+                        }
+                    }
+                    None => p.refused = true,
+                }
+            }
+            let chip = decor
+                .chips
+                .get(i)
+                .and_then(|c| c.clone())
+                .unwrap_or_else(|| Chip::of(m));
+            p.chips.push(chip);
+        }
+        let links = page
+            .edges
+            .iter()
+            .enumerate()
+            .map(|(i, e)| Link {
+                from: e.from.clone(),
+                to: e.to.clone(),
+                label: match e.count {
+                    Some(c) => format!("{} ×{c}", e.label),
+                    None => e.label.clone(),
+                },
+                via: decor.vias.get(i).cloned().flatten(),
+                multi: e.count.is_some_and(|c| c > 1),
+            })
+            .collect();
+        Scene {
+            parts,
+            links,
+            regions,
+        }
     }
-    SUB_KEYS
-        .iter()
-        .copied()
-        .find(|key| p.props.iter().any(|(k, _)| k == key))
+
+    /// The heading of the nodes drawn inside container `c`.
+    fn heading(&self, c: usize) -> String {
+        let p = &self.parts[c];
+        match self.regions.iter().find(|r| r.0 == p.id) {
+            Some((_, _, heading)) => heading.clone(),
+            None => format!("in {}", p.label),
+        }
+    }
 }
 
-const SUB_KEYS: [&str; 6] = [
-    "role",
-    "harness",
-    "sharing",
-    "isolation",
-    "route",
-    "provider",
-];
+/// The row of each node: its group's rank; below every ranked row for a group without one; the
+/// longest chain of edges that leads to it when no group has a rank.
+fn rows(page: &Page, groups: &[(String, String, u32)]) -> Vec<usize> {
+    if !groups.is_empty() {
+        let below = groups.iter().map(|g| g.2 as usize).max().unwrap_or(0) + 1;
+        return page
+            .nodes
+            .iter()
+            .map(|n| {
+                groups
+                    .iter()
+                    .find(|g| g.0 == n.group)
+                    .map(|g| g.2 as usize)
+                    .unwrap_or(below)
+            })
+            .collect();
+    }
+    let n = page.nodes.len();
+    let index = |end: &str| {
+        page.nodes.iter().position(|x| x.id == end).or_else(|| {
+            let (head, _) = end.split_once('.')?;
+            page.nodes.iter().position(|x| x.id == head)
+        })
+    };
+    let edges: Vec<(usize, usize)> = page
+        .edges
+        .iter()
+        .filter_map(|e| Some((index(&e.from)?, index(&e.to)?)))
+        .filter(|(a, b)| a != b)
+        .collect();
+    // Edges that close a cycle, found by a depth-first walk in page order, are left out.
+    let mut state = vec![0u8; n];
+    let mut kept: Vec<(usize, usize)> = Vec::new();
+    for start in 0..n {
+        if state[start] != 0 {
+            continue;
+        }
+        let mut stack: Vec<(usize, usize)> = vec![(start, 0)];
+        state[start] = 1;
+        while let Some(top) = stack.last_mut() {
+            let v = top.0;
+            let out: Vec<usize> = edges.iter().filter(|e| e.0 == v).map(|e| e.1).collect();
+            if top.1 < out.len() {
+                let w = out[top.1];
+                top.1 += 1;
+                match state[w] {
+                    0 => {
+                        kept.push((v, w));
+                        state[w] = 1;
+                        stack.push((w, 0));
+                    }
+                    2 => kept.push((v, w)),
+                    _ => {}
+                }
+            } else {
+                state[v] = 2;
+                stack.pop();
+            }
+        }
+    }
+    let mut row = vec![0usize; n];
+    for _ in 0..n {
+        let mut moved = false;
+        for &(a, b) in &kept {
+            if row[b] < row[a] + 1 {
+                row[b] = row[a] + 1;
+                moved = true;
+            }
+        }
+        if !moved {
+            break;
+        }
+    }
+    row
+}
 
 struct Card {
     part: usize,
     w: f64,
     h: f64,
     children: Vec<usize>,
-    chips: Vec<Chip>,
-    child_chips: Vec<Vec<Chip>>,
-    props: Vec<(String, String)>,
-    /// The ports of a nested architecture: full address and the border part's own name.
-    ports: Vec<(String, String)>,
+    heading: String,
     border: bool,
     row: usize,
 }
 
-fn child_sub(p: &Part) -> String {
-    match (p.kind.is_none() && sub_prop(p).is_none(), p.props.first()) {
-        (true, Some((_, v))) => format!("{} · {v}", p.block),
-        _ => subtitle(p),
-    }
-}
-
 impl Card {
-    fn new(arch: &Architecture, part: usize, children: Vec<usize>, o: Option<&Outcome>) -> Self {
-        let p = &arch.parts[part];
-        // A nested architecture is on the border when one of its ports is.
-        let border = arch.border.contains(&p.name)
-            || p.nested
-                .as_ref()
-                .is_some_and(|n| n.ports.iter().any(|a| arch.border.contains(a)));
-        let mut props = Vec::new();
-        if let Some(a) = &p.acts_for {
-            props.push(("acts for".to_string(), a.clone()));
-        }
-        let shown_in_sub = subtitle(p);
-        let in_sub = sub_key(p);
-        for (k, v) in p.props.iter().filter(|(k, _)| Some(k.as_str()) != in_sub) {
-            props.push((k.replace('_', " "), v.clone()));
-        }
-        let ports: Vec<(String, String)> = p
-            .nested
-            .iter()
-            .flat_map(|n| n.ports.iter())
-            .map(|a| {
-                let own = a
-                    .strip_prefix(&p.name)
-                    .and_then(|r| r.strip_prefix('.'))
-                    .unwrap_or(a);
-                (a.clone(), own.to_string())
-            })
-            .collect();
-        let chips: Vec<Chip> = p.places.iter().map(|pl| Chip::new(pl, o)).collect();
-        let child_chips: Vec<Vec<Chip>> = children
-            .iter()
-            .map(|&c| {
-                arch.parts[c]
-                    .places
-                    .iter()
-                    .map(|pl| Chip::new(pl, o))
-                    .collect()
-            })
-            .collect();
-        let name_w = text_w(&p.name, 13.5, true);
-        let badge = p.count.as_ref().map(|c| badge_w(c) + 8.0).unwrap_or(0.0);
-        let tag = if border { tag_w() + 8.0 } else { 0.0 };
-        let head = ICON + 10.0 + (name_w + badge).max(text_w(&shown_in_sub, 11.5, false) + tag);
+    fn new(sc: &Scene, part: usize, children: Vec<usize>) -> Self {
+        let p = &sc.parts[part];
+        let border = p.outline.is_some();
+        let heading = if children.is_empty() {
+            String::new()
+        } else {
+            sc.heading(part)
+        };
+        let name_w = text_w(&p.label, 13.5, true);
+        let badge: f64 = p.badges.iter().map(|b| badge_w(b) + 8.0).sum();
+        let tag = p.outline.as_ref().map(|t| tag_w(t) + 8.0).unwrap_or(0.0);
+        let head = ICON + 10.0 + (name_w + badge).max(text_w(&p.subtitle, 11.5, false) + tag);
         let mut inner = head;
-        for (k, v) in &props {
+        for (k, v) in &p.props {
             inner = inner.max(text_w(k, 11.5, false) + 6.0 + text_w(v, 11.5, false));
         }
-        for (_, own) in &ports {
+        for (_, own, _, _) in &p.ports {
             inner = inner.max(text_w(&format!("port {own}"), 11.5, false) + 8.0);
         }
-        for c in &chips {
+        for c in &p.chips {
             inner = inner.max(c.width());
         }
-        for (i, &c) in children.iter().enumerate() {
-            let cp = &arch.parts[c];
+        for &c in &children {
+            let cp = &sc.parts[c];
             let w = 8.0
                 + 20.0
                 + 8.0
-                + text_w(&cp.name, 12.0, true).max(text_w(&child_sub(cp), 11.0, false))
+                + text_w(&cp.label, 12.0, true).max(text_w(&cp.subtitle, 11.0, false))
                 + 10.0;
             inner = inner.max(w);
-            for ch in &child_chips[i] {
+            for ch in &cp.chips {
                 inner = inner.max(ch.width() + 16.0);
             }
         }
-        inner = inner.max(text_w(&format!("per {}", p.name), 11.0, false));
+        inner = inner.max(text_w(&heading, 11.0, false));
         let w = (inner + 2.0 * PAD).max(MIN_W).ceil();
         let mut h = HEAD;
-        h += props.len() as f64 * PROP;
-        h += ports.len() as f64 * PROP;
-        h += chips.len() as f64 * CHIP;
+        h += p.props.len() as f64 * PROP;
+        h += p.ports.len() as f64 * PROP;
+        h += p.chips.len() as f64 * CHIP;
         if !children.is_empty() {
             h += CHILD_HEAD;
-            for cc in &child_chips {
-                h += CHILD + cc.len() as f64 * CHIP + CHILD_GAP;
+            for &c in &children {
+                h += CHILD + sc.parts[c].chips.len() as f64 * CHIP + CHILD_GAP;
             }
         }
         let h = if h == HEAD { HEAD } else { h + 6.0 };
@@ -414,22 +782,19 @@ impl Card {
             w,
             h,
             children,
-            chips,
-            child_chips,
-            props,
-            ports,
+            heading,
             border,
-            row: family(&p.block).1,
+            row: p.row,
         }
     }
 }
 
-fn badge_w(count: &str) -> f64 {
-    mono_w(&format!("×{count}"), 11.0) + 12.0
+fn badge_w(text: &str) -> f64 {
+    mono_w(text, 11.0) + 12.0
 }
 
-fn tag_w() -> f64 {
-    text_w("border", 11.0, false) + 14.0
+fn tag_w(text: &str) -> f64 {
+    text_w(text, 11.0, false) + 14.0
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -450,7 +815,7 @@ struct Item {
     y: f64,
 }
 
-/// Links between two cards on different rows, drawn together.
+/// Edges between two cards on different rows, drawn together.
 struct Bundle {
     upper: usize,
     lower: usize,
@@ -458,16 +823,16 @@ struct Bundle {
     channel: Option<usize>,
     label_layer: usize,
     items: Vec<usize>,
-    /// For a channel bundle: which links pass left of the card.
+    /// For a channel bundle: which edges pass left of the card.
     left: Vec<usize>,
     right: Vec<usize>,
-    /// The fan this single link shares its label with.
+    /// The fan this single edge shares its label with.
     fan: Option<usize>,
 }
 
-/// Single links with one label at one side of one card. They share one label beside the card
-/// and one trunk from there through every row between: each link joins the trunk on a track of
-/// the label row next to its other card, so the links draw as a comb, not as parallel lines.
+/// Single edges with one label at one side of one card. They share one label beside the card
+/// and one trunk from there through every row between: each edge joins the trunk on a track of
+/// the label row next to its other card, so the edges draw as a comb, not as parallel lines.
 struct Fan {
     card: usize,
     at_lower: bool,
@@ -491,18 +856,18 @@ impl Fan {
 const TRACK: f64 = 6.0;
 
 impl Bundle {
-    fn label_size(&self, arch: &Architecture) -> (f64, f64) {
+    fn label_size(&self, sc: &Scene) -> (f64, f64) {
         match self.channel {
             None => {
-                let l = &arch.links[self.links[0]];
+                let l = &sc.links[self.links[0]];
                 (
-                    text_w(&edge_label(arch, l, false), 11.5, false) + 18.0,
+                    text_w(&edge_label(sc, l, false), 11.5, false) + 18.0,
                     PILL_H,
                 )
             }
             Some(c) => {
-                let (wl, wr) = self.side_widths(arch);
-                let (cw, ch) = channel_card_size(&arch.parts[c]);
+                let (wl, wr) = self.side_widths(sc);
+                let (cw, ch) = channel_card_size(&sc.parts[c]);
                 let nl = self.left.len() as f64;
                 let nr = self.right.len() as f64;
                 let w = wl + nl * LINE_GAP + 12.0 + cw + 12.0 + nr * LINE_GAP + wr;
@@ -512,10 +877,10 @@ impl Bundle {
         }
     }
 
-    fn side_widths(&self, arch: &Architecture) -> (f64, f64) {
+    fn side_widths(&self, sc: &Scene) -> (f64, f64) {
         let side = |ls: &[usize]| {
             ls.iter()
-                .map(|&l| text_w(&arch.links[l].carries, 11.5, false) + 18.0 + 6.0)
+                .map(|&l| text_w(&sc.links[l].label, 11.5, false) + 18.0 + 6.0)
                 .fold(0.0, f64::max)
         };
         (side(&self.left), side(&self.right))
@@ -523,41 +888,39 @@ impl Bundle {
 }
 
 fn channel_card_size(p: &Part) -> (f64, f64) {
-    let w = 8.0 + 22.0 + 8.0 + text_w(&p.name, 13.0, true).max(text_w(&subtitle(p), 11.0, false));
+    let w = 8.0 + 22.0 + 8.0 + text_w(&p.label, 13.0, true).max(text_w(&p.subtitle, 11.0, false));
     ((w + 12.0).ceil(), 44.0)
 }
 
-/// The border part a link end addresses on a nested architecture, by its own name.
-fn port_of<'a>(arch: &Architecture, end: &'a str) -> Option<&'a str> {
+/// The port an edge end `node.port` addresses, by its own name.
+fn port_of<'a>(sc: &Scene, end: &'a str) -> Option<&'a str> {
     let (head, own) = end.split_once('.')?;
-    arch.part(head)?
-        .nested
-        .as_ref()?
+    sc.part(head)?
         .ports
         .iter()
-        .any(|p| p == end)
+        .any(|p| p.0 == end)
         .then_some(own)
 }
 
-fn edge_label(arch: &Architecture, l: &crate::model::Link, on_channel: bool) -> String {
-    let base = match (&l.over, on_channel) {
-        (Some(o), false) if arch.part(o).is_some() => format!("{} via {}", l.carries, o),
-        _ => l.carries.clone(),
+fn edge_label(sc: &Scene, l: &Link, on_channel: bool) -> String {
+    let base = match (&l.via, on_channel) {
+        (Some(o), false) if sc.part(o).is_some() => format!("{} via {}", l.label, o),
+        _ => l.label.clone(),
     };
-    match port_of(arch, &l.to).or_else(|| port_of(arch, &l.from)) {
+    match port_of(sc, &l.to).or_else(|| port_of(sc, &l.from)) {
         Some(port) => format!("{base} · {port}"),
         None => base,
     }
 }
 
-/// Links between two cards of one row.
+/// Edges between two cards of one row.
 struct Level {
     a: usize,
     b: usize,
     links: Vec<usize>,
 }
 
-pub struct Graph {
+pub(crate) struct Graph {
     pub svg: String,
     pub width: f64,
     pub height: f64,
@@ -586,48 +949,62 @@ fn pava(target: &[f64], weight: &[f64]) -> Vec<f64> {
     out
 }
 
-pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
-    let n = arch.parts.len();
-    // A link end `<part>.<border part>` lands on the box of the nested architecture `<part>`.
+pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
+    let scene = Scene::read(page, decor);
+    let sc = &scene;
+    let n = sc.parts.len();
+    // An edge end `<node>.<port>` lands on the card of the node with that port.
     let index = |name: &str| {
-        arch.parts.iter().position(|p| p.name == name).or_else(|| {
+        sc.parts.iter().position(|p| p.id == name).or_else(|| {
             let (head, _) = name.split_once('.')?;
-            arch.parts
+            sc.parts
                 .iter()
-                .position(|p| p.name == head && p.nested.is_some())
+                .position(|p| p.id == head && !p.ports.is_empty())
         })
     };
-    let endpoints: Vec<&str> = arch
+    let endpoints: Vec<&str> = sc
         .links
         .iter()
         .flat_map(|l| [l.from.as_str(), l.to.as_str()])
         .collect();
 
-    // A part with `per` is drawn inside the part it belongs to.
+    // A node in a region is drawn inside the card of the outermost region it lies in: a node of
+    // that id, or the card of a region that is no node.
     let mut host: Vec<Option<usize>> = vec![None; n];
-    for (i, p) in arch.parts.iter().enumerate() {
-        let mut cur = i;
+    for (i, p) in sc.parts.iter().enumerate() {
+        let Some(mut cur) = p.region.clone() else {
+            continue;
+        };
         for _ in 0..8 {
-            match arch.parts[cur].per.as_deref().and_then(index) {
-                Some(next) if next != i => cur = next,
-                _ => break,
+            let next = match index(&cur) {
+                Some(j) if j != i => {
+                    host[i] = Some(j);
+                    sc.parts[j].region.clone()
+                }
+                Some(_) => None,
+                None => sc
+                    .regions
+                    .iter()
+                    .find(|r| r.0 == cur)
+                    .and_then(|r| r.1.clone()),
+            };
+            match next {
+                Some(x) => cur = x,
+                None => break,
             }
         }
-        if cur != i && p.per.is_some() {
-            host[i] = Some(cur);
-        }
     }
-    let row_of = |i: usize| family(&arch.parts[i].block).1;
+    let row_of = |i: usize| sc.parts[i].row;
     let resolve = |name: &str| index(name).map(|i| host[i].unwrap_or(i));
 
-    // A part that is only ever the channel of links between two rows is drawn on those links.
+    // A node that is only ever passed through by edges between two rows is drawn on those edges.
     let mut on_edge = vec![false; n];
-    for (i, p) in arch.parts.iter().enumerate() {
-        if host[i].is_some() || p.per.is_some() || endpoints.contains(&p.name.as_str()) {
+    for (i, p) in sc.parts.iter().enumerate() {
+        if host[i].is_some() || p.region.is_some() || endpoints.contains(&p.id.as_str()) {
             continue;
         }
-        on_edge[i] = arch.links.iter().any(|l| {
-            l.over.as_deref() == Some(p.name.as_str())
+        on_edge[i] = sc.links.iter().any(|l| {
+            l.via.as_deref() == Some(p.id.as_str())
                 && match (resolve(&l.from), resolve(&l.to)) {
                     (Some(a), Some(b)) => row_of(a) != row_of(b),
                     _ => false,
@@ -635,7 +1012,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         });
     }
 
-    // Cards in order of first appearance in the links, then in the order of the document.
+    // Cards in order of first appearance in the edges, then in the order of the page.
     let mut order: Vec<usize> = Vec::new();
     for name in &endpoints {
         if let Some(i) = resolve(name)
@@ -653,7 +1030,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         .iter()
         .map(|&i| {
             let children = (0..n).filter(|&c| host[c] == Some(i)).collect();
-            Card::new(arch, i, children, outcome)
+            Card::new(sc, i, children)
         })
         .collect();
     let card_of = |part: usize| order.iter().position(|&c| c == part);
@@ -661,7 +1038,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     // A card that two or more cards of its own row send to moves to a row of its own just
     // below: its links then cross rows, where they share a label, instead of arching over the
     // cards between.
-    let ends: Vec<(usize, usize)> = arch
+    let ends: Vec<(usize, usize)> = sc
         .links
         .iter()
         .filter_map(|l| Some((card_of(resolve(&l.from)?)?, card_of(resolve(&l.to)?)?)))
@@ -695,7 +1072,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     // Bundles across rows, levels within a row.
     let mut bundles: Vec<Bundle> = Vec::new();
     let mut levels: Vec<Level> = Vec::new();
-    for (li, l) in arch.links.iter().enumerate() {
+    for (li, l) in sc.links.iter().enumerate() {
         let (Some(a), Some(b)) = (resolve(&l.from), resolve(&l.to)) else {
             continue;
         };
@@ -722,7 +1099,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         } else {
             (cb, ca)
         };
-        let channel = l.over.as_deref().and_then(index).filter(|&c| on_edge[c]);
+        let channel = l.via.as_deref().and_then(index).filter(|&c| on_edge[c]);
         let existing = channel.and_then(|c| {
             bundles
                 .iter()
@@ -758,11 +1135,11 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
             if bd.channel.is_some() || bd.fan.is_some() {
                 continue;
             }
-            let l = &arch.links[bd.links[0]];
+            let l = &sc.links[bd.links[0]];
             let Some(c) = resolve(if at_end { &l.to } else { &l.from }).and_then(card_of) else {
                 continue;
             };
-            keys.push((c, c == bd.lower, edge_label(arch, l, false), bi));
+            keys.push((c, c == bd.lower, edge_label(sc, l, false), bi));
         }
         for &(c, at_lower, ref label, _) in &keys {
             if fans
@@ -854,7 +1231,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
                 continue;
             }
             let (kind, w, h) = if layer == bd.label_layer && bd.fan.is_none() {
-                let (w, h) = bd.label_size(arch);
+                let (w, h) = bd.label_size(sc);
                 (ItemKind::Label(bi), w, h)
             } else {
                 (
@@ -1026,7 +1403,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
                     .iter()
                     .filter(|v| v.a == x && v.b == y)
                     .flat_map(|v| v.links.iter())
-                    .map(|&l| text_w(&edge_label(arch, &arch.links[l], false), 11.5, false) + 18.0)
+                    .map(|&l| text_w(&edge_label(sc, &sc.links[l], false), 11.5, false) + 18.0)
                     .fold(0.0, f64::max);
                 if widest > 0.0 {
                     (widest + 40.0).max(48.0)
@@ -1255,10 +1632,10 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
                 }
                 let x = match item.kind {
                     ItemKind::Label(_) if bd.channel.is_some() => {
-                        let (wl, _) = bd.side_widths(arch);
+                        let (wl, _) = bd.side_widths(sc);
                         let left_edge = item.x - item.w / 2.0;
                         let right_edge = item.x + item.w / 2.0;
-                        let (_, wr) = bd.side_widths(arch);
+                        let (_, wr) = bd.side_widths(sc);
                         if let Some(j) = bd.left.iter().position(|&x| x == l) {
                             left_edge + wl + (j as f64 + 0.5) * LINE_GAP
                         } else {
@@ -1340,10 +1717,9 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     );
     let _ = write!(
         svg,
-        "<title id=\"graph-title\">Architecture {}</title><desc id=\"graph-desc\">{} parts in rows by block layer, {} links as arrows labelled by what they carry. The tables of parts and links beside the graph list every part and every link as text.</desc>",
-        esc(&arch.name),
-        arch.parts.len(),
-        arch.links.len()
+        "<title id=\"graph-title\">{}</title><desc id=\"graph-desc\">{}</desc>",
+        esc(&decor.words.title),
+        esc(&decor.words.desc)
     );
     svg.push_str(
         "<defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker></defs>",
@@ -1353,7 +1729,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     svg.push_str("<g class=\"edges\">");
     for (ri, r) in routes.iter().enumerate() {
         let bd = &bundles[r.bundle];
-        let link = &arch.links[r.link];
+        let link = &sc.links[r.link];
         let ux = port_x
             .iter()
             .find(|p| p.0 == port_key(ri, true) && p.1)
@@ -1433,9 +1809,9 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         let adjacent = pa.abs_diff(pb) == 1;
         let m = v.links.len() as f64;
         for (k, &li) in v.links.iter().enumerate() {
-            let link = &arch.links[li];
+            let link = &sc.links[li];
             let from_left = resolve(&link.from).and_then(card_of) == Some(l);
-            let label = edge_label(arch, link, false);
+            let label = edge_label(sc, link, false);
             if adjacent {
                 let y = items[l].y + (k as f64 - (m - 1.0) / 2.0) * 26.0;
                 let x1 = items[l].x + items[l].w / 2.0 + 1.0;
@@ -1493,18 +1869,12 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         let item = &items[it];
         match bd.channel {
             None => {
-                let link = &arch.links[bd.links[0]];
-                pill(
-                    &mut svg,
-                    item.x,
-                    item.y,
-                    &edge_label(arch, link, false),
-                    None,
-                );
+                let link = &sc.links[bd.links[0]];
+                pill(&mut svg, item.x, item.y, &edge_label(sc, link, false), None);
             }
             Some(c) => {
-                let (wl, wr) = bd.side_widths(arch);
-                let (cw, ch) = channel_card_size(&arch.parts[c]);
+                let (wl, wr) = bd.side_widths(sc);
+                let (cw, ch) = channel_card_size(&sc.parts[c]);
                 let left_edge = item.x - item.w / 2.0;
                 let right_edge = item.x + item.w / 2.0;
                 let cl = left_edge + wl + bd.left.len() as f64 * LINE_GAP + 12.0;
@@ -1524,7 +1894,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
                 for (side, ls) in [(true, &bd.left), (false, &bd.right)] {
                     let rows = ls.len() as f64;
                     for (j, &l) in ls.iter().enumerate() {
-                        let text = &arch.links[l].carries;
+                        let text = &sc.links[l].label;
                         let w = text_w(text, 11.5, false) + 18.0;
                         let y = item.y + (j as f64 - (rows - 1.0) / 2.0) * (PILL_H + 4.0);
                         let x = if side {
@@ -1535,7 +1905,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
                         pill(&mut svg, x, y, text, Some(w));
                     }
                 }
-                channel_card(&mut svg, arch, c, cl, ct, cw, ch);
+                channel_card(&mut svg, sc, c, cl, ct, cw, ch);
             }
         }
     }
@@ -1545,36 +1915,31 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     svg.push_str("<g class=\"nodes\">");
     for (ci, card) in cards.iter().enumerate() {
         let it = &items[ci];
-        draw_card(
-            &mut svg,
-            arch,
-            card,
-            it.x - card.w / 2.0,
-            it.y - card.h / 2.0,
-        );
+        draw_card(&mut svg, sc, card, it.x - card.w / 2.0, it.y - card.h / 2.0);
     }
     svg.push_str("</g></svg>");
     Graph { svg, width, height }
 }
 
-fn edge_path(svg: &mut String, d: &str, link: &crate::model::Link) {
+fn edge_path(svg: &mut String, d: &str, link: &Link) {
     let over = link
-        .over
+        .via
         .as_ref()
         .map(|o| format!(" over {o}"))
         .unwrap_or_default();
     let _ = write!(
         svg,
-        "<path class=\"edge\" d=\"{d}\" data-from=\"{}\" data-to=\"{}\"{}><title>{} → {}: {}{}</title></path>",
+        "<path class=\"edge{}\" d=\"{d}\" data-from=\"{}\" data-to=\"{}\"{}><title>{} → {}: {}{}</title></path>",
+        if link.multi { " multi" } else { "" },
         esc(&link.from),
         esc(&link.to),
-        link.over
+        link.via
             .as_ref()
             .map(|o| format!(" data-over=\"{}\"", esc(o)))
             .unwrap_or_default(),
         esc(&link.from),
         esc(&link.to),
-        esc(&link.carries),
+        esc(&link.label),
         esc(&over)
     );
 }
@@ -1597,7 +1962,7 @@ fn pill(svg: &mut String, cx: f64, cy: f64, text: &str, w: Option<f64>) {
     );
 }
 
-fn icon_tile(svg: &mut String, block: &str, x: f64, y: f64, size: f64) {
+fn icon_tile(svg: &mut String, icon: &str, x: f64, y: f64, size: f64) {
     let scale = size / 30.0;
     let _ = write!(
         svg,
@@ -1610,38 +1975,18 @@ fn icon_tile(svg: &mut String, block: &str, x: f64, y: f64, size: f64) {
         px(x + 8.0 * scale),
         px(y + 8.0 * scale),
         (scale * 100.0).round() / 100.0,
-        icon(block)
+        icon
     );
 }
 
-fn label_for(arch: &Architecture, p: &Part) -> String {
-    let mut s = format!("{}, {}", p.name, subtitle(p));
-    if let Some(c) = &p.count {
-        s.push_str(&format!(", count {c}"));
-    }
-    if let Some(per) = &p.per {
-        s.push_str(&format!(", one per {per}"));
-    }
-    if arch.border.contains(&p.name) {
-        s.push_str(", on the border");
-    }
-    if !p.places.is_empty() {
-        s.push_str(&format!(", {} marked places", p.places.len()));
-    }
-    if let Some(n) = p.nested.as_ref().filter(|n| !n.ports.is_empty()) {
-        s.push_str(&format!(", ports {}", n.ports.join(", ")));
-    }
-    s
-}
-
-fn channel_card(svg: &mut String, arch: &Architecture, c: usize, x: f64, y: f64, w: f64, h: f64) {
-    let p = &arch.parts[c];
-    let (fam, _) = family(&p.block);
+fn channel_card(svg: &mut String, sc: &Scene, c: usize, x: f64, y: f64, w: f64, h: f64) {
+    let p = &sc.parts[c];
     let _ = write!(
         svg,
-        "<g class=\"node channel f-{fam}\" data-part=\"{}\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\" data-box=\"{} {} {} {}\"/>",
-        esc(&p.name),
-        esc(&label_for(arch, p)),
+        "<g class=\"node channel f-{}\" data-part=\"{}\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\" data-box=\"{} {} {} {}\"/>",
+        p.slot,
+        esc(&p.id),
+        esc(&p.description),
         px(x),
         px(y),
         px(w),
@@ -1651,27 +1996,29 @@ fn channel_card(svg: &mut String, arch: &Architecture, c: usize, x: f64, y: f64,
         px(w),
         px(h)
     );
-    icon_tile(svg, &p.block, x + 8.0, y + 11.0, 22.0);
+    icon_tile(svg, p.icon, x + 8.0, y + 11.0, 22.0);
     let _ = write!(
         svg,
         "<text class=\"name sm\" x=\"{}\" y=\"{}\">{}</text><text class=\"sub\" x=\"{}\" y=\"{}\">{}</text></g>",
         px(x + 38.0),
         px(y + 19.0),
-        esc(&p.name),
+        esc(&p.label),
         px(x + 38.0),
         px(y + 34.0),
-        esc(&subtitle(p))
+        esc(&p.subtitle)
     );
 }
 
-fn draw_card(svg: &mut String, arch: &Architecture, card: &Card, x: f64, y: f64) {
-    let p = &arch.parts[card.part];
-    let (fam, _) = family(&p.block);
+fn draw_card(svg: &mut String, sc: &Scene, card: &Card, x: f64, y: f64) {
+    let p = &sc.parts[card.part];
     let _ = write!(
         svg,
-        "<g class=\"node f-{fam}{}\" data-part=\"{}\">",
+        "<g class=\"node{} f-{}{}{}\" data-part=\"{}\">",
+        p.class,
+        p.slot,
         if card.border { " on-border" } else { "" },
-        esc(&p.name),
+        if p.refused { " refused" } else { "" },
+        esc(&p.id),
     );
     if card.border {
         let _ = write!(
@@ -1683,10 +2030,22 @@ fn draw_card(svg: &mut String, arch: &Architecture, card: &Card, x: f64, y: f64)
             px(card.h + 10.0)
         );
     }
+    if p.refused {
+        let off = if card.border { 9.0 } else { 5.0 };
+        let _ = write!(
+            svg,
+            "<rect class=\"refusal-ring\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"{}\"/>",
+            px(x - off),
+            px(y - off),
+            px(card.w + 2.0 * off),
+            px(card.h + 2.0 * off),
+            px(10.0 + off)
+        );
+    }
     let _ = write!(
         svg,
         "<rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\" data-box=\"{} {} {} {}\"/>",
-        esc(&label_for(arch, p)),
+        esc(&p.description),
         px(x),
         px(y),
         px(card.w),
@@ -1696,22 +2055,23 @@ fn draw_card(svg: &mut String, arch: &Architecture, card: &Card, x: f64, y: f64)
         px(card.w),
         px(card.h)
     );
-    icon_tile(svg, &p.block, x + PAD, y + PAD, ICON);
+    icon_tile(svg, p.icon, x + PAD, y + PAD, ICON);
     let tx = x + PAD + ICON + 10.0;
     let _ = write!(
         svg,
         "<text class=\"name\" x=\"{}\" y=\"{}\">{}</text><text class=\"sub\" x=\"{}\" y=\"{}\">{}</text>",
         px(tx),
         px(y + PAD + 12.0),
-        esc(&p.name),
+        esc(&p.label),
         px(tx),
         px(y + PAD + 27.0),
-        esc(&subtitle(p))
+        esc(&p.subtitle)
     );
-    if let Some(c) = &p.count {
-        let t = format!("×{c}");
-        let bw = badge_w(c);
-        let bx = x + card.w - PAD - bw;
+    // Badges sit at the top right, the last one rightmost.
+    let mut right = x + card.w - PAD;
+    for t in p.badges.iter().rev() {
+        let bw = badge_w(t);
+        let bx = right - bw;
         let _ = write!(
             svg,
             "<g class=\"badge\"><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"18\" rx=\"9\"/><text x=\"{}\" y=\"{}\" text-anchor=\"middle\">{}</text></g>",
@@ -1720,24 +2080,26 @@ fn draw_card(svg: &mut String, arch: &Architecture, card: &Card, x: f64, y: f64)
             px(bw),
             px(bx + bw / 2.0),
             px(y + PAD + 12.0),
-            esc(&t)
+            esc(t)
         );
+        right = bx - 8.0;
     }
-    if card.border {
-        let tw = tag_w();
+    if let Some(tag) = &p.outline {
+        let tw = tag_w(tag);
         let bx = x + card.w - PAD - tw;
         let _ = write!(
             svg,
-            "<g class=\"tag\"><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"16\" rx=\"8\"/><text x=\"{}\" y=\"{}\" text-anchor=\"middle\">border</text></g>",
+            "<g class=\"tag\"><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"16\" rx=\"8\"/><text x=\"{}\" y=\"{}\" text-anchor=\"middle\">{}</text></g>",
             px(bx),
             px(y + PAD + 16.0),
             px(tw),
             px(bx + tw / 2.0),
-            px(y + PAD + 27.5)
+            px(y + PAD + 27.5),
+            esc(tag)
         );
     }
     let mut cy = y + HEAD;
-    for (k, v) in &card.props {
+    for (k, v) in &p.props {
         let _ = write!(
             svg,
             "<text class=\"prop\" x=\"{}\" y=\"{}\"><tspan class=\"prop-k\">{}</tspan> {}</text>",
@@ -1748,13 +2110,14 @@ fn draw_card(svg: &mut String, arch: &Architecture, card: &Card, x: f64, y: f64)
         );
         cy += PROP;
     }
-    // The ports of a nested architecture sit on the left edge of its box, one row each.
-    for (address, own) in &card.ports {
+    // The ports of a node sit on the left edge of its card, one row each.
+    for (address, own, title, refused) in &p.ports {
         let _ = write!(
             svg,
-            "<g class=\"port\" data-port=\"{}\"><title>{}</title><rect class=\"port-mark\" x=\"{}\" y=\"{}\" width=\"10\" height=\"10\" rx=\"2\"/><text class=\"prop\" x=\"{}\" y=\"{}\"><tspan class=\"prop-k\">port</tspan> {}</text></g>",
+            "<g class=\"port{}\" data-port=\"{}\"><title>{}</title><rect class=\"port-mark\" x=\"{}\" y=\"{}\" width=\"10\" height=\"10\" rx=\"2\"/><text class=\"prop\" x=\"{}\" y=\"{}\"><tspan class=\"prop-k\">port</tspan> {}</text></g>",
+            if *refused { " refused" } else { "" },
             esc(address),
-            esc(&format!("border part {address}")),
+            esc(title),
             px(x - 5.0),
             px(cy + 3.5),
             px(x + PAD),
@@ -1763,48 +2126,58 @@ fn draw_card(svg: &mut String, arch: &Architecture, card: &Card, x: f64, y: f64)
         );
         cy += PROP;
     }
-    for chip in &card.chips {
+    for chip in &p.chips {
         chip.svg(svg, x + PAD, cy + 2.0);
         cy += CHIP;
     }
     if !card.children.is_empty() {
         let _ = write!(
             svg,
-            "<text class=\"per-head\" x=\"{}\" y=\"{}\">per {}</text>",
+            "<text class=\"per-head\" x=\"{}\" y=\"{}\">{}</text>",
             px(x + PAD),
             px(cy + 12.0),
-            esc(&p.name)
+            esc(&card.heading)
         );
         cy += CHILD_HEAD;
-        for (i, &c) in card.children.iter().enumerate() {
-            let cp = &arch.parts[c];
-            let (cfam, _) = family(&cp.block);
-            let chips = &card.child_chips[i];
-            let h = CHILD + chips.len() as f64 * CHIP;
+        for &c in &card.children {
+            let cp = &sc.parts[c];
+            let h = CHILD + cp.chips.len() as f64 * CHIP;
             let w = card.w - 2.0 * PAD;
             let _ = write!(
                 svg,
-                "<g class=\"node child f-{cfam}\" data-part=\"{}\"><rect class=\"child-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"8\"/>",
-                esc(&cp.name),
-                esc(&label_for(arch, cp)),
+                "<g class=\"node child f-{}{}\" data-part=\"{}\"><rect class=\"child-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"8\"/>",
+                cp.slot,
+                if cp.refused { " refused" } else { "" },
+                esc(&cp.id),
+                esc(&cp.description),
                 px(x + PAD),
                 px(cy),
                 px(w),
                 px(h)
             );
-            icon_tile(svg, &cp.block, x + PAD + 8.0, cy + 9.0, 20.0);
+            if cp.refused {
+                let _ = write!(
+                    svg,
+                    "<rect class=\"refusal-ring\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\"/>",
+                    px(x + PAD - 3.0),
+                    px(cy - 3.0),
+                    px(w + 6.0),
+                    px(h + 6.0)
+                );
+            }
+            icon_tile(svg, cp.icon, x + PAD + 8.0, cy + 9.0, 20.0);
             let _ = write!(
                 svg,
                 "<text class=\"name xs\" x=\"{}\" y=\"{}\">{}</text><text class=\"sub xs\" x=\"{}\" y=\"{}\">{}</text>",
                 px(x + PAD + 36.0),
                 px(cy + 16.0),
-                esc(&cp.name),
+                esc(&cp.label),
                 px(x + PAD + 36.0),
                 px(cy + 30.0),
-                esc(&child_sub(cp))
+                esc(&cp.subtitle)
             );
             let mut chy = cy + CHILD;
-            for chip in chips {
+            for chip in &cp.chips {
                 chip.svg(svg, x + PAD + 8.0, chy);
                 chy += CHIP;
             }

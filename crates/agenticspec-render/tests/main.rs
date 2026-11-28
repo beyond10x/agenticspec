@@ -2,8 +2,9 @@
 
 mod graph;
 mod optim;
+mod page;
 
-use agenticspec_render::page;
+use agenticspec_render::architecture::page;
 use serde_json::{Value, json};
 use std::path::PathBuf;
 
@@ -190,7 +191,7 @@ fn absent_and_partial_inputs_render() {
 #[test]
 fn the_graph_alone_holds_the_svg_its_size_and_every_part_and_link() {
     let arch = workstation();
-    let g = agenticspec_render::graph(&arch);
+    let g = agenticspec_render::architecture::graph(&arch);
     let svg = g["svg"].as_str().expect("svg");
     assert!(svg.starts_with("<svg class=\"graph\""), "{}", &svg[..40]);
     assert!(svg.ends_with("</svg>"));

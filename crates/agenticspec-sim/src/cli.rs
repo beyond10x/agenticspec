@@ -358,7 +358,7 @@ pub fn run(
     };
     write(
         &out.join("index.html"),
-        &agenticspec_render::page(&result["architecture"], Some(&result)),
+        &agenticspec_render::architecture::page(&result["architecture"], Some(&result)),
     )?;
     let source = e.doc["architecture"].as_str().and_then(|p| {
         std::fs::read_to_string(path.parent().unwrap_or(Path::new(".")).join(p)).ok()
@@ -422,7 +422,10 @@ pub fn render(path: &Path, result: Option<&Path>, out: &Path) -> Result<Value, R
         }
         None => None,
     };
-    write(out, &agenticspec_render::page(&arch, result.as_ref()))?;
+    write(
+        out,
+        &agenticspec_render::architecture::page(&arch, result.as_ref()),
+    )?;
     Ok(json!({ "out": out.display().to_string() }))
 }
 

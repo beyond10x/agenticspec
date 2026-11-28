@@ -1,10 +1,10 @@
 //! The sections of a simulation result: figures, KPIs, marked places, the search trace, the
 //! ranked variants and the timeline.
 
+use super::map;
+use super::model::{Architecture, Outcome, Run, norm};
+use super::optim;
 use crate::fmt::{self, esc, px};
-use crate::graph::Chip;
-use crate::model::{Architecture, Outcome, Run, norm};
-use crate::optim;
 use std::fmt::Write as _;
 
 pub fn sections(h: &mut String, arch: &Architecture, o: &Outcome) {
@@ -243,16 +243,19 @@ fn kpi_table(h: &mut String, o: &Outcome) {
 }
 
 fn places_table(h: &mut String, arch: &Architecture, o: &Outcome) {
-    let mut rows: Vec<Chip> = arch.places().map(|p| Chip::new(p, Some(o))).collect();
+    let mut rows: Vec<crate::graph::Chip> = arch.places().map(|p| map::chip(p, Some(o))).collect();
     for m in &o.marked {
-        if !rows.iter().any(|c| norm(&c.path) == norm(&m.path)) {
-            let place = crate::model::Place {
+        if !rows
+            .iter()
+            .any(|c| norm(c.id.as_deref().unwrap_or("")) == norm(&m.path))
+        {
+            let place = super::model::Place {
                 path: m.path.clone(),
                 field: m.path.clone(),
                 value: m.value.clone(),
                 vary: m.range.clone(),
             };
-            rows.push(Chip::new(&place, Some(o)));
+            rows.push(map::chip(&place, Some(o)));
         }
     }
     if rows.is_empty() {
@@ -263,10 +266,14 @@ fn places_table(h: &mut String, arch: &Architecture, o: &Outcome) {
         let _ = write!(
             h,
             "<tr{}><th scope=\"row\"><span class=\"mono\">{}</span></th><td class=\"mono muted\">{}</td><td class=\"r mono\">{}</td><td class=\"r mono best\">{}</td></tr>",
-            if c.changed { " class=\"changed\"" } else { "" },
-            esc(&norm(&c.path)),
+            if c.changed() {
+                " class=\"changed\""
+            } else {
+                ""
+            },
+            esc(&norm(c.id.as_deref().unwrap_or(""))),
             esc(&c.range),
-            esc(&c.value),
+            esc(c.value.as_deref().unwrap_or("")),
             esc(c.best.as_deref().unwrap_or("–"))
         );
     }

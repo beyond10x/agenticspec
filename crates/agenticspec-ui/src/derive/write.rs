@@ -599,7 +599,7 @@ pub fn fixtures(
             }
             reach.push(Value::Object(row));
         }
-        let mut g = agenticspec_render::graph(&level.doc);
+        let mut g = agenticspec_render::architecture::graph(&level.doc);
         if let Some(o) = g.as_object_mut() {
             o.insert("architecture".into(), json!(level.name));
             o.insert("draft_id".into(), json!(level.name));
