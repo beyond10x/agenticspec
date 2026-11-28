@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 0e951ba410076a4e5161979a4da48480077b83c4a512a275e83d6ead40028338
+// contract digest 36c9e5be061e7d939ddda81fea8e8d34c232e6058a340bb4fd9995f1af4e0a87
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -2806,6 +2806,160 @@ pub fn decode_agenticspec_cli_tool_figures(value: &json::Value, at: &str) -> Res
             let at3 = json::nested(at, "failed");
             let member3 = json::member_at(value, at, "failed")?;
             json::integer_at(member3, &at3, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiConformCheck` as JSON.
+pub fn encode_agenticspec_cli_ui_conform_check(value: &agenticspec_types::cli::UiConformCheck, out: &mut String) {
+    out.push('{');
+    json::member(out, "name");
+    json::push_text(out, &value.name);
+    json::member(out, "status");
+    json::push_text(out, &value.status);
+    json::member(out, "detail");
+    json::push_text(out, &value.detail);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiConformCheck` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_conform_check(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformCheck, json::DecodeError> {
+    json::closed_at(value, at, &["name", "status", "detail"])?;
+    Ok(agenticspec_types::cli::UiConformCheck {
+        name: {
+            let at0 = json::nested(at, "name");
+            let member0 = json::member_at(value, at, "name")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        status: {
+            let at1 = json::nested(at, "status");
+            let member1 = json::member_at(value, at, "status")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        detail: {
+            let at2 = json::nested(at, "detail");
+            let member2 = json::member_at(value, at, "detail")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiConformInput` as JSON.
+pub fn encode_agenticspec_cli_ui_conform_input(value: &agenticspec_types::cli::UiConformInput, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.source {
+        json::member(out, "source");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.plan {
+        json::member(out, "plan");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.root {
+        json::member(out, "root");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiConformInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_conform_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformInput, json::DecodeError> {
+    json::closed_at(value, at, &["source", "plan", "root"])?;
+    Ok(agenticspec_types::cli::UiConformInput {
+        source: match value.member("source") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "source");
+                Some(json::text_at(member0, &at0, "a string")?.to_owned())
+            }
+        },
+        plan: match value.member("plan") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "plan");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        root: match value.member("root") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "root");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiConformResult` as JSON.
+pub fn encode_agenticspec_cli_ui_conform_result(value: &agenticspec_types::cli::UiConformResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "source");
+    json::push_text(out, &value.source);
+    json::member(out, "passed");
+    json::push_integer(out, value.passed);
+    json::member(out, "failed");
+    json::push_integer(out, value.failed);
+    json::member(out, "skipped");
+    json::push_integer(out, value.skipped);
+    json::member(out, "checks");
+    out.push('[');
+    for (index0, item0) in value.checks.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        encode_agenticspec_cli_ui_conform_check(&*item0, out);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiConformResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_conform_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformResult, json::DecodeError> {
+    json::closed_at(value, at, &["source", "passed", "failed", "skipped", "checks"])?;
+    Ok(agenticspec_types::cli::UiConformResult {
+        source: {
+            let at0 = json::nested(at, "source");
+            let member0 = json::member_at(value, at, "source")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        passed: {
+            let at1 = json::nested(at, "passed");
+            let member1 = json::member_at(value, at, "passed")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        failed: {
+            let at2 = json::nested(at, "failed");
+            let member2 = json::member_at(value, at, "failed")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        skipped: {
+            let at3 = json::nested(at, "skipped");
+            let member3 = json::member_at(value, at, "skipped")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        checks: {
+            let at4 = json::nested(at, "checks");
+            let member4 = json::member_at(value, at, "checks")?;
+            {
+                let mut items4 = Vec::new();
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
+                    let nested4 = json::nested(&at4, &index4.to_string());
+                    items4.push(decode_agenticspec_cli_ui_conform_check(element4, &nested4)?);
+                }
+                items4
+            }
         },
     })
 }

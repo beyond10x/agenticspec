@@ -211,6 +211,8 @@ pub struct ChoiceModel {
 pub struct ActionModel {
     pub label: String,
     pub kind: ActionKind,
+    /// `visible`, compiled: shown only while it holds, beyond the action set.
+    pub visible: Option<String>,
 }
 
 pub enum ActionKind {
@@ -485,6 +487,20 @@ fn compile(e: &str, scope: &Scope, path: &str) -> Result<Compiled, Refusal> {
     if e == "true" || e == "false" || e == "null" || e.parse::<f64>().is_ok() {
         return Ok(plain(e.to_string()));
     }
+    // `actor.may(<command>)`: whether the action set of the scope allows the command (R5).
+    if let Some(cmd) = e
+        .strip_prefix("actor.may(")
+        .and_then(|r| r.strip_suffix(')'))
+    {
+        let cmd = cmd.trim();
+        if !cmd.is_empty()
+            && cmd
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
+        {
+            return Ok(plain(format!("may.allows({})", ts_str(cmd))));
+        }
+    }
     let word = |s: &str| !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
     if let Some((root, name)) = e.split_once('.') {
         if word(root) && word(name) {
@@ -521,7 +537,7 @@ fn compile(e: &str, scope: &Scope, path: &str) -> Result<Compiled, Refusal> {
         return Err(refusal(
             path,
             format!(
-                "expression `{e}` is not one this generator compiles (state.<name>, params.<name>, shell.<name>, row.<field>, args.<name> in a widget or a literal)"
+                "expression `{e}` is not one this generator compiles (state.<name>, params.<name>, shell.<name>, row.<field>, args.<name> in a widget, actor.may(<command>) or a literal)"
             ),
         ));
     }
@@ -534,7 +550,7 @@ fn compile(e: &str, scope: &Scope, path: &str) -> Result<Compiled, Refusal> {
     Err(refusal(
         path,
         format!(
-            "expression `{e}` is not one this generator compiles (state.<name>, params.<name>, shell.<name>, row.<field>, args.<name> in a widget or a literal)"
+            "expression `{e}` is not one this generator compiles (state.<name>, params.<name>, shell.<name>, row.<field>, args.<name> in a widget, actor.may(<command>) or a literal)"
         ),
     ))
 }
@@ -1159,7 +1175,15 @@ impl<'a> Resolver<'a> {
             let e = a.copy.as_deref().unwrap_or("");
             ActionKind::Copy(self.expr(e, scope, &format!("{apath}/copy"), read))
         };
-        Some(ActionModel { label, kind })
+        let visible = a
+            .visible
+            .as_ref()
+            .map(|e| self.expr(e, scope, &format!("{apath}/visible"), read));
+        Some(ActionModel {
+            label,
+            kind,
+            visible,
+        })
     }
 
     fn check_keys(&mut self, n: &Node, path: &str) -> bool {

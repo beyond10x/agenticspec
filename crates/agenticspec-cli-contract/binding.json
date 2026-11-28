@@ -1495,6 +1495,111 @@
         }
       }
     },
+    "ui_conform": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_conform"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiConformInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "plan": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "source": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiConformResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "checks": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "detail": {
+                    "kind": "string"
+                  },
+                  "name": {
+                    "kind": "string"
+                  },
+                  "status": {
+                    "kind": "string"
+                  }
+                }
+              }
+            },
+            "failed": {
+              "kind": "integer"
+            },
+            "passed": {
+              "kind": "integer"
+            },
+            "skipped": {
+              "kind": "integer"
+            },
+            "source": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "conformance_failed": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "plan_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "source_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "ui_generate": {
       "target": {
         "kind": "local",
@@ -2059,6 +2164,38 @@
     {
       "path": [
         "ui",
+        "conform"
+      ],
+      "aliases": [],
+      "callable": "ui_conform",
+      "about": "Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)",
+      "arguments": [
+        {
+          "field": "source",
+          "source": {
+            "kind": "option",
+            "long": "source"
+          }
+        },
+        {
+          "field": "plan",
+          "source": {
+            "kind": "option",
+            "long": "plan"
+          }
+        },
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ui",
         "generate"
       ],
       "aliases": [],
@@ -2121,6 +2258,7 @@
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_conform: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_generate: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract"
   ]

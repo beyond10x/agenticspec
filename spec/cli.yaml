@@ -119,6 +119,14 @@ callables:
       blocks_unreadable: agenticspec.cli.Refusal
       panels_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+  ui_conform:
+    target: {kind: local, owner: agenticspec.cli, action: ui_conform}
+    input: agenticspec.cli.UiConformInput
+    result: agenticspec.cli.UiConformResult
+    errors:
+      plan_unreadable: agenticspec.cli.Refusal
+      source_unavailable: agenticspec.cli.Refusal
+      conformance_failed: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -223,3 +231,10 @@ commands:
     arguments:
       - {field: root, source: {kind: option, long: root}}
       - {field: check, source: {kind: flag, long: check}}
+  - path: [ui, conform]
+    callable: ui_conform
+    about: Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)
+    arguments:
+      - {field: source, source: {kind: option, long: source}}
+      - {field: plan, source: {kind: option, long: plan}}
+      - {field: root, source: {kind: option, long: root}}

@@ -28,6 +28,9 @@ function fake(rows: Row[]) {
       state.emit = onEvent;
       return () => undefined;
     },
+    async actions() {
+      return null;
+    },
     scope(path) {
       state.scopes.push(path);
       return client;
@@ -157,7 +160,7 @@ describe('scope', () => {
     const { client, state } = fake([]);
     const el = mount(Principals, { channel: 'principal', source: 'https://runtime.example/scopes/a1/' }, client);
     await settle();
-    expect(fetcher).toHaveBeenCalledWith('https://runtime.example/scopes/a1/api/views/agentic.principal.Principals', undefined);
+    expect(fetcher).toHaveBeenCalledWith('https://runtime.example/scopes/a1/api/views/agentic.principal.Principals', { credentials: 'include' });
     expect(state.reads).toBe(0);
     expect(el.querySelector('tr[data-row="p9"]')).not.toBeNull();
     vi.unstubAllGlobals();

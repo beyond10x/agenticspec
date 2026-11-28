@@ -1,0 +1,33 @@
+{
+  "format": "agenticspec-runtime-conformance/1",
+  "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+  "token": "fixture-operator",
+  "scopes": [
+    {"part": "team.lead", "views": ["agentic.harness.Turns", "agentic.harness.HarnessSessions", "agentic.harness.ToolCalls", "agentic.question.OpenQuestions"]},
+    {"part": "team.worker", "instance": 2, "views": ["agentic.harness.Turns", "agentic.harness.HarnessSessions", "agentic.question.OpenQuestions"]}
+  ],
+  "feed": {"part": "team.lead", "channel": "harness", "events": 5, "resume_after": 3},
+  "commands": [
+    {"part": "team.lead", "command": "agentic.question.Answer", "input": {"question_id": "00000000-0000-4000-8000-d74009500000", "option": "A"}, "expect": "accepted"},
+    {"part": "team.lead", "command": "agentic.question.Answer", "input": {"question_id": "00000000-0000-4000-8000-d740095000ff", "option": "A"}, "expect": "refused", "error": "agentic.question.UnknownQuestion"}
+  ],
+  "actions": {
+    "principal_id": "00000000-0000-4000-8000-322d9f1c0000",
+    "action_classes": {
+      "agentic.question.Answer": "Message",
+      "agentic.question.TakeDefault": "Execute",
+      "agentic.question.Withdraw": "Edit"
+    },
+    "grants": [
+      {"grant_id": "00000000-0000-4000-8000-69f9b46e0100", "grantee_id": "00000000-0000-4000-8000-322d9f1c0000", "action_class": "Message", "scope": "00000000-0000-4000-8000-463ec9280000/team.lead", "effect": "Allow", "state": "Active"},
+      {"grant_id": "00000000-0000-4000-8000-69f9b46e0101", "grantee_id": "00000000-0000-4000-8000-322d9f1c0000", "action_class": "Edit", "scope": "00000000-0000-4000-8000-463ec9280000", "effect": "Allow", "state": "Active"},
+      {"grant_id": "00000000-0000-4000-8000-69f9b46e0102", "grantee_id": "00000000-0000-4000-8000-322d9f1c0000", "action_class": "Execute", "scope": "00000000-0000-4000-8000-463ec9280000/team.lead", "effect": "Deny", "state": "Active"},
+      {"grant_id": "00000000-0000-4000-8000-69f9b46e0103", "grantee_id": "00000000-0000-4000-8000-322d9f1c0000", "action_class": "Message", "scope": "00000000-0000-4000-8000-463ec9280000/team.worker", "effect": "Allow", "state": "Revoked"}
+    ],
+    "probes": {
+      "agentic.question.Answer": {"question_id": "00000000-0000-4000-8000-d74009500001", "option": "A"},
+      "agentic.question.TakeDefault": {"question_id": "00000000-0000-4000-8000-d74009500000"},
+      "agentic.question.Withdraw": {"question_id": "00000000-0000-4000-8000-d74009500001"}
+    }
+  }
+}

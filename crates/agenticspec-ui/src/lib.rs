@@ -7,6 +7,10 @@
 //!   references and compiling expressions into the model the emitter writes.
 //! - `emit`: the files: one page component per page, `App.vue`, the router, the typed client of
 //!   the reads, commands and channels, the host slots' names and props, and the runtime.
+//! - `interface`: the runtime interface the generated client calls, `ui/runtime.openapi.yaml`.
+//! - `source`: the fixture source, an adapter that answers that interface from fixtures.
+//! - `conform`: the conformance suite of that interface, run against a source by its URL.
+//! - `wire`: the small HTTP client and server both use.
 //!
 //! The output is a function of the document alone: the same document gives the same bytes.
 
@@ -15,6 +19,10 @@ use std::fmt;
 use std::path::Path;
 
 mod check;
+pub mod conform;
+pub mod interface;
+pub mod source;
+pub mod wire;
 // The document types hold every property the schema gives a construct the generator accepts; some
 // it reads only to accept them (the model, the fixtures, a channel's delivery).
 #[allow(dead_code)]

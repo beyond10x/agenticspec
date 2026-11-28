@@ -7,7 +7,8 @@
 //! - `GET /view/channels/sessions` and `GET /view/channels/session_events?session_id=<id>`:
 //!   `text/event-stream`, one SSE message per published event (`event:` the qualified event
 //!   name, `data:` its wire JSON, `id:` the event's `seq` on `session_events`). A reconnect with
-//!   `Last-Event-ID` gets the events after it first.
+//!   `Last-Event-ID` gets exactly the events after it, in order, and none twice (R2 of
+//!   `ui/runtime.openapi.yaml`).
 //! - Any other path: a file of the built UI, else its `index.html`.
 
 use std::collections::HashMap;
@@ -396,6 +397,14 @@ fn message(event: &str, id: Option<i64>, data: &str) -> String {
     out
 }
 
+/// The cursor (`id:`) of one SSE message, when it has one.
+fn cursor_of(message: &str) -> Option<i64> {
+    message
+        .lines()
+        .find_map(|l| l.strip_prefix("id: "))
+        .and_then(|v| v.trim().parse().ok())
+}
+
 #[derive(Clone, PartialEq, Eq)]
 enum Channel {
     Sessions,
@@ -619,7 +628,11 @@ fn events_stream(
         b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: keep-alive\r\n\r\n",
     )?;
     stream.flush()?;
-    // A reconnect resumes after the last event the client saw.
+    // A reconnect resumes after the last event the client saw, and receives exactly what followed
+    // it: the stream subscribes before it reads the store, so an event published in between is
+    // both read and queued, and the queued copy (a cursor at or before the last one sent) is
+    // dropped. A cursor is the `seq` of an `EventAppended`.
+    let mut sent: Option<i64> = None;
     if let Channel::SessionEvents(id) = &channel
         && let Some(last) = request
             .headers
@@ -627,6 +640,7 @@ fn events_stream(
             .find(|(k, _)| k == "last-event-id")
             .and_then(|(_, v)| v.parse::<i64>().ok())
     {
+        sent = Some(last);
         for e in store.events(id, last + 1, None, None).unwrap_or_default() {
             let mut text = String::new();
             let seq = e.seq;
@@ -634,12 +648,20 @@ fn events_stream(
             stream.write_all(
                 message("agenticspec.view.EventAppended", Some(seq), &text).as_bytes(),
             )?;
+            sent = Some(seq);
         }
         stream.flush()?;
     }
     loop {
         match rx.recv_timeout(Duration::from_secs(15)) {
-            Ok(text) => stream.write_all(text.as_bytes())?,
+            Ok(text) => match (cursor_of(&text), sent) {
+                (Some(seq), Some(last)) if seq <= last => continue,
+                (Some(seq), _) => {
+                    sent = Some(seq);
+                    stream.write_all(text.as_bytes())?;
+                }
+                (None, _) => stream.write_all(text.as_bytes())?,
+            },
             Err(RecvTimeoutError::Timeout) => stream.write_all(b": keep-alive\n\n")?,
             Err(RecvTimeoutError::Disconnected) => return Ok(()),
         }

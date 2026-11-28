@@ -694,6 +694,9 @@ pub struct Action {
     pub label: Option<String>,
     #[serde(default, rename = "as")]
     pub as_: Option<ActionAs>,
+    /// Shows the action only while it holds, beyond the action set of the scope.
+    #[serde(default)]
+    pub visible: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]

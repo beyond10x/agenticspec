@@ -93,6 +93,8 @@ interface Runtime {
   shell: Record<string, Scalar>;
   /** The reader's system theme, which a document that names no theme follows. */
   system: Ref<string>;
+  /** The client of each scope and source a widget read, so widgets of one scope share it. */
+  scopes: Map<string, Client>;
 }
 
 const KEY: InjectionKey<Runtime> = Symbol('agenticspec-ui');
@@ -187,6 +189,7 @@ export function install(app: VueApp, options: InstallOptions): void {
     toasts: reactive([]),
     shell,
     system: ref(dark?.matches ? 'dark' : 'light'),
+    scopes: new Map(),
   };
   dark?.addEventListener?.('change', (e) => {
     rt.system.value = e.matches ? 'dark' : 'light';
@@ -366,14 +369,64 @@ export interface WidgetScope {
 
 /**
  * The client a widget reads through: the adapter at `source`, which answers the scope; else the
- * app's own under `/scopes/<architecture>[/<part>[/<instance>]]`; else the app's own.
+ * app's own under `/scopes/<architecture>[/<part>[/<instance>]]`; else the app's own. Widgets of
+ * one scope share one client, so they share its channels and its action set.
  */
 export function useWidget(scope: WidgetScope): Client {
   const rt = useRuntime();
-  if (scope.source) return createClient(scope.source.replace(/\/+$/, ''));
-  if (!scope.architecture) return rt.options.client;
+  if (!scope.source && !scope.architecture) return rt.options.client;
   const parts = [scope.architecture, scope.part, scope.instance].filter((p) => !empty(p)).map((p) => encodeURIComponent(String(p)));
-  return rt.options.client.scope('/scopes/' + parts.join('/'));
+  const key = scope.source ? 'source ' + scope.source.replace(/\/+$/, '') : '/scopes/' + parts.join('/');
+  let client = rt.scopes.get(key);
+  if (!client) {
+    client = scope.source ? createClient(scope.source.replace(/\/+$/, '')) : rt.options.client.scope(key);
+    rt.scopes.set(key, client);
+  }
+  return client;
+}
+
+/** What the action set (R5) of a scope allows. */
+export interface ActionSet {
+  /** `loading` until the source answered; `absent` when it has no action set or failed. */
+  readonly state: 'loading' | 'ready' | 'absent';
+  allows(command: string): boolean;
+}
+
+const actionSets = new WeakMap<Client, ActionSet>();
+
+/**
+ * The action set of a client's scope, read once per client: an action that sends a command shows
+ * only when the set allows the command. While it loads no such action shows; a source without
+ * an action set (404), or one that fails, shows every action, and the command (R4) refuses what
+ * the principal may not do. Hiding is a convenience, not authorization.
+ */
+export function useActions(over?: Client): ActionSet {
+  const rt = useRuntime();
+  const client = over ?? rt.options.client;
+  const known = actionSets.get(client);
+  if (known) return known;
+  const s = reactive({ state: 'loading' as ActionSet['state'], allowed: [] as string[] });
+  const set: ActionSet = {
+    get state() {
+      return s.state;
+    },
+    allows: (command) => s.state === 'absent' || (s.state === 'ready' && s.allowed.includes(command)),
+  };
+  actionSets.set(client, set);
+  client.actions().then(
+    (list) => {
+      if (list === null) {
+        s.state = 'absent';
+      } else {
+        s.allowed = list.filter((e) => e.allowed).map((e) => e.command);
+        s.state = 'ready';
+      }
+    },
+    () => {
+      s.state = 'absent';
+    },
+  );
+  return set;
 }
 
 /**

@@ -16,3 +16,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json.workspace = true
 serde_yaml_ng.workspace = true
 serde_path_to_error = "0.1"
+
+[dev-dependencies]
+regex.workspace = true

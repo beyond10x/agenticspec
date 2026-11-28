@@ -2,9 +2,10 @@
      the document and generate again. -->
 <script setup lang="ts">
 import { KitButton, KitCopy, KitField, KitForm, KitList, KitPanel, KitRecord, KitSearch, KitSelect, KitShell, KitSplit, KitStack, KitSwitch, KitTable, KitToolbar, type FieldDef } from '@kit';
-import { contains, flag, options, text, useCommand, useForm, useHosts, usePage, useRead, useShell } from '../runtime';
+import { contains, flag, options, text, useActions, useCommand, useForm, useHosts, usePage, useRead, useShell } from '../runtime';
 
 const shell = useShell();
+const may = useActions();
 const hosts = useHosts();
 const page = usePage({ params: ['draft_id'], state: { architecture: { store: 'url', initial: '' }, part_search: { store: 'memory', initial: '' } } });
 const r_bar_architecture = useRead('studio.Architectures', () => ({}));
@@ -44,7 +45,7 @@ const fields_parts: FieldDef[] = [
     <template #bar>
       <KitToolbar label="Filters">
         <KitSelect label="Architecture" placeholder="Choose an architecture" :options="options(r_bar_architecture.rows, 'source', 'name')" :model-value="page.state['architecture']" @update:model-value="page.state['architecture'] = $event" />
-        <KitButton tone="primary" :busy="c_bar_open.busy" :disabled="c_bar_open.blocked" @click="c_bar_open.run()">Open draft</KitButton>
+        <KitButton v-if="may.allows('studio.draft.OpenDraft')" tone="primary" :busy="c_bar_open.busy" :disabled="c_bar_open.blocked" @click="c_bar_open.run()">Open draft</KitButton>
       </KitToolbar>
     </template>
     <KitSplit>

@@ -5,7 +5,8 @@
 // `GET /api/views/<view>?<params>`, answered `{"rows": [...]}`; a command is
 // `POST /api/commands/<command>` with its input as JSON, answered `{"row": ...}` (a refusal the
 // command declares is status 422 with its row); a channel is `GET /api/channels/<channel>`, a
-// stream of server-sent events named by the event they carry.
+// stream of server-sent events named by the event they carry; the action set is `GET /api/actions`
+// (404 when the source has none). The interface is `ui/runtime.openapi.yaml` of agenticspec.
 
 export type Value = string | number | boolean | null | Value[] | { [key: string]: Value };
 export type Row = Record<string, Value>;
@@ -56,10 +57,19 @@ export class Refused extends Error {
   }
 }
 
+/** One command of the action set (R5): whether the signed-in principal may issue it at the scope. */
+export interface ActionEntry {
+  command: string;
+  allowed: boolean;
+  grant_id?: string;
+}
+
 export interface Client {
   read<V extends keyof Reads>(view: V, params: Reads[V]['params']): Promise<Row[]>;
   command<C extends keyof Commands>(command: C, input: Commands[C]['input']): Promise<CommandAnswer>;
   subscribe(channel: ChannelName, params: Record<string, Value>, onEvent: (event: string, data: Value) => void): () => void;
+  /** The action set at the client's scope, or null when the source has none (404). */
+  actions(): Promise<ActionEntry[] | null>;
   /** The same client under `path` below its base: the scope a widget reads (`/scopes/<architecture>/<part>`). */
   scope(path: string): Client;
 }
@@ -82,10 +92,14 @@ async function body(r: Response): Promise<Record<string, Value>> {
   }
 }
 
+/**
+ * The client of the source at `base` (`{root}/scopes/{scope}` for a runtime's adapter). Every
+ * request sends the cookies of the host's sign-in, also to a source on another origin.
+ */
 export function createClient(base = '', fetcher: typeof fetch = (input, init) => fetch(input, init)): Client {
   return {
     async read(view, params) {
-      const r = await fetcher(`${base}/api/views/${view}${query(params)}`);
+      const r = await fetcher(`${base}/api/views/${view}${query(params)}`, { credentials: 'include' });
       const b = await body(r);
       if (!r.ok) throw new Refused(r.status, String(b.error ?? r.status), String(b.message ?? ''));
       return (Array.isArray(b.rows) ? b.rows : []) as Row[];
@@ -93,6 +107,7 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
     async command(command, input) {
       const r = await fetcher(`${base}/api/commands/${command}`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
@@ -102,7 +117,7 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
       throw new Refused(r.status, String(b.error ?? r.status), String(b.message ?? ''));
     },
     subscribe(channel, params, onEvent) {
-      const source = new EventSource(`${base}/api/channels/${channel}${query(params)}`);
+      const source = new EventSource(`${base}/api/channels/${channel}${query(params)}`, { withCredentials: true });
       const handler = (e: MessageEvent<string>) => {
         let data: Value;
         try {
@@ -115,6 +130,23 @@ export function createClient(base = '', fetcher: typeof fetch = (input, init) =>
       for (const ev of (CHANNEL_EVENTS as Record<string, readonly string[]>)[channel] ?? []) source.addEventListener(ev, handler as EventListener);
       source.onmessage = handler;
       return () => source.close();
+    },
+    async actions() {
+      const r = await fetcher(`${base}/api/actions`, { credentials: 'include' });
+      if (r.status === 404) return null;
+      const t = await r.text();
+      let b: Value;
+      try {
+        b = JSON.parse(t) as Value;
+      } catch {
+        throw new Refused(r.status, 'InvalidAnswer', t.slice(0, 200));
+      }
+      if (!r.ok) {
+        const e = (b ?? {}) as Record<string, Value>;
+        throw new Refused(r.status, String(e.error ?? r.status), String(e.message ?? ''));
+      }
+      if (!Array.isArray(b)) throw new Refused(r.status, 'InvalidAnswer', 'an action set is a list');
+      return b as unknown as ActionEntry[];
     },
     scope(path) {
       return createClient(`${base}${path}`, fetcher);
