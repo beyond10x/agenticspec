@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b3a8e549462bc9e05e03c46df5841f20a02fcb1fe0d494b44b19fdeffb576120
+// contract digest 44b4e2b07e9a8b924d2d9b945b734fa5ec84308aa308b3b31272487e27998a0c
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -210,6 +210,17 @@ pub struct ExposureFigures {
     pub count: i64,
     /// `sessions` — `Integer`.
     pub sessions: i64,
+}
+
+/// InvariantStatus — `agenticspec.cli.InvariantStatus`: one of a closed set of names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InvariantStatus {
+    /// `held`.
+    Held,
+    /// `violated`.
+    Violated,
+    /// `not_checked`.
+    NotChecked,
 }
 
 /// KpiInput — `agenticspec.cli.KpiInput`.
@@ -615,11 +626,15 @@ pub struct SimContractInput {
     pub out: Option<String>,
     /// `check` — `Optional<String>`.
     pub check: Option<String>,
+    /// `suite` — `Optional<String>`.
+    pub suite: Option<String>,
+    /// `trace` — `Optional<String>`.
+    pub trace: Option<String>,
 }
 
 /// SimContractResult — `agenticspec.cli.SimContractResult`.
 ///
-/// The contract of an architecture, its counts, and whether it was written.
+/// The contract of an architecture, its counts, whether it was written, the suite cut to it and the checks of its routing invariants.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimContractResult {
     /// `architecture` — `String`.
@@ -632,6 +647,31 @@ pub struct SimContractResult {
     pub written: bool,
     /// `contract` — `Optional<String>`.
     pub contract: Option<String>,
+    /// `suite_scenarios` — `Optional<Integer>`.
+    pub suite_scenarios: Option<i64>,
+    /// `kept_scenarios` — `Optional<Integer>`.
+    pub kept_scenarios: Option<i64>,
+    /// `checks` — `List<agenticspec.cli.SimInvariantCheck>`.
+    pub checks: Vec<SimInvariantCheck>,
+}
+
+/// SimInvariantCheck — `agenticspec.cli.SimInvariantCheck`.
+///
+/// The check of one routing invariant on a trace. An invariant whose predicate names a port the trace does not record is not checked, never held.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimInvariantCheck {
+    /// `link` — `String`.
+    pub link: String,
+    /// `predicate` — `String`.
+    pub predicate: String,
+    /// `status` — `agenticspec.cli.InvariantStatus`.
+    pub status: InvariantStatus,
+    /// `uses` — `Integer`.
+    pub uses: i64,
+    /// `event` — `Optional<Integer>`.
+    pub event: Option<i64>,
+    /// `detail` — `Optional<String>`.
+    pub detail: Option<String>,
 }
 
 /// SimLadderInput — `agenticspec.cli.SimLadderInput`.
@@ -730,6 +770,40 @@ pub struct SimRunResult {
     pub threads: i64,
     /// `best_written` — `Boolean`.
     pub best_written: bool,
+}
+
+/// SimTraceInput — `agenticspec.cli.SimTraceInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimTraceInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `profile` — `String`.
+    pub profile: String,
+    /// `seed` — `Optional<Integer>`.
+    pub seed: Option<i64>,
+    /// `horizon` — `Optional<String>`.
+    pub horizon: Option<String>,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+}
+
+/// SimTraceResult — `agenticspec.cli.SimTraceResult`.
+///
+/// The trace of one simulated run, its counts, and whether it was written.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimTraceResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `seed` — `Integer`.
+    pub seed: i64,
+    /// `uses` — `Integer`.
+    pub uses: i64,
+    /// `events` — `Integer`.
+    pub events: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
+    /// `trace` — `Optional<String>`.
+    pub trace: Option<String>,
 }
 
 /// StepKind — `agenticspec.cli.StepKind`: one of a closed set of names.

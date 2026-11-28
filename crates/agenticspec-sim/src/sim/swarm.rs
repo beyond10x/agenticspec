@@ -2,7 +2,7 @@
 //! their concurrency policies, shared channels (topic, queue, board), an orchestrator, mesh
 //! messages, a scope partition with its merges, and a start stagger.
 
-use super::{Sim, Task, Who, WorkerKind, position, span};
+use super::{PortUse, Sim, Task, Who, WorkerKind, position, span};
 use crate::check;
 use crate::doc::num;
 use crate::rng::Rng;
@@ -198,14 +198,20 @@ pub(super) fn schedules(arch: &Value) -> Vec<Schedule> {
         .collect()
 }
 
-/// The shared channel a principal posts to: arrivals become posts there.
-pub(super) fn intake(arch: &Value, channels: &[String], dist: &[Distribution]) -> Option<usize> {
+/// The shared channel a principal posts to, and that principal: arrivals become posts there.
+pub(super) fn intake(
+    arch: &Value,
+    channels: &[String],
+    dist: &[Distribution],
+) -> Option<(usize, String)> {
     links(arch).find_map(|l| {
         let from = l["from"].as_str()?;
         if check::block(arch, from) != Some("principal") || l["carries"] != "message" {
             return None;
         }
-        position(channels, l["to"].as_str()?).filter(|c| dist[*c] != Distribution::Direct)
+        position(channels, l["to"].as_str()?)
+            .filter(|c| dist[*c] != Distribution::Direct)
+            .map(|c| (c, from.to_owned()))
     })
 }
 
@@ -346,6 +352,7 @@ impl Sim<'_> {
             scope: None,
             work_started: now,
             waited: false,
+            by: 0,
         });
         self.shipped.push(false);
         if origin.is_none() {
@@ -362,8 +369,8 @@ impl Sim<'_> {
         if let Some(w) = m.workers.first() {
             self.rec(t, &w.exec.part, "task_arrived");
         }
-        if let Some(c) = m.intake {
-            return self.post(c, id, t);
+        if let Some((c, by)) = &m.intake {
+            return self.post(*c, id, t, Some((by.as_str(), 0)));
         }
         if let Some(k) = m.partition {
             let n = m.workers[k].exec.count;
@@ -397,9 +404,18 @@ impl Sim<'_> {
         (s, other)
     }
 
-    pub(super) fn post(&mut self, c: usize, id: usize, now: f64) {
+    /// Task `id` is posted to channel `c`, by the part instance `by` when one posts it.
+    pub(super) fn post(&mut self, c: usize, id: usize, now: f64, by: Option<(&str, usize)>) {
         let m = self.m;
         self.posted[c] += 1.0;
+        if let Some((part, instance)) = by {
+            let port = if m.distribution[c] == Distribution::Direct {
+                "channel.message"
+            } else {
+                "channel.post"
+            };
+            self.port_use(PortUse::new(port, part, instance, now, now).to(&m.channels[c]));
+        }
         self.rec(now, &m.channels[c], "posted");
         let subs: Vec<usize> = (0..m.triggers.len())
             .filter(|tr| m.triggers[*tr].source == Source::Channel(c))
@@ -512,6 +528,7 @@ impl Sim<'_> {
         a.started += 1.0;
         self.insts[i].run = Some(tr);
         self.rec(now, &t.part, "firing_started");
+        self.record_firing(tr, i, fired, now);
         if item.is_none()
             && let Source::Channel(c) = t.source
             && m.distribution[c] == Distribution::Board
@@ -535,7 +552,7 @@ impl Sim<'_> {
             None => {
                 // Nothing to take: the run looks once and ends.
                 self.trig[tr].empty += 1.0;
-                let dur = self.side_call(k);
+                let dur = self.side_call(k, i, now);
                 self.kinds[k].busy += span(now, now + dur, m.horizon);
                 self.insts[i].hold = true;
                 self.at(now + dur, super::Ev::EmptyDone(i));
@@ -588,8 +605,8 @@ impl Sim<'_> {
         let first = delays.iter().copied().fold(f64::INFINITY, f64::min);
         let at = delays.iter().position(|d| *d == first).unwrap_or(0);
         delays.swap(0, at);
-        for (n, &(_, k)) in readers.iter().enumerate() {
-            self.side_call(k);
+        for (n, &(j, k)) in readers.iter().enumerate() {
+            self.side_call(k, j, now);
             self.kinds[k].coordination_calls += 1.0;
             if delays[n + 1] - first < m.coord.claim_window_seconds {
                 self.kinds[k].claim_conflicts += 1.0;
@@ -658,7 +675,7 @@ impl Sim<'_> {
                 self.kinds[k].coordination_messages += others as f64;
                 let calls = (others as f64 * m.coord.mesh_read_calls).round() as usize;
                 for _ in 0..calls {
-                    self.side_call(k);
+                    self.side_call(k, i, now);
                 }
                 self.kinds[k].coordination_calls += calls as f64;
             }
@@ -697,9 +714,10 @@ impl Sim<'_> {
 
     /// One model call of worker kind `k` outside a task (a read, an empty run): priced and
     /// counted on its model, drawn from the coordination stream; it waits on no rate limit.
-    /// Returns its duration.
-    fn side_call(&mut self, k: usize) -> f64 {
-        let e = &self.m.workers[k].exec;
+    /// Returns its duration. Instance `i` makes it at `now`.
+    fn side_call(&mut self, k: usize, i: usize, now: f64) -> f64 {
+        let m = self.m;
+        let e = &m.workers[k].exec;
         let route = e.route(&mut self.coord);
         let dur = e.turn_seconds.sample(&mut self.coord).max(0.0);
         let mut tokens = [0.0; 4];
@@ -713,6 +731,8 @@ impl Sim<'_> {
         let Some(r) = route else {
             return dur;
         };
+        let copy = self.insts[i].copy;
+        self.model_call(&e.part, copy, (r.model, r.gateway), now, now + dur);
         self.kinds[k].model_calls += 1.0;
         if let Some(g) = r.gateway {
             self.gateways[g].calls += 1.0;

@@ -11,4 +11,6 @@ mod marked;
 mod ports;
 mod search;
 mod sim;
+mod suite;
 mod swarm;
+mod trace;

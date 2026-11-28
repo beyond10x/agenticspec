@@ -124,6 +124,18 @@ callables:
       ports_unreadable: agenticspec.cli.Refusal
       contract_refused: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+      suite_unreadable: agenticspec.cli.Refusal
+      trace_unreadable: agenticspec.cli.Refusal
+      invariant_violated: agenticspec.cli.Refusal
+  sim_trace:
+    target: {kind: local, owner: agenticspec.cli, action: sim_trace}
+    input: agenticspec.cli.SimTraceInput
+    result: agenticspec.cli.SimTraceResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      simulation_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -226,9 +238,20 @@ commands:
       - {field: expect, source: {kind: option, long: expect}}
   - path: [sim, contract]
     callable: sim_contract
-    about: Derive and check the contract of an architecture (agenticspec-contract/1), or check a written contract with --check
+    about: Derive and check the contract of an architecture (agenticspec-contract/1), check a written contract with --check, cut the blocks' conformance suite to its ports with --suite, or check its routing invariants on a trace with --trace
     arguments:
       - {field: architecture, source: {kind: positional, index: 1}}
       - {field: ports, source: {kind: option, long: ports}}
       - {field: out, source: {kind: option, long: out}}
       - {field: check, source: {kind: option, long: check}}
+      - {field: suite, source: {kind: option, long: suite}}
+      - {field: trace, source: {kind: option, long: trace}}
+  - path: [sim, trace]
+    callable: sim_trace
+    about: Simulate an architecture once at its built values and write the port uses of the run as a trace (agenticspec-trace/1)
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: profile, source: {kind: option, long: profile}}
+      - {field: seed, source: {kind: option, long: seed}}
+      - {field: horizon, source: {kind: option, long: horizon}}
+      - {field: out, source: {kind: option, long: out}}

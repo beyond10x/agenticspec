@@ -1,8 +1,8 @@
-//! The commands of `agenticspec sim`: check, run, render and ladder. Each returns the result
-//! the command line prints, a JSON value of the shape `spec/domains/cli.yaml` declares
-//! (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of the error codes `spec/cli.yaml`
-//! binds to the command. The parser and the process adapter are the generated
-//! `agenticspec-cli-contract` of the `agenticspec` crate.
+//! The commands of `agenticspec sim`: check, run, render, ladder, ports, contract and trace.
+//! Each returns the result the command line prints, a JSON value of the shape
+//! `spec/domains/cli.yaml` declares (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of
+//! the error codes `spec/cli.yaml` binds to the command. The parser and the process adapter are
+//! the generated `agenticspec-cli-contract` of the `agenticspec` crate.
 
 use crate::check::check as check_architecture;
 use crate::doc::load_yaml;
@@ -284,16 +284,24 @@ pub struct ContractOptions<'a> {
     pub architecture: &'a Path,
     /// The ports file; `blocks/ports.json` when absent.
     pub ports: Option<&'a Path>,
+    /// The contract file to write, or with `suite` the cut suite.
     pub out: Option<&'a Path>,
     /// A written contract to check against the document and the ports, without deriving.
     pub check: Option<&'a Path>,
+    /// A conformance suite of the building blocks to cut to the contract's ports.
+    pub suite: Option<&'a Path>,
+    /// A trace (`agenticspec-trace/1`) to check the contract's routing invariants on.
+    pub trace: Option<&'a Path>,
 }
 
-/// `sim contract <architecture> [--ports <file>] [--out <file>] [--check <file>]`: derive the
-/// contract of an architecture document and check it, then write it (or print it); refused,
-/// writing nothing, when the document fails `sim check`. With `--check`, read a written contract
-/// and check it against the document and the ports instead.
-pub fn contract(o: &ContractOptions) -> Result<Value, Refusal> {
+/// `sim contract <architecture> [--ports <file>] [--out <file>] [--check <file>]
+/// [--suite <suite.json>] [--trace <trace.json>]`: derive the contract of an architecture
+/// document and check it, then write it (or print it); refused, writing nothing, when the
+/// document fails `sim check`. With `--check`, read a written contract and check it against the
+/// document and the ports instead. With `--suite`, cut the suite to the contract's ports and write
+/// the cut suite to `--out`. With `--trace`, check every routing invariant on the trace, one line
+/// each to `log`, refused as `invariant_violated` when one is violated.
+pub fn contract(o: &ContractOptions, log: &mut dyn Write) -> Result<Value, Refusal> {
     use crate::contract::derive as d;
     use crate::contract::ports::PortsFile;
     let arch = load_yaml(o.architecture).map_err(|e| refused("document_unreadable", e))?;
@@ -322,8 +330,19 @@ pub fn contract(o: &ContractOptions) -> Result<Value, Refusal> {
         "ports": contract.ports.len(),
         "invariants": contract.invariants.len(),
         "written": false,
+        "checks": [],
     });
-    if o.check.is_some() {
+    if let Some(trace) = o.trace {
+        answer["checks"] = check_trace(&contract, trace, log)?;
+    }
+    if let Some(suite) = o.suite {
+        let (kept, total) = cut_suite(&contract, &ports, suite, o.out)?;
+        answer["suite_scenarios"] = json!(total);
+        answer["kept_scenarios"] = json!(kept);
+        answer["written"] = json!(o.out.is_some());
+        return Ok(answer);
+    }
+    if o.check.is_some() || o.trace.is_some() {
         return Ok(answer);
     }
     let text = contract.text();
@@ -333,6 +352,135 @@ pub fn contract(o: &ContractOptions) -> Result<Value, Refusal> {
             answer["written"] = json!(true);
         }
         None => answer["contract"] = json!(text),
+    }
+    Ok(answer)
+}
+
+/// Cut the suite at `path` to the contract's ports and write it to `out`; the counts kept and
+/// whole.
+fn cut_suite(
+    contract: &crate::contract::derive::Contract,
+    ports: &crate::contract::ports::PortsFile,
+    path: &Path,
+    out: Option<&Path>,
+) -> Result<(usize, usize), Refusal> {
+    use crate::contract::suite;
+    let unreadable = |e: String| refused("suite_unreadable", format!("{}: {e}", path.display()));
+    let text = std::fs::read_to_string(path).map_err(|e| unreadable(e.to_string()))?;
+    let whole: Value = serde_json::from_str(&text).map_err(|e| unreadable(e.to_string()))?;
+    let commands = suite::commands(contract, ports);
+    let cut = suite::cut(&whole, &commands, &ports.bindings).map_err(unreadable)?;
+    if let Some(out) = out {
+        let mut text = serde_json::to_string(&cut.suite)
+            .map_err(|e| refused("out_unwritable", e.to_string()))?;
+        text.push('\n');
+        write(out, &text)?;
+    }
+    Ok((cut.kept.len(), cut.total))
+}
+
+/// Check the contract's routing invariants on the trace at `path`: one line per invariant to
+/// `log`, the checks as JSON, refused when one is violated.
+fn check_trace(
+    contract: &crate::contract::derive::Contract,
+    path: &Path,
+    log: &mut dyn Write,
+) -> Result<Value, Refusal> {
+    use crate::contract::trace::{self, Status, Trace};
+    let unreadable = |e: String| refused("trace_unreadable", format!("{}: {e}", path.display()));
+    let text = std::fs::read_to_string(path).map_err(|e| unreadable(e.to_string()))?;
+    let t = Trace::parse(&text).map_err(unreadable)?;
+    let checks = trace::check(contract, &t).map_err(unreadable)?;
+    let mut violated = Vec::new();
+    for c in &checks {
+        let note = match (&c.detail, c.status) {
+            (Some(d), _) => format!(": {d}"),
+            (None, _) => String::new(),
+        };
+        let _ = writeln!(
+            log,
+            "{:<11} {} ({} uses){note}",
+            c.status.as_str(),
+            c.link,
+            c.uses
+        );
+        if c.status == Status::Violated {
+            violated.push(format!(
+                "link `{}`: {}",
+                c.link,
+                c.detail.as_deref().unwrap_or("violated")
+            ));
+        }
+    }
+    if !violated.is_empty() {
+        return Err(refused("invariant_violated", violated.join("; ")));
+    }
+    Ok(Value::Array(checks.iter().map(|c| c.to_json()).collect()))
+}
+
+/// The options of `sim trace`.
+#[derive(Debug, Clone)]
+pub struct TraceOptions<'a> {
+    pub architecture: &'a Path,
+    pub profile: &'a Path,
+    /// The seed of the run; 1 when absent.
+    pub seed: Option<u64>,
+    /// The simulated time, as a duration; one day when absent.
+    pub horizon: Option<&'a str>,
+    pub out: Option<&'a Path>,
+}
+
+/// `sim trace <architecture> --profile <profile> [--seed <n>] [--horizon <duration>]
+/// [--out <trace.json>]`: simulate the architecture once at the values it is built with and
+/// write the port uses of the run as a trace (`agenticspec-trace/1`), or print it.
+pub fn trace(o: &TraceOptions) -> Result<Value, Refusal> {
+    use crate::contract::trace::Trace;
+    use crate::profile::Profile;
+    use crate::sim::{Model, RECORDED, simulate};
+    let arch = load_yaml(o.architecture).map_err(|e| refused("document_unreadable", e))?;
+    let refusals = check_architecture(&arch);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    let profile_doc = load_yaml(o.profile).map_err(|e| refused("document_unreadable", e))?;
+    let profile = Profile::parse(&profile_doc).map_err(|e| refused("simulation_refused", e))?;
+    let horizon = match o.horizon {
+        None => 86400.0,
+        Some(h) => crate::doc::parse_duration(h)
+            .filter(|s| *s > 0.0)
+            .ok_or_else(|| {
+                refused(
+                    "simulation_refused",
+                    format!("horizon `{h}` is no positive duration"),
+                )
+            })?,
+    };
+    let seed = o.seed.unwrap_or(1);
+    let built = crate::marked::resolve(&arch, &serde_json::Map::new())
+        .map_err(|e| refused("simulation_refused", e))?;
+    let model = Model::build(&built, &profile, horizon, &[], &[])
+        .map_err(|e| refused("simulation_refused", e))?;
+    let run = simulate(&model, seed, true);
+    let name = arch["architecture"].as_str().unwrap_or("architecture");
+    let source = json!({
+        "simulator": "agenticspec-sim",
+        "profile": profile_doc["profile"],
+        "seed": seed,
+        "horizon_seconds": horizon,
+    });
+    let t = Trace::from_uses(name, source, RECORDED, &run.uses);
+    let text = t.text();
+    let mut answer = json!({
+        "architecture": name,
+        "seed": seed,
+        "uses": run.uses.len(),
+        "events": t.events.len(),
+        "written": o.out.is_some(),
+    });
+    match o.out {
+        Some(out) => write(out, &text)?,
+        None => answer["trace"] = json!(text),
     }
     Ok(answer)
 }

@@ -262,21 +262,31 @@ fn the_command_writes_the_contract_and_refuses_a_refused_document_writing_nothin
     let root = repo_root();
     let dir = scratch("contract-cli");
     let out = dir.join("workstation.contract.yaml");
-    let written = cli::contract(&ContractOptions {
-        architecture: &root.join("architectures/workstation.yaml"),
-        ports: Some(&root.join("blocks/ports.json")),
-        out: Some(&out),
-        check: None,
-    })
+    let written = cli::contract(
+        &ContractOptions {
+            architecture: &root.join("architectures/workstation.yaml"),
+            ports: Some(&root.join("blocks/ports.json")),
+            out: Some(&out),
+            check: None,
+            suite: None,
+            trace: None,
+        },
+        &mut std::io::sink(),
+    )
     .unwrap();
     assert_eq!(written["written"], true);
     assert_eq!(std::fs::read_to_string(&out).unwrap(), workstation().text());
-    let printed = cli::contract(&ContractOptions {
-        architecture: &root.join("architectures/workstation.yaml"),
-        ports: Some(&root.join("blocks/ports.json")),
-        out: None,
-        check: None,
-    })
+    let printed = cli::contract(
+        &ContractOptions {
+            architecture: &root.join("architectures/workstation.yaml"),
+            ports: Some(&root.join("blocks/ports.json")),
+            out: None,
+            check: None,
+            suite: None,
+            trace: None,
+        },
+        &mut std::io::sink(),
+    )
     .unwrap();
     assert_eq!(
         printed["contract"].as_str(),
@@ -284,13 +294,18 @@ fn the_command_writes_the_contract_and_refuses_a_refused_document_writing_nothin
     );
 
     let refused_out = dir.join("refused.contract.yaml");
-    let err = cli::contract(&ContractOptions {
-        architecture: &Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/cases/contract/unknown-link-part.yaml"),
-        ports: Some(&root.join("blocks/ports.json")),
-        out: Some(&refused_out),
-        check: None,
-    })
+    let err = cli::contract(
+        &ContractOptions {
+            architecture: &Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("tests/cases/contract/unknown-link-part.yaml"),
+            ports: Some(&root.join("blocks/ports.json")),
+            out: Some(&refused_out),
+            check: None,
+            suite: None,
+            trace: None,
+        },
+        &mut std::io::sink(),
+    )
     .unwrap_err();
     assert_eq!(err.code, "architecture_refused");
     assert!(err.detail.contains("ghost"), "{}", err.detail);
@@ -316,15 +331,17 @@ fn a_contract_whose_predicate_does_not_parse_is_refused_naming_the_link_and_offs
         ports: Some(&root.join("blocks/ports.json")),
         out: None,
         check: Some(&file),
+        suite: None,
+        trace: None,
     };
     std::fs::write(&file, &good).unwrap();
     assert_eq!(
-        cli::contract(&options).unwrap()["written"],
+        cli::contract(&options, &mut std::io::sink()).unwrap()["written"],
         false,
         "the good contract passes"
     );
     std::fs::write(&file, &fixture).unwrap();
-    let err = cli::contract(&options).unwrap_err();
+    let err = cli::contract(&options, &mut std::io::sink()).unwrap_err();
     assert_eq!(err.code, "contract_refused");
     assert!(
         err.detail.contains("worker -> gateway carries model_call"),

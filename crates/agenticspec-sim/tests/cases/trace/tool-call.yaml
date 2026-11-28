@@ -1,0 +1,18 @@
+format: agenticspec-architecture/1
+architecture: tool-call
+summary: One agent that calls a test suite; the simulator records no tool calls.
+
+parts:
+  owner: { block: principal, kind: human }
+  agent: { block: agent, harness: coding }
+  model: { block: model, route: frontier }
+  tests: { block: tool, category: execute, kind: test_suite }
+
+links:
+  - { from: owner, to: agent, carries: prompt }
+  - { from: agent, to: owner, carries: question }
+  - { from: agent, to: model, carries: model_call }
+  - { from: agent, to: tests, carries: call }
+
+policies:
+  question_default_after: 15m

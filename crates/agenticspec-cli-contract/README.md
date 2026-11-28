@@ -106,7 +106,7 @@ Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
 ### `sim contract`
 
-Derive and check the contract of an architecture (agenticspec-contract/1), or check a written contract with --check
+Derive and check the contract of an architecture (agenticspec-contract/1), check a written contract with --check, cut the blocks' conformance suite to its ports with --suite, or check its routing invariants on a trace with --trace
 
 Callable: `sim_contract`. Input: `agenticspec.cli.SimContractInput`. Result: `agenticspec.cli.SimContractResult`.
 
@@ -116,9 +116,15 @@ Error `contract_refused`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+Error `invariant_violated`: `agenticspec.cli.Refusal`.
+
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `suite_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `trace_unreadable`: `agenticspec.cli.Refusal`.
 
 ### `sim ladder`
 
@@ -172,6 +178,20 @@ Error `experiment_invalid`: `agenticspec.cli.Refusal`.
 
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
+### `sim trace`
+
+Simulate an architecture once at its built values and write the port uses of the run as a trace (agenticspec-trace/1)
+
+Callable: `sim_trace`. Input: `agenticspec.cli.SimTraceInput`. Result: `agenticspec.cli.SimTraceResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `simulation_refused`: `agenticspec.cli.Refusal`.
+
 ### `sync`
 
 Lift the new and changed sessions of a window into the local store
@@ -198,4 +218,5 @@ Error `store_unavailable`: `agenticspec.cli.Refusal`.
 - handler:sim_ports: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_render: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_trace: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract

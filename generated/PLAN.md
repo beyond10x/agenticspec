@@ -1,13 +1,13 @@
 <!--
   generated from agenticspec v1
-  contract digest b3a8e549462bc9e05e03c46df5841f20a02fcb1fe0d494b44b19fdeffb576120
+  contract digest 44b4e2b07e9a8b924d2d9b945b734fa5ec84308aa308b3b31272487e27998a0c
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-190 capabilities: **187 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+194 capabilities: **191 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -29,6 +29,7 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.ExportInput` |
 | domain type | `agenticspec.cli.ExportResult` |
 | domain type | `agenticspec.cli.ExposureFigures` |
+| domain type | `agenticspec.cli.InvariantStatus` |
 | domain type | `agenticspec.cli.KpiInput` |
 | domain type | `agenticspec.cli.KpiReport` |
 | domain type | `agenticspec.cli.LiftInput` |
@@ -55,6 +56,7 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.SimCheckResult` |
 | domain type | `agenticspec.cli.SimContractInput` |
 | domain type | `agenticspec.cli.SimContractResult` |
+| domain type | `agenticspec.cli.SimInvariantCheck` |
 | domain type | `agenticspec.cli.SimLadderInput` |
 | domain type | `agenticspec.cli.SimLadderResult` |
 | domain type | `agenticspec.cli.SimPortsInput` |
@@ -63,6 +65,8 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.SimRenderResult` |
 | domain type | `agenticspec.cli.SimRunInput` |
 | domain type | `agenticspec.cli.SimRunResult` |
+| domain type | `agenticspec.cli.SimTraceInput` |
+| domain type | `agenticspec.cli.SimTraceResult` |
 | domain type | `agenticspec.cli.StepKind` |
 | domain type | `agenticspec.cli.SyncInput` |
 | domain type | `agenticspec.cli.SyncResult` |

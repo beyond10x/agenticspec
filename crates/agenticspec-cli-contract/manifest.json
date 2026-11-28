@@ -27,6 +27,7 @@
     "handler:sim_ports: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_trace: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract"
   ],
   "package": "agenticspec-cli-contract"

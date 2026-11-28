@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b3a8e549462bc9e05e03c46df5841f20a02fcb1fe0d494b44b19fdeffb576120
+// contract digest 44b4e2b07e9a8b924d2d9b945b734fa5ec84308aa308b3b31272487e27998a0c
 // do not edit: regenerate with `ess synthesize`
 
 //! The transport-free entry point's refusals.

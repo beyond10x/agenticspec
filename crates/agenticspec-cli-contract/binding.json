@@ -1223,6 +1223,18 @@
               "of": {
                 "kind": "string"
               }
+            },
+            "suite": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "trace": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
             }
           }
         }
@@ -1235,6 +1247,43 @@
             "architecture": {
               "kind": "string"
             },
+            "checks": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "detail": {
+                    "kind": "optional",
+                    "of": {
+                      "kind": "string"
+                    }
+                  },
+                  "event": {
+                    "kind": "optional",
+                    "of": {
+                      "kind": "integer"
+                    }
+                  },
+                  "link": {
+                    "kind": "string"
+                  },
+                  "predicate": {
+                    "kind": "string"
+                  },
+                  "status": {
+                    "kind": "enum",
+                    "variants": [
+                      "held",
+                      "violated",
+                      "not_checked"
+                    ]
+                  },
+                  "uses": {
+                    "kind": "integer"
+                  }
+                }
+              }
+            },
             "contract": {
               "kind": "optional",
               "of": {
@@ -1244,8 +1293,20 @@
             "invariants": {
               "kind": "integer"
             },
+            "kept_scenarios": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
             "ports": {
               "kind": "integer"
+            },
+            "suite_scenarios": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
             },
             "written": {
               "kind": "boolean"
@@ -1287,6 +1348,17 @@
             }
           }
         },
+        "invariant_violated": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
         "out_unwritable": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
@@ -1299,6 +1371,28 @@
           }
         },
         "ports_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "suite_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "trace_unreadable": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -1658,6 +1752,120 @@
           }
         },
         "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sim_trace": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_trace"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimTraceInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "horizon": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "profile": {
+              "kind": "string"
+            },
+            "seed": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimTraceResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "events": {
+              "kind": "integer"
+            },
+            "seed": {
+              "kind": "integer"
+            },
+            "trace": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "uses": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "simulation_refused": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -2046,7 +2254,7 @@
       ],
       "aliases": [],
       "callable": "sim_contract",
-      "about": "Derive and check the contract of an architecture (agenticspec-contract/1), or check a written contract with --check",
+      "about": "Derive and check the contract of an architecture (agenticspec-contract/1), check a written contract with --check, cut the blocks' conformance suite to its ports with --suite, or check its routing invariants on a trace with --trace",
       "arguments": [
         {
           "field": "architecture",
@@ -2074,6 +2282,20 @@
           "source": {
             "kind": "option",
             "long": "check"
+          }
+        },
+        {
+          "field": "suite",
+          "source": {
+            "kind": "option",
+            "long": "suite"
+          }
+        },
+        {
+          "field": "trace",
+          "source": {
+            "kind": "option",
+            "long": "trace"
           }
         }
       ]
@@ -2215,6 +2437,52 @@
     },
     {
       "path": [
+        "sim",
+        "trace"
+      ],
+      "aliases": [],
+      "callable": "sim_trace",
+      "about": "Simulate an architecture once at its built values and write the port uses of the run as a trace (agenticspec-trace/1)",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "profile",
+          "source": {
+            "kind": "option",
+            "long": "profile"
+          }
+        },
+        {
+          "field": "seed",
+          "source": {
+            "kind": "option",
+            "long": "seed"
+          }
+        },
+        {
+          "field": "horizon",
+          "source": {
+            "kind": "option",
+            "long": "horizon"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
         "sync"
       ],
       "aliases": [],
@@ -2253,6 +2521,7 @@
     "handler:sim_ports: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_trace: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract"
   ]
 }

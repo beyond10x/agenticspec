@@ -1,0 +1,65 @@
+{
+  "provenance": {
+    "suite_version": "ess-conformance/52",
+    "system": "agentic",
+    "specification_version": "v1",
+    "spec_digest": "0000000000000000000000000000000000000000000000000000000000000001",
+    "contract_digest": "0000000000000000000000000000000000000000000000000000000000000002",
+    "scenario_initial_state": "empty"
+  },
+  "events": ["agentic.model.InferenceFinished", "agentic.runtime.InstanceStarted"],
+  "scenarios": {
+    "agentic.model.FinishInference/outcome/finished": {
+      "steps": [
+        {"step": "execute_command", "command": "agentic.model.RegisterProvider"},
+        {"step": "execute_command", "command": "agentic.model.FinishInference"}
+      ]
+    },
+    "agentic.model.Inference/transition/finish/by/agentic.model.FinishInference/finished": {
+      "steps": [{"step": "execute_command", "command": "agentic.model.FinishInference"}]
+    },
+    "agentic.model.RegisterProvider/outcome/registered": {
+      "steps": [{"step": "execute_command", "command": "agentic.model.RegisterProvider"}]
+    },
+    "agentic.runtime.StartInstance/outcome/started": {
+      "steps": [{"step": "execute_command", "command": "agentic.runtime.StartInstance"}]
+    },
+    "agentic.trigger.FireTrigger/outcome/fired": {
+      "steps": [{"step": "execute_command", "command": "agentic.trigger.FireTrigger"}]
+    },
+    "agentic.channel.PostMessage/outcome/posted": {
+      "steps": [{"step": "execute_command", "command": "agentic.channel.PostMessage"}]
+    },
+    "agentic.channel.Post/state/Taken/refuses/agentic.channel.TakePost": {
+      "steps": [{"step": "execute_command", "command": "agentic.channel.TakePost"}]
+    },
+    "agentic.question.Question/invariant/after/agentic.question.Answer/answered": {
+      "steps": [{"step": "execute_command", "command": "agentic.question.Answer"}]
+    },
+    "agentic.trigger.CreateSchedule/outcome/created": {
+      "steps": [{"step": "execute_command", "command": "agentic.trigger.CreateSchedule"}]
+    },
+    "agentic.trigger.Schedule/transition/advance/by/agentic.trigger.AdvanceSchedule/advanced": {
+      "steps": [{"step": "execute_command", "command": "agentic.trigger.AdvanceSchedule"}]
+    },
+    "start-inference-on-admitted-call/binding/mapping": {
+      "steps": [{"step": "execute_command", "command": "agentic.gateway.AdmitCall"}]
+    },
+    "decide-tool-call-on-decision/binding/mapping": {
+      "steps": [{"step": "execute_command", "command": "agentic.authority.DecideRequest"}]
+    },
+    "agentic.resource/authored/claim-withdrawn-from-queue": {
+      "steps": [
+        {"step": "execute_command", "command": "agentic.resource.RequestClaim"},
+        {"step": "expect_outcome", "outcome": {"command": "agentic.resource.RequestClaim", "outcome": "queued"}},
+        {"step": "execute_command", "command": "agentic.resource.WithdrawClaim"}
+      ]
+    },
+    "agentic.architecture/authored/workstation-committed": {
+      "steps": [{"step": "execute_command", "command": "agentic.architecture.CommitRevision"}]
+    },
+    "agentic.shared.Usage/invariant/at/agentic.harness.Turns/usage": {
+      "steps": [{"step": "execute_command", "command": "agentic.harness.RecordTurn"}]
+    }
+  }
+}

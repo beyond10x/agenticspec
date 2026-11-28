@@ -7,7 +7,8 @@ c335e0082627a22921c5daa7c872d465e7fccdb9108a0fe7c8f00c774207f2af  crates/agentic
 84ce3ea549962060bdf18a5df99e4df68dd93ff1974ad8be45cd95af3746774c  crates/agenticspec-sim/src/profile.rs
 3928dfd7f2465190b8afe7abd06716f0ff9f638e27c0a143669beca3727901e0  crates/agenticspec-sim/src/rng.rs
 772a54ca1b4f937a4bdf5c143acb8edb3b376226cfd182e70c5045f2080ca867  crates/agenticspec-sim/src/search.rs
-b710097075e7ceecd9ba9db52874c013fe9f8aa53ab8f680b25db4f0194f9f9e  crates/agenticspec-sim/src/sim/swarm.rs
-895ef37594eb0b97932a5267dc085036c767f5acc5187ba2f933ede1994e2a6c  crates/agenticspec-sim/src/sim.rs
+fdfa33b041b6de068a0f0d813b8698ab6e39736199e292c7632e7a63dbd2a489  crates/agenticspec-sim/src/sim/record.rs
+5fcad2fbe379c9e3ab80a5adc3915cab9ae94db9bb5af28ed5aa11d32b7fa560  crates/agenticspec-sim/src/sim/swarm.rs
+0d81127c32caa08626307a4ce1baea897d3735880e7e9e31328cacf9970d76f1  crates/agenticspec-sim/src/sim.rs
 8f92b89d4fb02010bfa05053b470b095867e9bf85a02c6a6417a31d4e32e9b07  Cargo.lock (rayon 1.12.0, serde_json 1.0.154, serde_yaml_ng 0.10.0)
 5e7517b95a2b4e810124f84091dd4a6e3f2192523fcac7b6d52abc7fc6aff91d  rust-toolchain.toml

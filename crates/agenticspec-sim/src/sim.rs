@@ -15,8 +15,10 @@ use serde_json::Value;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BinaryHeap, VecDeque};
 
+mod record;
 mod swarm;
 
+pub use record::{PortUse, RECORDED};
 pub use swarm::EVENTS;
 use swarm::{Coordination, Distribution, Input, Output, Schedule, TrigAcc, Trigger};
 
@@ -249,8 +251,9 @@ pub struct Model {
     triggers: Vec<Trigger>,
     /// The triggers that fire on an event of the simulation.
     on_event: Vec<usize>,
-    /// The shared channel arrivals are posted to, when a principal posts to one.
-    intake: Option<usize>,
+    /// The shared channel arrivals are posted to, when a principal posts to one, and that
+    /// principal part.
+    intake: Option<(usize, String)>,
     /// The worker kind whose scope partition routes the arrivals.
     partition: Option<usize>,
     /// Tasks that arrive at once, `(at, tasks)`.
@@ -695,6 +698,8 @@ pub struct RunOut {
     pub per_part: BTreeMap<String, BTreeMap<String, f64>>,
     /// `(t_seconds, part, kind)`, ordered by time.
     pub timeline: Vec<(f64, String, &'static str)>,
+    /// The port uses of a recorded run, in the order they were made; empty otherwise.
+    pub uses: Vec<PortUse>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -809,6 +814,8 @@ struct Task {
     work_started: f64,
     /// A worker started it once; its backlog wait is counted.
     waited: bool,
+    /// The copy of the worker kind that last reported it done.
+    by: usize,
 }
 
 #[derive(Default, Clone)]
@@ -935,6 +942,7 @@ struct Sim<'a> {
     defaulted: f64,
     record: bool,
     timeline: Vec<(f64, String, &'static str)>,
+    uses: Vec<PortUse>,
 }
 
 /// The part of `[a, b)` inside the horizon `[0, h)`.
@@ -1275,6 +1283,8 @@ impl<'a> Sim<'a> {
                         self.gateways[g].calls += 1.0;
                     }
                     if let Some(r) = route {
+                        let copy = self.insts[i].copy;
+                        self.model_call(&e.part, copy, (r.model, r.gateway), start, start + dur);
                         let ma = &mut self.models[r.model];
                         ma.calls += 1.0;
                         ma.cost += cost;
@@ -1294,7 +1304,7 @@ impl<'a> Sim<'a> {
                         let cap = level_at(m.pools[p].capacity, &m.pools[p].drops, now);
                         if (self.pools[p].running as f64) < cap && self.pools[p].queue.is_empty() {
                             self.pools[p].waits.push(0.0);
-                            self.start_build(p, i, now);
+                            self.start_build(p, i, now, now);
                         } else {
                             self.pools[p].queue.push_back((i, now));
                             self.rec(now, &m.pools[p].part, "build_queued");
@@ -1322,6 +1332,7 @@ impl<'a> Sim<'a> {
         let claims = task.correct || task.rng.chance(w.exec.role.false_completion);
         if claims {
             task.kind = kind;
+            task.by = self.insts[i].copy;
         } else {
             self.rec(now, &w.exec.part, "task_failed");
             return self.start_rework(i, id, now);
@@ -1353,7 +1364,12 @@ impl<'a> Sim<'a> {
                 self.rec(now, &self.m.workers[k].exec.part, "task_handed");
                 self.assign(now);
             }
-            Output::Post(c) => self.post(c, id, now),
+            Output::Post(c) => {
+                let task = &self.tasks[id];
+                let m = self.m;
+                let by = (m.workers[task.kind].exec.part.as_str(), task.by);
+                self.post(c, id, now, Some(by))
+            }
         }
     }
 
@@ -1427,7 +1443,8 @@ impl<'a> Sim<'a> {
         }
     }
 
-    fn start_build(&mut self, p: usize, i: usize, now: f64) {
+    /// Starts the build of instance `i` in pool `p`, which it asked for at `requested`.
+    fn start_build(&mut self, p: usize, i: usize, requested: f64, now: f64) {
         let m = self.m;
         let h = m.horizon;
         let Who::Worker(kind) = self.insts[i].who else {
@@ -1447,6 +1464,15 @@ impl<'a> Sim<'a> {
         pa.jobs += 1.0;
         pa.busy += span(now, now + run, h);
         self.kinds[kind].busy += span(now, now + run, h);
+        let copy = self.insts[i].copy;
+        let claim = PortUse::new(
+            "resource.claim",
+            &m.workers[kind].exec.part,
+            copy,
+            requested,
+            now + run,
+        );
+        self.port_use(claim.to(&m.pools[p].part));
         self.rec(now, &m.pools[p].part, "build_started");
         self.at(now + run, Ev::BuildDone(i));
     }
@@ -1465,7 +1491,7 @@ impl<'a> Sim<'a> {
             if let Who::Worker(kind) = self.insts[j].who {
                 self.kinds[kind].slot_wait += span(queued, now, m.horizon);
             }
-            self.start_build(p, j, now);
+            self.start_build(p, j, queued, now);
         }
     }
 
@@ -1529,6 +1555,7 @@ impl<'a> Sim<'a> {
             }
         };
         let resolve = answer_at.min(deadline);
+        self.record_question(i, target, answerer, forwarded_at, channel, now, resolve);
         let k = &mut self.kinds[kind];
         match forwarded_at {
             Some(f) => {
@@ -1570,6 +1597,7 @@ impl<'a> Sim<'a> {
                         self.principals[p].answered += 1.0;
                         if let Some(c) = o.channel {
                             self.channels[c] += 1.0;
+                            self.record_answer(i, p, c, now);
                         }
                         self.rec(now, &m.principals[p].part, "question_answered");
                     }
@@ -1665,6 +1693,7 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
         defaulted: 0.0,
         record,
         timeline: Vec::new(),
+        uses: Vec::new(),
     };
     let first = s.arrivals.exponential(m.load_per_second);
     s.at(first, Ev::Arrive);
@@ -2047,6 +2076,7 @@ fn finish(s: Sim<'_>) -> RunOut {
         kpis: k,
         per_part,
         timeline,
+        uses: s.uses,
     }
 }
 
