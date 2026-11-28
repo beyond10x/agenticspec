@@ -31,6 +31,19 @@ interface Link {
   label: string;
 }
 
+/**
+ * The block pages, read from the navigation of the generated app when the tests are collected, so
+ * that a page gets tests of its own. Each link's address is the route's: `#/` for the home page,
+ * `#/<name, its dots as slashes>` for every other page. The first test holds this list equal to the
+ * links the gallery shows.
+ */
+const app = readFileSync(path.resolve(import.meta.dirname, '../src/generated/app.ts'), 'utf8');
+const home = /\bhome: '([^']+)'/.exec(app)?.[1];
+const pages: Link[] = [...app.matchAll(/\{ name: '([^']+)', label: '([^']+)' \}/g)].map(([, name, label]) => ({
+  hash: name === home ? '#/' : `#/${name.replaceAll('.', '/')}`,
+  label,
+}));
+
 async function open(page: Page): Promise<Link[]> {
   await page.goto(`${process.env.GALLERY_URL ?? ''}?still#/`);
   await expect(page.locator('body[data-ready="true"]')).toBeAttached();
@@ -56,6 +69,7 @@ function blockOf(link: Link): string {
 test('every panel of every block page shows the rows of its fixture', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   const links = await open(page);
+  expect(links, 'the pages each axe test is made for').toEqual(pages);
   let panels = 0;
   for (const link of links) {
     await visit(page, link);
@@ -76,22 +90,32 @@ for (const size of [
   { width: 390, height: 844 },
 ]) {
   for (const theme of ['light', 'dark'] as const) {
-    test(`no serious or critical axe finding and no horizontal overflow at ${size.width}x${size.height}, ${theme}`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
-      await page.setViewportSize(size);
-      const links = await open(page);
-      await expect(page.locator(`html[data-theme="${theme}"]`)).toBeAttached();
-      for (const link of links) {
-        await visit(page, link);
-        const result = await new AxeBuilder({ page }).analyze();
-        const bad = result.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
-        expect(bad.map((v) => `${link.label}: ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);
-        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-        expect(overflow, link.label).toBeLessThanOrEqual(0);
+    // One test per block page, so that no test runs axe on more than one page.
+    test.describe(`at ${size.width}x${size.height}, ${theme}`, () => {
+      for (const link of pages) {
+        test(`${link.label}: no serious or critical axe finding and no horizontal overflow`, async ({ page }) => {
+          await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+          await page.setViewportSize(size);
+          await page.goto(`${process.env.GALLERY_URL ?? ''}?still${link.hash}`);
+          await expect(page.locator('body[data-ready="true"]')).toBeAttached();
+          await expect(page.locator(`html[data-theme="${theme}"]`)).toBeAttached();
+          await visit(page, link);
+          const result = await new AxeBuilder({ page }).analyze();
+          const bad = result.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+          expect(bad.map((v) => `${link.label}: ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);
+          const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+          expect(overflow, link.label).toBeLessThanOrEqual(0);
+        });
       }
     });
   }
 }
+
+test('the page list of the axe tests is read from the generated app', () => {
+  expect(home).toBeTruthy();
+  expect(pages.length).toBeGreaterThanOrEqual(20);
+  expect(new Set(pages.map((p) => p.hash)).size).toBe(pages.length);
+});
 
 test('on a narrow screen the Pages button opens the navigation and a link closes it', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
