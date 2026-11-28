@@ -3,6 +3,7 @@
 mod bands;
 mod collapse;
 mod graph;
+mod lanes;
 mod model;
 mod optim;
 mod page;
