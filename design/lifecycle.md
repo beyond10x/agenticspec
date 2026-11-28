@@ -32,7 +32,7 @@ view (`studio.release.RevisionStages`) computed from evidence, never a lifecycle
 | `Tested` | a `Verification` of kind `Scenario` or `Corpus` passed for every scenario the draft names, at least one |
 | `Evaluated` | an `Evaluation` of kind `Simulate` is `Done`, and every requirement decided at evaluation is met (`design/deployment.md` K12) |
 | `Released` | a `Release` is `Committed` |
-| `Deployed` | a `Deployment` of the revision is `Translated` or `Realizing` |
+| `Deployed` | a `Deployment` of the revision is `Bundled`, `Translated` or `Realizing` |
 | `Operating` | a `Deployment` of the revision is `Running` or `Degraded` |
 
 ## L3 New nouns in `studio/`
@@ -57,7 +57,7 @@ view (`studio.release.RevisionStages`) computed from evidence, never a lifecycle
 | evaluate | `StartEvaluation(Simulate)` | `NotChecked` (new), `InvalidBudget`, `ArchivedDraft` | designer, agent | `agenticspec sim run` (exists) | `simulate` (`story:studio-evaluation`) |
 | optimize | `StartEvaluation(Search)`; accepting a variant is an `apply` | `NotChecked`, `NoMarkedPlaces` (new) | optimizer, designer, agent | `agenticspec sim run`, `optimize: marked` | `simulate(budget)`, accept |
 | release | `ReleaseRevision(path)`, then `RecordCommit(commit)` | `NotChecked`, `NotTested`, `RequirementsMissed`, `StaleEvidence`, `FileChangedOnDisk` | designer, agent | `agenticspec sim contract` (`story:contract-derivation`) for the contract digest; the commit and push are the user's version control | `release` (new) |
-| deploy | `agentic.deployment.RequestDeployment` | `NotReleased`, `NotAdmitted`, `CoverageRefused`, `ScopeTaken` | deployer | `agenticspec packing default`, `agenticspec translate` (new), then cloudspec's realization | `deploy` (new); its dry run answers admission and coverage |
+| deploy | `agentic.deployment.RequestDeployment` | `NotReleased`, `NotAdmitted`, `CoverageRefused`, `TargetRefused`, `ScopeTaken` | deployer | `agenticspec packing default`, `agenticspec deploy bundle` (new), then cloudspec's translator and the target (`design/deployment.md` K13, K14) | `deploy` (new); its dry run answers admission, and coverage once cloudspec's translator is reachable |
 | operate | the blocks' principal and administration commands | the ingress refusals (`design/ingress.md` I5, I9) | operator (`control.operator`) | none | none: the control plane (`design/control-plane.md` C3) |
 | promote | `RequestDeployment` naming the deployment promoted from | as deploy | deployer | as deploy | `deploy` |
 
