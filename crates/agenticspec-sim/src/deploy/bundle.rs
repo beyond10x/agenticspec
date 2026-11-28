@@ -1,19 +1,22 @@
 //! The deployment bundle (`agenticspec-deployment/1`): one YAML file with every member inline,
 //! the input a translator turns into an architecture of its target. [`build`] admits the
 //! architecture, its contract, the binding and the packing, and only then builds the bundle;
-//! the same inputs give the same bytes. The bundle names no secret value, host, provider or
-//! target.
+//! the same inputs give the same bytes. A UI the binding asks for is a unit of its own whose
+//! archive the bundle carries in `files` ([`super::ui`]). The bundle names no secret value, host,
+//! provider or target.
 
 use super::admit::{Accepts, Finding, Plan, PlannedUnit, admit, sort};
 use super::binding::{self as binding_form, Binding};
 use super::grants;
 use super::packing::{self, Packing, is_clock};
+use super::ui;
 use super::{digest, sha256};
 use crate::check::value;
 use crate::contract::derive::{Contract, link_name};
 use crate::doc::parse_yaml;
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::Path;
 
 pub const FORMAT: &str = "agenticspec-deployment/1";
 
@@ -34,13 +37,33 @@ pub const MEMBERS: &[&str] = &[
     "digest",
 ];
 
+/// The order members are written in: [`MEMBERS`] with `files`, which a bundle has only when it
+/// carries a file (a UI's archive, [`super::ui`]), before `digest`.
+const WRITTEN: &[&str] = &[
+    "format",
+    "generator",
+    "architecture",
+    "nested",
+    "contract",
+    "binding",
+    "packing",
+    "units",
+    "ingress",
+    "requirements",
+    "agents",
+    "runtimes",
+    "files",
+    "digest",
+];
+
 /// The claims of a unit the binding names none for.
 pub const DEFAULT_CPU_MILLIS: u64 = 500;
 pub const DEFAULT_MEMORY_MIB: u64 = 512;
 
 /// What a bundle is built from.
 pub struct Inputs<'a> {
-    /// The architecture document as written, and as data.
+    /// The architecture's file, which a UI's build reads; the document as written, and as data.
+    pub architecture: &'a Path,
     pub arch_bytes: &'a [u8],
     pub arch: &'a Value,
     pub contract: &'a Contract,
@@ -174,16 +197,31 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         inputs.packing,
     ));
     findings.extend(addresses(inputs.arch));
+    let contract = inputs.contract.to_value();
+    let ingress = ingress(&contract["ingress"], &inputs.binding.doc, inputs.packing);
+    findings.extend(ui::findings(
+        &inputs.binding.doc,
+        &ingress,
+        inputs.packing,
+        inputs.accepts,
+    ));
     let Some(plan) = plan.filter(|_| findings.is_empty()) else {
         sort(&mut findings);
         return Err(findings);
     };
+    let (ui_units, files) = ui::units(
+        inputs.architecture,
+        &contract,
+        &inputs.binding.doc,
+        &ingress,
+    )?;
 
     let binding = &inputs.binding.doc;
     let mut units = Vec::new();
     for pu in &plan.units {
         units.push(unit(inputs, &plan, pu, &docs));
     }
+    units.extend(ui_units);
     let mut agents = Map::new();
     let mut by_digest: BTreeMap<&str, (Vec<&str>, &Value)> = BTreeMap::new();
     for (part, d) in &docs {
@@ -224,8 +262,6 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         }
     }
     let packing = inputs.packing.to_value(inputs.arch);
-    let contract = inputs.contract.to_value();
-    let ingress = ingress(&contract["ingress"], binding, inputs.packing);
     let mut bundle = json!({
         "format": FORMAT,
         "generator": format!("agenticspec {}", env!("CARGO_PKG_VERSION")),
@@ -253,6 +289,9 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         "agents": agents,
         "runtimes": runtimes,
     });
+    if !files.is_empty() {
+        bundle["files"] = Value::Object(files);
+    }
     let d = digest(&bundle);
     bundle["digest"] = json!(d);
     Ok(Bundle {
@@ -263,10 +302,11 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
     })
 }
 
-/// The bundle as YAML, members in the order of [`MEMBERS`], keys sorted inside each.
+/// The bundle as YAML, members in the order of [`MEMBERS`] with `files` before `digest`, keys
+/// sorted inside each.
 pub fn write(bundle: &Value) -> String {
     let mut s = String::new();
-    for m in MEMBERS {
+    for m in WRITTEN {
         if let Some(v) = bundle.get(*m) {
             let mut one = Map::new();
             one.insert((*m).to_owned(), v.clone());
@@ -330,6 +370,7 @@ pub fn ingress(contract_ingress: &Value, binding: &Value, packing: &Packing) -> 
             out.push(entry);
         }
     }
+    ui::serve(&mut out, binding);
     out
 }
 
@@ -485,7 +526,7 @@ pub enum Refused {
 /// form and digests, then admission of its architecture under its binding and packing
 /// ([`admit`]), its agent documents against the parts that need them and the digests the
 /// binding pins, and the secrets and egress of the binding and of each unit
-/// ([`grants::check`], [`grants::check_units`]).
+/// ([`grants::check`], [`grants::check_units`]), and its UI units ([`ui::check`]).
 pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     let mut problems = Vec::new();
     if bundle["format"] != FORMAT {
@@ -586,6 +627,7 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     findings.extend(grants::check(arch, binding, &packing));
     findings.extend(grants::check_units(bundle));
     findings.extend(addresses(arch));
+    findings.extend(ui::check(bundle, accepts));
     if findings.is_empty() {
         return Ok(());
     }

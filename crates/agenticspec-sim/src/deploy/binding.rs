@@ -2,9 +2,9 @@
 //! thing plays each part, the transports of links that cross units, the runtimes pinned by
 //! digest (or, from the target's local image store, by tag), the claims and check ports of each
 //! unit, where each export of an ingress listens (`ingress:`), what the target gives a unit
-//! (`target:` isolation, images, network policy), and the packing (`packing:`). A binding may
-//! `refines:` a base binding; [`load`] resolves the chain into one document, the child's keys over
-//! the base's.
+//! (`target:` isolation, images, network policy), the UIs it asks for (`ui:`, [`super::ui`]),
+//! and the packing (`packing:`). A binding may `refines:` a base binding; [`load`] resolves the
+//! chain into one document, the child's keys over the base's.
 
 use crate::doc::load_yaml;
 use serde_json::{Map, Value};
@@ -27,6 +27,7 @@ const KEYS: &[&str] = &[
     "claims",
     "checks",
     "ingress",
+    "ui",
     "packing",
 ];
 
@@ -327,6 +328,7 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
     } else if !binding["ingress"].is_null() {
         out.push("`ingress:` is a mapping from an ingress name to its exports".into());
     }
+    super::ui::problems(binding, &mut out);
     out
 }
 
@@ -463,6 +465,11 @@ pub fn served_problems(
             }
         }
     }
+    out.extend(super::ui::served_problems(
+        binding,
+        contract_ingress,
+        packing,
+    ));
     out
 }
 

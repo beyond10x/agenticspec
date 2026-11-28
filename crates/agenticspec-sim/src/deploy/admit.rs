@@ -32,6 +32,7 @@ pub const REFUSALS: &[&str] = &[
     "secret_undeclared",
     "egress_undeclared",
     "address_in_architecture",
+    "ui_upstream_unknown",
 ];
 
 /// The transport of the link from a clock into the scheduled unit it starts: the target's

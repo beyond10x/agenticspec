@@ -8,7 +8,8 @@
 //!
 //! The digest of a bundle's sources covers the generator line, the architecture file, the
 //! binding file and every base it refines, each agent document it names, the ports file, the
-//! accepted list, and the generator's own sources (this directory and the contract derivation).
+//! accepted list, the generator's own sources (this directory and the contract derivation) and,
+//! for a binding that asks for a UI (`ui:`), what its archive is built from.
 //! [`check`] compares those digests without building a bundle; [`stale`] builds every bundle
 //! afresh and compares bytes.
 
@@ -35,6 +36,22 @@ const GENERATOR: &[&str] = &[
     "crates/agenticspec-sim/src/deploy/grants.rs",
     "crates/agenticspec-sim/src/deploy/mod.rs",
     "crates/agenticspec-sim/src/deploy/packing.rs",
+    "crates/agenticspec-sim/src/deploy/ui.rs",
+];
+
+/// What the archive of a UI is built from, a source of each bundle whose binding asks for a UI
+/// (`ui:`): the embedded operator app, panels and model, and the UI's derivation.
+const UI_SOURCES: &[&str] = &[
+    "crates/agenticspec-ui/src/derive/mod.rs",
+    "crates/agenticspec-ui/src/derive/model.rs",
+    "crates/agenticspec-ui/src/derive/view_key.rs",
+    "crates/agenticspec-ui/src/derive/write.rs",
+    "crates/agenticspec-ui/src/operator.rs",
+    "ui/operator/built/app.css",
+    "ui/operator/built/app.js",
+    "ui/operator/built/index.html",
+    "ui/views/blocks.model.json",
+    "ui/views/blocks.ui.yaml",
 ];
 
 /// One fixture bundle: its file name and what it is built from.
@@ -160,10 +177,15 @@ pub fn sources(root: &Path, f: &Fixture) -> Result<Vec<PathBuf>, String> {
             None => break,
         }
     }
-    out.extend(binding::load(&f.binding)?.agent_files.into_values());
+    let b = binding::load(&f.binding)?;
+    let asks_ui = !super::ui::asked(&b.doc).is_empty();
+    out.extend(b.agent_files.into_values());
     out.push(root.join("blocks/ports.json"));
     out.push(root.join("bundles/cloudspec-accepts.yaml"));
     out.push(root.join("kpis/catalogue.yaml"));
+    if asks_ui {
+        out.extend(UI_SOURCES.iter().map(|s| root.join(s)));
+    }
     Ok(out)
 }
 

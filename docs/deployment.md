@@ -32,6 +32,7 @@ but `format` and `binding` is optional.
 | `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator) |
 | `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below) |
 | `ingress` | per ingress of the contract and per protocol it exports, where it listens: `{operator: {exports: {http: {port: 8080, bind: all}}}}`. `port` (1 to 65535), `bind` (`loopback`, the default, or `all`), `address` (the address it is reached at, text) and `part` (a part of a unit that serves it, when not the control plane of the core) |
+| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) |
 | `packing` | the packing section below |
 
 A binding never changes the architecture: promoting a revision to another target is a new binding
@@ -164,6 +165,7 @@ order of the table, and writes nothing.
 | `secret_undeclared` | an egress entry, or in a written bundle a unit, names a secret that no part of its unit declares |
 | `egress_undeclared` | a link leaves its unit, for an external part or a part of another unit, and the part it starts at does not declare that destination in its `egress` |
 | `address_in_architecture` | the architecture names an address: a key `address`, `host`, `hostname` or `url` anywhere in it (see [the bundle](#the-bundle)) |
+| `ui_upstream_unknown` | the UI the binding asks for reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have |
 
 The **accepted list** (`bundles/cloudspec-accepts.yaml`, `agenticspec-cloudspec-accepts/1`) is
 the copy of the unit kinds and roles the translator accepts, with the commit it was copied from
@@ -192,6 +194,7 @@ SHA-256 of the canonical JSON of what it covers (keys sorted, no space).
 | `requirements` | the architecture's `requirements:`, empty when it has none |
 | `agents` | each agent document the binding names, by the digest of its bytes, with the parts it plays |
 | `runtimes` | each runtime image the binding pins. From a registry: keyed by its digest, with its name and its image reference `<image>@sha256:<digest>`. From the target's local store: what the binding gave, its name, `image`, and `tag`, `digest` or both, keyed by the digest, else by `<image>:<tag>` |
+| `files` | only when the binding asks for a UI: each file a unit names, by its file name, with its `digest`, its `size` in bytes and its bytes in `base64`. A UI unit's archive is carried here |
 | `digest` | the bundle digest, of every member but this one |
 
 Each unit:
@@ -200,14 +203,15 @@ Each unit:
 |---|---|
 | `name`, `kind`, `parts` | the unit, its kind and its parts |
 | `replicas` | the copies that run; absent for a `job` or `scheduled` unit |
-| `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (from a local store `<image>:<tag>`, else its config id). The core and service units run the pinned core runtime, by the same reference, or name the role `core-runtime` |
+| `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (from a local store `<image>:<tag>`, else its config id). The core and service units run the pinned core runtime, by the same reference, or name the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
 | `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace, with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
 | `schedule` | a scheduled unit's clock: the trigger and schedule that wake it, `every`, `next_fire_at`, and the trigger's `policy` and `max_parallel` as the rule for overlapping runs |
+| `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (`/api/`) |
 | `secrets` | the secret names its parts declare, never a value |
 | `egress` | every destination its parts declare, each with the part it starts at (`from`), the secret it authenticates with, when declared (`secret`), and `name`, what the target resolves: a link to another unit, with its transport, named by that unit; a link to an external part (`external: true`), named by its reach (its name, or its address, which is then also `address`); or a destination outside the architecture (`named: true`, no link), named by its own name, with the `address` the binding gives it, else `unresolved: true`. Nothing that is not listed is granted |
-| `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime`, `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls |
+| `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime`, `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls, `operator-ui` for the operator UI's unit |
 | `ports` | the contract ports its parts use, by their derived names, with their settings and instances |
 | `source` | the unit and its parts, carried into what the translator makes of it |
 
@@ -233,7 +237,10 @@ secret or an egress entry's secret that no part of the unit declares, an egress 
 does not declare its destination, and a secret value, each by its name. It also refuses what the
 target cannot be asked to serve: a volume without an absolute mount (in the binding or in a unit),
 a local runtime image with neither tag nor digest, and a part isolated on the network of a target
-that enforces no network policy. A refusal exits 1 with `not_admitted` and names every finding.
+that enforces no network policy. Of a UI unit it hashes the archive the bundle carries and refuses
+an archive that is missing or whose SHA-256 is not the unit's `digest` (`ui_archive_mismatch`),
+and an `upstream` that names no other unit of the bundle (`ui_upstream_unknown`). A refusal exits
+1 with `not_admitted` and names every finding.
 
 ```sh
 agenticspec deploy check workstation.bundle.yaml
@@ -266,6 +273,36 @@ time 0, and prints its SHA-256 as `archive_sha256`, the digest a bundle carries 
 agenticspec sim contract workstation.yaml --out workstation.contract.yaml
 agenticspec ui build workstation.yaml --contract workstation.contract.yaml --out ui --archive
 ```
+
+### The operator UI in a bundle
+
+A binding with `ui: {operator: {...}}` makes `deploy bundle` add the operator UI as a unit of its
+own. It builds the UI in-process with the library `ui build` uses, from the architecture and its
+contract, and the archive is the same bytes as `ui build --archive` writes for them (`api_base`
+`/api/`). Without `ui:` the bundle is the same as before.
+
+| key under `ui.operator` | holds |
+|---|---|
+| `port`, `bind` | where the UI's export listens when the binding's `ingress.operator.exports.ui` gives none. Given in both places, they must agree |
+| `upstream.unit` | the unit whose adapter (the runtime interface, `ui/runtime.openapi.yaml`) the page reads; the unit that serves the operator ingress's `http` export (the core) when absent |
+| `upstream.port` | its port; the `http` export's port when absent and that export is served by the same unit |
+
+The bundle then has:
+
+- a unit `operator-ui`, `kind: service`, `roles: [operator-ui]`, no parts, `code: {kind: static,
+  archive: operator-ui.tar, digest: sha256:<hex>}`, `upstream: {unit, port, path: /api/}`, and
+  `ready` and `alive` checks over HTTP at `/` on the export's port;
+- the archive under `files: {operator-ui.tar: {digest, size, base64}}`, inline like every other
+  member;
+- the `ingress` entry of the operator ingress's `ui` export naming `unit: operator-ui` and `part:
+  control`; its other exports stay where they were.
+
+`deploy bundle` refuses, with `binding_invalid`, a `ui:` of the wrong form, a contract whose
+operator ingress exports no `ui`, a packing that has a unit named `operator-ui`, and a `part` on
+the `ui` export; with `not_admitted`, an upstream that names no unit of the packing
+(`ui_upstream_unknown`), a role `operator-ui` the accepted list does not hold
+(`unit_not_hosted`), and a UI that does not build (`ui_build_refused`, for example a contract
+from other ports than the binary's). `bundles/bindings/operator-ui.yaml` is the worked example.
 
 ## Fixture bundles
 
