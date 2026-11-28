@@ -1,0 +1,8 @@
+{
+  "view": "agentic.channel.Channels",
+  "rows": [
+    {"channel_id": "00000000-0000-4000-8000-f4f3536e0000", "kind": "Prompt", "distribution": "Direct", "party_a": "00000000-0000-4000-8000-761908b00000", "party_a_kind": "Principal", "party_b": "00000000-0000-4000-8000-761908b00000", "party_b_kind": "Principal", "ordered": true, "may_lose": true, "entry_limits": {"claim":1,"fact":1,"fail":1,"observed":1,"patch_summary":1}, "owner": "00000000-0000-4000-8000-322d9f1c0000", "delegation_id": "00000000-0000-4000-8000-e045564d0000", "audience": "Internal", "state": "Closed"},
+    {"channel_id": "00000000-0000-4000-8000-f4f3536e0001", "kind": "Operator", "distribution": "Topic", "party_a": "00000000-0000-4000-8000-761908b00001", "party_a_kind": "Session", "ordered": false, "may_lose": false, "state": "Open"},
+    {"channel_id": "00000000-0000-4000-8000-f4f3536e0002", "kind": "AgentMessage", "distribution": "Queue", "party_a": "00000000-0000-4000-8000-761908b00002", "party_a_kind": "Principal", "party_b": "00000000-0000-4000-8000-761908b00002", "party_b_kind": "Principal", "ordered": true, "may_lose": true, "entry_limits": {"claim":3,"fact":3,"fail":3,"observed":3,"patch_summary":3}, "owner": "00000000-0000-4000-8000-322d9f1c0002", "delegation_id": "00000000-0000-4000-8000-e045564d0002", "audience": "Private", "state": "Closed"}
+  ]
+}

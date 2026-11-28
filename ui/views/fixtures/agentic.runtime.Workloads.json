@@ -1,0 +1,8 @@
+{
+  "view": "agentic.runtime.Workloads",
+  "rows": [
+    {"workload_id": "00000000-0000-4000-8000-160df8830000", "runtime_id": "00000000-0000-4000-8000-303c84bb0000", "kind": "Agent", "package": "package 1", "shape": {"cpu_millis":1,"memory_mib":1}, "sandbox_id": "00000000-0000-4000-8000-df1af3610000", "endpoint_id": "00000000-0000-4000-8000-b24dcd040000", "start_cost": {"micro_usd":1}, "state": "Defined"},
+    {"workload_id": "00000000-0000-4000-8000-160df8830001", "runtime_id": "00000000-0000-4000-8000-303c84bb0001", "kind": "Service", "package": "package 2", "shape": {"cpu_millis":2,"memory_mib":2}, "sandbox_id": "00000000-0000-4000-8000-df1af3610001", "state": "Defined"},
+    {"workload_id": "00000000-0000-4000-8000-160df8830002", "runtime_id": "00000000-0000-4000-8000-303c84bb0002", "kind": "Job", "package": "package 3", "shape": {"cpu_millis":3,"memory_mib":3}, "sandbox_id": "00000000-0000-4000-8000-df1af3610002", "endpoint_id": "00000000-0000-4000-8000-b24dcd040002", "start_cost": {"micro_usd":3}, "state": "Defined"}
+  ]
+}

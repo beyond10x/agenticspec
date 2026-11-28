@@ -1,0 +1,8 @@
+{
+  "view": "agentic.workspace.Workspaces",
+  "rows": [
+    {"workspace_id": "00000000-0000-4000-8000-881697980000", "kind": "Checkout", "sharing": "Exclusive", "base_revision": "base revision 1", "state": "Held"},
+    {"workspace_id": "00000000-0000-4000-8000-881697980001", "kind": "ScratchCopy", "sharing": "SharedReadOnly", "base_revision": "base revision 2", "state": "Ready"},
+    {"workspace_id": "00000000-0000-4000-8000-881697980002", "kind": "Worktree", "sharing": "SharedReadWrite", "base_revision": "base revision 3", "state": "Held"}
+  ]
+}

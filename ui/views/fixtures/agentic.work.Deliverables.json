@@ -1,0 +1,8 @@
+{
+  "view": "agentic.work.Deliverables",
+  "rows": [
+    {"deliverable_id": "00000000-0000-4000-8000-a7b2287c0000", "assignment_id": "00000000-0000-4000-8000-f9437b990000", "task_id": "00000000-0000-4000-8000-7b7975d50000", "kind": "Proposal", "evidence": ["evidence 1"], "state": "Accepted"},
+    {"deliverable_id": "00000000-0000-4000-8000-a7b2287c0001", "assignment_id": "00000000-0000-4000-8000-f9437b990001", "task_id": "00000000-0000-4000-8000-7b7975d50001", "kind": "Artifact", "evidence": ["evidence 2"], "state": "Proposed"},
+    {"deliverable_id": "00000000-0000-4000-8000-a7b2287c0002", "assignment_id": "00000000-0000-4000-8000-f9437b990002", "task_id": "00000000-0000-4000-8000-7b7975d50002", "kind": "Proposal", "evidence": ["evidence 3"], "state": "Rejected"}
+  ]
+}

@@ -1,0 +1,193 @@
+domain: mini.thing
+
+summary: Things that are made and retired, and notes written on a thing.
+
+naming:
+  wire: thing
+  display: Thing
+
+types:
+  - name: mini.thing.Kind
+    kind: enum
+    variants: [Small, Large]
+
+entities:
+  - name: mini.thing.Thing
+    identity:
+      name: thing_id
+      type: mini.shared.ThingId
+    fields:
+      - name: kind
+        type: mini.thing.Kind
+      - name: label
+        type: mini.shared.Name
+      - name: made_at
+        type: Timestamp
+      - name: weight
+        type: Optional<Integer>
+      - name: tags
+        type: List<mini.shared.Name>
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Active]
+          to: Retired
+
+  - name: mini.thing.Note
+    identity:
+      name: note_id
+      type: mini.shared.NoteId
+    fields:
+      - name: thing_id
+        type: mini.shared.ThingId
+      - name: text
+        type: String
+    lifecycle:
+      initial: Written
+      states: [Written]
+      terminal: [Written]
+    relations:
+      - {name: thing, kind: references, target: mini.thing.Thing, cardinality: one, via: thing_id}
+
+actors:
+  - name: mini.thing.Keeper
+    naming:
+      display: Keeper
+      summary: Whoever makes and retires things and writes notes on them.
+    may:
+      - mini.thing.MakeThing
+      - mini.thing.RetireThing
+      - mini.thing.WriteNote
+      - mini.thing.Things
+      - mini.thing.NotesOfThing
+
+errors:
+  - name: mini.thing.ThingNotFound
+    summary: No thing of this identity was made.
+    fields:
+      - {name: thing_id, type: mini.shared.ThingId}
+
+  - name: mini.thing.ThingStateConflict
+    summary: The thing is not in a state this command acts from.
+    fields:
+      - {name: state, type: mini.thing.Thing.State}
+
+events:
+  - name: mini.thing.ThingMade
+    fields:
+      - {name: thing_id, type: mini.shared.ThingId}
+      - {name: kind, type: mini.thing.Kind}
+      - {name: label, type: mini.shared.Name}
+      - {name: at, type: Timestamp}
+
+  - name: mini.thing.ThingRetired
+    fields:
+      - {name: thing_id, type: mini.shared.ThingId}
+      - {name: at, type: Timestamp}
+
+  - name: mini.thing.NoteWritten
+    fields:
+      - {name: note_id, type: mini.shared.NoteId}
+      - {name: thing_id, type: mini.shared.ThingId}
+      - {name: text, type: String}
+
+commands:
+  - name: mini.thing.MakeThing
+    input:
+      - {name: thing_id, type: mini.shared.ThingId}
+      - {name: kind, type: mini.thing.Kind}
+      - {name: label, type: mini.shared.Name}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: made
+        creates: mini.thing.Thing
+        instance: thing_id
+        sets:
+          kind: input.kind
+          label: input.label
+          made_at: input.at
+          tags: []
+        emits: [mini.thing.ThingMade]
+        payload:
+          mini.thing.ThingMade:
+            thing_id: input.thing_id
+            kind: input.kind
+            label: input.label
+            at: input.at
+        summary: The thing exists and is Active.
+
+  - name: mini.thing.RetireThing
+    input:
+      - {name: thing_id, type: mini.shared.ThingId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-thing
+        unknown_instance: true
+        error: mini.thing.ThingNotFound
+        payload:
+          mini.thing.ThingNotFound: {thing_id: input.thing_id}
+      - name: retired
+        moves: mini.thing.Thing.retire
+        instance: thing_id
+        emits: [mini.thing.ThingRetired]
+        payload:
+          mini.thing.ThingRetired:
+            thing_id: input.thing_id
+            at: input.at
+        summary: The thing is Retired.
+      - name: wrong-state
+        wrong_state: true
+        error: mini.thing.ThingStateConflict
+        payload:
+          mini.thing.ThingStateConflict: {state: {subject: state}}
+        summary: The thing had already retired.
+
+  - name: mini.thing.WriteNote
+    input:
+      - {name: note_id, type: mini.shared.NoteId}
+      - {name: thing_id, type: mini.shared.ThingId}
+      - {name: text, type: String}
+    outcomes:
+      - name: written
+        creates: mini.thing.Note
+        instance: note_id
+        sets:
+          thing_id: input.thing_id
+          text: input.text
+        emits: [mini.thing.NoteWritten]
+        payload:
+          mini.thing.NoteWritten:
+            note_id: input.note_id
+            thing_id: input.thing_id
+            text: input.text
+        summary: The note is on the thing.
+
+views:
+  - name: mini.thing.Things
+    source: mini.thing.Thing
+    consistency: read_your_writes
+    fields:
+      - {name: thing_id, type: mini.shared.ThingId}
+      - {name: kind, type: mini.thing.Kind}
+      - {name: label, type: mini.shared.Name}
+      - {name: made_at, type: Timestamp}
+      - {name: weight, type: Optional<Integer>}
+      - {name: tags, type: List<mini.shared.Name>}
+      - {name: state, type: mini.thing.Thing.State}
+    naming:
+      wire: things
+      display: All things
+
+  - name: mini.thing.NotesOfThing
+    source: mini.thing.Note
+    consistency: read_your_writes
+    params:
+      - {name: thing_id, type: mini.shared.ThingId}
+    filter: thing_id == param.thing_id
+    fields:
+      - {name: note_id, type: mini.shared.NoteId}
+      - {name: thing_id, type: mini.shared.ThingId}
+      - {name: text, type: String}

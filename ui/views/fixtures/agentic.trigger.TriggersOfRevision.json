@@ -1,0 +1,8 @@
+{
+  "view": "agentic.trigger.TriggersOfRevision",
+  "rows": [
+    {"trigger_id": "00000000-0000-4000-8000-85d720f50000", "kind": "OnEvent", "policy": "Skip", "max_parallel": 1, "running": 1, "state": "Disabled"},
+    {"trigger_id": "00000000-0000-4000-8000-85d720f50001", "kind": "OnMessage", "policy": "Queue", "max_parallel": 2, "running": 2, "state": "Enabled"},
+    {"trigger_id": "00000000-0000-4000-8000-85d720f50002", "kind": "OnSchedule", "policy": "Parallel", "max_parallel": 3, "running": 3, "state": "Disabled"}
+  ]
+}

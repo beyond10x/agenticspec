@@ -652,3 +652,27 @@ types:
       - {name: held, type: Integer}
       - {name: failed, type: Integer}
       - {name: rows, type: List<agenticspec.cli.SimCorpusRow>}
+  - name: agenticspec.cli.UiPanelsInput
+    kind: struct
+    fields:
+      - name: root
+        type: Optional<String>
+        summary: The repository root that holds `blocks/` and `ui/views/`; the current directory by default.
+      - name: check
+        type: Boolean
+        summary: Compare a fresh generation with the files instead of writing them.
+
+  - name: agenticspec.cli.UiPanelsResult
+    kind: struct
+    naming:
+      summary: >-
+        The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`,
+        a gallery page per block, a fixture per view and a script per channel under
+        `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`.
+    fields:
+      - {name: out, type: String}
+      - {name: panels, type: Integer}
+      - {name: files, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The files were written; false with `--check`, where they were found current.

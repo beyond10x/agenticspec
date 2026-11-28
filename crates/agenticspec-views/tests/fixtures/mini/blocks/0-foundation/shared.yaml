@@ -1,0 +1,12 @@
+domain: mini.shared
+
+summary: Identifiers of the entities of the small system.
+
+naming:
+  wire: shared
+  display: Shared
+
+types:
+  - {name: mini.shared.ThingId, kind: newtype, of: Uuid}
+  - {name: mini.shared.NoteId, kind: newtype, of: Uuid}
+  - {name: mini.shared.Name, kind: newtype, of: String}

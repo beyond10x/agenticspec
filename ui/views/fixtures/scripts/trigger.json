@@ -1,0 +1,19 @@
+{
+  "channel": "trigger",
+  "events": [
+    {"at": "1s", "event": "agentic.trigger.FiringEnded", "payload": {"firing_id": "00000000-0000-4000-8000-c34510b90000", "trigger_id": "00000000-0000-4000-8000-85d720f50000"}},
+    {"at": "2s", "event": "agentic.trigger.FiringFailed", "payload": {"firing_id": "00000000-0000-4000-8000-c34510b90000", "failure": "failure 1"}},
+    {"at": "3s", "event": "agentic.trigger.FiringQueued", "payload": {"firing_id": "00000000-0000-4000-8000-c34510b90000", "trigger_id": "00000000-0000-4000-8000-85d720f50000"}},
+    {"at": "4s", "event": "agentic.trigger.FiringSkipped", "payload": {"firing_id": "00000000-0000-4000-8000-c34510b90000", "trigger_id": "00000000-0000-4000-8000-85d720f50000"}},
+    {"at": "5s", "event": "agentic.trigger.FiringStarted", "payload": {"firing_id": "00000000-0000-4000-8000-c34510b90000", "trigger_id": "00000000-0000-4000-8000-85d720f50000", "run_id": "00000000-0000-4000-8000-1bc1b0c90000", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000"}},
+    {"at": "6s", "event": "agentic.trigger.ScheduleAdvanced", "payload": {"schedule_id": "00000000-0000-4000-8000-501c99cb0000", "next_fire_at": "2026-11-20T09:01:00Z"}},
+    {"at": "7s", "event": "agentic.trigger.ScheduleChecked", "payload": {"schedule_id": "00000000-0000-4000-8000-501c99cb0000"}},
+    {"at": "8s", "event": "agentic.trigger.ScheduleCreated", "payload": {"schedule_id": "00000000-0000-4000-8000-501c99cb0000", "expression": "expression 1", "timezone": "timezone 1", "next_fire_at": "2026-11-20T09:03:00Z"}},
+    {"at": "9s", "event": "agentic.trigger.ScheduleDisabled", "payload": {"schedule_id": "00000000-0000-4000-8000-501c99cb0000"}},
+    {"at": "10s", "event": "agentic.trigger.ScheduleEnabled", "payload": {"schedule_id": "00000000-0000-4000-8000-501c99cb0000"}},
+    {"at": "11s", "event": "agentic.trigger.TriggerCreated", "payload": {"trigger_id": "00000000-0000-4000-8000-85d720f50000", "kind": "OnEvent", "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000", "policy": "Skip", "max_parallel": 1}},
+    {"at": "12s", "event": "agentic.trigger.TriggerDisabled", "payload": {"trigger_id": "00000000-0000-4000-8000-85d720f50000"}},
+    {"at": "13s", "event": "agentic.trigger.TriggerEnabled", "payload": {"trigger_id": "00000000-0000-4000-8000-85d720f50000"}},
+    {"at": "14s", "event": "agentic.trigger.TriggerFired", "payload": {"firing_id": "00000000-0000-4000-8000-c34510b90000", "trigger_id": "00000000-0000-4000-8000-85d720f50000", "post_id": "00000000-0000-4000-8000-936344e80000", "tick": "2026-11-20T09:03:00Z"}}
+  ]
+}

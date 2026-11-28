@@ -1,0 +1,8 @@
+{
+  "view": "agentic.knowledge.Knowledge",
+  "rows": [
+    {"knowledge_id": "00000000-0000-4000-8000-92b695b40000", "kind": "Instruction", "name": "name 1", "scope": "Organization", "repository": "repository 1", "content": {"class":"class 1","digest":"digest 1","length":1}, "revision": 1, "state": "Published"},
+    {"knowledge_id": "00000000-0000-4000-8000-92b695b40001", "kind": "Skill", "name": "name 2", "scope": "Repository", "content": {"class":"class 2","digest":"digest 2","length":2}, "revision": 2, "state": "Withdrawn"},
+    {"knowledge_id": "00000000-0000-4000-8000-92b695b40002", "kind": "Memory", "name": "name 3", "scope": "Organization", "repository": "repository 3", "content": {"class":"class 3","digest":"digest 3","length":3}, "revision": 3, "state": "Published"}
+  ]
+}

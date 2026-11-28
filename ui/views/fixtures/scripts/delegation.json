@@ -1,0 +1,10 @@
+{
+  "channel": "delegation",
+  "events": [
+    {"at": "1s", "event": "agentic.delegation.DelegatedActionTaken", "payload": {"delegation_id": "00000000-0000-4000-8000-e045564d0000", "delegate": "00000000-0000-4000-8000-322d9f1c0000", "action": "AnswerQuestions", "at": "2026-11-20T09:03:00Z"}},
+    {"at": "2s", "event": "agentic.delegation.DelegationExpiredRecorded", "payload": {"delegation_id": "00000000-0000-4000-8000-e045564d0000", "at": "2026-11-20T09:01:00Z"}},
+    {"at": "3s", "event": "agentic.delegation.DelegationGranted", "payload": {"delegation_id": "00000000-0000-4000-8000-e045564d0000", "delegator": "00000000-0000-4000-8000-322d9f1c0000", "delegate": "00000000-0000-4000-8000-322d9f1c0000", "action": "AnswerQuestions", "expires_at": "2026-11-20T09:04:00Z", "excludes": ["excludes 1"], "at": "2026-11-20T09:06:00Z"}},
+    {"at": "4s", "event": "agentic.delegation.DelegationPassedOn", "payload": {"delegation_id": "00000000-0000-4000-8000-e045564d0000", "parent_delegation_id": "00000000-0000-4000-8000-e045564d0000", "delegate": "00000000-0000-4000-8000-322d9f1c0000", "action": "AnswerQuestions", "expires_at": "2026-11-20T09:04:00Z", "at": "2026-11-20T09:05:00Z"}},
+    {"at": "5s", "event": "agentic.delegation.DelegationRevoked", "payload": {"delegation_id": "00000000-0000-4000-8000-e045564d0000", "at": "2026-11-20T09:01:00Z"}}
+  ]
+}

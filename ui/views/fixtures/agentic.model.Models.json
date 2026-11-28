@@ -1,0 +1,8 @@
+{
+  "view": "agentic.model.Models",
+  "rows": [
+    {"model_id": "00000000-0000-4000-8000-83c6d66d0000", "provider_id": "00000000-0000-4000-8000-3841e4610000", "name": "name 1", "context_window": 1, "capabilities": ["Text"], "price": {"cache_read":{"micro_usd":1},"cache_write":{"micro_usd":1},"input":{"micro_usd":1},"output":{"micro_usd":1}}, "state": "Current"},
+    {"model_id": "00000000-0000-4000-8000-83c6d66d0001", "provider_id": "00000000-0000-4000-8000-3841e4610001", "name": "name 2", "context_window": 2, "capabilities": ["Vision"], "price": {"cache_read":{"micro_usd":2},"cache_write":{"micro_usd":2},"input":{"micro_usd":2},"output":{"micro_usd":2}}, "state": "Retired"},
+    {"model_id": "00000000-0000-4000-8000-83c6d66d0002", "provider_id": "00000000-0000-4000-8000-3841e4610002", "name": "name 3", "context_window": 3, "capabilities": ["Audio"], "price": {"cache_read":{"micro_usd":3},"cache_write":{"micro_usd":3},"input":{"micro_usd":3},"output":{"micro_usd":3}}, "state": "Current"}
+  ]
+}

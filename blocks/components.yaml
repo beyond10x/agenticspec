@@ -1,0 +1,32 @@
+# The deployment unit of the building blocks. One component owns every block and serves its views
+# over HTTP, so an `ess-ui/1` document over this system (`ui/views/blocks.ui.yaml`) reads them
+# from outside the process.
+
+components:
+  - component: blocks
+    summary: Every building block, its views served over HTTP.
+    owns:
+      domains:
+        - agentic.shared
+        - agentic.principal
+        - agentic.delegation
+        - agentic.model
+        - agentic.gateway
+        - agentic.tool
+        - agentic.knowledge
+        - agentic.agent
+        - agentic.harness
+        - agentic.work
+        - agentic.process
+        - agentic.authority
+        - agentic.channel
+        - agentic.question
+        - agentic.trigger
+        - agentic.workspace
+        - agentic.sandbox
+        - agentic.runtime
+        - agentic.resource
+        - agentic.architecture
+        - agentic.kpi
+        - agentic.experiment
+    reached_by: network

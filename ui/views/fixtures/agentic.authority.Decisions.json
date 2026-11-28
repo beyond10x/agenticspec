@@ -1,0 +1,8 @@
+{
+  "view": "agentic.authority.Decisions",
+  "rows": [
+    {"decision_id": "00000000-0000-4000-8000-589c34980000", "requester_kind": "Principal", "requester_id": "00000000-0000-4000-8000-742181700000", "action_class": "Read", "scope": "scope 1", "verdict": "Allow", "decider": "PermissionMode", "attribution": "Known", "delegation": "00000000-0000-4000-8000-e045564d0000", "decided_at": "2026-11-20T09:09:00Z", "approved_by": "PermissionMode", "approval_delegation": "00000000-0000-4000-8000-e045564d0000", "resolved_at": "2026-11-20T09:12:00Z", "grant_id": "00000000-0000-4000-8000-69f9b46e0000", "state": "Approved"},
+    {"decision_id": "00000000-0000-4000-8000-589c34980001", "requester_kind": "AgentRevision", "requester_id": "00000000-0000-4000-8000-742181700001", "action_class": "Search", "scope": "scope 2", "verdict": "Deny", "decider": "Classifier", "attribution": "Inferred", "decided_at": "2026-11-20T10:09:00Z", "state": "Recorded"},
+    {"decision_id": "00000000-0000-4000-8000-589c34980002", "requester_kind": "Principal", "requester_id": "00000000-0000-4000-8000-742181700002", "action_class": "Edit", "scope": "scope 3", "verdict": "ApprovalRequired", "decider": "Hook", "attribution": "NotRecorded", "delegation": "00000000-0000-4000-8000-e045564d0002", "decided_at": "2026-11-20T11:09:00Z", "approved_by": "Hook", "approval_delegation": "00000000-0000-4000-8000-e045564d0002", "resolved_at": "2026-11-20T11:12:00Z", "grant_id": "00000000-0000-4000-8000-69f9b46e0002", "state": "Rejected"}
+  ]
+}

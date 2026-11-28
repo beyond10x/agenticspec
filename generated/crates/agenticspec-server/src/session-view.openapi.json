@@ -8,7 +8,7 @@
     "x-ess-provenance": {
       "system": "agenticspec",
       "specification_version": "v1",
-      "contract_digest": "slice-sha256/2:0e4b3850daca33088bac82017fc77c74149930975c796d5eb8bff8aed324520e"
+      "contract_digest": "slice-sha256/2:c08ad84088d7522037fa077f271335ac5baeee0b8920bb106639f394ecd87179"
     },
     "x-ess-reached-by": "network"
   },

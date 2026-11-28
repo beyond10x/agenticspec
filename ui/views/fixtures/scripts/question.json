@@ -1,0 +1,9 @@
+{
+  "channel": "question",
+  "events": [
+    {"at": "1s", "event": "agentic.question.DefaultTaken", "payload": {"question_id": "00000000-0000-4000-8000-d74009500000", "option": "option 1"}},
+    {"at": "2s", "event": "agentic.question.QuestionAnswered", "payload": {"question_id": "00000000-0000-4000-8000-d74009500000", "option": "option 1", "answered_by": "00000000-0000-4000-8000-761908b00000", "answered_via": "00000000-0000-4000-8000-e045564d0000"}},
+    {"at": "3s", "event": "agentic.question.QuestionAsked", "payload": {"question_id": "00000000-0000-4000-8000-d74009500000", "kind": "Choice", "asked_by": "00000000-0000-4000-8000-761908b00000", "addressee": "00000000-0000-4000-8000-761908b00000", "default_option": "default option 1", "deadline": "2026-11-20T09:05:00Z", "topic": "topic 1", "run_id": "00000000-0000-4000-8000-1bc1b0c90000"}},
+    {"at": "4s", "event": "agentic.question.QuestionWithdrawn", "payload": {"question_id": "00000000-0000-4000-8000-d74009500000"}}
+  ]
+}
