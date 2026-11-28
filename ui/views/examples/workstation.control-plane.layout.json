@@ -1002,6 +1002,75 @@
                 "columns": [
                   {
                     "as": "text",
+                    "field": "agent_revision_id",
+                    "label": "Agent revision id"
+                  },
+                  {
+                    "as": "text",
+                    "field": "agent_id",
+                    "label": "Agent id"
+                  },
+                  {
+                    "as": "number",
+                    "field": "number",
+                    "label": "Number"
+                  },
+                  {
+                    "as": "text",
+                    "field": "role",
+                    "label": "Role"
+                  },
+                  {
+                    "as": "json",
+                    "field": "instructions",
+                    "label": "Instructions"
+                  },
+                  {
+                    "as": "json",
+                    "field": "models",
+                    "label": "Models"
+                  },
+                  {
+                    "as": "list",
+                    "field": "tools",
+                    "label": "Tools"
+                  },
+                  {
+                    "as": "list",
+                    "field": "knowledge",
+                    "label": "Knowledge"
+                  },
+                  {
+                    "as": "json",
+                    "field": "budget",
+                    "label": "Budget"
+                  },
+                  {
+                    "as": "timestamp",
+                    "field": "published_at",
+                    "label": "Published at"
+                  },
+                  {
+                    "as": "badge",
+                    "field": "state",
+                    "label": "State"
+                  }
+                ],
+                "key": "agent_revision_id",
+                "name": "ops_operator_agent_agent_revisions",
+                "order": null,
+                "part": "operator",
+                "row_actions": [],
+                "title": "Agent revisions of operator",
+                "widget": "agentic.agent.AgentRevisions"
+              },
+              {
+                "args": {
+                  "channel": "level"
+                },
+                "columns": [
+                  {
+                    "as": "text",
                     "field": "agent_id",
                     "label": "Agent id"
                   },
@@ -1089,6 +1158,75 @@
           {
             "collapsed": true,
             "sections": [
+              {
+                "args": {
+                  "channel": "level"
+                },
+                "columns": [
+                  {
+                    "as": "text",
+                    "field": "agent_revision_id",
+                    "label": "Agent revision id"
+                  },
+                  {
+                    "as": "text",
+                    "field": "agent_id",
+                    "label": "Agent id"
+                  },
+                  {
+                    "as": "number",
+                    "field": "number",
+                    "label": "Number"
+                  },
+                  {
+                    "as": "text",
+                    "field": "role",
+                    "label": "Role"
+                  },
+                  {
+                    "as": "json",
+                    "field": "instructions",
+                    "label": "Instructions"
+                  },
+                  {
+                    "as": "json",
+                    "field": "models",
+                    "label": "Models"
+                  },
+                  {
+                    "as": "list",
+                    "field": "tools",
+                    "label": "Tools"
+                  },
+                  {
+                    "as": "list",
+                    "field": "knowledge",
+                    "label": "Knowledge"
+                  },
+                  {
+                    "as": "json",
+                    "field": "budget",
+                    "label": "Budget"
+                  },
+                  {
+                    "as": "timestamp",
+                    "field": "published_at",
+                    "label": "Published at"
+                  },
+                  {
+                    "as": "badge",
+                    "field": "state",
+                    "label": "State"
+                  }
+                ],
+                "key": "agent_revision_id",
+                "name": "ops_worker_agent_agent_revisions",
+                "order": null,
+                "part": "worker",
+                "row_actions": [],
+                "title": "Agent revisions of worker",
+                "widget": "agentic.agent.AgentRevisions"
+              },
               {
                 "args": {
                   "channel": "level"
@@ -2164,6 +2302,81 @@
       {
         "count": "states",
         "field": "state",
+        "label": "Agent revisions of operator",
+        "page": "control.operations",
+        "section": {
+          "args": {
+            "channel": "level"
+          },
+          "columns": [
+            {
+              "as": "text",
+              "field": "agent_revision_id",
+              "label": "Agent revision id"
+            },
+            {
+              "as": "text",
+              "field": "agent_id",
+              "label": "Agent id"
+            },
+            {
+              "as": "number",
+              "field": "number",
+              "label": "Number"
+            },
+            {
+              "as": "text",
+              "field": "role",
+              "label": "Role"
+            },
+            {
+              "as": "json",
+              "field": "instructions",
+              "label": "Instructions"
+            },
+            {
+              "as": "json",
+              "field": "models",
+              "label": "Models"
+            },
+            {
+              "as": "list",
+              "field": "tools",
+              "label": "Tools"
+            },
+            {
+              "as": "list",
+              "field": "knowledge",
+              "label": "Knowledge"
+            },
+            {
+              "as": "json",
+              "field": "budget",
+              "label": "Budget"
+            },
+            {
+              "as": "timestamp",
+              "field": "published_at",
+              "label": "Published at"
+            },
+            {
+              "as": "badge",
+              "field": "state",
+              "label": "State"
+            }
+          ],
+          "key": "agent_revision_id",
+          "name": "ops_operator_agent_agent_revisions",
+          "order": null,
+          "part": "operator",
+          "row_actions": [],
+          "title": "Agent revisions of operator",
+          "widget": "agentic.agent.AgentRevisions"
+        }
+      },
+      {
+        "count": "states",
+        "field": "state",
         "label": "Agents of operator",
         "page": "control.operations",
         "section": {
@@ -2259,6 +2472,81 @@
           "row_actions": [],
           "title": "Harnesses of operator",
           "widget": "agentic.harness.Harnesses"
+        }
+      },
+      {
+        "count": "states",
+        "field": "state",
+        "label": "Agent revisions of worker",
+        "page": "control.operations",
+        "section": {
+          "args": {
+            "channel": "level"
+          },
+          "columns": [
+            {
+              "as": "text",
+              "field": "agent_revision_id",
+              "label": "Agent revision id"
+            },
+            {
+              "as": "text",
+              "field": "agent_id",
+              "label": "Agent id"
+            },
+            {
+              "as": "number",
+              "field": "number",
+              "label": "Number"
+            },
+            {
+              "as": "text",
+              "field": "role",
+              "label": "Role"
+            },
+            {
+              "as": "json",
+              "field": "instructions",
+              "label": "Instructions"
+            },
+            {
+              "as": "json",
+              "field": "models",
+              "label": "Models"
+            },
+            {
+              "as": "list",
+              "field": "tools",
+              "label": "Tools"
+            },
+            {
+              "as": "list",
+              "field": "knowledge",
+              "label": "Knowledge"
+            },
+            {
+              "as": "json",
+              "field": "budget",
+              "label": "Budget"
+            },
+            {
+              "as": "timestamp",
+              "field": "published_at",
+              "label": "Published at"
+            },
+            {
+              "as": "badge",
+              "field": "state",
+              "label": "State"
+            }
+          ],
+          "key": "agent_revision_id",
+          "name": "ops_worker_agent_agent_revisions",
+          "order": null,
+          "part": "worker",
+          "row_actions": [],
+          "title": "Agent revisions of worker",
+          "widget": "agentic.agent.AgentRevisions"
         }
       },
       {
@@ -2943,6 +3231,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -3387,6 +3685,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"

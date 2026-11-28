@@ -8,7 +8,7 @@ import { useRead, useWidget } from '../runtime';
 /** Rows of the view agentic.agent.AgentRevisions over AgentRevision, keyed by agent_revision_id. */
 const args = defineProps<{ architecture?: string; channel: string; instance?: number; part?: string; source?: string }>();
 const client = useWidget(args);
-const r_rows = useRead('agentic.agent.AgentRevisions', () => ({}), { channel: args['channel'], on: ['agentic.agent.AgentRevisionPublished', 'agentic.agent.AgentRevisionRetired', 'agentic.agent.AgentRevisionUsed'], coalesce: 1000 }, client);
+const r_rows = useRead('agentic.agent.AgentRevisions', () => ({}), { channel: args['channel'], on: ['agentic.agent.AgentRevisionPublished', 'agentic.agent.AgentRevisionRetired'], coalesce: 1000 }, client);
 const fields_rows: FieldDef[] = [
   { field: 'agent_revision_id', label: 'Agent revision id', as: 'text' },
   { field: 'agent_id', label: 'Agent id', as: 'text' },
@@ -20,7 +20,6 @@ const fields_rows: FieldDef[] = [
   { field: 'knowledge', label: 'Knowledge', as: 'list' },
   { field: 'budget', label: 'Budget', as: 'json' },
   { field: 'published_at', label: 'Published at', as: 'timestamp' },
-  { field: 'last_used_at', label: 'Last used at', as: 'timestamp' },
   { field: 'state', label: 'State', as: 'badge' },
 ];
 </script>

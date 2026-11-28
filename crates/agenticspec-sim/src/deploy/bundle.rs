@@ -7,8 +7,9 @@
 
 use super::admit::{Accepts, Finding, Plan, PlannedUnit, admit, sort};
 use super::binding::{self as binding_form, Binding, UnitImage};
+use super::config;
 use super::grants;
-use super::packing::{self, Packing, clock_link, schedule_of, schedule_part};
+use super::packing::{self, Packing, Unit, clock_link, schedule_of, schedule_part};
 use super::ui;
 use super::{digest, sha256};
 use crate::check::value;
@@ -304,6 +305,7 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
     };
     let docs = agent_documents(inputs, inputs.packing, &mut findings);
     findings.extend(served(inputs.arch, &inputs.binding.doc, inputs.packing));
+    findings.extend(config::findings(&inputs.binding.doc, inputs.packing));
     findings.extend(grants::check(
         inputs.arch,
         &inputs.binding.doc,
@@ -414,6 +416,13 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         "agents": agents,
         "runtimes": runtimes,
     });
+    // Two images under one key of `runtimes` (one digest, two names) leave a unit's image
+    // uncarried: refused as `deploy check` would refuse the bundle.
+    let mut uncarried = unit_runtimes(&bundle, inputs.arch, binding, inputs.packing);
+    if !uncarried.is_empty() {
+        sort(&mut uncarried);
+        return Err(uncarried);
+    }
     if !files.is_empty() {
         bundle["files"] = Value::Object(files);
     }
@@ -523,8 +532,11 @@ fn absolute(v: &Value) -> bool {
 /// local store with neither tag nor digest; `unit_image_conflict`, a core or service unit whose
 /// parts name different images and which names none itself; `unit_image_missing`, a core or
 /// service unit that holds a runtime part and has no image ([`binding_form::unit_image`]);
-/// `volume_mount_missing`, a volume of a unit no part of it mounts at an absolute path. A finding
-/// names the unit, part, runtime or volume, never a value.
+/// `durable_state_unplaceable`, a runtime part with durable state in a unit of
+/// [`STATELESS_KINDS`], or whose state volume's name is taken by a part;
+/// `volume_mount_missing`, a volume of a unit (a workspace's, or a runtime part's durable state)
+/// no part of it mounts at an absolute path. A finding names the unit, part, runtime or volume,
+/// never a value.
 pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> {
     let mut out = Vec::new();
     if binding["target"]["network_policy"] == "not_enforced" {
@@ -625,9 +637,55 @@ pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> 
                 detail,
             });
         }
+        for p in u
+            .parts
+            .iter()
+            .filter(|p| binding_form::durable_state(&arch["parts"][*p]))
+        {
+            let v = binding_form::state_volume(p);
+            if STATELESS_KINDS.contains(&u.kind.as_str()) {
+                out.push(Finding {
+                    refusal: "durable_state_unplaceable",
+                    detail: format!(
+                        "runtime part {p} keeps durable state, and its unit {} is a {} unit, which holds no volume for it (place {p} in a core, service, agent or store unit)",
+                        u.name, u.kind
+                    ),
+                });
+                continue;
+            }
+            if !arch["parts"][&v].is_null() {
+                out.push(Finding {
+                    refusal: "durable_state_unplaceable",
+                    detail: format!(
+                        "runtime part {p} keeps durable state in the volume {v}, and a part of the document has that name"
+                    ),
+                });
+                continue;
+            }
+            let detail = match mount_of(binding, &u.parts, &v) {
+                Some(m) if absolute(m) => continue,
+                Some(_) => format!(
+                    "unit {}: volume {v} (durable state of {p}): its mount is not an absolute path",
+                    u.name
+                ),
+                None => format!(
+                    "unit {}: volume {v} (durable state of {p}) has no mount (a part of the unit names it under `volumes:` with `mount:`, an absolute path)",
+                    u.name
+                ),
+            };
+            out.push(Finding {
+                refusal: "volume_mount_missing",
+                detail,
+            });
+        }
     }
     out
 }
+
+/// The kinds of unit that hold no volume for a runtime part's durable state: they run until
+/// done (`job`, `scheduled`) or serve a model the target runs (`model`)
+/// (`durable_state_unplaceable`).
+pub const STATELESS_KINDS: &[&str] = &["job", "scheduled", "model"];
 
 /// The refusals only `deploy check` gives, beside those of [`super::ui::CHECK_REFUSALS`].
 pub const CHECK_REFUSALS: &[&str] = &[
@@ -837,6 +895,92 @@ fn unit_volumes(bundle: &Value) -> Vec<Finding> {
     out
 }
 
+/// The reference a target runs an image the bundle's `runtimes` carry by: from a registry the
+/// entry's `image`, already `<image>@<digest>`; from the target's local store `<image>:<tag>`,
+/// else its digest ([`binding_form::pinned_reference`]).
+fn carried_reference(binding: &Value, entry: &Value) -> Option<String> {
+    if binding_form::images(binding) == "local" {
+        binding_form::pinned_reference(binding, entry)
+    } else {
+        entry["image"].as_str().map(str::to_owned)
+    }
+}
+
+/// The `unit_runtime_mismatch` findings of a bundle: a core or service unit whose
+/// `code.runtime` is not the image the binding resolves for it ([`binding_form::unit_image`],
+/// none when it resolves none), or names an image the bundle's `runtimes` do not carry. A unit
+/// the binding gives no image because of a refusal of its own (`unit_image_conflict`,
+/// `unit_image_missing`, `image_unpinned`) is left to that refusal. The finding names the unit,
+/// the image found and the image expected.
+pub fn unit_runtimes(
+    bundle: &Value,
+    arch: &Value,
+    binding: &Value,
+    packing: &Packing,
+) -> Vec<Finding> {
+    let carried: BTreeSet<String> = bundle["runtimes"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter_map(|(_, e)| carried_reference(binding, e))
+        .collect();
+    let mut out = Vec::new();
+    for u in packing
+        .units
+        .iter()
+        .filter(|u| binding_form::IMAGE_KINDS.contains(&u.kind.as_str()))
+    {
+        let resolved = binding_form::unit_image(binding, u);
+        let expected = match &resolved {
+            UnitImage::Conflict(_) => continue,
+            UnitImage::None
+                if u.parts
+                    .iter()
+                    .any(|p| arch["parts"][p]["block"] == binding_form::RUNTIME_BLOCK) =>
+            {
+                continue;
+            }
+            UnitImage::None => None,
+            r => match r
+                .image()
+                .and_then(|i| binding_form::pinned_reference(binding, i))
+            {
+                Some(x) => Some(x),
+                None => continue,
+            },
+        };
+        let Some(written) = bundle["units"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|x| x["name"] == u.name.as_str())
+        else {
+            continue;
+        };
+        let found = written["code"]["runtime"].as_str();
+        let detail = if found != expected.as_deref() {
+            format!(
+                "unit {}: its code.runtime is {}, and the binding resolves {}",
+                u.name,
+                found.unwrap_or("none"),
+                expected.as_deref().unwrap_or("none")
+            )
+        } else if let Some(f) = found.filter(|f| !carried.contains(*f)) {
+            format!(
+                "unit {}: its code.runtime {f} is no image the bundle's runtimes carry, and the binding resolves {f}",
+                u.name
+            )
+        } else {
+            continue;
+        };
+        out.push(Finding {
+            refusal: "unit_runtime_mismatch",
+            detail,
+        });
+    }
+    out
+}
+
 /// The keys that hold where something is reached. An address is the binding's (per export, and
 /// the named destinations of a part's `egress`), never the architecture's, which the bundle
 /// copies as written.
@@ -894,7 +1038,9 @@ pub enum Refused {
 /// by the digest its part pins and its bytes recomputed, then flattened; admission of that
 /// architecture under its binding and packing ([`admit`]), its agent documents against the parts that need them and the digests the
 /// binding pins, the bytes each agent document carries ([`CHECK_REFUSALS`]), the cron rule of
-/// each scheduled unit ([`packing::schedule_of`]), and the secrets and
+/// each scheduled unit ([`packing::schedule_of`]), the runtime image of each core and service
+/// unit ([`unit_runtimes`]), the configuration of each unit ([`config::findings`],
+/// [`config::check_units`]), and the secrets and
 /// egress of the binding and of each unit
 /// ([`grants::check`], [`grants::check_units`]), and its UI units ([`ui::check`]).
 pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
@@ -1011,7 +1157,10 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     findings.extend(nested_findings);
     findings.extend(unit_schedules(bundle, arch, &packing));
     findings.extend(served(arch, binding, &packing));
+    findings.extend(unit_runtimes(bundle, arch, binding, &packing));
     findings.extend(unit_volumes(bundle));
+    findings.extend(config::findings(binding, &packing));
+    findings.extend(config::check_units(bundle, &packing));
     findings.extend(grants::check(arch, binding, &packing));
     findings.extend(grants::check_units(bundle));
     findings.extend(addresses(arch));
@@ -1024,25 +1173,77 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     Err(Refused::NotAdmitted(findings))
 }
 
-/// The volumes a unit claims: one per workspace part, read-write by one copy when it is
-/// exclusive, read-only by many when shared read-only, read-write by many otherwise; per copy of
-/// its part when it is `per` one.
-fn volumes(inputs: &Inputs, parts: &[String]) -> Vec<Value> {
+/// Whether part `p` names the volume `name` under `parts.<p>.volumes[]` of the binding.
+fn names_volume(binding: &Value, p: &str, name: &str) -> bool {
+    binding["parts"][p]["volumes"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .any(|v| v["name"] == name)
+}
+
+/// The access of unit `u`'s claim on the volume `name`, from who mounts it: `read_only_many`
+/// for a shared read-only workspace; `read_write_many` when a part of another unit names the
+/// volume under `parts.<p>.volumes[]`, or when the claim is not one per copy (`per_instance`)
+/// and the unit does not run exactly one copy (more replicas, or a `job` or `scheduled` unit,
+/// whose runs start on demand and may overlap); `read_write_once` otherwise, whatever the
+/// sharing among the parts of the unit.
+fn access(
+    plan: &Plan,
+    binding: &Value,
+    u: &Unit,
+    name: &str,
+    read_only: bool,
+    per_instance: bool,
+) -> &'static str {
+    if read_only {
+        return "read_only_many";
+    }
+    let other_unit = plan.units.iter().any(|o| {
+        o.unit.name != u.name && o.unit.parts.iter().any(|p| names_volume(binding, p, name))
+    });
+    if !other_unit && (per_instance || u.replicas == Some(1)) {
+        "read_write_once"
+    } else {
+        "read_write_many"
+    }
+}
+
+/// The volumes a unit claims: one per workspace part and one per runtime part with durable
+/// state, `<part>-state`. Per copy of its part when it is `per` one; its access from who mounts
+/// it ([`access`]); its size is `parts.<p>.size` of the binding, its mount
+/// `parts.<p>.volumes[].mount` of a part of the unit that names it.
+fn volumes(inputs: &Inputs, plan: &Plan, u: &Unit) -> Vec<Value> {
+    let parts = &u.parts;
+    let binding = &inputs.binding.doc;
     let mut out = Vec::new();
     for p in parts {
         let part = &inputs.arch["parts"][p];
+        let per_instance = !part["per"].is_null();
+        if binding_form::durable_state(part) {
+            let name = binding_form::state_volume(p);
+            let mut v = json!({
+                "name": name,
+                "access": access(plan, binding, u, &name, false, per_instance),
+                "per_instance": per_instance,
+            });
+            if let Some(size) = inputs.binding.doc["parts"][p]["size"].as_str() {
+                v["size"] = json!(size);
+            }
+            if let Some(m) = mount_of(&inputs.binding.doc, parts, &name).and_then(Value::as_str) {
+                v["mount"] = json!(m);
+            }
+            out.push(v);
+            continue;
+        }
         if part["block"] != "workspace" {
             continue;
         }
-        let access = match value(&part["sharing"]).as_str() {
-            Some("exclusive") => "read_write_once",
-            Some("shared_read_only") => "read_only_many",
-            _ => "read_write_many",
-        };
+        let read_only = value(&part["sharing"]).as_str() == Some("shared_read_only");
         let mut v = json!({
             "name": p,
-            "access": access,
-            "per_instance": !part["per"].is_null(),
+            "access": access(plan, binding, u, p, read_only, per_instance),
+            "per_instance": per_instance,
         });
         if let Some(size) = inputs.binding.doc["parts"][p]["size"].as_str() {
             v["size"] = json!(size);
@@ -1101,7 +1302,7 @@ fn unit(
         "cpu_millis": c["cpu_millis"].as_u64().unwrap_or(DEFAULT_CPU_MILLIS),
         "memory_mib": c["memory_mib"].as_u64().unwrap_or(DEFAULT_MEMORY_MIB),
         "accelerators": accelerators,
-        "volumes": volumes(inputs, &u.parts),
+        "volumes": volumes(inputs, plan, u),
     });
 
     let isolation = u
@@ -1229,6 +1430,11 @@ fn unit(
     });
     if let Some(r) = u.replicas {
         v["replicas"] = json!(r);
+    }
+    // Admission refused a configuration of the wrong form or in conflict, so `Err` does not
+    // reach here; none is left out, and a bundle without one keeps its bytes.
+    if let Ok(Some(c)) = config::resolve(binding, u) {
+        v["config"] = c;
     }
     if let Some(s) = shape {
         v["shape"] = json!(s);

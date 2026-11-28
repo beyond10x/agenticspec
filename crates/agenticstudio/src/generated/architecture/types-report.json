@@ -1,12 +1,12 @@
 {
   "format": "ess-types-report/3",
-  "source_digest": "fe73327ca63f6c7a34b08bf8fe59d68fb6c895294ffb569d0e4956008c169f92",
+  "source_digest": "1a9c75e829f70b5fcd1e86362e8903fdfa91bc171a6cc686c64e2bf278a51c2d",
   "input": {
     "kind": "model",
     "system": "agentic",
     "specification_version": "v1",
     "contract_digest": "slice-sha256/2:829435c2e0ebb3a961096950052bcad1f6d57b7a2b474113e3fce041d103a22e",
-    "projection_digest": "8586dbebbe61e9525556cc17f6ba1eb3efabb94d992ad646b73553235ac6f050"
+    "projection_digest": "4cecbc348a297ed22f14994742a30367d2f09b32b4225cc4a217b19a815d20a4"
   },
   "generator_version": "0.99.2",
   "target": "rust",

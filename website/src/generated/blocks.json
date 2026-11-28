@@ -214,7 +214,7 @@
     },
     {
       "commands": 5,
-      "entities": 2,
+      "entities": 3,
       "events": 5,
       "family": "agent",
       "h": 92.0,
@@ -235,7 +235,7 @@
         "principal",
         "shared"
       ],
-      "views": 2,
+      "views": 3,
       "w": 181.5,
       "x": 345.5,
       "y": 858.0

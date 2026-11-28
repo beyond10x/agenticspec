@@ -1,0 +1,20 @@
+format: agenticspec-architecture/1
+architecture: durable-state
+summary: >-
+  A lead hands work to a workflow runtime that keeps durable state of its own, the records it
+  appends and reads back after a restart; the lead and the workflow call the hosted model through
+  a gateway.
+
+parts:
+  owner:   { block: principal, kind: human }
+  lead:    { block: agent }
+  flow:    { block: runtime, role: workflow, durable_state: true }
+  gateway: { block: gateway }
+  model:   { block: model, route: frontier }
+
+links:
+  - { from: owner,   to: lead,    carries: prompt }
+  - { from: lead,    to: flow,    carries: run }
+  - { from: lead,    to: gateway, carries: model_call }
+  - { from: flow,    to: gateway, carries: model_call }
+  - { from: gateway, to: model,   carries: model_call }

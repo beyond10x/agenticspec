@@ -26,6 +26,7 @@
 //! panels' own fixtures) and `<name>.layout.json` (the same composition for the view package).
 
 pub mod control;
+pub mod ingress;
 pub mod model;
 pub mod view_key;
 mod write;
@@ -164,6 +165,8 @@ pub struct Plan<'a> {
     pub home: String,
     /// The pages across parts of the default control plane, in the control-plane mode.
     pub control: Option<control::Control>,
+    /// The ingress the composition is scoped to; none for the unscoped operator UI.
+    pub ingress: Option<String>,
 }
 
 fn refusal(path: impl Into<String>, message: impl Into<String>) -> Refusal {
@@ -797,12 +800,72 @@ pub fn stem(out: &Path) -> String {
         .to_string()
 }
 
-/// Derives the composition of `inputs.architecture` with the compiled blocks `ir`.
+/// Derives the composition of `inputs.architecture` with the compiled blocks `ir`: the operator
+/// UI (see [`derive_ingress`]).
 ///
 /// # Errors
 ///
 /// An input that cannot be read, or an architecture or `view:` key that is refused.
 pub fn derive_with(inputs: &Inputs, ir: &Value) -> Result<Derivation, Failure> {
+    derive_ingress(inputs, ir, None)
+}
+
+/// Every composition `agenticspec ui derive` writes for `inputs`, each with the ingress it is
+/// scoped to: one per ingress with a `ui` export, at `<dir>/<name>.<ingress>.ui.yaml`, when the
+/// contract gives a UI to an ingress other than `operator` (see [`ingress`]); else the one
+/// composition at `inputs.out`. The control-plane mode writes the one composition at
+/// `inputs.out`, scoped to the operator ingress when the contract gives a UI per ingress.
+///
+/// # Errors
+///
+/// As [`derive_ingress`].
+pub fn derive_all(
+    inputs: &Inputs,
+    ir: &Value,
+) -> Result<Vec<(Option<String>, Derivation)>, Failure> {
+    let contract = match &inputs.contract {
+        Some(p) => Some(read_json(p)?),
+        None => None,
+    };
+    let per = contract.as_ref().is_some_and(ingress::per_ingress);
+    if !per || inputs.control_plane {
+        let scoped = per.then(|| ingress::OPERATOR.to_string());
+        return Ok(vec![(scoped, derive_ingress(inputs, ir, None)?)]);
+    }
+    let dir = inputs.out.parent().unwrap_or(Path::new("."));
+    let name = stem(&inputs.out);
+    let mut out = Vec::new();
+    for i in ingress::ui_ingresses(contract.as_ref().expect("a contract")) {
+        let one = Inputs {
+            root: inputs.root.clone(),
+            architecture: inputs.architecture.clone(),
+            contract: inputs.contract.clone(),
+            ports: inputs.ports.clone(),
+            out: dir.join(format!("{name}.{}.ui.yaml", i.name)),
+            control_plane: false,
+            prediction: None,
+        };
+        out.push((
+            Some(i.name.clone()),
+            derive_ingress(&one, ir, Some(&i.name))?,
+        ));
+    }
+    Ok(out)
+}
+
+/// Derives the composition of `inputs.architecture` with the compiled blocks `ir` as the UI of
+/// the ingress `ingress` (`operator` when none is named), scoped to its interface when the
+/// contract gives a UI per ingress (see [`ingress::scope`]).
+///
+/// # Errors
+///
+/// An input that cannot be read, an architecture or `view:` key that is refused, or an ingress
+/// with no `ui` export.
+pub fn derive_ingress(
+    inputs: &Inputs,
+    ir: &Value,
+    ingress: Option<&str>,
+) -> Result<Derivation, Failure> {
     let root = &inputs.root;
     let tree = Tree::read(root, &inputs.architecture).map_err(Failure::Unreadable)?;
     let panels_text = std::fs::read_to_string(root.join(PANELS))
@@ -828,6 +891,8 @@ pub fn derive_with(inputs: &Inputs, ir: &Value) -> Result<Derivation, Failure> {
     let control = inputs.control_plane.then_some(ControlInputs {
         result: result.as_ref(),
     });
+    let scope =
+        ingress::scope(contract_doc.as_ref(), ingress).map_err(|r| Failure::Refused(vec![r]))?;
     let plan = plan(
         &tree,
         &model,
@@ -835,6 +900,7 @@ pub fn derive_with(inputs: &Inputs, ir: &Value) -> Result<Derivation, Failure> {
         ports_doc.as_ref(),
         contract_doc.as_ref(),
         control.as_ref(),
+        scope.as_ref(),
     )?;
     derivation(inputs, &plan, ports_path.as_ref())
 }
@@ -863,15 +929,54 @@ pub fn layout_with(
     contract: Option<&Value>,
     control: Option<&ControlInputs<'_>>,
 ) -> Result<String, Failure> {
+    layout_for(
+        root,
+        architecture,
+        ir,
+        panels_text,
+        ports,
+        contract,
+        control,
+        None,
+    )
+}
+
+/// The layout of the UI of the ingress `ingress` as [`layout_with`] writes it (`operator` when
+/// none is named), scoped to its interface when the contract gives a UI per ingress.
+///
+/// # Errors
+///
+/// As [`layout_with`], and an ingress with no `ui` export.
+#[allow(clippy::too_many_arguments)]
+pub fn layout_for(
+    root: &Path,
+    architecture: &Path,
+    ir: &Value,
+    panels_text: &str,
+    ports: Option<&Value>,
+    contract: Option<&Value>,
+    control: Option<&ControlInputs<'_>>,
+    ingress: Option<&str>,
+) -> Result<String, Failure> {
     let tree = Tree::read(root, architecture).map_err(Failure::Unreadable)?;
     let panels = Panels::read(panels_text).map_err(Failure::Unreadable)?;
     let model = Model { ir };
-    let plan = plan(&tree, &model, &panels, ports, contract, control)?;
+    let scope = ingress::scope(contract, ingress).map_err(|r| Failure::Refused(vec![r]))?;
+    let plan = plan(
+        &tree,
+        &model,
+        &panels,
+        ports,
+        contract,
+        control,
+        scope.as_ref(),
+    )?;
     Ok(write::layout(&plan))
 }
 
 /// The whole composition of `tree`, or every refusal of the architecture and its `view:` key;
-/// with `control`, the pages across parts of the default control plane too.
+/// with `control`, the pages across parts of the default control plane too; with `scope`, only
+/// what that ingress's interface holds (see [`ingress`]).
 fn plan<'a>(
     tree: &'a Tree,
     model: &'a Model<'a>,
@@ -879,6 +984,7 @@ fn plan<'a>(
     ports_doc: Option<&Value>,
     contract_doc: Option<&Value>,
     control: Option<&ControlInputs<'_>>,
+    scope: Option<&ingress::Ingress>,
 ) -> Result<Plan<'a>, Failure> {
     let ports = ports_doc
         .map(|d| model::ports(d, model))
@@ -913,6 +1019,9 @@ fn plan<'a>(
         return Err(Failure::Refused(refusals));
     }
     let mut levels = levels;
+    if let Some(s) = scope {
+        ingress::apply(&mut levels, s, model, panels);
+    }
     let control = match control {
         None => None,
         Some(c) => {
@@ -946,7 +1055,10 @@ fn plan<'a>(
     };
     let home = match levels[0].key.home.as_deref() {
         None | Some("overview") => levels[0].overview.clone(),
-        Some(p) => part_page(p),
+        Some(p) if scope.is_none() || levels[0].pages.iter().any(|x| x.page == part_page(p)) => {
+            part_page(p)
+        }
+        Some(_) => levels[0].overview.clone(),
     };
     Ok(Plan {
         tree,
@@ -955,6 +1067,7 @@ fn plan<'a>(
         levels,
         home,
         control,
+        ingress: scope.map(|s| s.name.clone()),
     })
 }
 

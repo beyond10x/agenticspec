@@ -20,12 +20,12 @@ fixtures:
 then:
   order: sequence
   events:
-    - { event: post_sent, part: operator, author: owner, channel: chat }
-    - { event: task_created, part: operator, task: when.0 }
-    - { event: run_started, part: worker, task: when.0 }
-    - { event: proposal_opened, part: worker, task: when.0 }
-    - { event: claim_granted, part: builds, task: when.0 }
-    - { event: task_completed, part: worker, task: when.0 }
+    - { event: agentic.channel.MessageSent, part: operator, author: owner, channel: chat }
+    - { event: agentic.work.TaskCreated, part: operator, task: when.0 }
+    - { event: agentic.work.RunStarted, part: worker, task: when.0 }
+    - { event: agentic.workspace.ChangeProposed, part: worker, task: when.0 }
+    - { event: agentic.resource.ClaimGranted, part: builds, task: when.0 }
+    - { event: agentic.work.TaskCompleted, part: worker, task: when.0 }
   kpis:
     tasks_done: { min: 1, max: 1 }
     false_completions_shipped: { max: 0 }

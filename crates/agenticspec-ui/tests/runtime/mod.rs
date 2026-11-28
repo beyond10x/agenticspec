@@ -34,6 +34,7 @@ fn options() -> Options {
     Options {
         timeout: Duration::from_secs(5),
         idle: Duration::from_millis(200),
+        ..Options::default()
     }
 }
 

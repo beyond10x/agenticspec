@@ -1,0 +1,63 @@
+# A revision is immutable: no command changes its fields after it is published. Each use of it
+# records a usage of its own; after two uses the revision row stays as it was published, and the
+# two uses are read from the usages.
+type: ess-scenario/7
+domain: agentic.agent
+scenario: use-leaves-revision-unchanged
+summary: Each use of a revision records a usage and leaves the revision as published.
+
+timeline:
+  - at: 2026-11-28T09:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-0000000006a1, kind: Agent, name: coder, at: 2026-11-28T09:00:00Z}
+    outcome: registered
+  - at: 2026-11-28T09:00:01Z
+    command: agentic.agent.DefineAgent
+    input: {agent_id: 00000000-0000-4000-8000-0000000006a2, principal_id: 00000000-0000-4000-8000-0000000006a1, name: coder, at: 2026-11-28T09:00:01Z}
+    outcome: defined
+  - at: 2026-11-28T09:00:02Z
+    command: agentic.agent.PublishRevision
+    input:
+      agent_revision_id: 00000000-0000-4000-8000-0000000006a3
+      agent_id: 00000000-0000-4000-8000-0000000006a2
+      number: 1
+      role: coder
+      instructions: {digest: sha256-instructions, length: 400, class: prompt}
+      models: [{use: Primary, target: {kind: Model, value: 00000000-0000-4000-8000-0000000006a4}}]
+      tools: []
+      knowledge: []
+      budget: {}
+      at: 2026-11-28T09:00:02Z
+    outcome: published
+  - at: 2026-11-28T10:00:00Z
+    command: agentic.agent.UseRevision
+    input: {agent_revision_id: 00000000-0000-4000-8000-0000000006a3, at: 2026-11-28T10:00:00Z}
+    outcome: used
+  - at: 2026-11-28T11:00:00Z
+    command: agentic.agent.UseRevision
+    input: {agent_revision_id: 00000000-0000-4000-8000-0000000006a3, at: 2026-11-28T11:00:00Z}
+    outcome: used
+
+assert:
+  - view: agentic.agent.AgentRevisions
+    contains:
+      agent_revision_id: 00000000-0000-4000-8000-0000000006a3
+      number: 1
+      role: coder
+      published_at: 2026-11-28T09:00:02Z
+      instructions: {digest: sha256-instructions, length: 400, class: prompt}
+      tools: []
+      knowledge: []
+      state: Published
+  - view: agentic.agent.RevisionUsages
+    counts:
+      at_least: 2
+      at_most: 2
+  - view: agentic.agent.RevisionUsages
+    contains:
+      agent_revision_id: 00000000-0000-4000-8000-0000000006a3
+      used_at: 2026-11-28T10:00:00Z
+  - view: agentic.agent.RevisionUsages
+    contains:
+      agent_revision_id: 00000000-0000-4000-8000-0000000006a3
+      used_at: 2026-11-28T11:00:00Z

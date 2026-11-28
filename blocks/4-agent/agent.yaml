@@ -12,6 +12,12 @@ naming:
   display: Agent
 
 types:
+  - name: agentic.agent.RevisionUsageId
+    kind: newtype
+    of: Uuid
+    naming:
+      summary: The identity of one use of a revision.
+
   - name: agentic.agent.ModelUse
     kind: enum
     variants: [Primary, Fast, Review]
@@ -119,8 +125,6 @@ entities:
         type: agentic.agent.BudgetLimits
       - name: published_at
         type: Timestamp
-      - name: last_used_at
-        type: Optional<Timestamp>
     relations:
       - name: agent
         kind: references
@@ -141,6 +145,35 @@ entities:
           from: [Published]
           to: Retired
 
+  - name: agentic.agent.RevisionUsage
+    naming:
+      summary: >-
+        One use of a revision, kept apart from the revision so that the revision stays as it was
+        published. Each use records one; the newest of a revision is its last use.
+    # ESS 0.99.2: a usage keyed by the revision (identity `agent_revision_id`, created on the first
+    # use and updated on each later one) validates only with `when_related: {entity, where}`
+    # guards on the revision, and synthesis then arranges no revision before the use, so every
+    # scenario of UseRevision fails on the interpreter (no-such-revision). One record per use
+    # keeps `via:` guards, which synthesis arranges.
+    identity:
+      name: usage_id
+      type: agentic.agent.RevisionUsageId
+    fields:
+      - name: agent_revision_id
+        type: agentic.shared.AgentRevisionId
+      - name: used_at
+        type: Timestamp
+    relations:
+      - name: revision
+        kind: references
+        target: agentic.agent.AgentRevision
+        cardinality: one
+        via: agent_revision_id
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
 actors:
   - name: agentic.agent.Viewer
     naming:
@@ -151,6 +184,7 @@ actors:
     may:
       - agentic.agent.Agents
       - agentic.agent.AgentRevisions
+      - agentic.agent.RevisionUsages
 
 errors:
   - name: agentic.agent.UnknownPrincipal
@@ -241,6 +275,7 @@ events:
 
   - name: agentic.agent.AgentRevisionUsed
     fields:
+      - {name: usage_id, type: agentic.agent.RevisionUsageId}
       - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
       - {name: at, type: Timestamp}
 
@@ -359,28 +394,31 @@ commands:
     input:
       - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
       - {name: at, type: Timestamp}
+    # The revision is read, never written: each use is recorded as a RevisionUsage of its own.
     outcomes:
       - name: no-such-revision
-        unknown_instance: true
+        when_related: {via: input.agent_revision_id, exists: false}
         error: agentic.agent.UnknownRevision
         payload:
           agentic.agent.UnknownRevision: {agent_revision_id: input.agent_revision_id}
       - name: retired
-        when_subject_state: Retired
+        when_related: {via: input.agent_revision_id, predicate: state == Retired}
         error: agentic.agent.RevisionRetired
         payload:
           agentic.agent.RevisionRetired: {agent_revision_id: input.agent_revision_id}
       - name: used
-        updates: agentic.agent.AgentRevision
-        instance: agent_revision_id
+        creates: agentic.agent.RevisionUsage
+        instance: usage_id
         sets:
-          last_used_at: input.at
+          agent_revision_id: input.agent_revision_id
+          used_at: input.at
         emits: [agentic.agent.AgentRevisionUsed]
         payload:
           agentic.agent.AgentRevisionUsed:
+            usage_id: {generated: true}
             agent_revision_id: input.agent_revision_id
             at: input.at
-        summary: The revision may run; nothing in it changed.
+        summary: The revision may run; the use is recorded and nothing in the revision changed.
 
   - name: agentic.agent.RetireRevision
     naming:
@@ -470,8 +508,19 @@ views:
       - {name: knowledge, type: List<agentic.shared.KnowledgeId>}
       - {name: budget, type: agentic.agent.BudgetLimits}
       - {name: published_at, type: Timestamp}
-      - {name: last_used_at, type: Optional<Timestamp>}
       - {name: state, type: agentic.agent.AgentRevision.State}
     naming:
       wire: agent-revisions
       display: Agent revisions
+
+  - name: agentic.agent.RevisionUsages
+    source: agentic.agent.RevisionUsage
+    consistency: read_your_writes
+    fields:
+      - {name: usage_id, type: agentic.agent.RevisionUsageId}
+      - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
+      - {name: used_at, type: Timestamp}
+      - {name: state, type: agentic.agent.RevisionUsage.State}
+    naming:
+      wire: revision-usages
+      display: Revision usages

@@ -1,0 +1,9 @@
+format: agenticspec-binding/1
+binding: unit-config-invalid
+architecture: workstation
+refines: egress/workstation.yaml
+summary: >-
+  The gateway gives an environment variable whose name is not one (lower case, a hyphen) and a
+  value that is a list.
+parts:
+  gateway: {env: {allowed-hosts: "svc.ns.svc,localhost", PORTS: [8080, 8081]}}

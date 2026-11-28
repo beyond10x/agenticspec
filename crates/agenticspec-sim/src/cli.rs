@@ -22,7 +22,7 @@ pub struct Refusal {
     pub detail: String,
 }
 
-fn refused(code: &'static str, detail: impl Into<String>) -> Refusal {
+pub(crate) fn refused(code: &'static str, detail: impl Into<String>) -> Refusal {
     Refusal {
         code,
         detail: detail.into(),
@@ -857,6 +857,36 @@ fn check_trace(
     Ok(Value::Array(checks.iter().map(|c| c.to_json()).collect()))
 }
 
+/// The architecture at `architecture` as read (nested architectures resolved beside their
+/// parts), the flattened document at the values it is built with, and its simulation model under
+/// the profile at `profile` for `horizon` seconds: what `sim trace` and `ui serve --sim` run.
+///
+/// # Errors
+///
+/// A document cannot be read, the check refuses the architecture, or the simulator refuses the
+/// pair.
+pub fn built_model(
+    architecture: &Path,
+    profile: &Path,
+    horizon: f64,
+) -> Result<(Value, Value, crate::sim::Model), Refusal> {
+    use crate::profile::Profile;
+    let document = load_nested(architecture)?;
+    let arch = nest::flatten(&document);
+    let refusals = check_architecture(&arch);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    let profile_doc = load_yaml(profile).map_err(|e| refused("document_unreadable", e))?;
+    let profile = Profile::parse(&profile_doc).map_err(|e| refused("simulation_refused", e))?;
+    let built = crate::marked::resolve(&arch, &serde_json::Map::new())
+        .map_err(|e| refused("simulation_refused", e))?;
+    let model = crate::sim::Model::build(&built, &profile, horizon, &[], &[])
+        .map_err(|e| refused("simulation_refused", e))?;
+    Ok((document, built, model))
+}
+
 /// The options of `sim trace`.
 #[derive(Debug, Clone)]
 pub struct TraceOptions<'a> {
@@ -874,16 +904,7 @@ pub struct TraceOptions<'a> {
 /// write the port uses of the run as a trace (`agenticspec-trace/1`), or print it.
 pub fn trace(o: &TraceOptions) -> Result<Value, Refusal> {
     use crate::contract::trace::Trace;
-    use crate::profile::Profile;
-    use crate::sim::{Model, RECORDED, simulate};
-    let arch = nest::flatten(&load_nested(o.architecture)?);
-    let refusals = check_architecture(&arch);
-    if !refusals.is_empty() {
-        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
-        return Err(refused("architecture_refused", names.join("; ")));
-    }
-    let profile_doc = load_yaml(o.profile).map_err(|e| refused("document_unreadable", e))?;
-    let profile = Profile::parse(&profile_doc).map_err(|e| refused("simulation_refused", e))?;
+    use crate::sim::{RECORDED, simulate};
     let horizon = match o.horizon {
         None => 86400.0,
         Some(h) => crate::doc::parse_duration(h)
@@ -896,12 +917,10 @@ pub fn trace(o: &TraceOptions) -> Result<Value, Refusal> {
             })?,
     };
     let seed = o.seed.unwrap_or(1);
-    let built = crate::marked::resolve(&arch, &serde_json::Map::new())
-        .map_err(|e| refused("simulation_refused", e))?;
-    let model = Model::build(&built, &profile, horizon, &[], &[])
-        .map_err(|e| refused("simulation_refused", e))?;
+    let (_, built, model) = built_model(o.architecture, o.profile, horizon)?;
+    let profile_doc = load_yaml(o.profile).map_err(|e| refused("document_unreadable", e))?;
     let run = simulate(&model, seed, true);
-    let name = arch["architecture"].as_str().unwrap_or("architecture");
+    let name = built["architecture"].as_str().unwrap_or("architecture");
     let source = json!({
         "simulator": "agenticspec-sim",
         "profile": profile_doc["profile"],
@@ -1089,72 +1108,104 @@ pub struct ProjectOptions<'a> {
     pub kpis: Option<&'a Path>,
 }
 
-/// Whether a file name is one `ingress project` writes.
-fn is_projection(name: &str) -> bool {
-    name.ends_with(".http.yaml") || name.ends_with(".openapi.yaml")
-}
-
-/// The projections of an architecture's `http` exports, by file name: ESS compiles the blocks
-/// and writes their OpenAPI document into a scratch directory, and validates each binding.
+/// The projections of an architecture's exports, by file name ([`crate::contract::projection`]):
+/// when an export reads the blocks, ESS compiles them and writes their OpenAPI document into a
+/// scratch directory once, and validates each `ess-http/1` binding. A metric list reads the KPI
+/// catalogue only; a `ui` export has no projection here.
 fn projections(
     contract: &crate::contract::derive::Contract,
     blocks: &Path,
+    kpis: &crate::contract::ingress::Kpis,
 ) -> Result<std::collections::BTreeMap<String, String>, Refusal> {
     use crate::contract::ports::ess;
-    use crate::contract::projection as pr;
+    use crate::contract::projection::{self as pr, agent, cli, metrics, stream, tool};
     let mut files = std::collections::BTreeMap::new();
-    let http = pr::http_ingresses(contract);
-    if http.is_empty() {
+    let exports = pr::projected(contract);
+    if exports.is_empty() {
         return Ok(files);
     }
     let unreadable = |e: String| refused("blocks_unreadable", e);
     let b = blocks.display().to_string();
-    let ir = ess(&["specify", "compile", "--path", &b, "--format", "json"]).map_err(unreadable)?;
-    let pin = pr::Pin::of_ir(&ir).map_err(unreadable)?;
+    let reads_blocks = exports.iter().any(|(_, p)| *p != "metrics_scrape");
     let work = std::env::temp_dir().join(format!("agenticspec-ingress-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&work);
     let result = (|| {
-        let oa = work.join("openapi");
-        let oa_text = oa.display().to_string();
-        ess(&[
-            "generate", "--path", &b, "--kind", "openapi", "--out", &oa_text,
-        ])
-        .map_err(unreadable)?;
-        let docs: Vec<std::path::PathBuf> = std::fs::read_dir(oa.join("openapi"))
-            .map_err(|e| unreadable(format!("{}: {e}", oa.display())))?
-            .filter_map(Result::ok)
-            .map(|e| e.path())
-            .collect();
-        let [doc] = docs.as_slice() else {
-            return Err(unreadable(format!(
-                "ess wrote {} OpenAPI documents for {b}; one component reached by network serves the blocks",
-                docs.len()
-            )));
-        };
-        let full = load_yaml(doc).map_err(unreadable)?;
-        for i in http {
-            let [binding_name, openapi_name] = pr::file_names(&i.name);
-            let binding = pr::http_binding(contract, i, &pin);
-            let at = work.join(&binding_name);
-            std::fs::write(&at, &binding)
-                .map_err(|e| unreadable(format!("{}: {e}", at.display())))?;
-            let at_text = at.display().to_string();
+        let blocks_model = if reads_blocks {
+            let ir_text = ess(&["specify", "compile", "--path", &b, "--format", "json"])
+                .map_err(unreadable)?;
+            let pin = pr::Pin::of_ir(&ir_text).map_err(unreadable)?;
+            let ir: Value = serde_json::from_str(&ir_text)
+                .map_err(|e| unreadable(format!("ess specify compile: {e}")))?;
+            let oa = work.join("openapi");
+            let oa_text = oa.display().to_string();
             ess(&[
-                "specify",
-                "http",
-                "validate",
-                "--path",
-                &b,
-                "--binding",
-                &at_text,
+                "generate", "--path", &b, "--kind", "openapi", "--out", &oa_text,
             ])
-            .map_err(|e| refused("projection_refused", format!("ingress {}: {e}", i.name)))?;
-            let narrowed =
-                pr::openapi(&full, contract, i).map_err(|e| refused("projection_refused", e))?;
-            let text = pr::openapi_text(contract, i, &narrowed)
-                .map_err(|e| refused("projection_refused", e))?;
-            files.insert(binding_name, binding);
-            files.insert(openapi_name, text);
+            .map_err(unreadable)?;
+            let docs: Vec<std::path::PathBuf> = std::fs::read_dir(oa.join("openapi"))
+                .map_err(|e| unreadable(format!("{}: {e}", oa.display())))?
+                .filter_map(Result::ok)
+                .map(|e| e.path())
+                .collect();
+            let [doc] = docs.as_slice() else {
+                return Err(unreadable(format!(
+                    "ess wrote {} OpenAPI documents for {b}; one component reached by network serves the blocks",
+                    docs.len()
+                )));
+            };
+            let component = doc
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("blocks")
+                .to_owned();
+            let full = load_yaml(doc).map_err(unreadable)?;
+            Some((pin, ir, full, component))
+        } else {
+            None
+        };
+        for (i, protocol) in exports {
+            let refuse = |e: String| refused("projection_refused", e);
+            let names = pr::files_of(&i.name, protocol);
+            let texts: Vec<String> = match (protocol, &blocks_model) {
+                ("metrics_scrape", _) => vec![metrics::metrics(contract, i, kpis).map_err(refuse)?],
+                (_, None) => continue,
+                ("http", Some((pin, _, full, _))) => {
+                    let binding = pr::http_binding(contract, i, pin);
+                    let at = work.join(&names[0]);
+                    std::fs::write(&at, &binding)
+                        .map_err(|e| unreadable(format!("{}: {e}", at.display())))?;
+                    let at_text = at.display().to_string();
+                    ess(&[
+                        "specify",
+                        "http",
+                        "validate",
+                        "--path",
+                        &b,
+                        "--binding",
+                        &at_text,
+                    ])
+                    .map_err(|e| refuse(format!("ingress {}: {e}", i.name)))?;
+                    let narrowed = pr::openapi(full, contract, i).map_err(refuse)?;
+                    let text = pr::openapi_text(contract, i, &narrowed).map_err(refuse)?;
+                    vec![binding, text]
+                }
+                ("event_stream", Some((pin, ir, _, _))) => {
+                    vec![stream::streams(contract, i, pin, ir).map_err(refuse)?]
+                }
+                ("cli", Some((_, ir, _, component))) => {
+                    vec![cli::cli_binding(contract, i, ir, component).map_err(refuse)?]
+                }
+                ("tool", Some((pin, ir, full, _))) => {
+                    vec![tool::tools(contract, i, pin, ir, full).map_err(refuse)?]
+                }
+                ("agent", Some((pin, ir, full, _))) => {
+                    vec![agent::agent_card(contract, i, pin, ir, full).map_err(refuse)?]
+                }
+                _ => continue,
+            };
+            for (name, text) in names.into_iter().zip(texts) {
+                files.insert(name, text);
+            }
         }
         Ok(())
     })();
@@ -1163,10 +1214,11 @@ fn projections(
 }
 
 /// `ingress project <architecture> (--out <dir> | --check <dir>) [--blocks <dir>] [--ports
-/// <file>] [--kpis <file>]`: per ingress with an `http` export, its `ess-http/1` protocol binding
-/// (`<ingress>.http.yaml`) and OpenAPI document (`<ingress>.openapi.yaml`), the same bytes on
-/// every run; written into `--out`, removing projections of ingresses the document no longer
-/// has, or compared with the files in `--check`.
+/// <file>] [--kpis <file>]`: the projections of each export of each ingress (for `http` the
+/// `ess-http/1` protocol binding and the OpenAPI document, for `event_stream` the stream list, for
+/// `cli` the `ess-cli/2` binding, for `tool` the tool list, for `agent` the agent card, for
+/// `metrics_scrape` the metric list), the same bytes on every run; written into `--out`, removing
+/// projections the document no longer has, or compared with the files in `--check`.
 pub fn ingress_project(o: &ProjectOptions) -> Result<Value, Refusal> {
     let (dir, check) = match (o.out, o.check) {
         (Some(d), None) => (d, false),
@@ -1187,19 +1239,23 @@ pub fn ingress_project(o: &ProjectOptions) -> Result<Value, Refusal> {
     let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
     let ports = crate::contract::ports::PortsFile::load(ports_path)
         .map_err(|e| refused("ports_unreadable", e))?;
-    let contract = derive_contract(&arch, &ports, o.kpis)?;
-    let files = projections(&contract, o.blocks.unwrap_or(Path::new("blocks")))?;
+    let kpis =
+        crate::contract::ingress::Kpis::load(o.kpis.unwrap_or(Path::new("kpis/catalogue.yaml")))
+            .map_err(|e| refused("kpis_unreadable", e))?;
+    let contract = derive_contract_with(&arch, &ports, &kpis)?;
+    let exports = crate::contract::projection::projected(&contract).len();
+    let files = projections(&contract, o.blocks.unwrap_or(Path::new("blocks")), &kpis)?;
     let on_disk: Vec<String> = std::fs::read_dir(dir)
         .into_iter()
         .flatten()
         .filter_map(Result::ok)
         .filter_map(|e| e.file_name().to_str().map(str::to_owned))
-        .filter(|n| is_projection(n))
+        .filter(|n| crate::contract::projection::is_projection(n))
         .collect();
     let answer = |written: bool| {
         json!({
             "architecture": contract.architecture,
-            "exports": files.len() / 2,
+            "exports": exports,
             "files": files.keys().collect::<Vec<_>>(),
             "written": written,
         })

@@ -993,7 +993,6 @@ widgets:
           on:
             - agentic.agent.AgentRevisionPublished
             - agentic.agent.AgentRevisionRetired
-            - agentic.agent.AgentRevisionUsed
           effect: refetch
           coalesce: 1s
         columns:
@@ -1007,7 +1006,6 @@ widgets:
           - {field: knowledge, as: list}
           - {field: budget, as: json}
           - {field: published_at, as: timestamp}
-          - {field: last_used_at, as: timestamp}
           - {field: state, as: badge}
   agentic.agent.Agents:
     summary: "Rows of the view agentic.agent.Agents over Agent, keyed by agent_id."
@@ -1034,6 +1032,30 @@ widgets:
           - principal_id
           - name
           - {field: defined_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.agent.RevisionUsages:
+    summary: "Rows of the view agentic.agent.RevisionUsages over RevisionUsage, keyed by usage_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.agent.RevisionUsages, key: usage_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.agent.AgentRevisionUsed
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - usage_id
+          - agent_revision_id
+          - {field: used_at, as: timestamp}
           - {field: state, as: badge}
   agentic.harness.HarnessSessions:
     summary: "Rows of the view agentic.harness.HarnessSessions over HarnessSession, keyed by harness_session_id."
@@ -3029,6 +3051,10 @@ pages:
       - name: agents
         title: Agents
         component: agentic.agent.Agents
+        args: {channel: agent}
+      - name: revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {channel: agent}
   harness:
     kind: gallery

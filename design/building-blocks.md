@@ -301,7 +301,7 @@ KPI, the count of its refusals:
 | `review_without_reviewer` | a `review` link ends at a part that is not an agent with `role: reviewer` |
 | `border_without_part` | `border` names no part |
 | `trigger_source_not_trigger` | a `trigger` link starts at a part that is not a trigger or a schedule |
-| `trigger_target_not_agent` | a `trigger` link ends at a part that is neither an agent nor a runtime |
+| `trigger_target_not_agent` | a `trigger` link ends at a part that is not an agent, a runtime or a process |
 | `trigger_without_source` | the trigger's kind is missing or unknown; or an `on_schedule` trigger names no schedule part; or an `on_message` trigger names no topic, queue or board channel; or an `on_event` trigger names no `event_name`, or a `source` that is no part |
 | `invalid_concurrency` | `policy` is not `skip`, `queue` or `parallel`; or `max_parallel` is not a whole number of at least 1; or it is above 1 under `skip` or `queue` |
 | `invalid_schedule` | a schedule part has no positive `every` |

@@ -223,7 +223,8 @@ struct WorkerKind {
     orchestrates: bool,
     /// The triggers that wake it.
     triggers: Vec<usize>,
-    /// A runtime part that executes runs: its steps are its turns, and it is no agent alive.
+    /// A runtime or process part that executes runs: its steps are its turns, and it is no agent
+    /// alive.
     runtime: bool,
 }
 
@@ -301,21 +302,89 @@ fn number_or(v: &Value, default: f64) -> f64 {
     num(v).unwrap_or(default)
 }
 
+/// The settings the simulator reads from a part, per block. Every read of a part's setting in
+/// this module and its submodules goes through [`setting`], which asserts in a debug build that
+/// the part's block is listed here with the key; a test holds this list against the settings
+/// table (`blocks/settings.yaml`) and the sources against [`setting`]. Two reads go through
+/// `check` and are listed by hand: an agent's `role` (`check::is_reviewer`) and a channel's
+/// `distribution` (`check::distribution`).
+pub const PART_READS: &[(&str, &[&str])] = &[
+    (
+        "agent",
+        &[
+            "count",
+            "role",
+            "model_share",
+            "start_stagger",
+            "coordination",
+            "partition",
+            "acts_for",
+            "strictness",
+            "false_accept",
+            "false_reject",
+        ],
+    ),
+    ("runtime", &["count", "role", "model_share"]),
+    ("process", &["count", "role", "model_share", "steps"]),
+    ("principal", &["kind"]),
+    ("gateway", &["rate_limit_per_minute"]),
+    ("pool", &["capacity", "job_limit"]),
+    ("model", &["route"]),
+    ("channel", &["distribution"]),
+    (
+        "trigger",
+        &[
+            "kind",
+            "schedule",
+            "channel",
+            "event_name",
+            "source",
+            "policy",
+            "max_parallel",
+            "task_template",
+            "takes",
+        ],
+    ),
+    ("schedule", &["every", "next_fire_at"]),
+];
+
+/// The keys [`PART_READS`] lists for `block`.
+pub fn part_reads(block: &str) -> &'static [&'static str] {
+    PART_READS
+        .iter()
+        .find(|(b, _)| *b == block)
+        .map_or(&[], |(_, keys)| keys)
+}
+
+/// Setting `key` of part `p`, `Null` when it has none: the one way the simulator reads a part.
+fn setting<'a>(p: &'a Value, key: &str) -> &'a Value {
+    debug_assert!(
+        part_reads(p["block"].as_str().unwrap_or("")).contains(&key),
+        "the simulator reads `{key}` from a part of block {} and PART_READS does not list it",
+        p["block"]
+    );
+    &p[key]
+}
+
 fn count_of(p: &Value) -> usize {
-    num(&p["count"]).unwrap_or(1.0).max(0.0).round() as usize
+    num(setting(p, "count")).unwrap_or(1.0).max(0.0).round() as usize
 }
 
 /// The strictness of reviewer part `name`: its own `false_accept` and `false_reject`, else the
 /// profile's entry named by `strictness` (default `balanced`).
 fn strictness_of(name: &str, p: &Value, profile: &Profile) -> Result<Strictness, String> {
-    let label = p["strictness"].as_str().unwrap_or("balanced");
+    let label = setting(p, "strictness").as_str().unwrap_or("balanced");
     let named = profile.review.strictness.get(label).copied();
     let base = match named {
         Some(s) => s,
-        None if p["false_accept"].is_number() && p["false_reject"].is_number() => Strictness {
-            false_accept: 0.0,
-            false_reject: 0.0,
-        },
+        None if setting(p, "false_accept").is_number()
+            && setting(p, "false_reject").is_number() =>
+        {
+            Strictness {
+                false_accept: 0.0,
+                false_reject: 0.0,
+            }
+        }
         None => {
             let known: Vec<&str> = profile
                 .review
@@ -329,7 +398,7 @@ fn strictness_of(name: &str, p: &Value, profile: &Profile) -> Result<Strictness,
             ));
         }
     };
-    let rate = |k: &str, d: f64| p[k].as_f64().map_or(d, |x| x.clamp(0.0, 1.0));
+    let rate = |k: &str, d: f64| setting(p, k).as_f64().map_or(d, |x| x.clamp(0.0, 1.0));
     Ok(Strictness {
         false_accept: rate("false_accept", base.false_accept),
         false_reject: rate("false_reject", base.false_reject),
@@ -381,7 +450,7 @@ impl Model {
             .iter()
             .map(|n| Gateway {
                 part: n.clone(),
-                rate: number_or(&part(n)["rate_limit_per_minute"], f64::INFINITY),
+                rate: number_or(setting(part(n), "rate_limit_per_minute"), f64::INFINITY),
                 drops: drops(faults, n),
             })
             .collect();
@@ -390,15 +459,15 @@ impl Model {
             .iter()
             .map(|n| Pool {
                 part: n.clone(),
-                capacity: number_or(&part(n)["capacity"], f64::INFINITY),
-                job_limit: number_or(&part(n)["job_limit"], f64::INFINITY),
+                capacity: number_or(setting(part(n), "capacity"), f64::INFINITY),
+                job_limit: number_or(setting(part(n), "job_limit"), f64::INFINITY),
                 drops: drops(faults, n),
             })
             .collect();
         let principal_names = index_by_block(arch, "principal");
         let mut principals = Vec::new();
         for n in &principal_names {
-            let kind = part(n)["kind"].as_str().unwrap_or("human");
+            let kind = setting(part(n), "kind").as_str().unwrap_or("human");
             let prof = profile.principals.get(kind);
             let mut away = Vec::new();
             for w in prof.map(|p| p.away.as_slice()).unwrap_or(&[]) {
@@ -436,7 +505,7 @@ impl Model {
         // The profile role of a part is named by its `role`; an agent without one is `coding`.
         // `harness` names the kind of harness and picks no role.
         let role_of = |name: &str, p: &Value| -> Result<(String, Role), String> {
-            let label = match crate::check::value(&p["role"]).as_str() {
+            let label = match crate::check::value(setting(p, "role")).as_str() {
                 Some(l) => l,
                 None if p["block"] == "agent" => "coding",
                 None => {
@@ -455,7 +524,7 @@ impl Model {
         let routes = |name: &str, p: &Value| -> Result<Vec<Route>, String> {
             let path = reach(arch, name, "model_call");
             let reached: Vec<usize> = path.iter().filter_map(|r| position(&models, r)).collect();
-            let shares: Vec<f64> = match crate::check::value(&p["model_share"]) {
+            let shares: Vec<f64> = match crate::check::value(setting(p, "model_share")) {
                 Value::Null => vec![1.0; reached.len()],
                 Value::Object(o) => {
                     if let Some(k) = o
@@ -499,7 +568,7 @@ impl Model {
                     continue;
                 }
                 upto += share;
-                let route = part(&models[m])["route"]
+                let route = setting(part(&models[m]), "route")
                     .as_str()
                     .ok_or_else(|| format!("model part `{}` names no route", models[m]))?;
                 let price = profile.prices.get(route).copied().ok_or_else(|| {
@@ -564,8 +633,8 @@ impl Model {
             }
         }
 
-        // A runtime part executes runs when it is given them: a `run` or `order` link, or a
-        // trigger that wakes it.
+        // A runtime or process part executes runs when it is given them: a `run` or `order` link,
+        // or a trigger that wakes it.
         let executes = |name: &str| {
             links.iter().any(|l| {
                 l["to"] == name
@@ -575,9 +644,13 @@ impl Model {
         let mut delegates: Vec<Delegate> = Vec::new();
         let mut workers = Vec::new();
         for (name, p) in arch["parts"].as_object().into_iter().flatten() {
-            let runtime = p["block"] == "runtime";
-            let agent =
-                p["block"] == "agent" && p.get("acts_for").is_none() && !is_reviewer(arch, name);
+            // A process part executes runs like a runtime: each run takes the steps of its
+            // program, each a turn of its role.
+            let process = p["block"] == "process";
+            let runtime = p["block"] == "runtime" || process;
+            let agent = p["block"] == "agent"
+                && setting(p, "acts_for").is_null()
+                && !is_reviewer(arch, name);
             if !(agent || runtime && executes(name)) {
                 continue;
             }
@@ -626,16 +699,27 @@ impl Model {
                 }
                 Some(_) => None,
             };
+            let mut e = exec(name, p, !process)?;
+            if process {
+                let steps = num(crate::check::value(setting(p, "steps"))).unwrap_or(1.0);
+                e.task_turns = Dist::Fixed(steps.round().max(1.0));
+            }
             workers.push(WorkerKind {
-                exec: exec(name, p, true)?,
+                exec: e,
                 question,
                 pool,
                 review,
                 input: Input::Backlog,
                 output: Output::Ship,
-                coordination: swarm::coordination_of(name, p)?,
-                stagger: swarm::stagger_of(p),
-                partition: swarm::partition_of(name, p)?,
+                // How copies coordinate, stagger and partition is an agent's setting; the copies
+                // of a runtime or process part take the defaults.
+                coordination: if agent {
+                    swarm::coordination_of(name, p)?
+                } else {
+                    Coordination::None
+                },
+                stagger: if agent { swarm::stagger_of(p) } else { 0.0 },
+                partition: agent && swarm::partition_of(name, p)?,
                 orchestrates: false,
                 triggers: Vec::new(),
                 runtime,

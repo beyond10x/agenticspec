@@ -21,6 +21,13 @@
 //!
 //! [`run_plane`] needs no plan: it checks a running server against the default control plane of
 //! an architecture ([`crate::plane::Plane`]), the mode a runtime runs against itself.
+//!
+//! In both modes a read the source answers with the declared "not served" answer (404
+//! `{"error": "view_not_served", "view": …}` naming the view read) is a skipped check, any other
+//! 404 a failed one; a row's `scope` field, when it holds a scope of the architecture, decides
+//! its scope over the entity-id rule ([`interface::in_scope_at`]); and every write carries what a
+//! page of the source's origin sends: `Origin` (the source's own, or [`Options::origin`]) and
+//! [`Options::headers`].
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -195,6 +202,21 @@ impl Report {
             .collect()
     }
 
+    /// Every check on one line, `passed|failed|skipped <name>: <detail>`, in the order run; a
+    /// line break inside a detail becomes a space.
+    pub fn lines(&self) -> Vec<String> {
+        self.checks
+            .iter()
+            .map(|c| {
+                c.to_string()
+                    .split(['\r', '\n'])
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect()
+    }
+
     pub fn to_json(&self) -> Value {
         json!({
             "source": self.source,
@@ -208,13 +230,17 @@ impl Report {
     }
 }
 
-/// How long the suite waits.
-#[derive(Debug, Clone, Copy)]
+/// How long the suite waits, and what it sends on a write beside the credentials.
+#[derive(Debug, Clone)]
 pub struct Options {
     /// For one request or connection.
     pub timeout: Duration,
     /// With no event after a reconnect's last expected one, before it is judged.
     pub idle: Duration,
+    /// The `Origin` of every write (R4); the source's own origin ([`origin_of`]) when absent.
+    pub origin: Option<String>,
+    /// Headers sent on every write beside `Origin`, such as a CSRF token.
+    pub headers: Vec<(String, String)>,
 }
 
 impl Default for Options {
@@ -222,6 +248,110 @@ impl Default for Options {
         Options {
             timeout: Duration::from_secs(5),
             idle: Duration::from_millis(300),
+            origin: None,
+            headers: Vec::new(),
+        }
+    }
+}
+
+/// The origin of a source's root, what a page served from it sends as `Origin`:
+/// `http://host[:port]`, the port left out when it is 80.
+///
+/// # Errors
+///
+/// The root is no `http://` address.
+pub fn origin_of(root: &str) -> Result<String, String> {
+    let url = wire::Url::parse(root)?;
+    let host = url.host.to_ascii_lowercase();
+    Ok(if url.port == 80 {
+        format!("http://{host}")
+    } else {
+        format!("http://{host}:{}", url.port)
+    })
+}
+
+/// The value of `--origin`: `scheme://host[:port]`, a trailing `/` left out.
+///
+/// # Errors
+///
+/// No scheme, no host, a path, or a character a header value cannot hold.
+pub fn parse_origin(text: &str) -> Result<String, String> {
+    let origin = text.strip_suffix('/').unwrap_or(text);
+    let ok = origin.split_once("://").is_some_and(|(scheme, host)| {
+        !scheme.is_empty()
+            && scheme
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || "+-.".contains(c))
+            && !host.is_empty()
+            && !host.contains(['/', '?', '#'])
+    }) && !origin.chars().any(|c| c.is_whitespace() || c.is_control());
+    if ok {
+        Ok(origin.to_string())
+    } else {
+        Err(format!(
+            "{text:?} is no origin; name one as scheme://host[:port], such as http://127.0.0.1:7430"
+        ))
+    }
+}
+
+/// A `--header 'Name: value'`, sent on every write: the name a token, the value without line
+/// breaks. `Origin` is named with `--origin`; `Host`, `Content-Length`, `Content-Type` and
+/// `Authorization` are the suite's own.
+///
+/// # Errors
+///
+/// No `:`, an empty or invalid name, a line break, or a header the suite sets itself.
+pub fn parse_header(text: &str) -> Result<(String, String), String> {
+    let Some((name, value)) = text.split_once(':') else {
+        return Err(format!("{text:?} is no header; write it as 'Name: value'"));
+    };
+    let (name, value) = (name.trim(), value.trim());
+    let token = |c: char| c.is_ascii_alphanumeric() || "!#$%&'*+-.^_`|~".contains(c);
+    if name.is_empty() || !name.chars().all(token) {
+        return Err(format!("{text:?}: {name:?} is no header name"));
+    }
+    if value.chars().any(|c| c.is_control() && c != '\t') {
+        return Err(format!("{text:?}: the value holds a control character"));
+    }
+    if name.eq_ignore_ascii_case("origin") {
+        return Err(format!("{text:?}: name the origin with --origin"));
+    }
+    for own in ["host", "content-length", "content-type", "authorization"] {
+        if name.eq_ignore_ascii_case(own) {
+            return Err(format!(
+                "{text:?}: the suite sets {name} itself (the token is AGENTICSPEC_UI_TOKEN)"
+            ));
+        }
+    }
+    Ok((name.to_string(), value.to_string()))
+}
+
+/// What every write carries beside the credentials: `Origin` (the option's, else the root's)
+/// and the option's headers.
+fn write_headers(root: &str, options: &Options) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    if let Some(origin) = options.origin.clone().or_else(|| origin_of(root).ok()) {
+        out.push(("Origin".to_string(), origin));
+    }
+    out.extend(options.headers.iter().cloned());
+    out
+}
+
+/// Why a read gave no rows: the source does not serve the view (404 `view_not_served`, a
+/// skipped check), or anything else (a failed one).
+enum Unread {
+    NotServed(String),
+    Failed(String),
+}
+
+impl Unread {
+    fn judged(self) -> (Status, String) {
+        match self {
+            Unread::NotServed(view) => (
+                Status::Skipped,
+                format!("the source does not serve {view} (404 view_not_served)"),
+            ),
+            Unread::Failed(e) => (Status::Failed, e),
         }
     }
 }
@@ -289,6 +419,8 @@ struct Suite<'a> {
     plan: &'a Plan,
     token: Option<&'a str>,
     options: Options,
+    /// `Origin` and the option's headers, sent on every write.
+    writes: Vec<(String, String)>,
     checks: Vec<Check>,
 }
 
@@ -340,6 +472,7 @@ impl Suite<'_> {
         if let (Some(a), true) = (&auth, authed) {
             headers.push(("Authorization", a.as_str()));
         }
+        headers.extend(self.writes.iter().map(|(k, v)| (k.as_str(), v.as_str())));
         let text = body.to_string();
         wire::request(
             "POST",
@@ -357,15 +490,22 @@ impl Suite<'_> {
         view: &str,
         part: Option<&str>,
         instance: Option<u32>,
-    ) -> Result<Vec<Row>, String> {
+    ) -> Result<Vec<Row>, Unread> {
         let url = format!("{}/api/views/{view}", self.url(part, instance));
-        let r = self.get(&url, true)?;
+        let r = self.get(&url, true).map_err(Unread::Failed)?;
+        if r.status == 404 && interface::is_view_not_served(&r.body, view) {
+            return Err(Unread::NotServed(view.to_string()));
+        }
         if r.status != 200 {
-            return Err(format!("GET {url} answered {}: {}", r.status, r.text()));
+            return Err(Unread::Failed(format!(
+                "GET {url} answered {}: {}",
+                r.status,
+                r.text()
+            )));
         }
         serde_json::from_slice::<Rows>(&r.body)
             .map(|b| b.rows)
-            .map_err(|e| format!("GET {url} is not {{\"rows\": [...]}}: {e}"))
+            .map_err(|e| Unread::Failed(format!("GET {url} is not {{\"rows\": [...]}}: {e}")))
     }
 
     /// The entity ids placed to a scope, read from `Placements` at the architecture.
@@ -373,7 +513,7 @@ impl Suite<'_> {
         &self,
         part: Option<&str>,
         instance: Option<u32>,
-    ) -> Result<BTreeSet<String>, String> {
+    ) -> Result<BTreeSet<String>, Unread> {
         let rows = self.rows("agentic.architecture.Placements", None, None)?;
         Ok(rows
             .iter()
@@ -466,7 +606,8 @@ impl Suite<'_> {
         let all = match self.placed(None, None) {
             Ok(p) => p,
             Err(e) => {
-                self.push(format!("R1 placements at {arch}"), Status::Failed, e);
+                let (s, d) = e.judged();
+                self.push(format!("R1 placements at {arch}"), s, d);
                 return;
             }
         };
@@ -477,17 +618,25 @@ impl Suite<'_> {
             let placed = match self.placed(part, instance) {
                 Ok(p) => p,
                 Err(e) => {
-                    self.push(format!("R1 placements at {scope}"), Status::Failed, e);
+                    let (s, d) = e.judged();
+                    self.push(format!("R1 placements at {scope}"), s, d);
                     continue;
                 }
+            };
+            let in_scope = |r: &Row, placed: &BTreeSet<String>, at: &str| {
+                interface::in_scope_at(&r.map, placed, &arch, at)
             };
             for view in &sp.views {
                 let arch_rows = self.rows(view, None, None);
                 if seen_arch.insert(view.clone()) {
                     let name = format!("R1 {view} at {arch}");
                     match &arch_rows {
-                        Err(e) => self.push(name, Status::Failed, e.clone()),
-                        Ok(rows) => match rows.iter().find(|r| !interface::in_scope(&r.map, &all)) {
+                        Err(Unread::NotServed(v)) => {
+                            let (s, d) = Unread::NotServed(v.clone()).judged();
+                            self.push(name, s, d);
+                        }
+                        Err(Unread::Failed(e)) => self.push(name, Status::Failed, e.clone()),
+                        Ok(rows) => match rows.iter().find(|r| !in_scope(r, &all, &arch)) {
                             Some(r) => self.push(
                                 name,
                                 Status::Failed,
@@ -504,18 +653,23 @@ impl Suite<'_> {
                 let rows = match self.rows(view, part, instance) {
                     Ok(r) => r,
                     Err(e) => {
-                        self.push(name, Status::Failed, e);
+                        let (s, d) = e.judged();
+                        self.push(name, s, d);
                         continue;
                     }
                 };
-                if let Some(r) = rows.iter().find(|r| !interface::in_scope(&r.map, &placed)) {
+                let field = interface::scope_field();
+                let named =
+                    |r: &Row| interface::named_scope(r.map.get(&field), &arch).map(String::from);
+                if let Some(r) = rows.iter().find(|r| !in_scope(r, &placed, &scope)) {
+                    let why = match named(r) {
+                        Some(n) => format!(" of scope {n}, which is not in scope at {scope}"),
+                        None => format!(", which no placement to {scope} reaches"),
+                    };
                     self.push(
                         name,
                         Status::Failed,
-                        format!(
-                            "{view} returned the row {}, which no placement to {scope} reaches",
-                            r.key()
-                        ),
+                        format!("{view} returned the row {}{why}", r.key()),
                     );
                     continue;
                 }
@@ -523,16 +677,17 @@ impl Suite<'_> {
                     let got: BTreeSet<String> = rows.iter().map(Row::key_value).collect();
                     if let Some(r) = arch_rows
                         .iter()
-                        .filter(|r| interface::in_scope(&r.map, &placed))
+                        .filter(|r| in_scope(r, &placed, &scope))
                         .find(|r| !got.contains(&r.key_value()))
                     {
+                        let why = match named(r) {
+                            Some(n) => format!(" of scope {n}, which is in scope at {scope}"),
+                            None => format!(", which a placement to {scope} reaches"),
+                        };
                         self.push(
                             name,
                             Status::Failed,
-                            format!(
-                                "{view} left out the row {}, which a placement to {scope} reaches",
-                                r.key()
-                            ),
+                            format!("{view} left out the row {}{why}", r.key()),
                         );
                         continue;
                     }
@@ -560,7 +715,10 @@ impl Suite<'_> {
                 let name = format!("R3 {view} at {scope}");
                 match self.rows(&view, part.as_deref(), instance) {
                     Ok(rows) => self.push(name, Status::Passed, count(rows.len(), "row")),
-                    Err(e) => self.push(name, Status::Failed, e),
+                    Err(e) => {
+                        let (s, d) = e.judged();
+                        self.push(name, s, d);
+                    }
                 }
             }
         }
@@ -646,13 +804,17 @@ impl Suite<'_> {
         if let Some(part) = part {
             let sname = format!("R2 scope {} at {scope}", feed.channel);
             match self.placed(Some(part), instance) {
-                Err(e) => self.push(sname, Status::Failed, e),
+                Err(e) => {
+                    let (s, d) = e.judged();
+                    self.push(sname, s, d);
+                }
                 Ok(placed) => {
+                    let arch = &self.plan.architecture_id;
                     let out = first.iter().enumerate().find(|(_, e)| {
                         serde_json::from_str::<Value>(&e.data)
                             .ok()
                             .and_then(|v| v.as_object().cloned())
-                            .is_none_or(|o| !interface::in_scope(&o, &placed))
+                            .is_none_or(|o| !interface::in_scope_at(&o, &placed, arch, &scope))
                     });
                     match out {
                         Some((i, e)) => self.push(
@@ -999,6 +1161,7 @@ pub fn run(root: &str, plan: &Plan, token: Option<&str>, options: Options) -> Re
         root,
         plan,
         token,
+        writes: write_headers(root, &options),
         options,
         checks: Vec::new(),
     };
@@ -1022,6 +1185,8 @@ pub fn run(root: &str, plan: &Plan, token: Option<&str>, options: Options) -> Re
 ///   every row an object of the view's declared shape: its key first, and no field the view does
 ///   not declare. A failure names the row's key and the field.
 /// - `R3 <view> at <architecture>`: the placement views answer rows of their shape.
+/// - A row that names its scope in `scope` names the scope read or one below it. A view the
+///   source answers with 404 `view_not_served` is skipped, by its name.
 /// - `R2 resume <channel> at <architecture>`: a level's channel sends events with a cursor, a
 ///   qualified name and JSON data, and a reconnect from the cursor of event k gets exactly the
 ///   events after it, in order, none at or before it.
@@ -1043,6 +1208,7 @@ pub fn run_plane(
         root,
         plane,
         token,
+        writes: write_headers(root, &options),
         options,
         checks: Vec::new(),
     };
@@ -1061,6 +1227,8 @@ struct PlaneSuite<'a> {
     plane: &'a crate::plane::Plane,
     token: Option<&'a str>,
     options: Options,
+    /// `Origin` and the option's headers, sent on every write.
+    writes: Vec<(String, String)>,
     checks: Vec<Check>,
 }
 
@@ -1120,6 +1288,7 @@ impl PlaneSuite<'_> {
         if let (Some(a), true) = (&auth, authed) {
             headers.push(("Authorization", a.as_str()));
         }
+        headers.extend(self.writes.iter().map(|(k, v)| (k.as_str(), v.as_str())));
         wire::request("POST", url, &headers, Some(b"{}"), self.options.timeout)
             .map_err(|e| format!("POST {url}: {e}"))
     }
@@ -1159,17 +1328,23 @@ impl PlaneSuite<'_> {
         self.push(format!("unauthenticated R5 at {scope}"), s, d);
     }
 
-    /// Whether the answer to a read is `{"rows": [...]}` of the view's declared shape.
+    /// Whether the answer to a read at `scope` is `{"rows": [...]}` of the view's declared shape,
+    /// each row that names its scope (the `scope` field) named for `scope` or a scope below it.
+    /// The declared "not served" answer skips the check.
     fn judge_rows(
         &self,
         view: &str,
         url: &str,
+        scope: &str,
         r: Result<wire::Response, String>,
     ) -> (Status, String) {
         let r = match r {
             Ok(r) => r,
             Err(e) => return (Status::Failed, e),
         };
+        if r.status == 404 && interface::is_view_not_served(&r.body, view) {
+            return Unread::NotServed(view.to_string()).judged();
+        }
         if r.status != 200 {
             return (
                 Status::Failed,
@@ -1185,6 +1360,40 @@ impl PlaneSuite<'_> {
                 );
             }
         };
+        let field = interface::scope_field();
+        let arch = &self.plane.architecture;
+        for row in &rows {
+            let Some(value) = row.map.get(&field) else {
+                continue;
+            };
+            match interface::named_scope(Some(value), arch) {
+                Some(named) if !interface::covers(scope, named) => {
+                    return (
+                        Status::Failed,
+                        format!(
+                            "{view} returned the row {} of scope {named}, which is not in scope at {scope}",
+                            row.key()
+                        ),
+                    );
+                }
+                Some(_) => {}
+                None if self
+                    .plane
+                    .shapes
+                    .get(view)
+                    .is_some_and(|s| !s.fields.contains(&field)) =>
+                {
+                    return (
+                        Status::Failed,
+                        format!(
+                            "{view} returned the row {} with {field} {value}, which is no scope of {arch}",
+                            row.key()
+                        ),
+                    );
+                }
+                None => {}
+            }
+        }
         let Some(shape) = self.plane.shapes.get(view) else {
             return (
                 Status::Passed,
@@ -1206,7 +1415,11 @@ impl PlaneSuite<'_> {
                     ),
                 );
             }
-            if let Some(f) = row.map.keys().find(|f| !shape.fields.contains(*f)) {
+            if let Some(f) = row
+                .map
+                .keys()
+                .find(|f| !shape.fields.contains(*f) && **f != field)
+            {
                 return (
                     Status::Failed,
                     format!(
@@ -1229,7 +1442,7 @@ impl PlaneSuite<'_> {
             for read in &part.reads {
                 let q = query(&read.params);
                 let url = format!("{}/api/views/{}{q}", self.url(Some(&part.path)), read.view);
-                let (s, d) = self.judge_rows(&read.view, &url, self.get(&url, true));
+                let (s, d) = self.judge_rows(&read.view, &url, &scope, self.get(&url, true));
                 self.push(format!("R1 {}{q} at {scope}", read.view), s, d);
             }
         }
@@ -1237,12 +1450,12 @@ impl PlaneSuite<'_> {
         for read in &plane.across {
             let q = query(&read.params);
             let url = format!("{}/api/views/{}{q}", self.url(None), read.view);
-            let (s, d) = self.judge_rows(&read.view, &url, self.get(&url, true));
+            let (s, d) = self.judge_rows(&read.view, &url, &arch, self.get(&url, true));
             self.push(format!("R1 {}{q} at {arch}", read.view), s, d);
         }
         for view in interface::r3_views() {
             let url = format!("{}/api/views/{view}", self.url(None));
-            let (s, d) = self.judge_rows(&view, &url, self.get(&url, true));
+            let (s, d) = self.judge_rows(&view, &url, &arch, self.get(&url, true));
             self.push(format!("R3 {view} at {arch}"), s, d);
         }
     }

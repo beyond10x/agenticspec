@@ -131,7 +131,11 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `image_unpinned` | with `target.images: local`, a runtime, a part's `image` or a listed unit's `image` with neither `tag` nor `digest` (with `registry`, the default, one without its repository digest is refused as a binding of the wrong form) |
 | `unit_image_conflict` | parts of one core or service unit name different images (`parts.<p>.image`) and the unit names none (`packing.units[].image`); K19 |
 | `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image of its own, of its parts or, for the core unit only, `runtimes.core`; names the unit and its runtime parts; K19 |
-| `volume_mount_missing` | a volume a unit claims that no part of the unit mounts (`parts.<p>.volumes[].mount`, matched by name), or mounts at a relative path; there is no default path |
+| `unit_runtime_mismatch` | a core or service unit's `code.runtime` names an image that is not in the bundle's `runtimes`, or differs from the image the carried binding resolves for that unit (`binding::unit_image`; none gives the role `core-runtime`); names the unit, the image found and the image expected. At bundle time, two images of one key (one digest, two names) leave the second uncarried; in a written bundle (`deploy check`), also a unit or `runtimes` entry changed after writing. A unit refused `unit_image_conflict`, `unit_image_missing` or `image_unpinned` is left to that refusal; K19 |
+| `durable_state_unplaceable` | a runtime part with `durable_state: true` (K7, R88) in a `job`, `scheduled` or `model` unit, which runs until done or serves a model and holds no volume; or whose state volume's name, `<part>-state`, is the name of a part of the document |
+| `volume_mount_missing` | a volume a unit claims (a workspace's, or a runtime part's durable state) that no part of the unit mounts (`parts.<p>.volumes[].mount`, matched by name), or mounts at a relative path; there is no default path |
+| `unit_config_conflict` | two sources of one unit (its `packing.units` entry, its parts) give one environment variable two different values, or two parts of one unit both give `args`; K20 |
+| `unit_config_invalid` | a unit's `env` or `args` of the wrong form (a name that is not `[A-Z_][A-Z0-9_]*`, a value that is neither a scalar nor `{secret: <name>}`, `args` not a list of strings, on a part in no unit); in a written bundle, also a `config` of the wrong form or not the one the carried binding resolves; K20 |
 | `ui_upstream_unknown` | a UI unit (K17) reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have; in a written bundle, a UI unit's `upstream.unit` that is no other unit of the bundle |
 | `nested_document_missing` | in a written bundle (`deploy check`) only: a part of block `architecture`, at any depth, pins a digest the bundle's `nested` carries no document of |
 | `nested_document_mismatch` | in a written bundle (`deploy check`) only: a carried nested document whose `content_base64` is not its `sha256`, does not parse to its `document`, or whose canonical digest is not its key |
@@ -178,17 +182,43 @@ Each entry of `units`:
 | `parts` | the part instances, by path |
 | `replicas` | from `count`; `scheduled` and `job` units have none |
 | `code` | the artifact that runs, by digest. An `agent`, `job` or `scheduled` unit stays one agent: its agent document (instructions, tools, model route, authority, harness role) by digest and the role `agent-runtime`, never flattened into a process command; a core or service unit names its image (K19) of `runtimes` as `runtime`, or the role `core-runtime` without one; a UI unit (K17) serves static files, `{kind: static, archive, digest}` |
-| `claims` | CPU, memory, accelerators: the unit's `Shape` (`blocks/8-place/runtime.yaml`), plus an accelerator for `model`; `volumes`, one per workspace (Q16), each with its access, size and `mount`, the absolute path from the binding's `parts.<p>.volumes[].mount` of a part of the unit, matched by name (no default path; `volume_mount_missing`) |
+| `claims` | CPU, memory, accelerators: the unit's `Shape` (`blocks/8-place/runtime.yaml`), plus an accelerator for `model`; `volumes`, one per workspace (Q16) and one per runtime part with durable state (below), each with its access (below), size and `mount`, the absolute path from the binding's `parts.<p>.volumes[].mount` of a part of the unit, matched by name (no default path; `volume_mount_missing`) |
 | `isolation` | the least isolation level required, the highest of its sandboxes |
 | `checks` | `startup`, `ready`, `alive`, each with its kind and path or command, and `port` (an integer) where the binding gives one (`checks.<unit>.<check>.port`). An agent unit with `expose.a2a` uses Loom's readiness and liveness probes (`loom:README.md:727`); without it, `b10x-loom agent check` is its startup command |
 | `schedule` | for `scheduled`: the cron rule the binding gives (K18) |
 | `clock` | for `scheduled`: the trigger and schedule that wake it, its `policy` and `max_parallel` as the overlap rule |
 | `upstream` | for a UI unit (K17): `{unit, port, path}`, the unit whose adapter the page reads and the `api_base` of its `config.json` |
+| `config` | the non-secret configuration the binding gives the unit (K20): `env`, variable names sorted, each value text or `{secret: <name>}`, and `args`; absent when it gives none |
 | `secrets` | every secret by name; never a value |
 | `egress` | every destination by name: another unit's link with transport and protocol, or an `external` dependency. Each entry carries `name`, the string the target resolves: an external part's reach name (or its address, when the reach is one), the target unit's name for a crossing, the declared name for a named destination; and `address` when the binding resolves one (a named destination's `address`, a CIDR block or `<host>:<port>` or `{namespace, labels}`; an external part's reach address). A named destination the binding does not resolve carries `unresolved: true`. Nothing undeclared is granted (`weft:docs/domain-sketch.md:364-365`) |
 | `roles` | the abstract roles the unit needs (below) |
 | `ports` | the contract ports its parts use, by their derived names (`agenticspec sim contract`, `blocks/ports.json`), with the settings that narrow them; cloudspec holds them unchanged, and a target matches a runtime against them, more than one runtime per role being possible |
 | `source` | bundle digest, unit name, part paths: carried into every object translated from the unit and every observation of it (C3) |
+
+**Durable state of a runtime part (R88).** A workspace is files at a base revision (Checkout,
+ScratchCopy, Worktree); a service's own durable state, the records it appends and reads back after
+a restart, is none of those. A runtime part declares it with the setting `durable_state: true`
+(`blocks/settings.yaml`, default false). Its unit claims one more volume, named `<part>-state`,
+its access by the rule below, `per_instance` when the part is `per` another, its `size` from the binding's
+`parts.<part>.size` and its `mount` from `parts.<p>.volumes[]` of a part of the unit naming
+`<part>-state`, as a workspace's volume takes them; without an absolute mount it is refused
+`volume_mount_missing`. A `job` or `scheduled` unit runs until done and a `model` unit serves a
+model the target runs: none of them holds such a volume (`durable_state_unplaceable`). An external
+runtime part is not started by the target, and its state is not the bundle's.
+
+**Volume access follows from who mounts it (R93).** A workspace's `sharing` says how its holders
+use it; a claim's access says how many pods attach it, and a single-node storage provisioner
+refuses `read_write_many`. So the access is derived from the mounts, the same data that gives the
+`mount` and `per_instance`: the parts naming the volume under `parts.<p>.volumes[]` of the binding,
+by unit, and the claiming unit's `replicas`. A `shared_read_only` workspace is `read_only_many`
+(the bundle's only read-only access, for one mounting copy as for many). Any other claim is
+`read_write_once` when no part of another unit names the volume and the claim is `per_instance` or
+the unit has `replicas: 1`; otherwise `read_write_many`. A `job` or `scheduled` unit has no
+`replicas` and its runs may overlap, so a claim there that is not per instance is
+`read_write_many`. The same rule covers a runtime part's `<part>-state`. Links to a workspace do
+not count as mounts: a part that reaches it over a link without naming it under `volumes` does
+not attach the claim. `deploy check` does not re-derive the access; it checks the mounts
+(`volume_mount_missing`).
 
 **Abstract roles.** The bundle names roles, never a provider: a store's kind (record, key-value,
 semantic, graph; E4), a model's kind and its route alias, a capability the unit needs from the
@@ -452,7 +482,36 @@ stays `/1`.
   (`<image>@<digest>`; local `<image>:<tag>`, else the config id). `runtimes` carries every image
   used, keyed as `runtimes.core` is: the binding's runtimes by their names, then each unit's own by
   the unit's name, unless an entry of the same key is there already.
-- **Check.** `deploy check` reads the binding the bundle carries and applies the same rules.
+- **Check.** `deploy check` reads the binding the bundle carries and applies the same rules, and
+  compares each core and service unit's `code.runtime` with the image that binding resolves for
+  it and with the references `runtimes` carry (`unit_runtime_mismatch`, naming the unit, the image
+  found and the image expected). `deploy bundle` refuses the same on the bundle it built: an image
+  that shares a key with another under a different name is not carried.
+
+## K20 Configuration of a unit
+
+A unit needs non-secret values its program reads, such as the Host names a server allows (R87). A
+binding could give none: a part and a runtime took no key for it. The bundle stays `/1`; a bundle
+without configuration keeps its bytes.
+
+- **Binding.** `parts.<p>.env: {NAME: value}` and `parts.<p>.args: [string]`, and the same `env`
+  and `args` on a unit `packing.units` lists. `NAME` is `[A-Z_][A-Z0-9_]*`; a value is text, a
+  number or a boolean taken as its text, or `{secret: <name>}`.
+- **Secrets.** `{secret: <name>}` is a reference through the secrets of the unit
+  (`deploy/grants.rs`): the name is a secret name (`secret_value`) that a part of the unit
+  declares (`secret_undeclared`). The bundle carries the reference, never a value.
+- **Bundle.** Per unit `config: {env, args}`, merged in one order: the unit's entry, then its
+  parts by name. `env` keys sorted; `args` the unit's, then those of the one part that gives any.
+  Each member is left out when empty, and `config` when both are.
+- **Refusals.** `unit_config_conflict`: two sources of one unit give one variable two different
+  values, or two parts of one unit both give `args`. `unit_config_invalid`: a name that is no
+  variable name, a value of another kind (a list, a mapping other than `{secret}`, null), an `env`
+  that is no mapping, `args` that are not a list of strings, `env` or `args` on a part in no unit.
+  A finding names the unit, the source and the variable, never a value.
+- **Check.** `deploy check` reads each unit's `config` back: one of the wrong form, or one that is
+  not what the carried binding resolves for its unit (none for a unit the packing does not have),
+  is `unit_config_invalid`; a `{secret}` in it is checked like the unit's other secrets
+  (`deploy/config.rs`).
 
 ## Risks
 

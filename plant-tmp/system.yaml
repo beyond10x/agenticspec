@@ -1,0 +1,8 @@
+format: ess/37
+system: agenticspec
+version: v1
+
+domains:
+  - agenticspec.session
+  - agenticspec.cli
+  - agenticspec.view

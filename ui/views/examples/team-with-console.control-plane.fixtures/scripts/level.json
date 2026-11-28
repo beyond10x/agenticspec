@@ -43,7 +43,8 @@
       "event": "agentic.agent.AgentRevisionUsed",
       "payload": {
         "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
-        "at": "2026-11-20T09:01:00Z"
+        "at": "2026-11-20T09:02:00Z",
+        "usage_id": "00000000-0000-4000-8000-6705a1240000"
       }
     },
     {

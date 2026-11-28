@@ -3,8 +3,8 @@
 //! the renderer names no agenticspec term.
 
 use agenticspec_render::page::{
-    Badge, Colour, Direction, Edge, FORMAT, Group, ICONS, Icon, Level, Mark, NAMED_COLOURS, Node,
-    On, Page, Panel, Port, Region, Target, render,
+    Badge, Colour, Direction, Edge, FORMAT, Group, ICONS, Icon, Layout, Level, Mark, NAMED_COLOURS,
+    Node, On, Page, Panel, Place, Port, Region, Target, render,
 };
 use serde_json::{Value, json};
 
@@ -57,6 +57,7 @@ fn minimal() -> Page {
         title: "Owners".to_string(),
         columns: vec!["node".to_string(), "owner".to_string()],
         rows: vec![vec!["shop".to_string(), "team-cell-a".to_string()]],
+        ..Panel::default()
     }];
     p
 }
@@ -126,6 +127,43 @@ fn a_minimal_page_renders_every_node_edge_mark_and_panel_cell() {
     assert!(html.contains(&format!("{FORMAT} · rendered by agenticspec")));
     assert!(!html.contains("http://") && !html.contains("https://"));
     assert_eq!(html, render(&page), "deterministic");
+}
+
+/// The page and the architecture page share one viewer: its view asks to open at Fit, and its
+/// script fits a graph larger than the view (wider than its card or taller than its highest)
+/// and leaves one that fits at its natural size.
+#[test]
+fn the_graph_opens_fitted_when_larger_than_its_view() {
+    let arch = serde_json::from_str::<Value>(
+        r#"{"architecture":"a","parts":{"x":{"block":"agent"}},"links":[]}"#,
+    )
+    .expect("JSON");
+    for html in [
+        render(&minimal()),
+        agenticspec_render::architecture::page(&arch, None),
+    ] {
+        assert_eq!(
+            html.matches("<div class=\"graph-view\" data-initial=\"fit\"")
+                .count(),
+            1,
+            "the view asks to open at Fit"
+        );
+        let script = &html[html.rfind("<script>").expect("the viewer script")..];
+        for rule in [
+            "var initial = view ? view.getAttribute(\"data-initial\") : null;",
+            "return r.w > 0 && (natural.width > r.w || natural.height > r.h);",
+            "return Math.min(1, r.w / natural.width, r.h / natural.height);",
+            "if (initial === \"fit\" && natural && larger()) setZoom(fitZoom());",
+            "else if (initial === \"fit\" && zoom !== 1) setZoom(1);",
+            "new ResizeObserver(opening).observe(view);",
+        ] {
+            assert!(script.contains(rule), "the script holds {rule}");
+        }
+        assert!(
+            html.contains("data-zoom=\"fit\" aria-label=\"Fit the whole graph\""),
+            "Fit is the same view the page opens at"
+        );
+    }
 }
 
 /// The opening tag of the group of the card of node `id`.
@@ -619,6 +657,14 @@ fn the_schema_accepts_a_page_and_refuses_an_unknown_field() {
     let mut level = serde_json::to_value(full()).expect("serializes");
     level["marks"][0]["level"] = json!("warning");
     assert!(!validate(&s, &level, false).is_empty());
+    let mut layout = serde_json::to_value(full()).expect("serializes");
+    layout["layout"] = json!("bands");
+    assert!(validate(&s, &layout, false).is_empty(), "bands is a layout");
+    layout["layout"] = json!("grid");
+    assert!(
+        !validate(&s, &layout, false).is_empty(),
+        "grid is no layout"
+    );
 }
 
 /// The schema names exactly the fields of the types: a page with every field set has every
@@ -627,6 +673,8 @@ fn the_schema_accepts_a_page_and_refuses_an_unknown_field() {
 fn the_schema_and_the_types_name_the_same_fields() {
     let mut page = full();
     page.edges[1].count = Some(1);
+    page.layout = Layout::Bands;
+    page.panels[0].place = Place::Below;
     page.nodes[0].badges[0].on = On::Panel;
     for n in &mut page.nodes {
         n.region = Some("zone".to_string());

@@ -1,0 +1,1017 @@
+domain: agenticspec.session
+
+summary: >-
+  An agent session of any harness, as actors issuing commands. An adapter lifts a vendor transcript
+  into these commands; replaying them yields the events and the state the KPIs read. Content is
+  never held: a prompt, a tool input or a tool output is a digest and a length.
+
+naming:
+  wire: session
+  display: Session
+
+types:
+  - name: agenticspec.session.SessionId
+    kind: newtype
+    of: String
+    naming:
+      summary: The harness's own session identifier.
+
+  - name: agenticspec.session.AgentId
+    kind: newtype
+    of: String
+    naming:
+      summary: One agent loop in a session; the main loop or a sub-agent.
+
+  - name: agenticspec.session.ToolCallId
+    kind: newtype
+    of: String
+    naming:
+      summary: The harness's identifier of one tool call.
+
+  - name: agenticspec.session.ExposureId
+    kind: newtype
+    of: String
+    naming:
+      summary: One finding of the redaction pass; the adapter mints it from the record and the match position.
+
+  - name: agenticspec.session.Harness
+    kind: enum
+    variants: [ClaudeCode, Codex, Other]
+
+  - name: agenticspec.session.AgentRole
+    kind: enum
+    variants: [Main, SubAgent, SideCall]
+    naming:
+      summary: >-
+        SideCall is a model call of the harness outside every agent's conversation (a title, a
+        summary, a quota probe): the wire tells it by a call with no tools and no history.
+
+  - name: agenticspec.session.Source
+    kind: enum
+    variants: [Disk, Wire]
+    naming:
+      summary: >-
+        Where a record was observed: a harness transcript on disk, or a model call on a gateway's
+        wire (`design/interaction-records.md`).
+
+  - name: agenticspec.session.IncompleteReason
+    kind: enum
+    variants: [client_disconnected, upstream_cut, wire_error, refused]
+    naming:
+      summary: Why a model turn on the wire ended before its answer was whole.
+
+  - name: agenticspec.session.PromptAuthor
+    kind: enum
+    variants: [Human, Delegate, PeerSession, ParentAgent, Harness, Hook]
+    naming:
+      summary: >-
+        Who wrote a prompt. Delegate is a session acting for the human; Harness covers task
+        notifications, compaction summaries and auto-continuation.
+
+  - name: agenticspec.session.Attribution
+    kind: enum
+    variants: [Known, Inferred, Unknown]
+    naming:
+      summary: >-
+        How the author was established. Known from a structured field of the transcript, Inferred
+        from a text prefix, Unknown otherwise.
+
+  - name: agenticspec.session.PromptClass
+    kind: enum
+    variants: [Task, Correction, Approval, Question, Continue, Unknown]
+    naming:
+      summary: >-
+        What a prompt asks, from rules over its text run on the host before redaction; Unknown when
+        no rule matched or the author is the harness or a hook.
+
+  - name: agenticspec.session.ToolCategory
+    kind: enum
+    variants: [Read, Search, Edit, Execute, Network, Spawn, Message, Plan, Other]
+
+  - name: agenticspec.session.Decision
+    kind: enum
+    variants: [Accept, Refuse]
+
+  - name: agenticspec.session.Decider
+    kind: enum
+    variants: [PermissionMode, Classifier, Hook, Human, SafetyCheck, Rule, NotRecorded]
+    naming:
+      summary: What decided a tool call. NotRecorded where the transcript carries no decision.
+
+  - name: agenticspec.session.ExposureChannel
+    kind: enum
+    variants: [Prompt, ToolInput, ToolOutput, AgentText]
+    naming:
+      summary: >-
+        Where a secret or a personal datum appeared. ToolInput is the severe one when the tool's
+        category is Network, Message or Execute: the value left the session.
+
+  - name: agenticspec.session.ExposureClass
+    kind: enum
+    variants: [Secret, PersonalData]
+
+  - name: agenticspec.session.Verdict
+    kind: enum
+    variants: [Ok, Gap, Unk]
+    naming:
+      summary: Ok is a known fixture or allowed value, Gap a confirmed exposure, Unk a match nobody confirmed.
+
+  - name: agenticspec.session.Content
+    kind: struct
+    naming:
+      summary: Content without the content.
+    fields:
+      - name: digest
+        type: String
+        summary: sha256 of the content bytes, lower-case hex.
+      - name: bytes
+        type: Integer
+        summary: Length of the content in bytes.
+
+  - name: agenticspec.session.Usage
+    kind: struct
+    naming:
+      summary: Token usage of one model message, as the harness reports it.
+    fields:
+      - name: uncached_input
+        type: Integer
+      - name: cache_read
+        type: Integer
+      - name: cache_write_5m
+        type: Integer
+      - name: cache_write_1h
+        type: Integer
+      - name: output
+        type: Integer
+
+entities:
+  - name: agenticspec.session.Session
+    naming:
+      summary: One harness session, from its first record to its last.
+    identity:
+      name: session_id
+      type: agenticspec.session.SessionId
+    fields:
+      - name: harness
+        type: agenticspec.session.Harness
+      - name: opened_at
+        type: Timestamp
+    relations:
+      - name: agents
+        kind: owns
+        target: agenticspec.session.Agent
+        cardinality: many
+        via: session_id
+    lifecycle:
+      initial: Open
+      states: [Open, Ended]
+      terminal: [Ended]
+      transitions:
+        - name: end
+          from: [Open]
+          to: Ended
+
+  - name: agenticspec.session.Agent
+    naming:
+      summary: >-
+        One agent loop. Working while its turn runs, Idle once the turn ended and until the next
+        prompt. Idle time before a human prompt is time the session waited on the human.
+    identity:
+      name: agent_id
+      type: agenticspec.session.AgentId
+    fields:
+      - name: session_id
+        type: agenticspec.session.SessionId
+      - name: parent_agent_id
+        type: Optional<agenticspec.session.AgentId>
+      - name: role
+        type: agenticspec.session.AgentRole
+      - name: model
+        type: Optional<String>
+      - name: context_tokens
+        type: Integer
+    # Decision taken 2026-11-26, reversible: `references`. A sub-agent's transcript is its own file
+    # and a background sub-agent runs on after its parent's turn ends; the Session owns both.
+    lifecycle:
+      initial: Idle
+      states: [Idle, Working, Ended]
+      terminal: [Ended]
+      transitions:
+        - name: resume
+          from: [Idle, Working]
+          to: Working
+        - name: end_turn
+          from: [Working]
+          to: Idle
+        - name: end
+          from: [Working]
+          to: Ended
+    relations:
+      - name: tool_calls
+        kind: owns
+        target: agenticspec.session.ToolCall
+        cardinality: many
+        via: agent_id
+      - name: parent
+        kind: references
+        target: agenticspec.session.Agent
+        cardinality: one
+        via: parent_agent_id
+      - name: exposures
+        kind: owns
+        target: agenticspec.session.Exposure
+        cardinality: many
+        via: agent_id
+
+  - name: agenticspec.session.Exposure
+    naming:
+      summary: >-
+        A secret or a personal datum the redaction pass found in one channel of one agent. Holds the
+        class, the detector kind and a per-session alias; never the value.
+    identity:
+      name: exposure_id
+      type: agenticspec.session.ExposureId
+    fields:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: channel
+        type: agenticspec.session.ExposureChannel
+      - name: class
+        type: agenticspec.session.ExposureClass
+      - name: kind
+        type: String
+      - name: alias
+        type: String
+      - name: verdict
+        type: agenticspec.session.Verdict
+      - name: tool_call_id
+        type: Optional<agenticspec.session.ToolCallId>
+    relations:
+      - name: tool_call
+        kind: references
+        target: agenticspec.session.ToolCall
+        cardinality: one
+        via: tool_call_id
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
+  - name: agenticspec.session.ToolCall
+    naming:
+      summary: One tool call an agent requested, the decision on it and its result.
+    identity:
+      name: tool_call_id
+      type: agenticspec.session.ToolCallId
+    fields:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: tool
+        type: String
+      - name: category
+        type: agenticspec.session.ToolCategory
+    lifecycle:
+      initial: Requested
+      states: [Requested, Accepted, Refused, Succeeded, Failed]
+      terminal: [Refused, Succeeded, Failed]
+      transitions:
+        - name: accept
+          from: [Requested]
+          to: Accepted
+        - name: refuse
+          from: [Requested]
+          to: Refused
+        - name: succeed
+          from: [Accepted]
+          to: Succeeded
+        - name: fail
+          from: [Accepted]
+          to: Failed
+
+actors:
+  - name: agenticspec.session.HarnessRuntime
+    naming:
+      display: Harness
+      summary: The runtime around the model loop; opens and ends sessions and agents, compacts, notifies.
+    may:
+      - agenticspec.session.OpenSession
+      - agenticspec.session.EndSession
+      - agenticspec.session.StartAgent
+      - agenticspec.session.EndAgent
+      - agenticspec.session.CompactContext
+      - agenticspec.session.SubmitPrompt
+
+  - name: agenticspec.session.Human
+    naming:
+      display: Human
+    may:
+      - agenticspec.session.SubmitPrompt
+      - agenticspec.session.DecideToolCall
+
+  - name: agenticspec.session.Delegate
+    naming:
+      display: Delegate
+      summary: A session acting for the human, with the human's permissions.
+    may:
+      - agenticspec.session.SubmitPrompt
+
+  - name: agenticspec.session.PeerSession
+    naming:
+      display: Peer session
+    may:
+      - agenticspec.session.SubmitPrompt
+
+  - name: agenticspec.session.AgentLoop
+    naming:
+      display: Agent
+    may:
+      - agenticspec.session.RecordModelTurn
+      - agenticspec.session.RequestToolCall
+      - agenticspec.session.EndTurn
+      - agenticspec.session.SubmitPrompt
+
+  - name: agenticspec.session.PermissionAuthority
+    naming:
+      display: Permission authority
+      summary: Permission mode, classifier, hook or safety check deciding a tool call without the human.
+    may:
+      - agenticspec.session.DecideToolCall
+
+  - name: agenticspec.session.ToolProvider
+    naming:
+      display: Tool provider
+    may:
+      - agenticspec.session.CompleteToolCall
+
+  - name: agenticspec.session.Redactor
+    naming:
+      display: Redactor
+      summary: The redaction pass; reports what it found and replaced.
+    may:
+      - agenticspec.session.RecordExposure
+
+errors:
+  - name: agenticspec.session.UnknownAgent
+    summary: No agent of this identity was started; the adapter lost a StartAgent.
+    fields:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+
+  - name: agenticspec.session.SessionStateConflict
+    summary: The session is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agenticspec.session.Session.State
+
+  - name: agenticspec.session.AgentStateConflict
+    summary: The agent is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agenticspec.session.Agent.State
+
+  - name: agenticspec.session.ToolCallStateConflict
+    summary: The tool call is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agenticspec.session.ToolCall.State
+
+commands:
+  - name: agenticspec.session.OpenSession
+    naming:
+      wire: open-session
+      display: Open a session
+    input:
+      - name: session_id
+        type: agenticspec.session.SessionId
+      - name: harness
+        type: agenticspec.session.Harness
+      - name: source
+        type: Optional<agenticspec.session.Source>
+      - name: session_hash
+        type: Optional<String>
+        summary: >-
+          The gateway's name of the session: SHA-256 of `llm-gateway.session/1\0<source>\0<header
+          value>`, its first 6 bytes as 12 hex digits. Both sources compute it, so they join.
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: opened
+        creates: agenticspec.session.Session
+        instance: session_id
+        sets:
+          harness: input.harness
+          opened_at: input.at
+        emits:
+          - agenticspec.session.SessionOpened
+        payload:
+          agenticspec.session.SessionOpened:
+            session_id: input.session_id
+            harness: input.harness
+            source: input.source
+            session_hash: input.session_hash
+            at: input.at
+        summary: The session exists and holds no agent yet.
+
+  - name: agenticspec.session.EndSession
+    naming:
+      wire: end-session
+      display: End a session
+    input:
+      - name: session_id
+        type: agenticspec.session.SessionId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: ended
+        moves: agenticspec.session.Session.end
+        instance: session_id
+        emits:
+          - agenticspec.session.SessionEnded
+        payload:
+          agenticspec.session.SessionEnded:
+            session_id: input.session_id
+            at: input.at
+        summary: The session has ended; the transcript holds no later record.
+      - name: wrong-state
+        wrong_state: true
+        error: agenticspec.session.SessionStateConflict
+        summary: The session had already ended.
+
+  - name: agenticspec.session.StartAgent
+    naming:
+      wire: start-agent
+      display: Start an agent
+    input:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: session_id
+        type: agenticspec.session.SessionId
+      - name: parent_agent_id
+        type: Optional<agenticspec.session.AgentId>
+      - name: role
+        type: agenticspec.session.AgentRole
+      - name: spawned_by
+        type: Optional<agenticspec.session.ToolCallId>
+        summary: The tool call of the parent that started this agent, when the harness records it.
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: started
+        creates: agenticspec.session.Agent
+        instance: agent_id
+        sets:
+          session_id: input.session_id
+          parent_agent_id: input.parent_agent_id
+          role: input.role
+          context_tokens: 0
+        emits:
+          - agenticspec.session.AgentStarted
+        payload:
+          agenticspec.session.AgentStarted:
+            agent_id: input.agent_id
+            session_id: input.session_id
+            parent_agent_id: input.parent_agent_id
+            role: input.role
+            spawned_by: input.spawned_by
+            at: input.at
+        summary: The agent exists and is Idle until its first prompt.
+
+  - name: agenticspec.session.EndAgent
+    naming:
+      wire: end-agent
+      display: End an agent
+    input:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: ended
+        moves: agenticspec.session.Agent.end
+        instance: agent_id
+        emits:
+          - agenticspec.session.AgentEnded
+        payload:
+          agenticspec.session.AgentEnded:
+            agent_id: input.agent_id
+            at: input.at
+        summary: The agent will take no further prompt.
+      - name: wrong-state
+        wrong_state: true
+        error: agenticspec.session.AgentStateConflict
+        summary: The agent had already ended.
+
+  - name: agenticspec.session.SubmitPrompt
+    naming:
+      wire: submit-prompt
+      display: Submit a prompt
+      summary: >-
+        A prompt reaches an agent. From Idle it starts a turn; while Working it is queued into the
+        running turn, as Claude Code does with a message typed mid-turn.
+    input:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: author
+        type: agenticspec.session.PromptAuthor
+      - name: attribution
+        type: agenticspec.session.Attribution
+      - name: class
+        type: agenticspec.session.PromptClass
+      - name: content
+        type: agenticspec.session.Content
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: submitted
+        moves: agenticspec.session.Agent.resume
+        instance: agent_id
+        emits:
+          - agenticspec.session.PromptSubmitted
+        payload:
+          agenticspec.session.PromptSubmitted:
+            agent_id: input.agent_id
+            author: input.author
+            attribution: input.attribution
+            class: input.class
+            content: input.content
+            at: input.at
+        summary: The agent is Working on the prompt.
+      - name: wrong-state
+        wrong_state: true
+        error: agenticspec.session.AgentStateConflict
+        summary: The agent had ended, so the prompt reached nobody.
+
+  - name: agenticspec.session.EndTurn
+    naming:
+      wire: end-turn
+      display: End a turn
+    input:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: ended
+        moves: agenticspec.session.Agent.end_turn
+        instance: agent_id
+        emits:
+          - agenticspec.session.TurnEnded
+        payload:
+          agenticspec.session.TurnEnded:
+            agent_id: input.agent_id
+            at: input.at
+        summary: The agent is Idle and waits for its next prompt.
+      - name: wrong-state
+        wrong_state: true
+        error: agenticspec.session.AgentStateConflict
+        summary: The agent was not Working.
+
+  - name: agenticspec.session.RecordModelTurn
+    naming:
+      wire: record-model-turn
+      display: Record a model turn
+      summary: One model message of the agent, with the model that wrote it and its token usage.
+    input:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: model
+        type: String
+      - name: usage
+        type: agenticspec.session.Usage
+      - name: context_tokens
+        type: Integer
+      - name: message_id
+        type: Optional<String>
+        summary: The id the provider gave the answer (`msg_…`, `chatcmpl-…`, `resp_…`); both sources hold it, so they join on it.
+      - name: call_id
+        type: Optional<String>
+        summary: The gateway's call id (`x-llm-gateway-call`), the pointer to its call record. Wire only.
+      - name: route
+        type: Optional<String>
+      - name: upstream
+        type: Optional<String>
+      - name: attempts
+        type: Optional<Integer>
+      - name: queue_wait_ms
+        type: Optional<Integer>
+      - name: ttft_ms
+        type: Optional<Integer>
+        summary: Milliseconds from the request to the first answer byte.
+      - name: declared_cost_microdollars
+        type: Optional<Integer>
+        summary: Token counts times the price the gateway's operator declares for the route; absent on a route without one. Not a provider's bill.
+      - name: incomplete
+        type: Optional<agenticspec.session.IncompleteReason>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: recorded
+        updates: agenticspec.session.Agent
+        instance: agent_id
+        sets:
+          model: input.model
+          context_tokens: input.context_tokens
+        emits:
+          - agenticspec.session.ModelTurnRecorded
+        payload:
+          agenticspec.session.ModelTurnRecorded:
+            agent_id: input.agent_id
+            model: input.model
+            usage: input.usage
+            context_tokens: input.context_tokens
+            message_id: input.message_id
+            call_id: input.call_id
+            route: input.route
+            upstream: input.upstream
+            attempts: input.attempts
+            queue_wait_ms: input.queue_wait_ms
+            ttft_ms: input.ttft_ms
+            declared_cost_microdollars: input.declared_cost_microdollars
+            incomplete: input.incomplete
+            at: input.at
+        summary: The agent's model and context size are those of this message.
+      - name: no-such-agent
+        unknown_instance: true
+        error: agenticspec.session.UnknownAgent
+        payload:
+          agenticspec.session.UnknownAgent:
+            agent_id: input.agent_id
+
+  - name: agenticspec.session.CompactContext
+    naming:
+      wire: compact-context
+      display: Compact the context
+    input:
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: context_tokens_before
+        type: Integer
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: compacted
+        updates: agenticspec.session.Agent
+        instance: agent_id
+        sets:
+          context_tokens: 0
+        emits:
+          - agenticspec.session.ContextCompacted
+        payload:
+          agenticspec.session.ContextCompacted:
+            agent_id: input.agent_id
+            context_tokens_before: input.context_tokens_before
+            at: input.at
+        summary: The context was replaced by a summary; the next model turn writes the cache again.
+      - name: no-such-agent
+        unknown_instance: true
+        error: agenticspec.session.UnknownAgent
+        payload:
+          agenticspec.session.UnknownAgent:
+            agent_id: input.agent_id
+
+  - name: agenticspec.session.RequestToolCall
+    naming:
+      wire: request-tool-call
+      display: Request a tool call
+    input:
+      - name: tool_call_id
+        type: agenticspec.session.ToolCallId
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: tool
+        type: String
+      - name: category
+        type: agenticspec.session.ToolCategory
+      - name: input
+        type: agenticspec.session.Content
+      - name: cwd
+        type: Optional<String>
+        summary: The working directory of the call, relative to the home directory as `~/…`.
+      - name: background
+        type: Boolean
+        summary: The agent asked for the call to run in the background and went on.
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: requested
+        creates: agenticspec.session.ToolCall
+        instance: tool_call_id
+        sets:
+          agent_id: input.agent_id
+          tool: input.tool
+          category: input.category
+        emits:
+          - agenticspec.session.ToolCallRequested
+        payload:
+          agenticspec.session.ToolCallRequested:
+            tool_call_id: input.tool_call_id
+            agent_id: input.agent_id
+            tool: input.tool
+            category: input.category
+            input: input.input
+            cwd: input.cwd
+            background: input.background
+            at: input.at
+        summary: The tool call waits for a decision.
+
+  - name: agenticspec.session.DecideToolCall
+    naming:
+      wire: decide-tool-call
+      display: Decide a tool call
+    input:
+      - name: tool_call_id
+        type: agenticspec.session.ToolCallId
+      - name: decision
+        type: agenticspec.session.Decision
+      - name: decider
+        type: agenticspec.session.Decider
+      - name: reason
+        type: Optional<String>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: accepted
+        when: decision == Accept
+        moves: agenticspec.session.ToolCall.accept
+        instance: tool_call_id
+        emits:
+          - agenticspec.session.ToolCallDecided
+        payload:
+          agenticspec.session.ToolCallDecided:
+            tool_call_id: input.tool_call_id
+            decision: input.decision
+            decider: input.decider
+            reason: input.reason
+            at: input.at
+        summary: The tool runs.
+      - name: refused
+        moves: agenticspec.session.ToolCall.refuse
+        instance: tool_call_id
+        emits:
+          - agenticspec.session.ToolCallDecided
+        payload:
+          agenticspec.session.ToolCallDecided:
+            tool_call_id: input.tool_call_id
+            decision: input.decision
+            decider: input.decider
+            reason: input.reason
+            at: input.at
+        summary: The tool does not run; the agent gets the refusal as its result.
+      - name: wrong-state
+        wrong_state: true
+        error: agenticspec.session.ToolCallStateConflict
+        summary: The tool call was already decided.
+
+  - name: agenticspec.session.CompleteToolCall
+    naming:
+      wire: complete-tool-call
+      display: Complete a tool call
+    input:
+      - name: tool_call_id
+        type: agenticspec.session.ToolCallId
+      - name: ok
+        type: Boolean
+      - name: output
+        type: agenticspec.session.Content
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: succeeded
+        when: ok == true
+        moves: agenticspec.session.ToolCall.succeed
+        instance: tool_call_id
+        emits:
+          - agenticspec.session.ToolCallCompleted
+        payload:
+          agenticspec.session.ToolCallCompleted:
+            tool_call_id: input.tool_call_id
+            ok: input.ok
+            output: input.output
+            at: input.at
+        summary: The tool returned a result.
+      - name: failed
+        moves: agenticspec.session.ToolCall.fail
+        instance: tool_call_id
+        emits:
+          - agenticspec.session.ToolCallCompleted
+        payload:
+          agenticspec.session.ToolCallCompleted:
+            tool_call_id: input.tool_call_id
+            ok: input.ok
+            output: input.output
+            at: input.at
+        summary: The tool returned an error.
+      - name: wrong-state
+        wrong_state: true
+        error: agenticspec.session.ToolCallStateConflict
+        summary: The tool call was not running.
+
+  - name: agenticspec.session.RecordExposure
+    naming:
+      wire: record-exposure
+      display: Record an exposure
+      summary: The redaction pass found a secret or a personal datum and replaced it.
+    input:
+      - name: exposure_id
+        type: agenticspec.session.ExposureId
+      - name: agent_id
+        type: agenticspec.session.AgentId
+      - name: channel
+        type: agenticspec.session.ExposureChannel
+      - name: class
+        type: agenticspec.session.ExposureClass
+      - name: kind
+        type: String
+      - name: alias
+        type: String
+      - name: verdict
+        type: agenticspec.session.Verdict
+      - name: tool_call_id
+        type: Optional<agenticspec.session.ToolCallId>
+      - name: at
+        type: Timestamp
+    outcomes:
+      - name: recorded
+        creates: agenticspec.session.Exposure
+        instance: exposure_id
+        sets:
+          agent_id: input.agent_id
+          channel: input.channel
+          class: input.class
+          kind: input.kind
+          alias: input.alias
+          verdict: input.verdict
+          tool_call_id: input.tool_call_id
+        emits:
+          - agenticspec.session.ExposureDetected
+        payload:
+          agenticspec.session.ExposureDetected:
+            exposure_id: input.exposure_id
+            agent_id: input.agent_id
+            channel: input.channel
+            class: input.class
+            kind: input.kind
+            alias: input.alias
+            verdict: input.verdict
+            tool_call_id: input.tool_call_id
+            at: input.at
+        summary: The exposure is on record under its alias; the value is not.
+
+events:
+  - name: agenticspec.session.SessionOpened
+    fields:
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: harness, type: agenticspec.session.Harness}
+      - {name: source, type: Optional<agenticspec.session.Source>}
+      - {name: session_hash, type: Optional<String>}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.SessionEnded
+    fields:
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.AgentStarted
+    fields:
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: parent_agent_id, type: Optional<agenticspec.session.AgentId>}
+      - {name: role, type: agenticspec.session.AgentRole}
+      - {name: spawned_by, type: Optional<agenticspec.session.ToolCallId>}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.AgentEnded
+    fields:
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.PromptSubmitted
+    fields:
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: author, type: agenticspec.session.PromptAuthor}
+      - {name: attribution, type: agenticspec.session.Attribution}
+      - {name: class, type: agenticspec.session.PromptClass}
+      - {name: content, type: agenticspec.session.Content}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.TurnEnded
+    fields:
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.ModelTurnRecorded
+    fields:
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: model, type: String}
+      - {name: usage, type: agenticspec.session.Usage}
+      - {name: context_tokens, type: Integer}
+      - {name: message_id, type: Optional<String>}
+      - {name: call_id, type: Optional<String>}
+      - {name: route, type: Optional<String>}
+      - {name: upstream, type: Optional<String>}
+      - {name: attempts, type: Optional<Integer>}
+      - {name: queue_wait_ms, type: Optional<Integer>}
+      - {name: ttft_ms, type: Optional<Integer>}
+      - {name: declared_cost_microdollars, type: Optional<Integer>}
+      - {name: incomplete, type: Optional<agenticspec.session.IncompleteReason>}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.ContextCompacted
+    fields:
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: context_tokens_before, type: Integer}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.ToolCallRequested
+    fields:
+      - {name: tool_call_id, type: agenticspec.session.ToolCallId}
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: tool, type: String}
+      - {name: category, type: agenticspec.session.ToolCategory}
+      - {name: input, type: agenticspec.session.Content}
+      - {name: cwd, type: Optional<String>}
+      - {name: background, type: Boolean}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.ToolCallDecided
+    fields:
+      - {name: tool_call_id, type: agenticspec.session.ToolCallId}
+      - {name: decision, type: agenticspec.session.Decision}
+      - {name: decider, type: agenticspec.session.Decider}
+      - {name: reason, type: Optional<String>}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.ToolCallCompleted
+    fields:
+      - {name: tool_call_id, type: agenticspec.session.ToolCallId}
+      - {name: ok, type: Boolean}
+      - {name: output, type: agenticspec.session.Content}
+      - {name: at, type: Timestamp}
+
+  - name: agenticspec.session.ExposureDetected
+    fields:
+      - {name: exposure_id, type: agenticspec.session.ExposureId}
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: channel, type: agenticspec.session.ExposureChannel}
+      - {name: class, type: agenticspec.session.ExposureClass}
+      - {name: kind, type: String}
+      - {name: alias, type: String}
+      - {name: verdict, type: agenticspec.session.Verdict}
+      - {name: tool_call_id, type: Optional<agenticspec.session.ToolCallId>}
+      - {name: at, type: Timestamp}
+
+views:
+  - name: agenticspec.session.Sessions
+    source: agenticspec.session.Session
+    consistency: read_your_writes
+    fields:
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: harness, type: agenticspec.session.Harness}
+      - {name: opened_at, type: Timestamp}
+      - {name: state, type: agenticspec.session.Session.State}
+    naming:
+      wire: sessions
+      display: Sessions
+
+  - name: agenticspec.session.Agents
+    source: agenticspec.session.Agent
+    consistency: read_your_writes
+    fields:
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: session_id, type: agenticspec.session.SessionId}
+      - {name: parent_agent_id, type: Optional<agenticspec.session.AgentId>}
+      - {name: role, type: agenticspec.session.AgentRole}
+      - {name: model, type: Optional<String>}
+      - {name: context_tokens, type: Integer}
+      - {name: state, type: agenticspec.session.Agent.State}
+    naming:
+      wire: agents
+      display: Agents
+
+  - name: agenticspec.session.ToolCalls
+    source: agenticspec.session.ToolCall
+    consistency: read_your_writes
+    fields:
+      - {name: tool_call_id, type: agenticspec.session.ToolCallId}
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: tool, type: String}
+      - {name: category, type: agenticspec.session.ToolCategory}
+      - {name: state, type: agenticspec.session.ToolCall.State}
+    naming:
+      wire: tool-calls
+      display: Tool calls
+
+  - name: agenticspec.session.Exposures
+    source: agenticspec.session.Exposure
+    consistency: read_your_writes
+    fields:
+      - {name: exposure_id, type: agenticspec.session.ExposureId}
+      - {name: agent_id, type: agenticspec.session.AgentId}
+      - {name: channel, type: agenticspec.session.ExposureChannel}
+      - {name: class, type: agenticspec.session.ExposureClass}
+      - {name: kind, type: String}
+      - {name: verdict, type: agenticspec.session.Verdict}
+      - {name: state, type: agenticspec.session.Exposure.State}
+    naming:
+      wire: exposures
+      display: Exposures

@@ -25,10 +25,10 @@ fixtures:
 then:
   order: set
   events:
-    - { event: run_started, part: worker, task: when.0 }
-    - { event: claim_granted, absent: true }
-    - { event: task_completed, task: when.0, absent: true }
-    - { event: task_completed, part: worker, task: when.1 }
+    - { event: agentic.work.RunStarted, part: worker, task: when.0 }
+    - { event: agentic.resource.ClaimGranted, absent: true }
+    - { event: agentic.work.TaskCompleted, task: when.0, absent: true }
+    - { event: agentic.work.TaskCompleted, part: worker, task: when.1 }
   kpis:
     tasks_done: { min: 1, max: 1 }
   parts:

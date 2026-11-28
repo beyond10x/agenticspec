@@ -1,0 +1,21 @@
+# Mutants of studio/ that its conformance suite does not kill (scripts/check-mutation.sh studio).
+# One per line: the mutant id, then why no scenario can kill it. Remove a line when its mutant is
+# killed; the check fails on a line whose mutant is killed and on a survivor that is not listed.
+#
+# No actor may issue ReviseDraft, AnswerToolCall or FailToolCall (the actors in
+# domains/session.yaml), although studio-server accepts them: the server issues them itself. Every
+# caller is refused them, so no scenario reaches their outcomes.
+error-swap/studio.draft.ReviseDraft/archived no actor may issue ReviseDraft
+error-swap/studio.draft.ReviseDraft/no-such-draft no actor may issue ReviseDraft
+guard-negate/studio.draft.ReviseDraft/archived/when_related no actor may issue ReviseDraft
+error-swap/studio.session.AnswerToolCall/no-such-call no actor may issue AnswerToolCall
+error-swap/studio.session.AnswerToolCall/no-such-evaluation no actor may issue AnswerToolCall
+error-swap/studio.session.AnswerToolCall/over no actor may issue AnswerToolCall
+sets-retarget/studio.session.AnswerToolCall/answered/answer no actor may issue AnswerToolCall
+error-swap/studio.session.FailToolCall/no-such-call no actor may issue FailToolCall
+error-swap/studio.session.FailToolCall/over no actor may issue FailToolCall
+sets-retarget/studio.session.FailToolCall/failed/failure no actor may issue FailToolCall
+# No component accepts the commands of studio.evaluation (components.yaml), so no scenario sends
+# them.
+error-swap/studio.evaluation.CompleteEvaluation/over studio.evaluation is served by no component
+error-swap/studio.evaluation.FailEvaluation/over studio.evaluation is served by no component

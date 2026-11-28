@@ -219,6 +219,25 @@ fn a_session_records_each_call_and_refuses_calls_once_closed() {
     assert_eq!(rows(&v).len(), 1);
 }
 
+/// `studio.session.CallTool` answers `dry-run-outside-apply` before it reads the session: a dry
+/// run of any tool but apply is refused as such on an unknown and on a closed session too.
+#[test]
+fn a_dry_run_outside_apply_is_refused_before_the_session_is_read() {
+    let s = studio();
+    let id = open_workstation(&s);
+    let session = start(&s, &id);
+    let (status, _) = call(&s, "POST", &format!("/api/sessions/{session}/close"), None);
+    assert_eq!(status, 200);
+    for on in ["nope", session.as_str()] {
+        let (status, v) = tool(&s, on, json!({"tool": "check", "dry_run": true}));
+        assert_eq!(
+            (status, v["error"].as_str()),
+            (422, Some("DryRunOutsideApply")),
+            "on session {on}: {v}"
+        );
+    }
+}
+
 #[test]
 fn a_call_that_cannot_be_carried_out_fails_and_is_published() {
     let s = studio();

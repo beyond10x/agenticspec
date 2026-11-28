@@ -5,6 +5,7 @@ import { KitPanel, KitShell, KitStack } from '@kit';
 import { useShell } from '../runtime';
 import AgenticAgentAgentRevisions from '../widgets/AgenticAgentAgentRevisions.vue';
 import AgenticAgentAgents from '../widgets/AgenticAgentAgents.vue';
+import AgenticAgentRevisionUsages from '../widgets/AgenticAgentRevisionUsages.vue';
 
 const shell = useShell();
 </script>
@@ -17,6 +18,9 @@ const shell = useShell();
       </KitPanel>
       <KitPanel name="agents" title="Agents" collapsible>
         <AgenticAgentAgents :channel="'agent'" />
+      </KitPanel>
+      <KitPanel name="revision_usages" title="Revision usages" collapsible>
+        <AgenticAgentRevisionUsages :channel="'agent'" />
       </KitPanel>
     </KitStack>
   </KitShell>

@@ -67,7 +67,7 @@ Ingresses: who reaches the architecture from outside, what each audience may use
 | ingress | audience | authenticated | exports | commands | views | feeds | metrics |
 |---|---|---|---|---|---|---|---|
 | **metrics** | `control.monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 7 |
-| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 3 | 16 | 42 | 0 |
+| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 3 | 17 | 42 | 0 |
 
 - **metrics**: `cache_bust_count`, `cache_hit_share`, `context_size_p90_tokens`, `cost_usd`, `priced_message_share`, `sub_agents_started`, `subagent_cost_share`
 - **operator**: `agentic.gateway.DetachUpstream`, `agentic.gateway.DrainGateway`, `agentic.gateway.StopGateway`

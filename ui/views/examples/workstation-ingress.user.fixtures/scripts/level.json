@@ -1,0 +1,444 @@
+{
+  "channel": "level",
+  "events": [
+    {
+      "at": "1s",
+      "event": "agentic.agent.AgentDefined",
+      "payload": {
+        "agent_id": "00000000-0000-4000-8000-41b79aa10000",
+        "at": "2026-11-20T09:03:00Z",
+        "name": "name 1",
+        "principal_id": "00000000-0000-4000-8000-322d9f1c0000"
+      }
+    },
+    {
+      "at": "2s",
+      "event": "agentic.agent.AgentRetired",
+      "payload": {
+        "agent_id": "00000000-0000-4000-8000-41b79aa10000",
+        "at": "2026-11-20T09:01:00Z"
+      }
+    },
+    {
+      "at": "3s",
+      "event": "agentic.agent.AgentRevisionPublished",
+      "payload": {
+        "agent_id": "00000000-0000-4000-8000-41b79aa10000",
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:04:00Z",
+        "number": 1,
+        "role": "role 1"
+      }
+    },
+    {
+      "at": "4s",
+      "event": "agentic.agent.AgentRevisionRetired",
+      "payload": {
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:01:00Z"
+      }
+    },
+    {
+      "at": "5s",
+      "event": "agentic.agent.AgentRevisionUsed",
+      "payload": {
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:02:00Z",
+        "usage_id": "00000000-0000-4000-8000-6705a1240000"
+      }
+    },
+    {
+      "at": "6s",
+      "event": "agentic.channel.ChannelClosed",
+      "payload": {
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000"
+      }
+    },
+    {
+      "at": "7s",
+      "event": "agentic.channel.ChannelOpened",
+      "payload": {
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "kind": "Prompt",
+        "party_a": "00000000-0000-4000-8000-761908b00000",
+        "party_b": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "8s",
+      "event": "agentic.channel.HeartbeatRecorded",
+      "payload": {
+        "subscription_id": "00000000-0000-4000-8000-f489e8720000"
+      }
+    },
+    {
+      "at": "9s",
+      "event": "agentic.channel.MessageDelivered",
+      "payload": {
+        "message_id": "00000000-0000-4000-8000-783eb9330000"
+      }
+    },
+    {
+      "at": "10s",
+      "event": "agentic.channel.MessageLost",
+      "payload": {
+        "message_id": "00000000-0000-4000-8000-783eb9330000"
+      }
+    },
+    {
+      "at": "11s",
+      "event": "agentic.channel.MessageRead",
+      "payload": {
+        "message_id": "00000000-0000-4000-8000-783eb9330000",
+        "turn_id": "00000000-0000-4000-8000-391e34cb0000"
+      }
+    },
+    {
+      "at": "12s",
+      "event": "agentic.channel.MessageSent",
+      "payload": {
+        "act": "Request",
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "content": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "delegation_id": "00000000-0000-4000-8000-e045564d0000",
+        "from": "00000000-0000-4000-8000-761908b00000",
+        "in_reply_to": "00000000-0000-4000-8000-783eb9330000",
+        "message_id": "00000000-0000-4000-8000-783eb9330000",
+        "proof": "None",
+        "sent_by_call": "00000000-0000-4000-8000-b72db82b0000",
+        "to": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "13s",
+      "event": "agentic.channel.PostTaken",
+      "payload": {
+        "post_id": "00000000-0000-4000-8000-936344e80000",
+        "reader": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "14s",
+      "event": "agentic.channel.Posted",
+      "payload": {
+        "act": "Request",
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "content": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "delegation_id": "00000000-0000-4000-8000-e045564d0000",
+        "entry": "Observed",
+        "from": "00000000-0000-4000-8000-761908b00000",
+        "in_reply_to": "00000000-0000-4000-8000-936344e80000",
+        "post_id": "00000000-0000-4000-8000-936344e80000",
+        "proof": "None"
+      }
+    },
+    {
+      "at": "15s",
+      "event": "agentic.channel.SharedChannelOpened",
+      "payload": {
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "distribution": "Direct",
+        "kind": "Prompt",
+        "party_a": "00000000-0000-4000-8000-761908b00000"
+      }
+    },
+    {
+      "at": "16s",
+      "event": "agentic.channel.Subscribed",
+      "payload": {
+        "channel_id": "00000000-0000-4000-8000-f4f3536e0000",
+        "party": "00000000-0000-4000-8000-761908b00000",
+        "relays_for": "00000000-0000-4000-8000-322d9f1c0000",
+        "subscription_id": "00000000-0000-4000-8000-f489e8720000"
+      }
+    },
+    {
+      "at": "17s",
+      "event": "agentic.channel.SubscriptionEnded",
+      "payload": {
+        "subscription_id": "00000000-0000-4000-8000-f489e8720000"
+      }
+    },
+    {
+      "at": "18s",
+      "event": "agentic.harness.HarnessRegistered",
+      "payload": {
+        "at": "2026-11-20T09:04:00Z",
+        "context_window": 1,
+        "harness_id": "00000000-0000-4000-8000-a444a03c0000",
+        "kind": "Vendor",
+        "max_depth": 1
+      }
+    },
+    {
+      "at": "19s",
+      "event": "agentic.harness.HarnessRetired",
+      "payload": {
+        "at": "2026-11-20T09:01:00Z",
+        "harness_id": "00000000-0000-4000-8000-a444a03c0000"
+      }
+    },
+    {
+      "at": "20s",
+      "event": "agentic.harness.PermissionModeRegistered",
+      "payload": {
+        "at": "2026-11-20T09:02:00Z",
+        "name": "name 1",
+        "permission_mode_id": "00000000-0000-4000-8000-1551be920000"
+      }
+    },
+    {
+      "at": "21s",
+      "event": "agentic.harness.PermissionModeRetired",
+      "payload": {
+        "at": "2026-11-20T09:01:00Z",
+        "permission_mode_id": "00000000-0000-4000-8000-1551be920000"
+      }
+    },
+    {
+      "at": "22s",
+      "event": "agentic.harness.SessionEnded",
+      "payload": {
+        "at": "2026-11-20T09:01:00Z",
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000"
+      }
+    },
+    {
+      "at": "23s",
+      "event": "agentic.harness.SessionOpened",
+      "payload": {
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:06:00Z",
+        "harness_id": "00000000-0000-4000-8000-a444a03c0000",
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "name": "name 1",
+        "permission_mode": "00000000-0000-4000-8000-1551be920000",
+        "principal_id": "00000000-0000-4000-8000-322d9f1c0000"
+      }
+    },
+    {
+      "at": "24s",
+      "event": "agentic.harness.SessionRestarted",
+      "payload": {
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "lineage": "00000000-0000-4000-8000-a83fcb5e0000",
+        "replaces": "00000000-0000-4000-8000-a83fcb5e0000"
+      }
+    },
+    {
+      "at": "25s",
+      "event": "agentic.harness.SubAgentSpawned",
+      "payload": {
+        "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000",
+        "at": "2026-11-20T09:06:00Z",
+        "depth": 1,
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "name": "name 1",
+        "parent_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "requested_route": "00000000-0000-4000-8000-176f59df0000"
+      }
+    },
+    {
+      "at": "26s",
+      "event": "agentic.harness.ToolCallCompleted",
+      "payload": {
+        "ok": true,
+        "output": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "tool_call_id": "00000000-0000-4000-8000-b72db82b0000"
+      }
+    },
+    {
+      "at": "27s",
+      "event": "agentic.harness.ToolCallDecided",
+      "payload": {
+        "attribution": "Known",
+        "decider": "PermissionMode",
+        "tool_call_id": "00000000-0000-4000-8000-b72db82b0000",
+        "verdict": "Allow"
+      }
+    },
+    {
+      "at": "28s",
+      "event": "agentic.harness.ToolCallRequested",
+      "payload": {
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "input": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "tool_call_id": "00000000-0000-4000-8000-b72db82b0000",
+        "tool_id": "00000000-0000-4000-8000-b84588820000"
+      }
+    },
+    {
+      "at": "29s",
+      "event": "agentic.harness.ToolResultNotRead",
+      "payload": {
+        "read_failure": "read failure 1",
+        "tool_call_id": "00000000-0000-4000-8000-b72db82b0000"
+      }
+    },
+    {
+      "at": "30s",
+      "event": "agentic.harness.TurnRecorded",
+      "payload": {
+        "at": "2026-11-20T09:05:00Z",
+        "context_tokens": 1,
+        "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000",
+        "inference_id": "00000000-0000-4000-8000-d56952c90000",
+        "turn_id": "00000000-0000-4000-8000-391e34cb0000",
+        "usage": {
+          "cache_read_tokens": 1,
+          "cache_write_tokens": 1,
+          "input_tokens": 1,
+          "output_tokens": 1
+        }
+      }
+    },
+    {
+      "at": "31s",
+      "event": "agentic.model.EndpointClosed",
+      "payload": {
+        "endpoint_id": "00000000-0000-4000-8000-b24dcd040000"
+      }
+    },
+    {
+      "at": "32s",
+      "event": "agentic.model.EndpointOpened",
+      "payload": {
+        "address": "address 1",
+        "endpoint_id": "00000000-0000-4000-8000-b24dcd040000",
+        "hosting": "Vendor",
+        "model_id": "00000000-0000-4000-8000-83c6d66d0000",
+        "wire": "Messages"
+      }
+    },
+    {
+      "at": "33s",
+      "event": "agentic.model.InferenceFinished",
+      "payload": {
+        "inference_id": "00000000-0000-4000-8000-d56952c90000",
+        "latency": {
+          "first_token_ms": 1,
+          "total_ms": 1
+        },
+        "outcome": "Ok",
+        "usage": {
+          "cache_read_tokens": 1,
+          "cache_write_tokens": 1,
+          "input_tokens": 1,
+          "output_tokens": 1
+        }
+      }
+    },
+    {
+      "at": "34s",
+      "event": "agentic.model.InferenceStarted",
+      "payload": {
+        "inference_id": "00000000-0000-4000-8000-d56952c90000",
+        "request": {
+          "class": "class 1",
+          "digest": "digest 1",
+          "length": 1
+        },
+        "route_id": "00000000-0000-4000-8000-176f59df0000"
+      }
+    },
+    {
+      "at": "35s",
+      "event": "agentic.model.ModelDeclared",
+      "payload": {
+        "context_window": 1,
+        "model_id": "00000000-0000-4000-8000-83c6d66d0000",
+        "name": "name 1",
+        "provider_id": "00000000-0000-4000-8000-3841e4610000"
+      }
+    },
+    {
+      "at": "36s",
+      "event": "agentic.model.ModelRetired",
+      "payload": {
+        "model_id": "00000000-0000-4000-8000-83c6d66d0000"
+      }
+    },
+    {
+      "at": "37s",
+      "event": "agentic.model.RouteDefined",
+      "payload": {
+        "endpoint_id": "00000000-0000-4000-8000-b24dcd040000",
+        "model_id": "00000000-0000-4000-8000-83c6d66d0000",
+        "name": "name 1",
+        "route_id": "00000000-0000-4000-8000-176f59df0000"
+      }
+    },
+    {
+      "at": "38s",
+      "event": "agentic.model.RouteRetired",
+      "payload": {
+        "route_id": "00000000-0000-4000-8000-176f59df0000"
+      }
+    },
+    {
+      "at": "39s",
+      "event": "agentic.question.AnswerNotRead",
+      "payload": {
+        "answered_by": "00000000-0000-4000-8000-761908b00000",
+        "answered_via": "00000000-0000-4000-8000-e045564d0000",
+        "question_id": "00000000-0000-4000-8000-d74009500000",
+        "read_failure": "read failure 1"
+      }
+    },
+    {
+      "at": "40s",
+      "event": "agentic.question.DefaultTaken",
+      "payload": {
+        "option": "option 1",
+        "question_id": "00000000-0000-4000-8000-d74009500000"
+      }
+    },
+    {
+      "at": "41s",
+      "event": "agentic.question.QuestionAnswered",
+      "payload": {
+        "answered_by": "00000000-0000-4000-8000-761908b00000",
+        "answered_via": "00000000-0000-4000-8000-e045564d0000",
+        "option": "option 1",
+        "question_id": "00000000-0000-4000-8000-d74009500000"
+      }
+    },
+    {
+      "at": "42s",
+      "event": "agentic.question.QuestionAsked",
+      "payload": {
+        "addressee": "00000000-0000-4000-8000-761908b00000",
+        "asked_by": "00000000-0000-4000-8000-761908b00000",
+        "deadline": "2026-11-20T09:05:00Z",
+        "default_option": "default option 1",
+        "kind": "Choice",
+        "question_id": "00000000-0000-4000-8000-d74009500000",
+        "run_id": "00000000-0000-4000-8000-1bc1b0c90000",
+        "topic": "topic 1"
+      }
+    },
+    {
+      "at": "43s",
+      "event": "agentic.question.QuestionWithdrawn",
+      "payload": {
+        "question_id": "00000000-0000-4000-8000-d74009500000"
+      }
+    }
+  ]
+}

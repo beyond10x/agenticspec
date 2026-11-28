@@ -524,18 +524,18 @@ pub fn draft(lift: &Lift, args: &DraftArgs) -> Draft {
                 events.push(format!("    - {}  # {}", flow(&pairs), row.evidence));
             };
             match row.entity {
-                "agentic.work.Task" => push("task_created", Some(args.main.clone())),
-                "agentic.work.Run" => push("run_started", part),
+                "agentic.work.Task" => push("agentic.work.TaskCreated", Some(args.main.clone())),
+                "agentic.work.Run" => push("agentic.work.RunStarted", part),
                 "agentic.question.Question" => {
-                    push("question_asked", part);
+                    push("agentic.question.QuestionAsked", part);
                     if row.state == Some("Answered") {
-                        push("question_answered", None);
+                        push("agentic.question.QuestionAnswered", None);
                     }
                 }
                 "agentic.channel.Message"
                     if row.state == Some("Sent") && row.evidence != input.node =>
                 {
-                    push("post_sent", part)
+                    push("agentic.channel.MessageSent", part)
                 }
                 _ => {}
             }

@@ -20,7 +20,7 @@ scope:
   path: crates/agenticspec-sim/src/sim.rs
 - confidence: cited
   path: crates/agenticspec-sim/tests/cases
-revision: 9
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 7}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 8}
@@ -86,3 +86,7 @@ bounds in a `then`; the simulator modelling more blocks than it does today.
 ## Remaining at 9bb5998
 
 Missing: expectations are matched on simulator event names, not qualified block events (crates/agenticspec-sim/src/scenario.rs).
+
+## Remaining after batch 5
+
+Delivered in 2a85d26: expectations match qualified block events. Missing: verdicts are held/failed/not_checked, not met/missed/not_simulated, with no observed column; no matching through the port-level trace.

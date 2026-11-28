@@ -833,7 +833,10 @@ types:
       summary: >-
         The operator UI of an architecture: one `ess-ui/1` document (an overview per level, a page
         per part, a channel per level, the actions of the contract) with `<name>.sources.sha256`,
-        `<name>.fixtures/` and `<name>.layout.json` beside it.
+        `<name>.fixtures/` and `<name>.layout.json` beside it; when the contract gives a `ui`
+        export to an ingress other than `operator`, one such document per ingress with a `ui`
+        export, `<name>.<ingress>.ui.yaml`, each scoped to the ingress's interface, and the counts
+        summed over them.
     fields:
       - {name: out, type: String}
       - {name: pages, type: Integer}
@@ -843,6 +846,20 @@ types:
       - name: written
         type: Boolean
         summary: The files were written; false with `--check`, where they were found current.
+      - name: ingresses
+        type: Optional<List<agenticspec.cli.UiIngressDerived>>
+        summary: The document of each ingress with a `ui` export; absent when the architecture has only the operator UI.
+
+  - name: agenticspec.cli.UiIngressDerived
+    kind: struct
+    naming:
+      summary: The composition of one ingress with a `ui` export.
+    fields:
+      - {name: ingress, type: String}
+      - {name: out, type: String}
+      - {name: pages, type: Integer}
+      - {name: actions, type: Integer}
+      - {name: channels, type: Integer}
 
   - name: agenticspec.cli.UiBuildInput
     kind: struct
@@ -874,6 +891,12 @@ types:
           A simulator result of the same revision of the architecture
           (`agenticspec-sim-result/1`); with `--control-plane` the Metrics page shows its
           predicted value beside each KPI. A result of another revision is refused.
+      - name: ingress
+        type: Optional<String>
+        summary: >-
+          The ingress whose UI to build, one with a `ui` export; `operator` by default. When the
+          contract gives a `ui` export to an ingress other than `operator`, the UI is scoped to
+          the ingress's interface and `config.json` names the ingress.
 
   - name: agenticspec.cli.UiBuildResult
     kind: struct
@@ -912,18 +935,44 @@ types:
           `<view>.json` per view (`{view, rows}`), the channel scripts in `scripts/`
           (`{channel, events}`) and the scripted outcomes in `outcomes.json`
           (`agenticspec-command-outcomes/1`); the last two may be absent.
+      - name: sim
+        type: Optional<String>
+        summary: >-
+          A behaviour profile (`agenticspec-profile/1`) to answer a simulator run from instead of
+          fixtures: the architecture simulated once at the values it is built with, seed 1, one
+          day. R1 answers each view from the state the run's events left, each row at the scopes
+          of the parts its events happened at; R2 replays the run's event log (the lines of
+          `sim run --events`) in order, with each event's `seq` as its cursor; the Metrics page
+          shows the run's KPIs. Not with `--fixtures`.
 
   - name: agenticspec.cli.UiServeResult
     kind: struct
     naming:
       summary: >-
         Where the operator UI was served, `http://127.0.0.1:<port>/`, the control-plane UI,
-        `<url>control/`, and the root of their runtime interface, `<url>ingress/operator`. The
-        server runs until it is stopped.
+        `<url>control/`, and the root of their runtime interface, `<url>ingress/operator`, and the
+        UI of every other ingress with a `ui` export at `<url>ingress/<ingress>/`. The server runs
+        until it is stopped.
     fields:
       - {name: url, type: String}
       - {name: control, type: String}
       - {name: interface, type: String}
+      - name: ingresses
+        type: Optional<List<agenticspec.cli.UiIngressServed>>
+        summary: The UI of each ingress with a `ui` export; absent when the architecture has only the operator UI.
+
+  - name: agenticspec.cli.UiIngressServed
+    kind: struct
+    naming:
+      summary: Where the UI of one ingress with a `ui` export is served.
+    fields:
+      - {name: ingress, type: String}
+      - name: url
+        type: String
+        summary: The app, `<url>ingress/<ingress>/`.
+      - name: interface
+        type: String
+        summary: The root of its runtime interface, `<url>ingress/<ingress>`.
 
   - name: agenticspec.cli.SimPortsInput
     kind: struct
@@ -1118,6 +1167,21 @@ types:
       - name: contract
         type: Optional<String>
         summary: The contract of the architecture with `--architecture`; derived from it when absent.
+      - name: origin
+        type: Optional<String>
+        summary: >-
+          The `Origin` every write (R4) carries, `scheme://host[:port]`; the source's own origin
+          by default, what a page served from the source sends.
+      - name: header
+        type: List<String>
+        summary: >-
+          A header `'Name: value'` every write carries beside `Origin`, such as the CSRF token of a
+          source that accepts only same-origin writes; repeatable.
+      - name: json
+        type: Boolean
+        summary: >-
+          Print the report (every check with its status and detail) on standard output, also when
+          a check failed; the command still exits non-zero then.
 
   - name: agenticspec.cli.UiConformCheck
     kind: struct
@@ -1347,15 +1411,15 @@ types:
   - name: agenticspec.cli.IngressProjectResult
     kind: struct
     naming:
-      summary: The projections of the http exports of an architecture, and whether they were written.
+      summary: The projections of the exports of an architecture, and whether they were written.
     fields:
       - {name: architecture, type: String}
       - name: exports
         type: Integer
-        summary: The http exports projected, one per ingress that has one.
+        summary: The exports projected; a ui export has no projection here.
       - name: files
         type: List<String>
-        summary: The projection files, `<ingress>.http.yaml` and `<ingress>.openapi.yaml` per http export.
+        summary: The projection files, per export of an ingress `<ingress>.http.yaml` and `<ingress>.openapi.yaml` (http), `<ingress>.streams.yaml` (event_stream), `<ingress>.cli.yaml` (cli), `<ingress>.tools.yaml` (tool), `<ingress>.agent.yaml` (agent) or `<ingress>.metrics.yaml` (metrics_scrape).
       - name: written
         type: Boolean
         summary: The files were written; false with `--check`, where they were found current.

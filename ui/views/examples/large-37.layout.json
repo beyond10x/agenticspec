@@ -166,6 +166,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "architect",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -726,6 +736,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "builders",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -2054,6 +2074,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "night",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -2390,6 +2420,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -2706,6 +2746,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "planner",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -2871,6 +2921,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "release",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -3158,6 +3218,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "reviewers",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -3686,6 +3756,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "testers",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -4164,6 +4244,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "triage",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -4370,6 +4460,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "writer",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"

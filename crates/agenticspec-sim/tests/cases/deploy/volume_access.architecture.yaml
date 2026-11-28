@@ -1,0 +1,25 @@
+format: agenticspec-architecture/1
+architecture: volume-access
+summary: >-
+  A lead hands work to a workflow runtime that writes notes of its own, one copy per copy of the
+  runtime; the lead keeps a board it shares read-write and a base it shares read-only; both call
+  the hosted model through a gateway.
+
+parts:
+  owner:   { block: principal, kind: human }
+  lead:    { block: agent }
+  flow:    { block: runtime, role: workflow }
+  notes:   { block: workspace, sharing: shared_read_write, per: flow }
+  board:   { block: workspace, sharing: shared_read_write }
+  base:    { block: workspace, sharing: shared_read_only }
+  gateway: { block: gateway }
+  model:   { block: model, route: frontier }
+
+links:
+  - { from: owner,   to: lead,    carries: prompt }
+  - { from: lead,    to: flow,    carries: run }
+  - { from: lead,    to: gateway, carries: model_call }
+  - { from: flow,    to: gateway, carries: model_call }
+  - { from: gateway, to: model,   carries: model_call }
+  - { from: board,   to: lead,    carries: checkout }
+  - { from: base,    to: lead,    carries: checkout }

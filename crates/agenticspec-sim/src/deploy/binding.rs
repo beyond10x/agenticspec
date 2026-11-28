@@ -31,10 +31,11 @@ const KEYS: &[&str] = &[
     "packing",
 ];
 
-/// The keys of one part's entry under `parts:`.
+/// The keys of one part's entry under `parts:`. `env` and `args`, the configuration of its unit,
+/// are checked by admission ([`super::config`], `unit_config_invalid`).
 const PART_KEYS: &[&str] = &[
     "agent", "digest", "state", "inside", "secrets", "egress", "size", "volumes", "network",
-    "image",
+    "image", "env", "args",
 ];
 
 /// The keys of a runtime pinned under `runtimes:`, and of an image a part or a listed unit
@@ -216,6 +217,9 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                 }
                 if k == "image" {
                     image_problems(&format!("parts: {name}: image"), v, local, &mut out);
+                    continue;
+                }
+                if super::config::KEYS.contains(&k.as_str()) {
                     continue;
                 }
                 let ok = match k.as_str() {
@@ -561,7 +565,8 @@ pub fn unit_checks(kind: &str) -> &'static [&'static str] {
 }
 
 /// The problems of one part's `volumes:`: a list of `{name, mount}`, each naming a workspace
-/// part of the document. Whether a mount is an absolute path is admission's
+/// part of the document or the durable state of a runtime part, `<part>-state`
+/// ([`state_owner`]). Whether a mount is an absolute path is admission's
 /// (`volume_mount_missing`).
 fn volume_problems(part: &str, v: &Value, parts: &Value, out: &mut Vec<String>) {
     let Some(list) = v.as_array() else {
@@ -579,8 +584,12 @@ fn volume_problems(part: &str, v: &Value, parts: &Value, out: &mut Vec<String>) 
         for (k, x) in m {
             match k.as_str() {
                 "name" => {
-                    if !x.as_str().is_some_and(|n| parts[n]["block"] == "workspace") {
-                        out.push(format!("{at}: name names a workspace part of the document"));
+                    if !x.as_str().is_some_and(|n| {
+                        parts[n]["block"] == "workspace" || state_owner(parts, n).is_some()
+                    }) {
+                        out.push(format!(
+                            "{at}: name names a workspace part of the document, or `<part>-state` of a runtime part with `durable_state: true`"
+                        ));
                     }
                 }
                 "mount" if x.is_string() => {}
@@ -589,7 +598,9 @@ fn volume_problems(part: &str, v: &Value, parts: &Value, out: &mut Vec<String>) 
             }
         }
         if !m.contains_key("name") {
-            out.push(format!("{at} needs a `name:`, the workspace it mounts"));
+            out.push(format!(
+                "{at} needs a `name:`, the workspace or durable state it mounts"
+            ));
         }
     }
 }
@@ -773,6 +784,24 @@ pub const IMAGE_KINDS: &[&str] = &["core", "service"];
 /// The block of a part that, held by a core or service unit, needs an image
 /// (`unit_image_missing`): a runtime part.
 pub const RUNTIME_BLOCK: &str = "runtime";
+
+/// Whether a part is a runtime part that keeps durable state of its own (`durable_state: true`,
+/// a marked place judged by its value).
+pub fn durable_state(part: &Value) -> bool {
+    part["block"] == RUNTIME_BLOCK
+        && *crate::check::value(&part["durable_state"]) == Value::Bool(true)
+}
+
+/// The name of the volume that holds the durable state of runtime part `part`: `<part>-state`.
+pub fn state_volume(part: &str) -> String {
+    format!("{part}-state")
+}
+
+/// The runtime part with durable state whose volume `name` is (`<part>-state`), if any.
+pub fn state_owner<'a>(parts: &Value, name: &'a str) -> Option<&'a str> {
+    name.strip_suffix("-state")
+        .filter(|p| durable_state(&parts[*p]))
+}
 
 /// Where the image of a core or service unit comes from.
 #[derive(Debug, Clone, PartialEq)]

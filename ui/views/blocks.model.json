@@ -3547,6 +3547,7 @@
   "entities": {
     "agentic.agent.Agent": {},
     "agentic.agent.AgentRevision": {},
+    "agentic.agent.RevisionUsage": {},
     "agentic.architecture.Architecture": {},
     "agentic.architecture.ArchitectureRevision": {},
     "agentic.architecture.Contract": {},
@@ -3642,6 +3643,13 @@
           "Primary",
           "Fast",
           "Review"
+        ]
+      }
+    },
+    "agentic.agent.RevisionUsage.State": {
+      "body": {
+        "variants": [
+          "Recorded"
         ]
       }
     },
@@ -5047,6 +5055,9 @@
     },
     "agentic.agent.Agents": {
       "source": "agentic.agent.Agent"
+    },
+    "agentic.agent.RevisionUsages": {
+      "source": "agentic.agent.RevisionUsage"
     },
     "agentic.architecture.Architectures": {
       "source": "agentic.architecture.Architecture"

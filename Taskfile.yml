@@ -6,6 +6,7 @@ tasks:
     cmds:
       - task: check:spec
       - task: check:blocks
+      - task: check:mutation
       - task: check:fields
       - task: check:ports
       - task: check:bundles
@@ -109,7 +110,7 @@ tasks:
       - target/debug/agenticspec-docs --root . --bundles --slow
 
   projections:generate:
-    desc: Write the projections of the http exports of the worked example architectures/workstation-ingress.yaml (per ingress its ess-http/1 protocol binding and OpenAPI document) into architectures/projections/workstation-ingress/.
+    desc: Write the projections of the exports of the worked example architectures/workstation-ingress.yaml (per http export its ess-http/1 protocol binding and OpenAPI document, per event_stream its stream list, per tool its tool list, per metrics_scrape its metric list) into architectures/projections/workstation-ingress/.
     cmds:
       - cargo build --quiet --locked -p agenticspec
       - target/debug/agenticspec ingress project architectures/workstation-ingress.yaml --out architectures/projections/workstation-ingress
@@ -222,10 +223,23 @@ tasks:
       - npm run build
 
   check:spec:
-    desc: Validate the specification and synthesize its conformance suite with no refusal.
+    desc: Validate the specification, synthesize its conformance suite with no refusal and run it on the interpreter.
     cmds:
       - ess specify validate --path spec
       - mkdir -p target/spec && ess verify conform synthesize --path spec --out target/spec/suite.json
+      - ess verify conform run --target interpreted --path spec --suite target/spec/suite.json --report-format 2 --report-out target/spec/report.json > target/spec/run.txt 2>&1 || { grep -E '^  (failed|error|unsupported) ' target/spec/run.txt; tail -n 1 target/spec/run.txt; exit 1; }
+      - tail -n 1 target/spec/run.txt
+
+  spec:diff:
+    desc: Classify the change of blocks/, spec/ and studio/ since a git revision (task spec:diff -- <revision>; the newest release tag without one) as breaking, unknown or compatible for callers, readers and history; exits 4 on a breaking or unknown change. Not in the gate. The lines are in scripts/spec-diff.sh.
+    cmds:
+      - sh scripts/spec-diff.sh {{.CLI_ARGS}}
+
+  check:mutation:
+    desc: Mutation audit of spec/ and studio/ on the interpreter, authored scenarios included; fails on a mutant the suite does not kill that the specification's mutation-known.txt does not list, and on a listed one that is now killed (about 20 s; the lines are in scripts/check-mutation.sh).
+    cmds:
+      - sh scripts/check-mutation.sh spec
+      - sh scripts/check-mutation.sh studio
 
   check:ui:
     desc: Check the ess-ui document against the specification and run its headless tests on the fixtures; then fail when the block panels (ui/views/) differ from a fresh generation from blocks/ or their digest no longer matches (ui/views/serve.fixtures.json included), and check them against blocks/ with no finding.
@@ -246,15 +260,17 @@ tasks:
       - target/debug/agenticspec sim contract architectures/team-with-console.yaml --check ui/views/examples/team-with-console.contract.yaml
       - target/debug/agenticspec ui derive --check --control-plane --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.control-plane.ui.yaml
       - target/debug/agenticspec ui derive --check --control-plane --path architectures/team-with-console.yaml --contract ui/views/examples/team-with-console.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/team-with-console.control-plane.ui.yaml
+      - target/debug/agenticspec sim contract architectures/workstation-ingress.yaml --check ui/views/examples/workstation-ingress.contract.yaml
+      - target/debug/agenticspec ui derive --check --path architectures/workstation-ingress.yaml --contract ui/views/examples/workstation-ingress.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation-ingress.ui.yaml
       - |
-        for f in ui/views/examples/workstation.ui.yaml ui/views/examples/large-37.ui.yaml ui/views/examples/host-slot.ui.yaml ui/views/examples/workstation.control-plane.ui.yaml ui/views/examples/team-with-console.control-plane.ui.yaml; do
+        for f in ui/views/examples/workstation.ui.yaml ui/views/examples/large-37.ui.yaml ui/views/examples/host-slot.ui.yaml ui/views/examples/workstation.control-plane.ui.yaml ui/views/examples/team-with-console.control-plane.ui.yaml ui/views/examples/workstation-ingress.user.ui.yaml ui/views/examples/workstation-ingress.operator.ui.yaml; do
           out=$(ess ui check --path "$f" --model blocks) || { echo "$out"; exit 1; }
           echo "$out" | tail -n 1
           echo "$out" | grep -q ': 0 error(s), 0 warning(s)$' || { echo "check:ui: $f has a warning"; exit 1; }
         done
 
   ui:derive:
-    desc: Write the derived examples of ui/views/examples/ with agenticspec ui derive - workstation.ui.yaml from architectures/workstation.yaml, its contract (written first by agenticspec sim contract) and a copy of blocks/ports.json beside it, and large-37.ui.yaml from the 37-part fixture alone, and the control-plane UIs workstation.control-plane.ui.yaml and team-with-console.control-plane.ui.yaml (ui derive --control-plane, team-with-console.contract.yaml written first) - each with its fixtures, its layout and the digest of its inputs. Never edited by hand; task check:ui holds them.
+    desc: Write the derived examples of ui/views/examples/ with agenticspec ui derive - workstation.ui.yaml from architectures/workstation.yaml, its contract (written first by agenticspec sim contract) and a copy of blocks/ports.json beside it, and large-37.ui.yaml from the 37-part fixture alone, and the control-plane UIs workstation.control-plane.ui.yaml and team-with-console.control-plane.ui.yaml (ui derive --control-plane, team-with-console.contract.yaml written first), and one UI per ingress with a ui export of architectures/workstation-ingress.yaml, workstation-ingress.user.ui.yaml and workstation-ingress.operator.ui.yaml (its contract written first) - each with its fixtures, its layout and the digest of its inputs. Never edited by hand; task check:ui holds them.
     cmds:
       - cargo build --quiet --locked -p agenticspec
       - target/debug/agenticspec sim contract architectures/workstation.yaml --out ui/views/examples/workstation.contract.yaml
@@ -264,6 +280,8 @@ tasks:
       - target/debug/agenticspec sim contract architectures/team-with-console.yaml --out ui/views/examples/team-with-console.contract.yaml
       - target/debug/agenticspec ui derive --control-plane --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.control-plane.ui.yaml
       - target/debug/agenticspec ui derive --control-plane --path architectures/team-with-console.yaml --contract ui/views/examples/team-with-console.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/team-with-console.control-plane.ui.yaml
+      - target/debug/agenticspec sim contract architectures/workstation-ingress.yaml --out ui/views/examples/workstation-ingress.contract.yaml
+      - target/debug/agenticspec ui derive --path architectures/workstation-ingress.yaml --contract ui/views/examples/workstation-ingress.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation-ingress.ui.yaml
 
   ui:panels:
     desc: Write the block panels from blocks/ - ui/views/blocks.ui.yaml (one ess-ui/1 widget per view, a gallery page per block), its fixtures in ui/views/fixtures/ and the digest of its inputs, ui/views/blocks.sources.sha256, then ui/views/serve.fixtures.json (the fixtures and ui/views/source/outcomes.json in one compact file with the digest of its sources, which the binary embeds for agenticspec ui serve). Never edited by hand.

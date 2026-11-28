@@ -1,6 +1,6 @@
 format: agenticspec-contract/1
 architecture: console
-ports_digest: b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1
+ports_digest: b257c8de9607627a0d6f6d4b6786198c766bb2811aee55627f8a1c1c1b09e99e
 ports:
   - port: gateway.call
     part: gateway
@@ -76,6 +76,7 @@ ingress:
       - {kind: command, name: agentic.gateway.StopGateway}
       - {kind: view, name: agentic.agent.AgentRevisions}
       - {kind: view, name: agentic.agent.Agents}
+      - {kind: view, name: agentic.agent.RevisionUsages}
       - {kind: view, name: agentic.gateway.Calls}
       - {kind: view, name: agentic.gateway.Gateways}
       - {kind: view, name: agentic.gateway.Upstreams}

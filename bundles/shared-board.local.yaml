@@ -77,7 +77,7 @@ architecture:
   sha256: sha256:b70807a8341d44d3cec3f862bdc46e7d57c610d6aa29f37f3199c2a0b167491b
 nested: {}
 contract:
-  digest: sha256:c2fe061fb48a0717262a75d3d1544cb560a586e1036ae05fd16a311bd3efc511
+  digest: sha256:a4ecf9a59508bf60cd532e15f62617d4050a5e2d1bd6ce06ae1a62af2e3349b9
   document:
     architecture: shared-board
     border: []
@@ -138,6 +138,8 @@ contract:
         name: agentic.agent.AgentRevisions
       - kind: view
         name: agentic.agent.Agents
+      - kind: view
+        name: agentic.agent.RevisionUsages
       - kind: view
         name: agentic.channel.ChannelMessages
       - kind: view
@@ -486,7 +488,7 @@ contract:
       protocol: Propose (MergeProposal | RejectProposal | SupersedeProposal)
       settings:
         sharing: exclusive
-    ports_digest: b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1
+    ports_digest: b257c8de9607627a0d6f6d4b6786198c766bb2811aee55627f8a1c1c1b09e99e
 binding:
   digest: sha256:c9cf3b69ce293a19b4ba642e0b293dd7ae9b9787155f74d44d0454d8d95c53d0
   document:
@@ -684,4 +686,4 @@ ingress:
 requirements: []
 agents: {}
 runtimes: {}
-digest: sha256:9e38ab3d1291eb74e49d52f9e97a5209f28a271bfe983d9016bd5cbbe52f0aa4
+digest: sha256:7f316f5bf84614f2c32ce84ebeb6f3bab3c8a17c8a26481fd9a9ad2b3b151914

@@ -15,7 +15,8 @@
 //!   architecture, and their reproducible archive.
 //! - `plane`: the default control plane of an architecture as that interface sees it, read from
 //!   the files of its operator UI.
-//! - `serve`: `agenticspec ui serve`, the operator app and that plane answered from fixtures.
+//! - `serve`: `agenticspec ui serve`, the operator app and that plane answered from fixtures,
+//!   and the UI of every other ingress with a `ui` export at its own root.
 //!
 //! The output is a function of the document alone: the same document gives the same bytes.
 
@@ -77,6 +78,21 @@ pub fn derive_ui(inputs: &derive::Inputs) -> Result<derive::Derivation, derive::
     let ir = agenticspec_views::compile(&inputs.root.join("blocks"))
         .map_err(derive::Failure::Unreadable)?;
     derive::derive_with(inputs, &ir)
+}
+
+/// `agenticspec ui derive` of every UI of the architecture: compiles the blocks under
+/// `inputs.root` once and derives one composition per ingress with a `ui` export when the
+/// contract gives a UI per ingress, else the one operator UI (see [`derive::derive_all`]).
+///
+/// # Errors
+///
+/// As [`derive_ui`], and an ingress with no `ui` export.
+pub fn derive_uis(
+    inputs: &derive::Inputs,
+) -> Result<Vec<(Option<String>, derive::Derivation)>, derive::Failure> {
+    let ir = agenticspec_views::compile(&inputs.root.join("blocks"))
+        .map_err(derive::Failure::Unreadable)?;
+    derive::derive_all(inputs, &ir)
 }
 
 /// Replaces `out` with exactly `files`: what was in it before is removed.

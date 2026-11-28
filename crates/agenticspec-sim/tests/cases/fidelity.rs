@@ -1,10 +1,11 @@
 //! Where the simulation follows the architecture instead of a name: the answering agent and the
 //! profile role come from the document, an agent splits its calls over several priced models, a
-//! runtime part executes the runs it is given, and an `on_event` trigger fires on its event.
+//! runtime or process part executes the runs it is given, and an `on_event` trigger fires on its
+//! event.
 
-use super::common::{PROFILE, yaml};
+use super::common::{PROFILE, scratch, yaml};
 use agenticspec_sim::check::check;
-use agenticspec_sim::{Experiment, run};
+use agenticspec_sim::{Experiment, cli, run};
 use serde_json::{Value, json};
 
 const EXPERIMENT: &str = r#"
@@ -93,6 +94,22 @@ links:
   - { from: owner,   to: worker,   carries: prompt }
   - { from: on_done, to: notifier, carries: trigger }
   - { from: worker,  to: model,    carries: model_call }
+"#;
+
+/// Every task a worker ships wakes a process part whose program has two steps.
+const PROCESS: &str = r#"
+format: agenticspec-architecture/1
+architecture: process
+parts:
+  owner:   { block: principal, kind: human }
+  worker:  { block: agent, count: 2 }
+  on_done: { block: trigger, kind: on_event, event_name: agentic.work.TaskCompleted, source: worker, policy: parallel, max_parallel: 4, task_template: notice }
+  release: { block: process, steps: 2, role: notify, count: 4 }
+  model:   { block: model, route: frontier }
+links:
+  - { from: owner,   to: worker,  carries: prompt }
+  - { from: on_done, to: release, carries: trigger }
+  - { from: worker,  to: model,   carries: model_call }
 "#;
 
 /// The common profile in the form these cases need: the answer delay on the role of the agent
@@ -325,6 +342,55 @@ fn a_trigger_may_wake_a_runtime() {
 }
 
 #[test]
+fn a_trigger_wakes_a_process_part_that_runs_the_steps_of_its_program() {
+    let b = base(&yaml(PROCESS));
+    let runs = part(&b, "release", "tasks_started");
+    assert!(runs > 0.0, "the trigger starts runs of the process");
+    assert_eq!(runs, part(&b, "on_done", "firings_started"));
+    assert!(part(&b, "release", "tasks_done") > 0.0, "and they end");
+    assert_eq!(
+        part(&b, "release", "run_steps"),
+        2.0 * runs,
+        "each run executes the two steps of the program"
+    );
+    assert!(
+        b["per_part"]["release"]["agent_time_cost_usd"].is_null(),
+        "a process is not an agent alive"
+    );
+    let mut three = yaml(PROCESS);
+    three["parts"]["release"]["steps"] = json!(3);
+    let t = base(&three);
+    let runs = part(&t, "release", "tasks_started");
+    assert_eq!(part(&t, "release", "run_steps"), 3.0 * runs);
+    let mut unlinked = yaml(PROCESS);
+    unlinked["links"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|l| l["to"] != "release");
+    let u = base(&unlinked);
+    assert!(
+        u["per_part"]["release"]["tasks_started"].is_null(),
+        "a process nothing gives runs to does not run"
+    );
+}
+
+#[test]
+fn a_trigger_may_wake_a_process_and_the_process_names_its_role() {
+    let refusals: Vec<String> = check(&yaml(PROCESS))
+        .iter()
+        .map(|r| r.to_string())
+        .collect();
+    assert!(refusals.is_empty(), "{refusals:?}");
+    let mut a = yaml(PROCESS);
+    a["parts"]["release"]
+        .as_object_mut()
+        .unwrap()
+        .remove("role");
+    let err = try_base(&a, &profile()).unwrap_err();
+    assert!(err.contains("release") && err.contains("role"), "{err}");
+}
+
+#[test]
 fn an_event_the_simulation_does_not_emit_is_refused_by_name() {
     let mut a = yaml(ON_EVENT);
     a["parts"]["on_done"]["event_name"] = json!("agentic.model.RouteDefined");
@@ -357,6 +423,104 @@ fn runtimes_models_and_events_keep_one_and_four_threads_byte_equal() {
         "the second model was called"
     );
     assert!(part(b, "notifier", "run_steps") > 0.0, "the event fired");
+}
+
+/// R96: a runtime part that names its model shares, calling two models through one gateway. The
+/// lead reaches only `m1`, so every call to `m2` is the runtime's.
+const SHARED_RUNTIME: &str = r#"
+format: agenticspec-architecture/1
+architecture: shared-runtime
+parts:
+  owner:   { block: principal, kind: human }
+  lead:    { block: agent }
+  exec:    { block: runtime, role: executor, model_share: { m1: 1 } }
+  gateway: { block: gateway }
+  m1:      { block: model, route: frontier }
+  m2:      { block: model, route: fast }
+links:
+  - { from: owner,   to: lead,    carries: prompt }
+  - { from: lead,    to: exec,    carries: run }
+  - { from: lead,    to: m1,      carries: model_call }
+  - { from: exec,    to: gateway, carries: model_call }
+  - { from: gateway, to: m1,      carries: model_call }
+  - { from: gateway, to: m2,      carries: model_call }
+"#;
+
+/// `sim check` and `sim run` on `arch` in a scratch directory: the check's refusal, if any, the
+/// refusals `sim run` logs, and the baseline of the result it wrote.
+fn check_and_run(name: &str, arch: &Value) -> (Option<String>, Vec<String>, Value) {
+    let dir = scratch(name);
+    let mut p = profile();
+    p["roles"]["executor"] = json!({
+        "task_turns": 3, "turn_seconds": 20,
+        "tokens_per_turn": { "input": 500, "output": 100 }
+    });
+    std::fs::write(dir.join("fidelity.yaml"), arch.to_string()).unwrap();
+    std::fs::write(dir.join("fidelity-profile.yaml"), p.to_string()).unwrap();
+    std::fs::write(dir.join("exp.yaml"), EXPERIMENT).unwrap();
+    let checked = cli::check(&dir.join("fidelity.yaml"))
+        .err()
+        .map(|e| e.detail);
+    let mut log = Vec::new();
+    cli::run(
+        &dir.join("exp.yaml"),
+        &dir.join("out"),
+        Some(2),
+        false,
+        &mut log,
+    )
+    .unwrap_or_else(|e| panic!("{e:?}\n{}", String::from_utf8_lossy(&log)));
+    let refused = String::from_utf8_lossy(&log)
+        .lines()
+        .filter(|l| l.contains("refused"))
+        .map(str::to_string)
+        .collect();
+    let result: Value =
+        serde_json::from_str(&std::fs::read_to_string(dir.join("out/result.json")).unwrap())
+            .unwrap();
+    (checked, refused, result["baseline"].clone())
+}
+
+#[test]
+fn sim_check_accepts_the_model_share_of_a_runtime_and_sim_run_uses_it() {
+    let shared = yaml(SHARED_RUNTIME);
+    let (checked, refused, b) = check_and_run("r96-share", &shared);
+    assert_eq!(checked, None, "sim check accepts the runtime's model_share");
+    assert!(refused.is_empty(), "sim run logs no refusal: {refused:?}");
+    let runs = part(&b, "exec", "run_steps");
+    assert!(runs > 0.0, "the runtime executes runs");
+    assert_eq!(part(&b, "exec", "model_calls"), runs);
+    assert_eq!(
+        part(&b, "m2", "calls"),
+        0.0,
+        "a share of 0 for m2: the runtime calls only m1"
+    );
+    let mut even = shared.clone();
+    even["parts"]["exec"]
+        .as_object_mut()
+        .unwrap()
+        .remove("model_share");
+    let (_, _, e) = check_and_run("r96-even", &even);
+    assert!(
+        part(&e, "m2", "calls") > 0.0,
+        "without the share the runtime's calls spread over both models"
+    );
+    // A process part takes the same setting.
+    let mut process = shared;
+    process["parts"]["exec"] =
+        json!({ "block": "process", "steps": 2, "role": "notify", "model_share": { "m2": 1 } });
+    let (checked, refused, p) = check_and_run("r96-process", &process);
+    assert_eq!(checked, None, "sim check accepts the process's model_share");
+    assert!(refused.is_empty(), "{refused:?}");
+    assert!(
+        part(&p, "exec", "run_steps") > 0.0,
+        "the process executes runs"
+    );
+    assert_eq!(
+        part(&p, "m2", "calls"),
+        part(&p, "exec", "model_calls"),
+        "the process calls only m2"
+    );
 }
 
 #[test]

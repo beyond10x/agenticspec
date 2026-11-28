@@ -20,6 +20,12 @@
     },
     {
       "architecture": "workstation",
+      "label": "Agent revisions of operator",
+      "page": "control.operations",
+      "view": "agentic.agent.AgentRevisions"
+    },
+    {
+      "architecture": "workstation",
       "label": "Agents of operator",
       "page": "control.operations",
       "view": "agentic.agent.Agents"
@@ -29,6 +35,12 @@
       "label": "Harnesses of operator",
       "page": "control.operations",
       "view": "agentic.harness.Harnesses"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Agent revisions of worker",
+      "page": "control.operations",
+      "view": "agentic.agent.AgentRevisions"
     },
     {
       "architecture": "workstation",

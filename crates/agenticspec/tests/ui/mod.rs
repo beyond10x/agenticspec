@@ -6,6 +6,7 @@ use std::process::Command;
 
 use serde_json::Value;
 
+mod conform;
 mod serve;
 
 fn repo() -> PathBuf {
@@ -193,6 +194,69 @@ fn ui_build_control_plane_writes_the_pages_across_parts() {
     assert_eq!(
         r["archive_sha256"].as_str(),
         Some(agenticspec_ui::operator::sha256(&tar).as_str())
+    );
+}
+
+/// `ui build --ingress` of the workstation with ingresses writes the UI of that ingress: its
+/// layout is the one `ui derive` wrote for it, and `config.json` names it; an ingress with no
+/// `ui` export is refused, and so is any ingress but the operator's where only it has a UI.
+#[test]
+fn ui_build_ingress_writes_the_ui_of_one_ingress_with_a_ui_export() {
+    let tmp = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("ui-build-ingress");
+    let _ = std::fs::remove_dir_all(&tmp);
+    std::fs::create_dir_all(&tmp).unwrap();
+    let build = |dir: &std::path::Path, ingress: &str| {
+        Command::new(env!("CARGO_BIN_EXE_agenticspec"))
+            .current_dir(repo())
+            .args([
+                "--output",
+                "json",
+                "ui",
+                "build",
+                "architectures/workstation-ingress.yaml",
+                "--contract",
+                "ui/views/examples/workstation-ingress.contract.yaml",
+                "--api-base",
+                "/ingress/user",
+                "--ingress",
+                ingress,
+                "--out",
+            ])
+            .arg(dir)
+            .output()
+            .unwrap()
+    };
+    let dir = tmp.join("user");
+    result(&build(&dir, "user"));
+    assert_eq!(
+        std::fs::read(dir.join("views.json")).unwrap(),
+        std::fs::read(repo().join("ui/views/examples/workstation-ingress.user.layout.json"))
+            .unwrap(),
+        "views.json is not the derived layout of the user ingress"
+    );
+    let config: Value =
+        serde_json::from_str(&std::fs::read_to_string(dir.join("config.json")).unwrap()).unwrap();
+    assert_eq!(config["ingress"], "user");
+    assert_eq!(config["api_base"], "/ingress/user");
+    assert_eq!(config["title"], "workstation-ingress (user)");
+
+    let out = build(&tmp.join("metrics"), "metrics");
+    assert!(!out.status.success());
+    let text =
+        String::from_utf8_lossy(&out.stdout).into_owned() + &String::from_utf8_lossy(&out.stderr);
+    assert!(text.contains("document_refused"), "{text}");
+    assert!(
+        text.contains("no ingress metrics with a ui export"),
+        "{text}"
+    );
+
+    let out = ui_build(&tmp.join("ws-user"), &["--ingress", "user"]);
+    assert!(!out.status.success());
+    let text =
+        String::from_utf8_lossy(&out.stdout).into_owned() + &String::from_utf8_lossy(&out.stderr);
+    assert!(
+        text.contains("no ingress user with a ui export; the contract gives a UI to: operator"),
+        "{text}"
     );
 }
 

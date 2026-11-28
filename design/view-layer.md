@@ -202,8 +202,9 @@ The architecture graph reuses the studio's `DraftGraph` host component, read-onl
 - The overview leads with the parts table. A nested architecture is one row, so a 40-part
   architecture split into nested documents reads as a short table per level.
 - The graph draws one level, with each nested architecture as one box (the rendering
-  `story:architecture-references` decides). It is drawn at natural size with pan, zoom and fit,
-  by the rule of `story:large-graph-view`. The graph is never the only way to reach a part.
+  `story:architecture-references` decides). It opens whole, fitted to its view when larger,
+  with pan, zoom and fit, by the rule of `story:large-graph-view`. The graph is never the only
+  way to reach a part.
 - Links are read in the reach table, filterable by part, rather than drawn as 95 edges.
 - Acceptance uses the 37-part fixture of `story:large-graph-view`. At 1366x768 the first screen
   shows the parts table, nothing runs past the viewport horizontally, and every part opens in two

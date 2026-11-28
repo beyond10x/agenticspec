@@ -111,7 +111,7 @@ pub enum Refusal {
     BorderWithoutPart { part: String },
     /// A `trigger` link starts at a part that is neither a trigger nor a schedule.
     TriggerSourceNotTrigger { link: usize, part: String },
-    /// A `trigger` link ends at a part that is neither an agent nor a runtime.
+    /// A `trigger` link ends at a part that is not an agent, a runtime or a process.
     TriggerTargetNotAgent { link: usize, part: String },
     /// A trigger part names no source it can fire on.
     TriggerWithoutSource { part: String, detail: String },
@@ -251,7 +251,7 @@ impl fmt::Display for Refusal {
                 format!("link {link} carries trigger from a part that is not a trigger or schedule")
             }
             Refusal::TriggerTargetNotAgent { link, .. } => {
-                format!("link {link} carries trigger to a part that is neither an agent nor a runtime")
+                format!("link {link} carries trigger to a part that is not an agent, a runtime or a process")
             }
             Refusal::TriggerWithoutSource { detail, .. } => detail.clone(),
             Refusal::InvalidConcurrency { .. } => {
@@ -534,6 +534,7 @@ pub fn check(architecture: &Value) -> Vec<Refusal> {
             && let Some(b) = block(architecture, to)
             && b != "agent"
             && b != "runtime"
+            && b != "process"
         {
             out.push(Refusal::TriggerTargetNotAgent {
                 link: i,
