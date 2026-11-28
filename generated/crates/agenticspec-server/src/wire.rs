@@ -10,10 +10,7 @@
 use crate::json;
 
 /// Writes `agenticspec.cli.AgentScope` as JSON.
-pub fn encode_agenticspec_cli_agent_scope(
-    value: &agenticspec_types::cli::AgentScope,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_agent_scope(value: &agenticspec_types::cli::AgentScope, out: &mut String) {
     match value {
         agenticspec_types::cli::AgentScope::Main => json::push_text(out, "main"),
         agenticspec_types::cli::AgentScope::Sub => json::push_text(out, "sub"),
@@ -25,28 +22,16 @@ pub fn encode_agenticspec_cli_agent_scope(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_agent_scope(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::AgentScope, json::DecodeError> {
+pub fn decode_agenticspec_cli_agent_scope(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::AgentScope, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `main`, `sub`")? {
         "main" => agenticspec_types::cli::AgentScope::Main,
         "sub" => agenticspec_types::cli::AgentScope::Sub,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `main`, `sub`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `main`, `sub`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.cli.AnalyzeInput` as JSON.
-pub fn encode_agenticspec_cli_analyze_input(
-    value: &agenticspec_types::cli::AnalyzeInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_analyze_input(value: &agenticspec_types::cli::AnalyzeInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.root {
         json::member(out, "root");
@@ -68,10 +53,7 @@ pub fn encode_agenticspec_cli_analyze_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_analyze_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::AnalyzeInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_analyze_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::AnalyzeInput, json::DecodeError> {
     json::closed_at(value, at, &["root", "since_hours", "out"])?;
     Ok(agenticspec_types::cli::AnalyzeInput {
         root: match value.member("root") {
@@ -99,10 +81,7 @@ pub fn decode_agenticspec_cli_analyze_input(
 }
 
 /// Writes `agenticspec.cli.AnalyzeResult` as JSON.
-pub fn encode_agenticspec_cli_analyze_result(
-    value: &agenticspec_types::cli::AnalyzeResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_analyze_result(value: &agenticspec_types::cli::AnalyzeResult, out: &mut String) {
     out.push('{');
     json::member(out, "path");
     json::push_text(out, &value.path);
@@ -116,10 +95,7 @@ pub fn encode_agenticspec_cli_analyze_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_analyze_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::AnalyzeResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_analyze_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::AnalyzeResult, json::DecodeError> {
     json::closed_at(value, at, &["path", "sessions"])?;
     Ok(agenticspec_types::cli::AnalyzeResult {
         path: {
@@ -136,10 +112,7 @@ pub fn decode_agenticspec_cli_analyze_result(
 }
 
 /// Writes `agenticspec.cli.AutonomyFigures` as JSON.
-pub fn encode_agenticspec_cli_autonomy_figures(
-    value: &agenticspec_types::cli::AutonomyFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_autonomy_figures(value: &agenticspec_types::cli::AutonomyFigures, out: &mut String) {
     out.push('{');
     json::member(out, "working_seconds");
     json::push_integer(out, value.working_seconds);
@@ -173,21 +146,8 @@ pub fn encode_agenticspec_cli_autonomy_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_autonomy_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::AutonomyFigures, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "working_seconds",
-            "waiting_on_human_seconds",
-            "away_seconds",
-            "prompts",
-            "decisions",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_autonomy_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::AutonomyFigures, json::DecodeError> {
+    json::closed_at(value, at, &["working_seconds", "waiting_on_human_seconds", "away_seconds", "prompts", "decisions"])?;
     Ok(agenticspec_types::cli::AutonomyFigures {
         working_seconds: {
             let at0 = json::nested(at, "working_seconds");
@@ -209,10 +169,7 @@ pub fn decode_agenticspec_cli_autonomy_figures(
             let member3 = json::member_at(value, at, "prompts")?;
             {
                 let mut items3 = Vec::new();
-                for (index3, element3) in json::items_at(member3, &at3, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
                     let nested3 = json::nested(&at3, &index3.to_string());
                     items3.push(decode_agenticspec_cli_prompt_figures(element3, &nested3)?);
                 }
@@ -224,10 +181,7 @@ pub fn decode_agenticspec_cli_autonomy_figures(
             let member4 = json::member_at(value, at, "decisions")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(decode_agenticspec_cli_decision_figures(element4, &nested4)?);
                 }
@@ -238,10 +192,7 @@ pub fn decode_agenticspec_cli_autonomy_figures(
 }
 
 /// Writes `agenticspec.cli.BlocksLiftInput` as JSON.
-pub fn encode_agenticspec_cli_blocks_lift_input(
-    value: &agenticspec_types::cli::BlocksLiftInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_blocks_lift_input(value: &agenticspec_types::cli::BlocksLiftInput, out: &mut String) {
     out.push('{');
     json::member(out, "transcript");
     json::push_text(out, &value.transcript);
@@ -253,10 +204,7 @@ pub fn encode_agenticspec_cli_blocks_lift_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_blocks_lift_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::BlocksLiftInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_blocks_lift_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksLiftInput, json::DecodeError> {
     json::closed_at(value, at, &["transcript"])?;
     Ok(agenticspec_types::cli::BlocksLiftInput {
         transcript: {
@@ -268,10 +216,7 @@ pub fn decode_agenticspec_cli_blocks_lift_input(
 }
 
 /// Writes `agenticspec.cli.BlocksLiftResult` as JSON.
-pub fn encode_agenticspec_cli_blocks_lift_result(
-    value: &agenticspec_types::cli::BlocksLiftResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_blocks_lift_result(value: &agenticspec_types::cli::BlocksLiftResult, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     json::push_text(out, &value.session_id);
@@ -303,15 +248,8 @@ pub fn encode_agenticspec_cli_blocks_lift_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_blocks_lift_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::BlocksLiftResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["session_id", "given", "entities", "not_observable"],
-    )?;
+pub fn decode_agenticspec_cli_blocks_lift_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksLiftResult, json::DecodeError> {
+    json::closed_at(value, at, &["session_id", "given", "entities", "not_observable"])?;
     Ok(agenticspec_types::cli::BlocksLiftResult {
         session_id: {
             let at0 = json::nested(at, "session_id");
@@ -328,10 +266,7 @@ pub fn decode_agenticspec_cli_blocks_lift_result(
             let member2 = json::member_at(value, at, "entities")?;
             {
                 let mut items2 = Vec::new();
-                for (index2, element2) in json::items_at(member2, &at2, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
                     let nested2 = json::nested(&at2, &index2.to_string());
                     items2.push(decode_agenticspec_cli_entity_rows(element2, &nested2)?);
                 }
@@ -343,10 +278,7 @@ pub fn decode_agenticspec_cli_blocks_lift_result(
             let member3 = json::member_at(value, at, "not_observable")?;
             {
                 let mut items3 = Vec::new();
-                for (index3, element3) in json::items_at(member3, &at3, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
                     let nested3 = json::nested(&at3, &index3.to_string());
                     items3.push(json::text_at(element3, &nested3, "a string")?.to_owned());
                 }
@@ -357,10 +289,7 @@ pub fn decode_agenticspec_cli_blocks_lift_result(
 }
 
 /// Writes `agenticspec.cli.BlocksScenarioInput` as JSON.
-pub fn encode_agenticspec_cli_blocks_scenario_input(
-    value: &agenticspec_types::cli::BlocksScenarioInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_blocks_scenario_input(value: &agenticspec_types::cli::BlocksScenarioInput, out: &mut String) {
     out.push('{');
     json::member(out, "transcript");
     json::push_text(out, &value.transcript);
@@ -384,22 +313,8 @@ pub fn encode_agenticspec_cli_blocks_scenario_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_blocks_scenario_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::BlocksScenarioInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "transcript",
-            "architecture",
-            "profile",
-            "map",
-            "out",
-            "name",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_blocks_scenario_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksScenarioInput, json::DecodeError> {
+    json::closed_at(value, at, &["transcript", "architecture", "profile", "map", "out", "name"])?;
     Ok(agenticspec_types::cli::BlocksScenarioInput {
         transcript: {
             let at0 = json::nested(at, "transcript");
@@ -437,10 +352,7 @@ pub fn decode_agenticspec_cli_blocks_scenario_input(
 }
 
 /// Writes `agenticspec.cli.BlocksScenarioResult` as JSON.
-pub fn encode_agenticspec_cli_blocks_scenario_result(
-    value: &agenticspec_types::cli::BlocksScenarioResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_blocks_scenario_result(value: &agenticspec_types::cli::BlocksScenarioResult, out: &mut String) {
     out.push('{');
     json::member(out, "out");
     json::push_text(out, &value.out);
@@ -476,22 +388,8 @@ pub fn encode_agenticspec_cli_blocks_scenario_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_blocks_scenario_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::BlocksScenarioResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "out",
-            "scenario",
-            "inputs",
-            "expectations",
-            "unjoined",
-            "unmapped",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_blocks_scenario_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksScenarioResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "scenario", "inputs", "expectations", "unjoined", "unmapped"])?;
     Ok(agenticspec_types::cli::BlocksScenarioResult {
         out: {
             let at0 = json::nested(at, "out");
@@ -518,10 +416,7 @@ pub fn decode_agenticspec_cli_blocks_scenario_result(
             let member4 = json::member_at(value, at, "unjoined")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
                 }
@@ -533,10 +428,7 @@ pub fn decode_agenticspec_cli_blocks_scenario_result(
             let member5 = json::member_at(value, at, "unmapped")?;
             {
                 let mut items5 = Vec::new();
-                for (index5, element5) in json::items_at(member5, &at5, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
                     let nested5 = json::nested(&at5, &index5.to_string());
                     items5.push(json::text_at(element5, &nested5, "a string")?.to_owned());
                 }
@@ -547,10 +439,7 @@ pub fn decode_agenticspec_cli_blocks_scenario_result(
 }
 
 /// Writes `agenticspec.cli.BustCause` as JSON.
-pub fn encode_agenticspec_cli_bust_cause(
-    value: &agenticspec_types::cli::BustCause,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_bust_cause(value: &agenticspec_types::cli::BustCause, out: &mut String) {
     match value {
         agenticspec_types::cli::BustCause::TtlExpired => json::push_text(out, "ttl_expired"),
         agenticspec_types::cli::BustCause::ModelChanged => json::push_text(out, "model_changed"),
@@ -564,37 +453,18 @@ pub fn encode_agenticspec_cli_bust_cause(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_bust_cause(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::BustCause, json::DecodeError> {
-    Ok(
-        match json::text_at(
-            value,
-            at,
-            "one of `ttl_expired`, `model_changed`, `compacted`, `unexplained`",
-        )? {
-            "ttl_expired" => agenticspec_types::cli::BustCause::TtlExpired,
-            "model_changed" => agenticspec_types::cli::BustCause::ModelChanged,
-            "compacted" => agenticspec_types::cli::BustCause::Compacted,
-            "unexplained" => agenticspec_types::cli::BustCause::Unexplained,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `ttl_expired`, `model_changed`, `compacted`, `unexplained`"
-                        .to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_cli_bust_cause(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BustCause, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `ttl_expired`, `model_changed`, `compacted`, `unexplained`")? {
+        "ttl_expired" => agenticspec_types::cli::BustCause::TtlExpired,
+        "model_changed" => agenticspec_types::cli::BustCause::ModelChanged,
+        "compacted" => agenticspec_types::cli::BustCause::Compacted,
+        "unexplained" => agenticspec_types::cli::BustCause::Unexplained,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `ttl_expired`, `model_changed`, `compacted`, `unexplained`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.cli.BustFigures` as JSON.
-pub fn encode_agenticspec_cli_bust_figures(
-    value: &agenticspec_types::cli::BustFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_bust_figures(value: &agenticspec_types::cli::BustFigures, out: &mut String) {
     out.push('{');
     json::member(out, "scope");
     encode_agenticspec_cli_agent_scope(&value.scope, out);
@@ -612,15 +482,8 @@ pub fn encode_agenticspec_cli_bust_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_bust_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::BustFigures, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["scope", "cause", "count", "tokens_written_again"],
-    )?;
+pub fn decode_agenticspec_cli_bust_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BustFigures, json::DecodeError> {
+    json::closed_at(value, at, &["scope", "cause", "count", "tokens_written_again"])?;
     Ok(agenticspec_types::cli::BustFigures {
         scope: {
             let at0 = json::nested(at, "scope");
@@ -646,10 +509,7 @@ pub fn decode_agenticspec_cli_bust_figures(
 }
 
 /// Writes `agenticspec.cli.CacheFigures` as JSON.
-pub fn encode_agenticspec_cli_cache_figures(
-    value: &agenticspec_types::cli::CacheFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_cache_figures(value: &agenticspec_types::cli::CacheFigures, out: &mut String) {
     out.push('{');
     json::member(out, "scope");
     encode_agenticspec_cli_agent_scope(&value.scope, out);
@@ -669,21 +529,8 @@ pub fn encode_agenticspec_cli_cache_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_cache_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::CacheFigures, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "scope",
-            "read_tokens",
-            "write_tokens",
-            "uncached_tokens",
-            "hit_permille",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_cache_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::CacheFigures, json::DecodeError> {
+    json::closed_at(value, at, &["scope", "read_tokens", "write_tokens", "uncached_tokens", "hit_permille"])?;
     Ok(agenticspec_types::cli::CacheFigures {
         scope: {
             let at0 = json::nested(at, "scope");
@@ -714,10 +561,7 @@ pub fn decode_agenticspec_cli_cache_figures(
 }
 
 /// Writes `agenticspec.cli.Certainty` as JSON.
-pub fn encode_agenticspec_cli_certainty(
-    value: &agenticspec_types::cli::Certainty,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_certainty(value: &agenticspec_types::cli::Certainty, out: &mut String) {
     match value {
         agenticspec_types::cli::Certainty::Definite => json::push_text(out, "definite"),
         agenticspec_types::cli::Certainty::Possible => json::push_text(out, "possible"),
@@ -729,30 +573,16 @@ pub fn encode_agenticspec_cli_certainty(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_certainty(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::Certainty, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `definite`, `possible`")? {
-            "definite" => agenticspec_types::cli::Certainty::Definite,
-            "possible" => agenticspec_types::cli::Certainty::Possible,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `definite`, `possible`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_cli_certainty(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::Certainty, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `definite`, `possible`")? {
+        "definite" => agenticspec_types::cli::Certainty::Definite,
+        "possible" => agenticspec_types::cli::Certainty::Possible,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `definite`, `possible`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.cli.CheckFigures` as JSON.
-pub fn encode_agenticspec_cli_check_figures(
-    value: &agenticspec_types::cli::CheckFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_check_figures(value: &agenticspec_types::cli::CheckFigures, out: &mut String) {
     out.push('{');
     json::member(out, "check");
     json::push_text(out, &value.check);
@@ -774,15 +604,8 @@ pub fn encode_agenticspec_cli_check_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_check_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::CheckFigures, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["check", "about", "severity", "ok", "gap", "unk"],
-    )?;
+pub fn decode_agenticspec_cli_check_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::CheckFigures, json::DecodeError> {
+    json::closed_at(value, at, &["check", "about", "severity", "ok", "gap", "unk"])?;
     Ok(agenticspec_types::cli::CheckFigures {
         check: {
             let at0 = json::nested(at, "check");
@@ -818,10 +641,7 @@ pub fn decode_agenticspec_cli_check_figures(
 }
 
 /// Writes `agenticspec.cli.CheckVerdict` as JSON.
-pub fn encode_agenticspec_cli_check_verdict(
-    value: &agenticspec_types::cli::CheckVerdict,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_check_verdict(value: &agenticspec_types::cli::CheckVerdict, out: &mut String) {
     out.push('{');
     json::member(out, "check");
     json::push_text(out, &value.check);
@@ -839,10 +659,7 @@ pub fn encode_agenticspec_cli_check_verdict(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_check_verdict(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::CheckVerdict, json::DecodeError> {
+pub fn decode_agenticspec_cli_check_verdict(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::CheckVerdict, json::DecodeError> {
     json::closed_at(value, at, &["check", "session_id", "verdict", "rows"])?;
     Ok(agenticspec_types::cli::CheckVerdict {
         check: {
@@ -869,10 +686,7 @@ pub fn decode_agenticspec_cli_check_verdict(
 }
 
 /// Writes `agenticspec.cli.ConcurrencyFigures` as JSON.
-pub fn encode_agenticspec_cli_concurrency_figures(
-    value: &agenticspec_types::cli::ConcurrencyFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_concurrency_figures(value: &agenticspec_types::cli::ConcurrencyFigures, out: &mut String) {
     out.push('{');
     json::member(out, "scope");
     encode_agenticspec_cli_agent_scope(&value.scope, out);
@@ -890,10 +704,7 @@ pub fn encode_agenticspec_cli_concurrency_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_concurrency_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ConcurrencyFigures, json::DecodeError> {
+pub fn decode_agenticspec_cli_concurrency_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ConcurrencyFigures, json::DecodeError> {
     json::closed_at(value, at, &["scope", "p50", "p90", "max"])?;
     Ok(agenticspec_types::cli::ConcurrencyFigures {
         scope: {
@@ -920,10 +731,7 @@ pub fn decode_agenticspec_cli_concurrency_figures(
 }
 
 /// Writes `agenticspec.cli.CorpusAction` as JSON.
-pub fn encode_agenticspec_cli_corpus_action(
-    value: &agenticspec_types::cli::CorpusAction,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_corpus_action(value: &agenticspec_types::cli::CorpusAction, out: &mut String) {
     match value {
         agenticspec_types::cli::CorpusAction::Run => json::push_text(out, "run"),
     }
@@ -934,27 +742,15 @@ pub fn encode_agenticspec_cli_corpus_action(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_corpus_action(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::CorpusAction, json::DecodeError> {
+pub fn decode_agenticspec_cli_corpus_action(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::CorpusAction, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `run`")? {
         "run" => agenticspec_types::cli::CorpusAction::Run,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `run`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `run`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.cli.Dashboard` as JSON.
-pub fn encode_agenticspec_cli_dashboard(
-    value: &agenticspec_types::cli::Dashboard,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_dashboard(value: &agenticspec_types::cli::Dashboard, out: &mut String) {
     out.push('{');
     json::member(out, "generated_at");
     json::push_text(out, &value.generated_at);
@@ -977,10 +773,7 @@ pub fn encode_agenticspec_cli_dashboard(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_dashboard(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::Dashboard, json::DecodeError> {
+pub fn decode_agenticspec_cli_dashboard(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::Dashboard, json::DecodeError> {
     json::closed_at(value, at, &["generated_at", "overall", "sessions"])?;
     Ok(agenticspec_types::cli::Dashboard {
         generated_at: {
@@ -998,10 +791,7 @@ pub fn decode_agenticspec_cli_dashboard(
             let member2 = json::member_at(value, at, "sessions")?;
             {
                 let mut items2 = Vec::new();
-                for (index2, element2) in json::items_at(member2, &at2, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
                     let nested2 = json::nested(&at2, &index2.to_string());
                     items2.push(decode_agenticspec_cli_session_summary(element2, &nested2)?);
                 }
@@ -1012,10 +802,7 @@ pub fn decode_agenticspec_cli_dashboard(
 }
 
 /// Writes `agenticspec.cli.DecisionFigures` as JSON.
-pub fn encode_agenticspec_cli_decision_figures(
-    value: &agenticspec_types::cli::DecisionFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_decision_figures(value: &agenticspec_types::cli::DecisionFigures, out: &mut String) {
     out.push('{');
     json::member(out, "decider");
     encode_agenticspec_session_decider(&value.decider, out);
@@ -1031,10 +818,7 @@ pub fn encode_agenticspec_cli_decision_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_decision_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::DecisionFigures, json::DecodeError> {
+pub fn decode_agenticspec_cli_decision_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DecisionFigures, json::DecodeError> {
     json::closed_at(value, at, &["decider", "decision", "count"])?;
     Ok(agenticspec_types::cli::DecisionFigures {
         decider: {
@@ -1056,10 +840,7 @@ pub fn decode_agenticspec_cli_decision_figures(
 }
 
 /// Writes `agenticspec.cli.DeployBundleInput` as JSON.
-pub fn encode_agenticspec_cli_deploy_bundle_input(
-    value: &agenticspec_types::cli::DeployBundleInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_deploy_bundle_input(value: &agenticspec_types::cli::DeployBundleInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -1089,15 +870,8 @@ pub fn encode_agenticspec_cli_deploy_bundle_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_deploy_bundle_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::DeployBundleInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["architecture", "binding", "out", "ports", "accepts", "kpis"],
-    )?;
+pub fn decode_agenticspec_cli_deploy_bundle_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployBundleInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "binding", "out", "ports", "accepts", "kpis"])?;
     Ok(agenticspec_types::cli::DeployBundleInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -1141,10 +915,7 @@ pub fn decode_agenticspec_cli_deploy_bundle_input(
 }
 
 /// Writes `agenticspec.cli.DeployBundleResult` as JSON.
-pub fn encode_agenticspec_cli_deploy_bundle_result(
-    value: &agenticspec_types::cli::DeployBundleResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_deploy_bundle_result(value: &agenticspec_types::cli::DeployBundleResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -1172,23 +943,8 @@ pub fn encode_agenticspec_cli_deploy_bundle_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_deploy_bundle_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::DeployBundleResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "architecture",
-            "binding",
-            "digest",
-            "units",
-            "written",
-            "out",
-            "bundle",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_deploy_bundle_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployBundleResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "binding", "digest", "units", "written", "out", "bundle"])?;
     Ok(agenticspec_types::cli::DeployBundleResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -1233,10 +989,7 @@ pub fn decode_agenticspec_cli_deploy_bundle_result(
 }
 
 /// Writes `agenticspec.cli.DeployCheckInput` as JSON.
-pub fn encode_agenticspec_cli_deploy_check_input(
-    value: &agenticspec_types::cli::DeployCheckInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_deploy_check_input(value: &agenticspec_types::cli::DeployCheckInput, out: &mut String) {
     out.push('{');
     json::member(out, "bundle");
     json::push_text(out, &value.bundle);
@@ -1252,10 +1005,7 @@ pub fn encode_agenticspec_cli_deploy_check_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_deploy_check_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::DeployCheckInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_deploy_check_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployCheckInput, json::DecodeError> {
     json::closed_at(value, at, &["bundle", "accepts"])?;
     Ok(agenticspec_types::cli::DeployCheckInput {
         bundle: {
@@ -1274,10 +1024,7 @@ pub fn decode_agenticspec_cli_deploy_check_input(
 }
 
 /// Writes `agenticspec.cli.DeployCheckResult` as JSON.
-pub fn encode_agenticspec_cli_deploy_check_result(
-    value: &agenticspec_types::cli::DeployCheckResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_deploy_check_result(value: &agenticspec_types::cli::DeployCheckResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -1295,10 +1042,7 @@ pub fn encode_agenticspec_cli_deploy_check_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_deploy_check_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::DeployCheckResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_deploy_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployCheckResult, json::DecodeError> {
     json::closed_at(value, at, &["architecture", "binding", "digest", "units"])?;
     Ok(agenticspec_types::cli::DeployCheckResult {
         architecture: {
@@ -1325,10 +1069,7 @@ pub fn decode_agenticspec_cli_deploy_check_result(
 }
 
 /// Writes `agenticspec.cli.EntityRows` as JSON.
-pub fn encode_agenticspec_cli_entity_rows(
-    value: &agenticspec_types::cli::EntityRows,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_entity_rows(value: &agenticspec_types::cli::EntityRows, out: &mut String) {
     out.push('{');
     json::member(out, "entity");
     json::push_text(out, &value.entity);
@@ -1342,10 +1083,7 @@ pub fn encode_agenticspec_cli_entity_rows(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_entity_rows(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::EntityRows, json::DecodeError> {
+pub fn decode_agenticspec_cli_entity_rows(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::EntityRows, json::DecodeError> {
     json::closed_at(value, at, &["entity", "rows"])?;
     Ok(agenticspec_types::cli::EntityRows {
         entity: {
@@ -1362,10 +1100,7 @@ pub fn decode_agenticspec_cli_entity_rows(
 }
 
 /// Writes `agenticspec.cli.ExportInput` as JSON.
-pub fn encode_agenticspec_cli_export_input(
-    value: &agenticspec_types::cli::ExportInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_export_input(value: &agenticspec_types::cli::ExportInput, out: &mut String) {
     out.push('{');
     json::member(out, "procedure");
     json::push_text(out, &value.procedure);
@@ -1379,10 +1114,7 @@ pub fn encode_agenticspec_cli_export_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_export_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ExportInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_export_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ExportInput, json::DecodeError> {
     json::closed_at(value, at, &["procedure", "out"])?;
     Ok(agenticspec_types::cli::ExportInput {
         procedure: {
@@ -1399,10 +1131,7 @@ pub fn decode_agenticspec_cli_export_input(
 }
 
 /// Writes `agenticspec.cli.ExportResult` as JSON.
-pub fn encode_agenticspec_cli_export_result(
-    value: &agenticspec_types::cli::ExportResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_export_result(value: &agenticspec_types::cli::ExportResult, out: &mut String) {
     out.push('{');
     json::member(out, "protocol");
     json::push_text(out, &value.protocol);
@@ -1420,10 +1149,7 @@ pub fn encode_agenticspec_cli_export_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_export_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ExportResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_export_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ExportResult, json::DecodeError> {
     json::closed_at(value, at, &["protocol", "bindings", "validated", "detail"])?;
     Ok(agenticspec_types::cli::ExportResult {
         protocol: {
@@ -1450,10 +1176,7 @@ pub fn decode_agenticspec_cli_export_result(
 }
 
 /// Writes `agenticspec.cli.ExposureFigures` as JSON.
-pub fn encode_agenticspec_cli_exposure_figures(
-    value: &agenticspec_types::cli::ExposureFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_exposure_figures(value: &agenticspec_types::cli::ExposureFigures, out: &mut String) {
     out.push('{');
     json::member(out, "channel");
     encode_agenticspec_session_exposure_channel(&value.channel, out);
@@ -1475,15 +1198,8 @@ pub fn encode_agenticspec_cli_exposure_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_exposure_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ExposureFigures, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["channel", "class", "kind", "verdict", "count", "sessions"],
-    )?;
+pub fn decode_agenticspec_cli_exposure_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ExposureFigures, json::DecodeError> {
+    json::closed_at(value, at, &["channel", "class", "kind", "verdict", "count", "sessions"])?;
     Ok(agenticspec_types::cli::ExposureFigures {
         channel: {
             let at0 = json::nested(at, "channel");
@@ -1519,10 +1235,7 @@ pub fn decode_agenticspec_cli_exposure_figures(
 }
 
 /// Writes `agenticspec.cli.IngressDefaultInput` as JSON.
-pub fn encode_agenticspec_cli_ingress_default_input(
-    value: &agenticspec_types::cli::IngressDefaultInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ingress_default_input(value: &agenticspec_types::cli::IngressDefaultInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -1534,10 +1247,7 @@ pub fn encode_agenticspec_cli_ingress_default_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ingress_default_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::IngressDefaultInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_ingress_default_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressDefaultInput, json::DecodeError> {
     json::closed_at(value, at, &["architecture"])?;
     Ok(agenticspec_types::cli::IngressDefaultInput {
         architecture: {
@@ -1549,10 +1259,7 @@ pub fn decode_agenticspec_cli_ingress_default_input(
 }
 
 /// Writes `agenticspec.cli.IngressDefaultResult` as JSON.
-pub fn encode_agenticspec_cli_ingress_default_result(
-    value: &agenticspec_types::cli::IngressDefaultResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ingress_default_result(value: &agenticspec_types::cli::IngressDefaultResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -1575,10 +1282,7 @@ pub fn encode_agenticspec_cli_ingress_default_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ingress_default_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::IngressDefaultResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_ingress_default_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressDefaultResult, json::DecodeError> {
     json::closed_at(value, at, &["architecture", "defaults", "ingress"])?;
     Ok(agenticspec_types::cli::IngressDefaultResult {
         architecture: {
@@ -1591,10 +1295,7 @@ pub fn decode_agenticspec_cli_ingress_default_result(
             let member1 = json::member_at(value, at, "defaults")?;
             {
                 let mut items1 = Vec::new();
-                for (index1, element1) in json::items_at(member1, &at1, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index1, element1) in json::items_at(member1, &at1, "an array")?.iter().enumerate() {
                     let nested1 = json::nested(&at1, &index1.to_string());
                     items1.push(json::text_at(element1, &nested1, "a string")?.to_owned());
                 }
@@ -1610,10 +1311,7 @@ pub fn decode_agenticspec_cli_ingress_default_result(
 }
 
 /// Writes `agenticspec.cli.IngressProjectInput` as JSON.
-pub fn encode_agenticspec_cli_ingress_project_input(
-    value: &agenticspec_types::cli::IngressProjectInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ingress_project_input(value: &agenticspec_types::cli::IngressProjectInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -1645,15 +1343,8 @@ pub fn encode_agenticspec_cli_ingress_project_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ingress_project_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::IngressProjectInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["architecture", "out", "check", "blocks", "ports", "kpis"],
-    )?;
+pub fn decode_agenticspec_cli_ingress_project_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressProjectInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "out", "check", "blocks", "ports", "kpis"])?;
     Ok(agenticspec_types::cli::IngressProjectInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -1699,10 +1390,7 @@ pub fn decode_agenticspec_cli_ingress_project_input(
 }
 
 /// Writes `agenticspec.cli.IngressProjectResult` as JSON.
-pub fn encode_agenticspec_cli_ingress_project_result(
-    value: &agenticspec_types::cli::IngressProjectResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ingress_project_result(value: &agenticspec_types::cli::IngressProjectResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -1727,10 +1415,7 @@ pub fn encode_agenticspec_cli_ingress_project_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ingress_project_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::IngressProjectResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_ingress_project_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressProjectResult, json::DecodeError> {
     json::closed_at(value, at, &["architecture", "exports", "files", "written"])?;
     Ok(agenticspec_types::cli::IngressProjectResult {
         architecture: {
@@ -1748,10 +1433,7 @@ pub fn decode_agenticspec_cli_ingress_project_result(
             let member2 = json::member_at(value, at, "files")?;
             {
                 let mut items2 = Vec::new();
-                for (index2, element2) in json::items_at(member2, &at2, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
                     let nested2 = json::nested(&at2, &index2.to_string());
                     items2.push(json::text_at(element2, &nested2, "a string")?.to_owned());
                 }
@@ -1767,10 +1449,7 @@ pub fn decode_agenticspec_cli_ingress_project_result(
 }
 
 /// Writes `agenticspec.cli.InvariantStatus` as JSON.
-pub fn encode_agenticspec_cli_invariant_status(
-    value: &agenticspec_types::cli::InvariantStatus,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_invariant_status(value: &agenticspec_types::cli::InvariantStatus, out: &mut String) {
     match value {
         agenticspec_types::cli::InvariantStatus::Held => json::push_text(out, "held"),
         agenticspec_types::cli::InvariantStatus::Violated => json::push_text(out, "violated"),
@@ -1783,31 +1462,17 @@ pub fn encode_agenticspec_cli_invariant_status(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_invariant_status(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::InvariantStatus, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `held`, `violated`, `not_checked`")? {
-            "held" => agenticspec_types::cli::InvariantStatus::Held,
-            "violated" => agenticspec_types::cli::InvariantStatus::Violated,
-            "not_checked" => agenticspec_types::cli::InvariantStatus::NotChecked,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `held`, `violated`, `not_checked`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_cli_invariant_status(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::InvariantStatus, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `held`, `violated`, `not_checked`")? {
+        "held" => agenticspec_types::cli::InvariantStatus::Held,
+        "violated" => agenticspec_types::cli::InvariantStatus::Violated,
+        "not_checked" => agenticspec_types::cli::InvariantStatus::NotChecked,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `held`, `violated`, `not_checked`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.cli.KpiInput` as JSON.
-pub fn encode_agenticspec_cli_kpi_input(
-    value: &agenticspec_types::cli::KpiInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_kpi_input(value: &agenticspec_types::cli::KpiInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.root {
         json::member(out, "root");
@@ -1825,10 +1490,7 @@ pub fn encode_agenticspec_cli_kpi_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_kpi_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::KpiInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_kpi_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::KpiInput, json::DecodeError> {
     json::closed_at(value, at, &["root", "since_hours"])?;
     Ok(agenticspec_types::cli::KpiInput {
         root: match value.member("root") {
@@ -1849,10 +1511,7 @@ pub fn decode_agenticspec_cli_kpi_input(
 }
 
 /// Writes `agenticspec.cli.KpiReport` as JSON.
-pub fn encode_agenticspec_cli_kpi_report(
-    value: &agenticspec_types::cli::KpiReport,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_kpi_report(value: &agenticspec_types::cli::KpiReport, out: &mut String) {
     out.push('{');
     json::member(out, "window_from");
     json::push_text(out, &value.window_from);
@@ -1925,30 +1584,8 @@ pub fn encode_agenticspec_cli_kpi_report(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_kpi_report(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::KpiReport, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "window_from",
-            "window_to",
-            "transcripts",
-            "sessions",
-            "sub_agents",
-            "refused_commands",
-            "cost_microdollars",
-            "unpriced_messages",
-            "models",
-            "cache",
-            "busts",
-            "concurrency",
-            "autonomy",
-            "exposures",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_kpi_report(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::KpiReport, json::DecodeError> {
+    json::closed_at(value, at, &["window_from", "window_to", "transcripts", "sessions", "sub_agents", "refused_commands", "cost_microdollars", "unpriced_messages", "models", "cache", "busts", "concurrency", "autonomy", "exposures"])?;
     Ok(agenticspec_types::cli::KpiReport {
         window_from: {
             let at0 = json::nested(at, "window_from");
@@ -1995,10 +1632,7 @@ pub fn decode_agenticspec_cli_kpi_report(
             let member8 = json::member_at(value, at, "models")?;
             {
                 let mut items8 = Vec::new();
-                for (index8, element8) in json::items_at(member8, &at8, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index8, element8) in json::items_at(member8, &at8, "an array")?.iter().enumerate() {
                     let nested8 = json::nested(&at8, &index8.to_string());
                     items8.push(decode_agenticspec_cli_model_figures(element8, &nested8)?);
                 }
@@ -2010,10 +1644,7 @@ pub fn decode_agenticspec_cli_kpi_report(
             let member9 = json::member_at(value, at, "cache")?;
             {
                 let mut items9 = Vec::new();
-                for (index9, element9) in json::items_at(member9, &at9, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index9, element9) in json::items_at(member9, &at9, "an array")?.iter().enumerate() {
                     let nested9 = json::nested(&at9, &index9.to_string());
                     items9.push(decode_agenticspec_cli_cache_figures(element9, &nested9)?);
                 }
@@ -2025,10 +1656,7 @@ pub fn decode_agenticspec_cli_kpi_report(
             let member10 = json::member_at(value, at, "busts")?;
             {
                 let mut items10 = Vec::new();
-                for (index10, element10) in json::items_at(member10, &at10, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index10, element10) in json::items_at(member10, &at10, "an array")?.iter().enumerate() {
                     let nested10 = json::nested(&at10, &index10.to_string());
                     items10.push(decode_agenticspec_cli_bust_figures(element10, &nested10)?);
                 }
@@ -2040,14 +1668,9 @@ pub fn decode_agenticspec_cli_kpi_report(
             let member11 = json::member_at(value, at, "concurrency")?;
             {
                 let mut items11 = Vec::new();
-                for (index11, element11) in json::items_at(member11, &at11, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index11, element11) in json::items_at(member11, &at11, "an array")?.iter().enumerate() {
                     let nested11 = json::nested(&at11, &index11.to_string());
-                    items11.push(decode_agenticspec_cli_concurrency_figures(
-                        element11, &nested11,
-                    )?);
+                    items11.push(decode_agenticspec_cli_concurrency_figures(element11, &nested11)?);
                 }
                 items11
             }
@@ -2062,14 +1685,9 @@ pub fn decode_agenticspec_cli_kpi_report(
             let member13 = json::member_at(value, at, "exposures")?;
             {
                 let mut items13 = Vec::new();
-                for (index13, element13) in json::items_at(member13, &at13, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index13, element13) in json::items_at(member13, &at13, "an array")?.iter().enumerate() {
                     let nested13 = json::nested(&at13, &index13.to_string());
-                    items13.push(decode_agenticspec_cli_exposure_figures(
-                        element13, &nested13,
-                    )?);
+                    items13.push(decode_agenticspec_cli_exposure_figures(element13, &nested13)?);
                 }
                 items13
             }
@@ -2078,10 +1696,7 @@ pub fn decode_agenticspec_cli_kpi_report(
 }
 
 /// Writes `agenticspec.cli.LiftInput` as JSON.
-pub fn encode_agenticspec_cli_lift_input(
-    value: &agenticspec_types::cli::LiftInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_lift_input(value: &agenticspec_types::cli::LiftInput, out: &mut String) {
     out.push('{');
     json::member(out, "transcript");
     json::push_text(out, &value.transcript);
@@ -2093,10 +1708,7 @@ pub fn encode_agenticspec_cli_lift_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_lift_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::LiftInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_lift_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::LiftInput, json::DecodeError> {
     json::closed_at(value, at, &["transcript"])?;
     Ok(agenticspec_types::cli::LiftInput {
         transcript: {
@@ -2108,10 +1720,7 @@ pub fn decode_agenticspec_cli_lift_input(
 }
 
 /// Writes `agenticspec.cli.LiftResult` as JSON.
-pub fn encode_agenticspec_cli_lift_result(
-    value: &agenticspec_types::cli::LiftResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_lift_result(value: &agenticspec_types::cli::LiftResult, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     json::push_text(out, &value.session_id);
@@ -2136,10 +1745,7 @@ pub fn encode_agenticspec_cli_lift_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_lift_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::LiftResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_lift_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::LiftResult, json::DecodeError> {
     json::closed_at(value, at, &["session_id", "agents", "commands", "refused"])?;
     Ok(agenticspec_types::cli::LiftResult {
         session_id: {
@@ -2157,10 +1763,7 @@ pub fn decode_agenticspec_cli_lift_result(
             let member2 = json::member_at(value, at, "commands")?;
             {
                 let mut items2 = Vec::new();
-                for (index2, element2) in json::items_at(member2, &at2, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
                     let nested2 = json::nested(&at2, &index2.to_string());
                     items2.push(decode_agenticspec_cli_lifted_command(element2, &nested2)?);
                 }
@@ -2176,10 +1779,7 @@ pub fn decode_agenticspec_cli_lift_result(
 }
 
 /// Writes `agenticspec.cli.LiftedCommand` as JSON.
-pub fn encode_agenticspec_cli_lifted_command(
-    value: &agenticspec_types::cli::LiftedCommand,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_lifted_command(value: &agenticspec_types::cli::LiftedCommand, out: &mut String) {
     out.push('{');
     json::member(out, "seq");
     json::push_integer(out, value.seq);
@@ -2201,15 +1801,8 @@ pub fn encode_agenticspec_cli_lifted_command(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_lifted_command(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::LiftedCommand, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["seq", "at", "actor", "command", "outcome", "input"],
-    )?;
+pub fn decode_agenticspec_cli_lifted_command(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::LiftedCommand, json::DecodeError> {
+    json::closed_at(value, at, &["seq", "at", "actor", "command", "outcome", "input"])?;
     Ok(agenticspec_types::cli::LiftedCommand {
         seq: {
             let at0 = json::nested(at, "seq");
@@ -2245,10 +1838,7 @@ pub fn decode_agenticspec_cli_lifted_command(
 }
 
 /// Writes `agenticspec.cli.MarkKind` as JSON.
-pub fn encode_agenticspec_cli_mark_kind(
-    value: &agenticspec_types::cli::MarkKind,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_mark_kind(value: &agenticspec_types::cli::MarkKind, out: &mut String) {
     match value {
         agenticspec_types::cli::MarkKind::Turn => json::push_text(out, "turn"),
         agenticspec_types::cli::MarkKind::HumanPrompt => json::push_text(out, "human_prompt"),
@@ -2266,10 +1856,7 @@ pub fn encode_agenticspec_cli_mark_kind(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_mark_kind(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::MarkKind, json::DecodeError> {
+pub fn decode_agenticspec_cli_mark_kind(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::MarkKind, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `turn`, `human_prompt`, `delegate_prompt`, `peer_prompt`, `harness_prompt`, `compaction`, `cache_bust`, `refusal`")? {
         "turn" => agenticspec_types::cli::MarkKind::Turn,
         "human_prompt" => agenticspec_types::cli::MarkKind::HumanPrompt,
@@ -2284,10 +1871,7 @@ pub fn decode_agenticspec_cli_mark_kind(
 }
 
 /// Writes `agenticspec.cli.MineInput` as JSON.
-pub fn encode_agenticspec_cli_mine_input(
-    value: &agenticspec_types::cli::MineInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_mine_input(value: &agenticspec_types::cli::MineInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.root {
         json::member(out, "root");
@@ -2321,22 +1905,8 @@ pub fn encode_agenticspec_cli_mine_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_mine_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::MineInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "root",
-            "since_hours",
-            "level",
-            "min_sessions",
-            "min_projects",
-            "top",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_mine_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::MineInput, json::DecodeError> {
+    json::closed_at(value, at, &["root", "since_hours", "level", "min_sessions", "min_projects", "top"])?;
     Ok(agenticspec_types::cli::MineInput {
         root: match value.member("root") {
             None | Some(json::Value::Null) => None,
@@ -2384,10 +1954,7 @@ pub fn decode_agenticspec_cli_mine_input(
 }
 
 /// Writes `agenticspec.cli.MineReport` as JSON.
-pub fn encode_agenticspec_cli_mine_report(
-    value: &agenticspec_types::cli::MineReport,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_mine_report(value: &agenticspec_types::cli::MineReport, out: &mut String) {
     out.push('{');
     json::member(out, "format");
     json::push_text(out, &value.format);
@@ -2414,15 +1981,8 @@ pub fn encode_agenticspec_cli_mine_report(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_mine_report(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::MineReport, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["format", "level", "sessions", "turns", "patterns"],
-    )?;
+pub fn decode_agenticspec_cli_mine_report(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::MineReport, json::DecodeError> {
+    json::closed_at(value, at, &["format", "level", "sessions", "turns", "patterns"])?;
     Ok(agenticspec_types::cli::MineReport {
         format: {
             let at0 = json::nested(at, "format");
@@ -2449,10 +2009,7 @@ pub fn decode_agenticspec_cli_mine_report(
             let member4 = json::member_at(value, at, "patterns")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(decode_agenticspec_cli_pattern(element4, &nested4)?);
                 }
@@ -2463,10 +2020,7 @@ pub fn decode_agenticspec_cli_mine_report(
 }
 
 /// Writes `agenticspec.cli.ModelFigures` as JSON.
-pub fn encode_agenticspec_cli_model_figures(
-    value: &agenticspec_types::cli::ModelFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_model_figures(value: &agenticspec_types::cli::ModelFigures, out: &mut String) {
     out.push('{');
     json::member(out, "scope");
     encode_agenticspec_cli_agent_scope(&value.scope, out);
@@ -2492,24 +2046,8 @@ pub fn encode_agenticspec_cli_model_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_model_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ModelFigures, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "scope",
-            "model",
-            "messages",
-            "output_tokens",
-            "context_p50",
-            "context_p90",
-            "context_max",
-            "cost_microdollars",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_model_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ModelFigures, json::DecodeError> {
+    json::closed_at(value, at, &["scope", "model", "messages", "output_tokens", "context_p50", "context_p90", "context_max", "cost_microdollars"])?;
     Ok(agenticspec_types::cli::ModelFigures {
         scope: {
             let at0 = json::nested(at, "scope");
@@ -2555,10 +2093,7 @@ pub fn decode_agenticspec_cli_model_figures(
 }
 
 /// Writes `agenticspec.cli.PackingDefaultInput` as JSON.
-pub fn encode_agenticspec_cli_packing_default_input(
-    value: &agenticspec_types::cli::PackingDefaultInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_packing_default_input(value: &agenticspec_types::cli::PackingDefaultInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -2574,10 +2109,7 @@ pub fn encode_agenticspec_cli_packing_default_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_packing_default_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::PackingDefaultInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_packing_default_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::PackingDefaultInput, json::DecodeError> {
     json::closed_at(value, at, &["architecture", "strategy"])?;
     Ok(agenticspec_types::cli::PackingDefaultInput {
         architecture: {
@@ -2596,10 +2128,7 @@ pub fn decode_agenticspec_cli_packing_default_input(
 }
 
 /// Writes `agenticspec.cli.PackingDefaultResult` as JSON.
-pub fn encode_agenticspec_cli_packing_default_result(
-    value: &agenticspec_types::cli::PackingDefaultResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_packing_default_result(value: &agenticspec_types::cli::PackingDefaultResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -2617,10 +2146,7 @@ pub fn encode_agenticspec_cli_packing_default_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_packing_default_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::PackingDefaultResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_packing_default_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::PackingDefaultResult, json::DecodeError> {
     json::closed_at(value, at, &["architecture", "strategy", "units", "packing"])?;
     Ok(agenticspec_types::cli::PackingDefaultResult {
         architecture: {
@@ -2678,23 +2204,8 @@ pub fn encode_agenticspec_cli_pattern(value: &agenticspec_types::cli::Pattern, o
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_pattern(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::Pattern, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "id",
-            "tokens",
-            "sessions",
-            "projects",
-            "occurrences",
-            "ok_permille",
-            "query",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_pattern(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::Pattern, json::DecodeError> {
+    json::closed_at(value, at, &["id", "tokens", "sessions", "projects", "occurrences", "ok_permille", "query"])?;
     Ok(agenticspec_types::cli::Pattern {
         id: {
             let at0 = json::nested(at, "id");
@@ -2706,10 +2217,7 @@ pub fn decode_agenticspec_cli_pattern(
             let member1 = json::member_at(value, at, "tokens")?;
             {
                 let mut items1 = Vec::new();
-                for (index1, element1) in json::items_at(member1, &at1, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index1, element1) in json::items_at(member1, &at1, "an array")?.iter().enumerate() {
                     let nested1 = json::nested(&at1, &index1.to_string());
                     items1.push(json::text_at(element1, &nested1, "a string")?.to_owned());
                 }
@@ -2745,10 +2253,7 @@ pub fn decode_agenticspec_cli_pattern(
 }
 
 /// Writes `agenticspec.cli.Procedure` as JSON.
-pub fn encode_agenticspec_cli_procedure(
-    value: &agenticspec_types::cli::Procedure,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_procedure(value: &agenticspec_types::cli::Procedure, out: &mut String) {
     out.push('{');
     json::member(out, "format");
     json::push_text(out, &value.format);
@@ -2804,25 +2309,8 @@ pub fn encode_agenticspec_cli_procedure(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_procedure(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::Procedure, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "format",
-            "id",
-            "description",
-            "pattern",
-            "matches",
-            "sessions",
-            "parameters",
-            "steps",
-            "query",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_procedure(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::Procedure, json::DecodeError> {
+    json::closed_at(value, at, &["format", "id", "description", "pattern", "matches", "sessions", "parameters", "steps", "query"])?;
     Ok(agenticspec_types::cli::Procedure {
         format: {
             let at0 = json::nested(at, "format");
@@ -2844,10 +2332,7 @@ pub fn decode_agenticspec_cli_procedure(
             let member3 = json::member_at(value, at, "pattern")?;
             {
                 let mut items3 = Vec::new();
-                for (index3, element3) in json::items_at(member3, &at3, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
                     let nested3 = json::nested(&at3, &index3.to_string());
                     items3.push(json::text_at(element3, &nested3, "a string")?.to_owned());
                 }
@@ -2864,10 +2349,7 @@ pub fn decode_agenticspec_cli_procedure(
             let member5 = json::member_at(value, at, "sessions")?;
             {
                 let mut items5 = Vec::new();
-                for (index5, element5) in json::items_at(member5, &at5, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
                     let nested5 = json::nested(&at5, &index5.to_string());
                     items5.push(json::text_at(element5, &nested5, "a string")?.to_owned());
                 }
@@ -2879,14 +2361,9 @@ pub fn decode_agenticspec_cli_procedure(
             let member6 = json::member_at(value, at, "parameters")?;
             {
                 let mut items6 = Vec::new();
-                for (index6, element6) in json::items_at(member6, &at6, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index6, element6) in json::items_at(member6, &at6, "an array")?.iter().enumerate() {
                     let nested6 = json::nested(&at6, &index6.to_string());
-                    items6.push(decode_agenticspec_cli_procedure_parameter(
-                        element6, &nested6,
-                    )?);
+                    items6.push(decode_agenticspec_cli_procedure_parameter(element6, &nested6)?);
                 }
                 items6
             }
@@ -2896,10 +2373,7 @@ pub fn decode_agenticspec_cli_procedure(
             let member7 = json::member_at(value, at, "steps")?;
             {
                 let mut items7 = Vec::new();
-                for (index7, element7) in json::items_at(member7, &at7, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index7, element7) in json::items_at(member7, &at7, "an array")?.iter().enumerate() {
                     let nested7 = json::nested(&at7, &index7.to_string());
                     items7.push(decode_agenticspec_cli_procedure_step(element7, &nested7)?);
                 }
@@ -2915,10 +2389,7 @@ pub fn decode_agenticspec_cli_procedure(
 }
 
 /// Writes `agenticspec.cli.ProcedureInput` as JSON.
-pub fn encode_agenticspec_cli_procedure_input(
-    value: &agenticspec_types::cli::ProcedureInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_procedure_input(value: &agenticspec_types::cli::ProcedureInput, out: &mut String) {
     out.push('{');
     json::member(out, "pattern");
     json::push_text(out, &value.pattern);
@@ -2946,15 +2417,8 @@ pub fn encode_agenticspec_cli_procedure_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_procedure_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ProcedureInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["pattern", "root", "since_hours", "level", "out"],
-    )?;
+pub fn decode_agenticspec_cli_procedure_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ProcedureInput, json::DecodeError> {
+    json::closed_at(value, at, &["pattern", "root", "since_hours", "level", "out"])?;
     Ok(agenticspec_types::cli::ProcedureInput {
         pattern: {
             let at0 = json::nested(at, "pattern");
@@ -2993,10 +2457,7 @@ pub fn decode_agenticspec_cli_procedure_input(
 }
 
 /// Writes `agenticspec.cli.ProcedureParameter` as JSON.
-pub fn encode_agenticspec_cli_procedure_parameter(
-    value: &agenticspec_types::cli::ProcedureParameter,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_procedure_parameter(value: &agenticspec_types::cli::ProcedureParameter, out: &mut String) {
     out.push('{');
     json::member(out, "name");
     json::push_text(out, &value.name);
@@ -3021,10 +2482,7 @@ pub fn encode_agenticspec_cli_procedure_parameter(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_procedure_parameter(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ProcedureParameter, json::DecodeError> {
+pub fn decode_agenticspec_cli_procedure_parameter(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ProcedureParameter, json::DecodeError> {
     json::closed_at(value, at, &["name", "step", "kind", "values"])?;
     Ok(agenticspec_types::cli::ProcedureParameter {
         name: {
@@ -3047,10 +2505,7 @@ pub fn decode_agenticspec_cli_procedure_parameter(
             let member3 = json::member_at(value, at, "values")?;
             {
                 let mut items3 = Vec::new();
-                for (index3, element3) in json::items_at(member3, &at3, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
                     let nested3 = json::nested(&at3, &index3.to_string());
                     items3.push(json::text_at(element3, &nested3, "a string")?.to_owned());
                 }
@@ -3061,10 +2516,7 @@ pub fn decode_agenticspec_cli_procedure_parameter(
 }
 
 /// Writes `agenticspec.cli.ProcedureStep` as JSON.
-pub fn encode_agenticspec_cli_procedure_step(
-    value: &agenticspec_types::cli::ProcedureStep,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_procedure_step(value: &agenticspec_types::cli::ProcedureStep, out: &mut String) {
     out.push('{');
     json::member(out, "id");
     json::push_text(out, &value.id);
@@ -3105,27 +2557,8 @@ pub fn encode_agenticspec_cli_procedure_step(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_procedure_step(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ProcedureStep, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "id",
-            "kind",
-            "token",
-            "tool",
-            "category",
-            "shape",
-            "effect",
-            "after",
-            "retry_max",
-            "timeout_seconds",
-            "ok_permille",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_procedure_step(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ProcedureStep, json::DecodeError> {
+    json::closed_at(value, at, &["id", "kind", "token", "tool", "category", "shape", "effect", "after", "retry_max", "timeout_seconds", "ok_permille"])?;
     Ok(agenticspec_types::cli::ProcedureStep {
         id: {
             let at0 = json::nested(at, "id");
@@ -3169,10 +2602,7 @@ pub fn decode_agenticspec_cli_procedure_step(
             let member7 = json::member_at(value, at, "after")?;
             {
                 let mut items7 = Vec::new();
-                for (index7, element7) in json::items_at(member7, &at7, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index7, element7) in json::items_at(member7, &at7, "an array")?.iter().enumerate() {
                     let nested7 = json::nested(&at7, &index7.to_string());
                     items7.push(json::text_at(element7, &nested7, "a string")?.to_owned());
                 }
@@ -3198,10 +2628,7 @@ pub fn decode_agenticspec_cli_procedure_step(
 }
 
 /// Writes `agenticspec.cli.PromptFigures` as JSON.
-pub fn encode_agenticspec_cli_prompt_figures(
-    value: &agenticspec_types::cli::PromptFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_prompt_figures(value: &agenticspec_types::cli::PromptFigures, out: &mut String) {
     out.push('{');
     json::member(out, "author");
     encode_agenticspec_session_prompt_author(&value.author, out);
@@ -3217,10 +2644,7 @@ pub fn encode_agenticspec_cli_prompt_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_prompt_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::PromptFigures, json::DecodeError> {
+pub fn decode_agenticspec_cli_prompt_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::PromptFigures, json::DecodeError> {
     json::closed_at(value, at, &["author", "attribution", "count"])?;
     Ok(agenticspec_types::cli::PromptFigures {
         author: {
@@ -3242,10 +2666,7 @@ pub fn decode_agenticspec_cli_prompt_figures(
 }
 
 /// Writes `agenticspec.cli.QueryInput` as JSON.
-pub fn encode_agenticspec_cli_query_input(
-    value: &agenticspec_types::cli::QueryInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_query_input(value: &agenticspec_types::cli::QueryInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.module {
         json::member(out, "module");
@@ -3275,15 +2696,8 @@ pub fn encode_agenticspec_cli_query_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_query_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::QueryInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["module", "text", "transcript", "root", "since_hours"],
-    )?;
+pub fn decode_agenticspec_cli_query_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::QueryInput, json::DecodeError> {
+    json::closed_at(value, at, &["module", "text", "transcript", "root", "since_hours"])?;
     Ok(agenticspec_types::cli::QueryInput {
         module: match value.member("module") {
             None | Some(json::Value::Null) => None,
@@ -3324,10 +2738,7 @@ pub fn decode_agenticspec_cli_query_input(
 }
 
 /// Writes `agenticspec.cli.QueryReport` as JSON.
-pub fn encode_agenticspec_cli_query_report(
-    value: &agenticspec_types::cli::QueryReport,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_query_report(value: &agenticspec_types::cli::QueryReport, out: &mut String) {
     out.push('{');
     json::member(out, "format");
     json::push_text(out, &value.format);
@@ -3377,17 +2788,8 @@ pub fn encode_agenticspec_cli_query_report(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_query_report(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::QueryReport, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "format", "sessions", "queries", "rows", "checks", "verdicts",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_query_report(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::QueryReport, json::DecodeError> {
+    json::closed_at(value, at, &["format", "sessions", "queries", "rows", "checks", "verdicts"])?;
     Ok(agenticspec_types::cli::QueryReport {
         format: {
             let at0 = json::nested(at, "format");
@@ -3404,10 +2806,7 @@ pub fn decode_agenticspec_cli_query_report(
             let member2 = json::member_at(value, at, "queries")?;
             {
                 let mut items2 = Vec::new();
-                for (index2, element2) in json::items_at(member2, &at2, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
                     let nested2 = json::nested(&at2, &index2.to_string());
                     items2.push(json::text_at(element2, &nested2, "a string")?.to_owned());
                 }
@@ -3419,10 +2818,7 @@ pub fn decode_agenticspec_cli_query_report(
             let member3 = json::member_at(value, at, "rows")?;
             {
                 let mut items3 = Vec::new();
-                for (index3, element3) in json::items_at(member3, &at3, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
                     let nested3 = json::nested(&at3, &index3.to_string());
                     items3.push(decode_agenticspec_cli_query_row(element3, &nested3)?);
                 }
@@ -3434,10 +2830,7 @@ pub fn decode_agenticspec_cli_query_report(
             let member4 = json::member_at(value, at, "checks")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(decode_agenticspec_cli_check_figures(element4, &nested4)?);
                 }
@@ -3449,10 +2842,7 @@ pub fn decode_agenticspec_cli_query_report(
             let member5 = json::member_at(value, at, "verdicts")?;
             {
                 let mut items5 = Vec::new();
-                for (index5, element5) in json::items_at(member5, &at5, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
                     let nested5 = json::nested(&at5, &index5.to_string());
                     items5.push(decode_agenticspec_cli_check_verdict(element5, &nested5)?);
                 }
@@ -3463,10 +2853,7 @@ pub fn decode_agenticspec_cli_query_report(
 }
 
 /// Writes `agenticspec.cli.QueryRow` as JSON.
-pub fn encode_agenticspec_cli_query_row(
-    value: &agenticspec_types::cli::QueryRow,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_query_row(value: &agenticspec_types::cli::QueryRow, out: &mut String) {
     out.push('{');
     json::member(out, "query");
     json::push_integer(out, value.query);
@@ -3500,15 +2887,8 @@ pub fn encode_agenticspec_cli_query_row(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_query_row(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::QueryRow, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["query", "session_id", "values", "certainty", "unknown"],
-    )?;
+pub fn decode_agenticspec_cli_query_row(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::QueryRow, json::DecodeError> {
+    json::closed_at(value, at, &["query", "session_id", "values", "certainty", "unknown"])?;
     Ok(agenticspec_types::cli::QueryRow {
         query: {
             let at0 = json::nested(at, "query");
@@ -3525,10 +2905,7 @@ pub fn decode_agenticspec_cli_query_row(
             let member2 = json::member_at(value, at, "values")?;
             {
                 let mut items2 = Vec::new();
-                for (index2, element2) in json::items_at(member2, &at2, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
                     let nested2 = json::nested(&at2, &index2.to_string());
                     items2.push(json::text_at(element2, &nested2, "a string")?.to_owned());
                 }
@@ -3545,10 +2922,7 @@ pub fn decode_agenticspec_cli_query_row(
             let member4 = json::member_at(value, at, "unknown")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
                 }
@@ -3571,10 +2945,7 @@ pub fn encode_agenticspec_cli_refusal(value: &agenticspec_types::cli::Refusal, o
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_refusal(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::Refusal, json::DecodeError> {
+pub fn decode_agenticspec_cli_refusal(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::Refusal, json::DecodeError> {
     json::closed_at(value, at, &["detail"])?;
     Ok(agenticspec_types::cli::Refusal {
         detail: {
@@ -3586,10 +2957,7 @@ pub fn decode_agenticspec_cli_refusal(
 }
 
 /// Writes `agenticspec.cli.ScenarioAction` as JSON.
-pub fn encode_agenticspec_cli_scenario_action(
-    value: &agenticspec_types::cli::ScenarioAction,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_scenario_action(value: &agenticspec_types::cli::ScenarioAction, out: &mut String) {
     match value {
         agenticspec_types::cli::ScenarioAction::Check => json::push_text(out, "check"),
         agenticspec_types::cli::ScenarioAction::Run => json::push_text(out, "run"),
@@ -3601,28 +2969,16 @@ pub fn encode_agenticspec_cli_scenario_action(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_scenario_action(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ScenarioAction, json::DecodeError> {
+pub fn decode_agenticspec_cli_scenario_action(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ScenarioAction, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `check`, `run`")? {
         "check" => agenticspec_types::cli::ScenarioAction::Check,
         "run" => agenticspec_types::cli::ScenarioAction::Run,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `check`, `run`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `check`, `run`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.cli.ServeInput` as JSON.
-pub fn encode_agenticspec_cli_serve_input(
-    value: &agenticspec_types::cli::ServeInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_serve_input(value: &agenticspec_types::cli::ServeInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.root {
         json::member(out, "root");
@@ -3644,10 +3000,7 @@ pub fn encode_agenticspec_cli_serve_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_serve_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ServeInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_serve_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ServeInput, json::DecodeError> {
     json::closed_at(value, at, &["root", "since_hours", "port"])?;
     Ok(agenticspec_types::cli::ServeInput {
         root: match value.member("root") {
@@ -3675,10 +3028,7 @@ pub fn decode_agenticspec_cli_serve_input(
 }
 
 /// Writes `agenticspec.cli.ServeResult` as JSON.
-pub fn encode_agenticspec_cli_serve_result(
-    value: &agenticspec_types::cli::ServeResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_serve_result(value: &agenticspec_types::cli::ServeResult, out: &mut String) {
     out.push('{');
     json::member(out, "url");
     json::push_text(out, &value.url);
@@ -3690,10 +3040,7 @@ pub fn encode_agenticspec_cli_serve_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_serve_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ServeResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_serve_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ServeResult, json::DecodeError> {
     json::closed_at(value, at, &["url"])?;
     Ok(agenticspec_types::cli::ServeResult {
         url: {
@@ -3705,10 +3052,7 @@ pub fn decode_agenticspec_cli_serve_result(
 }
 
 /// Writes `agenticspec.cli.SessionSummary` as JSON.
-pub fn encode_agenticspec_cli_session_summary(
-    value: &agenticspec_types::cli::SessionSummary,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_session_summary(value: &agenticspec_types::cli::SessionSummary, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     json::push_text(out, &value.session_id);
@@ -3750,24 +3094,8 @@ pub fn encode_agenticspec_cli_session_summary(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_session_summary(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SessionSummary, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "session_id",
-            "project",
-            "title",
-            "first_at",
-            "last_at",
-            "kpis",
-            "tools",
-            "timeline",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_session_summary(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SessionSummary, json::DecodeError> {
+    json::closed_at(value, at, &["session_id", "project", "title", "first_at", "last_at", "kpis", "tools", "timeline"])?;
     Ok(agenticspec_types::cli::SessionSummary {
         session_id: {
             let at0 = json::nested(at, "session_id");
@@ -3806,10 +3134,7 @@ pub fn decode_agenticspec_cli_session_summary(
             let member6 = json::member_at(value, at, "tools")?;
             {
                 let mut items6 = Vec::new();
-                for (index6, element6) in json::items_at(member6, &at6, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index6, element6) in json::items_at(member6, &at6, "an array")?.iter().enumerate() {
                     let nested6 = json::nested(&at6, &index6.to_string());
                     items6.push(decode_agenticspec_cli_tool_figures(element6, &nested6)?);
                 }
@@ -3821,10 +3146,7 @@ pub fn decode_agenticspec_cli_session_summary(
             let member7 = json::member_at(value, at, "timeline")?;
             {
                 let mut items7 = Vec::new();
-                for (index7, element7) in json::items_at(member7, &at7, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index7, element7) in json::items_at(member7, &at7, "an array")?.iter().enumerate() {
                     let nested7 = json::nested(&at7, &index7.to_string());
                     items7.push(decode_agenticspec_cli_timeline_mark(element7, &nested7)?);
                 }
@@ -3835,10 +3157,7 @@ pub fn decode_agenticspec_cli_session_summary(
 }
 
 /// Writes `agenticspec.cli.SimCheckInput` as JSON.
-pub fn encode_agenticspec_cli_sim_check_input(
-    value: &agenticspec_types::cli::SimCheckInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_check_input(value: &agenticspec_types::cli::SimCheckInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -3860,10 +3179,7 @@ pub fn encode_agenticspec_cli_sim_check_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_check_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimCheckInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_check_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckInput, json::DecodeError> {
     json::closed_at(value, at, &["architecture", "ports", "kpis", "json"])?;
     Ok(agenticspec_types::cli::SimCheckInput {
         architecture: {
@@ -3894,10 +3210,7 @@ pub fn decode_agenticspec_cli_sim_check_input(
 }
 
 /// Writes `agenticspec.cli.SimCheckResult` as JSON.
-pub fn encode_agenticspec_cli_sim_check_result(
-    value: &agenticspec_types::cli::SimCheckResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::SimCheckResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -3967,27 +3280,8 @@ pub fn encode_agenticspec_cli_sim_check_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_check_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimCheckResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "architecture",
-            "parts",
-            "links",
-            "kpis",
-            "single_points",
-            "nested",
-            "ingresses",
-            "format",
-            "valid",
-            "violations",
-            "counts",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "parts", "links", "kpis", "single_points", "nested", "ingresses", "format", "valid", "violations", "counts"])?;
     Ok(agenticspec_types::cli::SimCheckResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -4014,10 +3308,7 @@ pub fn decode_agenticspec_cli_sim_check_result(
             let member4 = json::member_at(value, at, "single_points")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
                 }
@@ -4029,10 +3320,7 @@ pub fn decode_agenticspec_cli_sim_check_result(
             let member5 = json::member_at(value, at, "nested")?;
             {
                 let mut items5 = Vec::new();
-                for (index5, element5) in json::items_at(member5, &at5, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
                     let nested5 = json::nested(&at5, &index5.to_string());
                     items5.push(decode_agenticspec_cli_sim_nested(element5, &nested5)?);
                 }
@@ -4063,18 +3351,13 @@ pub fn decode_agenticspec_cli_sim_check_result(
             Some(member9) => {
                 let at9 = json::nested(at, "violations");
                 Some({
-                    let mut items9 = Vec::new();
-                    for (index9, element9) in json::items_at(member9, &at9, "an array")?
-                        .iter()
-                        .enumerate()
-                    {
-                        let nested9 = json::nested(&at9, &index9.to_string());
-                        items9.push(decode_agenticspec_cli_sim_check_violation(
-                            element9, &nested9,
-                        )?);
-                    }
-                    items9
-                })
+                let mut items9 = Vec::new();
+                for (index9, element9) in json::items_at(member9, &at9, "an array")?.iter().enumerate() {
+                    let nested9 = json::nested(&at9, &index9.to_string());
+                    items9.push(decode_agenticspec_cli_sim_check_violation(element9, &nested9)?);
+                }
+                items9
+            })
             }
         },
         counts: match value.member("counts") {
@@ -4082,26 +3365,20 @@ pub fn decode_agenticspec_cli_sim_check_result(
             Some(member10) => {
                 let at10 = json::nested(at, "counts");
                 Some({
-                    let mut entries10 = std::collections::BTreeMap::new();
-                    for (key10, element10) in json::members_at(member10, &at10, "an object")? {
-                        let nested10 = json::nested(&at10, key10);
-                        entries10.insert(
-                            key10.clone(),
-                            json::integer_at(element10, &nested10, "an integer")?,
-                        );
-                    }
-                    entries10
-                })
+                let mut entries10 = std::collections::BTreeMap::new();
+                for (key10, element10) in json::members_at(member10, &at10, "an object")? {
+                    let nested10 = json::nested(&at10, key10);
+                    entries10.insert(key10.clone(), json::integer_at(element10, &nested10, "an integer")?);
+                }
+                entries10
+            })
             }
         },
     })
 }
 
 /// Writes `agenticspec.cli.SimCheckViolation` as JSON.
-pub fn encode_agenticspec_cli_sim_check_violation(
-    value: &agenticspec_types::cli::SimCheckViolation,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_check_violation(value: &agenticspec_types::cli::SimCheckViolation, out: &mut String) {
     out.push('{');
     json::member(out, "rule");
     json::push_text(out, &value.rule);
@@ -4125,15 +3402,8 @@ pub fn encode_agenticspec_cli_sim_check_violation(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_check_violation(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimCheckViolation, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["rule", "gate", "subject", "part", "link", "message"],
-    )?;
+pub fn decode_agenticspec_cli_sim_check_violation(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckViolation, json::DecodeError> {
+    json::closed_at(value, at, &["rule", "gate", "subject", "part", "link", "message"])?;
     Ok(agenticspec_types::cli::SimCheckViolation {
         rule: {
             let at0 = json::nested(at, "rule");
@@ -4171,10 +3441,7 @@ pub fn decode_agenticspec_cli_sim_check_violation(
 }
 
 /// Writes `agenticspec.cli.SimContractInput` as JSON.
-pub fn encode_agenticspec_cli_sim_contract_input(
-    value: &agenticspec_types::cli::SimContractInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_contract_input(value: &agenticspec_types::cli::SimContractInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -4210,23 +3477,8 @@ pub fn encode_agenticspec_cli_sim_contract_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_contract_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimContractInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "architecture",
-            "ports",
-            "out",
-            "check",
-            "suite",
-            "trace",
-            "kpis",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_sim_contract_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimContractInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "ports", "out", "check", "suite", "trace", "kpis"])?;
     Ok(agenticspec_types::cli::SimContractInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -4279,10 +3531,7 @@ pub fn decode_agenticspec_cli_sim_contract_input(
 }
 
 /// Writes `agenticspec.cli.SimContractResult` as JSON.
-pub fn encode_agenticspec_cli_sim_contract_result(
-    value: &agenticspec_types::cli::SimContractResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_contract_result(value: &agenticspec_types::cli::SimContractResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -4323,25 +3572,8 @@ pub fn encode_agenticspec_cli_sim_contract_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_contract_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimContractResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "architecture",
-            "ports",
-            "invariants",
-            "ingresses",
-            "written",
-            "contract",
-            "suite_scenarios",
-            "kept_scenarios",
-            "checks",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_sim_contract_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimContractResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "ports", "invariants", "ingresses", "written", "contract", "suite_scenarios", "kept_scenarios", "checks"])?;
     Ok(agenticspec_types::cli::SimContractResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -4394,14 +3626,9 @@ pub fn decode_agenticspec_cli_sim_contract_result(
             let member8 = json::member_at(value, at, "checks")?;
             {
                 let mut items8 = Vec::new();
-                for (index8, element8) in json::items_at(member8, &at8, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index8, element8) in json::items_at(member8, &at8, "an array")?.iter().enumerate() {
                     let nested8 = json::nested(&at8, &index8.to_string());
-                    items8.push(decode_agenticspec_cli_sim_invariant_check(
-                        element8, &nested8,
-                    )?);
+                    items8.push(decode_agenticspec_cli_sim_invariant_check(element8, &nested8)?);
                 }
                 items8
             }
@@ -4410,10 +3637,7 @@ pub fn decode_agenticspec_cli_sim_contract_result(
 }
 
 /// Writes `agenticspec.cli.SimCorpusInput` as JSON.
-pub fn encode_agenticspec_cli_sim_corpus_input(
-    value: &agenticspec_types::cli::SimCorpusInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_corpus_input(value: &agenticspec_types::cli::SimCorpusInput, out: &mut String) {
     out.push('{');
     json::member(out, "action");
     encode_agenticspec_cli_corpus_action(&value.action, out);
@@ -4427,10 +3651,7 @@ pub fn encode_agenticspec_cli_sim_corpus_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_corpus_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimCorpusInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_corpus_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCorpusInput, json::DecodeError> {
     json::closed_at(value, at, &["action", "corpus"])?;
     Ok(agenticspec_types::cli::SimCorpusInput {
         action: {
@@ -4447,10 +3668,7 @@ pub fn decode_agenticspec_cli_sim_corpus_input(
 }
 
 /// Writes `agenticspec.cli.SimCorpusResult` as JSON.
-pub fn encode_agenticspec_cli_sim_corpus_result(
-    value: &agenticspec_types::cli::SimCorpusResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_corpus_result(value: &agenticspec_types::cli::SimCorpusResult, out: &mut String) {
     out.push('{');
     json::member(out, "corpus");
     json::push_text(out, &value.corpus);
@@ -4477,10 +3695,7 @@ pub fn encode_agenticspec_cli_sim_corpus_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_corpus_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimCorpusResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_corpus_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCorpusResult, json::DecodeError> {
     json::closed_at(value, at, &["corpus", "entries", "held", "failed", "rows"])?;
     Ok(agenticspec_types::cli::SimCorpusResult {
         corpus: {
@@ -4508,10 +3723,7 @@ pub fn decode_agenticspec_cli_sim_corpus_result(
             let member4 = json::member_at(value, at, "rows")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(decode_agenticspec_cli_sim_corpus_row(element4, &nested4)?);
                 }
@@ -4522,10 +3734,7 @@ pub fn decode_agenticspec_cli_sim_corpus_result(
 }
 
 /// Writes `agenticspec.cli.SimCorpusRow` as JSON.
-pub fn encode_agenticspec_cli_sim_corpus_row(
-    value: &agenticspec_types::cli::SimCorpusRow,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_corpus_row(value: &agenticspec_types::cli::SimCorpusRow, out: &mut String) {
     out.push('{');
     json::member(out, "entry");
     json::push_text(out, &value.entry);
@@ -4551,24 +3760,8 @@ pub fn encode_agenticspec_cli_sim_corpus_row(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_corpus_row(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimCorpusRow, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "entry",
-            "kind",
-            "expected",
-            "predicted",
-            "held",
-            "failed",
-            "not_checked",
-            "verdict",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_sim_corpus_row(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCorpusRow, json::DecodeError> {
+    json::closed_at(value, at, &["entry", "kind", "expected", "predicted", "held", "failed", "not_checked", "verdict"])?;
     Ok(agenticspec_types::cli::SimCorpusRow {
         entry: {
             let at0 = json::nested(at, "entry");
@@ -4614,10 +3807,7 @@ pub fn decode_agenticspec_cli_sim_corpus_row(
 }
 
 /// Writes `agenticspec.cli.SimDigestInput` as JSON.
-pub fn encode_agenticspec_cli_sim_digest_input(
-    value: &agenticspec_types::cli::SimDigestInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_digest_input(value: &agenticspec_types::cli::SimDigestInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -4629,10 +3819,7 @@ pub fn encode_agenticspec_cli_sim_digest_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_digest_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimDigestInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_digest_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimDigestInput, json::DecodeError> {
     json::closed_at(value, at, &["architecture"])?;
     Ok(agenticspec_types::cli::SimDigestInput {
         architecture: {
@@ -4644,10 +3831,7 @@ pub fn decode_agenticspec_cli_sim_digest_input(
 }
 
 /// Writes `agenticspec.cli.SimDigestResult` as JSON.
-pub fn encode_agenticspec_cli_sim_digest_result(
-    value: &agenticspec_types::cli::SimDigestResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_digest_result(value: &agenticspec_types::cli::SimDigestResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -4661,10 +3845,7 @@ pub fn encode_agenticspec_cli_sim_digest_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_digest_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimDigestResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_digest_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimDigestResult, json::DecodeError> {
     json::closed_at(value, at, &["architecture", "digest"])?;
     Ok(agenticspec_types::cli::SimDigestResult {
         architecture: {
@@ -4681,10 +3862,7 @@ pub fn decode_agenticspec_cli_sim_digest_result(
 }
 
 /// Writes `agenticspec.cli.SimInvariantCheck` as JSON.
-pub fn encode_agenticspec_cli_sim_invariant_check(
-    value: &agenticspec_types::cli::SimInvariantCheck,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_invariant_check(value: &agenticspec_types::cli::SimInvariantCheck, out: &mut String) {
     out.push('{');
     json::member(out, "link");
     json::push_text(out, &value.link);
@@ -4710,15 +3888,8 @@ pub fn encode_agenticspec_cli_sim_invariant_check(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_invariant_check(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimInvariantCheck, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["link", "predicate", "status", "uses", "event", "detail"],
-    )?;
+pub fn decode_agenticspec_cli_sim_invariant_check(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimInvariantCheck, json::DecodeError> {
+    json::closed_at(value, at, &["link", "predicate", "status", "uses", "event", "detail"])?;
     Ok(agenticspec_types::cli::SimInvariantCheck {
         link: {
             let at0 = json::nested(at, "link");
@@ -4758,10 +3929,7 @@ pub fn decode_agenticspec_cli_sim_invariant_check(
 }
 
 /// Writes `agenticspec.cli.SimLadderInput` as JSON.
-pub fn encode_agenticspec_cli_sim_ladder_input(
-    value: &agenticspec_types::cli::SimLadderInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_ladder_input(value: &agenticspec_types::cli::SimLadderInput, out: &mut String) {
     out.push('{');
     json::member(out, "ladder");
     json::push_text(out, &value.ladder);
@@ -4777,10 +3945,7 @@ pub fn encode_agenticspec_cli_sim_ladder_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_ladder_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimLadderInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_ladder_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimLadderInput, json::DecodeError> {
     json::closed_at(value, at, &["ladder", "out", "check"])?;
     Ok(agenticspec_types::cli::SimLadderInput {
         ladder: {
@@ -4802,10 +3967,7 @@ pub fn decode_agenticspec_cli_sim_ladder_input(
 }
 
 /// Writes `agenticspec.cli.SimLadderResult` as JSON.
-pub fn encode_agenticspec_cli_sim_ladder_result(
-    value: &agenticspec_types::cli::SimLadderResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_ladder_result(value: &agenticspec_types::cli::SimLadderResult, out: &mut String) {
     out.push('{');
     json::member(out, "out");
     json::push_text(out, &value.out);
@@ -4821,10 +3983,7 @@ pub fn encode_agenticspec_cli_sim_ladder_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_ladder_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimLadderResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_ladder_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimLadderResult, json::DecodeError> {
     json::closed_at(value, at, &["out", "rungs", "written"])?;
     Ok(agenticspec_types::cli::SimLadderResult {
         out: {
@@ -4846,10 +4005,7 @@ pub fn decode_agenticspec_cli_sim_ladder_result(
 }
 
 /// Writes `agenticspec.cli.SimNested` as JSON.
-pub fn encode_agenticspec_cli_sim_nested(
-    value: &agenticspec_types::cli::SimNested,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_nested(value: &agenticspec_types::cli::SimNested, out: &mut String) {
     out.push('{');
     json::member(out, "part");
     json::push_text(out, &value.part);
@@ -4871,22 +4027,8 @@ pub fn encode_agenticspec_cli_sim_nested(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_nested(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimNested, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "part",
-            "architecture",
-            "reference",
-            "digest",
-            "parts",
-            "links",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_sim_nested(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimNested, json::DecodeError> {
+    json::closed_at(value, at, &["part", "architecture", "reference", "digest", "parts", "links"])?;
     Ok(agenticspec_types::cli::SimNested {
         part: {
             let at0 = json::nested(at, "part");
@@ -4922,10 +4064,7 @@ pub fn decode_agenticspec_cli_sim_nested(
 }
 
 /// Writes `agenticspec.cli.SimPortsInput` as JSON.
-pub fn encode_agenticspec_cli_sim_ports_input(
-    value: &agenticspec_types::cli::SimPortsInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_ports_input(value: &agenticspec_types::cli::SimPortsInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.blocks {
         json::member(out, "blocks");
@@ -4951,10 +4090,7 @@ pub fn encode_agenticspec_cli_sim_ports_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_ports_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimPortsInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_ports_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimPortsInput, json::DecodeError> {
     json::closed_at(value, at, &["blocks", "out", "check", "expect"])?;
     Ok(agenticspec_types::cli::SimPortsInput {
         blocks: match value.member("blocks") {
@@ -4989,10 +4125,7 @@ pub fn decode_agenticspec_cli_sim_ports_input(
 }
 
 /// Writes `agenticspec.cli.SimPortsResult` as JSON.
-pub fn encode_agenticspec_cli_sim_ports_result(
-    value: &agenticspec_types::cli::SimPortsResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_ports_result(value: &agenticspec_types::cli::SimPortsResult, out: &mut String) {
     out.push('{');
     json::member(out, "ports");
     json::push_integer(out, value.ports);
@@ -5021,15 +4154,8 @@ pub fn encode_agenticspec_cli_sim_ports_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_ports_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimPortsResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["ports", "sources_sha256", "written", "file", "differences"],
-    )?;
+pub fn decode_agenticspec_cli_sim_ports_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimPortsResult, json::DecodeError> {
+    json::closed_at(value, at, &["ports", "sources_sha256", "written", "file", "differences"])?;
     Ok(agenticspec_types::cli::SimPortsResult {
         ports: {
             let at0 = json::nested(at, "ports");
@@ -5058,10 +4184,7 @@ pub fn decode_agenticspec_cli_sim_ports_result(
             let member4 = json::member_at(value, at, "differences")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
                 }
@@ -5072,10 +4195,7 @@ pub fn decode_agenticspec_cli_sim_ports_result(
 }
 
 /// Writes `agenticspec.cli.SimRenderInput` as JSON.
-pub fn encode_agenticspec_cli_sim_render_input(
-    value: &agenticspec_types::cli::SimRenderInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_render_input(value: &agenticspec_types::cli::SimRenderInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -5093,10 +4213,7 @@ pub fn encode_agenticspec_cli_sim_render_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_render_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimRenderInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_render_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimRenderInput, json::DecodeError> {
     json::closed_at(value, at, &["architecture", "result", "out"])?;
     Ok(agenticspec_types::cli::SimRenderInput {
         architecture: {
@@ -5120,10 +4237,7 @@ pub fn decode_agenticspec_cli_sim_render_input(
 }
 
 /// Writes `agenticspec.cli.SimRenderResult` as JSON.
-pub fn encode_agenticspec_cli_sim_render_result(
-    value: &agenticspec_types::cli::SimRenderResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_render_result(value: &agenticspec_types::cli::SimRenderResult, out: &mut String) {
     out.push('{');
     json::member(out, "out");
     json::push_text(out, &value.out);
@@ -5135,10 +4249,7 @@ pub fn encode_agenticspec_cli_sim_render_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_render_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimRenderResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_render_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimRenderResult, json::DecodeError> {
     json::closed_at(value, at, &["out"])?;
     Ok(agenticspec_types::cli::SimRenderResult {
         out: {
@@ -5150,10 +4261,7 @@ pub fn decode_agenticspec_cli_sim_render_result(
 }
 
 /// Writes `agenticspec.cli.SimRunInput` as JSON.
-pub fn encode_agenticspec_cli_sim_run_input(
-    value: &agenticspec_types::cli::SimRunInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_run_input(value: &agenticspec_types::cli::SimRunInput, out: &mut String) {
     out.push('{');
     json::member(out, "experiment");
     json::push_text(out, &value.experiment);
@@ -5173,10 +4281,7 @@ pub fn encode_agenticspec_cli_sim_run_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_run_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimRunInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_run_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimRunInput, json::DecodeError> {
     json::closed_at(value, at, &["experiment", "out", "threads", "events"])?;
     Ok(agenticspec_types::cli::SimRunInput {
         experiment: {
@@ -5205,10 +4310,7 @@ pub fn decode_agenticspec_cli_sim_run_input(
 }
 
 /// Writes `agenticspec.cli.SimRunResult` as JSON.
-pub fn encode_agenticspec_cli_sim_run_result(
-    value: &agenticspec_types::cli::SimRunResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_run_result(value: &agenticspec_types::cli::SimRunResult, out: &mut String) {
     out.push('{');
     json::member(out, "out");
     json::push_text(out, &value.out);
@@ -5232,22 +4334,8 @@ pub fn encode_agenticspec_cli_sim_run_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_run_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimRunResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "out",
-            "variants",
-            "seeds",
-            "threads",
-            "best_written",
-            "events",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_sim_run_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimRunResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "variants", "seeds", "threads", "best_written", "events"])?;
     Ok(agenticspec_types::cli::SimRunResult {
         out: {
             let at0 = json::nested(at, "out");
@@ -5285,10 +4373,7 @@ pub fn decode_agenticspec_cli_sim_run_result(
 }
 
 /// Writes `agenticspec.cli.SimScenarioInput` as JSON.
-pub fn encode_agenticspec_cli_sim_scenario_input(
-    value: &agenticspec_types::cli::SimScenarioInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_scenario_input(value: &agenticspec_types::cli::SimScenarioInput, out: &mut String) {
     out.push('{');
     json::member(out, "action");
     encode_agenticspec_cli_scenario_action(&value.action, out);
@@ -5306,10 +4391,7 @@ pub fn encode_agenticspec_cli_sim_scenario_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_scenario_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimScenarioInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sim_scenario_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimScenarioInput, json::DecodeError> {
     json::closed_at(value, at, &["action", "scenario", "out"])?;
     Ok(agenticspec_types::cli::SimScenarioInput {
         action: {
@@ -5333,10 +4415,7 @@ pub fn decode_agenticspec_cli_sim_scenario_input(
 }
 
 /// Writes `agenticspec.cli.SimScenarioResult` as JSON.
-pub fn encode_agenticspec_cli_sim_scenario_result(
-    value: &agenticspec_types::cli::SimScenarioResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_scenario_result(value: &agenticspec_types::cli::SimScenarioResult, out: &mut String) {
     out.push('{');
     json::member(out, "scenario");
     json::push_text(out, &value.scenario);
@@ -5378,26 +4457,8 @@ pub fn encode_agenticspec_cli_sim_scenario_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_scenario_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimScenarioResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "scenario",
-            "architecture",
-            "inputs",
-            "expectations",
-            "out",
-            "verdict",
-            "predicted",
-            "held",
-            "failed",
-            "not_checked",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_sim_scenario_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimScenarioResult, json::DecodeError> {
+    json::closed_at(value, at, &["scenario", "architecture", "inputs", "expectations", "out", "verdict", "predicted", "held", "failed", "not_checked"])?;
     Ok(agenticspec_types::cli::SimScenarioResult {
         scenario: {
             let at0 = json::nested(at, "scenario");
@@ -5465,10 +4526,7 @@ pub fn decode_agenticspec_cli_sim_scenario_result(
 }
 
 /// Writes `agenticspec.cli.SimTraceInput` as JSON.
-pub fn encode_agenticspec_cli_sim_trace_input(
-    value: &agenticspec_types::cli::SimTraceInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_trace_input(value: &agenticspec_types::cli::SimTraceInput, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -5494,15 +4552,8 @@ pub fn encode_agenticspec_cli_sim_trace_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_trace_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimTraceInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["architecture", "profile", "seed", "horizon", "out"],
-    )?;
+pub fn decode_agenticspec_cli_sim_trace_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimTraceInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "profile", "seed", "horizon", "out"])?;
     Ok(agenticspec_types::cli::SimTraceInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -5539,10 +4590,7 @@ pub fn decode_agenticspec_cli_sim_trace_input(
 }
 
 /// Writes `agenticspec.cli.SimTraceResult` as JSON.
-pub fn encode_agenticspec_cli_sim_trace_result(
-    value: &agenticspec_types::cli::SimTraceResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sim_trace_result(value: &agenticspec_types::cli::SimTraceResult, out: &mut String) {
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
@@ -5566,15 +4614,8 @@ pub fn encode_agenticspec_cli_sim_trace_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sim_trace_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SimTraceResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["architecture", "seed", "uses", "events", "written", "trace"],
-    )?;
+pub fn decode_agenticspec_cli_sim_trace_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimTraceResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "seed", "uses", "events", "written", "trace"])?;
     Ok(agenticspec_types::cli::SimTraceResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -5612,10 +4653,7 @@ pub fn decode_agenticspec_cli_sim_trace_result(
 }
 
 /// Writes `agenticspec.cli.StepKind` as JSON.
-pub fn encode_agenticspec_cli_step_kind(
-    value: &agenticspec_types::cli::StepKind,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_step_kind(value: &agenticspec_types::cli::StepKind, out: &mut String) {
     match value {
         agenticspec_types::cli::StepKind::Program => json::push_text(out, "program"),
         agenticspec_types::cli::StepKind::Judgement => json::push_text(out, "judgement"),
@@ -5629,36 +4667,18 @@ pub fn encode_agenticspec_cli_step_kind(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_step_kind(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::StepKind, json::DecodeError> {
-    Ok(
-        match json::text_at(
-            value,
-            at,
-            "one of `program`, `judgement`, `person`, `child`",
-        )? {
-            "program" => agenticspec_types::cli::StepKind::Program,
-            "judgement" => agenticspec_types::cli::StepKind::Judgement,
-            "person" => agenticspec_types::cli::StepKind::Person,
-            "child" => agenticspec_types::cli::StepKind::Child,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `program`, `judgement`, `person`, `child`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_cli_step_kind(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::StepKind, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `program`, `judgement`, `person`, `child`")? {
+        "program" => agenticspec_types::cli::StepKind::Program,
+        "judgement" => agenticspec_types::cli::StepKind::Judgement,
+        "person" => agenticspec_types::cli::StepKind::Person,
+        "child" => agenticspec_types::cli::StepKind::Child,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `program`, `judgement`, `person`, `child`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.cli.SyncInput` as JSON.
-pub fn encode_agenticspec_cli_sync_input(
-    value: &agenticspec_types::cli::SyncInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sync_input(value: &agenticspec_types::cli::SyncInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.root {
         json::member(out, "root");
@@ -5676,10 +4696,7 @@ pub fn encode_agenticspec_cli_sync_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sync_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SyncInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_sync_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SyncInput, json::DecodeError> {
     json::closed_at(value, at, &["root", "since_hours"])?;
     Ok(agenticspec_types::cli::SyncInput {
         root: match value.member("root") {
@@ -5700,10 +4717,7 @@ pub fn decode_agenticspec_cli_sync_input(
 }
 
 /// Writes `agenticspec.cli.SyncResult` as JSON.
-pub fn encode_agenticspec_cli_sync_result(
-    value: &agenticspec_types::cli::SyncResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_sync_result(value: &agenticspec_types::cli::SyncResult, out: &mut String) {
     out.push('{');
     json::member(out, "db");
     json::push_text(out, &value.db);
@@ -5727,23 +4741,8 @@ pub fn encode_agenticspec_cli_sync_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_sync_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::SyncResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "db",
-            "scanned",
-            "lifted",
-            "unchanged",
-            "failed",
-            "sessions",
-            "ms",
-        ],
-    )?;
+pub fn decode_agenticspec_cli_sync_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SyncResult, json::DecodeError> {
+    json::closed_at(value, at, &["db", "scanned", "lifted", "unchanged", "failed", "sessions", "ms"])?;
     Ok(agenticspec_types::cli::SyncResult {
         db: {
             let at0 = json::nested(at, "db");
@@ -5784,10 +4783,7 @@ pub fn decode_agenticspec_cli_sync_result(
 }
 
 /// Writes `agenticspec.cli.TimelineMark` as JSON.
-pub fn encode_agenticspec_cli_timeline_mark(
-    value: &agenticspec_types::cli::TimelineMark,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_timeline_mark(value: &agenticspec_types::cli::TimelineMark, out: &mut String) {
     out.push('{');
     json::member(out, "at");
     json::push_text(out, &value.at);
@@ -5805,10 +4801,7 @@ pub fn encode_agenticspec_cli_timeline_mark(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_timeline_mark(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::TimelineMark, json::DecodeError> {
+pub fn decode_agenticspec_cli_timeline_mark(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::TimelineMark, json::DecodeError> {
     json::closed_at(value, at, &["at", "kind", "scope", "value"])?;
     Ok(agenticspec_types::cli::TimelineMark {
         at: {
@@ -5835,10 +4828,7 @@ pub fn decode_agenticspec_cli_timeline_mark(
 }
 
 /// Writes `agenticspec.cli.ToolFigures` as JSON.
-pub fn encode_agenticspec_cli_tool_figures(
-    value: &agenticspec_types::cli::ToolFigures,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_tool_figures(value: &agenticspec_types::cli::ToolFigures, out: &mut String) {
     out.push('{');
     json::member(out, "category");
     encode_agenticspec_session_tool_category(&value.category, out);
@@ -5856,10 +4846,7 @@ pub fn encode_agenticspec_cli_tool_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_tool_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::ToolFigures, json::DecodeError> {
+pub fn decode_agenticspec_cli_tool_figures(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::ToolFigures, json::DecodeError> {
     json::closed_at(value, at, &["category", "calls", "refused", "failed"])?;
     Ok(agenticspec_types::cli::ToolFigures {
         category: {
@@ -5886,10 +4873,7 @@ pub fn decode_agenticspec_cli_tool_figures(
 }
 
 /// Writes `agenticspec.cli.UiConformCheck` as JSON.
-pub fn encode_agenticspec_cli_ui_conform_check(
-    value: &agenticspec_types::cli::UiConformCheck,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_conform_check(value: &agenticspec_types::cli::UiConformCheck, out: &mut String) {
     out.push('{');
     json::member(out, "name");
     json::push_text(out, &value.name);
@@ -5905,10 +4889,7 @@ pub fn encode_agenticspec_cli_ui_conform_check(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_conform_check(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiConformCheck, json::DecodeError> {
+pub fn decode_agenticspec_cli_ui_conform_check(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformCheck, json::DecodeError> {
     json::closed_at(value, at, &["name", "status", "detail"])?;
     Ok(agenticspec_types::cli::UiConformCheck {
         name: {
@@ -5930,10 +4911,7 @@ pub fn decode_agenticspec_cli_ui_conform_check(
 }
 
 /// Writes `agenticspec.cli.UiConformInput` as JSON.
-pub fn encode_agenticspec_cli_ui_conform_input(
-    value: &agenticspec_types::cli::UiConformInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_conform_input(value: &agenticspec_types::cli::UiConformInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.source {
         json::member(out, "source");
@@ -5955,10 +4933,7 @@ pub fn encode_agenticspec_cli_ui_conform_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_conform_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiConformInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_ui_conform_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformInput, json::DecodeError> {
     json::closed_at(value, at, &["source", "plan", "root"])?;
     Ok(agenticspec_types::cli::UiConformInput {
         source: match value.member("source") {
@@ -5986,10 +4961,7 @@ pub fn decode_agenticspec_cli_ui_conform_input(
 }
 
 /// Writes `agenticspec.cli.UiConformResult` as JSON.
-pub fn encode_agenticspec_cli_ui_conform_result(
-    value: &agenticspec_types::cli::UiConformResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_conform_result(value: &agenticspec_types::cli::UiConformResult, out: &mut String) {
     out.push('{');
     json::member(out, "source");
     json::push_text(out, &value.source);
@@ -6016,15 +4988,8 @@ pub fn encode_agenticspec_cli_ui_conform_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_conform_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiConformResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["source", "passed", "failed", "skipped", "checks"],
-    )?;
+pub fn decode_agenticspec_cli_ui_conform_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformResult, json::DecodeError> {
+    json::closed_at(value, at, &["source", "passed", "failed", "skipped", "checks"])?;
     Ok(agenticspec_types::cli::UiConformResult {
         source: {
             let at0 = json::nested(at, "source");
@@ -6051,10 +5016,7 @@ pub fn decode_agenticspec_cli_ui_conform_result(
             let member4 = json::member_at(value, at, "checks")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(decode_agenticspec_cli_ui_conform_check(element4, &nested4)?);
                 }
@@ -6065,10 +5027,7 @@ pub fn decode_agenticspec_cli_ui_conform_result(
 }
 
 /// Writes `agenticspec.cli.UiDeriveInput` as JSON.
-pub fn encode_agenticspec_cli_ui_derive_input(
-    value: &agenticspec_types::cli::UiDeriveInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_derive_input(value: &agenticspec_types::cli::UiDeriveInput, out: &mut String) {
     out.push('{');
     json::member(out, "path");
     json::push_text(out, &value.path);
@@ -6096,15 +5055,8 @@ pub fn encode_agenticspec_cli_ui_derive_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_derive_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiDeriveInput, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["path", "contract", "ports", "out", "root", "check"],
-    )?;
+pub fn decode_agenticspec_cli_ui_derive_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiDeriveInput, json::DecodeError> {
+    json::closed_at(value, at, &["path", "contract", "ports", "out", "root", "check"])?;
     Ok(agenticspec_types::cli::UiDeriveInput {
         path: {
             let at0 = json::nested(at, "path");
@@ -6146,10 +5098,7 @@ pub fn decode_agenticspec_cli_ui_derive_input(
 }
 
 /// Writes `agenticspec.cli.UiDeriveResult` as JSON.
-pub fn encode_agenticspec_cli_ui_derive_result(
-    value: &agenticspec_types::cli::UiDeriveResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_derive_result(value: &agenticspec_types::cli::UiDeriveResult, out: &mut String) {
     out.push('{');
     json::member(out, "out");
     json::push_text(out, &value.out);
@@ -6171,15 +5120,8 @@ pub fn encode_agenticspec_cli_ui_derive_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_derive_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiDeriveResult, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["out", "pages", "actions", "channels", "files", "written"],
-    )?;
+pub fn decode_agenticspec_cli_ui_derive_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiDeriveResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "pages", "actions", "channels", "files", "written"])?;
     Ok(agenticspec_types::cli::UiDeriveResult {
         out: {
             let at0 = json::nested(at, "out");
@@ -6215,10 +5157,7 @@ pub fn decode_agenticspec_cli_ui_derive_result(
 }
 
 /// Writes `agenticspec.cli.UiGenerateInput` as JSON.
-pub fn encode_agenticspec_cli_ui_generate_input(
-    value: &agenticspec_types::cli::UiGenerateInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_generate_input(value: &agenticspec_types::cli::UiGenerateInput, out: &mut String) {
     out.push('{');
     json::member(out, "path");
     json::push_text(out, &value.path);
@@ -6232,10 +5171,7 @@ pub fn encode_agenticspec_cli_ui_generate_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_generate_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiGenerateInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_ui_generate_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiGenerateInput, json::DecodeError> {
     json::closed_at(value, at, &["path", "out"])?;
     Ok(agenticspec_types::cli::UiGenerateInput {
         path: {
@@ -6252,10 +5188,7 @@ pub fn decode_agenticspec_cli_ui_generate_input(
 }
 
 /// Writes `agenticspec.cli.UiGenerateResult` as JSON.
-pub fn encode_agenticspec_cli_ui_generate_result(
-    value: &agenticspec_types::cli::UiGenerateResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_generate_result(value: &agenticspec_types::cli::UiGenerateResult, out: &mut String) {
     out.push('{');
     json::member(out, "out");
     json::push_text(out, &value.out);
@@ -6276,10 +5209,7 @@ pub fn encode_agenticspec_cli_ui_generate_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_generate_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiGenerateResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_ui_generate_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiGenerateResult, json::DecodeError> {
     json::closed_at(value, at, &["out", "files"])?;
     Ok(agenticspec_types::cli::UiGenerateResult {
         out: {
@@ -6292,10 +5222,7 @@ pub fn decode_agenticspec_cli_ui_generate_result(
             let member1 = json::member_at(value, at, "files")?;
             {
                 let mut items1 = Vec::new();
-                for (index1, element1) in json::items_at(member1, &at1, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index1, element1) in json::items_at(member1, &at1, "an array")?.iter().enumerate() {
                     let nested1 = json::nested(&at1, &index1.to_string());
                     items1.push(json::text_at(element1, &nested1, "a string")?.to_owned());
                 }
@@ -6306,10 +5233,7 @@ pub fn decode_agenticspec_cli_ui_generate_result(
 }
 
 /// Writes `agenticspec.cli.UiPanelsInput` as JSON.
-pub fn encode_agenticspec_cli_ui_panels_input(
-    value: &agenticspec_types::cli::UiPanelsInput,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_panels_input(value: &agenticspec_types::cli::UiPanelsInput, out: &mut String) {
     out.push('{');
     if let Some(held0) = &value.root {
         json::member(out, "root");
@@ -6325,10 +5249,7 @@ pub fn encode_agenticspec_cli_ui_panels_input(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_panels_input(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiPanelsInput, json::DecodeError> {
+pub fn decode_agenticspec_cli_ui_panels_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiPanelsInput, json::DecodeError> {
     json::closed_at(value, at, &["root", "check"])?;
     Ok(agenticspec_types::cli::UiPanelsInput {
         root: match value.member("root") {
@@ -6347,10 +5268,7 @@ pub fn decode_agenticspec_cli_ui_panels_input(
 }
 
 /// Writes `agenticspec.cli.UiPanelsResult` as JSON.
-pub fn encode_agenticspec_cli_ui_panels_result(
-    value: &agenticspec_types::cli::UiPanelsResult,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_cli_ui_panels_result(value: &agenticspec_types::cli::UiPanelsResult, out: &mut String) {
     out.push('{');
     json::member(out, "out");
     json::push_text(out, &value.out);
@@ -6368,10 +5286,7 @@ pub fn encode_agenticspec_cli_ui_panels_result(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_cli_ui_panels_result(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::cli::UiPanelsResult, json::DecodeError> {
+pub fn decode_agenticspec_cli_ui_panels_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiPanelsResult, json::DecodeError> {
     json::closed_at(value, at, &["out", "panels", "files", "written"])?;
     Ok(agenticspec_types::cli::UiPanelsResult {
         out: {
@@ -6398,10 +5313,7 @@ pub fn decode_agenticspec_cli_ui_panels_result(
 }
 
 /// Writes `agenticspec.session.Agent.State` as JSON.
-pub fn encode_agenticspec_session_agent_state(
-    value: &agenticspec_types::session::AgentState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_agent_state(value: &agenticspec_types::session::AgentState, out: &mut String) {
     match value {
         agenticspec_types::session::AgentState::Ended => json::push_text(out, "Ended"),
         agenticspec_types::session::AgentState::Idle => json::push_text(out, "Idle"),
@@ -6414,31 +5326,17 @@ pub fn encode_agenticspec_session_agent_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_agent_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::AgentState, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `Ended`, `Idle`, `Working`")? {
-            "Ended" => agenticspec_types::session::AgentState::Ended,
-            "Idle" => agenticspec_types::session::AgentState::Idle,
-            "Working" => agenticspec_types::session::AgentState::Working,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `Ended`, `Idle`, `Working`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_agent_state(value: &json::Value, at: &str) -> Result<agenticspec_types::session::AgentState, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Ended`, `Idle`, `Working`")? {
+        "Ended" => agenticspec_types::session::AgentState::Ended,
+        "Idle" => agenticspec_types::session::AgentState::Idle,
+        "Working" => agenticspec_types::session::AgentState::Working,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Ended`, `Idle`, `Working`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.AgentId` as JSON.
-pub fn encode_agenticspec_session_agent_id(
-    value: &agenticspec_types::session::AgentId,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_agent_id(value: &agenticspec_types::session::AgentId, out: &mut String) {
     json::push_text(out, &value.0);
 }
 
@@ -6447,20 +5345,12 @@ pub fn encode_agenticspec_session_agent_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_agent_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::AgentId, json::DecodeError> {
-    Ok(agenticspec_types::session::AgentId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_session_agent_id(value: &json::Value, at: &str) -> Result<agenticspec_types::session::AgentId, json::DecodeError> {
+    Ok(agenticspec_types::session::AgentId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.session.AgentRole` as JSON.
-pub fn encode_agenticspec_session_agent_role(
-    value: &agenticspec_types::session::AgentRole,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_agent_role(value: &agenticspec_types::session::AgentRole, out: &mut String) {
     match value {
         agenticspec_types::session::AgentRole::Main => json::push_text(out, "Main"),
         agenticspec_types::session::AgentRole::SubAgent => json::push_text(out, "SubAgent"),
@@ -6473,31 +5363,17 @@ pub fn encode_agenticspec_session_agent_role(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_agent_role(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::AgentRole, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `Main`, `SubAgent`, `SideCall`")? {
-            "Main" => agenticspec_types::session::AgentRole::Main,
-            "SubAgent" => agenticspec_types::session::AgentRole::SubAgent,
-            "SideCall" => agenticspec_types::session::AgentRole::SideCall,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `Main`, `SubAgent`, `SideCall`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_agent_role(value: &json::Value, at: &str) -> Result<agenticspec_types::session::AgentRole, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Main`, `SubAgent`, `SideCall`")? {
+        "Main" => agenticspec_types::session::AgentRole::Main,
+        "SubAgent" => agenticspec_types::session::AgentRole::SubAgent,
+        "SideCall" => agenticspec_types::session::AgentRole::SideCall,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Main`, `SubAgent`, `SideCall`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.Attribution` as JSON.
-pub fn encode_agenticspec_session_attribution(
-    value: &agenticspec_types::session::Attribution,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_attribution(value: &agenticspec_types::session::Attribution, out: &mut String) {
     match value {
         agenticspec_types::session::Attribution::Known => json::push_text(out, "Known"),
         agenticspec_types::session::Attribution::Inferred => json::push_text(out, "Inferred"),
@@ -6510,31 +5386,17 @@ pub fn encode_agenticspec_session_attribution(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_attribution(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::Attribution, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `Known`, `Inferred`, `Unknown`")? {
-            "Known" => agenticspec_types::session::Attribution::Known,
-            "Inferred" => agenticspec_types::session::Attribution::Inferred,
-            "Unknown" => agenticspec_types::session::Attribution::Unknown,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `Known`, `Inferred`, `Unknown`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_attribution(value: &json::Value, at: &str) -> Result<agenticspec_types::session::Attribution, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Known`, `Inferred`, `Unknown`")? {
+        "Known" => agenticspec_types::session::Attribution::Known,
+        "Inferred" => agenticspec_types::session::Attribution::Inferred,
+        "Unknown" => agenticspec_types::session::Attribution::Unknown,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Known`, `Inferred`, `Unknown`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.Content` as JSON.
-pub fn encode_agenticspec_session_content(
-    value: &agenticspec_types::session::Content,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_content(value: &agenticspec_types::session::Content, out: &mut String) {
     out.push('{');
     json::member(out, "digest");
     json::push_text(out, &value.digest);
@@ -6548,10 +5410,7 @@ pub fn encode_agenticspec_session_content(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_content(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::Content, json::DecodeError> {
+pub fn decode_agenticspec_session_content(value: &json::Value, at: &str) -> Result<agenticspec_types::session::Content, json::DecodeError> {
     json::closed_at(value, at, &["digest", "bytes"])?;
     Ok(agenticspec_types::session::Content {
         digest: {
@@ -6568,14 +5427,9 @@ pub fn decode_agenticspec_session_content(
 }
 
 /// Writes `agenticspec.session.Decider` as JSON.
-pub fn encode_agenticspec_session_decider(
-    value: &agenticspec_types::session::Decider,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_decider(value: &agenticspec_types::session::Decider, out: &mut String) {
     match value {
-        agenticspec_types::session::Decider::PermissionMode => {
-            json::push_text(out, "PermissionMode")
-        }
+        agenticspec_types::session::Decider::PermissionMode => json::push_text(out, "PermissionMode"),
         agenticspec_types::session::Decider::Classifier => json::push_text(out, "Classifier"),
         agenticspec_types::session::Decider::Hook => json::push_text(out, "Hook"),
         agenticspec_types::session::Decider::Human => json::push_text(out, "Human"),
@@ -6590,10 +5444,7 @@ pub fn encode_agenticspec_session_decider(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_decider(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::Decider, json::DecodeError> {
+pub fn decode_agenticspec_session_decider(value: &json::Value, at: &str) -> Result<agenticspec_types::session::Decider, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `PermissionMode`, `Classifier`, `Hook`, `Human`, `SafetyCheck`, `Rule`, `NotRecorded`")? {
         "PermissionMode" => agenticspec_types::session::Decider::PermissionMode,
         "Classifier" => agenticspec_types::session::Decider::Classifier,
@@ -6607,10 +5458,7 @@ pub fn decode_agenticspec_session_decider(
 }
 
 /// Writes `agenticspec.session.Decision` as JSON.
-pub fn encode_agenticspec_session_decision(
-    value: &agenticspec_types::session::Decision,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_decision(value: &agenticspec_types::session::Decision, out: &mut String) {
     match value {
         agenticspec_types::session::Decision::Accept => json::push_text(out, "Accept"),
         agenticspec_types::session::Decision::Refuse => json::push_text(out, "Refuse"),
@@ -6622,30 +5470,16 @@ pub fn encode_agenticspec_session_decision(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_decision(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::Decision, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `Accept`, `Refuse`")? {
-            "Accept" => agenticspec_types::session::Decision::Accept,
-            "Refuse" => agenticspec_types::session::Decision::Refuse,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `Accept`, `Refuse`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_decision(value: &json::Value, at: &str) -> Result<agenticspec_types::session::Decision, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Accept`, `Refuse`")? {
+        "Accept" => agenticspec_types::session::Decision::Accept,
+        "Refuse" => agenticspec_types::session::Decision::Refuse,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Accept`, `Refuse`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.Exposure.State` as JSON.
-pub fn encode_agenticspec_session_exposure_state(
-    value: &agenticspec_types::session::ExposureState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_exposure_state(value: &agenticspec_types::session::ExposureState, out: &mut String) {
     match value {
         agenticspec_types::session::ExposureState::Recorded => json::push_text(out, "Recorded"),
     }
@@ -6656,33 +5490,19 @@ pub fn encode_agenticspec_session_exposure_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_exposure_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ExposureState, json::DecodeError> {
+pub fn decode_agenticspec_session_exposure_state(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ExposureState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Recorded`")? {
         "Recorded" => agenticspec_types::session::ExposureState::Recorded,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Recorded`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Recorded`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.session.ExposureChannel` as JSON.
-pub fn encode_agenticspec_session_exposure_channel(
-    value: &agenticspec_types::session::ExposureChannel,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_exposure_channel(value: &agenticspec_types::session::ExposureChannel, out: &mut String) {
     match value {
         agenticspec_types::session::ExposureChannel::Prompt => json::push_text(out, "Prompt"),
         agenticspec_types::session::ExposureChannel::ToolInput => json::push_text(out, "ToolInput"),
-        agenticspec_types::session::ExposureChannel::ToolOutput => {
-            json::push_text(out, "ToolOutput")
-        }
+        agenticspec_types::session::ExposureChannel::ToolOutput => json::push_text(out, "ToolOutput"),
         agenticspec_types::session::ExposureChannel::AgentText => json::push_text(out, "AgentText"),
     }
 }
@@ -6692,41 +5512,21 @@ pub fn encode_agenticspec_session_exposure_channel(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_exposure_channel(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ExposureChannel, json::DecodeError> {
-    Ok(
-        match json::text_at(
-            value,
-            at,
-            "one of `Prompt`, `ToolInput`, `ToolOutput`, `AgentText`",
-        )? {
-            "Prompt" => agenticspec_types::session::ExposureChannel::Prompt,
-            "ToolInput" => agenticspec_types::session::ExposureChannel::ToolInput,
-            "ToolOutput" => agenticspec_types::session::ExposureChannel::ToolOutput,
-            "AgentText" => agenticspec_types::session::ExposureChannel::AgentText,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `Prompt`, `ToolInput`, `ToolOutput`, `AgentText`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_exposure_channel(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ExposureChannel, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Prompt`, `ToolInput`, `ToolOutput`, `AgentText`")? {
+        "Prompt" => agenticspec_types::session::ExposureChannel::Prompt,
+        "ToolInput" => agenticspec_types::session::ExposureChannel::ToolInput,
+        "ToolOutput" => agenticspec_types::session::ExposureChannel::ToolOutput,
+        "AgentText" => agenticspec_types::session::ExposureChannel::AgentText,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Prompt`, `ToolInput`, `ToolOutput`, `AgentText`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.ExposureClass` as JSON.
-pub fn encode_agenticspec_session_exposure_class(
-    value: &agenticspec_types::session::ExposureClass,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_exposure_class(value: &agenticspec_types::session::ExposureClass, out: &mut String) {
     match value {
         agenticspec_types::session::ExposureClass::Secret => json::push_text(out, "Secret"),
-        agenticspec_types::session::ExposureClass::PersonalData => {
-            json::push_text(out, "PersonalData")
-        }
+        agenticspec_types::session::ExposureClass::PersonalData => json::push_text(out, "PersonalData"),
     }
 }
 
@@ -6735,30 +5535,16 @@ pub fn encode_agenticspec_session_exposure_class(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_exposure_class(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ExposureClass, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `Secret`, `PersonalData`")? {
-            "Secret" => agenticspec_types::session::ExposureClass::Secret,
-            "PersonalData" => agenticspec_types::session::ExposureClass::PersonalData,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `Secret`, `PersonalData`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_exposure_class(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ExposureClass, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Secret`, `PersonalData`")? {
+        "Secret" => agenticspec_types::session::ExposureClass::Secret,
+        "PersonalData" => agenticspec_types::session::ExposureClass::PersonalData,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Secret`, `PersonalData`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.ExposureId` as JSON.
-pub fn encode_agenticspec_session_exposure_id(
-    value: &agenticspec_types::session::ExposureId,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_exposure_id(value: &agenticspec_types::session::ExposureId, out: &mut String) {
     json::push_text(out, &value.0);
 }
 
@@ -6767,20 +5553,12 @@ pub fn encode_agenticspec_session_exposure_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_exposure_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ExposureId, json::DecodeError> {
-    Ok(agenticspec_types::session::ExposureId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_session_exposure_id(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ExposureId, json::DecodeError> {
+    Ok(agenticspec_types::session::ExposureId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.session.Harness` as JSON.
-pub fn encode_agenticspec_session_harness(
-    value: &agenticspec_types::session::Harness,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_harness(value: &agenticspec_types::session::Harness, out: &mut String) {
     match value {
         agenticspec_types::session::Harness::ClaudeCode => json::push_text(out, "ClaudeCode"),
         agenticspec_types::session::Harness::Codex => json::push_text(out, "Codex"),
@@ -6793,41 +5571,21 @@ pub fn encode_agenticspec_session_harness(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_harness(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::Harness, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `ClaudeCode`, `Codex`, `Other`")? {
-            "ClaudeCode" => agenticspec_types::session::Harness::ClaudeCode,
-            "Codex" => agenticspec_types::session::Harness::Codex,
-            "Other" => agenticspec_types::session::Harness::Other,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `ClaudeCode`, `Codex`, `Other`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_harness(value: &json::Value, at: &str) -> Result<agenticspec_types::session::Harness, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `ClaudeCode`, `Codex`, `Other`")? {
+        "ClaudeCode" => agenticspec_types::session::Harness::ClaudeCode,
+        "Codex" => agenticspec_types::session::Harness::Codex,
+        "Other" => agenticspec_types::session::Harness::Other,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `ClaudeCode`, `Codex`, `Other`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.IncompleteReason` as JSON.
-pub fn encode_agenticspec_session_incomplete_reason(
-    value: &agenticspec_types::session::IncompleteReason,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_incomplete_reason(value: &agenticspec_types::session::IncompleteReason, out: &mut String) {
     match value {
-        agenticspec_types::session::IncompleteReason::ClientDisconnected => {
-            json::push_text(out, "client_disconnected")
-        }
-        agenticspec_types::session::IncompleteReason::UpstreamCut => {
-            json::push_text(out, "upstream_cut")
-        }
-        agenticspec_types::session::IncompleteReason::WireError => {
-            json::push_text(out, "wire_error")
-        }
+        agenticspec_types::session::IncompleteReason::ClientDisconnected => json::push_text(out, "client_disconnected"),
+        agenticspec_types::session::IncompleteReason::UpstreamCut => json::push_text(out, "upstream_cut"),
+        agenticspec_types::session::IncompleteReason::WireError => json::push_text(out, "wire_error"),
         agenticspec_types::session::IncompleteReason::Refused => json::push_text(out, "refused"),
     }
 }
@@ -6837,49 +5595,23 @@ pub fn encode_agenticspec_session_incomplete_reason(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_incomplete_reason(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::IncompleteReason, json::DecodeError> {
-    Ok(
-        match json::text_at(
-            value,
-            at,
-            "one of `client_disconnected`, `upstream_cut`, `wire_error`, `refused`",
-        )? {
-            "client_disconnected" => {
-                agenticspec_types::session::IncompleteReason::ClientDisconnected
-            }
-            "upstream_cut" => agenticspec_types::session::IncompleteReason::UpstreamCut,
-            "wire_error" => agenticspec_types::session::IncompleteReason::WireError,
-            "refused" => agenticspec_types::session::IncompleteReason::Refused,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected:
-                        "one of `client_disconnected`, `upstream_cut`, `wire_error`, `refused`"
-                            .to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_incomplete_reason(value: &json::Value, at: &str) -> Result<agenticspec_types::session::IncompleteReason, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `client_disconnected`, `upstream_cut`, `wire_error`, `refused`")? {
+        "client_disconnected" => agenticspec_types::session::IncompleteReason::ClientDisconnected,
+        "upstream_cut" => agenticspec_types::session::IncompleteReason::UpstreamCut,
+        "wire_error" => agenticspec_types::session::IncompleteReason::WireError,
+        "refused" => agenticspec_types::session::IncompleteReason::Refused,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `client_disconnected`, `upstream_cut`, `wire_error`, `refused`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.PromptAuthor` as JSON.
-pub fn encode_agenticspec_session_prompt_author(
-    value: &agenticspec_types::session::PromptAuthor,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_prompt_author(value: &agenticspec_types::session::PromptAuthor, out: &mut String) {
     match value {
         agenticspec_types::session::PromptAuthor::Human => json::push_text(out, "Human"),
         agenticspec_types::session::PromptAuthor::Delegate => json::push_text(out, "Delegate"),
-        agenticspec_types::session::PromptAuthor::PeerSession => {
-            json::push_text(out, "PeerSession")
-        }
-        agenticspec_types::session::PromptAuthor::ParentAgent => {
-            json::push_text(out, "ParentAgent")
-        }
+        agenticspec_types::session::PromptAuthor::PeerSession => json::push_text(out, "PeerSession"),
+        agenticspec_types::session::PromptAuthor::ParentAgent => json::push_text(out, "ParentAgent"),
         agenticspec_types::session::PromptAuthor::Harness => json::push_text(out, "Harness"),
         agenticspec_types::session::PromptAuthor::Hook => json::push_text(out, "Hook"),
     }
@@ -6890,38 +5622,20 @@ pub fn encode_agenticspec_session_prompt_author(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_prompt_author(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::PromptAuthor, json::DecodeError> {
-    Ok(
-        match json::text_at(
-            value,
-            at,
-            "one of `Human`, `Delegate`, `PeerSession`, `ParentAgent`, `Harness`, `Hook`",
-        )? {
-            "Human" => agenticspec_types::session::PromptAuthor::Human,
-            "Delegate" => agenticspec_types::session::PromptAuthor::Delegate,
-            "PeerSession" => agenticspec_types::session::PromptAuthor::PeerSession,
-            "ParentAgent" => agenticspec_types::session::PromptAuthor::ParentAgent,
-            "Harness" => agenticspec_types::session::PromptAuthor::Harness,
-            "Hook" => agenticspec_types::session::PromptAuthor::Hook,
-            other => return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected:
-                    "one of `Human`, `Delegate`, `PeerSession`, `ParentAgent`, `Harness`, `Hook`"
-                        .to_owned(),
-                found: format!("`{other}`"),
-            }),
-        },
-    )
+pub fn decode_agenticspec_session_prompt_author(value: &json::Value, at: &str) -> Result<agenticspec_types::session::PromptAuthor, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Human`, `Delegate`, `PeerSession`, `ParentAgent`, `Harness`, `Hook`")? {
+        "Human" => agenticspec_types::session::PromptAuthor::Human,
+        "Delegate" => agenticspec_types::session::PromptAuthor::Delegate,
+        "PeerSession" => agenticspec_types::session::PromptAuthor::PeerSession,
+        "ParentAgent" => agenticspec_types::session::PromptAuthor::ParentAgent,
+        "Harness" => agenticspec_types::session::PromptAuthor::Harness,
+        "Hook" => agenticspec_types::session::PromptAuthor::Hook,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Human`, `Delegate`, `PeerSession`, `ParentAgent`, `Harness`, `Hook`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.PromptClass` as JSON.
-pub fn encode_agenticspec_session_prompt_class(
-    value: &agenticspec_types::session::PromptClass,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_prompt_class(value: &agenticspec_types::session::PromptClass, out: &mut String) {
     match value {
         agenticspec_types::session::PromptClass::Task => json::push_text(out, "Task"),
         agenticspec_types::session::PromptClass::Correction => json::push_text(out, "Correction"),
@@ -6937,40 +5651,20 @@ pub fn encode_agenticspec_session_prompt_class(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_prompt_class(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::PromptClass, json::DecodeError> {
-    Ok(
-        match json::text_at(
-            value,
-            at,
-            "one of `Task`, `Correction`, `Approval`, `Question`, `Continue`, `Unknown`",
-        )? {
-            "Task" => agenticspec_types::session::PromptClass::Task,
-            "Correction" => agenticspec_types::session::PromptClass::Correction,
-            "Approval" => agenticspec_types::session::PromptClass::Approval,
-            "Question" => agenticspec_types::session::PromptClass::Question,
-            "Continue" => agenticspec_types::session::PromptClass::Continue,
-            "Unknown" => agenticspec_types::session::PromptClass::Unknown,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected:
-                        "one of `Task`, `Correction`, `Approval`, `Question`, `Continue`, `Unknown`"
-                            .to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_prompt_class(value: &json::Value, at: &str) -> Result<agenticspec_types::session::PromptClass, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Task`, `Correction`, `Approval`, `Question`, `Continue`, `Unknown`")? {
+        "Task" => agenticspec_types::session::PromptClass::Task,
+        "Correction" => agenticspec_types::session::PromptClass::Correction,
+        "Approval" => agenticspec_types::session::PromptClass::Approval,
+        "Question" => agenticspec_types::session::PromptClass::Question,
+        "Continue" => agenticspec_types::session::PromptClass::Continue,
+        "Unknown" => agenticspec_types::session::PromptClass::Unknown,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Task`, `Correction`, `Approval`, `Question`, `Continue`, `Unknown`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.Session.State` as JSON.
-pub fn encode_agenticspec_session_session_state(
-    value: &agenticspec_types::session::SessionState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_session_state(value: &agenticspec_types::session::SessionState, out: &mut String) {
     match value {
         agenticspec_types::session::SessionState::Ended => json::push_text(out, "Ended"),
         agenticspec_types::session::SessionState::Open => json::push_text(out, "Open"),
@@ -6982,28 +5676,16 @@ pub fn encode_agenticspec_session_session_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_session_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::SessionState, json::DecodeError> {
+pub fn decode_agenticspec_session_session_state(value: &json::Value, at: &str) -> Result<agenticspec_types::session::SessionState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Ended`, `Open`")? {
         "Ended" => agenticspec_types::session::SessionState::Ended,
         "Open" => agenticspec_types::session::SessionState::Open,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Ended`, `Open`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Ended`, `Open`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.session.SessionId` as JSON.
-pub fn encode_agenticspec_session_session_id(
-    value: &agenticspec_types::session::SessionId,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_session_id(value: &agenticspec_types::session::SessionId, out: &mut String) {
     json::push_text(out, &value.0);
 }
 
@@ -7012,20 +5694,12 @@ pub fn encode_agenticspec_session_session_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_session_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::SessionId, json::DecodeError> {
-    Ok(agenticspec_types::session::SessionId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_session_session_id(value: &json::Value, at: &str) -> Result<agenticspec_types::session::SessionId, json::DecodeError> {
+    Ok(agenticspec_types::session::SessionId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.session.Source` as JSON.
-pub fn encode_agenticspec_session_source(
-    value: &agenticspec_types::session::Source,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_source(value: &agenticspec_types::session::Source, out: &mut String) {
     match value {
         agenticspec_types::session::Source::Disk => json::push_text(out, "Disk"),
         agenticspec_types::session::Source::Wire => json::push_text(out, "Wire"),
@@ -7037,28 +5711,16 @@ pub fn encode_agenticspec_session_source(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_source(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::Source, json::DecodeError> {
+pub fn decode_agenticspec_session_source(value: &json::Value, at: &str) -> Result<agenticspec_types::session::Source, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Disk`, `Wire`")? {
         "Disk" => agenticspec_types::session::Source::Disk,
         "Wire" => agenticspec_types::session::Source::Wire,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Disk`, `Wire`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Disk`, `Wire`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.session.ToolCall.State` as JSON.
-pub fn encode_agenticspec_session_tool_call_state(
-    value: &agenticspec_types::session::ToolCallState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_tool_call_state(value: &agenticspec_types::session::ToolCallState, out: &mut String) {
     match value {
         agenticspec_types::session::ToolCallState::Accepted => json::push_text(out, "Accepted"),
         agenticspec_types::session::ToolCallState::Failed => json::push_text(out, "Failed"),
@@ -7073,38 +5735,19 @@ pub fn encode_agenticspec_session_tool_call_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_tool_call_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ToolCallState, json::DecodeError> {
-    Ok(
-        match json::text_at(
-            value,
-            at,
-            "one of `Accepted`, `Failed`, `Refused`, `Requested`, `Succeeded`",
-        )? {
-            "Accepted" => agenticspec_types::session::ToolCallState::Accepted,
-            "Failed" => agenticspec_types::session::ToolCallState::Failed,
-            "Refused" => agenticspec_types::session::ToolCallState::Refused,
-            "Requested" => agenticspec_types::session::ToolCallState::Requested,
-            "Succeeded" => agenticspec_types::session::ToolCallState::Succeeded,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `Accepted`, `Failed`, `Refused`, `Requested`, `Succeeded`"
-                        .to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_tool_call_state(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ToolCallState, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Accepted`, `Failed`, `Refused`, `Requested`, `Succeeded`")? {
+        "Accepted" => agenticspec_types::session::ToolCallState::Accepted,
+        "Failed" => agenticspec_types::session::ToolCallState::Failed,
+        "Refused" => agenticspec_types::session::ToolCallState::Refused,
+        "Requested" => agenticspec_types::session::ToolCallState::Requested,
+        "Succeeded" => agenticspec_types::session::ToolCallState::Succeeded,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Accepted`, `Failed`, `Refused`, `Requested`, `Succeeded`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.session.ToolCallId` as JSON.
-pub fn encode_agenticspec_session_tool_call_id(
-    value: &agenticspec_types::session::ToolCallId,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_tool_call_id(value: &agenticspec_types::session::ToolCallId, out: &mut String) {
     json::push_text(out, &value.0);
 }
 
@@ -7113,20 +5756,12 @@ pub fn encode_agenticspec_session_tool_call_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_tool_call_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ToolCallId, json::DecodeError> {
-    Ok(agenticspec_types::session::ToolCallId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_session_tool_call_id(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ToolCallId, json::DecodeError> {
+    Ok(agenticspec_types::session::ToolCallId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.session.ToolCategory` as JSON.
-pub fn encode_agenticspec_session_tool_category(
-    value: &agenticspec_types::session::ToolCategory,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_tool_category(value: &agenticspec_types::session::ToolCategory, out: &mut String) {
     match value {
         agenticspec_types::session::ToolCategory::Read => json::push_text(out, "Read"),
         agenticspec_types::session::ToolCategory::Search => json::push_text(out, "Search"),
@@ -7145,10 +5780,7 @@ pub fn encode_agenticspec_session_tool_category(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_tool_category(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ToolCategory, json::DecodeError> {
+pub fn decode_agenticspec_session_tool_category(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ToolCategory, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Read`, `Search`, `Edit`, `Execute`, `Network`, `Spawn`, `Message`, `Plan`, `Other`")? {
         "Read" => agenticspec_types::session::ToolCategory::Read,
         "Search" => agenticspec_types::session::ToolCategory::Search,
@@ -7164,10 +5796,7 @@ pub fn decode_agenticspec_session_tool_category(
 }
 
 /// Writes `agenticspec.session.Usage` as JSON.
-pub fn encode_agenticspec_session_usage(
-    value: &agenticspec_types::session::Usage,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_usage(value: &agenticspec_types::session::Usage, out: &mut String) {
     out.push('{');
     json::member(out, "uncached_input");
     json::push_integer(out, value.uncached_input);
@@ -7187,21 +5816,8 @@ pub fn encode_agenticspec_session_usage(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_usage(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::Usage, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "uncached_input",
-            "cache_read",
-            "cache_write_5m",
-            "cache_write_1h",
-            "output",
-        ],
-    )?;
+pub fn decode_agenticspec_session_usage(value: &json::Value, at: &str) -> Result<agenticspec_types::session::Usage, json::DecodeError> {
+    json::closed_at(value, at, &["uncached_input", "cache_read", "cache_write_5m", "cache_write_1h", "output"])?;
     Ok(agenticspec_types::session::Usage {
         uncached_input: {
             let at0 = json::nested(at, "uncached_input");
@@ -7232,10 +5848,7 @@ pub fn decode_agenticspec_session_usage(
 }
 
 /// Writes `agenticspec.session.Verdict` as JSON.
-pub fn encode_agenticspec_session_verdict(
-    value: &agenticspec_types::session::Verdict,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_session_verdict(value: &agenticspec_types::session::Verdict, out: &mut String) {
     match value {
         agenticspec_types::session::Verdict::Ok => json::push_text(out, "Ok"),
         agenticspec_types::session::Verdict::Gap => json::push_text(out, "Gap"),
@@ -7248,24 +5861,13 @@ pub fn encode_agenticspec_session_verdict(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_session_verdict(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::Verdict, json::DecodeError> {
-    Ok(
-        match json::text_at(value, at, "one of `Ok`, `Gap`, `Unk`")? {
-            "Ok" => agenticspec_types::session::Verdict::Ok,
-            "Gap" => agenticspec_types::session::Verdict::Gap,
-            "Unk" => agenticspec_types::session::Verdict::Unk,
-            other => {
-                return Err(json::DecodeError {
-                    at: at.to_owned(),
-                    expected: "one of `Ok`, `Gap`, `Unk`".to_owned(),
-                    found: format!("`{other}`"),
-                })
-            }
-        },
-    )
+pub fn decode_agenticspec_session_verdict(value: &json::Value, at: &str) -> Result<agenticspec_types::session::Verdict, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `Ok`, `Gap`, `Unk`")? {
+        "Ok" => agenticspec_types::session::Verdict::Ok,
+        "Gap" => agenticspec_types::session::Verdict::Gap,
+        "Unk" => agenticspec_types::session::Verdict::Unk,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Ok`, `Gap`, `Unk`".to_owned(), found: format!("`{other}`") }),
+    })
 }
 
 /// Writes `agenticspec.view.Agent` as JSON.
@@ -7293,15 +5895,8 @@ pub fn encode_agenticspec_view_agent(value: &agenticspec_types::view::Agent, out
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_agent(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::Agent, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["id", "parent", "role", "spawned_by", "started_at"],
-    )?;
+pub fn decode_agenticspec_view_agent(value: &json::Value, at: &str) -> Result<agenticspec_types::view::Agent, json::DecodeError> {
+    json::closed_at(value, at, &["id", "parent", "role", "spawned_by", "started_at"])?;
     Ok(agenticspec_types::view::Agent {
         id: {
             let at0 = json::nested(at, "id");
@@ -7336,10 +5931,7 @@ pub fn decode_agenticspec_view_agent(
 }
 
 /// Writes `agenticspec.view.AgentListing.State` as JSON.
-pub fn encode_agenticspec_view_agent_listing_state(
-    value: &agenticspec_types::view::AgentListingState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_agent_listing_state(value: &agenticspec_types::view::AgentListingState, out: &mut String) {
     match value {
         agenticspec_types::view::AgentListingState::Listed => json::push_text(out, "Listed"),
     }
@@ -7350,27 +5942,15 @@ pub fn encode_agenticspec_view_agent_listing_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_agent_listing_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::AgentListingState, json::DecodeError> {
+pub fn decode_agenticspec_view_agent_listing_state(value: &json::Value, at: &str) -> Result<agenticspec_types::view::AgentListingState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Listed`")? {
         "Listed" => agenticspec_types::view::AgentListingState::Listed,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Listed`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Listed`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.view.BucketId` as JSON.
-pub fn encode_agenticspec_view_bucket_id(
-    value: &agenticspec_types::view::BucketId,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_bucket_id(value: &agenticspec_types::view::BucketId, out: &mut String) {
     json::push_text(out, &value.0);
 }
 
@@ -7379,20 +5959,12 @@ pub fn encode_agenticspec_view_bucket_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_bucket_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::BucketId, json::DecodeError> {
-    Ok(agenticspec_types::view::BucketId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_view_bucket_id(value: &json::Value, at: &str) -> Result<agenticspec_types::view::BucketId, json::DecodeError> {
+    Ok(agenticspec_types::view::BucketId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.view.CheckId` as JSON.
-pub fn encode_agenticspec_view_check_id(
-    value: &agenticspec_types::view::CheckId,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_check_id(value: &agenticspec_types::view::CheckId, out: &mut String) {
     json::push_text(out, &value.0);
 }
 
@@ -7401,20 +5973,12 @@ pub fn encode_agenticspec_view_check_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_check_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::CheckId, json::DecodeError> {
-    Ok(agenticspec_types::view::CheckId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_view_check_id(value: &json::Value, at: &str) -> Result<agenticspec_types::view::CheckId, json::DecodeError> {
+    Ok(agenticspec_types::view::CheckId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.view.CountId` as JSON.
-pub fn encode_agenticspec_view_count_id(
-    value: &agenticspec_types::view::CountId,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_count_id(value: &agenticspec_types::view::CountId, out: &mut String) {
     json::push_text(out, &value.0);
 }
 
@@ -7423,20 +5987,12 @@ pub fn encode_agenticspec_view_count_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_count_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::CountId, json::DecodeError> {
-    Ok(agenticspec_types::view::CountId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_view_count_id(value: &json::Value, at: &str) -> Result<agenticspec_types::view::CountId, json::DecodeError> {
+    Ok(agenticspec_types::view::CountId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.view.Document` as JSON.
-pub fn encode_agenticspec_view_document(
-    value: &agenticspec_types::view::Document,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_document(value: &agenticspec_types::view::Document, out: &mut String) {
     out.push('{');
     json::member(out, "format");
     json::push_text(out, &value.format);
@@ -7476,23 +6032,8 @@ pub fn encode_agenticspec_view_document(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_document(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::Document, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "format",
-            "session_id",
-            "title",
-            "project",
-            "harness",
-            "agents",
-            "events",
-        ],
-    )?;
+pub fn decode_agenticspec_view_document(value: &json::Value, at: &str) -> Result<agenticspec_types::view::Document, json::DecodeError> {
+    json::closed_at(value, at, &["format", "session_id", "title", "project", "harness", "agents", "events"])?;
     Ok(agenticspec_types::view::Document {
         format: {
             let at0 = json::nested(at, "format");
@@ -7526,10 +6067,7 @@ pub fn decode_agenticspec_view_document(
             let member5 = json::member_at(value, at, "agents")?;
             {
                 let mut items5 = Vec::new();
-                for (index5, element5) in json::items_at(member5, &at5, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
                     let nested5 = json::nested(&at5, &index5.to_string());
                     items5.push(decode_agenticspec_view_agent(element5, &nested5)?);
                 }
@@ -7541,10 +6079,7 @@ pub fn decode_agenticspec_view_document(
             let member6 = json::member_at(value, at, "events")?;
             {
                 let mut items6 = Vec::new();
-                for (index6, element6) in json::items_at(member6, &at6, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index6, element6) in json::items_at(member6, &at6, "an array")?.iter().enumerate() {
                     let nested6 = json::nested(&at6, &index6.to_string());
                     items6.push(decode_agenticspec_view_event(element6, &nested6)?);
                 }
@@ -7611,30 +6146,8 @@ pub fn encode_agenticspec_view_event(value: &agenticspec_types::view::Event, out
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_event(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::Event, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "seq",
-            "at",
-            "agent",
-            "kind",
-            "label",
-            "detail",
-            "call",
-            "ok",
-            "context_tokens",
-            "output_tokens",
-            "cache_read_tokens",
-            "cache_write_tokens",
-            "cost_microdollars",
-            "bytes",
-        ],
-    )?;
+pub fn decode_agenticspec_view_event(value: &json::Value, at: &str) -> Result<agenticspec_types::view::Event, json::DecodeError> {
+    json::closed_at(value, at, &["seq", "at", "agent", "kind", "label", "detail", "call", "ok", "context_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens", "cost_microdollars", "bytes"])?;
     Ok(agenticspec_types::view::Event {
         seq: {
             let at0 = json::nested(at, "seq");
@@ -7728,10 +6241,7 @@ pub fn decode_agenticspec_view_event(
 }
 
 /// Writes `agenticspec.view.EventCount.State` as JSON.
-pub fn encode_agenticspec_view_event_count_state(
-    value: &agenticspec_types::view::EventCountState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_event_count_state(value: &agenticspec_types::view::EventCountState, out: &mut String) {
     match value {
         agenticspec_types::view::EventCountState::Counted => json::push_text(out, "Counted"),
     }
@@ -7742,27 +6252,15 @@ pub fn encode_agenticspec_view_event_count_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_event_count_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::EventCountState, json::DecodeError> {
+pub fn decode_agenticspec_view_event_count_state(value: &json::Value, at: &str) -> Result<agenticspec_types::view::EventCountState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Counted`")? {
         "Counted" => agenticspec_types::view::EventCountState::Counted,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Counted`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Counted`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.view.EventId` as JSON.
-pub fn encode_agenticspec_view_event_id(
-    value: &agenticspec_types::view::EventId,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_event_id(value: &agenticspec_types::view::EventId, out: &mut String) {
     json::push_text(out, &value.0);
 }
 
@@ -7771,20 +6269,12 @@ pub fn encode_agenticspec_view_event_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_event_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::EventId, json::DecodeError> {
-    Ok(agenticspec_types::view::EventId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_view_event_id(value: &json::Value, at: &str) -> Result<agenticspec_types::view::EventId, json::DecodeError> {
+    Ok(agenticspec_types::view::EventId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.view.EventKind` as JSON.
-pub fn encode_agenticspec_view_event_kind(
-    value: &agenticspec_types::view::EventKind,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_event_kind(value: &agenticspec_types::view::EventKind, out: &mut String) {
     match value {
         agenticspec_types::view::EventKind::AgentStarted => json::push_text(out, "agent_started"),
         agenticspec_types::view::EventKind::Prompt => json::push_text(out, "prompt"),
@@ -7804,10 +6294,7 @@ pub fn encode_agenticspec_view_event_kind(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_event_kind(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::EventKind, json::DecodeError> {
+pub fn decode_agenticspec_view_event_kind(value: &json::Value, at: &str) -> Result<agenticspec_types::view::EventKind, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `agent_started`, `prompt`, `model_turn`, `tool_call`, `decision`, `tool_result`, `turn_end`, `compaction`, `exposure`, `cache_bust`")? {
         "agent_started" => agenticspec_types::view::EventKind::AgentStarted,
         "prompt" => agenticspec_types::view::EventKind::Prompt,
@@ -7824,10 +6311,7 @@ pub fn decode_agenticspec_view_event_kind(
 }
 
 /// Writes `agenticspec.view.EventRow.State` as JSON.
-pub fn encode_agenticspec_view_event_row_state(
-    value: &agenticspec_types::view::EventRowState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_event_row_state(value: &agenticspec_types::view::EventRowState, out: &mut String) {
     match value {
         agenticspec_types::view::EventRowState::Logged => json::push_text(out, "Logged"),
     }
@@ -7838,27 +6322,15 @@ pub fn encode_agenticspec_view_event_row_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_event_row_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::EventRowState, json::DecodeError> {
+pub fn decode_agenticspec_view_event_row_state(value: &json::Value, at: &str) -> Result<agenticspec_types::view::EventRowState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Logged`")? {
         "Logged" => agenticspec_types::view::EventRowState::Logged,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Logged`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Logged`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.view.FigureBucket.State` as JSON.
-pub fn encode_agenticspec_view_figure_bucket_state(
-    value: &agenticspec_types::view::FigureBucketState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_figure_bucket_state(value: &agenticspec_types::view::FigureBucketState, out: &mut String) {
     match value {
         agenticspec_types::view::FigureBucketState::Counted => json::push_text(out, "Counted"),
     }
@@ -7869,27 +6341,15 @@ pub fn encode_agenticspec_view_figure_bucket_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_figure_bucket_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::FigureBucketState, json::DecodeError> {
+pub fn decode_agenticspec_view_figure_bucket_state(value: &json::Value, at: &str) -> Result<agenticspec_types::view::FigureBucketState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Counted`")? {
         "Counted" => agenticspec_types::view::FigureBucketState::Counted,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Counted`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Counted`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.view.SessionCheck.State` as JSON.
-pub fn encode_agenticspec_view_session_check_state(
-    value: &agenticspec_types::view::SessionCheckState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_session_check_state(value: &agenticspec_types::view::SessionCheckState, out: &mut String) {
     match value {
         agenticspec_types::view::SessionCheckState::Judged => json::push_text(out, "Judged"),
     }
@@ -7900,27 +6360,15 @@ pub fn encode_agenticspec_view_session_check_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_session_check_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::SessionCheckState, json::DecodeError> {
+pub fn decode_agenticspec_view_session_check_state(value: &json::Value, at: &str) -> Result<agenticspec_types::view::SessionCheckState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Judged`")? {
         "Judged" => agenticspec_types::view::SessionCheckState::Judged,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Judged`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Judged`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
 /// Writes `agenticspec.view.SessionListing.State` as JSON.
-pub fn encode_agenticspec_view_session_listing_state(
-    value: &agenticspec_types::view::SessionListingState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_session_listing_state(value: &agenticspec_types::view::SessionListingState, out: &mut String) {
     match value {
         agenticspec_types::view::SessionListingState::Listed => json::push_text(out, "Listed"),
     }
@@ -7931,19 +6379,10 @@ pub fn encode_agenticspec_view_session_listing_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_session_listing_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::SessionListingState, json::DecodeError> {
+pub fn decode_agenticspec_view_session_listing_state(value: &json::Value, at: &str) -> Result<agenticspec_types::view::SessionListingState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Listed`")? {
         "Listed" => agenticspec_types::view::SessionListingState::Listed,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Listed`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Listed`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
@@ -7957,20 +6396,12 @@ pub fn encode_agenticspec_view_slot_id(value: &agenticspec_types::view::SlotId, 
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_slot_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::SlotId, json::DecodeError> {
-    Ok(agenticspec_types::view::SlotId(
-        json::text_at(value, at, "a string")?.to_owned(),
-    ))
+pub fn decode_agenticspec_view_slot_id(value: &json::Value, at: &str) -> Result<agenticspec_types::view::SlotId, json::DecodeError> {
+    Ok(agenticspec_types::view::SlotId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
 /// Writes `agenticspec.view.TimelineSlot.State` as JSON.
-pub fn encode_agenticspec_view_timeline_slot_state(
-    value: &agenticspec_types::view::TimelineSlotState,
-    out: &mut String,
-) {
+pub fn encode_agenticspec_view_timeline_slot_state(value: &agenticspec_types::view::TimelineSlotState, out: &mut String) {
     match value {
         agenticspec_types::view::TimelineSlotState::Counted => json::push_text(out, "Counted"),
     }
@@ -7981,19 +6412,10 @@ pub fn encode_agenticspec_view_timeline_slot_state(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_timeline_slot_state(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::TimelineSlotState, json::DecodeError> {
+pub fn decode_agenticspec_view_timeline_slot_state(value: &json::Value, at: &str) -> Result<agenticspec_types::view::TimelineSlotState, json::DecodeError> {
     Ok(match json::text_at(value, at, "one of `Counted`")? {
         "Counted" => agenticspec_types::view::TimelineSlotState::Counted,
-        other => {
-            return Err(json::DecodeError {
-                at: at.to_owned(),
-                expected: "one of `Counted`".to_owned(),
-                found: format!("`{other}`"),
-            })
-        }
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `Counted`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
@@ -8034,22 +6456,8 @@ pub fn encode_agenticspec_view_update(value: &agenticspec_types::view::Update, o
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_agenticspec_view_update(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::Update, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "format",
-            "session_id",
-            "reset",
-            "from_seq",
-            "agents",
-            "events",
-        ],
-    )?;
+pub fn decode_agenticspec_view_update(value: &json::Value, at: &str) -> Result<agenticspec_types::view::Update, json::DecodeError> {
+    json::closed_at(value, at, &["format", "session_id", "reset", "from_seq", "agents", "events"])?;
     Ok(agenticspec_types::view::Update {
         format: {
             let at0 = json::nested(at, "format");
@@ -8076,10 +6484,7 @@ pub fn decode_agenticspec_view_update(
             let member4 = json::member_at(value, at, "agents")?;
             {
                 let mut items4 = Vec::new();
-                for (index4, element4) in json::items_at(member4, &at4, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
                     let nested4 = json::nested(&at4, &index4.to_string());
                     items4.push(decode_agenticspec_view_agent(element4, &nested4)?);
                 }
@@ -8091,10 +6496,7 @@ pub fn decode_agenticspec_view_update(
             let member5 = json::member_at(value, at, "events")?;
             {
                 let mut items5 = Vec::new();
-                for (index5, element5) in json::items_at(member5, &at5, "an array")?
-                    .iter()
-                    .enumerate()
-                {
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
                     let nested5 = json::nested(&at5, &index5.to_string());
                     items5.push(decode_agenticspec_view_event(element5, &nested5)?);
                 }
@@ -8105,10 +6507,7 @@ pub fn decode_agenticspec_view_update(
 }
 
 /// Writes the event `agenticspec.session.AgentEnded` as JSON.
-pub fn encode_event_agenticspec_session_agent_ended(
-    value: &agenticspec_types::session::AgentEnded,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_agent_ended(value: &agenticspec_types::session::AgentEnded, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -8122,10 +6521,7 @@ pub fn encode_event_agenticspec_session_agent_ended(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_agent_ended(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::AgentEnded, json::DecodeError> {
+pub fn decode_event_agenticspec_session_agent_ended(value: &json::Value, at: &str) -> Result<agenticspec_types::session::AgentEnded, json::DecodeError> {
     Ok(agenticspec_types::session::AgentEnded {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -8135,18 +6531,13 @@ pub fn decode_event_agenticspec_session_agent_ended(
         at: {
             let at1 = json::nested(at, "at");
             let member1 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.AgentStarted` as JSON.
-pub fn encode_event_agenticspec_session_agent_started(
-    value: &agenticspec_types::session::AgentStarted,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_agent_started(value: &agenticspec_types::session::AgentStarted, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -8172,10 +6563,7 @@ pub fn encode_event_agenticspec_session_agent_started(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_agent_started(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::AgentStarted, json::DecodeError> {
+pub fn decode_event_agenticspec_session_agent_started(value: &json::Value, at: &str) -> Result<agenticspec_types::session::AgentStarted, json::DecodeError> {
     Ok(agenticspec_types::session::AgentStarted {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -8209,18 +6597,13 @@ pub fn decode_event_agenticspec_session_agent_started(
         at: {
             let at5 = json::nested(at, "at");
             let member5 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.ContextCompacted` as JSON.
-pub fn encode_event_agenticspec_session_context_compacted(
-    value: &agenticspec_types::session::ContextCompacted,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_context_compacted(value: &agenticspec_types::session::ContextCompacted, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -8236,10 +6619,7 @@ pub fn encode_event_agenticspec_session_context_compacted(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_context_compacted(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ContextCompacted, json::DecodeError> {
+pub fn decode_event_agenticspec_session_context_compacted(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ContextCompacted, json::DecodeError> {
     Ok(agenticspec_types::session::ContextCompacted {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -8254,18 +6634,13 @@ pub fn decode_event_agenticspec_session_context_compacted(
         at: {
             let at2 = json::nested(at, "at");
             let member2 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member2, &at2, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member2, &at2, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.ExposureDetected` as JSON.
-pub fn encode_event_agenticspec_session_exposure_detected(
-    value: &agenticspec_types::session::ExposureDetected,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_exposure_detected(value: &agenticspec_types::session::ExposureDetected, out: &mut String) {
     out.push('{');
     json::member(out, "exposure_id");
     encode_agenticspec_session_exposure_id(&value.exposure_id, out);
@@ -8295,10 +6670,7 @@ pub fn encode_event_agenticspec_session_exposure_detected(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_exposure_detected(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ExposureDetected, json::DecodeError> {
+pub fn decode_event_agenticspec_session_exposure_detected(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ExposureDetected, json::DecodeError> {
     Ok(agenticspec_types::session::ExposureDetected {
         exposure_id: {
             let at0 = json::nested(at, "exposure_id");
@@ -8345,18 +6717,13 @@ pub fn decode_event_agenticspec_session_exposure_detected(
         at: {
             let at8 = json::nested(at, "at");
             let member8 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member8, &at8, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member8, &at8, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.ModelTurnRecorded` as JSON.
-pub fn encode_event_agenticspec_session_model_turn_recorded(
-    value: &agenticspec_types::session::ModelTurnRecorded,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_model_turn_recorded(value: &agenticspec_types::session::ModelTurnRecorded, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -8412,10 +6779,7 @@ pub fn encode_event_agenticspec_session_model_turn_recorded(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_model_turn_recorded(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ModelTurnRecorded, json::DecodeError> {
+pub fn decode_event_agenticspec_session_model_turn_recorded(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ModelTurnRecorded, json::DecodeError> {
     Ok(agenticspec_types::session::ModelTurnRecorded {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -8497,26 +6861,19 @@ pub fn decode_event_agenticspec_session_model_turn_recorded(
             None | Some(json::Value::Null) => None,
             Some(member12) => {
                 let at12 = json::nested(at, "incomplete");
-                Some(decode_agenticspec_session_incomplete_reason(
-                    member12, &at12,
-                )?)
+                Some(decode_agenticspec_session_incomplete_reason(member12, &at12)?)
             }
         },
         at: {
             let at13 = json::nested(at, "at");
             let member13 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member13, &at13, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member13, &at13, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.PromptSubmitted` as JSON.
-pub fn encode_event_agenticspec_session_prompt_submitted(
-    value: &agenticspec_types::session::PromptSubmitted,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_prompt_submitted(value: &agenticspec_types::session::PromptSubmitted, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -8538,10 +6895,7 @@ pub fn encode_event_agenticspec_session_prompt_submitted(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_prompt_submitted(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::PromptSubmitted, json::DecodeError> {
+pub fn decode_event_agenticspec_session_prompt_submitted(value: &json::Value, at: &str) -> Result<agenticspec_types::session::PromptSubmitted, json::DecodeError> {
     Ok(agenticspec_types::session::PromptSubmitted {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -8571,18 +6925,13 @@ pub fn decode_event_agenticspec_session_prompt_submitted(
         at: {
             let at5 = json::nested(at, "at");
             let member5 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.SessionEnded` as JSON.
-pub fn encode_event_agenticspec_session_session_ended(
-    value: &agenticspec_types::session::SessionEnded,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_session_ended(value: &agenticspec_types::session::SessionEnded, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     encode_agenticspec_session_session_id(&value.session_id, out);
@@ -8596,10 +6945,7 @@ pub fn encode_event_agenticspec_session_session_ended(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_session_ended(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::SessionEnded, json::DecodeError> {
+pub fn decode_event_agenticspec_session_session_ended(value: &json::Value, at: &str) -> Result<agenticspec_types::session::SessionEnded, json::DecodeError> {
     Ok(agenticspec_types::session::SessionEnded {
         session_id: {
             let at0 = json::nested(at, "session_id");
@@ -8609,18 +6955,13 @@ pub fn decode_event_agenticspec_session_session_ended(
         at: {
             let at1 = json::nested(at, "at");
             let member1 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.SessionOpened` as JSON.
-pub fn encode_event_agenticspec_session_session_opened(
-    value: &agenticspec_types::session::SessionOpened,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_session_opened(value: &agenticspec_types::session::SessionOpened, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     encode_agenticspec_session_session_id(&value.session_id, out);
@@ -8644,10 +6985,7 @@ pub fn encode_event_agenticspec_session_session_opened(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_session_opened(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::SessionOpened, json::DecodeError> {
+pub fn decode_event_agenticspec_session_session_opened(value: &json::Value, at: &str) -> Result<agenticspec_types::session::SessionOpened, json::DecodeError> {
     Ok(agenticspec_types::session::SessionOpened {
         session_id: {
             let at0 = json::nested(at, "session_id");
@@ -8676,18 +7014,13 @@ pub fn decode_event_agenticspec_session_session_opened(
         at: {
             let at4 = json::nested(at, "at");
             let member4 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.ToolCallCompleted` as JSON.
-pub fn encode_event_agenticspec_session_tool_call_completed(
-    value: &agenticspec_types::session::ToolCallCompleted,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_tool_call_completed(value: &agenticspec_types::session::ToolCallCompleted, out: &mut String) {
     out.push('{');
     json::member(out, "tool_call_id");
     encode_agenticspec_session_tool_call_id(&value.tool_call_id, out);
@@ -8705,10 +7038,7 @@ pub fn encode_event_agenticspec_session_tool_call_completed(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_tool_call_completed(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ToolCallCompleted, json::DecodeError> {
+pub fn decode_event_agenticspec_session_tool_call_completed(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ToolCallCompleted, json::DecodeError> {
     Ok(agenticspec_types::session::ToolCallCompleted {
         tool_call_id: {
             let at0 = json::nested(at, "tool_call_id");
@@ -8728,18 +7058,13 @@ pub fn decode_event_agenticspec_session_tool_call_completed(
         at: {
             let at3 = json::nested(at, "at");
             let member3 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member3, &at3, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member3, &at3, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.ToolCallDecided` as JSON.
-pub fn encode_event_agenticspec_session_tool_call_decided(
-    value: &agenticspec_types::session::ToolCallDecided,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_tool_call_decided(value: &agenticspec_types::session::ToolCallDecided, out: &mut String) {
     out.push('{');
     json::member(out, "tool_call_id");
     encode_agenticspec_session_tool_call_id(&value.tool_call_id, out);
@@ -8761,10 +7086,7 @@ pub fn encode_event_agenticspec_session_tool_call_decided(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_tool_call_decided(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ToolCallDecided, json::DecodeError> {
+pub fn decode_event_agenticspec_session_tool_call_decided(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ToolCallDecided, json::DecodeError> {
     Ok(agenticspec_types::session::ToolCallDecided {
         tool_call_id: {
             let at0 = json::nested(at, "tool_call_id");
@@ -8791,18 +7113,13 @@ pub fn decode_event_agenticspec_session_tool_call_decided(
         at: {
             let at4 = json::nested(at, "at");
             let member4 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.ToolCallRequested` as JSON.
-pub fn encode_event_agenticspec_session_tool_call_requested(
-    value: &agenticspec_types::session::ToolCallRequested,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_tool_call_requested(value: &agenticspec_types::session::ToolCallRequested, out: &mut String) {
     out.push('{');
     json::member(out, "tool_call_id");
     encode_agenticspec_session_tool_call_id(&value.tool_call_id, out);
@@ -8830,10 +7147,7 @@ pub fn encode_event_agenticspec_session_tool_call_requested(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_tool_call_requested(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::ToolCallRequested, json::DecodeError> {
+pub fn decode_event_agenticspec_session_tool_call_requested(value: &json::Value, at: &str) -> Result<agenticspec_types::session::ToolCallRequested, json::DecodeError> {
     Ok(agenticspec_types::session::ToolCallRequested {
         tool_call_id: {
             let at0 = json::nested(at, "tool_call_id");
@@ -8875,18 +7189,13 @@ pub fn decode_event_agenticspec_session_tool_call_requested(
         at: {
             let at7 = json::nested(at, "at");
             let member7 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member7, &at7, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member7, &at7, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.session.TurnEnded` as JSON.
-pub fn encode_event_agenticspec_session_turn_ended(
-    value: &agenticspec_types::session::TurnEnded,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_session_turn_ended(value: &agenticspec_types::session::TurnEnded, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -8900,10 +7209,7 @@ pub fn encode_event_agenticspec_session_turn_ended(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_session_turn_ended(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::TurnEnded, json::DecodeError> {
+pub fn decode_event_agenticspec_session_turn_ended(value: &json::Value, at: &str) -> Result<agenticspec_types::session::TurnEnded, json::DecodeError> {
     Ok(agenticspec_types::session::TurnEnded {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -8913,18 +7219,13 @@ pub fn decode_event_agenticspec_session_turn_ended(
         at: {
             let at1 = json::nested(at, "at");
             let member1 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the event `agenticspec.view.AgentUpdated` as JSON.
-pub fn encode_event_agenticspec_view_agent_updated(
-    value: &agenticspec_types::view::AgentUpdated,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_view_agent_updated(value: &agenticspec_types::view::AgentUpdated, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -8964,10 +7265,7 @@ pub fn encode_event_agenticspec_view_agent_updated(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_view_agent_updated(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::AgentUpdated, json::DecodeError> {
+pub fn decode_event_agenticspec_view_agent_updated(value: &json::Value, at: &str) -> Result<agenticspec_types::view::AgentUpdated, json::DecodeError> {
     Ok(agenticspec_types::view::AgentUpdated {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -9001,9 +7299,7 @@ pub fn decode_event_agenticspec_view_agent_updated(
         started_at: {
             let at5 = json::nested(at, "started_at");
             let member5 = json::member_at(value, at, "started_at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned())
         },
         turns: {
             let at6 = json::nested(at, "turns");
@@ -9044,10 +7340,7 @@ pub fn decode_event_agenticspec_view_agent_updated(
 }
 
 /// Writes the event `agenticspec.view.EventAppended` as JSON.
-pub fn encode_event_agenticspec_view_event_appended(
-    value: &agenticspec_types::view::EventAppended,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_view_event_appended(value: &agenticspec_types::view::EventAppended, out: &mut String) {
     out.push('{');
     json::member(out, "event_id");
     encode_agenticspec_view_event_id(&value.event_id, out);
@@ -9115,10 +7408,7 @@ pub fn encode_event_agenticspec_view_event_appended(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_view_event_appended(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::EventAppended, json::DecodeError> {
+pub fn decode_event_agenticspec_view_event_appended(value: &json::Value, at: &str) -> Result<agenticspec_types::view::EventAppended, json::DecodeError> {
     Ok(agenticspec_types::view::EventAppended {
         event_id: {
             let at0 = json::nested(at, "event_id");
@@ -9143,9 +7433,7 @@ pub fn decode_event_agenticspec_view_event_appended(
         at: {
             let at4 = json::nested(at, "at");
             let member4 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned())
         },
         agent: {
             let at5 = json::nested(at, "agent");
@@ -9244,10 +7532,7 @@ pub fn decode_event_agenticspec_view_event_appended(
 }
 
 /// Writes the event `agenticspec.view.SessionUpdated` as JSON.
-pub fn encode_event_agenticspec_view_session_updated(
-    value: &agenticspec_types::view::SessionUpdated,
-    out: &mut String,
-) {
+pub fn encode_event_agenticspec_view_session_updated(value: &agenticspec_types::view::SessionUpdated, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     encode_agenticspec_session_session_id(&value.session_id, out);
@@ -9301,10 +7586,7 @@ pub fn encode_event_agenticspec_view_session_updated(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_event_agenticspec_view_session_updated(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::view::SessionUpdated, json::DecodeError> {
+pub fn decode_event_agenticspec_view_session_updated(value: &json::Value, at: &str) -> Result<agenticspec_types::view::SessionUpdated, json::DecodeError> {
     Ok(agenticspec_types::view::SessionUpdated {
         session_id: {
             let at0 = json::nested(at, "session_id");
@@ -9341,16 +7623,12 @@ pub fn decode_event_agenticspec_view_session_updated(
         first_at: {
             let at6 = json::nested(at, "first_at");
             let member6 = json::member_at(value, at, "first_at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member6, &at6, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member6, &at6, "an RFC 3339 instant")?.to_owned())
         },
         last_at: {
             let at7 = json::nested(at, "last_at");
             let member7 = json::member_at(value, at, "last_at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member7, &at7, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member7, &at7, "an RFC 3339 instant")?.to_owned())
         },
         agents: {
             let at8 = json::nested(at, "agents");
@@ -9421,10 +7699,7 @@ pub fn decode_event_agenticspec_view_session_updated(
 }
 
 /// Writes the declared error `agenticspec.session.AgentStateConflict` as JSON.
-pub fn encode_error_agenticspec_session_agent_state_conflict(
-    value: &agenticspec_types::session::AgentStateConflict,
-    out: &mut String,
-) {
+pub fn encode_error_agenticspec_session_agent_state_conflict(value: &agenticspec_types::session::AgentStateConflict, out: &mut String) {
     out.push('{');
     json::member(out, "state");
     encode_agenticspec_session_agent_state(&value.state, out);
@@ -9432,10 +7707,7 @@ pub fn encode_error_agenticspec_session_agent_state_conflict(
 }
 
 /// Writes the declared error `agenticspec.session.SessionStateConflict` as JSON.
-pub fn encode_error_agenticspec_session_session_state_conflict(
-    value: &agenticspec_types::session::SessionStateConflict,
-    out: &mut String,
-) {
+pub fn encode_error_agenticspec_session_session_state_conflict(value: &agenticspec_types::session::SessionStateConflict, out: &mut String) {
     out.push('{');
     json::member(out, "state");
     encode_agenticspec_session_session_state(&value.state, out);
@@ -9443,10 +7715,7 @@ pub fn encode_error_agenticspec_session_session_state_conflict(
 }
 
 /// Writes the declared error `agenticspec.session.ToolCallStateConflict` as JSON.
-pub fn encode_error_agenticspec_session_tool_call_state_conflict(
-    value: &agenticspec_types::session::ToolCallStateConflict,
-    out: &mut String,
-) {
+pub fn encode_error_agenticspec_session_tool_call_state_conflict(value: &agenticspec_types::session::ToolCallStateConflict, out: &mut String) {
     out.push('{');
     json::member(out, "state");
     encode_agenticspec_session_tool_call_state(&value.state, out);
@@ -9454,10 +7723,7 @@ pub fn encode_error_agenticspec_session_tool_call_state_conflict(
 }
 
 /// Writes the declared error `agenticspec.session.UnknownAgent` as JSON.
-pub fn encode_error_agenticspec_session_unknown_agent(
-    value: &agenticspec_types::session::UnknownAgent,
-    out: &mut String,
-) {
+pub fn encode_error_agenticspec_session_unknown_agent(value: &agenticspec_types::session::UnknownAgent, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -9465,10 +7731,7 @@ pub fn encode_error_agenticspec_session_unknown_agent(
 }
 
 /// Writes one row of the view `agenticspec.session.Agents` as JSON.
-pub fn encode_view_agenticspec_session_agents(
-    value: &agenticspec_types::session::Agents,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_session_agents(value: &agenticspec_types::session::Agents, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -9492,10 +7755,7 @@ pub fn encode_view_agenticspec_session_agents(
 }
 
 /// Writes one row of the view `agenticspec.session.Exposures` as JSON.
-pub fn encode_view_agenticspec_session_exposures(
-    value: &agenticspec_types::session::Exposures,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_session_exposures(value: &agenticspec_types::session::Exposures, out: &mut String) {
     out.push('{');
     json::member(out, "exposure_id");
     encode_agenticspec_session_exposure_id(&value.exposure_id, out);
@@ -9515,10 +7775,7 @@ pub fn encode_view_agenticspec_session_exposures(
 }
 
 /// Writes one row of the view `agenticspec.session.Sessions` as JSON.
-pub fn encode_view_agenticspec_session_sessions(
-    value: &agenticspec_types::session::Sessions,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_session_sessions(value: &agenticspec_types::session::Sessions, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     encode_agenticspec_session_session_id(&value.session_id, out);
@@ -9532,10 +7789,7 @@ pub fn encode_view_agenticspec_session_sessions(
 }
 
 /// Writes one row of the view `agenticspec.session.ToolCalls` as JSON.
-pub fn encode_view_agenticspec_session_tool_calls(
-    value: &agenticspec_types::session::ToolCalls,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_session_tool_calls(value: &agenticspec_types::session::ToolCalls, out: &mut String) {
     out.push('{');
     json::member(out, "tool_call_id");
     encode_agenticspec_session_tool_call_id(&value.tool_call_id, out);
@@ -9551,10 +7805,7 @@ pub fn encode_view_agenticspec_session_tool_calls(
 }
 
 /// Writes one row of the view `agenticspec.view.AgentTurns` as JSON.
-pub fn encode_view_agenticspec_view_agent_turns(
-    value: &agenticspec_types::view::AgentTurns,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_agent_turns(value: &agenticspec_types::view::AgentTurns, out: &mut String) {
     out.push('{');
     json::member(out, "event_id");
     encode_agenticspec_view_event_id(&value.event_id, out);
@@ -9622,16 +7873,7 @@ pub fn encode_view_agenticspec_view_agent_turns(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_agent_turns(
-    value: &json::Value,
-    at: &str,
-) -> Result<
-    (
-        agenticspec_types::session::SessionId,
-        agenticspec_types::session::AgentId,
-    ),
-    json::DecodeError,
-> {
+pub fn decode_params_agenticspec_view_agent_turns(value: &json::Value, at: &str) -> Result<(agenticspec_types::session::SessionId, agenticspec_types::session::AgentId,), json::DecodeError> {
     Ok((
         {
             let at0 = json::nested(at, "session_id");
@@ -9647,10 +7889,7 @@ pub fn decode_params_agenticspec_view_agent_turns(
 }
 
 /// Writes one row of the view `agenticspec.view.OverviewFigures` as JSON.
-pub fn encode_view_agenticspec_view_overview_figures(
-    value: &agenticspec_types::view::OverviewFigures,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_overview_figures(value: &agenticspec_types::view::OverviewFigures, out: &mut String) {
     out.push('{');
     json::member(out, "bucket_id");
     encode_agenticspec_view_bucket_id(&value.bucket_id, out);
@@ -9680,17 +7919,12 @@ pub fn encode_view_agenticspec_view_overview_figures(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_overview_figures(
-    value: &json::Value,
-    at: &str,
-) -> Result<(agenticspec_types::primitives::Timestamp, i64), json::DecodeError> {
+pub fn decode_params_agenticspec_view_overview_figures(value: &json::Value, at: &str) -> Result<(agenticspec_types::primitives::Timestamp, i64,), json::DecodeError> {
     Ok((
         {
             let at0 = json::nested(at, "since");
             let member0 = json::member_at(value, at, "since")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member0, &at0, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member0, &at0, "an RFC 3339 instant")?.to_owned())
         },
         {
             let at1 = json::nested(at, "bucket_seconds");
@@ -9701,10 +7935,7 @@ pub fn decode_params_agenticspec_view_overview_figures(
 }
 
 /// Writes one row of the view `agenticspec.view.SessionAgents` as JSON.
-pub fn encode_view_agenticspec_view_session_agents(
-    value: &agenticspec_types::view::SessionAgents,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_session_agents(value: &agenticspec_types::view::SessionAgents, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -9744,22 +7975,18 @@ pub fn encode_view_agenticspec_view_session_agents(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_session_agents(
-    value: &json::Value,
-    at: &str,
-) -> Result<(agenticspec_types::session::SessionId,), json::DecodeError> {
-    Ok(({
-        let at0 = json::nested(at, "session_id");
-        let member0 = json::member_at(value, at, "session_id")?;
-        decode_agenticspec_session_session_id(member0, &at0)?
-    },))
+pub fn decode_params_agenticspec_view_session_agents(value: &json::Value, at: &str) -> Result<(agenticspec_types::session::SessionId,), json::DecodeError> {
+    Ok((
+        {
+            let at0 = json::nested(at, "session_id");
+            let member0 = json::member_at(value, at, "session_id")?;
+            decode_agenticspec_session_session_id(member0, &at0)?
+        },
+    ))
 }
 
 /// Writes one row of the view `agenticspec.view.SessionById` as JSON.
-pub fn encode_view_agenticspec_view_session_by_id(
-    value: &agenticspec_types::view::SessionById,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_session_by_id(value: &agenticspec_types::view::SessionById, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     encode_agenticspec_session_session_id(&value.session_id, out);
@@ -9811,22 +8038,18 @@ pub fn encode_view_agenticspec_view_session_by_id(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_session_by_id(
-    value: &json::Value,
-    at: &str,
-) -> Result<(agenticspec_types::session::SessionId,), json::DecodeError> {
-    Ok(({
-        let at0 = json::nested(at, "session_id");
-        let member0 = json::member_at(value, at, "session_id")?;
-        decode_agenticspec_session_session_id(member0, &at0)?
-    },))
+pub fn decode_params_agenticspec_view_session_by_id(value: &json::Value, at: &str) -> Result<(agenticspec_types::session::SessionId,), json::DecodeError> {
+    Ok((
+        {
+            let at0 = json::nested(at, "session_id");
+            let member0 = json::member_at(value, at, "session_id")?;
+            decode_agenticspec_session_session_id(member0, &at0)?
+        },
+    ))
 }
 
 /// Writes one row of the view `agenticspec.view.SessionChecks` as JSON.
-pub fn encode_view_agenticspec_view_session_checks(
-    value: &agenticspec_types::view::SessionChecks,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_session_checks(value: &agenticspec_types::view::SessionChecks, out: &mut String) {
     out.push('{');
     json::member(out, "check_id");
     encode_agenticspec_view_check_id(&value.check_id, out);
@@ -9852,22 +8075,18 @@ pub fn encode_view_agenticspec_view_session_checks(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_session_checks(
-    value: &json::Value,
-    at: &str,
-) -> Result<(agenticspec_types::session::SessionId,), json::DecodeError> {
-    Ok(({
-        let at0 = json::nested(at, "session_id");
-        let member0 = json::member_at(value, at, "session_id")?;
-        decode_agenticspec_session_session_id(member0, &at0)?
-    },))
+pub fn decode_params_agenticspec_view_session_checks(value: &json::Value, at: &str) -> Result<(agenticspec_types::session::SessionId,), json::DecodeError> {
+    Ok((
+        {
+            let at0 = json::nested(at, "session_id");
+            let member0 = json::member_at(value, at, "session_id")?;
+            decode_agenticspec_session_session_id(member0, &at0)?
+        },
+    ))
 }
 
 /// Writes one row of the view `agenticspec.view.SessionEventCounts` as JSON.
-pub fn encode_view_agenticspec_view_session_event_counts(
-    value: &agenticspec_types::view::SessionEventCounts,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_session_event_counts(value: &agenticspec_types::view::SessionEventCounts, out: &mut String) {
     out.push('{');
     json::member(out, "count_id");
     encode_agenticspec_view_count_id(&value.count_id, out);
@@ -9889,16 +8108,7 @@ pub fn encode_view_agenticspec_view_session_event_counts(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_session_event_counts(
-    value: &json::Value,
-    at: &str,
-) -> Result<
-    (
-        agenticspec_types::session::SessionId,
-        Option<agenticspec_types::session::AgentId>,
-    ),
-    json::DecodeError,
-> {
+pub fn decode_params_agenticspec_view_session_event_counts(value: &json::Value, at: &str) -> Result<(agenticspec_types::session::SessionId, Option<agenticspec_types::session::AgentId>,), json::DecodeError> {
     Ok((
         {
             let at0 = json::nested(at, "session_id");
@@ -9916,10 +8126,7 @@ pub fn decode_params_agenticspec_view_session_event_counts(
 }
 
 /// Writes one row of the view `agenticspec.view.SessionEvents` as JSON.
-pub fn encode_view_agenticspec_view_session_events(
-    value: &agenticspec_types::view::SessionEvents,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_session_events(value: &agenticspec_types::view::SessionEvents, out: &mut String) {
     out.push('{');
     json::member(out, "event_id");
     encode_agenticspec_view_event_id(&value.event_id, out);
@@ -9987,19 +8194,7 @@ pub fn encode_view_agenticspec_view_session_events(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_session_events(
-    value: &json::Value,
-    at: &str,
-) -> Result<
-    (
-        agenticspec_types::session::SessionId,
-        Option<agenticspec_types::session::AgentId>,
-        Option<agenticspec_types::view::EventKind>,
-        Option<bool>,
-        Option<i64>,
-    ),
-    json::DecodeError,
-> {
+pub fn decode_params_agenticspec_view_session_events(value: &json::Value, at: &str) -> Result<(agenticspec_types::session::SessionId, Option<agenticspec_types::session::AgentId>, Option<agenticspec_types::view::EventKind>, Option<bool>, Option<i64>,), json::DecodeError> {
     Ok((
         {
             let at0 = json::nested(at, "session_id");
@@ -10038,10 +8233,7 @@ pub fn decode_params_agenticspec_view_session_events(
 }
 
 /// Writes one row of the view `agenticspec.view.SessionList` as JSON.
-pub fn encode_view_agenticspec_view_session_list(
-    value: &agenticspec_types::view::SessionList,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_session_list(value: &agenticspec_types::view::SessionList, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     encode_agenticspec_session_session_id(&value.session_id, out);
@@ -10095,26 +8287,13 @@ pub fn encode_view_agenticspec_view_session_list(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_session_list(
-    value: &json::Value,
-    at: &str,
-) -> Result<
-    (
-        Option<agenticspec_types::primitives::Timestamp>,
-        Option<String>,
-        Option<i64>,
-        Option<i64>,
-    ),
-    json::DecodeError,
-> {
+pub fn decode_params_agenticspec_view_session_list(value: &json::Value, at: &str) -> Result<(Option<agenticspec_types::primitives::Timestamp>, Option<String>, Option<i64>, Option<i64>,), json::DecodeError> {
     Ok((
         match value.member("since") {
             None | Some(json::Value::Null) => None,
             Some(member0) => {
                 let at0 = json::nested(at, "since");
-                Some(agenticspec_types::primitives::Timestamp(
-                    json::timestamp_at(member0, &at0, "an RFC 3339 instant")?.to_owned(),
-                ))
+                Some(agenticspec_types::primitives::Timestamp(json::timestamp_at(member0, &at0, "an RFC 3339 instant")?.to_owned()))
             }
         },
         match value.member("search") {
@@ -10142,10 +8321,7 @@ pub fn decode_params_agenticspec_view_session_list(
 }
 
 /// Writes one row of the view `agenticspec.view.SessionTimeline` as JSON.
-pub fn encode_view_agenticspec_view_session_timeline(
-    value: &agenticspec_types::view::SessionTimeline,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_session_timeline(value: &agenticspec_types::view::SessionTimeline, out: &mut String) {
     out.push('{');
     json::member(out, "slot_id");
     encode_agenticspec_view_slot_id(&value.slot_id, out);
@@ -10205,10 +8381,7 @@ pub fn encode_view_agenticspec_view_session_timeline(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_session_timeline(
-    value: &json::Value,
-    at: &str,
-) -> Result<(agenticspec_types::session::SessionId, i64), json::DecodeError> {
+pub fn decode_params_agenticspec_view_session_timeline(value: &json::Value, at: &str) -> Result<(agenticspec_types::session::SessionId, i64,), json::DecodeError> {
     Ok((
         {
             let at0 = json::nested(at, "session_id");
@@ -10224,10 +8397,7 @@ pub fn decode_params_agenticspec_view_session_timeline(
 }
 
 /// Writes one row of the view `agenticspec.view.SessionTurns` as JSON.
-pub fn encode_view_agenticspec_view_session_turns(
-    value: &agenticspec_types::view::SessionTurns,
-    out: &mut String,
-) {
+pub fn encode_view_agenticspec_view_session_turns(value: &agenticspec_types::view::SessionTurns, out: &mut String) {
     out.push('{');
     json::member(out, "event_id");
     encode_agenticspec_view_event_id(&value.event_id, out);
@@ -10295,22 +8465,18 @@ pub fn encode_view_agenticspec_view_session_turns(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_agenticspec_view_session_turns(
-    value: &json::Value,
-    at: &str,
-) -> Result<(agenticspec_types::session::SessionId,), json::DecodeError> {
-    Ok(({
-        let at0 = json::nested(at, "session_id");
-        let member0 = json::member_at(value, at, "session_id")?;
-        decode_agenticspec_session_session_id(member0, &at0)?
-    },))
+pub fn decode_params_agenticspec_view_session_turns(value: &json::Value, at: &str) -> Result<(agenticspec_types::session::SessionId,), json::DecodeError> {
+    Ok((
+        {
+            let at0 = json::nested(at, "session_id");
+            let member0 = json::member_at(value, at, "session_id")?;
+            decode_agenticspec_session_session_id(member0, &at0)?
+        },
+    ))
 }
 
 /// Writes the input of `agenticspec.session.CompactContext` as JSON.
-pub fn encode_command_agenticspec_session_compact_context(
-    value: &agenticspec_types::session::CompactContext,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_compact_context(value: &agenticspec_types::session::CompactContext, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -10326,10 +8492,7 @@ pub fn encode_command_agenticspec_session_compact_context(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_compact_context(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::CompactContext, json::DecodeError> {
+pub fn decode_command_agenticspec_session_compact_context(value: &json::Value, at: &str) -> Result<agenticspec_types::session::CompactContext, json::DecodeError> {
     json::closed_at(value, at, &["agent_id", "context_tokens_before", "at"])?;
     Ok(agenticspec_types::session::CompactContext {
         agent_id: {
@@ -10345,19 +8508,14 @@ pub fn decode_command_agenticspec_session_compact_context(
         at: {
             let at2 = json::nested(at, "at");
             let member2 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member2, &at2, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member2, &at2, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.CompactContext` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_compact_context(
-    value: &agenticspec_types::session::CompactContextOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_compact_context(value: &agenticspec_types::session::CompactContextOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::CompactContextOutcome::Compacted { context_compacted } => {
@@ -10392,10 +8550,7 @@ pub fn encode_outcome_agenticspec_session_compact_context(
 }
 
 /// Writes the input of `agenticspec.session.CompleteToolCall` as JSON.
-pub fn encode_command_agenticspec_session_complete_tool_call(
-    value: &agenticspec_types::session::CompleteToolCall,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_complete_tool_call(value: &agenticspec_types::session::CompleteToolCall, out: &mut String) {
     out.push('{');
     json::member(out, "tool_call_id");
     encode_agenticspec_session_tool_call_id(&value.tool_call_id, out);
@@ -10413,10 +8568,7 @@ pub fn encode_command_agenticspec_session_complete_tool_call(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_complete_tool_call(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::CompleteToolCall, json::DecodeError> {
+pub fn decode_command_agenticspec_session_complete_tool_call(value: &json::Value, at: &str) -> Result<agenticspec_types::session::CompleteToolCall, json::DecodeError> {
     json::closed_at(value, at, &["tool_call_id", "ok", "output", "at"])?;
     Ok(agenticspec_types::session::CompleteToolCall {
         tool_call_id: {
@@ -10437,24 +8589,17 @@ pub fn decode_command_agenticspec_session_complete_tool_call(
         at: {
             let at3 = json::nested(at, "at");
             let member3 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member3, &at3, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member3, &at3, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.CompleteToolCall` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_complete_tool_call(
-    value: &agenticspec_types::session::CompleteToolCallOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_complete_tool_call(value: &agenticspec_types::session::CompleteToolCallOutcome, out: &mut String) {
     out.push('{');
     match value {
-        agenticspec_types::session::CompleteToolCallOutcome::Succeeded {
-            tool_call_completed,
-        } => {
+        agenticspec_types::session::CompleteToolCallOutcome::Succeeded { tool_call_completed } => {
             json::member(out, "outcome");
             json::push_text(out, "succeeded");
             json::member(out, "published");
@@ -10467,9 +8612,7 @@ pub fn encode_outcome_agenticspec_session_complete_tool_call(
             out.push('}');
             out.push(']');
         }
-        agenticspec_types::session::CompleteToolCallOutcome::Failed {
-            tool_call_completed,
-        } => {
+        agenticspec_types::session::CompleteToolCallOutcome::Failed { tool_call_completed } => {
             json::member(out, "outcome");
             json::push_text(out, "failed");
             json::member(out, "published");
@@ -10513,10 +8656,7 @@ pub fn encode_outcome_agenticspec_session_complete_tool_call(
 }
 
 /// Writes the input of `agenticspec.session.DecideToolCall` as JSON.
-pub fn encode_command_agenticspec_session_decide_tool_call(
-    value: &agenticspec_types::session::DecideToolCall,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_decide_tool_call(value: &agenticspec_types::session::DecideToolCall, out: &mut String) {
     out.push('{');
     json::member(out, "tool_call_id");
     encode_agenticspec_session_tool_call_id(&value.tool_call_id, out);
@@ -10538,15 +8678,8 @@ pub fn encode_command_agenticspec_session_decide_tool_call(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_decide_tool_call(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::DecideToolCall, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["tool_call_id", "decision", "decider", "reason", "at"],
-    )?;
+pub fn decode_command_agenticspec_session_decide_tool_call(value: &json::Value, at: &str) -> Result<agenticspec_types::session::DecideToolCall, json::DecodeError> {
+    json::closed_at(value, at, &["tool_call_id", "decision", "decider", "reason", "at"])?;
     Ok(agenticspec_types::session::DecideToolCall {
         tool_call_id: {
             let at0 = json::nested(at, "tool_call_id");
@@ -10573,19 +8706,14 @@ pub fn decode_command_agenticspec_session_decide_tool_call(
         at: {
             let at4 = json::nested(at, "at");
             let member4 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.DecideToolCall` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_decide_tool_call(
-    value: &agenticspec_types::session::DecideToolCallOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_decide_tool_call(value: &agenticspec_types::session::DecideToolCallOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::DecideToolCallOutcome::Accepted { tool_call_decided } => {
@@ -10645,10 +8773,7 @@ pub fn encode_outcome_agenticspec_session_decide_tool_call(
 }
 
 /// Writes the input of `agenticspec.session.EndAgent` as JSON.
-pub fn encode_command_agenticspec_session_end_agent(
-    value: &agenticspec_types::session::EndAgent,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_end_agent(value: &agenticspec_types::session::EndAgent, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -10662,10 +8787,7 @@ pub fn encode_command_agenticspec_session_end_agent(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_end_agent(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::EndAgent, json::DecodeError> {
+pub fn decode_command_agenticspec_session_end_agent(value: &json::Value, at: &str) -> Result<agenticspec_types::session::EndAgent, json::DecodeError> {
     json::closed_at(value, at, &["agent_id", "at"])?;
     Ok(agenticspec_types::session::EndAgent {
         agent_id: {
@@ -10676,19 +8798,14 @@ pub fn decode_command_agenticspec_session_end_agent(
         at: {
             let at1 = json::nested(at, "at");
             let member1 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.EndAgent` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_end_agent(
-    value: &agenticspec_types::session::EndAgentOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_end_agent(value: &agenticspec_types::session::EndAgentOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::EndAgentOutcome::Ended { agent_ended } => {
@@ -10735,10 +8852,7 @@ pub fn encode_outcome_agenticspec_session_end_agent(
 }
 
 /// Writes the input of `agenticspec.session.EndSession` as JSON.
-pub fn encode_command_agenticspec_session_end_session(
-    value: &agenticspec_types::session::EndSession,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_end_session(value: &agenticspec_types::session::EndSession, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     encode_agenticspec_session_session_id(&value.session_id, out);
@@ -10752,10 +8866,7 @@ pub fn encode_command_agenticspec_session_end_session(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_end_session(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::EndSession, json::DecodeError> {
+pub fn decode_command_agenticspec_session_end_session(value: &json::Value, at: &str) -> Result<agenticspec_types::session::EndSession, json::DecodeError> {
     json::closed_at(value, at, &["session_id", "at"])?;
     Ok(agenticspec_types::session::EndSession {
         session_id: {
@@ -10766,19 +8877,14 @@ pub fn decode_command_agenticspec_session_end_session(
         at: {
             let at1 = json::nested(at, "at");
             let member1 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.EndSession` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_end_session(
-    value: &agenticspec_types::session::EndSessionOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_end_session(value: &agenticspec_types::session::EndSessionOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::EndSessionOutcome::Ended { session_ended } => {
@@ -10825,10 +8931,7 @@ pub fn encode_outcome_agenticspec_session_end_session(
 }
 
 /// Writes the input of `agenticspec.session.EndTurn` as JSON.
-pub fn encode_command_agenticspec_session_end_turn(
-    value: &agenticspec_types::session::EndTurn,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_end_turn(value: &agenticspec_types::session::EndTurn, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -10842,10 +8945,7 @@ pub fn encode_command_agenticspec_session_end_turn(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_end_turn(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::EndTurn, json::DecodeError> {
+pub fn decode_command_agenticspec_session_end_turn(value: &json::Value, at: &str) -> Result<agenticspec_types::session::EndTurn, json::DecodeError> {
     json::closed_at(value, at, &["agent_id", "at"])?;
     Ok(agenticspec_types::session::EndTurn {
         agent_id: {
@@ -10856,19 +8956,14 @@ pub fn decode_command_agenticspec_session_end_turn(
         at: {
             let at1 = json::nested(at, "at");
             let member1 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member1, &at1, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.EndTurn` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_end_turn(
-    value: &agenticspec_types::session::EndTurnOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_end_turn(value: &agenticspec_types::session::EndTurnOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::EndTurnOutcome::Ended { turn_ended } => {
@@ -10915,10 +9010,7 @@ pub fn encode_outcome_agenticspec_session_end_turn(
 }
 
 /// Writes the input of `agenticspec.session.OpenSession` as JSON.
-pub fn encode_command_agenticspec_session_open_session(
-    value: &agenticspec_types::session::OpenSession,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_open_session(value: &agenticspec_types::session::OpenSession, out: &mut String) {
     out.push('{');
     json::member(out, "session_id");
     encode_agenticspec_session_session_id(&value.session_id, out);
@@ -10942,15 +9034,8 @@ pub fn encode_command_agenticspec_session_open_session(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_open_session(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::OpenSession, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &["session_id", "harness", "source", "session_hash", "at"],
-    )?;
+pub fn decode_command_agenticspec_session_open_session(value: &json::Value, at: &str) -> Result<agenticspec_types::session::OpenSession, json::DecodeError> {
+    json::closed_at(value, at, &["session_id", "harness", "source", "session_hash", "at"])?;
     Ok(agenticspec_types::session::OpenSession {
         session_id: {
             let at0 = json::nested(at, "session_id");
@@ -10979,19 +9064,14 @@ pub fn decode_command_agenticspec_session_open_session(
         at: {
             let at4 = json::nested(at, "at");
             let member4 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member4, &at4, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.OpenSession` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_open_session(
-    value: &agenticspec_types::session::OpenSessionOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_open_session(value: &agenticspec_types::session::OpenSessionOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::OpenSessionOutcome::Opened { session_opened } => {
@@ -11012,10 +9092,7 @@ pub fn encode_outcome_agenticspec_session_open_session(
 }
 
 /// Writes the input of `agenticspec.session.RecordExposure` as JSON.
-pub fn encode_command_agenticspec_session_record_exposure(
-    value: &agenticspec_types::session::RecordExposure,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_record_exposure(value: &agenticspec_types::session::RecordExposure, out: &mut String) {
     out.push('{');
     json::member(out, "exposure_id");
     encode_agenticspec_session_exposure_id(&value.exposure_id, out);
@@ -11045,25 +9122,8 @@ pub fn encode_command_agenticspec_session_record_exposure(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_record_exposure(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::RecordExposure, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "exposure_id",
-            "agent_id",
-            "channel",
-            "class",
-            "kind",
-            "alias",
-            "verdict",
-            "tool_call_id",
-            "at",
-        ],
-    )?;
+pub fn decode_command_agenticspec_session_record_exposure(value: &json::Value, at: &str) -> Result<agenticspec_types::session::RecordExposure, json::DecodeError> {
+    json::closed_at(value, at, &["exposure_id", "agent_id", "channel", "class", "kind", "alias", "verdict", "tool_call_id", "at"])?;
     Ok(agenticspec_types::session::RecordExposure {
         exposure_id: {
             let at0 = json::nested(at, "exposure_id");
@@ -11110,19 +9170,14 @@ pub fn decode_command_agenticspec_session_record_exposure(
         at: {
             let at8 = json::nested(at, "at");
             let member8 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member8, &at8, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member8, &at8, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.RecordExposure` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_record_exposure(
-    value: &agenticspec_types::session::RecordExposureOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_record_exposure(value: &agenticspec_types::session::RecordExposureOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::RecordExposureOutcome::Recorded { exposure_detected } => {
@@ -11143,10 +9198,7 @@ pub fn encode_outcome_agenticspec_session_record_exposure(
 }
 
 /// Writes the input of `agenticspec.session.RecordModelTurn` as JSON.
-pub fn encode_command_agenticspec_session_record_model_turn(
-    value: &agenticspec_types::session::RecordModelTurn,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_record_model_turn(value: &agenticspec_types::session::RecordModelTurn, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -11202,30 +9254,8 @@ pub fn encode_command_agenticspec_session_record_model_turn(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_record_model_turn(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::RecordModelTurn, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "agent_id",
-            "model",
-            "usage",
-            "context_tokens",
-            "message_id",
-            "call_id",
-            "route",
-            "upstream",
-            "attempts",
-            "queue_wait_ms",
-            "ttft_ms",
-            "declared_cost_microdollars",
-            "incomplete",
-            "at",
-        ],
-    )?;
+pub fn decode_command_agenticspec_session_record_model_turn(value: &json::Value, at: &str) -> Result<agenticspec_types::session::RecordModelTurn, json::DecodeError> {
+    json::closed_at(value, at, &["agent_id", "model", "usage", "context_tokens", "message_id", "call_id", "route", "upstream", "attempts", "queue_wait_ms", "ttft_ms", "declared_cost_microdollars", "incomplete", "at"])?;
     Ok(agenticspec_types::session::RecordModelTurn {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -11307,32 +9337,23 @@ pub fn decode_command_agenticspec_session_record_model_turn(
             None | Some(json::Value::Null) => None,
             Some(member12) => {
                 let at12 = json::nested(at, "incomplete");
-                Some(decode_agenticspec_session_incomplete_reason(
-                    member12, &at12,
-                )?)
+                Some(decode_agenticspec_session_incomplete_reason(member12, &at12)?)
             }
         },
         at: {
             let at13 = json::nested(at, "at");
             let member13 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member13, &at13, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member13, &at13, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.RecordModelTurn` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_record_model_turn(
-    value: &agenticspec_types::session::RecordModelTurnOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_record_model_turn(value: &agenticspec_types::session::RecordModelTurnOutcome, out: &mut String) {
     out.push('{');
     match value {
-        agenticspec_types::session::RecordModelTurnOutcome::Recorded {
-            model_turn_recorded,
-        } => {
+        agenticspec_types::session::RecordModelTurnOutcome::Recorded { model_turn_recorded } => {
             json::member(out, "outcome");
             json::push_text(out, "recorded");
             json::member(out, "published");
@@ -11364,10 +9385,7 @@ pub fn encode_outcome_agenticspec_session_record_model_turn(
 }
 
 /// Writes the input of `agenticspec.session.RequestToolCall` as JSON.
-pub fn encode_command_agenticspec_session_request_tool_call(
-    value: &agenticspec_types::session::RequestToolCall,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_request_tool_call(value: &agenticspec_types::session::RequestToolCall, out: &mut String) {
     out.push('{');
     json::member(out, "tool_call_id");
     encode_agenticspec_session_tool_call_id(&value.tool_call_id, out);
@@ -11395,24 +9413,8 @@ pub fn encode_command_agenticspec_session_request_tool_call(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_request_tool_call(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::RequestToolCall, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "tool_call_id",
-            "agent_id",
-            "tool",
-            "category",
-            "input",
-            "cwd",
-            "background",
-            "at",
-        ],
-    )?;
+pub fn decode_command_agenticspec_session_request_tool_call(value: &json::Value, at: &str) -> Result<agenticspec_types::session::RequestToolCall, json::DecodeError> {
+    json::closed_at(value, at, &["tool_call_id", "agent_id", "tool", "category", "input", "cwd", "background", "at"])?;
     Ok(agenticspec_types::session::RequestToolCall {
         tool_call_id: {
             let at0 = json::nested(at, "tool_call_id");
@@ -11454,24 +9456,17 @@ pub fn decode_command_agenticspec_session_request_tool_call(
         at: {
             let at7 = json::nested(at, "at");
             let member7 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member7, &at7, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member7, &at7, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.RequestToolCall` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_request_tool_call(
-    value: &agenticspec_types::session::RequestToolCallOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_request_tool_call(value: &agenticspec_types::session::RequestToolCallOutcome, out: &mut String) {
     out.push('{');
     match value {
-        agenticspec_types::session::RequestToolCallOutcome::Requested {
-            tool_call_requested,
-        } => {
+        agenticspec_types::session::RequestToolCallOutcome::Requested { tool_call_requested } => {
             json::member(out, "outcome");
             json::push_text(out, "requested");
             json::member(out, "published");
@@ -11489,10 +9484,7 @@ pub fn encode_outcome_agenticspec_session_request_tool_call(
 }
 
 /// Writes the input of `agenticspec.session.StartAgent` as JSON.
-pub fn encode_command_agenticspec_session_start_agent(
-    value: &agenticspec_types::session::StartAgent,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_start_agent(value: &agenticspec_types::session::StartAgent, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -11518,22 +9510,8 @@ pub fn encode_command_agenticspec_session_start_agent(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_start_agent(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::StartAgent, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "agent_id",
-            "session_id",
-            "parent_agent_id",
-            "role",
-            "spawned_by",
-            "at",
-        ],
-    )?;
+pub fn decode_command_agenticspec_session_start_agent(value: &json::Value, at: &str) -> Result<agenticspec_types::session::StartAgent, json::DecodeError> {
+    json::closed_at(value, at, &["agent_id", "session_id", "parent_agent_id", "role", "spawned_by", "at"])?;
     Ok(agenticspec_types::session::StartAgent {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -11567,19 +9545,14 @@ pub fn decode_command_agenticspec_session_start_agent(
         at: {
             let at5 = json::nested(at, "at");
             let member5 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.StartAgent` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_start_agent(
-    value: &agenticspec_types::session::StartAgentOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_start_agent(value: &agenticspec_types::session::StartAgentOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::StartAgentOutcome::Started { agent_started } => {
@@ -11600,10 +9573,7 @@ pub fn encode_outcome_agenticspec_session_start_agent(
 }
 
 /// Writes the input of `agenticspec.session.SubmitPrompt` as JSON.
-pub fn encode_command_agenticspec_session_submit_prompt(
-    value: &agenticspec_types::session::SubmitPrompt,
-    out: &mut String,
-) {
+pub fn encode_command_agenticspec_session_submit_prompt(value: &agenticspec_types::session::SubmitPrompt, out: &mut String) {
     out.push('{');
     json::member(out, "agent_id");
     encode_agenticspec_session_agent_id(&value.agent_id, out);
@@ -11625,22 +9595,8 @@ pub fn encode_command_agenticspec_session_submit_prompt(
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
-pub fn decode_command_agenticspec_session_submit_prompt(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::session::SubmitPrompt, json::DecodeError> {
-    json::closed_at(
-        value,
-        at,
-        &[
-            "agent_id",
-            "author",
-            "attribution",
-            "class",
-            "content",
-            "at",
-        ],
-    )?;
+pub fn decode_command_agenticspec_session_submit_prompt(value: &json::Value, at: &str) -> Result<agenticspec_types::session::SubmitPrompt, json::DecodeError> {
+    json::closed_at(value, at, &["agent_id", "author", "attribution", "class", "content", "at"])?;
     Ok(agenticspec_types::session::SubmitPrompt {
         agent_id: {
             let at0 = json::nested(at, "agent_id");
@@ -11670,19 +9626,14 @@ pub fn decode_command_agenticspec_session_submit_prompt(
         at: {
             let at5 = json::nested(at, "at");
             let member5 = json::member_at(value, at, "at")?;
-            agenticspec_types::primitives::Timestamp(
-                json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned(),
-            )
+            agenticspec_types::primitives::Timestamp(json::timestamp_at(member5, &at5, "an RFC 3339 instant")?.to_owned())
         },
     })
 }
 
 /// Writes the outcome of `agenticspec.session.SubmitPrompt` as JSON: the branch taken, what it published, and the declared
 /// refusal it carries where it carries one.
-pub fn encode_outcome_agenticspec_session_submit_prompt(
-    value: &agenticspec_types::session::SubmitPromptOutcome,
-    out: &mut String,
-) {
+pub fn encode_outcome_agenticspec_session_submit_prompt(value: &agenticspec_types::session::SubmitPromptOutcome, out: &mut String) {
     out.push('{');
     match value {
         agenticspec_types::session::SubmitPromptOutcome::Submitted { prompt_submitted } => {
@@ -11731,17 +9682,13 @@ pub fn encode_outcome_agenticspec_session_submit_prompt(
 /// The finite `Binary64` at this path: a JSON number, rounded once to the nearest binary64,
 /// and refused where it rounds to an infinity.
 #[allow(dead_code)]
-fn binary64_at(
-    value: &json::Value,
-    at: &str,
-) -> Result<agenticspec_types::primitives::Binary64, json::DecodeError> {
+fn binary64_at(value: &json::Value, at: &str) -> Result<agenticspec_types::primitives::Binary64, json::DecodeError> {
     match value {
-        json::Value::Number(token) => agenticspec_types::primitives::Binary64::from_token(token)
-            .ok_or_else(|| json::DecodeError {
-                at: at.to_owned(),
-                expected: "a finite Binary64 number".to_owned(),
-                found: format!("the number {token}"),
-            }),
+        json::Value::Number(token) => agenticspec_types::primitives::Binary64::from_token(token).ok_or_else(|| json::DecodeError {
+            at: at.to_owned(),
+            expected: "a finite Binary64 number".to_owned(),
+            found: format!("the number {token}"),
+        }),
         other => Err(json::DecodeError::of(at, "a finite Binary64 number", other)),
     }
 }
@@ -11754,51 +9701,21 @@ pub fn encode_system_event(value: &agenticspec_system::SystemEvent) -> String {
     json::push_text(&mut out, value.name());
     json::member(&mut out, "payload");
     match value {
-        agenticspec_system::SystemEvent::AgentEnded(event) => {
-            encode_event_agenticspec_session_agent_ended(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::AgentStarted(event) => {
-            encode_event_agenticspec_session_agent_started(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::ContextCompacted(event) => {
-            encode_event_agenticspec_session_context_compacted(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::ExposureDetected(event) => {
-            encode_event_agenticspec_session_exposure_detected(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::ModelTurnRecorded(event) => {
-            encode_event_agenticspec_session_model_turn_recorded(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::PromptSubmitted(event) => {
-            encode_event_agenticspec_session_prompt_submitted(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::SessionEnded(event) => {
-            encode_event_agenticspec_session_session_ended(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::SessionOpened(event) => {
-            encode_event_agenticspec_session_session_opened(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::ToolCallCompleted(event) => {
-            encode_event_agenticspec_session_tool_call_completed(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::ToolCallDecided(event) => {
-            encode_event_agenticspec_session_tool_call_decided(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::ToolCallRequested(event) => {
-            encode_event_agenticspec_session_tool_call_requested(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::TurnEnded(event) => {
-            encode_event_agenticspec_session_turn_ended(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::AgentUpdated(event) => {
-            encode_event_agenticspec_view_agent_updated(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::EventAppended(event) => {
-            encode_event_agenticspec_view_event_appended(event, &mut out)
-        }
-        agenticspec_system::SystemEvent::SessionUpdated(event) => {
-            encode_event_agenticspec_view_session_updated(event, &mut out)
-        }
+        agenticspec_system::SystemEvent::AgentEnded(event) => encode_event_agenticspec_session_agent_ended(event, &mut out),
+        agenticspec_system::SystemEvent::AgentStarted(event) => encode_event_agenticspec_session_agent_started(event, &mut out),
+        agenticspec_system::SystemEvent::ContextCompacted(event) => encode_event_agenticspec_session_context_compacted(event, &mut out),
+        agenticspec_system::SystemEvent::ExposureDetected(event) => encode_event_agenticspec_session_exposure_detected(event, &mut out),
+        agenticspec_system::SystemEvent::ModelTurnRecorded(event) => encode_event_agenticspec_session_model_turn_recorded(event, &mut out),
+        agenticspec_system::SystemEvent::PromptSubmitted(event) => encode_event_agenticspec_session_prompt_submitted(event, &mut out),
+        agenticspec_system::SystemEvent::SessionEnded(event) => encode_event_agenticspec_session_session_ended(event, &mut out),
+        agenticspec_system::SystemEvent::SessionOpened(event) => encode_event_agenticspec_session_session_opened(event, &mut out),
+        agenticspec_system::SystemEvent::ToolCallCompleted(event) => encode_event_agenticspec_session_tool_call_completed(event, &mut out),
+        agenticspec_system::SystemEvent::ToolCallDecided(event) => encode_event_agenticspec_session_tool_call_decided(event, &mut out),
+        agenticspec_system::SystemEvent::ToolCallRequested(event) => encode_event_agenticspec_session_tool_call_requested(event, &mut out),
+        agenticspec_system::SystemEvent::TurnEnded(event) => encode_event_agenticspec_session_turn_ended(event, &mut out),
+        agenticspec_system::SystemEvent::AgentUpdated(event) => encode_event_agenticspec_view_agent_updated(event, &mut out),
+        agenticspec_system::SystemEvent::EventAppended(event) => encode_event_agenticspec_view_event_appended(event, &mut out),
+        agenticspec_system::SystemEvent::SessionUpdated(event) => encode_event_agenticspec_view_session_updated(event, &mut out),
     }
     out.push('}');
     out
@@ -11813,14 +9730,8 @@ pub fn encode_system_event(value: &agenticspec_system::SystemEvent) -> String {
 /// [`json::DecodeError`] at `event` when the envelope names no event this system publishes,
 /// naming the one it carried, and at the payload's own path when the payload is not that
 /// event's.
-pub fn decode_system_event(
-    value: &json::Value,
-) -> Result<agenticspec_system::SystemEvent, json::DecodeError> {
-    let event = json::text_at(
-        json::member_at(value, "", "event")?,
-        "event",
-        "a qualified event name",
-    )?;
+pub fn decode_system_event(value: &json::Value) -> Result<agenticspec_system::SystemEvent, json::DecodeError> {
+    let event = json::text_at(json::member_at(value, "", "event")?, "event", "a qualified event name")?;
     Ok(match event {
         "agenticspec.session.AgentEnded" => agenticspec_system::SystemEvent::AgentEnded(decode_event_agenticspec_session_agent_ended(json::member_at(value, "", "payload")?, "payload")?),
         "agenticspec.session.AgentStarted" => agenticspec_system::SystemEvent::AgentStarted(decode_event_agenticspec_session_agent_started(json::member_at(value, "", "payload")?, "payload")?),

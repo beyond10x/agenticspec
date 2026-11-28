@@ -1858,11 +1858,7 @@ pub mod obligations {
         /// Serves `agenticspec.view.AgentTurns` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
-        fn agent_turns(
-            &self,
-            session_id: crate::session::SessionId,
-            agent: crate::session::AgentId,
-        ) -> Result<Vec<super::AgentTurns>, crate::obligation::UnmetObligation>;
+        fn agent_turns(&self, session_id: crate::session::SessionId, agent: crate::session::AgentId) -> Result<Vec<super::AgentTurns>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.OverviewFigures` — generated.
@@ -1873,11 +1869,7 @@ pub mod obligations {
         /// Serves `agenticspec.view.OverviewFigures` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
-        fn overview_figures(
-            &self,
-            since: crate::primitives::Timestamp,
-            bucket_seconds: i64,
-        ) -> Result<Vec<super::OverviewFigures>, crate::obligation::UnmetObligation>;
+        fn overview_figures(&self, since: crate::primitives::Timestamp, bucket_seconds: i64) -> Result<Vec<super::OverviewFigures>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.SessionAgents` — generated.
@@ -1888,10 +1880,7 @@ pub mod obligations {
         /// Serves `agenticspec.view.SessionAgents` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
-        fn session_agents(
-            &self,
-            session_id: crate::session::SessionId,
-        ) -> Result<Vec<super::SessionAgents>, crate::obligation::UnmetObligation>;
+        fn session_agents(&self, session_id: crate::session::SessionId) -> Result<Vec<super::SessionAgents>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.SessionById` — generated.
@@ -1902,10 +1891,7 @@ pub mod obligations {
         /// Serves `agenticspec.view.SessionById` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
-        fn session_by_id(
-            &self,
-            session_id: crate::session::SessionId,
-        ) -> Result<Vec<super::SessionById>, crate::obligation::UnmetObligation>;
+        fn session_by_id(&self, session_id: crate::session::SessionId) -> Result<Vec<super::SessionById>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.SessionChecks` — generated.
@@ -1916,10 +1902,7 @@ pub mod obligations {
         /// Serves `agenticspec.view.SessionChecks` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
-        fn session_checks(
-            &self,
-            session_id: crate::session::SessionId,
-        ) -> Result<Vec<super::SessionChecks>, crate::obligation::UnmetObligation>;
+        fn session_checks(&self, session_id: crate::session::SessionId) -> Result<Vec<super::SessionChecks>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.SessionEventCounts` — an implementation obligation.
@@ -1932,11 +1915,7 @@ pub mod obligations {
         ///
         /// `Err` is the typed refusal of an obligation nothing has satisfied; a satisfying
         /// implementation never returns it.
-        fn session_event_counts(
-            &self,
-            session_id: crate::session::SessionId,
-            agent: Option<crate::session::AgentId>,
-        ) -> Result<Vec<super::SessionEventCounts>, crate::obligation::UnmetObligation>;
+        fn session_event_counts(&self, session_id: crate::session::SessionId, agent: Option<crate::session::AgentId>) -> Result<Vec<super::SessionEventCounts>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.SessionEvents` — an implementation obligation.
@@ -1949,14 +1928,7 @@ pub mod obligations {
         ///
         /// `Err` is the typed refusal of an obligation nothing has satisfied; a satisfying
         /// implementation never returns it.
-        fn session_events(
-            &self,
-            session_id: crate::session::SessionId,
-            agent: Option<crate::session::AgentId>,
-            kind: Option<crate::view::EventKind>,
-            notable: Option<bool>,
-            before: Option<i64>,
-        ) -> Result<Vec<super::SessionEvents>, crate::obligation::UnmetObligation>;
+        fn session_events(&self, session_id: crate::session::SessionId, agent: Option<crate::session::AgentId>, kind: Option<crate::view::EventKind>, notable: Option<bool>, before: Option<i64>) -> Result<Vec<super::SessionEvents>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.SessionList` — an implementation obligation.
@@ -1969,13 +1941,7 @@ pub mod obligations {
         ///
         /// `Err` is the typed refusal of an obligation nothing has satisfied; a satisfying
         /// implementation never returns it.
-        fn session_list(
-            &self,
-            since: Option<crate::primitives::Timestamp>,
-            search: Option<String>,
-            limit: Option<i64>,
-            offset: Option<i64>,
-        ) -> Result<Vec<super::SessionList>, crate::obligation::UnmetObligation>;
+        fn session_list(&self, since: Option<crate::primitives::Timestamp>, search: Option<String>, limit: Option<i64>, offset: Option<i64>) -> Result<Vec<super::SessionList>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.SessionTimeline` — generated.
@@ -1986,11 +1952,7 @@ pub mod obligations {
         /// Serves `agenticspec.view.SessionTimeline` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
-        fn session_timeline(
-            &self,
-            session_id: crate::session::SessionId,
-            slot_seconds: i64,
-        ) -> Result<Vec<super::SessionTimeline>, crate::obligation::UnmetObligation>;
+        fn session_timeline(&self, session_id: crate::session::SessionId, slot_seconds: i64) -> Result<Vec<super::SessionTimeline>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.view.SessionTurns` — generated.
@@ -2001,10 +1963,7 @@ pub mod obligations {
         /// Serves `agenticspec.view.SessionTurns` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
-        fn session_turns(
-            &self,
-            session_id: crate::session::SessionId,
-        ) -> Result<Vec<super::SessionTurns>, crate::obligation::UnmetObligation>;
+        fn session_turns(&self, session_id: crate::session::SessionId) -> Result<Vec<super::SessionTurns>, crate::obligation::UnmetObligation>;
     }
 
     /// Every obligation of this bounded context, refused in the type system.
@@ -2014,46 +1973,20 @@ pub mod obligations {
     pub struct Unimplemented;
 
     impl SessionEventCountsQuery for Unimplemented {
-        fn session_event_counts(
-            &self,
-            _session_id: crate::session::SessionId,
-            _agent: Option<crate::session::AgentId>,
-        ) -> Result<Vec<super::SessionEventCounts>, crate::obligation::UnmetObligation> {
-            Err(crate::obligation::UnmetObligation {
-                capability: "view query",
-                source: "agenticspec.view.SessionEventCounts",
-            })
+        fn session_event_counts(&self, _session_id: crate::session::SessionId, _agent: Option<crate::session::AgentId>) -> Result<Vec<super::SessionEventCounts>, crate::obligation::UnmetObligation> {
+            Err(crate::obligation::UnmetObligation { capability: "view query", source: "agenticspec.view.SessionEventCounts" })
         }
     }
 
     impl SessionEventsQuery for Unimplemented {
-        fn session_events(
-            &self,
-            _session_id: crate::session::SessionId,
-            _agent: Option<crate::session::AgentId>,
-            _kind: Option<crate::view::EventKind>,
-            _notable: Option<bool>,
-            _before: Option<i64>,
-        ) -> Result<Vec<super::SessionEvents>, crate::obligation::UnmetObligation> {
-            Err(crate::obligation::UnmetObligation {
-                capability: "view query",
-                source: "agenticspec.view.SessionEvents",
-            })
+        fn session_events(&self, _session_id: crate::session::SessionId, _agent: Option<crate::session::AgentId>, _kind: Option<crate::view::EventKind>, _notable: Option<bool>, _before: Option<i64>) -> Result<Vec<super::SessionEvents>, crate::obligation::UnmetObligation> {
+            Err(crate::obligation::UnmetObligation { capability: "view query", source: "agenticspec.view.SessionEvents" })
         }
     }
 
     impl SessionListQuery for Unimplemented {
-        fn session_list(
-            &self,
-            _since: Option<crate::primitives::Timestamp>,
-            _search: Option<String>,
-            _limit: Option<i64>,
-            _offset: Option<i64>,
-        ) -> Result<Vec<super::SessionList>, crate::obligation::UnmetObligation> {
-            Err(crate::obligation::UnmetObligation {
-                capability: "view query",
-                source: "agenticspec.view.SessionList",
-            })
+        fn session_list(&self, _since: Option<crate::primitives::Timestamp>, _search: Option<String>, _limit: Option<i64>, _offset: Option<i64>) -> Result<Vec<super::SessionList>, crate::obligation::UnmetObligation> {
+            Err(crate::obligation::UnmetObligation { capability: "view query", source: "agenticspec.view.SessionList" })
         }
     }
 }

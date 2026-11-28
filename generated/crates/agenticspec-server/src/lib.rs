@@ -20,8 +20,8 @@
 pub mod entry;
 pub mod http;
 pub mod json;
-pub mod memory;
+pub mod wire;
 pub mod session_ir;
 pub mod session_view;
+pub mod memory;
 mod static_assets;
-pub mod wire;

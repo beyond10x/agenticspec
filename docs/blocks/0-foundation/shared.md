@@ -30,7 +30,7 @@ Nothing: this block is the foundation.
 - [store](../3-capability/store.md) · layer 3 · 22 references
 - [tool](../3-capability/tool.md) · layer 3 · 8 references
 - [agent](../4-agent/agent.md) · layer 4 · 9 references
-- [harness](../4-agent/harness.md) · layer 4 · 22 references
+- [harness](../4-agent/harness.md) · layer 4 · 26 references
 - [process](../5-work/process.md) · layer 5 · 4 references
 - [work](../5-work/work.md) · layer 5 · 11 references
 - [authority](../6-governance/authority.md) · layer 6 · 16 references
@@ -40,7 +40,8 @@ Nothing: this block is the foundation.
 - [runtime](../8-place/runtime.md) · layer 8 · 7 references
 - [sandbox](../8-place/sandbox.md) · layer 8 · 4 references
 - [workspace](../8-place/workspace.md) · layer 8 · 10 references
-- [architecture](../9-composition/architecture.md) · layer 9 · 20 references
+- [architecture](../9-composition/architecture.md) · layer 9 · 24 references
+- [deployment](../9-composition/deployment.md) · layer 9 · 9 references
 - [experiment](../10-evaluation/experiment.md) · layer 10 · 11 references
 - [kpi](../10-evaluation/kpi.md) · layer 10 · 7 references
 
@@ -52,6 +53,7 @@ Nothing: this block is the foundation.
 | `AgentRevisionId` | an identifier or value | `uuid` |
 | `ArchitectureId` | an identifier or value | `uuid` |
 | `ArchitectureRevisionId` | an identifier or value | `uuid` |
+| `ArchitectureRunId` | an identifier or value | `uuid` |
 | `AssignmentId` | an identifier or value | `uuid` |
 | `Attribution` | one of | `Known`, `Inferred`, `NotRecorded` |
 | `BudgetId` | an identifier or value | `uuid` |
@@ -63,6 +65,8 @@ Nothing: this block is the foundation.
 | `DecisionId` | an identifier or value | `uuid` |
 | `DelegationId` | an identifier or value | `uuid` |
 | `DeliverableId` | an identifier or value | `uuid` |
+| `DeploymentId` | an identifier or value | `uuid` |
+| `DeploymentUnitId` | an identifier or value | `uuid` |
 | `EndpointId` | an identifier or value | `uuid` |
 | `ExperimentId` | an identifier or value | `uuid` |
 | `ExportId` | an identifier or value | `uuid` |
@@ -73,6 +77,7 @@ Nothing: this block is the foundation.
 | `HarnessSessionId` | an identifier or value | `uuid` |
 | `InferenceId` | an identifier or value | `uuid` |
 | `IngressId` | an identifier or value | `uuid` |
+| `InstallationId` | an identifier or value | `uuid` |
 | `InstanceId` | an identifier or value | `uuid` |
 | `IsolationLevel` | one of | `None`, `Process`, `Container`, `UserKernel`, `MicroVm` |
 | `KnowledgeId` | an identifier or value | `uuid` |
@@ -86,6 +91,7 @@ Nothing: this block is the foundation.
 | `PartId` | an identifier or value | `uuid` |
 | `PatchApplicationId` | an identifier or value | `uuid` |
 | `PatchId` | an identifier or value | `uuid` |
+| `PermissionModeId` | an identifier or value | `uuid` |
 | `PlacementId` | an identifier or value | `uuid` |
 | `PoolId` | an identifier or value | `uuid` |
 | `PortId` | an identifier or value | `uuid` |

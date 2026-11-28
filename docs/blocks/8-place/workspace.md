@@ -14,12 +14,13 @@ mdx:
 
 <BlockHeader name={"workspace"} family={"place"} layer={8} layerName={"place"} counts={{"commands":10,"entities":3,"events":10,"kpis":2,"refusals":23,"views":3}} />
 
-The files an agent works on: a checkout, a scratch copy or a worktree, at a base revision. A lease names who works in it; it is requested, then granted, and an exclusive workspace has at most one live lease. Only the holder of a live lease writes, and a change leaves the workspace only as a proposal, which is merged, rejected or superseded.
+The files an agent works on: a checkout, a scratch copy or a worktree, at a base revision. A lease names who works in it; it is requested, then granted, and an exclusive workspace has at most one live lease. Only the holder of a live lease writes, and a change leaves the workspace only as a proposal, which is merged, rejected or superseded. A proposal hands its change back as an artifact of a store (`agentic.store`).
 
 ## Depends on
 
 - [channel](../7-collaboration/channel.md) · layer 7 · 8 references
 - [authority](../6-governance/authority.md) · layer 6 · 5 references
+- [store](../3-capability/store.md) · layer 3 · 5 references
 - [shared](../0-foundation/shared.md) · layer 0 · 10 references
 
 ## Used by
@@ -65,8 +66,8 @@ Identified by `proposal_id` (`ProposalId`).
 | `change` | `Content` |  |
 | `merged_revision` | `optional Revision` |  |
 | `superseded_by` | `optional ProposalId` |  |
+| `handback` | `optional RecordId` | The artifact the change is handed back as, a record of an artifact store (`agentic.store`). |
 | `head_revision` | `optional Revision` | The revision the change ends at when it was proposed. |
-| `handback` | `optional string` | Where the change was handed back for review, as the place that takes it names it; a field of work says what that is. |
 | `merged_under` | `optional GrantId` | The standing grant under which it was merged without asking, when one was. |
 
 Relations:
@@ -75,6 +76,7 @@ Relations:
 - `lease` references **Lease** (one, by `lease_id`)
 - `successor` references **Proposal** (one, by `superseded_by`)
 - `merge_grant` references **Grant** of [authority](../6-governance/authority.md) (one, by `merged_under`)
+- `handback_artifact` references **Record** of [store](../3-capability/store.md) (one, by `handback`)
 
 <Lifecycle entity={"Proposal"} initial={"Proposed"} states={["Merged","Proposed","Rejected","Superseded"]} terminal={["Merged","Rejected","Superseded"]} transitions={[{"from":["Proposed"],"name":"merge","to":"Merged"},{"from":["Proposed"],"name":"reject","to":"Rejected"},{"from":["Proposed"],"name":"supersede","to":"Superseded"}]} />
 
@@ -174,8 +176,8 @@ Called by: Worker.
 | `lease_id` | `LeaseId` |
 | `base_revision` | `Revision` |
 | `change` | `Content` |
+| `handback` | `optional RecordId` |
 | `head_revision` | `optional Revision` |
-| `handback` | `optional string` |
 
 | outcome | when | result |
 |---|---|---|
@@ -273,7 +275,7 @@ Called by: Keeper.
 
 | event | fields | emitted by |
 |---|---|---|
-| `ChangeProposed` | `proposal_id` ProposalId, `lease_id` LeaseId, `proposed_by` PartyId, `base_revision` Revision, `head_revision` optional Revision, `handback` optional string | `Propose` |
+| `ChangeProposed` | `proposal_id` ProposalId, `lease_id` LeaseId, `proposed_by` PartyId, `base_revision` Revision, `handback` optional RecordId, `head_revision` optional Revision | `Propose` |
 | `LeaseExpired` | `lease_id` LeaseId | `ExpireLease` |
 | `LeaseGranted` | `lease_id` LeaseId, `workspace_id` WorkspaceId | `GrantLease` |
 | `LeaseReleased` | `lease_id` LeaseId | `ReleaseLease` |
@@ -289,7 +291,7 @@ Called by: Keeper.
 | view | rows | fields |
 |---|---|---|
 | `Leases`<br/>Leases | each **Lease** | `lease_id` LeaseId, `workspace_id` WorkspaceId, `holder` PartyId, `sharing` Sharing, `expires_at` timestamp, `writes` integer, `state` State |
-| `Proposals`<br/>Proposals | each **Proposal** | `proposal_id` ProposalId, `workspace_id` WorkspaceId, `lease_id` LeaseId, `proposed_by` PartyId, `base_revision` Revision, `change` Content, `merged_revision` optional Revision, `superseded_by` optional ProposalId, `head_revision` optional Revision, `handback` optional string, `merged_under` optional GrantId, `state` State |
+| `Proposals`<br/>Proposals | each **Proposal** | `proposal_id` ProposalId, `workspace_id` WorkspaceId, `lease_id` LeaseId, `proposed_by` PartyId, `base_revision` Revision, `change` Content, `merged_revision` optional Revision, `superseded_by` optional ProposalId, `handback` optional RecordId, `head_revision` optional Revision, `merged_under` optional GrantId, `state` State |
 | `Workspaces`<br/>Workspaces | each **Workspace** | `workspace_id` WorkspaceId, `kind` WorkspaceKind, `sharing` Sharing, `base_revision` Revision, `state` State |
 
 ## Types

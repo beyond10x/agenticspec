@@ -21,6 +21,24 @@ mdx:
 
 <span className="as-tag as-tag--accepted">accepted</span> 9 parts and 8 links; the structural check refuses nothing.
 
+## The architecture as a whole
+
+Read from the document alone, before any simulation: its size, autonomy, exposure, weak points and fixed limits. `agenticspec sim check` reports the same numbers; a marked place counts at its value as built. The KPIs are in the [KPI catalogue](../kpis-catalogue.md) under the block `architecture`.
+
+| KPI | value | what it counts |
+|---|---|---|
+| `agents_total` | 9 | Agent copies: the sum of count over the agent parts. |
+| `principals_total` | 1 | Principal parts. |
+| `human_touchpoints` | 1 | Links that end at a principal and carry a question or a proposal. |
+| `autonomy_depth` | 0 | Links in the longest chain of order and question links from agent to agent. |
+| `model_call_paths` | 2 | Distinct paths of model_call links from an agent part to a model part. |
+| `ungated_model_calls` | 0 | Paths of model_call links from an agent to a model that pass no gateway part. |
+| `single_points` | 2 (`gateway`, `model`) | Parts whose removal leaves some agent with no model_call path to a model. |
+| `border_parts` | 0 | Parts named in the border, the parts that take input from outside. |
+| `egress_targets` | 0 | Distinct parts named in the egress of the sandbox parts. |
+| `shared_workspaces` | 0 | Workspace parts whose sharing is not exclusive. |
+| `capacity_ratio` | 0.5 | Agent copies that claim a pool divided by its capacity, the largest over the pools. |
+
 ## Contract
 
 The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [planner-executor.contract.yaml](pathname:///architectures/planner-executor.contract.yaml).
@@ -61,7 +79,7 @@ Ingresses: who reaches the architecture from outside, what each audience may use
 | ingress | audience | authenticated | exports | commands | views | feeds | metrics |
 |---|---|---|---|---|---|---|---|
 | **metrics** | `control.monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 9 |
-| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 9 | 33 | 82 | 0 |
+| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 9 | 34 | 88 | 0 |
 
 - **metrics**: `cache_bust_count`, `cache_hit_share`, `context_size_p90_tokens`, `cost_usd`, `human_prompt_share`, `owner_wait_share`, `priced_message_share`, `sub_agents_started`, `subagent_cost_share`
 - **operator**: `agentic.gateway.DetachUpstream`, `agentic.gateway.DrainGateway`, `agentic.gateway.StopGateway`, `agentic.question.Answer`, `agentic.trigger.DisableSchedule`, `agentic.trigger.DisableTrigger`, `agentic.trigger.EnableSchedule`, `agentic.trigger.EnableTrigger`, `agentic.trigger.PassScheduleChecks`

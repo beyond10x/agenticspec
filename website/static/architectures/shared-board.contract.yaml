@@ -1,6 +1,6 @@
 format: agenticspec-contract/1
 architecture: shared-board
-ports_digest: 1a4d28dd95f5ce8ffe4197fe9ac0f07f8c33a8b954b9668b5f0b6461e56f7457
+ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 ports:
   - port: channel.post
     part: board
@@ -29,7 +29,7 @@ ports:
     settings: {route: frontier}
   - port: trigger.firing
     part: on_entry
-    protocol: "FireTrigger (RecordFailure | RecordStart RecordEnd | SkipFiring)"
+    protocol: "FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)"
     instances: 1
     settings: {channel: board, kind: on_message, max_parallel: 16, policy: parallel}
   - port: channel.post
@@ -39,12 +39,12 @@ ports:
     settings: {}
   - port: question.question
     part: owner
-    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    protocol: "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)"
     instances: 1
     settings: {kind: human}
   - port: harness.session
     part: team
-    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession"
     instances: 8
     settings: {harness: coding}
   - port: model.inference
@@ -54,7 +54,7 @@ ports:
     settings: {}
   - port: question.question
     part: team
-    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    protocol: "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)"
     instances: 8
     settings: {}
   - port: resource.claim
@@ -135,6 +135,7 @@ ingress:
       - {kind: view, name: agentic.gateway.Upstreams}
       - {kind: view, name: agentic.harness.HarnessSessions}
       - {kind: view, name: agentic.harness.Harnesses}
+      - {kind: view, name: agentic.harness.PermissionModes}
       - {kind: view, name: agentic.harness.ToolCalls}
       - {kind: view, name: agentic.harness.Turns}
       - {kind: view, name: agentic.model.Endpoints}
@@ -184,12 +185,16 @@ ingress:
       - {kind: feed, name: agentic.harness.ContextCompacted}
       - {kind: feed, name: agentic.harness.HarnessRegistered}
       - {kind: feed, name: agentic.harness.HarnessRetired}
+      - {kind: feed, name: agentic.harness.PermissionModeRegistered}
+      - {kind: feed, name: agentic.harness.PermissionModeRetired}
       - {kind: feed, name: agentic.harness.SessionEnded}
       - {kind: feed, name: agentic.harness.SessionOpened}
+      - {kind: feed, name: agentic.harness.SessionRestarted}
       - {kind: feed, name: agentic.harness.SubAgentSpawned}
       - {kind: feed, name: agentic.harness.ToolCallCompleted}
       - {kind: feed, name: agentic.harness.ToolCallDecided}
       - {kind: feed, name: agentic.harness.ToolCallRequested}
+      - {kind: feed, name: agentic.harness.ToolResultNotRead}
       - {kind: feed, name: agentic.harness.TurnRecorded}
       - {kind: feed, name: agentic.model.EndpointClosed}
       - {kind: feed, name: agentic.model.EndpointOpened}
@@ -202,6 +207,7 @@ ingress:
       - {kind: feed, name: agentic.model.RouteRetired}
       - {kind: feed, name: agentic.principal.PrincipalRegistered}
       - {kind: feed, name: agentic.principal.PrincipalRetired}
+      - {kind: feed, name: agentic.question.AnswerNotRead}
       - {kind: feed, name: agentic.question.DefaultTaken}
       - {kind: feed, name: agentic.question.QuestionAnswered}
       - {kind: feed, name: agentic.question.QuestionAsked}
@@ -216,6 +222,7 @@ ingress:
       - {kind: feed, name: agentic.trigger.FiringEnded}
       - {kind: feed, name: agentic.trigger.FiringFailed}
       - {kind: feed, name: agentic.trigger.FiringQueued}
+      - {kind: feed, name: agentic.trigger.FiringReplaced}
       - {kind: feed, name: agentic.trigger.FiringSkipped}
       - {kind: feed, name: agentic.trigger.FiringStarted}
       - {kind: feed, name: agentic.trigger.ScheduleAdvanced}

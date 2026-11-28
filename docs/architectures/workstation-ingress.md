@@ -21,6 +21,24 @@ mdx:
 
 <span className="as-tag as-tag--accepted">accepted</span> 11 parts and 8 links; the structural check refuses nothing.
 
+## The architecture as a whole
+
+Read from the document alone, before any simulation: its size, autonomy, exposure, weak points and fixed limits. `agenticspec sim check` reports the same numbers; a marked place counts at its value as built. The KPIs are in the [KPI catalogue](../kpis-catalogue.md) under the block `architecture`.
+
+| KPI | value | what it counts |
+|---|---|---|
+| `agents_total` | 13 | Agent copies: the sum of count over the agent parts. |
+| `principals_total` | 3 | Principal parts. |
+| `human_touchpoints` | 1 | Links that end at a principal and carry a question or a proposal. |
+| `autonomy_depth` | 1 | Links in the longest chain of order and question links from agent to agent. |
+| `model_call_paths` | 2 | Distinct paths of model_call links from an agent part to a model part. |
+| `ungated_model_calls` | 0 | Paths of model_call links from an agent to a model that pass no gateway part. |
+| `single_points` | 2 (`gateway`, `model`) | Parts whose removal leaves some agent with no model_call path to a model. |
+| `border_parts` | 1 | Parts named in the border, the parts that take input from outside. |
+| `egress_targets` | 1 | Distinct parts named in the egress of the sandbox parts. |
+| `shared_workspaces` | 0 | Workspace parts whose sharing is not exclusive. |
+| `capacity_ratio` | 0.75 | Agent copies that claim a pool divided by its capacity, the largest over the pools. |
+
 ## Contract
 
 The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [workstation-ingress.contract.yaml](pathname:///architectures/workstation-ingress.contract.yaml).
@@ -33,16 +51,16 @@ The ports a runtime implements to run this architecture: each port's protocol, t
 | `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
 | `channel.message` | `Outbound` | `channel` | `SendMessage (MarkDelivered MarkRead? \| MarkLost)` | `operator` | none | 1 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `operator` | `acts_for: owner`, `harness: coding`, `role: operator` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `operator` | `acts_for: owner`, `harness: coding`, `role: operator` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `operator` | none | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `operator` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `operator` | none | 1 |
 | `channel.message` | `Outbound` | `channel` | `SendMessage (MarkDelivered MarkRead? \| MarkLost)` | `owner` | none | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
 | `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 12 |
 | `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 12 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `worker` | `harness: coding` | 12 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `worker` | `harness: coding` | 12 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `worker` | none | 12 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `worker` | none | 12 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `worker` | none | 12 |
 | `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `worker` | none | 12 |
 
 Routing invariants, one per link whose value travels in a port:
@@ -62,8 +80,8 @@ Ingresses: who reaches the architecture from outside, what each audience may use
 | ingress | audience | authenticated | exports | commands | views | feeds | metrics |
 |---|---|---|---|---|---|---|---|
 | **metrics** | `monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 5 |
-| **operator** | `admin` | yes | `http`, `event_stream`, `ui`, `tool` | 3 | 29 | 70 | 0 |
-| **user** | `owner` | yes | `http`, `event_stream`, `ui` | 2 | 18 | 40 | 0 |
+| **operator** | `admin` | yes | `http`, `event_stream`, `ui`, `tool` | 3 | 30 | 75 | 0 |
+| **user** | `owner` | yes | `http`, `event_stream`, `ui` | 2 | 19 | 45 | 0 |
 
 - **metrics**: `cost_usd`, `owner_wait_share`, `pool_utilization`, `queue_wait_p90_seconds`, `rate_limited_seconds`
 - **operator**: `agentic.gateway.DetachUpstream`, `agentic.gateway.DrainGateway`, `agentic.gateway.StopGateway`

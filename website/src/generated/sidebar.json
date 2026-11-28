@@ -11,6 +11,7 @@
     "docs/architectures/shared-board",
     "docs/architectures/solo",
     "docs/architectures/team-with-console",
+    "docs/architectures/workstation-ingress",
     "docs/architectures/workstation"
   ],
   "blocks": [

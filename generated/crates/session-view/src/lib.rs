@@ -55,136 +55,55 @@ impl<B> SessionView<B> {
 
 impl<B> SessionView<B>
 where
-    B: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    B: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     /// Serves `agenticspec.view.AgentTurns` at `eventual` consistency, from the owed projection.
-    pub fn agent_turns(
-        &self,
-        session_id: agenticspec_types::session::SessionId,
-        agent: agenticspec_types::session::AgentId,
-    ) -> Result<
-        Vec<agenticspec_types::view::AgentTurns>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn agent_turns(&self, session_id: agenticspec_types::session::SessionId, agent: agenticspec_types::session::AgentId) -> Result<Vec<agenticspec_types::view::AgentTurns>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.agent_turns(session_id, agent)
     }
 
     /// Serves `agenticspec.view.OverviewFigures` at `eventual` consistency, from the owed projection.
-    pub fn overview_figures(
-        &self,
-        since: agenticspec_types::primitives::Timestamp,
-        bucket_seconds: i64,
-    ) -> Result<
-        Vec<agenticspec_types::view::OverviewFigures>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn overview_figures(&self, since: agenticspec_types::primitives::Timestamp, bucket_seconds: i64) -> Result<Vec<agenticspec_types::view::OverviewFigures>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.overview_figures(since, bucket_seconds)
     }
 
     /// Serves `agenticspec.view.SessionAgents` at `eventual` consistency, from the owed projection.
-    pub fn session_agents(
-        &self,
-        session_id: agenticspec_types::session::SessionId,
-    ) -> Result<
-        Vec<agenticspec_types::view::SessionAgents>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn session_agents(&self, session_id: agenticspec_types::session::SessionId) -> Result<Vec<agenticspec_types::view::SessionAgents>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.session_agents(session_id)
     }
 
     /// Serves `agenticspec.view.SessionById` at `eventual` consistency, from the owed projection.
-    pub fn session_by_id(
-        &self,
-        session_id: agenticspec_types::session::SessionId,
-    ) -> Result<
-        Vec<agenticspec_types::view::SessionById>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn session_by_id(&self, session_id: agenticspec_types::session::SessionId) -> Result<Vec<agenticspec_types::view::SessionById>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.session_by_id(session_id)
     }
 
     /// Serves `agenticspec.view.SessionChecks` at `eventual` consistency, from the owed projection.
-    pub fn session_checks(
-        &self,
-        session_id: agenticspec_types::session::SessionId,
-    ) -> Result<
-        Vec<agenticspec_types::view::SessionChecks>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn session_checks(&self, session_id: agenticspec_types::session::SessionId) -> Result<Vec<agenticspec_types::view::SessionChecks>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.session_checks(session_id)
     }
 
     /// Serves `agenticspec.view.SessionEventCounts` at `eventual` consistency, from the owed projection.
-    pub fn session_event_counts(
-        &self,
-        session_id: agenticspec_types::session::SessionId,
-        agent: Option<agenticspec_types::session::AgentId>,
-    ) -> Result<
-        Vec<agenticspec_types::view::SessionEventCounts>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn session_event_counts(&self, session_id: agenticspec_types::session::SessionId, agent: Option<agenticspec_types::session::AgentId>) -> Result<Vec<agenticspec_types::view::SessionEventCounts>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.session_event_counts(session_id, agent)
     }
 
     /// Serves `agenticspec.view.SessionEvents` at `eventual` consistency, from the owed projection.
-    pub fn session_events(
-        &self,
-        session_id: agenticspec_types::session::SessionId,
-        agent: Option<agenticspec_types::session::AgentId>,
-        kind: Option<agenticspec_types::view::EventKind>,
-        notable: Option<bool>,
-        before: Option<i64>,
-    ) -> Result<
-        Vec<agenticspec_types::view::SessionEvents>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
-        self.behaviors
-            .session_events(session_id, agent, kind, notable, before)
+    pub fn session_events(&self, session_id: agenticspec_types::session::SessionId, agent: Option<agenticspec_types::session::AgentId>, kind: Option<agenticspec_types::view::EventKind>, notable: Option<bool>, before: Option<i64>) -> Result<Vec<agenticspec_types::view::SessionEvents>, agenticspec_types::obligation::UnmetObligation> {
+        self.behaviors.session_events(session_id, agent, kind, notable, before)
     }
 
     /// Serves `agenticspec.view.SessionList` at `eventual` consistency, from the owed projection.
-    pub fn session_list(
-        &self,
-        since: Option<agenticspec_types::primitives::Timestamp>,
-        search: Option<String>,
-        limit: Option<i64>,
-        offset: Option<i64>,
-    ) -> Result<
-        Vec<agenticspec_types::view::SessionList>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn session_list(&self, since: Option<agenticspec_types::primitives::Timestamp>, search: Option<String>, limit: Option<i64>, offset: Option<i64>) -> Result<Vec<agenticspec_types::view::SessionList>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.session_list(since, search, limit, offset)
     }
 
     /// Serves `agenticspec.view.SessionTimeline` at `eventual` consistency, from the owed projection.
-    pub fn session_timeline(
-        &self,
-        session_id: agenticspec_types::session::SessionId,
-        slot_seconds: i64,
-    ) -> Result<
-        Vec<agenticspec_types::view::SessionTimeline>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn session_timeline(&self, session_id: agenticspec_types::session::SessionId, slot_seconds: i64) -> Result<Vec<agenticspec_types::view::SessionTimeline>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.session_timeline(session_id, slot_seconds)
     }
 
     /// Serves `agenticspec.view.SessionTurns` at `eventual` consistency, from the owed projection.
-    pub fn session_turns(
-        &self,
-        session_id: agenticspec_types::session::SessionId,
-    ) -> Result<
-        Vec<agenticspec_types::view::SessionTurns>,
-        agenticspec_types::obligation::UnmetObligation,
-    > {
+    pub fn session_turns(&self, session_id: agenticspec_types::session::SessionId) -> Result<Vec<agenticspec_types::view::SessionTurns>, agenticspec_types::obligation::UnmetObligation> {
         self.behaviors.session_turns(session_id)
     }
 }

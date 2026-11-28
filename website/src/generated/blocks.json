@@ -17,6 +17,7 @@
         "gateway",
         "model",
         "knowledge",
+        "store",
         "tool",
         "agent",
         "harness",
@@ -30,6 +31,7 @@
         "sandbox",
         "workspace",
         "architecture",
+        "deployment",
         "experiment",
         "kpi"
       ],
@@ -78,6 +80,7 @@
       "usedBy": [
         "delegation",
         "gateway",
+        "store",
         "agent",
         "harness",
         "work",
@@ -159,6 +162,30 @@
       ],
       "views": 2,
       "w": 181.5,
+      "x": 134.0,
+      "y": 1000.0
+    },
+    {
+      "commands": 14,
+      "entities": 4,
+      "events": 15,
+      "family": "capability",
+      "h": 92.0,
+      "kpis": 4,
+      "layer": 3,
+      "name": "store",
+      "route": "/docs/blocks/3-capability/store",
+      "summary": "Data a part writes and another part reads.",
+      "usedBy": [
+        "work",
+        "workspace"
+      ],
+      "uses": [
+        "principal",
+        "shared"
+      ],
+      "views": 6,
+      "w": 181.5,
       "x": 345.5,
       "y": 1000.0
     },
@@ -214,12 +241,12 @@
       "y": 858.0
     },
     {
-      "commands": 12,
+      "commands": 14,
       "entities": 6,
-      "events": 12,
+      "events": 14,
       "family": "agent",
       "h": 92.0,
-      "kpis": 5,
+      "kpis": 7,
       "layer": 4,
       "name": "harness",
       "route": "/docs/blocks/4-agent/harness",
@@ -271,19 +298,21 @@
       "events": 14,
       "family": "work",
       "h": 92.0,
-      "kpis": 8,
+      "kpis": 9,
       "layer": 5,
       "name": "work",
       "route": "/docs/blocks/5-work/work",
       "summary": "What an agent is asked to do.",
       "usedBy": [
         "question",
-        "trigger"
+        "trigger",
+        "deployment"
       ],
       "uses": [
         "process",
         "agent",
         "harness",
+        "store",
         "model",
         "principal",
         "shared"
@@ -348,12 +377,12 @@
       "y": 432.0
     },
     {
-      "commands": 4,
+      "commands": 5,
       "entities": 1,
-      "events": 4,
+      "events": 5,
       "family": "collab",
       "h": 92.0,
-      "kpis": 5,
+      "kpis": 6,
       "layer": 7,
       "name": "question",
       "route": "/docs/blocks/7-collaboration/question",
@@ -371,12 +400,12 @@
       "y": 432.0
     },
     {
-      "commands": 13,
+      "commands": 14,
       "entities": 3,
-      "events": 14,
+      "events": 15,
       "family": "other",
       "h": 92.0,
-      "kpis": 7,
+      "kpis": 8,
       "layer": 7,
       "name": "trigger",
       "route": "/docs/blocks/7-collaboration/trigger",
@@ -426,7 +455,9 @@
       "name": "runtime",
       "route": "/docs/blocks/8-place/runtime",
       "summary": "What runs a workload.",
-      "usedBy": [],
+      "usedBy": [
+        "deployment"
+      ],
       "uses": [
         "sandbox",
         "authority",
@@ -475,6 +506,7 @@
       "uses": [
         "channel",
         "authority",
+        "store",
         "shared"
       ],
       "views": 3,
@@ -483,9 +515,9 @@
       "y": 290.0
     },
     {
-      "commands": 17,
-      "entities": 9,
-      "events": 17,
+      "commands": 19,
+      "entities": 11,
+      "events": 19,
       "family": "composition",
       "h": 92.0,
       "kpis": 23,
@@ -494,15 +526,39 @@
       "route": "/docs/blocks/9-composition/architecture",
       "summary": "An architecture composes building blocks into one concrete setup: parts (named instances of a block, with a count), links (which part may call or message which, and what the link carries), a border (the parts a human principal reaches) and immutable revisions.",
       "usedBy": [
+        "deployment",
         "experiment",
         "kpi"
       ],
       "uses": [
         "shared"
       ],
-      "views": 9,
+      "views": 10,
       "w": 181.5,
       "x": 345.5,
+      "y": 148.0
+    },
+    {
+      "commands": 24,
+      "entities": 4,
+      "events": 23,
+      "family": "composition",
+      "h": 92.0,
+      "kpis": 4,
+      "layer": 9,
+      "name": "deployment",
+      "route": "/docs/blocks/9-composition/deployment",
+      "summary": "An architecture revision brought to a runtime, and the runs it serves.",
+      "usedBy": [],
+      "uses": [
+        "architecture",
+        "runtime",
+        "work",
+        "shared"
+      ],
+      "views": 7,
+      "w": 181.5,
+      "x": 557.0,
       "y": 148.0
     },
     {
@@ -571,6 +627,24 @@
       "to": "architecture"
     },
     {
+      "count": 24,
+      "d": "M557 194 L527 194",
+      "from": "deployment",
+      "to": "architecture"
+    },
+    {
+      "count": 12,
+      "d": "M654.8 240 C654.8 265 647.8 265 647.8 290",
+      "from": "deployment",
+      "to": "runtime"
+    },
+    {
+      "count": 6,
+      "d": "M640.8 240 C640.8 257.5 532 247.5 532 265 L532 691 C532 708.5 436.3 698.5 436.3 716",
+      "from": "deployment",
+      "to": "work"
+    },
+    {
       "count": 7,
       "d": "M224.8 382 C224.8 407 429.3 407 429.3 432",
       "from": "resource",
@@ -578,15 +652,21 @@
     },
     {
       "count": 8,
-      "d": "M429.3 382 C429.3 407 443.3 407 443.3 432",
+      "d": "M436.3 382 C436.3 407 443.3 407 443.3 432",
       "from": "workspace",
       "to": "channel"
     },
     {
       "count": 5,
-      "d": "M443.3 382 C443.3 399.5 534.2 389.5 534.2 407 L534.2 549 C534.2 566.5 640.8 556.5 640.8 574",
+      "d": "M450.3 382 C450.3 399.5 535.6 389.5 535.6 407 L535.6 549 C535.6 566.5 640.8 556.5 640.8 574",
       "from": "workspace",
       "to": "authority"
+    },
+    {
+      "count": 5,
+      "d": "M422.3 382 C422.3 399.5 320.5 389.5 320.5 407 L320.5 975 C320.5 992.5 429.3 982.5 429.3 1000",
+      "from": "workspace",
+      "to": "store"
     },
     {
       "count": 6,
@@ -602,43 +682,43 @@
     },
     {
       "count": 5,
-      "d": "M640.8 382 C640.8 399.5 532 389.5 532 407 L532 1117 C532 1134.5 443.3 1124.5 443.3 1142",
+      "d": "M640.8 382 C640.8 399.5 533.8 389.5 533.8 407 L533.8 1117 C533.8 1134.5 443.3 1124.5 443.3 1142",
       "from": "runtime",
       "to": "model"
     },
     {
-      "count": 7,
+      "count": 9,
       "d": "M315.5 478 L345.5 478",
       "from": "question",
       "to": "channel"
     },
     {
       "count": 5,
-      "d": "M231.8 524 C231.8 541.5 330.5 531.5 330.5 549 L330.5 691 C330.5 708.5 429.3 698.5 429.3 716",
+      "d": "M231.8 524 C231.8 541.5 330.5 531.5 330.5 549 L330.5 691 C330.5 708.5 422.3 698.5 422.3 716",
       "from": "question",
       "to": "work"
     },
     {
-      "count": 4,
-      "d": "M217.8 524 C217.8 541.5 325.5 531.5 325.5 549 L325.5 1259 C325.5 1276.5 436.3 1266.5 436.3 1284",
+      "count": 6,
+      "d": "M217.8 524 C217.8 541.5 327.2 531.5 327.2 549 L327.2 1259 C327.2 1276.5 436.3 1266.5 436.3 1284",
       "from": "question",
       "to": "delegation"
     },
     {
-      "count": 5,
-      "d": "M450.3 524 C450.3 541.5 538.7 531.5 538.7 549 L538.7 833 C538.7 850.5 640.8 840.5 640.8 858",
+      "count": 8,
+      "d": "M450.3 524 C450.3 541.5 539.3 531.5 539.3 549 L539.3 833 C539.3 850.5 640.8 840.5 640.8 858",
       "from": "channel",
       "to": "harness"
     },
     {
       "count": 14,
-      "d": "M422.3 524 C422.3 541.5 320.5 531.5 320.5 549 L320.5 1259 C320.5 1276.5 422.3 1266.5 422.3 1284",
+      "d": "M422.3 524 C422.3 541.5 323.8 531.5 323.8 549 L323.8 1259 C323.8 1276.5 422.3 1266.5 422.3 1284",
       "from": "channel",
       "to": "delegation"
     },
     {
       "count": 9,
-      "d": "M436.3 524 C436.3 541.5 536.4 531.5 536.4 549 L536.4 1259 C536.4 1276.5 612.8 1266.5 612.8 1284",
+      "d": "M436.3 524 C436.3 541.5 537.5 531.5 537.5 549 L537.5 1259 C537.5 1276.5 605.8 1266.5 605.8 1284",
       "from": "channel",
       "to": "principal"
     },
@@ -650,7 +730,7 @@
     },
     {
       "count": 6,
-      "d": "M640.8 524 C640.8 541.5 543.1 531.5 543.1 549 L543.1 691 C543.1 708.5 443.3 698.5 443.3 716",
+      "d": "M640.8 524 C640.8 541.5 542.9 531.5 542.9 549 L542.9 691 C542.9 708.5 450.3 698.5 450.3 716",
       "from": "trigger",
       "to": "work"
     },
@@ -662,7 +742,7 @@
     },
     {
       "count": 6,
-      "d": "M626.8 524 C626.8 541.5 540.9 531.5 540.9 549 L540.9 833 C540.9 850.5 443.3 840.5 443.3 858",
+      "d": "M626.8 524 C626.8 541.5 541.1 531.5 541.1 549 L541.1 833 C541.1 850.5 443.3 840.5 443.3 858",
       "from": "trigger",
       "to": "agent"
     },
@@ -680,13 +760,13 @@
     },
     {
       "count": 9,
-      "d": "M633.8 666 C633.8 683.5 545.3 673.5 545.3 691 L545.3 1259 C545.3 1276.5 450.3 1266.5 450.3 1284",
+      "d": "M633.8 666 C633.8 683.5 544.7 673.5 544.7 691 L544.7 1259 C544.7 1276.5 450.3 1266.5 450.3 1284",
       "from": "authority",
       "to": "delegation"
     },
     {
       "count": 7,
-      "d": "M647.8 666 C647.8 683.5 755.5 673.5 755.5 691 L755.5 1259 C755.5 1276.5 668.8 1266.5 668.8 1284",
+      "d": "M647.8 666 C647.8 683.5 755.5 673.5 755.5 691 L755.5 1259 C755.5 1276.5 675.8 1266.5 675.8 1284",
       "from": "authority",
       "to": "principal"
     },
@@ -698,31 +778,37 @@
     },
     {
       "count": 4,
-      "d": "M429.3 808 C429.3 833 429.3 833 429.3 858",
+      "d": "M436.3 808 C436.3 833 429.3 833 429.3 858",
       "from": "work",
       "to": "agent"
     },
     {
       "count": 8,
-      "d": "M457.3 808 C457.3 833 626.8 833 626.8 858",
+      "d": "M464.3 808 C464.3 833 626.8 833 626.8 858",
       "from": "work",
       "to": "harness"
     },
     {
       "count": 5,
-      "d": "M415.3 808 C415.3 825.5 335.5 815.5 335.5 833 L335.5 1117 C335.5 1134.5 415.3 1124.5 415.3 1142",
+      "d": "M422.3 808 C422.3 825.5 337.2 815.5 337.2 833 L337.2 975 C337.2 992.5 443.3 982.5 443.3 1000",
+      "from": "work",
+      "to": "store"
+    },
+    {
+      "count": 5,
+      "d": "M408.3 808 C408.3 825.5 333.8 815.5 333.8 833 L333.8 1117 C333.8 1134.5 415.3 1124.5 415.3 1142",
       "from": "work",
       "to": "model"
     },
     {
       "count": 12,
-      "d": "M443.3 808 C443.3 825.5 547.6 815.5 547.6 833 L547.6 1259 C547.6 1276.5 626.8 1266.5 626.8 1284",
+      "d": "M450.3 808 C450.3 825.5 546.5 815.5 546.5 833 L546.5 1259 C546.5 1276.5 619.8 1266.5 619.8 1284",
       "from": "work",
       "to": "principal"
     },
     {
       "count": 3,
-      "d": "M429.3 950 C429.3 975 436.3 975 436.3 1000",
+      "d": "M415.3 950 C415.3 975 224.8 975 224.8 1000",
       "from": "agent",
       "to": "knowledge"
     },
@@ -734,13 +820,13 @@
     },
     {
       "count": 5,
-      "d": "M415.3 950 C415.3 967.5 340.5 957.5 340.5 975 L340.5 1117 C340.5 1134.5 429.3 1124.5 429.3 1142",
+      "d": "M429.3 950 C429.3 967.5 340.5 957.5 340.5 975 L340.5 1117 C340.5 1134.5 429.3 1124.5 429.3 1142",
       "from": "agent",
       "to": "model"
     },
     {
       "count": 8,
-      "d": "M443.3 950 C443.3 967.5 549.8 957.5 549.8 975 L549.8 1259 C549.8 1276.5 640.8 1266.5 640.8 1284",
+      "d": "M443.3 950 C443.3 967.5 548.4 957.5 548.4 975 L548.4 1259 C548.4 1276.5 633.8 1266.5 633.8 1284",
       "from": "agent",
       "to": "principal"
     },
@@ -758,14 +844,20 @@
     },
     {
       "count": 9,
-      "d": "M633.8 950 C633.8 967.5 552 957.5 552 975 L552 1117 C552 1134.5 457.3 1124.5 457.3 1142",
+      "d": "M633.8 950 C633.8 967.5 550.2 957.5 550.2 975 L550.2 1117 C550.2 1134.5 457.3 1124.5 457.3 1142",
       "from": "harness",
       "to": "model"
     },
     {
       "count": 8,
-      "d": "M661.8 950 C661.8 967.5 763.5 957.5 763.5 975 L763.5 1259 C763.5 1276.5 682.8 1266.5 682.8 1284",
+      "d": "M661.8 950 C661.8 967.5 763.5 957.5 763.5 975 L763.5 1259 C763.5 1276.5 689.8 1266.5 689.8 1284",
       "from": "harness",
+      "to": "principal"
+    },
+    {
+      "count": 19,
+      "d": "M436.3 1092 C436.3 1109.5 552 1099.5 552 1117 L552 1259 C552 1276.5 647.8 1266.5 647.8 1284",
+      "from": "store",
       "to": "principal"
     },
     {
@@ -776,7 +868,7 @@
     },
     {
       "count": 4,
-      "d": "M647.8 1234 C647.8 1259 654.8 1259 654.8 1284",
+      "d": "M647.8 1234 C647.8 1259 661.8 1259 661.8 1284",
       "from": "gateway",
       "to": "principal"
     },

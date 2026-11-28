@@ -80,10 +80,7 @@ impl Binary64 {
     /// an infinity or spells no number.
     #[must_use]
     pub fn from_token(token: &str) -> Option<Self> {
-        token
-            .parse::<f64>()
-            .ok()
-            .and_then(|value| Self::new(value).ok())
+        token.parse::<f64>().ok().and_then(|value| Self::new(value).ok())
     }
 
     /// The JSON number the wire writes: the shortest digits that read back as the value,
@@ -92,12 +89,7 @@ impl Binary64 {
     pub fn token(&self) -> String {
         let value = self.0;
         if value == 0.0 {
-            return if value.is_sign_negative() {
-                "-0.0"
-            } else {
-                "0.0"
-            }
-            .to_owned();
+            return if value.is_sign_negative() { "-0.0" } else { "0.0" }.to_owned();
         }
         let sign = if value < 0.0 { "-" } else { "" };
         let scientific = format!("{:e}", value.abs());

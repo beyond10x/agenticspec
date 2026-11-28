@@ -72,7 +72,9 @@ pub fn may(actor: Actor) -> &'static [&'static str] {
             "agenticspec.session.RequestToolCall",
             "agenticspec.session.SubmitPrompt",
         ],
-        Actor::Delegate => &["agenticspec.session.SubmitPrompt"],
+        Actor::Delegate => &[
+            "agenticspec.session.SubmitPrompt",
+        ],
         Actor::HarnessRuntime => &[
             "agenticspec.session.CompactContext",
             "agenticspec.session.EndAgent",
@@ -85,10 +87,18 @@ pub fn may(actor: Actor) -> &'static [&'static str] {
             "agenticspec.session.DecideToolCall",
             "agenticspec.session.SubmitPrompt",
         ],
-        Actor::PeerSession => &["agenticspec.session.SubmitPrompt"],
-        Actor::PermissionAuthority => &["agenticspec.session.DecideToolCall"],
-        Actor::Redactor => &["agenticspec.session.RecordExposure"],
-        Actor::ToolProvider => &["agenticspec.session.CompleteToolCall"],
+        Actor::PeerSession => &[
+            "agenticspec.session.SubmitPrompt",
+        ],
+        Actor::PermissionAuthority => &[
+            "agenticspec.session.DecideToolCall",
+        ],
+        Actor::Redactor => &[
+            "agenticspec.session.RecordExposure",
+        ],
+        Actor::ToolProvider => &[
+            "agenticspec.session.CompleteToolCall",
+        ],
         Actor::Viewer => &[],
     }
 }

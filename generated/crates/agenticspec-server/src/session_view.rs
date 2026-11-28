@@ -87,87 +87,23 @@ fn announce(address: &std::net::SocketAddr) {
 /// # Errors
 ///
 /// What binding the address refuses: the address is taken, or the port is privileged.
-pub fn serve<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    address: &str,
-    authenticate: impl Fn(&http::Request) -> Option<agenticspec_types::actor::Caller>,
-) -> std::io::Result<()>
+pub fn serve<SessionIrBehaviors, SessionViewBehaviors>(system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, address: &str, authenticate: impl Fn(&http::Request) -> Option<agenticspec_types::actor::Caller>) -> std::io::Result<()>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
-{
-    serve_with_static(system, address, authenticate, None)
-}
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
+{ serve_with_static(system, address, authenticate, None) }
 
 /// Serves the declared surface, with files only for paths outside its route table.
 ///
 /// # Errors
 /// Returns a listener or static-root error before announcing readiness.
-pub fn serve_with_static<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    address: &str,
-    authenticate: impl Fn(&http::Request) -> Option<agenticspec_types::actor::Caller>,
-    static_root: Option<&std::path::Path>,
-) -> std::io::Result<()>
+pub fn serve_with_static<SessionIrBehaviors, SessionViewBehaviors>(system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, address: &str, authenticate: impl Fn(&http::Request) -> Option<agenticspec_types::actor::Caller>, static_root: Option<&std::path::Path>) -> std::io::Result<()>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     let static_root = static_root.map(std::fs::canonicalize).transpose()?;
-    if static_root.as_ref().is_some_and(|root| !root.is_dir()) {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "static root is not a directory",
-        ));
-    }
+    if static_root.as_ref().is_some_and(|root| !root.is_dir()) { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "static root is not a directory")); }
     let listener = std::net::TcpListener::bind(address)?;
     announce(&listener.local_addr()?);
     for connection in listener.incoming() {
@@ -190,11 +126,8 @@ where
                         continue;
                     }
                 }
-                (
-                    dispatch(system, authenticate(&request).as_ref(), &request),
-                    false,
-                )
-            }
+                (dispatch(system, authenticate(&request).as_ref(), &request), false)
+            },
             Err(refusal) => (refusal, true),
         };
         let mut stream = reader.into_inner();
@@ -219,38 +152,10 @@ where
 /// checks its grant before it runs, and answers the standard refusal when the caller is none
 /// or is an actor the specification does not grant the command.
 /// A view some actor's grant names checks the reader's grant the same way before it is read.
-pub fn dispatch<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    caller: Option<&agenticspec_types::actor::Caller>,
-    request: &http::Request,
-) -> http::Response
+pub fn dispatch<SessionIrBehaviors, SessionViewBehaviors>(system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&agenticspec_types::actor::Caller>, request: &http::Request) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     dispatch_with_events(system, caller, request).0
 }
@@ -264,38 +169,10 @@ where
 /// it failed after the command took effect. An event a component's port published through a
 /// direct call is in that component's outbox until a pump collects it, so one no pump has
 /// collected yet is listed as this call's: call `pump` after calling a port directly.
-pub fn dispatch_with_events<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    caller: Option<&agenticspec_types::actor::Caller>,
-    request: &http::Request,
-) -> (http::Response, Vec<agenticspec_system::SystemEvent>)
+pub fn dispatch_with_events<SessionIrBehaviors, SessionViewBehaviors>(system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&agenticspec_types::actor::Caller>, request: &http::Request) -> (http::Response, Vec<agenticspec_system::SystemEvent>)
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     let mut taken = Vec::new();
     let answer = route_request(system, caller, request, &mut taken);
@@ -304,39 +181,10 @@ where
 
 /// The route match behind [`dispatch_with_events`]: each command pushes what it took off the
 /// log onto `taken`.
-fn route_request<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    caller: Option<&agenticspec_types::actor::Caller>,
-    request: &http::Request,
-    _taken: &mut Vec<agenticspec_system::SystemEvent>,
-) -> http::Response
+fn route_request<SessionIrBehaviors, SessionViewBehaviors>(system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&agenticspec_types::actor::Caller>, request: &http::Request, _taken: &mut Vec<agenticspec_system::SystemEvent>) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     match request.path.as_str() {
         "/docs" => {
@@ -474,39 +322,10 @@ where
 /// `Json` value the realization built with a number JSON does not spell is not JSON, and is
 /// [`entry::Refused::Undelivered`] for a command, whose effect stands, and [`entry::Refused::Unmet`]
 /// for a view.
-pub fn handle<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    caller: Option<&agenticspec_types::actor::Caller>,
-    name: &str,
-    input: json::Value,
-) -> Result<json::Value, entry::Refused>
+pub fn handle<SessionIrBehaviors, SessionViewBehaviors>(system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&agenticspec_types::actor::Caller>, name: &str, input: json::Value) -> Result<json::Value, entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     handle_with_events(system, caller, name, input).0
 }
@@ -520,42 +339,10 @@ where
 /// command took effect. An event a component's port published through a direct call is in
 /// that component's outbox until a pump collects it, so one no pump has collected yet is
 /// listed as this call's: call `pump` after calling a port directly.
-pub fn handle_with_events<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    caller: Option<&agenticspec_types::actor::Caller>,
-    name: &str,
-    input: json::Value,
-) -> (
-    Result<json::Value, entry::Refused>,
-    Vec<agenticspec_system::SystemEvent>,
-)
+pub fn handle_with_events<SessionIrBehaviors, SessionViewBehaviors>(system: &mut agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, caller: Option<&agenticspec_types::actor::Caller>, name: &str, input: json::Value) -> (Result<json::Value, entry::Refused>, Vec<agenticspec_system::SystemEvent>)
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     let taken = Vec::new();
     let checked = |input: &json::Value| {
@@ -565,75 +352,45 @@ where
     };
     let answered = match name {
         "agenticspec.view.AgentTurns" => match admit_read(caller, "agenticspec.view.AgentTurns") {
-            Ok(()) => {
-                checked(&input).and_then(|()| run_agenticspec_view_agent_turns(system, &input))
-            }
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_agent_turns(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
-        "agenticspec.view.OverviewFigures" => {
-            match admit_read(caller, "agenticspec.view.OverviewFigures") {
-                Ok(()) => checked(&input)
-                    .and_then(|()| run_agenticspec_view_overview_figures(system, &input)),
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
-        "agenticspec.view.SessionAgents" => {
-            match admit_read(caller, "agenticspec.view.SessionAgents") {
-                Ok(()) => checked(&input)
-                    .and_then(|()| run_agenticspec_view_session_agents(system, &input)),
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
-        "agenticspec.view.SessionById" => {
-            match admit_read(caller, "agenticspec.view.SessionById") {
-                Ok(()) => checked(&input)
-                    .and_then(|()| run_agenticspec_view_session_by_id(system, &input)),
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
-        "agenticspec.view.SessionChecks" => {
-            match admit_read(caller, "agenticspec.view.SessionChecks") {
-                Ok(()) => checked(&input)
-                    .and_then(|()| run_agenticspec_view_session_checks(system, &input)),
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
-        "agenticspec.view.SessionEventCounts" => {
-            match admit_read(caller, "agenticspec.view.SessionEventCounts") {
-                Ok(()) => checked(&input)
-                    .and_then(|()| run_agenticspec_view_session_event_counts(system, &input)),
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
-        "agenticspec.view.SessionEvents" => {
-            match admit_read(caller, "agenticspec.view.SessionEvents") {
-                Ok(()) => checked(&input)
-                    .and_then(|()| run_agenticspec_view_session_events(system, &input)),
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
-        "agenticspec.view.SessionList" => {
-            match admit_read(caller, "agenticspec.view.SessionList") {
-                Ok(()) => {
-                    checked(&input).and_then(|()| run_agenticspec_view_session_list(system, &input))
-                }
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
-        "agenticspec.view.SessionTimeline" => {
-            match admit_read(caller, "agenticspec.view.SessionTimeline") {
-                Ok(()) => checked(&input)
-                    .and_then(|()| run_agenticspec_view_session_timeline(system, &input)),
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
-        "agenticspec.view.SessionTurns" => {
-            match admit_read(caller, "agenticspec.view.SessionTurns") {
-                Ok(()) => checked(&input)
-                    .and_then(|()| run_agenticspec_view_session_turns(system, &input)),
-                Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
-            }
-        }
+        "agenticspec.view.OverviewFigures" => match admit_read(caller, "agenticspec.view.OverviewFigures") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_overview_figures(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "agenticspec.view.SessionAgents" => match admit_read(caller, "agenticspec.view.SessionAgents") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_session_agents(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "agenticspec.view.SessionById" => match admit_read(caller, "agenticspec.view.SessionById") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_session_by_id(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "agenticspec.view.SessionChecks" => match admit_read(caller, "agenticspec.view.SessionChecks") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_session_checks(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "agenticspec.view.SessionEventCounts" => match admit_read(caller, "agenticspec.view.SessionEventCounts") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_session_event_counts(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "agenticspec.view.SessionEvents" => match admit_read(caller, "agenticspec.view.SessionEvents") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_session_events(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "agenticspec.view.SessionList" => match admit_read(caller, "agenticspec.view.SessionList") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_session_list(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "agenticspec.view.SessionTimeline" => match admit_read(caller, "agenticspec.view.SessionTimeline") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_session_timeline(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
+        "agenticspec.view.SessionTurns" => match admit_read(caller, "agenticspec.view.SessionTurns") {
+            Ok(()) => checked(&input).and_then(|()| run_agenticspec_view_session_turns(system, &input)),
+            Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
+        },
         other => return (Err(entry::Refused::Unknown(other.to_owned())), taken),
     };
     let body = match answered {
@@ -654,10 +411,7 @@ where
 /// Checked before the command runs, on the caller the realization authenticated the request
 /// as and never on anything the request says about itself. Public, so code that drives the system
 /// in process checks the grant exactly as every route does.
-pub fn admit(
-    caller: Option<&agenticspec_types::actor::Caller>,
-    command: &str,
-) -> Result<(), Option<&'static str>> {
+pub fn admit(caller: Option<&agenticspec_types::actor::Caller>, command: &str) -> Result<(), Option<&'static str>> {
     match caller {
         Some(caller) if caller.may(command) => Ok(()),
         Some(caller) => Err(Some(caller.actor.name())),
@@ -685,10 +439,7 @@ fn not_granted(actor: Option<&str>) -> http::Response {
 ///
 /// Checked before the view is read, on the caller the realization authenticated the request as.
 /// Public, so code that reads the system in process checks the grant exactly as every route does.
-pub fn admit_read(
-    caller: Option<&agenticspec_types::actor::Caller>,
-    view: &str,
-) -> Result<(), Option<&'static str>> {
+pub fn admit_read(caller: Option<&agenticspec_types::actor::Caller>, view: &str) -> Result<(), Option<&'static str>> {
     match caller {
         Some(caller) if caller.may_read(view) => Ok(()),
         Some(caller) => Err(Some(caller.actor.name())),
@@ -698,46 +449,12 @@ pub fn admit_read(
 
 /// `GET` `agenticspec.view.AgentTurns`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_agent_turns<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_agent_turns<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    match http::query_object(
-        query,
-        &[
-            ("session_id", http::Scalar::Text),
-            ("agent", http::Scalar::Text),
-        ],
-        "query",
-    ) {
+    match http::query_object(query, &[("session_id", http::Scalar::Text), ("agent", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_agent_turns(system, &value)),
         Err(refused) => http::Response::refusal(400, &refused),
     }
@@ -748,37 +465,10 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_agent_turns<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_agent_turns<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0, param1) = match wire::decode_params_agenticspec_view_agent_turns(value, "query") {
         Ok(params) => params,
@@ -805,46 +495,12 @@ where
 
 /// `GET` `agenticspec.view.OverviewFigures`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_overview_figures<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_overview_figures<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    match http::query_object(
-        query,
-        &[
-            ("since", http::Scalar::Text),
-            ("bucket_seconds", http::Scalar::Integer),
-        ],
-        "query",
-    ) {
+    match http::query_object(query, &[("since", http::Scalar::Text), ("bucket_seconds", http::Scalar::Integer)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_overview_figures(system, &value)),
         Err(refused) => http::Response::refusal(400, &refused),
     }
@@ -855,43 +511,15 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_overview_figures<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_overview_figures<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    let (param0, param1) =
-        match wire::decode_params_agenticspec_view_overview_figures(value, "query") {
-            Ok(params) => params,
-            Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
-        };
+    let (param0, param1) = match wire::decode_params_agenticspec_view_overview_figures(value, "query") {
+        Ok(params) => params,
+        Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
+    };
     match system.session_view.overview_figures(param0, param1) {
         Ok(rows) => {
             let mut body = String::from("{");
@@ -913,37 +541,10 @@ where
 
 /// `GET` `agenticspec.view.SessionById`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_session_by_id<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_session_by_id<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_session_by_id(system, &value)),
@@ -956,37 +557,10 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_session_by_id<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_session_by_id<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0,) = match wire::decode_params_agenticspec_view_session_by_id(value, "query") {
         Ok(params) => params,
@@ -1013,37 +587,10 @@ where
 
 /// `GET` `agenticspec.view.SessionAgents`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_session_agents<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_session_agents<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_session_agents(system, &value)),
@@ -1056,37 +603,10 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_session_agents<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_session_agents<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0,) = match wire::decode_params_agenticspec_view_session_agents(value, "query") {
         Ok(params) => params,
@@ -1113,37 +633,10 @@ where
 
 /// `GET` `agenticspec.view.SessionChecks`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_session_checks<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_session_checks<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_session_checks(system, &value)),
@@ -1156,37 +649,10 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_session_checks<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_session_checks<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0,) = match wire::decode_params_agenticspec_view_session_checks(value, "query") {
         Ok(params) => params,
@@ -1213,46 +679,12 @@ where
 
 /// `GET` `agenticspec.view.SessionEventCounts`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_session_event_counts<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_session_event_counts<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    match http::query_object(
-        query,
-        &[
-            ("session_id", http::Scalar::Text),
-            ("agent", http::Scalar::Text),
-        ],
-        "query",
-    ) {
+    match http::query_object(query, &[("session_id", http::Scalar::Text), ("agent", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_session_event_counts(system, &value)),
         Err(refused) => http::Response::refusal(400, &refused),
     }
@@ -1263,43 +695,15 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_session_event_counts<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_session_event_counts<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    let (param0, param1) =
-        match wire::decode_params_agenticspec_view_session_event_counts(value, "query") {
-            Ok(params) => params,
-            Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
-        };
+    let (param0, param1) = match wire::decode_params_agenticspec_view_session_event_counts(value, "query") {
+        Ok(params) => params,
+        Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
+    };
     match system.session_view.session_event_counts(param0, param1) {
         Ok(rows) => {
             let mut body = String::from("{");
@@ -1321,49 +725,12 @@ where
 
 /// `GET` `agenticspec.view.SessionEvents`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_session_events<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_session_events<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    match http::query_object(
-        query,
-        &[
-            ("session_id", http::Scalar::Text),
-            ("agent", http::Scalar::Text),
-            ("kind", http::Scalar::Text),
-            ("notable", http::Scalar::Boolean),
-            ("before", http::Scalar::Integer),
-        ],
-        "query",
-    ) {
+    match http::query_object(query, &[("session_id", http::Scalar::Text), ("agent", http::Scalar::Text), ("kind", http::Scalar::Text), ("notable", http::Scalar::Boolean), ("before", http::Scalar::Integer)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_session_events(system, &value)),
         Err(refused) => http::Response::refusal(400, &refused),
     }
@@ -1374,47 +741,16 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_session_events<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_session_events<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    let (param0, param1, param2, param3, param4) =
-        match wire::decode_params_agenticspec_view_session_events(value, "query") {
-            Ok(params) => params,
-            Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
-        };
-    match system
-        .session_view
-        .session_events(param0, param1, param2, param3, param4)
-    {
+    let (param0, param1, param2, param3, param4) = match wire::decode_params_agenticspec_view_session_events(value, "query") {
+        Ok(params) => params,
+        Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
+    };
+    match system.session_view.session_events(param0, param1, param2, param3, param4) {
         Ok(rows) => {
             let mut body = String::from("{");
             json::member(&mut body, "rows");
@@ -1435,48 +771,12 @@ where
 
 /// `GET` `agenticspec.view.SessionList`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_session_list<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_session_list<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    match http::query_object(
-        query,
-        &[
-            ("since", http::Scalar::Text),
-            ("search", http::Scalar::Text),
-            ("limit", http::Scalar::Integer),
-            ("offset", http::Scalar::Integer),
-        ],
-        "query",
-    ) {
+    match http::query_object(query, &[("since", http::Scalar::Text), ("search", http::Scalar::Text), ("limit", http::Scalar::Integer), ("offset", http::Scalar::Integer)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_session_list(system, &value)),
         Err(refused) => http::Response::refusal(400, &refused),
     }
@@ -1487,47 +787,16 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_session_list<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_session_list<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    let (param0, param1, param2, param3) =
-        match wire::decode_params_agenticspec_view_session_list(value, "query") {
-            Ok(params) => params,
-            Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
-        };
-    match system
-        .session_view
-        .session_list(param0, param1, param2, param3)
-    {
+    let (param0, param1, param2, param3) = match wire::decode_params_agenticspec_view_session_list(value, "query") {
+        Ok(params) => params,
+        Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
+    };
+    match system.session_view.session_list(param0, param1, param2, param3) {
         Ok(rows) => {
             let mut body = String::from("{");
             json::member(&mut body, "rows");
@@ -1548,46 +817,12 @@ where
 
 /// `GET` `agenticspec.view.SessionTimeline`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_session_timeline<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_session_timeline<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    match http::query_object(
-        query,
-        &[
-            ("session_id", http::Scalar::Text),
-            ("slot_seconds", http::Scalar::Integer),
-        ],
-        "query",
-    ) {
+    match http::query_object(query, &[("session_id", http::Scalar::Text), ("slot_seconds", http::Scalar::Integer)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_session_timeline(system, &value)),
         Err(refused) => http::Response::refusal(400, &refused),
     }
@@ -1598,43 +833,15 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_session_timeline<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_session_timeline<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
-    let (param0, param1) =
-        match wire::decode_params_agenticspec_view_session_timeline(value, "query") {
-            Ok(params) => params,
-            Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
-        };
+    let (param0, param1) = match wire::decode_params_agenticspec_view_session_timeline(value, "query") {
+        Ok(params) => params,
+        Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
+    };
     match system.session_view.session_timeline(param0, param1) {
         Ok(rows) => {
             let mut body = String::from("{");
@@ -1656,37 +863,10 @@ where
 
 /// `GET` `agenticspec.view.SessionTurns`: reads the declared parameters from the query string by their wire names, runs the
 /// port, answers its rows. A key the view does not declare is ignored.
-fn serve_agenticspec_view_session_turns<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    query: &str,
-) -> http::Response
+fn serve_agenticspec_view_session_turns<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, query: &str) -> http::Response
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     match http::query_object(query, &[("session_id", http::Scalar::Text)], "query") {
         Ok(value) => http::answer(run_agenticspec_view_session_turns(system, &value)),
@@ -1699,37 +879,10 @@ where
 ///
 /// The one path the `GET` route and [`handle`] share. A decoding failure is located under
 /// `query`, as the route reports it.
-fn run_agenticspec_view_session_turns<SessionIrBehaviors, SessionViewBehaviors>(
-    system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>,
-    value: &json::Value,
-) -> Result<(u16, String), entry::Refused>
+fn run_agenticspec_view_session_turns<SessionIrBehaviors, SessionViewBehaviors>(system: &agenticspec_system::System<SessionIrBehaviors, SessionViewBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     let (param0,) = match wire::decode_params_agenticspec_view_session_turns(value, "query") {
         Ok(params) => params,

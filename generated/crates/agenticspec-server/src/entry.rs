@@ -53,9 +53,10 @@ impl Refused {
 impl std::fmt::Display for Refused {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Unknown(name) => {
-                write!(f, "`{name}` is not a command or view this surface declares")
-            }
+            Self::Unknown(name) => write!(
+                f,
+                "`{name}` is not a command or view this surface declares"
+            ),
             Self::Input(detail) | Self::Unmet(detail) | Self::Undelivered(detail) => {
                 f.write_str(detail)
             }

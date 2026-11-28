@@ -118,10 +118,7 @@ pub struct System<SessionIrBehaviors, SessionViewBehaviors> {
 
 impl<SessionIrBehaviors, SessionViewBehaviors> System<SessionIrBehaviors, SessionViewBehaviors> {
     /// Assembles the system from its components.
-    pub fn new(
-        session_ir: session_ir::SessionIr<SessionIrBehaviors>,
-        session_view: session_view::SessionView<SessionViewBehaviors>,
-    ) -> Self {
+    pub fn new(session_ir: session_ir::SessionIr<SessionIrBehaviors>, session_view: session_view::SessionView<SessionViewBehaviors>) -> Self {
         Self {
             session_ir,
             session_view,
@@ -151,32 +148,8 @@ impl<SessionIrBehaviors, SessionViewBehaviors> System<SessionIrBehaviors, Sessio
 
 impl<SessionIrBehaviors, SessionViewBehaviors> System<SessionIrBehaviors, SessionViewBehaviors>
 where
-    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior
-        + agenticspec_types::session::obligations::CompleteToolCallBehavior
-        + agenticspec_types::session::obligations::DecideToolCallBehavior
-        + agenticspec_types::session::obligations::EndAgentBehavior
-        + agenticspec_types::session::obligations::EndSessionBehavior
-        + agenticspec_types::session::obligations::EndTurnBehavior
-        + agenticspec_types::session::obligations::OpenSessionBehavior
-        + agenticspec_types::session::obligations::RecordExposureBehavior
-        + agenticspec_types::session::obligations::RecordModelTurnBehavior
-        + agenticspec_types::session::obligations::RequestToolCallBehavior
-        + agenticspec_types::session::obligations::StartAgentBehavior
-        + agenticspec_types::session::obligations::SubmitPromptBehavior
-        + agenticspec_types::session::obligations::AgentsQuery
-        + agenticspec_types::session::obligations::ExposuresQuery
-        + agenticspec_types::session::obligations::SessionsQuery
-        + agenticspec_types::session::obligations::ToolCallsQuery,
-    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery
-        + agenticspec_types::view::obligations::OverviewFiguresQuery
-        + agenticspec_types::view::obligations::SessionAgentsQuery
-        + agenticspec_types::view::obligations::SessionByIdQuery
-        + agenticspec_types::view::obligations::SessionChecksQuery
-        + agenticspec_types::view::obligations::SessionEventCountsQuery
-        + agenticspec_types::view::obligations::SessionEventsQuery
-        + agenticspec_types::view::obligations::SessionListQuery
-        + agenticspec_types::view::obligations::SessionTimelineQuery
-        + agenticspec_types::view::obligations::SessionTurnsQuery,
+    SessionIrBehaviors: agenticspec_types::session::obligations::CompactContextBehavior + agenticspec_types::session::obligations::CompleteToolCallBehavior + agenticspec_types::session::obligations::DecideToolCallBehavior + agenticspec_types::session::obligations::EndAgentBehavior + agenticspec_types::session::obligations::EndSessionBehavior + agenticspec_types::session::obligations::EndTurnBehavior + agenticspec_types::session::obligations::OpenSessionBehavior + agenticspec_types::session::obligations::RecordExposureBehavior + agenticspec_types::session::obligations::RecordModelTurnBehavior + agenticspec_types::session::obligations::RequestToolCallBehavior + agenticspec_types::session::obligations::StartAgentBehavior + agenticspec_types::session::obligations::SubmitPromptBehavior + agenticspec_types::session::obligations::AgentsQuery + agenticspec_types::session::obligations::ExposuresQuery + agenticspec_types::session::obligations::SessionsQuery + agenticspec_types::session::obligations::ToolCallsQuery,
+    SessionViewBehaviors: agenticspec_types::view::obligations::AgentTurnsQuery + agenticspec_types::view::obligations::OverviewFiguresQuery + agenticspec_types::view::obligations::SessionAgentsQuery + agenticspec_types::view::obligations::SessionByIdQuery + agenticspec_types::view::obligations::SessionChecksQuery + agenticspec_types::view::obligations::SessionEventCountsQuery + agenticspec_types::view::obligations::SessionEventsQuery + agenticspec_types::view::obligations::SessionListQuery + agenticspec_types::view::obligations::SessionTimelineQuery + agenticspec_types::view::obligations::SessionTurnsQuery,
 {
     /// Delivers until quiescent: collects every component's outbox onto the log. No binding
     /// reacts to anything this specification publishes, so collecting is the whole delivery.
