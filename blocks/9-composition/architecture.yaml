@@ -82,6 +82,94 @@ types:
       - {name: verb, type: agentic.architecture.PatchVerb}
       - {name: text, type: String}
 
+  # The ports and the contract. Source: design/architecture-runtime.md § "The boundary: ports"
+  # and § "The contract of one architecture". A port is a leaf of the blocks with effects outside
+  # them, the part a runtime must implement; everything else is behaviour or computation that the
+  # specification runs. Ports are derived from this system, never authored: from its bindings
+  # (which command an event causes) and its lifecycles (which state only an entry command
+  # leaves). An entry command is one no binding causes; an exit event is one no binding consumes.
+  # The contract of an architecture revision is the ports its parts use, narrowed by their
+  # settings, with the routing invariants of its links and the number of instances of each port.
+
+  # The full name of a command of this system (`agentic.model.StartInference`).
+  # ESS limit (0.99.2): a field cannot reference a command, so the name is text. The derivation
+  # writes only names `ess specify compile` lists.
+  - name: agentic.architecture.CommandName
+    kind: newtype
+    of: String
+    naming:
+      summary: The full name of a command of the building blocks.
+
+  # The full name of an event of this system (`agentic.model.InferenceStarted`). Text for the
+  # reason CommandName is.
+  - name: agentic.architecture.EventName
+    kind: newtype
+    of: String
+    naming:
+      summary: The full name of an event of the building blocks.
+
+  # A lifecycle state of an entity of this system, as `<entity>.<state>`
+  # (`agentic.model.Inference.Started`). Text for the reason CommandName is.
+  - name: agentic.architecture.StateName
+    kind: newtype
+    of: String
+    naming:
+      summary: A lifecycle state of an entity of the building blocks.
+
+  # The order of a port's commands, as a regular expression over their short names
+  # (`StartInference FinishInference`, `OpenSession (RecordTurn | CompactContext)* EndSession`).
+  - name: agentic.architecture.Protocol
+    kind: newtype
+    of: String
+    naming:
+      summary: A regular expression over the short names of a port's commands, intent first.
+
+  # What kind of outside a port reaches.
+  # Outbound: an exit event leaves its entity in a state whose only way out is an entry command;
+  # the world must act and report (InferenceStarted leaves an inference Started, which only
+  # FinishInference leaves). Clock: a periodic host cause or a clock-reading attachment of a
+  # binding. Principal: entry commands a principal issues (Answer, ApproveDecision).
+  # Not a port, and so not a variant: an internal command (a binding causes it, or it decides on
+  # recorded facts) and a configuration command (an entry command whose entity has no waiting
+  # state: RegisterPrincipal, DefineAgent, DefineKpi), which the deployer issues from the
+  # architecture document.
+  - name: agentic.architecture.PortKind
+    kind: enum
+    variants: [Outbound, Clock, Principal]
+
+  # One port one part of the revision uses: the settings of the part that narrow it, and how
+  # many instances of the port run (the part's count, times the count of the part it is `per`, as
+  # far as that chain goes).
+  # UNMAPPED: which part uses which port. Architecture documents name a block per part (`agent`,
+  # `pool`, `schedule`), not a domain (`harness`, `resource`, `trigger`), and some ports are used
+  # through a link (`principal.answer` by a principal part a link carrying questions reaches).
+  # Documents also name parts PartKind has no variant for (`authority`, `work`, `experiment`,
+  # `kpi`) and carry values Carries has none for (`call`, `checkout`, `context`, `grant`, ...).
+  # UNMAPPED: which settings narrow which port. The design names examples only (`harness`,
+  # `route`, `isolation`, `egress`, `capacity`). Both are open for story contract-derivation.
+  - name: agentic.architecture.ContractPort
+    kind: struct
+    fields:
+      - {name: port_id, type: agentic.shared.PortId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: settings, type: List<agentic.architecture.Setting>}
+      - {name: instances, type: Integer}
+
+  # What one link of the revision promises about a run's trace: `worker -> gateway carries
+  # model_call` means every `model.infer` of `worker` happens inside a `gateway.call` of
+  # `gateway`. `predicate` is the predicate as the contract writes it.
+  # UNMAPPED: the design states the invariant of a link carrying ModelCall only. The invariant of
+  # every other Carries (Question, Order, Claim, Prompt over a channel, ...) and the predicate
+  # language are open for story contract-derivation; `within_port_id` is absent where a link
+  # restricts the counterparty and nests in no port.
+  - name: agentic.architecture.RoutingInvariant
+    kind: struct
+    fields:
+      - {name: link_id, type: agentic.shared.LinkId}
+      - {name: port_id, type: agentic.shared.PortId}
+      - {name: within_port_id, type: Optional<agentic.shared.PortId>}
+      - {name: predicate, type: String}
+
 entities:
   # UNMAPPED: the brief names the lifecycle "Draft -> Committed revisions, Retired". An outcome
   # that records a revision creates the revision row, and ESS admits no second effect beside a
@@ -103,6 +191,9 @@ entities:
       - {name: links, kind: owns, target: agentic.architecture.Link, cardinality: many, via: architecture_id}
       - {name: revisions, kind: owns, target: agentic.architecture.ArchitectureRevision, cardinality: many, via: architecture_id}
       - {name: patch_applications, kind: owns, target: agentic.architecture.PatchApplication, cardinality: many, via: architecture_id}
+      # UNMAPPED: whether an architecture owns its revisions' contracts (a contract is derived, so
+      # deleting the architecture could drop them) or a contract only references its revision.
+      # Taken: references, from the contract.
     lifecycle:
       initial: Draft
       states:
@@ -259,6 +350,61 @@ entities:
         - {name: apply, from: [Requested], to: Applied}
         - {name: refuse, from: [Requested], to: Refused}
 
+  # A port of a block, derived from this system (`model.infer`: the exit event InferenceStarted
+  # leaves an inference Started, which only the entry command FinishInference leaves). A runtime
+  # implements ports; everything else of a block it gets from the specification. Immutable: a
+  # change of the blocks derives the ports again.
+  # `block` is the domain of the port's commands without `agentic.` (`model`, `harness`).
+  # ESS limit (0.99.2): a field cannot name a domain, so it is a name.
+  # `intent_event` and `waiting_state` are absent for a Clock port, which no event of the blocks
+  # starts. `reports` are the entry commands that leave the waiting state (an Outbound or
+  # Principal port), or the commands the periodic cause invokes (a Clock port). `protocol` orders
+  # the command that emits the intent event and the reports.
+  # The table in design/architecture-runtime.md § "The boundary: ports" is the output the
+  # derivation is expected to give, not a source of this entity.
+  - name: agentic.architecture.Port
+    naming:
+      summary: A leaf of the building blocks with effects outside them, which a runtime must implement.
+    identity:
+      name: port_id
+      type: agentic.shared.PortId
+    fields:
+      - {name: name, type: agentic.shared.Name}
+      - {name: block, type: agentic.shared.Name}
+      - {name: kind, type: agentic.architecture.PortKind}
+      - {name: intent_event, type: Optional<agentic.architecture.EventName>}
+      - {name: waiting_state, type: Optional<agentic.architecture.StateName>}
+      - {name: reports, type: List<agentic.architecture.CommandName>}
+      - {name: protocol, type: agentic.architecture.Protocol}
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+
+  # The contract of one architecture revision (`agenticspec-contract/1`): the ports its parts
+  # use with their narrowing settings and instances, the routing invariants of its links, and its
+  # border (the only parts that take input from outside). Derived from the revision and the
+  # ports, without any runtime, so one revision has at most one contract. Immutable.
+  - name: agentic.architecture.Contract
+    naming:
+      summary: The ports one architecture revision uses, narrowed by its settings, with the routing invariants of its links.
+    identity:
+      name: contract_id
+      type: agentic.shared.ContractId
+    fields:
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: digest, type: agentic.architecture.Digest}
+      - {name: ports, type: List<agentic.architecture.ContractPort>}
+      - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
+      - {name: border, type: List<agentic.shared.PartId>}
+    relations:
+      - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
+      - {name: border_parts, kind: references, target: agentic.architecture.Part, cardinality: many, via: border}
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
 errors:
   - name: agentic.architecture.NoSuchArchitecture
     summary: No architecture has this id, and nothing changed.
@@ -312,6 +458,12 @@ errors:
     summary: A patch applied outside a dry run names the revision it committed, and nothing changed.
   - name: agentic.architecture.InvalidRuleIndex
     summary: A rule's position starts at 1, and nothing changed.
+  - name: agentic.architecture.PortNameTaken
+    summary: A port of this name is already declared, and nothing was declared.
+  - name: agentic.architecture.EmptyContract
+    summary: A contract names at least one port, and nothing was recorded.
+  - name: agentic.architecture.ContractExists
+    summary: The revision already has a contract, and nothing was recorded.
 
 events:
   - name: agentic.architecture.ArchitectureCreated
@@ -382,6 +534,16 @@ events:
       - {name: application_id, type: agentic.shared.PatchApplicationId}
       - {name: rule_index, type: Optional<Integer>}
       - {name: error, type: String}
+  - name: agentic.architecture.PortDeclared
+    fields:
+      - {name: port_id, type: agentic.shared.PortId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: block, type: agentic.shared.Name}
+  - name: agentic.architecture.ContractRecorded
+    fields:
+      - {name: contract_id, type: agentic.shared.ContractId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: digest, type: agentic.architecture.Digest}
 
 commands:
   - name: agentic.architecture.CreateArchitecture
@@ -984,6 +1146,82 @@ commands:
         wrong_state: true
         error: agentic.architecture.PatchApplicationSettled
 
+  # Record one port the derivation found in the blocks.
+  - name: agentic.architecture.DeclarePort
+    naming:
+      display: Declare a port
+    input:
+      - {name: name, type: agentic.shared.Name}
+      - {name: block, type: agentic.shared.Name}
+      - {name: kind, type: agentic.architecture.PortKind}
+      - {name: intent_event, type: Optional<agentic.architecture.EventName>}
+      - {name: waiting_state, type: Optional<agentic.architecture.StateName>}
+      - {name: reports, type: List<agentic.architecture.CommandName>}
+      - {name: protocol, type: agentic.architecture.Protocol}
+    outcomes:
+      - name: name-taken
+        when_related:
+          entity: agentic.architecture.Port
+          where: name == input.name
+          exists: true
+        error: agentic.architecture.PortNameTaken
+      - name: declared
+        creates: agentic.architecture.Port
+        instance: port_id
+        sets:
+          name: input.name
+          block: input.block
+          kind: input.kind
+          intent_event: input.intent_event
+          waiting_state: input.waiting_state
+          reports: input.reports
+          protocol: input.protocol
+        emits: [agentic.architecture.PortDeclared]
+        payload:
+          agentic.architecture.PortDeclared:
+            port_id: {generated: true}
+            name: input.name
+            block: input.block
+
+  # Record the contract derived from one revision. Its digest is over the ports, invariants and
+  # border as recorded.
+  - name: agentic.architecture.RecordContract
+    naming:
+      display: Record the contract of a revision
+    input:
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: ports, type: List<agentic.architecture.ContractPort>}
+      - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
+      - {name: border, type: List<agentic.shared.PartId>}
+    outcomes:
+      - name: empty
+        when: ports.count == 0
+        error: agentic.architecture.EmptyContract
+      - name: no-such-revision
+        when_related: {via: input.revision_id, exists: false}
+        error: agentic.architecture.NoSuchRevision
+      - name: contract-exists
+        when_related:
+          entity: agentic.architecture.Contract
+          where: revision_id == input.revision_id
+          exists: true
+        error: agentic.architecture.ContractExists
+      - name: recorded
+        creates: agentic.architecture.Contract
+        instance: contract_id
+        sets:
+          revision_id: input.revision_id
+          digest: {generated: true}
+          ports: input.ports
+          invariants: input.invariants
+          border: input.border
+        emits: [agentic.architecture.ContractRecorded]
+        payload:
+          agentic.architecture.ContractRecorded:
+            contract_id: {generated: true}
+            revision_id: input.revision_id
+            digest: {generated: true}
+
 views:
   # Who may call whom: one row per link. No row, no reach.
   - name: agentic.architecture.Reach
@@ -1067,3 +1305,32 @@ views:
       - {name: rule_index, type: Optional<Integer>}
       - {name: error, type: Optional<String>}
       - {name: state, type: agentic.architecture.PatchApplication.State}
+
+  # The marked ports of the blocks: what a runtime may have to implement.
+  - name: agentic.architecture.Ports
+    source: agentic.architecture.Port
+    consistency: read_your_writes
+    fields:
+      - {name: port_id, type: agentic.shared.PortId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: block, type: agentic.shared.Name}
+      - {name: kind, type: agentic.architecture.PortKind}
+      - {name: intent_event, type: Optional<agentic.architecture.EventName>}
+      - {name: waiting_state, type: Optional<agentic.architecture.StateName>}
+      - {name: reports, type: List<agentic.architecture.CommandName>}
+      - {name: protocol, type: agentic.architecture.Protocol}
+
+  # The contract of one revision: what a runtime must provide to run it.
+  - name: agentic.architecture.Contracts
+    source: agentic.architecture.Contract
+    consistency: read_your_writes
+    params:
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+    filter: revision_id == param.revision_id
+    fields:
+      - {name: contract_id, type: agentic.shared.ContractId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: digest, type: agentic.architecture.Digest}
+      - {name: ports, type: List<agentic.architecture.ContractPort>}
+      - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
+      - {name: border, type: List<agentic.shared.PartId>}

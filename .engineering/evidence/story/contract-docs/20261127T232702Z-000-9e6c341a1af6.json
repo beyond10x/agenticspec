@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:02Z",
+  "actor": "human:operator",
+  "artifact": "story:contract-docs",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-acceptance-1",
+    "reference": "acceptance 7 (only workstation checked): docs test in crates/agenticspec-docs/tests/main.rs over all 10 architecture pages and 6 catalog entries (section, one row per port with protocol, border, download bytes, counts asserted); plus a count of 16 contract files",
+    "review": "review-result:architecture-contract-acceptance-1",
+    "outcome": "fixed"
+  }
+}

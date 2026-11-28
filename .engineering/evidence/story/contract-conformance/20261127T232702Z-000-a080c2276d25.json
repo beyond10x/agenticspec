@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:02Z",
+  "actor": "human:operator",
+  "artifact": "story:contract-conformance",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-acceptance-1",
+    "reference": "acceptance 6 (fallback branch): both paths named: A runs ess verify conform run on the cut suite; B records the gap with a repro and selects by scenario id from a report/2 of the whole suite via sim contract --report; one acceptance line per path, cut-suite content line holds on both, docs/contract.md names the path",
+    "review": "review-result:architecture-contract-acceptance-1",
+    "outcome": "fixed"
+  }
+}

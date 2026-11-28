@@ -39,7 +39,7 @@ Nothing: this block is the foundation.
 - [runtime](../8-place/runtime.md) · layer 8 · 7 references
 - [sandbox](../8-place/sandbox.md) · layer 8 · 4 references
 - [workspace](../8-place/workspace.md) · layer 8 · 10 references
-- [architecture](../9-composition/architecture.md) · layer 9 · 12 references
+- [architecture](../9-composition/architecture.md) · layer 9 · 16 references
 - [experiment](../10-evaluation/experiment.md) · layer 10 · 11 references
 - [kpi](../10-evaluation/kpi.md) · layer 10 · 7 references
 
@@ -57,6 +57,7 @@ Nothing: this block is the foundation.
 | `ChannelId` | an identifier or value | `uuid` |
 | `ClaimId` | an identifier or value | `uuid` |
 | `Content` | a record | `digest` string, `length` integer, `class` string |
+| `ContractId` | an identifier or value | `uuid` |
 | `Decider` | one of | `PermissionMode`, `Classifier`, `Hook`, `Rule`, `Delegate`, `Human`, `NotRecorded` |
 | `DecisionId` | an identifier or value | `uuid` |
 | `DelegationId` | an identifier or value | `uuid` |
@@ -83,6 +84,7 @@ Nothing: this block is the foundation.
 | `PatchApplicationId` | an identifier or value | `uuid` |
 | `PatchId` | an identifier or value | `uuid` |
 | `PoolId` | an identifier or value | `uuid` |
+| `PortId` | an identifier or value | `uuid` |
 | `PostId` | an identifier or value | `uuid` |
 | `PrincipalId` | an identifier or value | `uuid` |
 | `PrincipalKind` | one of | `Human`, `Organization`, `Service`, `Agent` |

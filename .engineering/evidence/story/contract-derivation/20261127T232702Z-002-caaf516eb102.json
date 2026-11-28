@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:02Z",
+  "actor": "human:operator",
+  "artifact": "story:contract-derivation",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-scope-1",
+    "reference": "scope 1 (protocol not in contract): agenticspec-contract/1 ports carry protocol copied from blocks/ports.json, acceptance line compares it; epic Nouns says protocol is read via ContractPort.port_id in ESS; contract-docs table shows a protocol column and its docs test checks it",
+    "review": "review-result:architecture-contract-scope-1",
+    "outcome": "fixed"
+  }
+}

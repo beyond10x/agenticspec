@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:02Z",
+  "actor": "human:operator",
+  "artifact": "story:contract-derivation",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-acceptance-1",
+    "reference": "acceptance 4 (joined first bullet): split into separate lines for port set, absent ports, tree instances, box settings, border, invariant, protocol, clock/board ports",
+    "review": "review-result:architecture-contract-acceptance-1",
+    "outcome": "fixed"
+  }
+}

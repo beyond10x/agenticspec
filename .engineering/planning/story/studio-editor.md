@@ -9,6 +9,7 @@ relations:
 - decomposes: epic:agenticstudio
 - depends_on: story:studio-live
 - depends_on: story:guards-and-limits
+- depends_on: story:ui-generator
 scope:
 - confidence: cited
   path: Taskfile.yml
@@ -19,25 +20,28 @@ scope:
 - confidence: cited
   path: scripts/check-generated.sh
 - confidence: cited
+  path: studio/studio.ui.yaml
+- confidence: cited
   path: ui/studio
 - confidence: cited
   path: ui/studio/src/generated
-revision: 8
+revision: 10
 ---
 ## Outcome
 
 The architecture graph is an editor in the browser: the user selects parts and links in the
 graph or by a selector, writes a patch and sees its dry run (diff and check) while typing, applies
-it, and steps through the draft's revisions. The page of `story:studio-first-slice` becomes the
-Vue app `ui/studio`.
+it, and steps through the draft's revisions. `ui/studio` exists from `story:ui-generator`: pages
+come from `studio/studio.ui.yaml` through `agenticspec ui generate`, every look from `ui/kit/`.
 
 ## Scope
 
-- `ui/studio` (new): Vue 3, Vite and TypeScript like `ui/app`; types from `ess generate types`
-  over `studio/` and the `architecture` block (read, not changed), committed under
-  `ui/studio/src/generated/` and listed in `scripts/check-generated.sh` as `ui/app/src/generated`
-  is; a later story that changes `studio/` or that block regenerates them; the graph with selectable
-  parts and links; a selector box (a `query` tool call) that highlights its selection; a patch
+- `studio/studio.ui.yaml`: the editor's pages, reads, commands and channel, regenerated into
+  `ui/studio/src/generated/` with `agenticspec ui generate`; no hand edit of generated output.
+- `ui/studio` host-slot components (hand-written, kit components only): types from `ess generate
+  types` over `studio/` and the `architecture` block (read, not changed), committed under
+  `ui/studio/src/generated/types/` and listed in `scripts/check-generated.sh`; a later story that
+  changes `studio/` or that block regenerates them; the graph with selectable parts and links; a selector box (a `query` tool call) that highlights its selection; a patch
   editor whose every edit sends a dry run and shows its diff and check result; an apply button;
   the revision list of the draft (`GET /drafts/<id>/revisions` of `story:studio-live`) and the
   view of one earlier revision (`GET /drafts/<id>/revisions/<number>`); live updates from the
@@ -54,7 +58,7 @@ Vue app `ui/studio`.
 - `crates/agenticstudio`: after `story:studio-first-slice` and `story:studio-live` (depends on
   live); before `story:studio-evaluation`, `story:studio-mcp`, `story:studio-drafts` and
   `story:studio-chat`, which each depend on this story.
-- `ui/studio`: this story creates it; `story:studio-evaluation`, `story:studio-drafts`,
+- `ui/studio`, `studio/studio.ui.yaml`: after `story:ui-generator`, which creates them; `story:studio-evaluation`, `story:studio-drafts`,
   `story:studio-state-space` and `story:studio-chat` add to it and each depend on this story.
 - `crates/agenticspec-render`: before `story:studio-state-space`, which depends on this story.
 - `Taskfile.yml`: after `story:studio-first-slice`.

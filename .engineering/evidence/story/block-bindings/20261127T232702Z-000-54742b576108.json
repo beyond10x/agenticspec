@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-27T23:27:02Z",
+  "actor": "human:operator",
+  "artifact": "story:block-bindings",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:architecture-contract-acceptance-1",
+    "reference": "acceptance 3 (dropped/added candidates): candidates numbered C1-C10, added ones A1..; each ends as binding, gap or dropped with reason, one line each in new epic section Cross-block causation; acceptance split into four lines, one per end state plus completeness",
+    "review": "review-result:architecture-contract-acceptance-1",
+    "outcome": "fixed"
+  }
+}
