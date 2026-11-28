@@ -2,10 +2,14 @@
 // The shell of every page: a header bar with the app's title, the page's title, the page's bar
 // (its filters and actions) and the theme switch; the page below it fills the rest of the
 // viewport; the toasts float above. The theme is set on <html> (`global`) or on the shell alone.
-import { watch } from 'vue';
+// With a navigation, it stands at the left as the docs site's sidebar; on a narrow screen a
+// Pages button in the header opens it above the page.
+import { computed, ref, useId, watch } from 'vue';
+import KitIcon from './KitIcon.vue';
+import KitNav from './KitNav.vue';
 import KitThemeToggle from './KitThemeToggle.vue';
 import KitToaster from './KitToaster.vue';
-import type { KitToast } from '../types';
+import type { KitNavSection, KitToast } from '../types';
 
 const props = withDefaults(
   defineProps<{
@@ -14,12 +18,19 @@ const props = withDefaults(
     theme?: string;
     themes?: string[];
     toasts?: KitToast[];
+    nav?: KitNavSection[];
     /** Set the theme on the document; false keeps it on the shell (the gallery shows two). */
     global?: boolean;
   }>(),
-  { pageTitle: '', theme: 'light', themes: () => [], toasts: () => [], global: true },
+  { pageTitle: '', theme: 'light', themes: () => [], toasts: () => [], nav: () => [], global: true },
 );
 const emit = defineEmits<{ 'update:theme': [theme: string]; dismiss: [id: number] }>();
+
+const id = useId();
+const hasNav = computed(() => props.nav.length > 0);
+const menuOpen = ref(false);
+const current = computed(() => props.nav.flatMap((s) => s.items).find((i) => i.current)?.href ?? '');
+watch(current, () => (menuOpen.value = false));
 
 watch(
   () => props.theme,
@@ -31,8 +42,19 @@ watch(
 </script>
 
 <template>
-  <div class="kit-shell" :data-theme="global ? undefined : theme">
+  <div class="kit-shell" :class="{ 'with-nav': hasNav }" :data-theme="global ? undefined : theme">
     <header class="header">
+      <button
+        v-if="hasNav"
+        type="button"
+        class="menu"
+        :aria-expanded="menuOpen"
+        :aria-controls="`${id}-nav`"
+        @click="menuOpen = !menuOpen"
+      >
+        <KitIcon name="menu" />
+        <span>Pages</span>
+      </button>
       <div class="titles">
         <span class="brand">{{ title }}</span>
         <span v-if="pageTitle" class="divider" aria-hidden="true">/</span>
@@ -49,7 +71,15 @@ watch(
         @update:model-value="emit('update:theme', $event)"
       />
     </header>
-    <main class="main">
+    <div v-if="hasNav" class="frame">
+      <aside :id="`${id}-nav`" class="side" :class="{ open: menuOpen }">
+        <KitNav :sections="nav" />
+      </aside>
+      <main class="main">
+        <slot />
+      </main>
+    </div>
+    <main v-else class="main">
       <slot />
     </main>
     <KitToaster :toasts="toasts" @dismiss="emit('dismiss', $event)" />
@@ -116,6 +146,56 @@ watch(
   position: relative;
   min-height: 0;
   overflow: auto;
+}
+.menu {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  height: var(--kit-control-height-sm);
+  padding: 0 0.6rem;
+  border: 1px solid var(--kit-hairline);
+  border-radius: var(--kit-radius-sm);
+  background: var(--kit-surface);
+  color: var(--kit-text);
+  font: inherit;
+  font-size: var(--kit-text-sm);
+  font-weight: var(--kit-weight-strong);
+  cursor: pointer;
+}
+.menu:hover {
+  background: var(--kit-surface-muted);
+}
+.frame {
+  display: grid;
+  grid-template-columns: var(--kit-nav-width) minmax(0, 1fr);
+  min-height: 0;
+}
+.side {
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--kit-surface);
+  border-right: 1px solid var(--kit-hairline);
+}
+@media (max-width: 900px) {
+  .menu {
+    display: inline-flex;
+  }
+  .frame {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .frame > .main {
+    grid-row: 2;
+  }
+  .side {
+    display: none;
+    max-height: 55vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--kit-hairline);
+  }
+  .side.open {
+    display: block;
+  }
 }
 @media (max-width: 640px) {
   .header {

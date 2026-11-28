@@ -51,7 +51,7 @@ watch(
     :data-panel="name"
     :data-state="state"
     :aria-labelledby="title ? `${id}-title` : undefined"
-    :aria-label="title ? undefined : name"
+    :aria-label="title || bare ? undefined : name"
   >
     <header v-if="title" class="head">
       <h2 :id="`${id}-title`" class="title">

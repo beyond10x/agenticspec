@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// A table of rows by their fields, compact, scrolling sideways inside itself when narrow. The
-// actions slot adds a last column for each row.
-import { useSlots } from 'vue';
+// A table of rows by their fields, compact, scrolling sideways inside itself when narrow; while it
+// scrolls, the keyboard can reach it (a named region in the tab order). The actions slot adds a
+// last column for each row.
+import { onBeforeUnmount, onMounted, onUpdated, ref, useSlots } from 'vue';
 import KitValue from './KitValue.vue';
 import type { FieldDef, KitRow } from '../types';
 
@@ -11,10 +12,33 @@ withDefaults(
 );
 defineSlots<{ actions?: (p: { row: KitRow }) => unknown }>();
 const slots = useSlots();
+
+const box = ref<HTMLElement | null>(null);
+const scrolls = ref(false);
+function measure(): void {
+  const el = box.value;
+  scrolls.value = !!el && el.scrollWidth > el.clientWidth;
+}
+let observer: ResizeObserver | null = null;
+onMounted(() => {
+  measure();
+  if (typeof ResizeObserver === 'function' && box.value) {
+    observer = new ResizeObserver(measure);
+    observer.observe(box.value);
+  }
+});
+onUpdated(measure);
+onBeforeUnmount(() => observer?.disconnect());
 </script>
 
 <template>
-  <div class="kit-table">
+  <div
+    ref="box"
+    class="kit-table"
+    :tabindex="scrolls ? 0 : undefined"
+    :role="scrolls ? 'region' : undefined"
+    :aria-label="scrolls ? label : undefined"
+  >
     <table v-if="rows.length">
       <caption class="kit-sr-only">{{ label }}</caption>
       <thead>

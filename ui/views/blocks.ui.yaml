@@ -290,6 +290,7 @@ channels:
         - agentic.architecture.ArchitectureRetired
         - agentic.architecture.ContractRecorded
         - agentic.architecture.DryRunApplied
+        - agentic.architecture.EntityPlaced
         - agentic.architecture.LinkAdded
         - agentic.architecture.PartAdded
         - agentic.architecture.PartBordered
@@ -2063,6 +2064,36 @@ widgets:
           - name
           - {field: rules, as: json}
           - digest
+  agentic.architecture.Placements:
+    summary: "Rows of the view agentic.architecture.Placements over Placement, keyed by placement_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+      architecture_id: {type: ArchitectureId, required: true, note: the parameter architecture_id of the view}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.architecture.Placements, key: placement_id, params: {architecture_id: args.architecture_id}}
+        live:
+          channel: args.channel
+          on:
+            - agentic.architecture.EntityPlaced
+          effect: insert_or_patch
+          match: placement_id
+          only_if: matches(params)
+        columns:
+          - placement_id
+          - architecture_id
+          - revision_id
+          - part_id
+          - part_path
+          - {field: instance, as: number}
+          - entity_name
+          - entity_id
   agentic.architecture.Ports:
     summary: "Rows of the view agentic.architecture.Ports over Port, keyed by port_id."
     params:
@@ -2641,6 +2672,10 @@ pages:
         title: Patches
         component: agentic.architecture.Patches
         args: {channel: architecture}
+      - name: placements
+        title: Placements
+        component: agentic.architecture.Placements
+        args: {channel: architecture, architecture_id: "'00000000-0000-4000-8000-463ec9280000'"}
       - name: ports
         title: Ports
         component: agentic.architecture.Ports

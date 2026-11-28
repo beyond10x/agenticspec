@@ -57,6 +57,7 @@ views:
   agentic.architecture.Parts: agentic.architecture.Parts.json
   agentic.architecture.PatchApplications: agentic.architecture.PatchApplications.json
   agentic.architecture.Patches: agentic.architecture.Patches.json
+  agentic.architecture.Placements: agentic.architecture.Placements.json
   agentic.architecture.Ports: agentic.architecture.Ports.json
   agentic.architecture.Reach: agentic.architecture.Reach.json
   agentic.architecture.Revisions: agentic.architecture.Revisions.json

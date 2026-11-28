@@ -2,7 +2,7 @@
   "channel": "gateway",
   "events": [
     {"at": "1s", "event": "agentic.gateway.CallCompleted", "payload": {"inference_id": "00000000-0000-4000-8000-d56952c90000", "outcome": "Ok", "usage": {"cache_read_tokens":1,"cache_write_tokens":1,"input_tokens":1,"output_tokens":1}}},
-    {"at": "2s", "event": "agentic.gateway.CallDecided", "payload": {"inference_id": "00000000-0000-4000-8000-d56952c90000", "gateway_id": "00000000-0000-4000-8000-9121f2990000", "caller": "00000000-0000-4000-8000-322d9f1c0000", "route_id": "00000000-0000-4000-8000-176f59df0000", "admission": "Admitted", "upstream_id": "00000000-0000-4000-8000-0085ef940000"}},
+    {"at": "2s", "event": "agentic.gateway.CallDecided", "payload": {"inference_id": "00000000-0000-4000-8000-d56952c90000", "gateway_id": "00000000-0000-4000-8000-9121f2990000", "caller": "00000000-0000-4000-8000-322d9f1c0000", "route_id": "00000000-0000-4000-8000-176f59df0000", "admission": "Admitted", "upstream_id": "00000000-0000-4000-8000-0085ef940000", "request": {"class":"class 1","digest":"digest 1","length":1}}},
     {"at": "3s", "event": "agentic.gateway.GatewayDrained", "payload": {"gateway_id": "00000000-0000-4000-8000-9121f2990000"}},
     {"at": "4s", "event": "agentic.gateway.GatewayOpened", "payload": {"gateway_id": "00000000-0000-4000-8000-9121f2990000", "name": "name 1"}},
     {"at": "5s", "event": "agentic.gateway.GatewayStopped", "payload": {"gateway_id": "00000000-0000-4000-8000-9121f2990000"}},

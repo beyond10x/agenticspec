@@ -2,7 +2,7 @@
 export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
 /** How a field's value is shown. */
-export type FieldAs = 'text' | 'number' | 'badge' | 'toggle' | 'list' | 'timestamp' | 'date' | 'time' | 'percent';
+export type FieldAs = 'text' | 'number' | 'badge' | 'toggle' | 'list' | 'timestamp' | 'date' | 'time' | 'percent' | 'json';
 
 /** One field a table, a list or a record shows. Generated pages hand these to the kit. */
 export interface FieldDef {
@@ -27,6 +27,12 @@ export type KitScalar = string | number | boolean | null;
 export interface KitOption {
   value: KitScalar;
   label: string;
+}
+
+/** One section of a navigation: its label and its links, one of which may be the current page. */
+export interface KitNavSection {
+  label: string;
+  items: { label: string; href: string; current: boolean }[];
 }
 
 /** A toast the shell shows. */
