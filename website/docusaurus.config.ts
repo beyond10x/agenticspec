@@ -69,6 +69,12 @@ const pages: Record<string, Page> = {
     title: 'Records library',
     lede: 'Write session records from your own program, such as an LLM gateway.',
   },
+  'docs/contract.md': {
+    slug: '/contract',
+    title: 'The contract of an architecture',
+    sidebar_label: 'Contract',
+    lede: 'The ports a runtime implements, derived from the building blocks, and the contract of each architecture.',
+  },
 };
 
 const config: Config = {

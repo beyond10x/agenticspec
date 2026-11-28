@@ -1,0 +1,105 @@
+# A schedule fires at the period its row holds. A periodic binding cause has one fixed period,
+# written in the specification (`every: PT<seconds>S`); the period of a schedule is data, set by
+# the command that creates it. Writing the period as a read of the host is refused:
+#
+#   ess specify validate --path design/ess-repro/periodic-period-from-data
+#
+# answers `invalid elapsed time reference "host_read.period": is not written `PT…S``. With
+# `every: PT1S` the same file validates: a fixed-rate poll every second whose host reads the
+# schedules that are due, but then the host decides
+# which schedule is due and when, and nothing in the specification states or checks it.
+domain: repro.schedule
+
+types:
+  - {name: repro.schedule.ScheduleId, kind: newtype, of: Uuid}
+  - {name: repro.schedule.FiringId, kind: newtype, of: Uuid}
+
+entities:
+  - name: repro.schedule.Schedule
+    identity: {name: schedule_id, type: repro.schedule.ScheduleId}
+    fields:
+      - {name: period_seconds, type: Integer}
+    lifecycle:
+      initial: Enabled
+      states: [Enabled]
+      terminal: [Enabled]
+
+  - name: repro.schedule.Firing
+    identity: {name: firing_id, type: repro.schedule.FiringId}
+    fields:
+      - {name: schedule_id, type: repro.schedule.ScheduleId}
+    relations:
+      - {name: schedule, kind: references, target: repro.schedule.Schedule, cardinality: one, via: schedule_id}
+    lifecycle:
+      initial: Fired
+      states: [Fired]
+      terminal: [Fired]
+
+commands:
+  - name: repro.schedule.CreateSchedule
+    input:
+      - {name: period_seconds, type: Integer}
+    outcomes:
+      - name: created
+        creates: repro.schedule.Schedule
+        instance: schedule_id
+        sets: {period_seconds: input.period_seconds}
+        emits: [repro.schedule.ScheduleCreated]
+        payload:
+          repro.schedule.ScheduleCreated: {schedule_id: {generated: true}}
+  - name: repro.schedule.Fire
+    input:
+      - {name: schedule_id, type: repro.schedule.ScheduleId}
+    outcomes:
+      - name: fired
+        creates: repro.schedule.Firing
+        instance: firing_id
+        sets: {schedule_id: input.schedule_id}
+        emits: [repro.schedule.Fired]
+        payload:
+          repro.schedule.Fired: {firing_id: {generated: true}, schedule_id: input.schedule_id}
+
+events:
+  - name: repro.schedule.ScheduleCreated
+    fields:
+      - {name: schedule_id, type: repro.schedule.ScheduleId}
+  - name: repro.schedule.Fired
+    fields:
+      - {name: firing_id, type: repro.schedule.FiringId}
+      - {name: schedule_id, type: repro.schedule.ScheduleId}
+
+components:
+  - component: scheduler
+    owns:
+      domains: [repro.schedule]
+    accepts:
+      commands: [repro.schedule.CreateSchedule, repro.schedule.Fire]
+    publishes:
+      events: [repro.schedule.ScheduleCreated, repro.schedule.Fired]
+
+bindings:
+  - id: fire-at-the-schedules-period
+    when:
+      periodic:
+        every: host_read.period
+        anchor: host_activation
+        first: after_period
+        cadence: fixed_rate
+        overlap: serial_per_instance
+        missed: one_pending_drop_excess
+        lifetime: host_instance
+        cancellation: stop_acknowledged
+        host:
+          owner: scheduler
+          authority: schedule-store
+          eligibility: host_boolean
+          context_fields: []
+          read_fields:
+            - {name: schedule_id, type: repro.schedule.ScheduleId}
+            - {name: period, type: Integer}
+    invoke:
+      command: repro.schedule.Fire
+    mapping:
+      schedule_id: host_read.schedule_id
+    delivery: at_most_once
+    on_failure: drop

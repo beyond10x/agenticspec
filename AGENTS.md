@@ -90,6 +90,21 @@ change.
   `task docs:generate`; `task slow:catalog` runs them afresh and compares bytes. The catalog
   components are in `website/src/components/catalog/`; a ladder stage on a card comes from
   `STAGES` in `catalog.rs`.
+- Cross-block causation is declared as ESS bindings in `blocks/components.yaml` (one component
+  owns every block); `scripts/check-layers.sh` counts a binding as a dependency of the event's
+  domain on the command's, and `scripts/check-blocks-conform.sh` fails when a binding has no
+  `<binding>/binding/...` scenario. A causation ESS cannot express gets a reproduction under
+  `design/ess-repro/<gap>/` (a header comment says what `ess specify validate` answers).
+- `blocks/ports.json` (`agenticspec-ports/1`) holds the ports derived from the compiled blocks
+  (`agenticspec sim ports`, `docs/contract.md`). A change of a file `blocks/ess-inputs.yaml` lists
+  runs `task ports:generate` in the same change; `task check:ports` (in the gate) compares the
+  digest without `ess`, `task slow:ports` derives afresh. The actors
+  `agentic.architecture.Deployer` and `agentic.architecture.Principal` decide configuration and
+  principal ports; a new command a deployer issues to end something goes into the deployer's
+  `may:`.
+- Each architecture page and catalog entry has a "Contract" section and a contract file
+  (`website/static/architectures/<name>.contract.yaml`, `<entry>/<entry>.contract.yaml`), from
+  `agenticspec_sim::contract::derive` over the committed `blocks/ports.json`.
 
 ## agenticstudio nouns (`studio/`)
 
@@ -121,8 +136,11 @@ change.
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
 | `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
 | `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
+| `agenticspec-sim` | `contract/ports.rs`, `contract/protocol.rs` | `agenticspec sim ports`: the ports of the building blocks from their compiled ESS system, their protocols (regular expressions over command names), `blocks/ports.json` and its digest |
+| `agenticspec-sim` | `contract/derive.rs`, `contract/predicate.rs` | `agenticspec sim contract`: the contract of an architecture document (`agenticspec-contract/1`), its check, and the predicate language of routing invariants |
 | `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
 | `agenticspec-docs` | `lib.rs`, `main.rs` | the generated docs pages of the blocks, architectures and KPI catalogue (`task docs:generate`, `--check`) |
+| `agenticspec-docs` | `contract.rs` | the "Contract" section of an architecture page and a catalog entry |
 
 Beside the crates, `ui/` holds:
 

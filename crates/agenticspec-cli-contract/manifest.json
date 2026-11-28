@@ -22,7 +22,9 @@
     "handler:query: implement the owner-qualified callable and its declared result/error contract",
     "handler:serve: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_check: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_contract: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_ports: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract"

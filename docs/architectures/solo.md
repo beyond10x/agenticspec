@@ -21,6 +21,25 @@ mdx:
 
 <span className="as-tag as-tag--accepted">accepted</span> 3 parts and 3 links; the structural check refuses nothing.
 
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [solo.contract.yaml](pathname:///architectures/solo.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `agent` | `harness: coding` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `agent` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `agent` | none | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `agent -> owner carries question`: `every question.question@agent to owner`
+- `agent -> model carries model_call`: `every model.inference@agent to model`
+
+Border: none.
+
 ## Parts
 
 | part | block | settings |

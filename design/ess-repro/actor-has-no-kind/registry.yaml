@@ -1,0 +1,111 @@
+# Two entities with the same lifecycle shape: an inference waits Started until the world reports
+# FinishInference; an agent rests Active until its deployer retires it. A runtime implements the
+# first (a port) and leaves the second to configuration. Nothing in the structure tells them
+# apart; only who issues the exit does. An actor names commands it may issue (`may:`) and the
+# attributes of its caller, but no kind: "the deployer of a system" and "a principal" are names,
+# not something ESS knows. `agenticspec sim ports` therefore reads two actors by name. Saying it
+# is refused:
+#
+#   ess specify validate --path design/ess-repro/actor-has-no-kind
+#
+# answers `unknown field `kind`, expected one of `name`, `may`, `naming`, `attributes`, `system``;
+# without the two `kind:` lines the file validates. `system: true` marks the system itself, not
+# the deployer or a principal.
+domain: repro.registry
+
+types:
+  - {name: repro.registry.InferenceId, kind: newtype, of: Uuid}
+  - {name: repro.registry.AgentId, kind: newtype, of: Uuid}
+
+entities:
+  - name: repro.registry.Inference
+    identity: {name: inference_id, type: repro.registry.InferenceId}
+    fields: []
+    lifecycle:
+      initial: Started
+      states: [Started, Finished]
+      terminal: [Finished]
+      transitions:
+        - {name: finish, from: [Started], to: Finished}
+
+  - name: repro.registry.Agent
+    identity: {name: agent_id, type: repro.registry.AgentId}
+    fields: []
+    lifecycle:
+      initial: Active
+      states: [Active, Retired]
+      terminal: [Retired]
+      transitions:
+        - {name: retire, from: [Active], to: Retired}
+
+errors:
+  - name: repro.registry.UnknownInference
+  - name: repro.registry.UnknownAgent
+
+commands:
+  - name: repro.registry.StartInference
+    input: []
+    outcomes:
+      - name: started
+        creates: repro.registry.Inference
+        instance: inference_id
+        emits: [repro.registry.InferenceStarted]
+        payload:
+          repro.registry.InferenceStarted: {inference_id: {generated: true}}
+  - name: repro.registry.FinishInference
+    input:
+      - {name: inference_id, type: repro.registry.InferenceId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: repro.registry.UnknownInference
+      - name: finished
+        moves: repro.registry.Inference.finish
+        instance: inference_id
+        emits: [repro.registry.InferenceFinished]
+        payload:
+          repro.registry.InferenceFinished: {inference_id: input.inference_id}
+  - name: repro.registry.DefineAgent
+    input: []
+    outcomes:
+      - name: defined
+        creates: repro.registry.Agent
+        instance: agent_id
+        emits: [repro.registry.AgentDefined]
+        payload:
+          repro.registry.AgentDefined: {agent_id: {generated: true}}
+  - name: repro.registry.RetireAgent
+    input:
+      - {name: agent_id, type: repro.registry.AgentId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: repro.registry.UnknownAgent
+      - name: retired
+        moves: repro.registry.Agent.retire
+        instance: agent_id
+        emits: [repro.registry.AgentRetired]
+        payload:
+          repro.registry.AgentRetired: {agent_id: input.agent_id}
+
+events:
+  - name: repro.registry.InferenceStarted
+    fields:
+      - {name: inference_id, type: repro.registry.InferenceId}
+  - name: repro.registry.InferenceFinished
+    fields:
+      - {name: inference_id, type: repro.registry.InferenceId}
+  - name: repro.registry.AgentDefined
+    fields:
+      - {name: agent_id, type: repro.registry.AgentId}
+  - name: repro.registry.AgentRetired
+    fields:
+      - {name: agent_id, type: repro.registry.AgentId}
+
+actors:
+  - name: repro.registry.Deployer
+    kind: configuration
+    may: [repro.registry.DefineAgent, repro.registry.RetireAgent]
+  - name: repro.registry.Model
+    kind: world
+    may: [repro.registry.FinishInference]

@@ -88,7 +88,7 @@ Relations:
 - `on_behalf` references **Delegation** of [delegation](../1-principals/delegation.md) (one, by `delegation_id`)
 - `send_call` references **ToolCall** of [harness](../4-agent/harness.md) (one, by `sent_by_call`)
 
-<Lifecycle entity={"Message"} initial={"Sent"} states={["Delivered","Lost","Read","Sent"]} terminal={["Lost","Read"]} transitions={[{"from":["Sent"],"name":"deliver","to":"Delivered"},{"from":["Delivered"],"name":"read","to":"Read"},{"from":["Sent"],"name":"lose","to":"Lost"}]} />
+<Lifecycle entity={"Message"} initial={"Sent"} states={["Delivered","Lost","Read","Sent"]} terminal={["Delivered","Lost","Read"]} transitions={[{"from":["Sent"],"name":"deliver","to":"Delivered"},{"from":["Delivered"],"name":"read","to":"Read"},{"from":["Sent"],"name":"lose","to":"Lost"}]} />
 
 ### Post
 
@@ -116,7 +116,7 @@ Relations:
 - `reply_to` references **Post** (one, by `in_reply_to`)
 - `on_behalf` references **Delegation** of [delegation](../1-principals/delegation.md) (one, by `delegation_id`)
 
-<Lifecycle entity={"Post"} initial={"Posted"} states={["Posted","Taken"]} terminal={["Taken"]} transitions={[{"from":["Posted"],"name":"take","to":"Taken"}]} />
+<Lifecycle entity={"Post"} initial={"Posted"} states={["Posted","Taken"]} terminal={["Posted","Taken"]} transitions={[{"from":["Posted"],"name":"take","to":"Taken"}]} />
 
 ### Subscription
 

@@ -381,6 +381,7 @@ commands:
       - {name: route_id, type: agentic.shared.RouteId}
       - {name: upstream_id, type: agentic.shared.UpstreamId}
       - {name: budget_left, type: agentic.shared.Money}
+      - {name: request, type: agentic.shared.Content}
     outcomes:
       - name: unknown-gateway
         when_related: {via: input.gateway_id, exists: false}
@@ -409,6 +410,7 @@ commands:
             route_id: input.route_id
             admission: NoUpstream
             upstream_id: input.upstream_id
+            request: input.request
         summary: The named upstream does not exist; the call is recorded NoUpstream.
       - name: gateway-not-serving
         when_related: {via: input.gateway_id, predicate: state != Serving}
@@ -437,6 +439,7 @@ commands:
             route_id: input.route_id
             admission: NoUpstream
             upstream_id: input.upstream_id
+            request: input.request
         summary: The upstream is detached; the call is recorded NoUpstream.
       - name: rate-limited
         when_related: {via: input.upstream_id, predicate: state == Saturated}
@@ -458,6 +461,7 @@ commands:
             route_id: input.route_id
             admission: RateLimited
             upstream_id: input.upstream_id
+            request: input.request
         summary: The upstream is saturated; the call is recorded RateLimited.
       - name: over-budget
         when: budget_left.micro_usd == 0
@@ -479,6 +483,7 @@ commands:
             route_id: input.route_id
             admission: OverBudget
             upstream_id: input.upstream_id
+            request: input.request
         summary: The caller's budget is spent and the gateway and upstream are fine; the call is recorded OverBudget and goes nowhere.
       - name: admitted
         creates: agentic.gateway.Call
@@ -499,6 +504,7 @@ commands:
             route_id: input.route_id
             admission: Admitted
             upstream_id: input.upstream_id
+            request: input.request
         summary: The call is Admitted on the upstream and awaits its completion.
 
   - name: agentic.gateway.CompleteCall
@@ -576,6 +582,7 @@ events:
       - {name: route_id, type: agentic.shared.RouteId}
       - {name: admission, type: agentic.gateway.Admission}
       - {name: upstream_id, type: agentic.shared.UpstreamId}
+      - {name: request, type: agentic.shared.Content}
 
   - name: agentic.gateway.CallCompleted
     fields:

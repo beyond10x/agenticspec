@@ -339,6 +339,19 @@ fn a_result_whose_sources_changed_is_refused() {
     );
 }
 
+/// The contract module of the simulator (`crates/agenticspec-sim/src/contract/`) changes no
+/// simulation result, so a change there leaves every committed result current.
+#[test]
+fn a_change_of_the_contract_module_keeps_every_result_current() {
+    let tmp = copy_inputs("docs-contract-change");
+    let file = tmp.join("crates/agenticspec-sim/src/contract/ports.rs");
+    let mut text = std::fs::read_to_string(&file).unwrap();
+    text.push_str("\n// changed\n");
+    std::fs::write(&file, text).unwrap();
+    generate(&tmp, Some(fixture()))
+        .expect("a change of the contract module is no change of a result");
+}
+
 #[test]
 fn check_fails_after_a_generated_file_is_edited_or_added() {
     let tmp = copy_inputs("docs-check");
@@ -357,6 +370,10 @@ fn check_fails_after_a_generated_file_is_edited_or_added() {
     std::fs::write(&page, body).unwrap();
     let html = tmp.join("website/static/architectures/workstation.html");
     std::fs::remove_file(&html).unwrap();
+    let contract = tmp.join("website/static/architectures/workstation.contract.yaml");
+    let mut yaml = std::fs::read_to_string(&contract).unwrap();
+    yaml.push_str("# edited by hand\n");
+    std::fs::write(&contract, yaml).unwrap();
     let stray = tmp.join(OWNED_DIRS[0]).join("stray.md");
     std::fs::write(&stray, "not generated\n").unwrap();
     let (code, text) = run(&tmp, &["--check"]);
@@ -367,6 +384,7 @@ fn check_fails_after_a_generated_file_is_edited_or_added() {
     for named in [
         "changed: docs/blocks/7-collaboration/question.md",
         "missing: website/static/architectures/workstation.html",
+        "changed: website/static/architectures/workstation.contract.yaml",
         "not generated: docs/blocks/stray.md",
     ] {
         assert!(text.contains(named), "{named} in {text}");
@@ -506,4 +524,114 @@ fn a_catalog_result_is_the_bytes_of_a_fresh_run() {
         std::fs::read_to_string(root().join("website/static/catalog/shared-board/result.json"))
             .unwrap();
     assert!(committed == fresh, "run `task catalog:generate`");
+}
+
+/// The contract of a document as `agenticspec sim contract` derives it, from the committed ports.
+fn contract_of(path: &Path) -> agenticspec_sim::contract::derive::Contract {
+    let ports =
+        agenticspec_sim::contract::ports::PortsFile::load(&root().join("blocks/ports.json"))
+            .expect("blocks/ports.json");
+    let doc = agenticspec_sim::doc::load_yaml(path).expect("the document");
+    agenticspec_sim::contract::derive::derive(&doc, &ports).expect("a contract")
+}
+
+/// The part of a page from its "Contract" section to the next section.
+fn contract_section<'a>(page: &'a str, what: &str) -> &'a str {
+    let at = page
+        .find("\n## Contract\n")
+        .unwrap_or_else(|| panic!("{what} has a Contract section"));
+    let rest = &page[at + 1..];
+    let end = rest[3..].find("\n## ").map_or(rest.len(), |e| e + 4);
+    &rest[..end]
+}
+
+/// Every architecture page and every catalog entry shows the contract of its document: one row
+/// per port with its protocol, the border and the contract file, which is the derived contract.
+#[test]
+fn every_architecture_page_and_catalog_entry_shows_its_contract() {
+    let g = generated_with_fixture();
+    let mut pages = 0;
+    for entry in std::fs::read_dir(root().join("architectures")).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().is_none_or(|e| e != "yaml") {
+            continue;
+        }
+        let name = path.file_stem().unwrap().to_string_lossy().into_owned();
+        let contract = contract_of(&path);
+        let file = format!("website/static/architectures/{name}.contract.yaml");
+        assert_eq!(g.files[&file], contract.text(), "{file}");
+        for (page_path, link) in [
+            (
+                format!("docs/architectures/{name}.md"),
+                format!("pathname:///architectures/{name}.contract.yaml"),
+            ),
+            (
+                format!("docs/catalog/{name}.md"),
+                format!("{name}.contract.yaml"),
+            ),
+        ] {
+            let Some(page) = g.files.get(&page_path) else {
+                continue;
+            };
+            pages += 1;
+            let section = contract_section(page, &page_path);
+            let rows = section.lines().filter(|l| l.starts_with("| `")).count();
+            assert_eq!(rows, contract.ports.len(), "{page_path}: one row per port");
+            for p in &contract.ports {
+                let protocol = format!("`{}`", p.protocol.replace('|', "\\|"));
+                let row = section
+                    .lines()
+                    .find(|l| {
+                        let cells: Vec<&str> = l.split(" | ").collect();
+                        l.starts_with(&format!("| `{}` |", p.port))
+                            && cells.get(4) == Some(&format!("`{}`", p.part).as_str())
+                    })
+                    .unwrap_or_else(|| panic!("{page_path}: a row for {}@{}", p.port, p.part));
+                assert!(row.contains(&protocol), "{page_path}: {row}");
+                assert!(
+                    row.ends_with(&format!("| {} |", p.instances)),
+                    "{page_path}: {row}"
+                );
+            }
+            let border: Vec<String> = contract.border.iter().map(|b| format!("**{b}**")).collect();
+            let border = if border.is_empty() {
+                "none".to_owned()
+            } else {
+                border.join(", ")
+            };
+            assert!(
+                section.contains(&format!("Border: {border}.")),
+                "{page_path}: the border"
+            );
+            assert!(section.contains(&link), "{page_path}: the contract file");
+        }
+        if g.files.contains_key(&format!("docs/catalog/{name}.md")) {
+            let entry_file = format!("website/static/catalog/{name}/{name}.contract.yaml");
+            assert_eq!(g.files[&entry_file], contract.text(), "{entry_file}");
+            assert!(
+                g.files[&format!("docs/catalog/{name}.md")]
+                    .contains(&format!("\"file\":\"{name}.contract.yaml\"")),
+                "{name}: the downloads list the contract"
+            );
+        }
+    }
+    assert_eq!(pages, 16, "10 architecture pages and 6 catalog entries");
+    let contracts = g
+        .files
+        .keys()
+        .filter(|k| k.ends_with(".contract.yaml"))
+        .count();
+    assert_eq!(contracts, 16);
+    let ws = contract_section(&g.files["docs/architectures/workstation.md"], "workstation");
+    assert!(
+        ws.contains("| `workspace.lease` | `Outbound` | `workspace` |"),
+        "{ws}"
+    );
+    assert!(
+        ws.contains("| `tree` | `sharing: exclusive` | 12 |"),
+        "{ws}"
+    );
+    for absent in ["runtime.instance", "trigger.firing", "channel.post"] {
+        assert!(!ws.contains(absent), "{absent}");
+    }
 }

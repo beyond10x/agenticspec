@@ -24,6 +24,8 @@ pub struct Architecture {
     pub file: String,
     pub doc: Value,
     pub experiment: Option<Run>,
+    /// The contract of the document, or why it has none.
+    pub contract: Result<crate::contract::Shown, String>,
 }
 
 pub struct Run {
@@ -113,6 +115,7 @@ pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
         out.push(Architecture {
             file: format!("architectures/{name}.yaml"),
             name,
+            contract: crate::contract::derive(root, &doc),
             doc,
             experiment,
         });
@@ -434,6 +437,13 @@ How the run was made: [Optimization](#optimization).\n",
         }
         s.push('\n');
     }
+
+    let file = format!("{}.contract.yaml", a.name);
+    let target = format!("pathname:///architectures/{file}");
+    s.push_str(&crate::contract::section(
+        &a.contract,
+        Some((&file, &target)),
+    ));
 
     s.push_str("## Parts\n\n| part | block | settings |\n|---|---|---|\n");
     // Parts in layer order of their blocks, the principals first, as the graph draws them.

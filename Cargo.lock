@@ -89,8 +89,10 @@ version = "0.4.0"
 dependencies = [
  "agenticspec-render",
  "rayon",
+ "regex",
  "serde_json",
  "serde_yaml_ng",
+ "sha2",
 ]
 
 [[package]]

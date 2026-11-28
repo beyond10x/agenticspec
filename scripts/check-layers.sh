@@ -7,7 +7,9 @@
 #     or view field, or a type A declares (nested in structs, unions, lists, optionals);
 #   - the identity type of an entity of B (an identifier in the shared domain counts as a
 #     dependency on the domain whose entity it identifies);
-#   - a relation of an entity of A whose target is an entity of B.
+#   - a relation of an entity of A whose target is an entity of B;
+#   - a binding from an event of A to a command of B (components.yaml): the block of the cause
+#     holds the effect, as a higher block holds the identifier of a lower one.
 # Rules:
 #   1. no dependency points to a higher layer;
 #   2. dependencies inside one layer form no cycle;
@@ -96,6 +98,14 @@ jq -r '
     | (.target | prefix) as $to
     | select($to != $e.domain)
     | "\($e.domain) \($to) \($e.name).\(.name)"
+  ),
+  (
+    (.bindings // {}) | to_entries[] | .value
+    | select(.event != null and .command != null)
+    | (.event | prefix) as $from
+    | (.command | prefix) as $to
+    | select($to != $from)
+    | "\($from) \($to) binding:\(.name)"
   )
 ' "$work/ir.json" > "$work/edges.raw" || { echo "check-layers: jq failed on the compiled IR" >&2; exit 2; }
 sort -u "$work/edges.raw" > "$work/edges.txt"
@@ -135,6 +145,7 @@ if [ -s "$work/same-layer.txt" ]; then
 fi
 
 if [ "$status" = 0 ]; then
-  echo "layers: $(wc -l < "$work/layers.txt") domains, $(wc -l < "$work/edges.txt") dependencies, every one points to its own or a lower layer, no cycle inside a layer"
+  bindings=$(jq -r '(.bindings // {}) | length' "$work/ir.json")
+  echo "layers: $(wc -l < "$work/layers.txt") domains, $(wc -l < "$work/edges.txt") dependencies ($bindings binding(s) among their causes), every one points to its own or a lower layer, no cycle inside a layer"
 fi
 exit "$status"

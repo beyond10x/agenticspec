@@ -200,3 +200,139 @@ pub fn ladder(path: &Path, out: &Path, check: bool) -> Result<Value, Refusal> {
     write(out, &text)?;
     Ok(answer(true))
 }
+
+/// The options of `sim ports`.
+#[derive(Debug, Clone, Default)]
+pub struct PortsOptions<'a> {
+    /// The blocks directory; `blocks` when absent.
+    pub blocks: Option<&'a Path>,
+    pub out: Option<&'a Path>,
+    pub check: Option<&'a Path>,
+    pub expect: Option<&'a Path>,
+}
+
+/// `sim ports [--blocks <dir>] [--out <file>] [--check <file>] [--expect <file>]`: derive the
+/// ports of the building blocks and write them (or print the file), compare a ports file's
+/// digest with its sources (`--check`, no derivation and no `ess` call), or list every difference
+/// from an expected list (`--expect`: one line per difference to `log`, refused as
+/// `ports_differ` when there is one).
+pub fn ports(o: &PortsOptions, log: &mut dyn Write) -> Result<Value, Refusal> {
+    use crate::contract::ports as p;
+    let blocks = o.blocks.unwrap_or(Path::new("blocks"));
+    if let Some(file) = o.check {
+        let have = p::PortsFile::load(file).map_err(|e| refused("document_unreadable", e))?;
+        let digest =
+            p::sources_digest(blocks, &have.ess).map_err(|e| refused("blocks_unreadable", e))?;
+        if digest != have.sources_sha256 {
+            return Err(refused(
+                "ports_stale",
+                format!(
+                    "{} was derived from other sources than {}: run task ports:generate",
+                    file.display(),
+                    blocks.display()
+                ),
+            ));
+        }
+        return Ok(json!({
+            "ports": have.ports.len(),
+            "sources_sha256": digest,
+            "written": false,
+            "differences": [],
+        }));
+    }
+    let unreadable = |e: String| refused("blocks_unreadable", e);
+    let ess = p::ess_version().map_err(unreadable)?;
+    let digest = p::sources_digest(blocks, &ess).map_err(unreadable)?;
+    let ir = p::compile(blocks).map_err(unreadable)?;
+    let derived = p::derive(&ir).map_err(|e| refused("ports_refused", e.join("; ")))?;
+    if let Some(expect) = o.expect {
+        let rows = p::load_expected(expect).map_err(|e| refused("document_unreadable", e))?;
+        let lines = p::compare(&derived.ports, &rows);
+        for line in &lines {
+            let _ = writeln!(log, "{line}");
+        }
+        if !lines.is_empty() {
+            return Err(refused(
+                "ports_differ",
+                format!("{} difference(s) from {}", lines.len(), expect.display()),
+            ));
+        }
+        return Ok(json!({
+            "ports": derived.ports.len(),
+            "sources_sha256": digest,
+            "written": false,
+            "differences": [],
+        }));
+    }
+    let text = p::file_text(&derived.ports, &derived.bindings, &ess, &digest);
+    let mut answer = json!({
+        "ports": derived.ports.len(),
+        "sources_sha256": digest,
+        "written": o.out.is_some(),
+        "differences": [],
+    });
+    match o.out {
+        Some(out) => write(out, &text)?,
+        None => answer["file"] = json!(text),
+    }
+    Ok(answer)
+}
+
+/// The options of `sim contract`.
+#[derive(Debug, Clone)]
+pub struct ContractOptions<'a> {
+    pub architecture: &'a Path,
+    /// The ports file; `blocks/ports.json` when absent.
+    pub ports: Option<&'a Path>,
+    pub out: Option<&'a Path>,
+    /// A written contract to check against the document and the ports, without deriving.
+    pub check: Option<&'a Path>,
+}
+
+/// `sim contract <architecture> [--ports <file>] [--out <file>] [--check <file>]`: derive the
+/// contract of an architecture document and check it, then write it (or print it); refused,
+/// writing nothing, when the document fails `sim check`. With `--check`, read a written contract
+/// and check it against the document and the ports instead.
+pub fn contract(o: &ContractOptions) -> Result<Value, Refusal> {
+    use crate::contract::derive as d;
+    use crate::contract::ports::PortsFile;
+    let arch = load_yaml(o.architecture).map_err(|e| refused("document_unreadable", e))?;
+    let refusals = check_architecture(&arch);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
+    let ports = PortsFile::load(ports_path).map_err(|e| refused("ports_unreadable", e))?;
+    let contract = match o.check {
+        Some(file) => {
+            let text = std::fs::read_to_string(file)
+                .map_err(|e| refused("document_unreadable", format!("{}: {e}", file.display())))?;
+            d::Contract::parse(&text)
+                .map_err(|e| refused("contract_refused", format!("{}: {e}", file.display())))?
+        }
+        None => d::derive(&arch, &ports).map_err(|r| refused("contract_refused", r.join("; ")))?,
+    };
+    let problems = d::check(&contract, &arch, &ports);
+    if !problems.is_empty() {
+        return Err(refused("contract_refused", problems.join("; ")));
+    }
+    let mut answer = json!({
+        "architecture": contract.architecture,
+        "ports": contract.ports.len(),
+        "invariants": contract.invariants.len(),
+        "written": false,
+    });
+    if o.check.is_some() {
+        return Ok(answer);
+    }
+    let text = contract.text();
+    match o.out {
+        Some(out) => {
+            write(out, &text)?;
+            answer["written"] = json!(true);
+        }
+        None => answer["contract"] = json!(text),
+    }
+    Ok(answer)
+}

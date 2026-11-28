@@ -22,8 +22,8 @@ pub const REGENERATE: &str = "task catalog:generate";
 
 /// Files of the simulator that do not change a result: the commands of `agenticspec sim`, the
 /// module list, the ladder, the best variant as a document (derived from the result by the docs
-/// generator).
-const SIM_EXCLUDED: &[&str] = &["cli.rs", "lib.rs", "ladder.rs", "best.rs"];
+/// generator), and the contract module. An entry ending in `/` leaves out every file under it.
+const SIM_EXCLUDED: &[&str] = &["cli.rs", "lib.rs", "ladder.rs", "best.rs", "contract/"];
 
 /// The simulator's dependencies from crates.io whose versions a result depends on.
 const SIM_DEPS: &[&str] = &["rayon", "serde_json", "serde_yaml_ng"];
@@ -175,10 +175,14 @@ pub fn digest(root: &Path, s: &Source) -> Result<String, String> {
     }
     for f in files {
         let rel = relative(root, &f);
-        if SIM_EXCLUDED
-            .iter()
-            .any(|x| rel == format!("crates/agenticspec-sim/src/{x}"))
-        {
+        if SIM_EXCLUDED.iter().any(|x| {
+            let x = format!("crates/agenticspec-sim/src/{x}");
+            if x.ends_with('/') {
+                rel.starts_with(&x)
+            } else {
+                rel == x
+            }
+        }) {
             continue;
         }
         add(&std::fs::read(&f).map_err(|e| format!("{rel}: {e}"))?, rel);

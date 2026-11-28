@@ -18,6 +18,7 @@ What may happen. A grant lets a principal or an agent revision perform an action
 
 ## Depends on
 
+- [harness](../4-agent/harness.md) · layer 4 · 10 references
 - [delegation](../1-principals/delegation.md) · layer 1 · 9 references
 - [principal](../1-principals/principal.md) · layer 1 · 7 references
 - [shared](../0-foundation/shared.md) · layer 0 · 16 references
@@ -111,12 +112,13 @@ Relations:
 
 Called by: Steward.
 
-| field | type |
-|---|---|
-| `decision_id` | `DecisionId` |
-| `approver` | `Decider` |
-| `delegation` | `optional DelegationId` |
-| `at` | `timestamp` |
+| field | type | meaning |
+|---|---|---|
+| `decision_id` | `DecisionId` |  |
+| `approver` | `Decider` |  |
+| `delegation` | `optional DelegationId` |  |
+| `tool_call_id` | `optional ToolCallId` | The harness tool call the approved request is for, when it is one. UNMAPPED: nothing checks that it is the tool call the decision was recorded for; a value read from the stored decision left the binding that decides the call without a scenario (ESS-SYNTH-010), so the approver names it again. |
+| `at` | `timestamp` |  |
 
 | outcome | when | result |
 |---|---|---|
@@ -134,18 +136,19 @@ Called by: Steward.
 
 Called by: Authority.
 
-| field | type |
-|---|---|
-| `grant_id` | `GrantId` |
-| `requester_kind` | `SubjectKind` |
-| `requester_id` | `uuid` |
-| `action_class` | `ToolCategory` |
-| `scope` | `string` |
-| `verdict` | `Verdict` |
-| `decider` | `Decider` |
-| `attribution` | `Attribution` |
-| `delegation` | `optional DelegationId` |
-| `at` | `timestamp` |
+| field | type | meaning |
+|---|---|---|
+| `grant_id` | `GrantId` |  |
+| `requester_kind` | `SubjectKind` |  |
+| `requester_id` | `uuid` |  |
+| `action_class` | `ToolCategory` |  |
+| `scope` | `string` |  |
+| `verdict` | `Verdict` |  |
+| `decider` | `Decider` |  |
+| `attribution` | `Attribution` |  |
+| `delegation` | `optional DelegationId` |  |
+| `tool_call_id` | `optional ToolCallId` | The harness tool call the request is for, when it is one. |
+| `at` | `timestamp` |  |
 
 | outcome | when | result |
 |---|---|---|
@@ -172,6 +175,7 @@ Called by: Authority.
 | `attribution` | `Attribution` |  |
 | `delegation` | `optional DelegationId` |  |
 | `grant_id` | `optional GrantId` | The standing prohibition the denial rests on, when one does. |
+| `tool_call_id` | `optional ToolCallId` | The harness tool call the request is for, when it is one. |
 | `at` | `timestamp` |  |
 
 | outcome | when | result |
@@ -251,11 +255,12 @@ Called by: Meter.
 
 Called by: Steward.
 
-| field | type |
-|---|---|
-| `decision_id` | `DecisionId` |
-| `rejecter` | `Decider` |
-| `at` | `timestamp` |
+| field | type | meaning |
+|---|---|---|
+| `decision_id` | `DecisionId` |  |
+| `rejecter` | `Decider` |  |
+| `tool_call_id` | `optional ToolCallId` | The harness tool call the rejected request is for, when it is one (see ApproveDecision). |
+| `at` | `timestamp` |  |
 
 | outcome | when | result |
 |---|---|---|
@@ -286,11 +291,11 @@ Called by: Steward.
 
 | event | fields | emitted by |
 |---|---|---|
-| `ApprovalGranted` | `decision_id` DecisionId, `approver` Decider, `delegation` optional DelegationId, `at` timestamp | `ApproveDecision` |
-| `ApprovalRejected` | `decision_id` DecisionId, `rejecter` Decider, `at` timestamp | `RejectDecision` |
+| `ApprovalGranted` | `decision_id` DecisionId, `approver` Decider, `delegation` optional DelegationId, `tool_call_id` optional ToolCallId, `at` timestamp | `ApproveDecision` |
+| `ApprovalRejected` | `decision_id` DecisionId, `rejecter` Decider, `tool_call_id` optional ToolCallId, `at` timestamp | `RejectDecision` |
 | `BudgetExhausted` | `budget_id` BudgetId, `at` timestamp | `RecordSpend` |
 | `BudgetOpened` | `budget_id` BudgetId, `owner_kind` BudgetOwnerKind, `owner_id` uuid, `resource` BudgetResource, `window` BudgetWindow, `limit` integer, `at` timestamp | `OpenBudget` |
-| `DecisionRecorded` | `decision_id` DecisionId, `requester_kind` SubjectKind, `requester_id` uuid, `action_class` ToolCategory, `scope` string, `verdict` Verdict, `decider` Decider, `attribution` Attribution, `delegation` optional DelegationId, `grant_id` optional GrantId, `at` timestamp | `DecideRequest`, `DenyRequest` |
+| `DecisionRecorded` | `decision_id` DecisionId, `requester_kind` SubjectKind, `requester_id` uuid, `action_class` ToolCategory, `scope` string, `verdict` Verdict, `decider` Decider, `attribution` Attribution, `delegation` optional DelegationId, `grant_id` optional GrantId, `tool_call_id` optional ToolCallId, `at` timestamp | `DecideRequest`, `DenyRequest` |
 | `GrantIssued` | `grant_id` GrantId, `grantee_kind` SubjectKind, `grantee_id` uuid, `action_class` ToolCategory, `scope` string, `expires_at` timestamp, `granted_by` PrincipalId, `effect` Verdict, `supersedes` optional GrantId, `at` timestamp | `GrantAuthority` |
 | `GrantRevoked` | `grant_id` GrantId, `revoked_by` PrincipalId, `at` timestamp | `RevokeGrant` |
 | `SpendRecorded` | `budget_id` BudgetId, `spent_total` integer, `at` timestamp | `RecordSpend` |

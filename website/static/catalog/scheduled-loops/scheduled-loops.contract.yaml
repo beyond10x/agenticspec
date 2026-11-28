@@ -1,0 +1,115 @@
+format: agenticspec-contract/1
+architecture: scheduled-loops
+ports_digest: 24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229
+ports:
+  - port: resource.claim
+    part: builds
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {capacity: 8, job_limit: 10m, kind: build_slots}
+  - port: trigger.schedule
+    part: clock
+    protocol: "CreateSchedule AdvanceSchedule*"
+    instances: 1
+    settings: {every: 1h}
+  - port: gateway.call
+    part: gateway
+    protocol: "AdmitCall CompleteCall"
+    instances: 1
+    settings: {rate_limit_per_minute: 120}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: trigger.schedule
+    part: nightly
+    protocol: "CreateSchedule AdvanceSchedule*"
+    instances: 1
+    settings: {every: 24h, next_fire_at: 2h}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+  - port: trigger.firing
+    part: sweep
+    protocol: "FireTrigger (RecordFailure | RecordStart RecordEnd | SkipFiring)"
+    instances: 1
+    settings: {kind: on_schedule, max_parallel: 1, policy: skip, schedule: nightly}
+  - port: harness.session
+    part: sweeper
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding}
+  - port: model.inference
+    part: sweeper
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: sweeper
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {}
+  - port: resource.claim
+    part: sweeper
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {}
+  - port: trigger.firing
+    part: triage
+    protocol: "FireTrigger (RecordFailure | RecordStart RecordEnd | SkipFiring)"
+    instances: 1
+    settings: {kind: on_schedule, max_parallel: 1, policy: skip, schedule: clock}
+  - port: harness.session
+    part: triager
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 2
+    settings: {harness: coding}
+  - port: model.inference
+    part: triager
+    protocol: "StartInference FinishInference"
+    instances: 2
+    settings: {}
+  - port: question.question
+    part: triager
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 2
+    settings: {}
+  - port: resource.claim
+    part: triager
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 2
+    settings: {}
+invariants:
+  - link: "sweep -> sweeper carries trigger"
+    port: trigger.firing
+    predicate: "every trigger.firing@sweep to sweeper"
+  - link: "triage -> triager carries trigger"
+    port: trigger.firing
+    predicate: "every trigger.firing@triage to triager"
+  - link: "triager -> owner carries question"
+    port: question.question
+    predicate: "every question.question@triager to owner"
+  - link: "sweeper -> owner carries question"
+    port: question.question
+    predicate: "every question.question@sweeper to owner"
+  - link: "sweeper -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@sweeper inside gateway.call@gateway"
+  - link: "triager -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@triager inside gateway.call@gateway"
+  - link: "gateway -> model carries model_call"
+    port: gateway.call
+    predicate: "every gateway.call@gateway to model"
+  - link: "sweeper -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@sweeper to builds"
+  - link: "triager -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@triager to builds"
+border: []

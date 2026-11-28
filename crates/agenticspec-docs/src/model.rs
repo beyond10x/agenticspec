@@ -208,6 +208,15 @@ pub fn layer_edges(ir: &Value) -> BTreeMap<(String, String), usize> {
             }
         }
     }
+    // A binding makes the domain of its event depend on the domain of the command it invokes, as
+    // scripts/check-layers.sh counts it.
+    for (name, b) in ir["bindings"].as_object().into_iter().flatten() {
+        let from = prefix(b["event"].as_str().unwrap_or(""));
+        let to = prefix(b["command"].as_str().unwrap_or(""));
+        if !from.is_empty() && to != from {
+            raw.insert((from, to, format!("binding:{name}")));
+        }
+    }
     let mut out = BTreeMap::new();
     for (from, to, _) in raw {
         *out.entry((from, to)).or_insert(0) += 1;

@@ -45,9 +45,46 @@ The weighted KPIs that moved, the largest change of the fitness first:
 
 <ArchitectureFrame name={"scheduled-loops"} src={"/catalog/scheduled-loops/scheduled-loops"} caption={"The full result of scheduled-loops-tuning: objective, landscape, trade-offs, sensitivity, variants and timeline."} />
 
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [scheduled-loops.contract.yaml](pathname:///catalog/scheduled-loops/scheduled-loops.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 8`, `job_limit: 10m`, `kind: build_slots` | 1 |
+| `trigger.schedule` | `Outbound` | `trigger` | `CreateSchedule AdvanceSchedule*` | `clock` | `every: 1h` | 1 |
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `trigger.schedule` | `Outbound` | `trigger` | `CreateSchedule AdvanceSchedule*` | `nightly` | `every: 24h`, `next_fire_at: 2h` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `sweep` | `kind: on_schedule`, `max_parallel: 1`, `policy: skip`, `schedule: nightly` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `sweeper` | `harness: coding` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `sweeper` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `sweeper` | none | 1 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `sweeper` | none | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `triage` | `kind: on_schedule`, `max_parallel: 1`, `policy: skip`, `schedule: clock` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `triager` | `harness: coding` | 2 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `triager` | none | 2 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `triager` | none | 2 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `triager` | none | 2 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `sweep -> sweeper carries trigger`: `every trigger.firing@sweep to sweeper`
+- `triage -> triager carries trigger`: `every trigger.firing@triage to triager`
+- `triager -> owner carries question`: `every question.question@triager to owner`
+- `sweeper -> owner carries question`: `every question.question@sweeper to owner`
+- `sweeper -> gateway carries model_call`: `every model.inference@sweeper inside gateway.call@gateway`
+- `triager -> gateway carries model_call`: `every model.inference@triager inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+- `sweeper -> builds carries claim`: `every resource.claim@sweeper to builds`
+- `triager -> builds carries claim`: `every resource.claim@triager to builds`
+
+Border: none.
+
 ## Download
 
-<CatalogDownloads dir={"/catalog/scheduled-loops/"} files={[{"about":"the parts, links and policies, with the marked places at their values as written","file":"scheduled-loops.yaml","label":"Architecture as written"},{"about":"every marked place at the value of the best variant; its vary ranges are kept, so it can be searched again","file":"scheduled-loops.best.yaml","label":"Optimized architecture"},{"about":"seeds, horizon, faults, the search and its weights; it names the two files beside it","file":"scheduled-loops-tuning.yaml","label":"Experiment"},{"about":"how long turns, builds and answers take, and what model calls cost","file":"coding.yaml","label":"Behaviour profile"},{"about":"every variant with its KPIs, the best one and the timeline, as the result page draws it","file":"result.json","label":"Result"}]} />
+<CatalogDownloads dir={"/catalog/scheduled-loops/"} files={[{"about":"the parts, links and policies, with the marked places at their values as written","file":"scheduled-loops.yaml","label":"Architecture as written"},{"about":"the ports a runtime implements to run the architecture as written, with their protocols, settings, instances and routing invariants","file":"scheduled-loops.contract.yaml","label":"Contract"},{"about":"every marked place at the value of the best variant; its vary ranges are kept, so it can be searched again","file":"scheduled-loops.best.yaml","label":"Optimized architecture"},{"about":"seeds, horizon, faults, the search and its weights; it names the two files beside it","file":"scheduled-loops-tuning.yaml","label":"Experiment"},{"about":"how long turns, builds and answers take, and what model calls cost","file":"coding.yaml","label":"Behaviour profile"},{"about":"every variant with its KPIs, the best one and the timeline, as the result page draws it","file":"result.json","label":"Result"}]} />
 
 ## Run it
 

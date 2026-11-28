@@ -42,9 +42,45 @@ The weighted KPIs that moved, the largest change of the fitness first:
 
 <ArchitectureFrame name={"workstation"} src={"/catalog/workstation/workstation"} caption={"The full result of workstation-tuning: objective, landscape, trade-offs, sensitivity, variants and timeline."} />
 
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [workstation.contract.yaml](pathname:///catalog/workstation/workstation.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `sandbox.sandbox` | `Outbound` | `sandbox` | `DefineSandbox (CheckEgress \| CheckSecretRead \| CheckWrite)*` | `box` | `egress: [gateway]`, `isolation: process` | 12 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 16`, `job_limit: 10m`, `kind: build_slots` | 1 |
+| `channel.message` | `Outbound` | `channel` | `SendMessage (MarkDelivered MarkRead? \| MarkLost)` | `chat` | `kind: operator` | 1 |
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `channel.message` | `Outbound` | `channel` | `SendMessage (MarkDelivered MarkRead? \| MarkLost)` | `operator` | none | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `operator` | `acts_for: owner`, `harness: coding`, `role: operator` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `operator` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `operator` | none | 1 |
+| `channel.message` | `Outbound` | `channel` | `SendMessage (MarkDelivered MarkRead? \| MarkLost)` | `owner` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 12 |
+| `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 12 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `worker` | `harness: coding` | 12 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `worker` | none | 12 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `worker` | none | 12 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `worker` | none | 12 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `owner -> operator carries prompt over chat`: `every channel.message@owner to operator over chat`
+- `operator -> owner carries question over chat`: `every question.question@operator to owner over chat`
+- `worker -> operator carries question`: `every question.question@worker to operator`
+- `operator -> gateway carries model_call`: `every model.inference@operator inside gateway.call@gateway`
+- `worker -> gateway carries model_call`: `every model.inference@worker inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+- `worker -> builds carries claim`: `every resource.claim@worker to builds`
+
+Border: **operator**.
+
 ## Download
 
-<CatalogDownloads dir={"/catalog/workstation/"} files={[{"about":"the parts, links and policies, with the marked places at their values as written","file":"workstation.yaml","label":"Architecture as written"},{"about":"every marked place at the value of the best variant; its vary ranges are kept, so it can be searched again","file":"workstation.best.yaml","label":"Optimized architecture"},{"about":"seeds, horizon, faults, the search and its weights; it names the two files beside it","file":"workstation-tuning.yaml","label":"Experiment"},{"about":"how long turns, builds and answers take, and what model calls cost","file":"coding.yaml","label":"Behaviour profile"},{"about":"every variant with its KPIs, the best one and the timeline, as the result page draws it","file":"result.json","label":"Result"}]} />
+<CatalogDownloads dir={"/catalog/workstation/"} files={[{"about":"the parts, links and policies, with the marked places at their values as written","file":"workstation.yaml","label":"Architecture as written"},{"about":"the ports a runtime implements to run the architecture as written, with their protocols, settings, instances and routing invariants","file":"workstation.contract.yaml","label":"Contract"},{"about":"every marked place at the value of the best variant; its vary ranges are kept, so it can be searched again","file":"workstation.best.yaml","label":"Optimized architecture"},{"about":"seeds, horizon, faults, the search and its weights; it names the two files beside it","file":"workstation-tuning.yaml","label":"Experiment"},{"about":"how long turns, builds and answers take, and what model calls cost","file":"coding.yaml","label":"Behaviour profile"},{"about":"every variant with its KPIs, the best one and the timeline, as the result page draws it","file":"result.json","label":"Result"}]} />
 
 ## Run it
 

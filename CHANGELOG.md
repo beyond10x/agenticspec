@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
+- The building blocks declare their cross-block causation as ESS bindings (`blocks/components.yaml`): an admitted gateway call starts its inference, and the authority's decision, approval or rejection decides a harness tool call. `task check:layers` counts bindings among the dependencies, and `task check:blocks` requires a scenario per binding. Causations ESS cannot express yet have reproductions under `design/ess-repro/`
+- `agenticspec sim ports` derives the ports of the building blocks, where the specification waits on the world, into `blocks/ports.json`: each port's kind (outbound, clock, principal), intent, reports and protocol. `--check` compares the file's digest with the blocks without calling `ess` (`task check:ports`), `--expect` lists every difference from an expected list
+- `agenticspec sim contract <architecture>` derives and checks the contract of an architecture (`agenticspec-contract/1`): the ports its parts use with their protocols, narrowing settings (an agent's `role`, an `on_event` trigger's `event_name` and `source`) and instances, a routing invariant per link (a runtime's `run` and `model_call` links among them) in a small predicate language, and the border; `--check` checks a written contract. `docs/contract.md` describes ports, the contract and the predicate language
+- Every architecture page and catalog entry of the docs site has a "Contract" section and its contract file to download (`<name>.contract.yaml`)
 
 ### Changed
 

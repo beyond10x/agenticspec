@@ -1,0 +1,18 @@
+domain: fixture.low
+summary: A block of layer 2 whose event a binding carries up to layer 7.
+naming:
+  wire: low
+  display: Low
+commands:
+  - name: fixture.low.Ping
+    input:
+      - {name: label, type: String}
+    outcomes:
+      - name: pinged
+        emits: [fixture.low.Pinged]
+        payload:
+          fixture.low.Pinged: {label: input.label}
+events:
+  - name: fixture.low.Pinged
+    fields:
+      - {name: label, type: String}

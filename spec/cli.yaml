@@ -103,6 +103,27 @@ callables:
       ladder_refused: agenticspec.cli.Refusal
       ladder_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+  sim_ports:
+    target: {kind: local, owner: agenticspec.cli, action: sim_ports}
+    input: agenticspec.cli.SimPortsInput
+    result: agenticspec.cli.SimPortsResult
+    errors:
+      blocks_unreadable: agenticspec.cli.Refusal
+      document_unreadable: agenticspec.cli.Refusal
+      ports_refused: agenticspec.cli.Refusal
+      ports_stale: agenticspec.cli.Refusal
+      ports_differ: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  sim_contract:
+    target: {kind: local, owner: agenticspec.cli, action: sim_contract}
+    input: agenticspec.cli.SimContractInput
+    result: agenticspec.cli.SimContractResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      ports_unreadable: agenticspec.cli.Refusal
+      contract_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -195,3 +216,19 @@ commands:
       - {field: ladder, source: {kind: positional, index: 1}}
       - {field: out, source: {kind: option, long: out}}
       - {field: check, source: {kind: flag, long: check}}
+  - path: [sim, ports]
+    callable: sim_ports
+    about: Derive the ports of the building blocks into blocks/ports.json, check its digest with --check, or list how they differ from an expected list with --expect
+    arguments:
+      - {field: blocks, source: {kind: option, long: blocks}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: check, source: {kind: option, long: check}}
+      - {field: expect, source: {kind: option, long: expect}}
+  - path: [sim, contract]
+    callable: sim_contract
+    about: Derive and check the contract of an architecture (agenticspec-contract/1), or check a written contract with --check
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: check, source: {kind: option, long: check}}
