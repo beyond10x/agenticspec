@@ -7,6 +7,7 @@ use crate::marked::{Marked, collect, resolve};
 use crate::profile::Profile;
 use crate::rng::Rng;
 use crate::sim::{Fault, Model, RUN_KPIS, RunOut, parse_bursts, parse_faults, simulate};
+use crate::whole::{measure, measure_of};
 use rayon::prelude::*;
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, HashMap};
@@ -22,7 +23,9 @@ pub fn kind(name: &str) -> &'static str {
         || name == "firing_failure_share"
     {
         "Correctness"
-    } else if name == "task_completion" {
+    } else if name == "task_completion"
+        || measure_of(name).is_some_and(|m| m.kind == "completeness")
+    {
         "Completeness"
     } else {
         "Quality"
@@ -58,7 +61,7 @@ pub struct Experiment {
 }
 
 fn known_kpi(name: &str) -> bool {
-    RUN_KPIS.contains(&name) || GATE_KPIS.contains(&name)
+    RUN_KPIS.contains(&name) || GATE_KPIS.contains(&name) || measure_of(name).is_some()
 }
 
 impl Experiment {
@@ -258,6 +261,9 @@ fn evaluate(e: &Experiment, points: &[Vec<usize>]) -> Result<Vec<Eval>, String> 
         let (mut kpis, per_part) = mean(chunk);
         for (g, n) in gate_counts(&arch) {
             kpis.insert(g.to_string(), n);
+        }
+        for (k, n) in measure(&arch) {
+            kpis.insert(k.to_string(), n);
         }
         let feasible = e
             .search

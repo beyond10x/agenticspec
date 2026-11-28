@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
+- KPIs of an architecture as a whole, read from its document before any simulation: `agents_total`, `principals_total`, `human_touchpoints`, `autonomy_depth`, `model_call_paths`, `ungated_model_calls`, `single_points`, `border_parts`, `egress_targets`, `shared_workspaces` and `capacity_ratio`. `agenticspec sim check` reports them (and names the single points), `result.json` carries them for every variant, the KPI catalogue lists them under the block `architecture`, each architecture page and catalog entry has a section "The architecture as a whole", and the catalog index compares every architecture on them in a sortable table
 
 ### Changed
 

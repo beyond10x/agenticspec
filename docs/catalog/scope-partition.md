@@ -39,6 +39,24 @@ The weighted KPIs that moved, the largest change of the fitness first:
 | `questions_defaulted` | −1 | 30.12 | 56.50 | −26.38 |
 | `owner_wait_share` | −200 | 0.096 | 0.063 | +6.61 |
 
+## The architecture as a whole
+
+Read from the document alone, before any simulation: its size, autonomy, exposure, weak points and fixed limits. `agenticspec sim check` reports the same numbers; a marked place counts at its value as built. The KPIs are in the [KPI catalogue](../kpis-catalogue.md) under the block `architecture`.
+
+| KPI | as written | optimized | what it counts |
+|---|---|---|---|
+| `agents_total` | 4 | 12 | Agent copies: the sum of count over the agent parts. |
+| `principals_total` | 1 | 1 | Principal parts. |
+| `human_touchpoints` | 1 | 1 | Links that end at a principal and carry a question or a proposal. |
+| `autonomy_depth` | 0 | 0 | Links in the longest chain of order and question links from agent to agent. |
+| `model_call_paths` | 1 | 1 | Distinct paths of model_call links from an agent part to a model part. |
+| `ungated_model_calls` | 0 | 0 | Paths of model_call links from an agent to a model that pass no gateway part. |
+| `single_points` | 2 (`gateway`, `model`) | 2 | Parts whose removal leaves some agent with no model_call path to a model. |
+| `border_parts` | 0 | 0 | Parts named in the border, the parts that take input from outside. |
+| `egress_targets` | 0 | 0 | Distinct parts named in the egress of the sandbox parts. |
+| `shared_workspaces` | 0 | 0 | Workspace parts whose sharing is not exclusive. |
+| `capacity_ratio` | 0.5 | 3 | Agent copies that claim a pool divided by its capacity, the largest over the pools. |
+
 ## Result
 
 <ArchitectureFrame name={"scope-partition"} src={"/catalog/scope-partition/scope-partition"} caption={"The full result of scope-partition-tuning: objective, landscape, trade-offs, sensitivity, variants and timeline."} />

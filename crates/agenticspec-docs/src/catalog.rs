@@ -4,11 +4,13 @@
 //! searches.
 
 use crate::SOURCE_BASE;
+use crate::arch::{whole_section, whole_value};
 use crate::md::{attr, code, first_sentence, text, yaml};
 use crate::results::{self, stem, yaml_files};
 use agenticspec_sim::Experiment;
 use agenticspec_sim::best::yaml_of_result;
 use agenticspec_sim::doc::parse_yaml;
+use agenticspec_sim::whole::{ARCHITECTURE_KPIS, measure};
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
@@ -46,6 +48,8 @@ pub struct Entry {
 pub struct Unsearched {
     pub name: String,
     pub summary: String,
+    /// The architecture document as written.
+    pub doc: Value,
 }
 
 pub struct Catalog {
@@ -149,6 +153,7 @@ pub fn load(root: &Path) -> Result<Catalog, String> {
         unsearched.push(Unsearched {
             name,
             summary: doc["summary"].as_str().unwrap_or("").to_string(),
+            doc,
         });
     }
     Ok(Catalog {
@@ -451,6 +456,8 @@ pub fn page(e: &Entry) -> String {
         }
     }
 
+    whole_section(&mut s, &e.doc, Some(&e.result["best"]["kpis"]));
+
     s.push_str("## Result\n\n");
     let _ = writeln!(
         s,
@@ -514,6 +521,39 @@ The same seeds give the same `result.json`.\n"
     s
 }
 
+/// The data of the table of the architectures as a whole: one row per architecture, entries and
+/// unsearched ones by name, each with the KPIs `agenticspec sim check` reports.
+fn whole_table(c: &Catalog) -> Value {
+    let mut rows: Vec<(&str, String, &Value)> = c
+        .entries
+        .iter()
+        .map(|e| (e.name.as_str(), format!("/docs/catalog/{}", e.name), &e.doc))
+        .chain(c.unsearched.iter().map(|u| {
+            (
+                u.name.as_str(),
+                format!("/docs/architectures/{}", u.name),
+                &u.doc,
+            )
+        }))
+        .collect();
+    rows.sort_by(|a, b| a.0.cmp(b.0));
+    let kpis: Vec<Value> = ARCHITECTURE_KPIS
+        .iter()
+        .map(|m| json!({"id": m.id, "what": m.what}))
+        .collect();
+    let rows: Vec<Value> = rows
+        .into_iter()
+        .map(|(name, to, doc)| {
+            let values: Vec<Value> = measure(doc)
+                .into_iter()
+                .map(|(_, v)| json!({"value": v, "text": whole_value(v)}))
+                .collect();
+            json!({"name": name, "to": to, "values": values})
+        })
+        .collect();
+    json!({"kpis": kpis, "rows": rows})
+}
+
 /// The index page: one card per entry, then the architectures no experiment searches yet.
 pub fn index(c: &Catalog) -> String {
     let mut s = String::new();
@@ -527,6 +567,7 @@ pub fn index(c: &Catalog) -> String {
         &format!("{}experiments", SOURCE_BASE.replace("/blob/", "/tree/")),
         "CatalogCards",
     );
+    s.push_str("import ArchitectureKpis from '@site/src/components/catalog/ArchitectureKpis';\n\n");
     s.push_str(
         "Each entry is an [architecture](../architectures/index.md) an experiment optimized in the simulator. \
 **Fitness** is the weighted sum of the KPIs the experiment scores, as written → optimized; a card names the KPIs that gained most and the one that got worse.\n\n",
@@ -549,5 +590,11 @@ pub fn index(c: &Catalog) -> String {
         }
         s.push('\n');
     }
+    s.push_str("## The architectures as a whole\n\n");
+    s.push_str(
+        "Every architecture measured from its document alone, before any simulation, by the KPIs `agenticspec sim check` reports; \
+a marked place counts at its value as built. Sort by a column to compare them; each KPI is in the [KPI catalogue](../kpis-catalogue.md) under the block `architecture`.\n\n",
+    );
+    let _ = writeln!(s, "<ArchitectureKpis data={{{}}} />", whole_table(c));
     s
 }

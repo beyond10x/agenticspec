@@ -1158,11 +1158,20 @@
             "architecture": {
               "kind": "string"
             },
+            "kpis": {
+              "kind": "json"
+            },
             "links": {
               "kind": "integer"
             },
             "parts": {
               "kind": "integer"
+            },
+            "single_points": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
             }
           }
         }

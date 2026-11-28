@@ -89,7 +89,8 @@ change.
   runs them (and refuses a `best.yaml` that does not score the best fitness), then
   `task docs:generate`; `task slow:catalog` runs them afresh and compares bytes. The catalog
   components are in `website/src/components/catalog/`; a ladder stage on a card comes from
-  `STAGES` in `catalog.rs`.
+  `STAGES` in `catalog.rs`; the sortable table of the architectures as a whole on the index is
+  `ArchitectureKpis.tsx`, from `agenticspec_sim::whole`.
 
 ## agenticstudio nouns (`studio/`)
 
@@ -120,7 +121,7 @@ change.
 | `agenticspec` | `serve.rs` | `agenticspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `agenticspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
 | `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
-| `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
+| `agenticspec-sim` | `check.rs`, `whole.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, measured as a whole (`whole.rs`: the KPIs `sim check` reports and every variant of a result carries), simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
 | `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
 | `agenticspec-docs` | `lib.rs`, `main.rs` | the generated docs pages of the blocks, architectures and KPI catalogue (`task docs:generate`, `--check`) |
 

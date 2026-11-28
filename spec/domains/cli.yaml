@@ -499,11 +499,22 @@ types:
   - name: agenticspec.cli.SimCheckResult
     kind: struct
     naming:
-      summary: The architecture the check accepted, with its counts of parts and links.
+      summary: >-
+        The architecture the check accepted, with its counts of parts and links and the KPIs of
+        the architecture as a whole.
     fields:
       - {name: architecture, type: String}
       - {name: parts, type: Integer}
       - {name: links, type: Integer}
+      - name: kpis
+        type: Json
+        summary: >-
+          The KPIs of the architecture as a whole, read from the document alone, by id: an object
+          of numbers, the KPIs `block: architecture` of the KPI catalogue that are not gates
+          (`agents_total`, `capacity_ratio`, ...). A marked place counts at its value as built.
+      - name: single_points
+        type: List<String>
+        summary: The parts whose removal leaves some agent with no model_call path to a model, the parts `kpis.single_points` counts.
 
   - name: agenticspec.cli.SimRunInput
     kind: struct

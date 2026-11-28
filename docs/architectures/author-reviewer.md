@@ -28,7 +28,7 @@ A marked place carries `vary`: the value as built and the values a search may tr
 
 ## KPIs that moved
 
-32 of 67 KPIs differ between the architecture as built and its best variant; the others are equal. A weight is what the experiment scores a KPI by: above 0 more is better, below 0 less is better.
+34 of 78 KPIs differ between the architecture as built and its best variant; the others are equal. A weight is what the experiment scores a KPI by: above 0 more is better, below 0 less is better.
 
 | KPI | weight | as built | best variant | change |
 |---|---|---|---|---|
@@ -38,9 +38,11 @@ A marked place carries `vary`: the value as built and the values a search may tr
 | `owner_wait_share` | −200 | 0.027 | 0.017 | −37.3 %, better |
 | `questions_defaulted` | −1 | 18 | 19.500 | +8.3 %, worse |
 | `tasks_correct` | +10 | 80 | 89.500 | +11.9 %, better |
+| `agents_total` | – | 10 | 16 | +60.0 % |
 | `task_completion` | – | 0.823 | 0.840 | +2.1 % |
 | `agent_time_cost_usd` | – | 240 | 384 | +60.0 % |
 | `backlog_wait_p50_seconds` | – | 3038.3 | 0 | −100.0 % |
+| `capacity_ratio` | – | 0.500 | 0.875 | +75.0 % |
 | `cost_per_task_usd` | – | 11.151 | 14.552 | +30.5 % |
 | `jobs` | – | 657.5 | 768.5 | +16.9 % |
 | `jobs_killed` | – | 39 | 45.500 | +16.7 % |
@@ -72,6 +74,24 @@ A marked place carries `vary`: the value as built and the values a search may tr
 ## Check
 
 <span className="as-tag as-tag--accepted">accepted</span> 10 parts and 10 links; the structural check refuses nothing.
+
+## The architecture as a whole
+
+Read from the document alone, before any simulation: its size, autonomy, exposure, weak points and fixed limits. `agenticspec sim check` reports the same numbers; a marked place counts at its value as built. The KPIs are in the [KPI catalogue](../kpis-catalogue.md) under the block `architecture`.
+
+| KPI | value | what it counts |
+|---|---|---|
+| `agents_total` | 10 | Agent copies: the sum of count over the agent parts. |
+| `principals_total` | 1 | Principal parts. |
+| `human_touchpoints` | 1 | Links that end at a principal and carry a question or a proposal. |
+| `autonomy_depth` | 1 | Links in the longest chain of order and question links from agent to agent. |
+| `model_call_paths` | 3 | Distinct paths of model_call links from an agent part to a model part. |
+| `ungated_model_calls` | 0 | Paths of model_call links from an agent to a model that pass no gateway part. |
+| `single_points` | 2 (`gateway`, `model`) | Parts whose removal leaves some agent with no model_call path to a model. |
+| `border_parts` | 1 | Parts named in the border, the parts that take input from outside. |
+| `egress_targets` | 1 | Distinct parts named in the egress of the sandbox parts. |
+| `shared_workspaces` | 0 | Workspace parts whose sharing is not exclusive. |
+| `capacity_ratio` | 0.5 | Agent copies that claim a pool divided by its capacity, the largest over the pools. |
 
 ## Parts
 
@@ -125,15 +145,20 @@ Every KPI of the architecture as built and of its best variant:
 | `acts_for_without_part` | correctness | 0 | 0 |
 | `agent_time_cost_usd` | quality | 240 | 384 |
 | `agent_without_model_path` | correctness | 0 | 0 |
+| `agents_total` | completeness | 10 | 16 |
+| `autonomy_depth` | quality | 1 | 1 |
 | `backlog_wait_p50_seconds` | quality | 3038.3 | 0 |
 | `backlog_wait_p90_seconds` | quality | 10309.8 | 245.4 |
+| `border_parts` | quality | 1 | 1 |
 | `border_without_part` | correctness | 0 | 0 |
+| `capacity_ratio` | quality | 0.500 | 0.875 |
 | `claim_conflicts` | quality | 0 | 0 |
 | `coordination_calls` | quality | 0 | 0 |
 | `coordination_messages` | quality | 0 | 0 |
 | `cost_per_task_usd` | quality | 11.151 | 14.552 |
 | `cost_usd` | quality | 1879.3 | 2484.5 |
 | `duplicate_runs` | quality | 0 | 0 |
+| `egress_targets` | quality | 1 | 1 |
 | `egress_without_part` | correctness | 0 | 0 |
 | `false_completions_shipped` | correctness | 88.500 | 82 |
 | `firing_failure_share` | correctness | 0 | 0 |
@@ -144,17 +169,20 @@ Every KPI of the architecture as built and of its best variant:
 | `firings_queued` | quality | 0 | 0 |
 | `firings_skipped` | quality | 0 | 0 |
 | `firings_started` | quality | 0 | 0 |
+| `human_touchpoints` | quality | 1 | 1 |
 | `invalid_concurrency` | correctness | 0 | 0 |
 | `invalid_schedule` | correctness | 0 | 0 |
 | `jobs` | quality | 657.5 | 768.5 |
 | `jobs_killed` | quality | 39 | 45.500 |
 | `merge_conflicts` | quality | 0 | 0 |
+| `model_call_paths` | completeness | 3 | 3 |
 | `operator_decided_owner_questions` | quality | 0 | 0 |
 | `operator_wait_share` | quality | 0.008 | 0.005 |
 | `owner_wait_share` | quality | 0.027 | 0.017 |
 | `per_without_part` | correctness | 0 | 0 |
 | `pool_utilization` | quality | 0.075 | 0.087 |
 | `posts` | quality | 0 | 0 |
+| `principals_total` | completeness | 1 | 1 |
 | `question_without_answerer` | correctness | 0 | 0 |
 | `questions_asked` | quality | 92.500 | 103.5 |
 | `questions_defaulted` | quality | 18 | 19.500 |
@@ -167,6 +195,8 @@ Every KPI of the architecture as built and of its best variant:
 | `reviews` | quality | 275.5 | 462.5 |
 | `reviews_rejected` | quality | 107 | 291 |
 | `rework_turns` | quality | 6703.5 | 9200 |
+| `shared_workspaces` | quality | 0 | 0 |
+| `single_points` | quality | 2 | 2 |
 | `slot_wait_share` | quality | 0 | 0 |
 | `steps` | quality | 2094 | 2643 |
 | `steps_failed` | quality | 1273 | 1638.5 |
@@ -185,6 +215,7 @@ Every KPI of the architecture as built and of its best variant:
 | `trigger_target_not_agent` | correctness | 0 | 0 |
 | `trigger_without_source` | correctness | 0 | 0 |
 | `turns` | quality | 18644 | 23332 |
+| `ungated_model_calls` | quality | 0 | 0 |
 | `unknown_link_parts` | correctness | 0 | 0 |
 | `unreachable_parts` | correctness | 0 | 0 |
 | `worker_busy_share` | quality | 0.857 | 0.606 |

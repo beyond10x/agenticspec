@@ -43,6 +43,12 @@ fn check_prints_the_accepted_architecture() {
     let arch = repo().join("architectures/workstation.yaml");
     let accepted = result(&sim(&["check".as_ref(), arch.as_os_str()]));
     assert_eq!(accepted["architecture"], "workstation");
+    assert_eq!(accepted["kpis"]["agents_total"], 13, "{accepted}");
+    assert_eq!(accepted["kpis"]["capacity_ratio"], 0.75, "{accepted}");
+    assert_eq!(
+        accepted["single_points"],
+        serde_json::json!(["gateway", "model"])
+    );
 }
 
 #[test]

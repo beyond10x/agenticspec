@@ -126,6 +126,14 @@
         "kind": "Correctness",
         "value": 0.0
       },
+      "agents_total": {
+        "kind": "Completeness",
+        "value": 9.0
+      },
+      "autonomy_depth": {
+        "kind": "Quality",
+        "value": 1.0
+      },
       "backlog_wait_p50_seconds": {
         "kind": "Quality",
         "value": 0.0
@@ -134,9 +142,17 @@
         "kind": "Quality",
         "value": 1462.8826953872076
       },
+      "border_parts": {
+        "kind": "Quality",
+        "value": 0.0
+      },
       "border_without_part": {
         "kind": "Correctness",
         "value": 0.0
+      },
+      "capacity_ratio": {
+        "kind": "Quality",
+        "value": 0.5
       },
       "claim_conflicts": {
         "kind": "Quality",
@@ -159,6 +175,10 @@
         "value": 1805.5985416664096
       },
       "duplicate_runs": {
+        "kind": "Quality",
+        "value": 0.0
+      },
+      "egress_targets": {
         "kind": "Quality",
         "value": 0.0
       },
@@ -202,6 +222,10 @@
         "kind": "Quality",
         "value": 0.0
       },
+      "human_touchpoints": {
+        "kind": "Quality",
+        "value": 1.0
+      },
       "invalid_concurrency": {
         "kind": "Correctness",
         "value": 0.0
@@ -221,6 +245,10 @@
       "merge_conflicts": {
         "kind": "Quality",
         "value": 0.0
+      },
+      "model_call_paths": {
+        "kind": "Completeness",
+        "value": 2.0
       },
       "operator_decided_owner_questions": {
         "kind": "Quality",
@@ -245,6 +273,10 @@
       "posts": {
         "kind": "Quality",
         "value": 0.0
+      },
+      "principals_total": {
+        "kind": "Completeness",
+        "value": 1.0
       },
       "question_without_answerer": {
         "kind": "Correctness",
@@ -293,6 +325,14 @@
       "rework_turns": {
         "kind": "Quality",
         "value": 6962.875
+      },
+      "shared_workspaces": {
+        "kind": "Quality",
+        "value": 0.0
+      },
+      "single_points": {
+        "kind": "Quality",
+        "value": 2.0
       },
       "slot_wait_share": {
         "kind": "Quality",
@@ -365,6 +405,10 @@
       "turns": {
         "kind": "Quality",
         "value": 20220.125
+      },
+      "ungated_model_calls": {
+        "kind": "Quality",
+        "value": 0.0
       },
       "unknown_link_parts": {
         "kind": "Correctness",
@@ -697,6 +741,14 @@
         "kind": "Correctness",
         "value": 0.0
       },
+      "agents_total": {
+        "kind": "Completeness",
+        "value": 14.0
+      },
+      "autonomy_depth": {
+        "kind": "Quality",
+        "value": 1.0
+      },
       "backlog_wait_p50_seconds": {
         "kind": "Quality",
         "value": 0.0
@@ -705,9 +757,17 @@
         "kind": "Quality",
         "value": 597.325670058975
       },
+      "border_parts": {
+        "kind": "Quality",
+        "value": 0.0
+      },
       "border_without_part": {
         "kind": "Correctness",
         "value": 0.0
+      },
+      "capacity_ratio": {
+        "kind": "Quality",
+        "value": 0.75
       },
       "claim_conflicts": {
         "kind": "Quality",
@@ -730,6 +790,10 @@
         "value": 2423.1971874992905
       },
       "duplicate_runs": {
+        "kind": "Quality",
+        "value": 0.0
+      },
+      "egress_targets": {
         "kind": "Quality",
         "value": 0.0
       },
@@ -773,6 +837,10 @@
         "kind": "Quality",
         "value": 0.0
       },
+      "human_touchpoints": {
+        "kind": "Quality",
+        "value": 1.0
+      },
       "invalid_concurrency": {
         "kind": "Correctness",
         "value": 0.0
@@ -792,6 +860,10 @@
       "merge_conflicts": {
         "kind": "Quality",
         "value": 0.0
+      },
+      "model_call_paths": {
+        "kind": "Completeness",
+        "value": 2.0
       },
       "operator_decided_owner_questions": {
         "kind": "Quality",
@@ -816,6 +888,10 @@
       "posts": {
         "kind": "Quality",
         "value": 0.0
+      },
+      "principals_total": {
+        "kind": "Completeness",
+        "value": 1.0
       },
       "question_without_answerer": {
         "kind": "Correctness",
@@ -864,6 +940,14 @@
       "rework_turns": {
         "kind": "Quality",
         "value": 9142.375
+      },
+      "shared_workspaces": {
+        "kind": "Quality",
+        "value": 0.0
+      },
+      "single_points": {
+        "kind": "Quality",
+        "value": 2.0
       },
       "slot_wait_share": {
         "kind": "Quality",
@@ -936,6 +1020,10 @@
       "turns": {
         "kind": "Quality",
         "value": 26444.125
+      },
+      "ungated_model_calls": {
+        "kind": "Quality",
+        "value": 0.0
       },
       "unknown_link_parts": {
         "kind": "Correctness",
@@ -11781,6 +11869,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 9.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -11789,9 +11885,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -11814,6 +11918,10 @@
           "value": 1805.5985416664096
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -11857,6 +11965,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -11876,6 +11988,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -11900,6 +12016,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -11948,6 +12068,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 6962.875
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -12020,6 +12148,10 @@
         "turns": {
           "kind": "Quality",
           "value": 20220.125
+        },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -12062,6 +12194,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 9.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -12070,9 +12210,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -12095,6 +12243,10 @@
           "value": 1805.5985416664096
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -12138,6 +12290,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -12157,6 +12313,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -12181,6 +12341,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -12229,6 +12393,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 6962.875
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -12301,6 +12473,10 @@
         "turns": {
           "kind": "Quality",
           "value": 20220.125
+        },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -12343,6 +12519,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 9.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -12351,9 +12535,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -12376,6 +12568,10 @@
           "value": 1805.5985416664096
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -12419,6 +12615,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -12438,6 +12638,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -12462,6 +12666,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -12510,6 +12718,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 6962.875
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -12583,6 +12799,10 @@
           "kind": "Quality",
           "value": 20220.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -12624,6 +12844,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 10.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -12632,9 +12860,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -12657,6 +12893,10 @@
           "value": 1832.2538541664073
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -12700,6 +12940,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -12719,6 +12963,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -12743,6 +12991,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -12791,6 +13043,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 7020.0
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -12864,6 +13124,10 @@
           "kind": "Quality",
           "value": 20253.375
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -12905,6 +13169,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 5.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -12913,9 +13185,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.25
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -12938,6 +13218,10 @@
           "value": 933.311875000105
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -12981,6 +13265,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -13000,6 +13288,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -13024,6 +13316,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -13072,6 +13368,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 3506.125
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -13145,6 +13449,10 @@
           "kind": "Quality",
           "value": 10514.25
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -13186,6 +13494,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 13.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -13194,9 +13510,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -13219,6 +13543,10 @@
           "value": 2398.0818749992914
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -13262,6 +13590,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -13281,6 +13613,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -13305,6 +13641,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -13353,6 +13693,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9136.0
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -13426,6 +13774,10 @@
           "kind": "Quality",
           "value": 26430.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -13467,6 +13819,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 9.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -13475,9 +13835,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -13500,6 +13868,10 @@
           "value": 1805.8085416664094
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -13543,6 +13915,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -13562,6 +13938,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -13586,6 +13966,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -13634,6 +14018,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 6962.875
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -13707,6 +14099,10 @@
           "kind": "Quality",
           "value": 20220.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -13748,6 +14144,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 13.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -13756,9 +14160,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -13781,6 +14193,10 @@
           "value": 2398.0818749992914
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -13824,6 +14240,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -13843,6 +14263,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -13867,6 +14291,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -13915,6 +14343,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9136.0
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -13987,6 +14423,10 @@
         "turns": {
           "kind": "Quality",
           "value": 26430.125
+        },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -14029,6 +14469,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 13.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -14037,9 +14485,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -14062,6 +14518,10 @@
           "value": 2398.0818749992914
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -14105,6 +14565,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -14124,6 +14588,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -14148,6 +14616,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -14196,6 +14668,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9136.0
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -14269,6 +14749,10 @@
           "kind": "Quality",
           "value": 26430.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -14310,6 +14794,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 14.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -14318,9 +14810,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -14343,6 +14843,10 @@
           "value": 2423.1971874992905
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -14386,6 +14890,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -14405,6 +14913,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -14429,6 +14941,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -14477,6 +14993,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9142.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -14550,6 +15074,10 @@
           "kind": "Quality",
           "value": 26444.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -14591,6 +15119,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 17.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -14599,9 +15135,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 1.0
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -14624,6 +15168,10 @@
           "value": 2504.311874999281
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -14667,6 +15215,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -14686,6 +15238,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -14710,6 +15266,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -14758,6 +15318,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9225.25
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -14831,6 +15399,10 @@
           "kind": "Quality",
           "value": 26563.625
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -14872,6 +15444,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 13.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -14880,9 +15460,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -14905,6 +15493,10 @@
           "value": 2398.5768749992912
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -14948,6 +15540,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -14967,6 +15563,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -14991,6 +15591,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -15039,6 +15643,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9136.0
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -15112,6 +15724,10 @@
           "kind": "Quality",
           "value": 26430.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -15153,6 +15769,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 14.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -15161,9 +15785,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -15186,6 +15818,10 @@
           "value": 2423.1971874992905
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -15229,6 +15865,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -15248,6 +15888,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -15272,6 +15916,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -15320,6 +15968,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9142.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -15392,6 +16048,10 @@
         "turns": {
           "kind": "Quality",
           "value": 26444.125
+        },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -15434,6 +16094,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 14.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -15442,9 +16110,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -15467,6 +16143,10 @@
           "value": 2423.1971874992905
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -15510,6 +16190,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -15529,6 +16213,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -15553,6 +16241,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -15601,6 +16293,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9142.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -15674,6 +16374,10 @@
           "kind": "Quality",
           "value": 26444.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -15715,6 +16419,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 18.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -15723,9 +16435,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 1.0
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -15748,6 +16468,10 @@
           "value": 2527.5071874992823
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -15791,6 +16515,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -15810,6 +16538,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -15834,6 +16566,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -15882,6 +16618,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9211.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -15955,6 +16699,10 @@
           "kind": "Quality",
           "value": 26553.625
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -15996,6 +16744,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 14.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -16004,9 +16760,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -16029,6 +16793,10 @@
           "value": 2423.69218749929
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -16072,6 +16840,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -16091,6 +16863,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -16115,6 +16891,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -16163,6 +16943,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9142.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -16236,6 +17024,10 @@
           "kind": "Quality",
           "value": 26444.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -16277,6 +17069,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 10.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -16285,9 +17085,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -16310,6 +17118,10 @@
           "value": 1832.5538541664068
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -16353,6 +17165,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -16372,6 +17188,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -16396,6 +17216,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -16444,6 +17268,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 7020.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -16516,6 +17348,10 @@
         "turns": {
           "kind": "Quality",
           "value": 20254.5
+        },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -16558,6 +17394,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 10.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -16566,9 +17410,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -16591,6 +17443,10 @@
           "value": 1832.5538541664068
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -16634,6 +17490,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -16653,6 +17513,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -16677,6 +17541,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -16725,6 +17593,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 7020.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -16798,6 +17674,10 @@
           "kind": "Quality",
           "value": 20254.5
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -16839,6 +17719,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 9.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -16847,9 +17735,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -16872,6 +17768,10 @@
           "value": 1805.8085416664094
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -16915,6 +17815,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -16934,6 +17838,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -16958,6 +17866,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -17006,6 +17918,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 6962.875
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -17079,6 +17999,10 @@
           "kind": "Quality",
           "value": 20220.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -17120,6 +18044,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 6.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -17128,9 +18060,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.25
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -17153,6 +18093,10 @@
           "value": 959.452187500106
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -17196,6 +18140,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -17215,6 +18163,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -17239,6 +18191,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -17287,6 +18243,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 3525.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -17360,6 +18324,10 @@
           "kind": "Quality",
           "value": 10540.5
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -17401,6 +18369,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 14.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -17409,9 +18385,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -17434,6 +18418,10 @@
           "value": 2423.69218749929
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -17477,6 +18465,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -17496,6 +18488,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -17520,6 +18516,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -17568,6 +18568,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9142.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -17641,6 +18649,10 @@
           "kind": "Quality",
           "value": 26444.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -17682,6 +18694,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 10.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -17690,9 +18710,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -17715,6 +18743,10 @@
           "value": 1832.5771874997404
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -17758,6 +18790,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -17777,6 +18813,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -17801,6 +18841,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -17849,6 +18893,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 7020.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -17922,6 +18974,10 @@
           "kind": "Quality",
           "value": 20254.5
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -17963,6 +19019,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 10.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -17971,9 +19035,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -17996,6 +19068,10 @@
           "value": 1832.2538541664073
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -18039,6 +19115,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -18058,6 +19138,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -18082,6 +19166,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -18130,6 +19218,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 7020.0
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -18203,6 +19299,10 @@
           "kind": "Quality",
           "value": 20253.375
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -18244,6 +19344,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 13.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -18252,9 +19360,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -18277,6 +19393,10 @@
           "value": 2398.5768749992912
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -18320,6 +19440,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -18339,6 +19463,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -18363,6 +19491,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -18411,6 +19543,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9136.0
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -18484,6 +19624,10 @@
           "kind": "Quality",
           "value": 26430.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -18525,6 +19669,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 18.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -18533,9 +19685,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 1.0
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -18558,6 +19718,10 @@
           "value": 2528.4071874992824
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -18601,6 +19765,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -18620,6 +19788,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -18644,6 +19816,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -18692,6 +19868,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9211.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -18765,6 +19949,10 @@
           "kind": "Quality",
           "value": 26553.625
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -18806,6 +19994,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 14.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -18814,9 +20010,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -18839,6 +20043,10 @@
           "value": 2423.7471874992902
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -18882,6 +20090,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -18901,6 +20113,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -18925,6 +20141,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -18973,6 +20193,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9142.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -19045,6 +20273,10 @@
         "turns": {
           "kind": "Quality",
           "value": 26444.125
+        },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -19087,6 +20319,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 14.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -19095,9 +20335,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -19120,6 +20368,10 @@
           "value": 2423.7471874992902
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -19163,6 +20415,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -19182,6 +20438,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -19206,6 +20466,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -19254,6 +20518,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9142.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -19326,6 +20598,10 @@
         "turns": {
           "kind": "Quality",
           "value": 26444.125
+        },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -19368,6 +20644,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 14.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -19376,9 +20660,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -19401,6 +20693,10 @@
           "value": 2423.7471874992902
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -19444,6 +20740,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -19463,6 +20763,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -19487,6 +20791,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -19535,6 +20843,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9142.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -19608,6 +20924,10 @@
           "kind": "Quality",
           "value": 26444.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -19649,6 +20969,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 13.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -19657,9 +20985,17 @@
           "kind": "Quality",
           "value": 1462.8826953872076
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.75
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -19682,6 +21018,10 @@
           "value": 2398.631874999291
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -19725,6 +21065,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -19744,6 +21088,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -19768,6 +21116,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -19816,6 +21168,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9136.0
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -19889,6 +21249,10 @@
           "kind": "Quality",
           "value": 26430.125
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -19930,6 +21294,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 10.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -19938,9 +21310,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 0.5
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -19963,6 +21343,10 @@
           "value": 1832.5771874997404
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -20006,6 +21390,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -20025,6 +21413,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -20049,6 +21441,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -20097,6 +21493,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 7020.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -20170,6 +21574,10 @@
           "kind": "Quality",
           "value": 20254.5
         },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -20211,6 +21619,14 @@
           "kind": "Correctness",
           "value": 0.0
         },
+        "agents_total": {
+          "kind": "Completeness",
+          "value": 18.0
+        },
+        "autonomy_depth": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "backlog_wait_p50_seconds": {
           "kind": "Quality",
           "value": 0.0
@@ -20219,9 +21635,17 @@
           "kind": "Quality",
           "value": 597.325670058975
         },
+        "border_parts": {
+          "kind": "Quality",
+          "value": 0.0
+        },
         "border_without_part": {
           "kind": "Correctness",
           "value": 0.0
+        },
+        "capacity_ratio": {
+          "kind": "Quality",
+          "value": 1.0
         },
         "claim_conflicts": {
           "kind": "Quality",
@@ -20244,6 +21668,10 @@
           "value": 2528.5071874992823
         },
         "duplicate_runs": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "egress_targets": {
           "kind": "Quality",
           "value": 0.0
         },
@@ -20287,6 +21715,10 @@
           "kind": "Quality",
           "value": 0.0
         },
+        "human_touchpoints": {
+          "kind": "Quality",
+          "value": 1.0
+        },
         "invalid_concurrency": {
           "kind": "Correctness",
           "value": 0.0
@@ -20306,6 +21738,10 @@
         "merge_conflicts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "model_call_paths": {
+          "kind": "Completeness",
+          "value": 2.0
         },
         "operator_decided_owner_questions": {
           "kind": "Quality",
@@ -20330,6 +21766,10 @@
         "posts": {
           "kind": "Quality",
           "value": 0.0
+        },
+        "principals_total": {
+          "kind": "Completeness",
+          "value": 1.0
         },
         "question_without_answerer": {
           "kind": "Correctness",
@@ -20378,6 +21818,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9211.375
+        },
+        "shared_workspaces": {
+          "kind": "Quality",
+          "value": 0.0
+        },
+        "single_points": {
+          "kind": "Quality",
+          "value": 2.0
         },
         "slot_wait_share": {
           "kind": "Quality",
@@ -20450,6 +21898,10 @@
         "turns": {
           "kind": "Quality",
           "value": 26553.625
+        },
+        "ungated_model_calls": {
+          "kind": "Quality",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",

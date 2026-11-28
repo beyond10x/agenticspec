@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest 1c85283ae85dcd279c75a78ac6655a0487a7fc753ad961048719d83148ee6045
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -2325,6 +2325,17 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
     json::push_integer(out, value.parts);
     json::member(out, "links");
     json::push_integer(out, value.links);
+    json::member(out, "kpis");
+    json::push_value(out, &value.kpis);
+    json::member(out, "single_points");
+    out.push('[');
+    for (index0, item0) in value.single_points.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
     out.push('}');
 }
 
@@ -2334,7 +2345,7 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckResult, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "parts", "links"])?;
+    json::closed_at(value, at, &["architecture", "parts", "links", "kpis", "single_points"])?;
     Ok(agenticspec_types::cli::SimCheckResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -2350,6 +2361,23 @@ pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) ->
             let at2 = json::nested(at, "links");
             let member2 = json::member_at(value, at, "links")?;
             json::integer_at(member2, &at2, "an integer")?
+        },
+        kpis: {
+            let at3 = json::nested(at, "kpis");
+            let member3 = json::member_at(value, at, "kpis")?;
+            json::value_at(member3, &at3)
+        },
+        single_points: {
+            let at4 = json::nested(at, "single_points");
+            let member4 = json::member_at(value, at, "single_points")?;
+            {
+                let mut items4 = Vec::new();
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
+                    let nested4 = json::nested(&at4, &index4.to_string());
+                    items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
+                }
+                items4
+            }
         },
     })
 }

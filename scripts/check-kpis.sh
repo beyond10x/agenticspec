@@ -11,7 +11,10 @@
 #   4. kind, unit, direction, status and each mode value come from their lists; a correctness KPI
 #      is a gate unless it says `gate: false`; source is `design`, `docs/kpis.md` or
 #      `research/<id>`;
-#   5. every event in `reads` is declared in the `events:` section of a block or of the session IR.
+#   5. every event in `reads` is declared in the `events:` section of a block or of the session IR;
+#   6. every KPI of the architecture as a whole that `agenticspec sim check` reports (`whole` below,
+#      the list of crates/agenticspec-sim/src/whole.rs) is listed with block architecture and
+#      source design.
 # Needs yq (mikefarah, v4).
 #
 # Usage: scripts/check-kpis.sh [FILE]
@@ -20,6 +23,8 @@ set -eu
 root="$(cd "$(dirname "$0")/.." && pwd)"
 file="${1:-$root/kpis/catalogue.yaml}"
 planned="verification memory plan monitor"
+whole="agents_total principals_total human_touchpoints autonomy_depth model_call_paths ungated_model_calls
+single_points border_parts egress_targets shared_workspaces capacity_ratio"
 
 command -v yq >/dev/null 2>&1 || { echo "check-kpis: yq is needed" >&2; exit 2; }
 work="$(mktemp -d)"
@@ -33,6 +38,7 @@ yq '.kpis[] | .id + " " + .block' "$file" >"$work/id-block"
 yq '.kpis[] | .id + " " + .kind + " " + .unit + " " + .direction + " " + .status + " " + (.gate | tag)' "$file" >"$work/fields"
 yq '.kpis[] | .id + " " + .kind + " " + .gate' "$file" >"$work/gates"
 yq '.kpis[] | .id + " " + .source' "$file" >"$work/sources"
+yq '.kpis[] | .id + " " + .block + " " + .source' "$file" >"$work/id-block-source"
 yq '.kpis[] | select(.summary == null or .how == null or .reads == null) | .id' "$file" >"$work/missing"
 yq '.kpis[] | .id + " " + (.modes.autonomous // "-") + " " + (.modes.pairing // "-") + " " + (.modes.review // "-") + " " + ((.modes // {}) | keys | join(","))' "$file" >"$work/modes"
 yq '.kpis[] | .id + " " + (.reads | join(" "))' "$file" >"$work/reads"
@@ -101,6 +107,11 @@ while read -r id events; do
     grep -q -x "$event" "$work/events" || say "$id: reads $event, which is not a declared event"
   done
 done <"$work/reads"
+
+for id in $whole; do
+  grep -q -x "$id architecture design" "$work/id-block-source" ||
+    say "$id: agenticspec sim check reports it; list it with block architecture and source design"
+done
 
 if [ -s "$work/fail" ]; then
   exit 1

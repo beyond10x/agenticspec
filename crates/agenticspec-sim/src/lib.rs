@@ -11,5 +11,6 @@ pub mod profile;
 pub mod rng;
 pub mod search;
 pub mod sim;
+pub mod whole;
 
 pub use search::{Experiment, run};

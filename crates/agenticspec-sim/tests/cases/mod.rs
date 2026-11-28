@@ -10,3 +10,4 @@ mod marked;
 mod search;
 mod sim;
 mod swarm;
+mod whole;

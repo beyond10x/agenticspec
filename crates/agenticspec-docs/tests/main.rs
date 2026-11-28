@@ -177,6 +177,43 @@ fn every_architecture_has_a_page_and_a_rendered_html() {
     }
 }
 
+/// The page of an architecture, its catalog entry and the catalog index show the KPIs of the
+/// architecture as a whole with the numbers `agenticspec sim check` reports.
+#[test]
+fn the_architecture_as_a_whole_shows_what_check_reports() {
+    let g = generated_with_fixture();
+    let checked =
+        agenticspec_sim::cli::check(&root().join("architectures/workstation.yaml")).unwrap();
+    let page = &g.files["docs/architectures/workstation.md"];
+    let entry = &g.files["docs/catalog/workstation.md"];
+    let index = &g.files["docs/catalog/index.md"];
+    for text in [page, entry] {
+        assert!(text.contains("\n## The architecture as a whole\n"));
+    }
+    for m in agenticspec_sim::whole::ARCHITECTURE_KPIS {
+        let v = checked["kpis"][m.id].as_f64().expect("a number");
+        let shown = if v.fract() == 0.0 {
+            format!("{}", v as i64)
+        } else {
+            format!("{v}")
+        };
+        let row = format!("| `{}` | {shown}", m.id);
+        assert!(page.contains(&row), "the page shows {row}");
+        assert!(entry.contains(&row), "the catalog entry shows {row}");
+        assert!(
+            index.contains(&format!("\"id\":\"{}\"", m.id)),
+            "the index has {}",
+            m.id
+        );
+    }
+    assert!(page.contains("| `single_points` | 2 (`gateway`, `model`) |"));
+    assert!(index.contains("<ArchitectureKpis data={"));
+    assert!(
+        index.contains("\"name\":\"solo\""),
+        "an unsearched architecture is in the table"
+    );
+}
+
 /// SUF-002: on an architecture with an experiment, the search result (the marked places with their
 /// best values and the KPIs that moved) comes before the graph.
 #[test]
