@@ -10,6 +10,11 @@
 //! edge joins on a track of its own label row; a card that several cards of its row send to drops
 //! to a row of its own; the passing items of a long line take one x where they fit, and a line
 //! leaves a card shorter than its row straight, so no line crosses a card.
+//!
+//! A row of cards wider than [`page::WRAP_WIDTH`] wraps ([`layered`]): the layout is made again
+//! with its cards in rows of their own, which every edge reaches as any other row. The cards a
+//! frame holds wrap into lines the same way ([`place_lines`]), and an edge leaves a line through
+//! the gap below it and the frame's corridor ([`Card::way_out`]).
 
 use crate::fmt::{esc, mono_w, px, text_w};
 use crate::page::{self, Direction, Mark, Page, Region};
@@ -873,22 +878,101 @@ struct Card {
     /// Two node cards side by side in one frame: their parts and the gap's left and right edge
     /// and top, from the item's top left.
     gaps: Vec<(usize, usize, f64, f64, f64)>,
+    /// Each frame whose cards wrap into lines.
+    lines: Vec<Lines>,
 }
+
+/// A frame whose cards wrap into lines: its part, the top and bottom of each line and the left
+/// edge of its corridor (the room beside the lines an edge runs along), from the item's top
+/// left.
+struct Lines {
+    frame: usize,
+    rows: Vec<(f64, f64)>,
+    corridor: f64,
+}
+
+/// The gap between two lines of a frame whose cards wrap, and the room of its corridor. An edge
+/// from a card of a line runs down into the gap below the line, along it to the corridor and
+/// down the corridor out of the frame (up, to a card it enters from above).
+const WRAP_GAP: f64 = 28.0;
+const CORRIDOR: f64 = 22.0;
 
 impl Card {
     fn new(sc: &Scene, part: usize) -> Self {
-        let mut c = Card {
-            w: 0.0,
-            h: 0.0,
-            row: sc.parts[part].row,
-            nodes: Vec::new(),
-            frames: Vec::new(),
-            gaps: Vec::new(),
-        };
+        let mut c = Card::empty(sc.parts[part].row);
         let (w, h) = place(sc, part, 0.0, 0.0, &mut c);
         c.w = w;
         c.h = h;
         c
+    }
+
+    fn empty(row: usize) -> Self {
+        Card {
+            w: 0.0,
+            h: 0.0,
+            row,
+            nodes: Vec::new(),
+            frames: Vec::new(),
+            gaps: Vec::new(),
+            lines: Vec::new(),
+        }
+    }
+
+    /// The way out of the frames that hold node card `p`, from the point `x`, `y` on its bottom
+    /// (`up`: on its top): through each frame whose cards wrap, from a line that is not its last
+    /// (`up`: first), into the gap next to the line, along it to the corridor and along the
+    /// corridor out. The corners, from the item's top left; none when no wrapped frame is in the
+    /// way, so the edge leaves the card straight. `k` spreads the edges of one gap and corridor.
+    fn way_out(
+        &self,
+        sc: &Scene,
+        p: usize,
+        (x, y): (f64, f64),
+        up: bool,
+        k: usize,
+    ) -> Vec<(f64, f64)> {
+        let mut chain: Vec<usize> = Vec::new();
+        if self.frames.iter().any(|f| f.0 == p) {
+            chain.push(p);
+        }
+        let mut cur = sc.parent[p];
+        while let Some(f) = cur {
+            if !self.frames.iter().any(|x| x.0 == f) {
+                break;
+            }
+            chain.push(f);
+            cur = sc.parent[f];
+        }
+        let spread = 3.0 * (k % 5) as f64;
+        let (mut x, mut y) = (x, y);
+        let mut pts = Vec::new();
+        for f in chain {
+            let Some(&(_, _, fy, _, fh)) = self.frames.iter().find(|x| x.0 == f) else {
+                continue;
+            };
+            if let Some(lines) = self.lines.iter().find(|l| l.frame == f) {
+                let rows = &lines.rows;
+                let line = if up {
+                    rows.iter().position(|r| y >= r.0 - 0.5 && y < r.1)
+                } else {
+                    rows.iter().position(|r| y > r.0 && y <= r.1 + 0.5)
+                };
+                let next = match line {
+                    Some(l) if up && l > 0 => Some(rows[l - 1].1),
+                    Some(l) if !up && l + 1 < rows.len() => Some(rows[l].1),
+                    _ => None,
+                };
+                if let Some(bottom) = next {
+                    let gy = bottom + 8.0 + spread;
+                    let cx = lines.corridor + 4.0 + spread;
+                    pts.push((x, gy));
+                    pts.push((cx, gy));
+                    x = cx;
+                }
+            }
+            y = if up { fy } else { fy + fh };
+        }
+        pts
     }
 
     /// The node card of part `p`: its offset and size.
@@ -912,6 +996,9 @@ impl Card {
         }
         for g in &mut self.gaps {
             *g = (g.1, g.0, w - g.3, w - g.2, g.4);
+        }
+        for l in &mut self.lines {
+            l.corridor = w - l.corridor - CORRIDOR;
         }
     }
 }
@@ -972,27 +1059,63 @@ fn place(sc: &Scene, p: usize, x: f64, y: f64, card: &mut Card) -> (f64, f64) {
         members.push(p);
     }
     members.extend((0..sc.parts.len()).filter(|&c| sc.parent[c] == Some(p)));
+    let plain = |m: usize| m == p || !sc.framed(m);
+    let gap = |a: usize, m: usize| -> f64 {
+        let widest = if plain(a) && plain(m) {
+            sc.links
+                .iter()
+                .filter(|l| {
+                    let (f, t) = (sc.index(&l.from), sc.index(&l.to));
+                    (f == Some(a) && t == Some(m)) || (f == Some(m) && t == Some(a))
+                })
+                .map(|l| text_w(&edge_label(sc, l, false), 11.5, false) + 18.0 + 24.0)
+                .fold(0.0, f64::max)
+        } else {
+            0.0
+        };
+        FGAP.max(widest)
+    };
+    // The members in lines when side by side they would be wider than the wrap width.
+    let widths: Vec<f64> = members
+        .iter()
+        .map(|&m| {
+            if m == p {
+                node_size(sc, p).0
+            } else {
+                place(sc, m, 0.0, 0.0, &mut Card::empty(0)).0
+            }
+        })
+        .collect();
+    let gaps: Vec<f64> = (0..members.len())
+        .map(|k| {
+            if k == 0 {
+                0.0
+            } else {
+                gap(members[k - 1], members[k])
+            }
+        })
+        .collect();
+    let mut lines: Vec<Vec<usize>> = Vec::new();
+    for (k, l) in wrap_lines(&widths, &gaps, page::WRAP_WIDTH)
+        .into_iter()
+        .enumerate()
+    {
+        if lines.len() <= l {
+            lines.push(Vec::new());
+        }
+        lines[l].push(members[k]);
+    }
+    if lines.len() > 1 {
+        return place_lines(sc, p, (x, y), &lines, &gap, card, fi);
+    }
     let top = y + FHEAD;
     let mut cx = x + FPAD;
     let mut h: f64 = 0.0;
     let mut prev: Option<usize> = None;
-    let plain = |m: usize| m == p || !sc.framed(m);
     for &m in &members {
         let left = cx;
         if let Some(a) = prev {
-            let widest = if plain(a) && plain(m) {
-                sc.links
-                    .iter()
-                    .filter(|l| {
-                        let (f, t) = (sc.index(&l.from), sc.index(&l.to));
-                        (f == Some(a) && t == Some(m)) || (f == Some(m) && t == Some(a))
-                    })
-                    .map(|l| text_w(&edge_label(sc, l, false), 11.5, false) + 18.0 + 24.0)
-                    .fold(0.0, f64::max)
-            } else {
-                0.0
-            };
-            cx += FGAP.max(widest);
+            cx += gap(a, m);
             if plain(a) && plain(m) {
                 card.gaps.push((a, m, left, cx, top));
             }
@@ -1011,6 +1134,128 @@ fn place(sc: &Scene, p: usize, x: f64, y: f64, card: &mut Card) -> (f64, f64) {
     let w = (cx - x + FPAD).max(frame_head_w(sc, p) + 2.0 * FPAD).ceil();
     let h = FHEAD + h.max(20.0) + FPAD;
     card.frames[fi] = (p, x, y, w, h);
+    (w, h)
+}
+
+/// The line of each of a row of cards of these widths, `gaps[k]` before card `k`: as few lines as
+/// keep each within `target` (a card wider alone has a line of its own), in order, the width
+/// shared out as evenly as the order allows. One line when the row fits.
+fn wrap_lines(widths: &[f64], gaps: &[f64], target: f64) -> Vec<usize> {
+    let total: f64 = widths.iter().sum::<f64>() + gaps.iter().skip(1).sum::<f64>();
+    let mut n = ((total / target).ceil() as usize).max(1);
+    loop {
+        let per = total / n as f64;
+        let mut lines = Vec::with_capacity(widths.len());
+        let mut at = 0.0;
+        for (k, &w) in widths.iter().enumerate() {
+            let start = if k == 0 { 0.0 } else { at + gaps[k] };
+            lines.push((((start + w / 2.0) / per) as usize).min(n - 1));
+            at = start + w;
+        }
+        // Lines no card fell into are dropped.
+        let mut seen = 0;
+        let mut last = usize::MAX;
+        for l in &mut lines {
+            if *l != last {
+                last = *l;
+                seen += 1;
+            }
+            *l = seen - 1;
+        }
+        let mut fits = true;
+        let mut used = 0.0;
+        for k in 0..widths.len() {
+            if k > 0 && lines[k] == lines[k - 1] {
+                used += gaps[k] + widths[k];
+            } else {
+                used = widths[k];
+            }
+            let alone = (k == 0 || lines[k] != lines[k - 1])
+                && (k + 1 == widths.len() || lines[k + 1] != lines[k]);
+            if used > target && !alone {
+                fits = false;
+            }
+        }
+        if fits || n >= widths.len() {
+            return lines;
+        }
+        n += 1;
+    }
+}
+
+/// Each row of cards (indices into `widths`, in their order) that is wider than `target` with
+/// [`CARD_GAP`] between its cards, cut into lines; none when every row fits.
+fn cut(rows: &[Vec<usize>], widths: &[f64], target: f64) -> Option<Wrap> {
+    let mut at: Vec<Option<(usize, usize)>> = vec![None; widths.len()];
+    let mut wraps = false;
+    for row in rows {
+        let w: Vec<f64> = row.iter().map(|&c| widths[c]).collect();
+        let lines = wrap_lines(&w, &vec![CARD_GAP; row.len()], target);
+        if lines.last().is_none_or(|&l| l == 0) {
+            continue;
+        }
+        wraps = true;
+        for (k, (&c, line)) in row.iter().zip(lines).enumerate() {
+            at[c] = Some((line, k));
+        }
+    }
+    wraps.then_some(Wrap { at, target })
+}
+
+/// Lays out the frame of part `p` whose members wrap: each line left to right as [`place`] lays
+/// out one, the lines top to bottom with [`WRAP_GAP`] between them, and the corridor right of the
+/// widest line. Returns the size.
+fn place_lines(
+    sc: &Scene,
+    p: usize,
+    (x, y): (f64, f64),
+    lines: &[Vec<usize>],
+    gap: &dyn Fn(usize, usize) -> f64,
+    card: &mut Card,
+    fi: usize,
+) -> (f64, f64) {
+    let plain = |m: usize| m == p || !sc.framed(m);
+    let mut top = y + FHEAD;
+    let mut rows: Vec<(f64, f64)> = Vec::new();
+    let mut widest: f64 = 0.0;
+    for line in lines {
+        let mut cx = x + FPAD;
+        let mut h: f64 = 0.0;
+        let mut prev: Option<usize> = None;
+        for &m in line {
+            let left = cx;
+            if let Some(a) = prev {
+                cx += gap(a, m);
+                if plain(a) && plain(m) {
+                    card.gaps.push((a, m, left, cx, top));
+                }
+            }
+            let (mw, mh) = if m == p {
+                let (w, h) = node_size(sc, p);
+                card.nodes.push((p, cx, top, w, h));
+                (w, h)
+            } else {
+                place(sc, m, cx, top, card)
+            };
+            cx += mw;
+            h = h.max(mh);
+            prev = Some(m);
+        }
+        rows.push((top, top + h));
+        widest = widest.max(cx - x);
+        top += h + WRAP_GAP;
+    }
+    let bottom = rows.last().map_or(top, |r| r.1);
+    let w = (widest + CORRIDOR + FPAD)
+        .max(frame_head_w(sc, p) + 2.0 * FPAD)
+        .ceil();
+    let h = bottom - y + FPAD;
+    card.frames[fi] = (p, x, y, w, h);
+    card.lines.push(Lines {
+        frame: p,
+        rows,
+        corridor: x + widest,
+    });
     (w, h)
 }
 
@@ -1658,7 +1903,42 @@ fn bands(page: &Page, decor: &Decor, colours_of: &Page) -> (String, f64, f64) {
     (svg, width, height)
 }
 
+/// Where the cards of rows wider than [`page::WRAP_WIDTH`] go, by card: the line of its row and
+/// its place in the order the row had in one line; and the width the lines were cut to.
+struct Wrap {
+    at: Vec<Option<(usize, usize)>>,
+    target: f64,
+}
+
+/// A page laid out in rows. A row whose cards with their gaps would be wider than
+/// [`page::WRAP_WIDTH`] wraps: the layout is made again with its cards in as many rows as keep
+/// each within it, in the order the one row gave them, read row by row and kept there; edges to
+/// and between the new rows are routed as between any two rows. When the edges that pass between
+/// the new rows still make the layout wider, its rows are cut narrower and it is made again, at
+/// most [`WRAP_PASSES`] times.
 fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
+    let mut wrap: Option<Wrap> = None;
+    for pass in 0..WRAP_PASSES {
+        match lay(page, decor, frame, wrap.as_ref(), pass + 1 == WRAP_PASSES) {
+            Ok(d) => return d,
+            Err(w) => wrap = Some(w),
+        }
+    }
+    unreachable!("the last pass lays out as it is")
+}
+
+/// The least gap between two cards of a row, as [`page::WRAP_WIDTH`] counts it, and how often a
+/// layout is made at most.
+const CARD_GAP: f64 = 40.0;
+const WRAP_PASSES: usize = 6;
+
+fn lay(
+    page: &Page,
+    decor: &Decor,
+    frame: &Frame,
+    wrap: Option<&Wrap>,
+    last: bool,
+) -> Result<Drawn, Wrap> {
     let scene = Scene::read(page, decor, frame);
     let sc = &scene;
     let n = sc.parts.len();
@@ -1782,6 +2062,17 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
         .collect();
     for (c, card) in cards.iter_mut().enumerate() {
         card.row = 2 * card.row + usize::from(sinks[c]);
+    }
+    // The rows of a row that wraps follow one another; each card keeps its place in the order.
+    let base_row: Vec<usize> = cards.iter().map(|c| c.row).collect();
+    let stride = cards.len() + 1;
+    let mut pin: Vec<Option<usize>> = vec![None; cards.len()];
+    if let Some(w) = wrap {
+        for (c, card) in cards.iter_mut().enumerate() {
+            let (line, place) = w.at.get(c).copied().flatten().unwrap_or((0, 0));
+            card.row = card.row * stride + line;
+            pin[c] = w.at.get(c).copied().flatten().map(|_| place);
+        }
     }
 
     let mut rows: Vec<usize> = cards.iter().map(|c| c.row).collect();
@@ -2010,6 +2301,25 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
         }
     }
     let groups: Vec<usize> = (0..items.len()).map(|i| find(&mut group, i)).collect();
+    // The cards of a wrapped row keep their order: a sweep moves what lies between them only.
+    let pinned = |layer: &mut Vec<usize>| {
+        let at: Vec<usize> = (0..layer.len())
+            .filter(|&k| pin.get(layer[k]).copied().flatten().is_some())
+            .collect();
+        let mut held: Vec<usize> = at.iter().map(|&k| layer[k]).collect();
+        held.sort_by_key(|&it| pin[it]);
+        for (&k, it) in at.iter().zip(held) {
+            layer[k] = it;
+        }
+    };
+    let has_pin = |layer: &[usize]| {
+        layer
+            .iter()
+            .any(|&it| pin.get(it).copied().flatten().is_some())
+    };
+    for layer in &mut layers {
+        pinned(layer);
+    }
 
     let mut pos = vec![0.0; items.len()];
     let renumber = |layers: &Vec<Vec<usize>>, pos: &mut Vec<f64>| {
@@ -2087,6 +2397,7 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
                 for (g, _, _) in &gkeys {
                     next.extend(layer.iter().copied().filter(|&m| groups[m] == *g));
                 }
+                pinned(&mut next);
                 layers[li] = next;
                 renumber(&layers, &mut pos);
             }
@@ -2102,6 +2413,9 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
     // row goes to the middle, so a star of links draws between neighbours rather than as arcs.
     let degree = |c: usize| levels.iter().filter(|v| v.a == c || v.b == c).count();
     for layer in &mut layers {
+        if has_pin(layer) {
+            continue;
+        }
         let mut done: Vec<usize> = Vec::new();
         let mut k = 0;
         while k < layer.len() {
@@ -2119,6 +2433,24 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
             }
             done.push(g);
             k += len.max(1);
+        }
+    }
+    // A row whose cards with their gaps are wider than the wrap width: its cards in that order,
+    // cut into rows that each stay within it, and the layout made again.
+    let widths: Vec<f64> = cards.iter().map(|c| c.w).collect();
+    if wrap.is_none() && !last {
+        let rows: Vec<Vec<usize>> = layers
+            .iter()
+            .map(|layer| {
+                layer
+                    .iter()
+                    .copied()
+                    .filter(|&it| it < cards.len())
+                    .collect()
+            })
+            .collect();
+        if let Some(w) = cut(&rows, &widths, page::WRAP_WIDTH) {
+            return Err(w);
         }
     }
     // A frame draws its own node card first, on the left. When it has more links within the row
@@ -2177,6 +2509,19 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
             x += items[it].w;
         }
     }
+    // The cards of a wrapped row hold to where they stand packed from one left edge, so its rows
+    // stand one under another; what passes between them moves around them.
+    let mut fixed: Vec<Option<f64>> = vec![None; items.len()];
+    for layer in &layers {
+        let mut x = 0.0;
+        for &it in layer
+            .iter()
+            .filter(|&&it| pin.get(it).copied().flatten().is_some())
+        {
+            fixed[it] = Some(x + items[it].w / 2.0);
+            x += items[it].w + CARD_GAP;
+        }
+    }
     let place = |layer: &[usize], items: &mut Vec<Item>, desired: &[f64]| {
         let mut offs = vec![0.0; layer.len()];
         for k in 1..layer.len() {
@@ -2187,6 +2532,7 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
         let weight: Vec<f64> = layer
             .iter()
             .map(|&it| match items[it].kind {
+                ItemKind::Node(_) if fixed[it].is_some() => 50.0,
                 ItemKind::Node(_) => 1.0,
                 ItemKind::Label(_) | ItemKind::Fan(_) => 1.5,
                 ItemKind::Dummy(_) | ItemKind::Trunk(_) => 2.0,
@@ -2204,6 +2550,9 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
             let desired: Vec<f64> = layer
                 .iter()
                 .map(|&it| {
+                    if let Some(x) = fixed[it] {
+                        return x;
+                    }
                     let ns: Vec<usize> = up[it].iter().chain(down[it].iter()).copied().collect();
                     if ns.is_empty() {
                         items[it].x
@@ -2273,6 +2622,93 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
         if let Some((x, _)) = best {
             for &it in run {
                 items[it].x = x;
+            }
+        }
+    }
+    // In a layout whose rows wrapped, a row the placement moved out past the widest row (or the
+    // wrap width, when wider) moves back in as a whole, so the rows stand one under another.
+    if let Some(w) = wrap {
+        let spans: Vec<(f64, f64)> = layers
+            .iter()
+            .map(|layer| {
+                layer
+                    .iter()
+                    .fold((f64::INFINITY, f64::NEG_INFINITY), |(l, r), &it| {
+                        (
+                            l.min(items[it].x - items[it].w / 2.0),
+                            r.max(items[it].x + items[it].w / 2.0),
+                        )
+                    })
+            })
+            .collect();
+        let widest = spans
+            .iter()
+            .filter(|s| s.0.is_finite())
+            .max_by(|a, b| (a.1 - a.0).total_cmp(&(b.1 - b.0)));
+        // Wider than the wrap width with the edges that pass between the rows: the rows that
+        // wrapped are cut again, narrower by the excess, from the order they had in one row.
+        if let Some(&(l, r)) = widest
+            && r - l > page::WRAP_WIDTH + 0.5
+            && !last
+        {
+            let mut rows: Vec<(usize, Vec<(usize, usize)>)> = Vec::new();
+            for (c, a) in w.at.iter().enumerate() {
+                let Some((_, k)) = *a else { continue };
+                match rows.iter_mut().find(|x| x.0 == base_row[c]) {
+                    Some(x) => x.1.push((k, c)),
+                    None => rows.push((base_row[c], vec![(k, c)])),
+                }
+            }
+            let rows: Vec<Vec<usize>> = rows
+                .into_iter()
+                .map(|(_, mut r)| {
+                    r.sort_unstable();
+                    r.into_iter().map(|x| x.1).collect()
+                })
+                .collect();
+            // When that cuts the same lines, the widest line of them breaks.
+            let line_w = |row: &Vec<usize>| -> f64 {
+                let mut most: f64 = 0.0;
+                let mut used = 0.0;
+                for (k, &c) in row.iter().enumerate() {
+                    let line = |c: usize| w.at[c].map(|a| a.0);
+                    used = if k > 0 && line(row[k - 1]) == line(c) {
+                        used + CARD_GAP + widths[c]
+                    } else {
+                        widths[c]
+                    };
+                    most = most.max(used);
+                }
+                most
+            };
+            let narrower = (w.target - (r - l - page::WRAP_WIDTH)).max(1.0);
+            let next = match cut(&rows, &widths, narrower) {
+                Some(n) if n.at != w.at => Some(n),
+                _ => {
+                    let widest_line = rows.iter().map(line_w).fold(0.0, f64::max);
+                    cut(&rows, &widths, (widest_line - 1.0).min(narrower).max(1.0))
+                }
+            };
+            if let Some(next) = next.filter(|n| n.at != w.at) {
+                return Err(next);
+            }
+        }
+        if let Some(&(l, r)) = widest {
+            let room = (r - l).max(page::WRAP_WIDTH);
+            let lo = l - (room - (r - l)) / 2.0;
+            for (layer, &(l, r)) in layers.iter().zip(&spans) {
+                let by = if !l.is_finite() {
+                    0.0
+                } else if l < lo {
+                    lo - l
+                } else if r > lo + room {
+                    (lo + room - r).max(lo - l)
+                } else {
+                    0.0
+                };
+                for &it in layer {
+                    items[it].x += by;
+                }
             }
         }
     }
@@ -2501,6 +2937,20 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
         }
     }
 
+    // The way out of the wrapped frames of item `ci` from a point on the bottom (`up`: top) of
+    // node card `part`, in the page's coordinates ([`Card::way_out`]).
+    let way_out = |ci: usize, part: Option<usize>, (x, y): (f64, f64), up: bool, k: usize| {
+        let c = &cards[ci];
+        let Some(p) = part.filter(|_| !c.lines.is_empty()) else {
+            return Vec::new();
+        };
+        let (x0, y0) = (items[ci].x - c.w / 2.0, items[ci].y - c.h / 2.0);
+        c.way_out(sc, p, (x - x0, y - y0), up, k)
+            .into_iter()
+            .map(|(a, b)| (a + x0, b + y0))
+            .collect::<Vec<_>>()
+    };
+
     let mut svg = String::new();
     // The highest y anything is drawn at: the top of the first row, or an arc over it.
     let mut reach = MARGIN + 6.0 + frame.origin.1;
@@ -2526,26 +2976,47 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
         let row_bottom = layer_top[lu] + layer_h[lu];
         let upper_bottom = node_box(bd.upper, end_node(ri, true)).2;
         let mut pts = vec![(ux, upper_bottom)];
-        if row_bottom - upper_bottom > 0.5 {
-            pts.push((ux, row_bottom));
+        // Out of a wrapped frame through the gap below its line and its corridor.
+        let out = way_out(
+            bd.upper,
+            end_node(ri, true),
+            (ux, upper_bottom),
+            false,
+            r.link,
+        );
+        let (ox, oy) = out.last().copied().unwrap_or((ux, upper_bottom));
+        pts.extend(out);
+        if row_bottom - oy > 0.5 {
+            pts.push((ox, row_bottom));
         }
         // A link of a fan runs straight to its track, then along it to the trunk.
         let comb = bd.fan.map(|f| fans[f].at_lower);
         if comb == Some(true)
             && let Some(&(_, ty)) = r.pts.first()
         {
-            pts.push((ux, ty));
+            pts.push((ox, ty));
         }
         pts.extend(r.pts.iter().copied());
+        let lower_top = node_box(bd.lower, end_node(ri, false)).1 - 1.0;
+        // Into a wrapped frame down its corridor and through the gap above the card's line.
+        let mut into = way_out(
+            bd.lower,
+            end_node(ri, false),
+            (lx, lower_top + 1.0),
+            true,
+            r.link,
+        );
+        into.reverse();
+        let (ix, iy) = into.first().copied().unwrap_or((lx, lower_top));
         if comb == Some(false)
             && let Some(&(_, ty)) = r.pts.last()
         {
-            pts.push((lx, ty));
+            pts.push((ix, ty));
         }
-        let lower_top = node_box(bd.lower, end_node(ri, false)).1 - 1.0;
-        if lower_top - layer_top[ll] > 0.5 {
-            pts.push((lx, layer_top[ll]));
+        if iy - layer_top[ll] > 0.5 {
+            pts.push((ix, layer_top[ll]));
         }
+        pts.extend(into);
         pts.push((lx, lower_top));
         let from_upper = resolve(&link.from).and_then(card_of) == Some(bd.upper);
         if !from_upper {
@@ -2643,12 +3114,18 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
                 edge_path(&mut svg, &d, link);
                 row_labels.push(((x1 + x2) / 2.0, y, label));
             } else {
-                let top = items[l].y - items[l].h / 2.0;
+                // Over the taller item when a frame at either end wraps, which stands higher.
+                let top = if cards[l].lines.is_empty() && cards[r].lines.is_empty() {
+                    items[l].y - items[l].h / 2.0
+                } else {
+                    (items[l].y - items[l].h / 2.0).min(items[r].y - items[r].h / 2.0)
+                };
                 let j = arcs[items[a].layer];
                 arcs[items[a].layer] += 1;
                 let lift = 46.0 + 28.0 * j as f64;
                 // An arc leaves the top of the node card it starts at and lands on the top of
                 // the one it ends at, inside a frame or not.
+                let (fc, tc) = if from_left { (l, r) } else { (r, l) };
                 let (sx, sy, ex, ey) = if cards[l].single() && cards[r].single() {
                     let (sx, ex) = if from_left {
                         (items[l].x, items[r].x)
@@ -2657,22 +3134,45 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
                     };
                     (sx, top, ex, top)
                 } else {
-                    let (fc, tc) = if from_left { (l, r) } else { (r, l) };
                     let (sx, sy, _, _) = node_box(fc, index(&link.from));
                     let (ex, ey, _, _) = node_box(tc, index(&link.to));
                     (sx, sy, ex, ey)
                 };
-                let d = format!(
-                    "M{} {}C{} {} {} {} {} {}",
-                    px(sx),
-                    px(sy),
-                    px(sx),
+                // Out of a wrapped frame at either end, up its corridor, before the arc.
+                let out = way_out(fc, index(&link.from), (sx, sy), true, li);
+                let mut inn = way_out(tc, index(&link.to), (ex, ey), true, li);
+                inn.reverse();
+                let mut d = format!("M{} {}", px(sx), px(sy));
+                for p in &out {
+                    let _ = write!(d, "L{} {}", px(p.0), px(p.1));
+                }
+                let (a, ay) = out.last().copied().unwrap_or((sx, sy));
+                let (b, by) = inn.first().copied().unwrap_or((ex, ey - 1.0));
+                // Beside or out of a wrapped frame, which stands higher: straight up to the top of
+                // the taller item at both ends, and the arc between, over everything.
+                let level = !(cards[l].lines.is_empty() && cards[r].lines.is_empty());
+                if level && top < ay - 0.5 {
+                    let _ = write!(d, "L{} {}", px(a), px(top));
+                }
+                let _ = write!(
+                    d,
+                    "C{} {} {} {} {} {}",
+                    px(a),
                     px(top - lift),
-                    px(ex),
+                    px(b),
                     px(top - lift),
-                    px(ex),
-                    px(ey - 1.0)
+                    px(b),
+                    px(if level { top } else { by })
                 );
+                if level && by > top + 0.5 {
+                    let _ = write!(d, "L{} {}", px(b), px(by));
+                }
+                if !inn.is_empty() {
+                    for p in &inn[1..] {
+                        let _ = write!(d, "L{} {}", px(p.0), px(p.1));
+                    }
+                    let _ = write!(d, "L{} {}", px(ex), px(ey - 1.0));
+                }
                 edge_path(&mut svg, &d, link);
                 reach = reach.min(top - lift * 0.75 - PILL_H / 2.0);
                 row_labels.push(((sx + ex) / 2.0, top - lift * 0.75, label));
@@ -2774,23 +3274,27 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
             continue;
         };
         let y = items[ci].y - cards[ci].h / 2.0 + ly;
-        let d = format!(
-            "M{} {}L{} {}L{} {}L{} {}",
-            px(sx),
-            px(sb),
-            px(sx),
-            px(y),
-            px(ex),
-            px(y),
-            px(ex),
-            px(eb + 1.0)
-        );
+        // Out of wrapped frames at both ends first, through their gaps and corridors.
+        let out = way_out(ci, Some(pa), (sx, sb), false, li);
+        let mut inn = way_out(ci, Some(pb), (ex, eb), false, li);
+        inn.reverse();
+        let ax = out.last().map_or(sx, |p| p.0);
+        let bx = inn.first().map_or(ex, |p| p.0);
+        let mut pts = vec![(sx, sb)];
+        pts.extend(out);
+        pts.extend([(ax, y), (bx, y)]);
+        pts.extend(inn);
+        pts.push((ex, eb + 1.0));
+        let mut d = format!("M{} {}", px(pts[0].0), px(pts[0].1));
+        for p in &pts[1..] {
+            let _ = write!(d, "L{} {}", px(p.0), px(p.1));
+        }
         edge_path(&mut svg, &d, link);
         let label = edge_label(sc, link, false);
         let half = (text_w(&label, 11.5, false) + 18.0) / 2.0;
         let x0 = items[ci].x - cards[ci].w / 2.0;
         let (lo, hi) = (x0 + FPAD + half, x0 + cards[ci].w - FPAD - half);
-        let mid = (sx + ex) / 2.0;
+        let mid = (ax + bx) / 2.0;
         row_labels.push((if lo <= hi { mid.clamp(lo, hi) } else { mid }, y, label));
     }
     svg.push_str("</g>");
@@ -2874,14 +3378,14 @@ fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
         }
     }
     svg.push_str("</g>");
-    Drawn {
+    Ok(Drawn {
         body: svg,
         width,
         height,
         top: reach,
         boxes,
         frames,
-    }
+    })
 }
 
 /// The SVG of a page's graph: its accessible title and description, the arrowheads, and what
