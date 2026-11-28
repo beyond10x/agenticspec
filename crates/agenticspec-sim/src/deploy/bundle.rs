@@ -314,7 +314,7 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
     let contract = inputs.contract.to_value();
     let ingress = ingress(&contract["ingress"], &inputs.binding.doc, inputs.packing);
     findings.extend(ui::findings(
-        &inputs.binding.doc,
+        inputs.binding,
         &ingress,
         inputs.packing,
         inputs.accepts,
@@ -323,12 +323,7 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         sort(&mut findings);
         return Err(findings);
     };
-    let (ui_units, files) = ui::units(
-        inputs.architecture,
-        &contract,
-        &inputs.binding.doc,
-        &ingress,
-    )?;
+    let (ui_units, files) = ui::units(inputs.architecture, &contract, inputs.binding, &ingress)?;
 
     let binding = &inputs.binding.doc;
     let mut units = Vec::new();

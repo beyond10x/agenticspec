@@ -8,7 +8,7 @@ use std::path::Path;
 use serde_json::{Map, Value, json};
 
 use super::model::{self, Level};
-use super::{Action, Entry, Plan, Section, channel_name, lit, pascal};
+use super::{Action, Entry, Frame, Plan, Section, channel_name, lit, pascal};
 
 /// A column of an overview table: field, `as`, label.
 pub type Column = (&'static str, Option<&'static str>, &'static str);
@@ -138,6 +138,17 @@ fn navigation(plan: &Plan<'_>) -> Vec<NavSection> {
         top.title.clone(),
         vec![(top.overview.clone(), "Overview".to_string())],
     )];
+    if let Some(c) = &plan.control {
+        out.push((
+            "control".to_string(),
+            "Control plane".to_string(),
+            c.pages
+                .iter()
+                .filter(|p| !p.frames.is_empty() || matches!(p.kind, "metrics" | "events"))
+                .map(|p| (p.page.clone(), p.label.clone()))
+                .collect(),
+        ));
+    }
     for (name, label, entries) in &top.sections {
         let mut pages = Vec::new();
         for e in entries {
@@ -252,6 +263,9 @@ pub fn document(plan: &Plan<'_>, name: &str, fixtures: &str) -> String {
     }
 
     y.push_str("\npage_kinds:\n  overview:\n    purpose: one level of the architecture - its parts, its links and its graph\n  part:\n    purpose: the panels of one part - its instances first, then each domain it uses\n");
+    if plan.control.is_some() {
+        y.push_str("  across:\n    purpose: one concern of the control plane across every part - what waits for an answer, what ran, what was set up, what is measured, the architecture and its events\n");
+    }
 
     let channels: Vec<(&str, &BTreeSet<String>)> = plan
         .levels
@@ -269,11 +283,7 @@ pub fn document(plan: &Plan<'_>, name: &str, fixtures: &str) -> String {
         }
     }
 
-    let used: BTreeSet<&str> = plan
-        .levels
-        .iter()
-        .flat_map(|l| &l.pages)
-        .flat_map(|p| &p.frames)
+    let used: BTreeSet<&str> = all_frames(plan)
         .flat_map(|f| &f.sections)
         .filter(|s| s.row_actions.is_empty())
         .map(|s| s.widget.as_str())
@@ -295,72 +305,157 @@ pub fn document(plan: &Plan<'_>, name: &str, fixtures: &str) -> String {
             if page.frames.is_empty() {
                 continue;
             }
-            let _ = writeln!(y, "  {}:", page.page);
-            let _ = writeln!(
-                y,
-                "    kind: part\n    title: {}\n    nav: {{label: {}}}",
-                q(&page.label),
-                q(&page.label)
-            );
-            if lp.instances > 1 {
-                instance_state(&mut y, lp.instances, "    ");
-            }
-            if !page.actions.is_empty() || lp.instances > 1 {
-                y.push_str("    header:\n");
-                if !page.actions.is_empty() {
-                    y.push_str("      actions:\n");
-                    for a in &page.actions {
-                        let _ = writeln!(y, "        - {}", action(a));
-                    }
+            let p = FramesPage {
+                page: &page.page,
+                kind: "part",
+                label: &page.label,
+                actions: &page.actions,
+                frames: &page.frames,
+                instances: lp.instances,
+                channel: lp.channel.as_deref(),
+            };
+            frames_page(&mut y, plan, &p);
+        }
+    }
+    if let Some(c) = &plan.control {
+        let channel = plan.levels[0].channel.as_deref();
+        let arch = Value::from(lit(&plan.tree.levels[0].name)).to_string();
+        for page in &c.pages {
+            match page.kind {
+                "metrics" | "events" => {
+                    let _ = writeln!(
+                        y,
+                        "  {}:\n    kind: across\n    title: {}\n    nav: {{label: {}}}\n    sections:",
+                        page.page,
+                        q(&page.label),
+                        q(&page.label)
+                    );
+                    let (host, title, reason, fixture) = if page.kind == "metrics" {
+                        (
+                            "ControlMetrics",
+                            "Computed KPIs",
+                            "shows each KPI the metrics ingress computes with the simulator's prediction of the same revision beside it; no view of the blocks holds a KPI's value",
+                            "metrics.json",
+                        )
+                    } else {
+                        (
+                            "ControlEvents",
+                            "Events",
+                            "shows every event of the level's channel as it arrives, newest first; no ess-ui composite draws a channel as a log",
+                            "events.json",
+                        )
+                    };
+                    let _ = writeln!(
+                        y,
+                        "      - name: {}\n        title: {title}\n        host: {host}\n        reason: {reason}\n        stands_in_for: none\n        reads: {{placeholder: agentic.architecture.{host}, fixture: {fixture}, params: {{architecture: {arch}}}}}",
+                        page.kind
+                    );
                 }
-                if lp.instances > 1 {
-                    y.push_str("      filters: instance_bar\n");
-                }
-            }
-            y.push_str("    layout:\n      areas:\n        grid: [");
-            let mut grid: Vec<String> = page
-                .frames
-                .iter()
-                .map(|f| format!("[{}]", f.area))
-                .collect();
-            if lp.instances > 1 {
-                grid.insert(0, "[area_bar]".into());
-            }
-            y.push_str(&grid.join(", "));
-            y.push_str("]\n        place:\n");
-            if lp.instances > 1 {
-                y.push_str("          area_bar: [instance_bar]\n");
-            }
-            for f in &page.frames {
-                let names: Vec<&str> = f.sections.iter().map(|s| s.name.as_str()).collect();
-                match &f.title {
-                    None => {
-                        let _ = writeln!(y, "          {}: [{}]", f.area, names.join(", "));
-                    }
-                    Some(t) => {
-                        let _ = writeln!(
-                            y,
-                            "          {}: {{sections: [{}], frame: shared, title: {}{}}}",
-                            f.area,
-                            names.join(", "),
-                            q(t),
-                            if f.collapsed { ", collapsed: true" } else { "" }
-                        );
-                    }
-                }
-            }
-            y.push_str("    sections:\n");
-            if lp.instances > 1 {
-                instance_bar(&mut y, lp.instances);
-            }
-            for f in &page.frames {
-                for s in &f.sections {
-                    section(&mut y, s, plan, lp.channel.as_deref());
+                _ if page.frames.is_empty() => {}
+                _ => {
+                    let p = FramesPage {
+                        page: &page.page,
+                        kind: "across",
+                        label: &page.label,
+                        actions: &[],
+                        frames: &page.frames,
+                        instances: 1,
+                        channel,
+                    };
+                    frames_page(&mut y, plan, &p);
                 }
             }
         }
     }
     y
+}
+
+/// Every frame of the composition: of the part pages, then of the pages across parts.
+fn all_frames<'a>(plan: &'a Plan<'_>) -> impl Iterator<Item = &'a Frame> + 'a {
+    plan.levels
+        .iter()
+        .flat_map(|l| &l.pages)
+        .flat_map(|p| &p.frames)
+        .chain(
+            plan.control
+                .iter()
+                .flat_map(|c| &c.pages)
+                .flat_map(|p| &p.frames),
+        )
+}
+
+/// A page of frames: a part page, or a page across parts.
+struct FramesPage<'a> {
+    page: &'a str,
+    kind: &'a str,
+    label: &'a str,
+    actions: &'a [Action],
+    frames: &'a [Frame],
+    instances: u64,
+    channel: Option<&'a str>,
+}
+
+fn frames_page(y: &mut String, plan: &Plan<'_>, p: &FramesPage<'_>) {
+    let _ = writeln!(y, "  {}:", p.page);
+    let _ = writeln!(
+        y,
+        "    kind: {}\n    title: {}\n    nav: {{label: {}}}",
+        p.kind,
+        q(p.label),
+        q(p.label)
+    );
+    if p.instances > 1 {
+        instance_state(y, p.instances, "    ");
+    }
+    if !p.actions.is_empty() || p.instances > 1 {
+        y.push_str("    header:\n");
+        if !p.actions.is_empty() {
+            y.push_str("      actions:\n");
+            for a in p.actions {
+                let _ = writeln!(y, "        - {}", action(a));
+            }
+        }
+        if p.instances > 1 {
+            y.push_str("      filters: instance_bar\n");
+        }
+    }
+    y.push_str("    layout:\n      areas:\n        grid: [");
+    let mut grid: Vec<String> = p.frames.iter().map(|f| format!("[{}]", f.area)).collect();
+    if p.instances > 1 {
+        grid.insert(0, "[area_bar]".into());
+    }
+    y.push_str(&grid.join(", "));
+    y.push_str("]\n        place:\n");
+    if p.instances > 1 {
+        y.push_str("          area_bar: [instance_bar]\n");
+    }
+    for f in p.frames {
+        let names: Vec<&str> = f.sections.iter().map(|s| s.name.as_str()).collect();
+        match &f.title {
+            None => {
+                let _ = writeln!(y, "          {}: [{}]", f.area, names.join(", "));
+            }
+            Some(t) => {
+                let _ = writeln!(
+                    y,
+                    "          {}: {{sections: [{}], frame: shared, title: {}{}}}",
+                    f.area,
+                    names.join(", "),
+                    q(t),
+                    if f.collapsed { ", collapsed: true" } else { "" }
+                );
+            }
+        }
+    }
+    y.push_str("    sections:\n");
+    if p.instances > 1 {
+        instance_bar(y, p.instances);
+    }
+    for f in p.frames {
+        for s in &f.sections {
+            section(y, s, plan, p.channel);
+        }
+    }
 }
 
 fn overview(y: &mut String, plan: &Plan<'_>, lp: &super::LevelPlan, level: &Level) {
@@ -385,6 +480,13 @@ fn overview(y: &mut String, plan: &Plan<'_>, lp: &super::LevelPlan, level: &Leve
         instance_bar(y, lp.instances);
     }
     let lit_name = lit(&level.name);
+    if plan.control.is_some() && level.path.is_empty() {
+        let _ = writeln!(
+            y,
+            "      - name: tiles\n        title: At a glance\n        host: ControlTiles\n        reason: counts the open rows of each Inbox view, the rows per state of each Operations view and shows each KPI as one tile; no ess-ui composite aggregates the rows of several reads\n        stands_in_for: none\n        reads: {{placeholder: agentic.architecture.ControlTiles, fixture: tiles.json, params: {{architecture: {}}}}}",
+            Value::from(lit_name.clone())
+        );
+    }
     for (table, cols) in TABLE_COLUMNS {
         let hidden = lp.key.hide_columns.get(table).cloned().unwrap_or_default();
         let labels = lp.key.label_columns.get(table).cloned().unwrap_or_default();
@@ -629,11 +731,7 @@ pub fn fixtures(
     index.push_str(
         "  agentic.architecture.Parts: parts.json\n  agentic.architecture.Reach: reach.json\n",
     );
-    let views: BTreeSet<&str> = plan
-        .levels
-        .iter()
-        .flat_map(|l| &l.pages)
-        .flat_map(|p| &p.frames)
+    let views: BTreeSet<&str> = all_frames(plan)
         .flat_map(|f| &f.sections)
         .map(|s| s.widget.as_str())
         .collect();
@@ -680,6 +778,9 @@ pub fn fixtures(
         "settings.json".into(),
         pretty(&json!({"view": "agentic.architecture.Settings", "rows": settings})),
     ));
+    if let Some(c) = &plan.control {
+        files.extend(control_fixtures(plan, c));
+    }
     files
 }
 
@@ -789,10 +890,149 @@ pub fn layout(plan: &Plan<'_>) -> String {
             "pages": pages,
         }));
     }
-    pretty(&json!({
+    let mut doc = json!({
         "format": "agenticspec-ui-layout/1",
         "architecture": plan.tree.levels[0].name,
         "home": plan.home,
         "levels": levels,
-    }))
+    });
+    if let Some(c) = &plan.control {
+        doc["control"] = control_layout(plan, c);
+    }
+    pretty(&doc)
+}
+
+/// The columns of a panel for a table of the control plane: field, how it is drawn, label.
+fn columns_json(plan: &Plan<'_>, widget: &str) -> Vec<Value> {
+    plan.panels
+        .get(widget)
+        .map(|p| p.columns.as_slice())
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|c| {
+            let field = c.as_str().or_else(|| c["field"].as_str())?;
+            let label = c["label"]
+                .as_str()
+                .map_or_else(|| super::capital(field), str::to_string);
+            let as_ = c["as"].as_str().unwrap_or("text");
+            Some(json!({"field": field, "as": as_, "label": label}))
+        })
+        .collect()
+}
+
+/// A section of a page across parts as the operator app reads it: what a part page's section
+/// holds, and the view's row key, its columns and the field its rows are ordered by.
+fn control_section(plan: &Plan<'_>, s: &Section) -> Value {
+    let args: Map<String, Value> = s
+        .args
+        .iter()
+        .filter(|(k, _)| !matches!(k.as_str(), "architecture" | "part" | "instance" | "source"))
+        .map(|(k, v)| (k.clone(), arg_value(v)))
+        .collect();
+    let part = s
+        .args
+        .iter()
+        .find(|(k, _)| k == "part")
+        .map(|(_, v)| arg_value(v))
+        .unwrap_or(Value::Null);
+    json!({
+        "name": s.name,
+        "title": s.title,
+        "widget": s.widget,
+        "part": part,
+        "args": args,
+        "key": plan.panels.get(&s.widget).map(|p| p.key.clone()).unwrap_or_default(),
+        "columns": columns_json(plan, &s.widget),
+        "order": s.order,
+        "row_actions": s.row_actions.iter().map(action_json).collect::<Vec<_>>(),
+    })
+}
+
+/// The pages across parts and the tiles, under the layout's `control` key.
+fn control_layout(plan: &Plan<'_>, c: &super::control::Control) -> Value {
+    let pages: Vec<Value> = c
+        .pages
+        .iter()
+        .map(|p| {
+            let frames: Vec<Value> = p
+                .frames
+                .iter()
+                .map(|f| {
+                    json!({
+                        "title": f.title,
+                        "collapsed": f.collapsed,
+                        "sections": f.sections.iter().map(|s| control_section(plan, s)).collect::<Vec<_>>(),
+                    })
+                })
+                .collect();
+            json!({"page": p.page, "label": p.label, "kind": p.kind, "frames": frames})
+        })
+        .collect();
+    let tiles: Vec<Value> = c
+        .tiles
+        .iter()
+        .map(|t| {
+            let (count, field) = match &t.count {
+                super::control::Count::Open => ("open", None),
+                super::control::Count::States(f) => ("states", f.clone()),
+            };
+            json!({
+                "label": t.label,
+                "page": t.page,
+                "count": count,
+                "field": field,
+                "section": control_section(plan, &t.section),
+            })
+        })
+        .collect();
+    let metrics: Vec<Value> = c
+        .metrics
+        .iter()
+        .map(|m| json!({"kpi": m.kpi, "label": super::control::kpi_label(&m.kpi), "prediction": m.prediction}))
+        .collect();
+    json!({
+        "channel": c.channel,
+        "events": plan.levels[0].events,
+        "pages": pages,
+        "tiles": tiles,
+        "metrics": metrics,
+    })
+}
+
+/// The fixtures of the host slots of the pages across parts: the tiles, the KPIs and the events
+/// of the channel.
+fn control_fixtures(plan: &Plan<'_>, c: &super::control::Control) -> Vec<(String, String)> {
+    let arch = &plan.tree.levels[0].name;
+    let tiles: Vec<Value> = c
+        .tiles
+        .iter()
+        .map(|t| json!({"architecture": arch, "label": t.label, "page": t.page, "view": t.section.widget}))
+        .chain(c.metrics.iter().map(|m| {
+            json!({"architecture": arch, "label": super::control::kpi_label(&m.kpi), "page": "control.metrics", "kpi": m.kpi, "prediction": m.prediction})
+        }))
+        .collect();
+    let metrics: Vec<Value> = c
+        .metrics
+        .iter()
+        .map(|m| json!({"architecture": arch, "kpi": m.kpi, "label": super::control::kpi_label(&m.kpi), "prediction": m.prediction}))
+        .collect();
+    let events: Vec<Value> = plan.levels[0]
+        .events
+        .iter()
+        .map(|e| json!({"architecture": arch, "channel": c.channel, "event": e}))
+        .collect();
+    vec![
+        (
+            "tiles.json".into(),
+            pretty(&json!({"view": "agentic.architecture.ControlTiles", "rows": tiles})),
+        ),
+        (
+            "metrics.json".into(),
+            pretty(&json!({"view": "agentic.architecture.ControlMetrics", "rows": metrics})),
+        ),
+        (
+            "events.json".into(),
+            pretty(&json!({"view": "agentic.architecture.ControlEvents", "rows": events})),
+        ),
+    ]
 }

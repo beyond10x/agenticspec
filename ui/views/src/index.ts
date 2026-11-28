@@ -17,7 +17,22 @@ export { default as AgenticOverview } from './AgenticOverview.vue';
 export { default as AgenticBlockPanels } from './AgenticBlockPanels.vue';
 export { PANELS, panelFor, panelName, panelsOfBlock, elementName } from './panels';
 export { loadLayout, pageOf } from './layout';
-export type { Layout, LayoutLevel, LayoutPage, LayoutPart, LayoutFrame, LayoutSection, LayoutAction } from './layout';
+export type {
+  Layout,
+  LayoutLevel,
+  LayoutPage,
+  LayoutPart,
+  LayoutFrame,
+  LayoutSection,
+  LayoutAction,
+  LayoutColumn,
+  LayoutControl,
+  LayoutControlPage,
+  LayoutControlFrame,
+  LayoutControlSection,
+  LayoutTile,
+  LayoutMetric,
+} from './layout';
 export type { NavigateDetail, CommandDetail } from './events';
 export * from './runtime';
 

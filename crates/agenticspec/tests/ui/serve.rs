@@ -310,6 +310,30 @@ fn ui_serve_answers_the_default_control_plane_on_fixtures_and_passes_ui_conform(
         assert_eq!(a["allowed"], true, "{a}");
     }
 
+    // The control-plane UI beside the operator UI at /control/: its layout holds the pages
+    // across parts, its config the control-plane mode; /control redirects there.
+    let (status, layout) = send(
+        "GET",
+        &format!("{}/control/views.json", server.url),
+        &[],
+        None,
+    );
+    assert_eq!(status, 200);
+    assert_eq!(layout["control"]["pages"].as_array().map(Vec::len), Some(6));
+    let (status, config) = send(
+        "GET",
+        &format!("{}/control/config.json", server.url),
+        &[],
+        None,
+    );
+    assert_eq!(status, 200);
+    assert_eq!(config["mode"], "control-plane");
+    assert_eq!(config["api_base"], "/ingress/operator");
+    let (status, _) = send("GET", &format!("{}/control", server.url), &[], None);
+    assert_eq!(status, 308);
+    let (status, _) = send("GET", &format!("{}/control/", server.url), &[], None);
+    assert_eq!(status, 200);
+
     // The conformance mode passes against the same server, run outside the checkout too.
     let out = Command::new(env!("CARGO_BIN_EXE_agenticspec"))
         .current_dir(outside())
@@ -329,6 +353,17 @@ fn ui_serve_answers_the_default_control_plane_on_fixtures_and_passes_ui_conform(
     let v: Value = serde_json::from_slice::<Value>(&out.stdout).unwrap()["result"].clone();
     assert_eq!(v["failed"], 0, "{v}");
     assert!(v["passed"].as_u64().unwrap() > 50, "{v}");
+    // It covers the reads of the control-plane UI across parts, at the architecture's scope.
+    let names: Vec<&str> = v["checks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|c| c["name"].as_str())
+        .collect();
+    assert!(
+        names.contains(&"R1 agentic.gateway.Calls at workstation"),
+        "{names:?}"
+    );
 }
 
 /// Against an address that answers nothing, the conformance mode exits non-zero and names each

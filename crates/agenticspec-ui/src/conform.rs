@@ -1234,6 +1234,12 @@ impl PlaneSuite<'_> {
             }
         }
         let arch = self.scope_name(None);
+        for read in &plane.across {
+            let q = query(&read.params);
+            let url = format!("{}/api/views/{}{q}", self.url(None), read.view);
+            let (s, d) = self.judge_rows(&read.view, &url, self.get(&url, true));
+            self.push(format!("R1 {}{q} at {arch}", read.view), s, d);
+        }
         for view in interface::r3_views() {
             let url = format!("{}/api/views/{view}", self.url(None));
             let (s, d) = self.judge_rows(&view, &url, self.get(&url, true));

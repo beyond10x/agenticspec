@@ -1695,7 +1695,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "x-ess-provenance": {
     "contract_digest": "slice-sha256/2:4561729faab8e80fc5abb4cfe50d8c789a1a6bc41cce839befc56d5cafd07ee9",
-    "source_digest": "c414a1149dd183c0acaa21671e966cc9b9dc08fc50cfaaad2d7db62e7086573f",
+    "source_digest": "33fd811bb28faed0e82a0158abf35886df87117861b777f90bb4a6fd214eb15a",
     "specification_version": "v1",
     "system": "agenticspec"
   }

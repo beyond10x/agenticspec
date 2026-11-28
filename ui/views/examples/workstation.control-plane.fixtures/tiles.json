@@ -1,0 +1,161 @@
+{
+  "rows": [
+    {
+      "architecture": "workstation",
+      "label": "Open: Open questions of an addressee for owner",
+      "page": "control.inbox",
+      "view": "agentic.question.OpenQuestions"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Open: Questions for owner",
+      "page": "control.inbox",
+      "view": "agentic.question.Questions"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Principals of owner",
+      "page": "control.operations",
+      "view": "agentic.principal.Principals"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Agents of operator",
+      "page": "control.operations",
+      "view": "agentic.agent.Agents"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Harnesses of operator",
+      "page": "control.operations",
+      "view": "agentic.harness.Harnesses"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Agents of worker",
+      "page": "control.operations",
+      "view": "agentic.agent.Agents"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Harnesses of worker",
+      "page": "control.operations",
+      "view": "agentic.harness.Harnesses"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Gateways of gateway",
+      "page": "control.operations",
+      "view": "agentic.gateway.Gateways"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Upstreams of gateway",
+      "page": "control.operations",
+      "view": "agentic.gateway.Upstreams"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Models of model",
+      "page": "control.operations",
+      "view": "agentic.model.Models"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Routes of model",
+      "page": "control.operations",
+      "view": "agentic.model.Routes"
+    },
+    {
+      "architecture": "workstation",
+      "label": "Sandboxes of box",
+      "page": "control.operations",
+      "view": "agentic.sandbox.Sandboxes"
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "cache_bust_count",
+      "label": "Cache bust count",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "cache_hit_share",
+      "label": "Cache hit share",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "context_size_p90_tokens",
+      "label": "Context size p90 tokens",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "cost_usd",
+      "label": "Cost usd",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "human_prompt_share",
+      "label": "Human prompt share",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "owner_wait_share",
+      "label": "Owner wait share",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "priced_message_share",
+      "label": "Priced message share",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "secrets_in_prompts",
+      "label": "Secrets in prompts",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "secrets_in_tool_output",
+      "label": "Secrets in tool output",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "secrets_left_session",
+      "label": "Secrets left session",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "sub_agents_started",
+      "label": "Sub agents started",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "subagent_cost_share",
+      "label": "Subagent cost share",
+      "page": "control.metrics",
+      "prediction": null
+    }
+  ],
+  "view": "agentic.architecture.ControlTiles"
+}

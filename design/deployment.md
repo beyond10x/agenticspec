@@ -133,10 +133,12 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image of its own, of its parts or, for the core unit only, `runtimes.core`; names the unit and its runtime parts; K19 |
 | `volume_mount_missing` | a volume a unit claims that no part of the unit mounts (`parts.<p>.volumes[].mount`, matched by name), or mounts at a relative path; there is no default path |
 | `ui_upstream_unknown` | a UI unit (K17) reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have; in a written bundle, a UI unit's `upstream.unit` that is no other unit of the bundle |
-| `ui_archive_mismatch` | in a written bundle (`deploy check`) only: a UI unit's archive is not in `files`, or its SHA-256 is not the unit's `code.digest` |
 | `nested_document_missing` | in a written bundle (`deploy check`) only: a part of block `architecture`, at any depth, pins a digest the bundle's `nested` carries no document of |
 | `nested_document_mismatch` | in a written bundle (`deploy check`) only: a carried nested document whose `content_base64` is not its `sha256`, does not parse to its `document`, or whose canonical digest is not its key |
 | `requirement_kpi_unknown`, `requirement_invalid` | a requirement (K12) names a KPI no stage knows, or is not `{kpi, at_least \| at_most \| equals, part?, window?}` with one number; `sim check` refuses both as `architecture_refused` |
+| `ui_archive_mismatch` | at bundle time, the archive a UI of the consumer's own names (`ui.<name>.source.archive`) is not its `digest`; in a written bundle (`deploy check`), a UI unit's archive is not in `files`, or its SHA-256 is not the unit's `code.digest` |
+| `ui_export_unknown` | a UI serves an export (`ui.<name>.export`; `operator.ui` for the built-in UIs) that no ingress of the architecture has |
+| `ui_build_needs_toolchain` | a UI of the consumer's own names an `ess-ui/1` document (`ui.<name>.source.ess_ui`): its generated pages need node and vite, which the binary does not run; the detail names the archive form |
 
 ## K6 The bundle: `agenticspec-deployment/1`
 
@@ -379,9 +381,22 @@ additions are a unit, the optional member `files` and the unit of one ingress en
   `deploy check` hashes the carried archive against the unit's digest (`ui_archive_mismatch`);
   the role is in the accepted list (K16, `unit_not_hosted`); a UI that does not build is
   `ui_build_refused`.
-- A UI is one row of a table (`crates/agenticspec-sim/src/deploy/ui.rs`, `KINDS`): its key under
-  `ui:`, its role, the ingress and export it serves and how its files are built. A second UI
-  (`control-plane-ui`) is a second row of the same shape.
+- A UI is one row (`crates/agenticspec-sim/src/deploy/ui.rs`, `Ui`): its key under `ui:`, its
+  unit's name and role, the ingress and export it serves and the source of its files. Two sources
+  are built in (`BUILT_IN`): `operator` (`operator-ui`) and `control-plane` (`control-plane-ui`,
+  `ui build --control-plane`), both serving `operator.ui`, on the same code path as any other row.
+- A UI of the consumer's own (R84) is any other key: `ui.<name>: {source, export, upstream?,
+  port?, bind?}`. `source` is `{archive: <file>, digest: sha256:<hex>}`, a static archive the
+  consumer built, read beside the binding file that names it and checked against `digest`
+  (`ui_archive_mismatch`), or `{ess_ui: <file>}`, an `ess-ui/1` document, refused with
+  `ui_build_needs_toolchain`: `ui generate` writes Vue components that need node and vite to
+  build, and the binary does not run them (the operator app is prebuilt and renders a derived
+  layout, not an arbitrary `ess-ui/1` document). `export` is `<ingress>.<protocol>`
+  (`ui_export_unknown` when no ingress has it). Its unit is `{name: <name>, kind: service, roles:
+  [ui], code: {kind: static, archive: <name>.tar, digest}, ...}`, the archive carried byte for
+  byte in `files`, with the upstream, checks, claims and refusals of the built-in UIs. The first UI
+  that serves an export serves it, the built-in ones first, then the others by key; the accepted
+  list holds the role `ui`.
 
 ## K18 Agent units, as the translator reads them
 

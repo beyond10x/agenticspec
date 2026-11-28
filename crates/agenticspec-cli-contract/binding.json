@@ -3262,8 +3262,17 @@
             "contract": {
               "kind": "string"
             },
+            "control_plane": {
+              "kind": "boolean"
+            },
             "out": {
               "kind": "string"
+            },
+            "prediction": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
             }
           }
         }
@@ -3492,6 +3501,9 @@
                 "kind": "string"
               }
             },
+            "control_plane": {
+              "kind": "boolean"
+            },
             "out": {
               "kind": "string"
             },
@@ -3499,6 +3511,12 @@
               "kind": "string"
             },
             "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "prediction": {
               "kind": "optional",
               "of": {
                 "kind": "string"
@@ -3778,6 +3796,9 @@
         "shape": {
           "kind": "struct",
           "fields": {
+            "control": {
+              "kind": "string"
+            },
             "interface": {
               "kind": "string"
             },
@@ -4743,7 +4764,7 @@
       ],
       "aliases": [],
       "callable": "ui_build",
-      "about": "Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), and with --archive a reproducible tar beside them with its sha256",
+      "about": "Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), or with --control-plane of its control-plane UI, and with --archive a reproducible tar beside them with its sha256",
       "arguments": [
         {
           "field": "architecture",
@@ -4778,6 +4799,20 @@
           "source": {
             "kind": "flag",
             "long": "archive"
+          }
+        },
+        {
+          "field": "control_plane",
+          "source": {
+            "kind": "flag",
+            "long": "control-plane"
+          }
+        },
+        {
+          "field": "prediction",
+          "source": {
+            "kind": "option",
+            "long": "prediction"
           }
         }
       ]
@@ -4835,7 +4870,7 @@
       ],
       "aliases": [],
       "callable": "ui_derive",
-      "about": "Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check",
+      "about": "Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check; with --control-plane the control-plane UI, the pages across parts beside it",
       "arguments": [
         {
           "field": "path",
@@ -4877,6 +4912,20 @@
           "source": {
             "kind": "flag",
             "long": "check"
+          }
+        },
+        {
+          "field": "control_plane",
+          "source": {
+            "kind": "flag",
+            "long": "control-plane"
+          }
+        },
+        {
+          "field": "prediction",
+          "source": {
+            "kind": "option",
+            "long": "prediction"
           }
         }
       ]
@@ -4938,7 +4987,7 @@
       ],
       "aliases": [],
       "callable": "ui_serve",
-      "about": "Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures",
+      "about": "Serve the operator UI of an architecture at / and its control-plane UI at /control/ over its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures",
       "arguments": [
         {
           "field": "architecture",

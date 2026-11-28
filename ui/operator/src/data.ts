@@ -11,6 +11,8 @@ export interface Config {
   /** The base path (or URL) of the runtime's adapter, the `{root}` of the runtime interface. */
   api_base: string;
   title: string;
+  /** `control-plane` for a control-plane UI (`agenticspec ui build --control-plane`). */
+  mode?: 'control-plane';
 }
 
 export interface ContractPort {

@@ -243,21 +243,27 @@ tasks:
         cmp blocks/ports.json ui/views/examples/ports.json || { echo "check:ui: ui/views/examples/ports.json differs from blocks/ports.json; run task ui:derive"; exit 1; }
       - target/debug/agenticspec ui derive --check --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.ui.yaml
       - target/debug/agenticspec ui derive --check --path crates/agenticspec-render/tests/fixtures/large-37.yaml --out ui/views/examples/large-37.ui.yaml
+      - target/debug/agenticspec sim contract architectures/team-with-console.yaml --check ui/views/examples/team-with-console.contract.yaml
+      - target/debug/agenticspec ui derive --check --control-plane --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.control-plane.ui.yaml
+      - target/debug/agenticspec ui derive --check --control-plane --path architectures/team-with-console.yaml --contract ui/views/examples/team-with-console.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/team-with-console.control-plane.ui.yaml
       - |
-        for f in ui/views/examples/workstation.ui.yaml ui/views/examples/large-37.ui.yaml ui/views/examples/host-slot.ui.yaml; do
+        for f in ui/views/examples/workstation.ui.yaml ui/views/examples/large-37.ui.yaml ui/views/examples/host-slot.ui.yaml ui/views/examples/workstation.control-plane.ui.yaml ui/views/examples/team-with-console.control-plane.ui.yaml; do
           out=$(ess ui check --path "$f" --model blocks) || { echo "$out"; exit 1; }
           echo "$out" | tail -n 1
           echo "$out" | grep -q ': 0 error(s), 0 warning(s)$' || { echo "check:ui: $f has a warning"; exit 1; }
         done
 
   ui:derive:
-    desc: Write the derived examples of ui/views/examples/ with agenticspec ui derive - workstation.ui.yaml from architectures/workstation.yaml, its contract (written first by agenticspec sim contract) and a copy of blocks/ports.json beside it, and large-37.ui.yaml from the 37-part fixture alone - each with its fixtures, its layout and the digest of its inputs. Never edited by hand; task check:ui holds them.
+    desc: Write the derived examples of ui/views/examples/ with agenticspec ui derive - workstation.ui.yaml from architectures/workstation.yaml, its contract (written first by agenticspec sim contract) and a copy of blocks/ports.json beside it, and large-37.ui.yaml from the 37-part fixture alone, and the control-plane UIs workstation.control-plane.ui.yaml and team-with-console.control-plane.ui.yaml (ui derive --control-plane, team-with-console.contract.yaml written first) - each with its fixtures, its layout and the digest of its inputs. Never edited by hand; task check:ui holds them.
     cmds:
       - cargo build --quiet --locked -p agenticspec
       - target/debug/agenticspec sim contract architectures/workstation.yaml --out ui/views/examples/workstation.contract.yaml
       - cp blocks/ports.json ui/views/examples/ports.json
       - target/debug/agenticspec ui derive --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.ui.yaml
       - target/debug/agenticspec ui derive --path crates/agenticspec-render/tests/fixtures/large-37.yaml --out ui/views/examples/large-37.ui.yaml
+      - target/debug/agenticspec sim contract architectures/team-with-console.yaml --out ui/views/examples/team-with-console.contract.yaml
+      - target/debug/agenticspec ui derive --control-plane --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.control-plane.ui.yaml
+      - target/debug/agenticspec ui derive --control-plane --path architectures/team-with-console.yaml --contract ui/views/examples/team-with-console.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/team-with-console.control-plane.ui.yaml
 
   ui:panels:
     desc: Write the block panels from blocks/ - ui/views/blocks.ui.yaml (one ess-ui/1 widget per view, a gallery page per block), its fixtures in ui/views/fixtures/ and the digest of its inputs, ui/views/blocks.sources.sha256, then ui/views/serve.fixtures.json (the fixtures and ui/views/source/outcomes.json in one compact file with the digest of its sources, which the binary embeds for agenticspec ui serve). Never edited by hand.

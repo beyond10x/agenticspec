@@ -514,7 +514,7 @@ contract:
       settings: {}
     ports_digest: b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1
 binding:
-  digest: sha256:e0c440db53b193935037133a96d68063f8c991fc9c7ced5c5a24e23f8742ecbe
+  digest: sha256:cc1743e20119c5738aaf8528a78d66c26ce26394d3b0ebe9cb4f93f80a816407
   document:
     architecture: workstation
     binding: split
@@ -559,11 +559,17 @@ binding:
       strategy: by_part
     parts:
       builds:
+        image:
+          digest: sha256:0000000000000000000000000000000000000000000000000000000000000001
+          image: registry.example/agenticspec-core
         state: service
       gateway:
         egress:
         - secret: model-api-key
           to: model
+        image:
+          digest: sha256:0000000000000000000000000000000000000000000000000000000000000001
+          image: registry.example/agenticspec-core
         secrets:
         - model-api-key
         state: service
@@ -595,7 +601,7 @@ binding:
       core:
         digest: sha256:0000000000000000000000000000000000000000000000000000000000000001
         image: registry.example/agenticspec-core
-    summary: 'The workstation with one unit per part: the operator and the coding agents run as agents of their own, the gateway and the build pool as services that keep their state in one place. The control plane serves its ingresses on two ports, the coding agents are isolated on the network and mount their trees, and the hosted model is reached at an address.'
+    summary: 'The workstation with one unit per part: the operator and the coding agents run as agents of their own, the gateway and the build pool as services that keep their state in one place and run the core runtime image, named for each. The control plane serves its ingresses on two ports, the coding agents are isolated on the network and mount their trees, and the hosted model is reached at an address.'
     target:
       images: registry
       isolation: container
@@ -1014,4 +1020,4 @@ runtimes:
   sha256:0000000000000000000000000000000000000000000000000000000000000001:
     image: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
     name: core
-digest: sha256:18804e6fa464ca13b9b68c42ddb2c46c2f628ccbe3c88bbdee775e9d3683e936
+digest: sha256:dffe1b0bec4d84c98717b2341a9223ac34dd747b425bf4e329e2f51212b9055f

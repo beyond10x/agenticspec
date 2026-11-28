@@ -6,6 +6,8 @@
 //!
 //! - the scopes: the architecture and every part of every level of the layout, by its path;
 //! - the R1 reads of each part: each panel of its page with the parameters the layout binds;
+//! - the R1 reads of the pages across parts of a control-plane UI (`control` of `views.json`), at
+//!   the scope of the architecture or of the part a section is scoped to;
 //! - the views, commands and feeds of the contract's `operator` ingress, with the reads and the
 //!   actions of the layout and the R3 views;
 //! - the channels: the channel of each level of the layout;
@@ -46,6 +48,8 @@ pub struct Plane {
     /// The architecture id of the scopes, `{root}/scopes/{architecture}/...`.
     pub architecture: String,
     pub parts: Vec<Part>,
+    /// The R1 reads of the pages across parts of a control-plane UI at the architecture's scope.
+    pub across: Vec<Read>,
     /// The channel of each level, such as `level`.
     pub channels: Vec<String>,
     /// Every view the plane answers.
@@ -160,6 +164,50 @@ impl Plane {
                 }
             }
         }
+        let mut across: Vec<Read> = Vec::new();
+        for page in layout["control"]["pages"].as_array().into_iter().flatten() {
+            for frame in page["frames"].as_array().into_iter().flatten() {
+                for s in frame["sections"].as_array().into_iter().flatten() {
+                    for a in s["row_actions"].as_array().into_iter().flatten() {
+                        if let Some(c) = a["command"].as_str() {
+                            commands.insert(c.to_string());
+                        }
+                    }
+                    let Some(view) = s["widget"].as_str() else {
+                        continue;
+                    };
+                    views.insert(view.to_string());
+                    let params = s["args"]
+                        .as_object()
+                        .into_iter()
+                        .flatten()
+                        .filter(|(k, _)| k.as_str() != "channel")
+                        .map(|(k, v)| (k.clone(), text(v)))
+                        .collect();
+                    let read = Read {
+                        view: view.to_string(),
+                        params,
+                    };
+                    let list = match s["part"].as_str() {
+                        None => &mut across,
+                        Some(path) => match parts.iter_mut().find(|p| p.path == path) {
+                            Some(p) => &mut p.reads,
+                            None => {
+                                parts.push(Part {
+                                    path: path.to_string(),
+                                    count: 1,
+                                    reads: Vec::new(),
+                                });
+                                &mut parts.last_mut().expect("just pushed").reads
+                            }
+                        },
+                    };
+                    if !list.contains(&read) {
+                        list.push(read);
+                    }
+                }
+            }
+        }
         let mut feeds = BTreeSet::new();
         let operator = contract["ingress"]
             .as_array()
@@ -210,6 +258,7 @@ impl Plane {
         Ok(Plane {
             architecture,
             parts,
+            across,
             channels,
             views,
             commands,

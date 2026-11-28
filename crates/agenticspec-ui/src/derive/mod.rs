@@ -25,6 +25,7 @@
 //! parts, reach and graph of each level, a script per channel, and an index that points at the
 //! panels' own fixtures) and `<name>.layout.json` (the same composition for the view package).
 
+pub mod control;
 pub mod model;
 pub mod view_key;
 mod write;
@@ -62,6 +63,11 @@ pub struct Inputs {
     pub ports: Option<PathBuf>,
     /// The document to write, `<dir>/<name>.ui.yaml`.
     pub out: PathBuf,
+    /// Derive the default control plane: the pages across parts beside the operator UI.
+    pub control_plane: bool,
+    /// A simulator result of the architecture (`agenticspec-sim-result/1`), whose predictions
+    /// the Metrics page shows beside each KPI; read only with `control_plane`.
+    pub prediction: Option<PathBuf>,
 }
 
 /// Why a derivation did not produce a document.
@@ -101,6 +107,8 @@ pub struct Section {
     /// The widget's arguments, each as an expression.
     pub args: Vec<(String, String)>,
     pub row_actions: Vec<Action>,
+    /// The field the rows are ordered by, newest first.
+    pub order: Option<String>,
 }
 
 /// A frame of a part page: one area of its layout.
@@ -154,6 +162,8 @@ pub struct Plan<'a> {
     pub panels: &'a Panels,
     pub levels: Vec<LevelPlan>,
     pub home: String,
+    /// The pages across parts of the default control plane, in the control-plane mode.
+    pub control: Option<control::Control>,
 }
 
 fn refusal(path: impl Into<String>, message: impl Into<String>) -> Refusal {
@@ -198,7 +208,7 @@ pub fn pascal(s: &str) -> String {
         .collect()
 }
 
-fn capital(s: &str) -> String {
+pub(crate) fn capital(s: &str) -> String {
     let mut cs = s.chars();
     cs.next()
         .map(|c| c.to_ascii_uppercase().to_string() + cs.as_str())
@@ -328,7 +338,7 @@ fn args_of(
     out
 }
 
-fn section_of(
+pub(crate) fn section_of(
     panel: &model::Panel,
     level: &Level,
     part_path: &str,
@@ -343,7 +353,57 @@ fn section_of(
         widget: panel.widget.clone(),
         args: args_of(panel, level, part_path, channel),
         row_actions: Vec::new(),
+        order: None,
     }
+}
+
+/// The row actions of `commands` on the panels `widgets`, by widget: a command acts on each panel
+/// of its domain whose row key is one of its inputs, and binds that input to the row's key.
+pub(crate) fn row_actions(
+    model: &Model<'_>,
+    panels: &Panels,
+    commands: &[String],
+    widgets: &[String],
+) -> BTreeMap<String, Vec<Action>> {
+    let mut rows: BTreeMap<String, Vec<Action>> = BTreeMap::new();
+    for command in commands.iter().filter(|c| model.has_command(c)) {
+        let inputs = model.command_inputs(command);
+        let domain = command.rsplit_once('.').map_or("", |(d, _)| d);
+        let fits: Vec<&String> = widgets
+            .iter()
+            .filter(|w| {
+                panels
+                    .get(w)
+                    .is_some_and(|p| p.domain == domain && inputs.contains(&p.key))
+            })
+            .collect();
+        // A panel of the open rows (`OpenQuestions`, `OpenApprovals`) takes the action alone when
+        // there is one: the other rows of the domain are already answered.
+        let open = |w: &String| w.rsplit('.').next().is_some_and(|v| v.starts_with("Open"));
+        let only_open = fits.iter().any(|w| open(w));
+        for w in fits.into_iter().filter(|w| !only_open || open(w)) {
+            let Some(p) = panels.get(w) else { continue };
+            let fields: BTreeSet<String> = p
+                .columns
+                .iter()
+                .filter_map(|c| c.as_str().or_else(|| c["field"].as_str()))
+                .map(str::to_string)
+                .collect();
+            // The row binds the command's input of the panel's key; the rest is the reader's.
+            let bind = inputs
+                .iter()
+                .filter(|i| **i == p.key && fields.contains(*i))
+                .map(|i| (i.clone(), format!("row.{i}")))
+                .collect();
+            rows.entry(w.clone()).or_default().push(Action {
+                name: snake(command.rsplit('.').next().unwrap_or(command)),
+                command: command.clone(),
+                label: model.command_label(command),
+                bind,
+            });
+        }
+    }
+    rows
 }
 
 /// The actions of one level, from the contract and the catalogue: row actions by part and
@@ -367,51 +427,13 @@ fn actions_of(
     };
     let principal = |name: &str| level.part(name).is_some_and(|p| p.block == "principal");
     for part in level.parts.iter().filter(|p| principal(&p.name)) {
+        let widgets: Vec<String> = placed.get(&part.name).cloned().unwrap_or_default();
         for port in c.ports_of(&part.name).filter_map(|n| ports.get(n)) {
             if port.kind != "Principal" || !port.explicit {
                 continue;
             }
-            for command in port.intent.iter().filter(|c| model.has_command(c)) {
-                let inputs = model.command_inputs(command);
-                let domain = command.rsplit_once('.').map_or("", |(d, _)| d);
-                let fits: Vec<&String> = placed
-                    .get(&part.name)
-                    .into_iter()
-                    .flatten()
-                    .filter(|w| {
-                        panels
-                            .get(w)
-                            .is_some_and(|p| p.domain == domain && inputs.contains(&p.key))
-                    })
-                    .collect();
-                // A panel of the open rows (`OpenQuestions`, `OpenApprovals`) takes the action
-                // alone when there is one: the other rows of the domain are already answered.
-                let open = |w: &String| w.rsplit('.').next().is_some_and(|v| v.starts_with("Open"));
-                let only_open = fits.iter().any(|w| open(w));
-                for w in fits.into_iter().filter(|w| !only_open || open(w)) {
-                    let Some(p) = panels.get(w) else { continue };
-                    let fields: BTreeSet<String> = p
-                        .columns
-                        .iter()
-                        .filter_map(|c| c.as_str().or_else(|| c["field"].as_str()))
-                        .map(str::to_string)
-                        .collect();
-                    // The row binds the command's input of the panel's key; the rest is the
-                    // reader's.
-                    let bind = inputs
-                        .iter()
-                        .filter(|i| **i == p.key && fields.contains(*i))
-                        .map(|i| (i.clone(), format!("row.{i}")))
-                        .collect();
-                    rows.entry((part.name.clone(), w.clone()))
-                        .or_default()
-                        .push(Action {
-                            name: snake(command.rsplit('.').next().unwrap_or(command)),
-                            command: command.clone(),
-                            label: model.command_label(command),
-                            bind,
-                        });
-                }
+            for (w, list) in row_actions(model, panels, &port.intent, &widgets) {
+                rows.entry((part.name.clone(), w)).or_default().extend(list);
             }
         }
     }
@@ -799,14 +821,29 @@ pub fn derive_with(inputs: &Inputs, ir: &Value) -> Result<Derivation, Failure> {
         Some(p) => Some(read_json(p)?),
         None => None,
     };
+    let result = match (&inputs.prediction, inputs.control_plane) {
+        (Some(p), true) => Some(read_json(p)?),
+        _ => None,
+    };
+    let control = inputs.control_plane.then_some(ControlInputs {
+        result: result.as_ref(),
+    });
     let plan = plan(
         &tree,
         &model,
         &panels,
         ports_doc.as_ref(),
         contract_doc.as_ref(),
+        control.as_ref(),
     )?;
     derivation(inputs, &plan, ports_path.as_ref())
+}
+
+/// What the control-plane mode reads besides the inputs of the operator UI.
+#[derive(Clone, Copy, Default)]
+pub struct ControlInputs<'a> {
+    /// A simulator result of the architecture, whose baseline predicts each KPI.
+    pub result: Option<&'a Value>,
 }
 
 /// The layout (`agenticspec-ui-layout/1`) of `architecture`, from inputs held in memory: the
@@ -824,21 +861,24 @@ pub fn layout_with(
     panels_text: &str,
     ports: Option<&Value>,
     contract: Option<&Value>,
+    control: Option<&ControlInputs<'_>>,
 ) -> Result<String, Failure> {
     let tree = Tree::read(root, architecture).map_err(Failure::Unreadable)?;
     let panels = Panels::read(panels_text).map_err(Failure::Unreadable)?;
     let model = Model { ir };
-    let plan = plan(&tree, &model, &panels, ports, contract)?;
+    let plan = plan(&tree, &model, &panels, ports, contract, control)?;
     Ok(write::layout(&plan))
 }
 
-/// The whole composition of `tree`, or every refusal of the architecture and its `view:` key.
+/// The whole composition of `tree`, or every refusal of the architecture and its `view:` key;
+/// with `control`, the pages across parts of the default control plane too.
 fn plan<'a>(
     tree: &'a Tree,
     model: &'a Model<'a>,
     panels: &'a Panels,
     ports_doc: Option<&Value>,
     contract_doc: Option<&Value>,
+    control: Option<&ControlInputs<'_>>,
 ) -> Result<Plan<'a>, Failure> {
     let ports = ports_doc
         .map(|d| model::ports(d, model))
@@ -872,6 +912,38 @@ fn plan<'a>(
     if !refusals.is_empty() {
         return Err(Failure::Refused(refusals));
     }
+    let mut levels = levels;
+    let control = match control {
+        None => None,
+        Some(c) => {
+            let (Some(ports_doc), Some(contract_doc), Some(contract)) =
+                (ports_doc, contract_doc, contract.as_ref())
+            else {
+                return Err(Failure::Refused(vec![refusal(
+                    "contract",
+                    "the control plane is derived from the contract and the port catalogue: name both",
+                )]));
+            };
+            let derived = control::derive(&control::Inputs {
+                tree,
+                model,
+                panels,
+                levels: &levels,
+                ports_doc,
+                ports: &ports,
+                contract_doc,
+                contract,
+                result: c.result,
+            })
+            .map_err(Failure::Refused)?;
+            // The top level's channel carries the events of the pages across parts too.
+            levels[0].events.extend(derived.events.iter().cloned());
+            if !levels[0].events.is_empty() {
+                levels[0].channel = Some(derived.channel.clone());
+            }
+            Some(derived)
+        }
+    };
     let home = match levels[0].key.home.as_deref() {
         None | Some("overview") => levels[0].overview.clone(),
         Some(p) => part_page(p),
@@ -882,6 +954,7 @@ fn plan<'a>(
         panels,
         levels,
         home,
+        control,
     })
 }
 
@@ -915,7 +988,11 @@ fn derivation(
             .map_err(|e| Failure::Unreadable(format!("{rel}: {e}")))?;
         lines.push(format!("{}  {rel}", sha(&bytes)));
     }
-    for p in [ports_path, inputs.contract.as_ref()].into_iter().flatten() {
+    let prediction = inputs.prediction.as_ref().filter(|_| inputs.control_plane);
+    for p in [ports_path, inputs.contract.as_ref(), prediction]
+        .into_iter()
+        .flatten()
+    {
         let bytes =
             std::fs::read(p).map_err(|e| Failure::Unreadable(format!("{}: {e}", p.display())))?;
         lines.push(format!(
@@ -931,7 +1008,8 @@ fn derivation(
     ));
 
     Ok(Derivation {
-        pages: plan.levels.iter().map(|l| 1 + l.pages.len()).sum(),
+        pages: plan.levels.iter().map(|l| 1 + l.pages.len()).sum::<usize>()
+            + plan.control.as_ref().map_or(0, |c| c.pages.len()),
         actions: plan
             .levels
             .iter()
@@ -944,7 +1022,15 @@ fn derivation(
                         .map(|s| s.row_actions.len())
                         .sum::<usize>()
             })
-            .sum(),
+            .sum::<usize>()
+            + plan.control.as_ref().map_or(0, |c| {
+                c.pages
+                    .iter()
+                    .flat_map(|p| &p.frames)
+                    .flat_map(|f| &f.sections)
+                    .map(|s| s.row_actions.len())
+                    .sum()
+            }),
         channels: plan.levels.iter().filter(|l| l.channel.is_some()).count(),
         files,
         fixtures_dir,

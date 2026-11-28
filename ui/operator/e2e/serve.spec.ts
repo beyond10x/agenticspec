@@ -28,3 +28,45 @@ test('ui serve shows the operator UI with rows from the fixtures', async ({ page
   const recorded = (await (await page.request.get(`${base()}/fixture/commands`)).json()) as { scope: string; command: string }[];
   expect(recorded).toContainEqual(expect.objectContaining({ scope: 'workstation/operator', command: 'agentic.channel.SendMessage' }));
 });
+
+// The control-plane UI beside it at /control/: the overview's tiles, then each page across parts
+// renders from the same fixtures, a row action of Operations sends its command at the part's
+// scope, and the Events page lists the level's channel as it plays.
+test('ui serve shows the control-plane UI at /control/ with each page across parts', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  const config = await (await page.request.get(`${base()}/control/config.json`)).json();
+  expect(config).toMatchObject({ mode: 'control-plane', api_base: '/ingress/operator' });
+  const layout = await (await page.request.get(`${base()}/control/views.json`)).json();
+  const pages = layout.control.pages as { page: string; label: string; kind: string }[];
+  expect(pages.map((p) => p.label)).toEqual(['Inbox', 'Activity', 'Operations', 'Metrics', 'Architecture', 'Events']);
+
+  await page.goto(`${base()}/control/`);
+  await expect(page.locator('[data-panel="tiles"] [data-tile]').first()).toBeVisible();
+  await expect(page.locator('[data-tile="cost_usd"]')).toBeVisible();
+
+  for (const p of pages) {
+    await page.goto(`${base()}/control/#/${p.page.split('.').join('/')}`);
+    await expect(page.locator(`section.control-page[data-page="${p.page}"] > h2.page-title`)).toHaveText(p.label);
+  }
+
+  await page.goto(`${base()}/control/#/control/inbox`);
+  await expect(page.locator('[data-view="agentic.question.OpenQuestions"][data-part="owner"] tr[data-row]').first()).toBeAttached();
+
+  await page.goto(`${base()}/control/#/control/operations`);
+  const gateways = page.locator('[data-view="agentic.gateway.Gateways"][data-part="gateway"]');
+  await expect(gateways.locator('tr[data-row]').first()).toBeAttached();
+  // DrainGateway moves a serving gateway; the fixture refuses it on one that is not.
+  await gateways.locator('tr[data-row]', { hasText: 'Serving' }).first().getByRole('button', { name: 'Drain a gateway' }).click();
+  await expect(page.getByText('Drain a gateway: done')).toBeVisible();
+  const recorded = (await (await page.request.get(`${base()}/fixture/commands`)).json()) as { scope: string; command: string }[];
+  expect(recorded).toContainEqual(expect.objectContaining({ scope: 'workstation/gateway', command: 'agentic.gateway.DrainGateway' }));
+
+  await page.goto(`${base()}/control/#/control/metrics`);
+  await expect(page.locator('[data-panel="metrics"] tr[data-row]')).toHaveCount(layout.control.metrics.length);
+
+  await page.goto(`${base()}/control/#/control/activity`);
+  await expect(page.locator('[data-panel="activity_gateway_calls"]')).toBeAttached();
+
+  await page.goto(`${base()}/control/#/control/events`);
+  await expect(page.locator('[data-panel="events"] tr[data-row]').first()).toBeAttached({ timeout: 15_000 });
+});

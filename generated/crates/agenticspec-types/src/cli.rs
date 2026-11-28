@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 3032732dfbc6d8e3dbadc3ff119b18f57e81eca30033e27897262c039411e410
+// contract digest b8f23e9b2c092077465347f0fbbae30dec676cfb4ee76e860761fa72b4bc5749
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -1290,6 +1290,10 @@ pub struct UiBuildInput {
     pub api_base: Option<String>,
     /// `archive` — `Boolean`.
     pub archive: bool,
+    /// `control_plane` — `Boolean`.
+    pub control_plane: bool,
+    /// `prediction` — `Optional<String>`.
+    pub prediction: Option<String>,
 }
 
 /// UiBuildResult — `agenticspec.cli.UiBuildResult`.
@@ -1367,6 +1371,10 @@ pub struct UiDeriveInput {
     pub root: Option<String>,
     /// `check` — `Boolean`.
     pub check: bool,
+    /// `control_plane` — `Boolean`.
+    pub control_plane: bool,
+    /// `prediction` — `Optional<String>`.
+    pub prediction: Option<String>,
 }
 
 /// UiDeriveResult — `agenticspec.cli.UiDeriveResult`.
@@ -1445,11 +1453,13 @@ pub struct UiServeInput {
 
 /// UiServeResult — `agenticspec.cli.UiServeResult`.
 ///
-/// Where the operator UI was served, `http://127.0.0.1:<port>/`, and the root of its runtime interface, `<url>ingress/operator`. The server runs until it is stopped.
+/// Where the operator UI was served, `http://127.0.0.1:<port>/`, the control-plane UI, `<url>control/`, and the root of their runtime interface, `<url>ingress/operator`. The server runs until it is stopped.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UiServeResult {
     /// `url` — `String`.
     pub url: String,
+    /// `control` — `String`.
+    pub control: String,
     /// `interface` — `String`.
     pub interface: String,
 }

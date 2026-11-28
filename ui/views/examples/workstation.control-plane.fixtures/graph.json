@@ -1,0 +1,213 @@
+{
+  "rows": [
+    {
+      "architecture": "workstation",
+      "draft_id": "workstation",
+      "height": 614.0,
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "owner",
+          "over": "chat",
+          "to": "operator"
+        },
+        {
+          "carries": "question",
+          "from": "operator",
+          "over": "chat",
+          "to": "owner"
+        },
+        {
+          "carries": "question",
+          "from": "worker",
+          "over": null,
+          "to": "operator"
+        },
+        {
+          "carries": "order",
+          "from": "operator",
+          "over": null,
+          "to": "worker"
+        },
+        {
+          "carries": "model_call",
+          "from": "operator",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "worker",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "over": null,
+          "to": "model"
+        },
+        {
+          "carries": "claim",
+          "from": "worker",
+          "over": null,
+          "to": "builds"
+        }
+      ],
+      "name": "workstation",
+      "parts": [
+        {
+          "acts_for": null,
+          "block": "sandbox",
+          "border": false,
+          "count": null,
+          "family": "place",
+          "id": "box",
+          "kind": null,
+          "per": "worker",
+          "properties": [
+            [
+              "egress",
+              "gateway"
+            ],
+            [
+              "isolation",
+              "process"
+            ]
+          ],
+          "subtitle": "sandbox · process"
+        },
+        {
+          "acts_for": null,
+          "block": "pool",
+          "border": false,
+          "count": null,
+          "family": "resource",
+          "id": "builds",
+          "kind": "build_slots",
+          "per": null,
+          "properties": [
+            [
+              "job limit",
+              "10m"
+            ]
+          ],
+          "subtitle": "pool · build_slots"
+        },
+        {
+          "acts_for": null,
+          "block": "channel",
+          "border": false,
+          "count": null,
+          "family": "collab",
+          "id": "chat",
+          "kind": "operator",
+          "per": null,
+          "properties": [],
+          "subtitle": "channel · operator"
+        },
+        {
+          "acts_for": null,
+          "block": "gateway",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "gateway",
+          "kind": null,
+          "per": null,
+          "properties": [],
+          "subtitle": "gateway"
+        },
+        {
+          "acts_for": null,
+          "block": "model",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "model",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "route",
+              "frontier"
+            ]
+          ],
+          "subtitle": "model · frontier"
+        },
+        {
+          "acts_for": "owner",
+          "block": "agent",
+          "border": true,
+          "count": null,
+          "family": "agent",
+          "id": "operator",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "operator"
+            ]
+          ],
+          "subtitle": "agent · operator"
+        },
+        {
+          "acts_for": null,
+          "block": "principal",
+          "border": false,
+          "count": null,
+          "family": "principal",
+          "id": "owner",
+          "kind": "human",
+          "per": null,
+          "properties": [],
+          "subtitle": "principal · human"
+        },
+        {
+          "acts_for": null,
+          "block": "workspace",
+          "border": false,
+          "count": null,
+          "family": "place",
+          "id": "tree",
+          "kind": null,
+          "per": "worker",
+          "properties": [
+            [
+              "sharing",
+              "exclusive"
+            ]
+          ],
+          "subtitle": "workspace · exclusive"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": "12",
+          "family": "agent",
+          "id": "worker",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ]
+          ],
+          "subtitle": "agent · coding"
+        }
+      ],
+      "revision": 1,
+      "summary": "One workstation, one owner, an operator agent acting for the owner, coding agents, a shared build pool.",
+      "svg": "<svg class=\"graph\" viewBox=\"0 0 991 614\" width=\"991\" height=\"614\" role=\"group\" aria-labelledby=\"graph-title graph-desc\"><title id=\"graph-title\">Architecture workstation</title><desc id=\"graph-desc\">9 parts in rows by block layer, 8 links as arrows labelled by what they carry. The tables of parts and links beside the graph list every part and every link as text.</desc><defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker></defs><g class=\"edges\"><path class=\"edge\" d=\"M172 76C172 86 87.6 86 87.6 96L87.6 140C87.6 150 165 150 165 160L165 171.5\" data-from=\"owner\" data-to=\"operator\" data-over=\"chat\"><title>owner → operator: prompt over chat</title></path><path class=\"edge\" d=\"M191 171.5L191 160C191 150 273.6 150 273.6 140L273.6 96C273.6 86.5 198 86.5 198 77\" data-from=\"operator\" data-to=\"owner\" data-over=\"chat\"><title>operator → owner: question over chat</title></path><path class=\"edge\" d=\"M178 264.5L178 277L178 302L395 302L395 317C395 331.5 354 331.5 354 346\" data-from=\"operator\" data-to=\"gateway\"><title>operator → gateway: model_call</title></path><path class=\"edge\" d=\"M472 267L472 277L472 302L395 302L395 317C395 331.5 354 331.5 354 346\" data-from=\"worker\" data-to=\"gateway\"><title>worker → gateway: model_call</title></path><path class=\"edge\" d=\"M498 267L498 277C498 287 798 287 798 297L798 327L798 347L798 430C798 440 804 440 804 450L804 470C804 479.5 807 479.5 807 489\" data-from=\"worker\" data-to=\"builds\"><title>worker → builds: claim</title></path><path class=\"edge\" d=\"M400 211.3L285.5 211.3\" data-from=\"worker\" data-to=\"operator\"><title>worker → operator: question</title></path><path class=\"edge\" d=\"M285.5 237.3L400 237.3\" data-from=\"operator\" data-to=\"worker\"><title>operator → worker: order</title></path><path class=\"edge\" d=\"M482.5 388.5L599 388.5\" data-from=\"gateway\" data-to=\"model\"><title>gateway → model: model_call</title></path></g><g class=\"labels\"><g class=\"pill\"><rect x=\"309.7\" y=\"201.3\" width=\"66.1\" height=\"20\" rx=\"10\" data-box=\"309.7 201.3 66.1 20\"/><text x=\"342.8\" y=\"215.3\" text-anchor=\"middle\">question</text></g><g class=\"pill\"><rect x=\"319.1\" y=\"227.3\" width=\"47.2\" height=\"20\" rx=\"10\" data-box=\"319.1 227.3 47.2 20\"/><text x=\"342.8\" y=\"241.3\" text-anchor=\"middle\">order</text></g><g class=\"pill\"><rect x=\"501.7\" y=\"378.5\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"501.7 378.5 78.1 20\"/><text x=\"540.8\" y=\"392.5\" text-anchor=\"middle\">model_call</text></g><g class=\"pill\"><rect x=\"355.9\" y=\"307\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"355.9 307 78.1 20\"/><text x=\"395\" y=\"321\" text-anchor=\"middle\">model_call</text></g><path class=\"over\" d=\"M87.6 118H105.6M255.6 118H273.6\"/><g class=\"pill\"><rect x=\"18.3\" y=\"108\" width=\"57.3\" height=\"20\" rx=\"10\" data-box=\"18.3 108 57.3 20\"/><text x=\"47\" y=\"122\" text-anchor=\"middle\">prompt</text></g><g class=\"pill\"><rect x=\"285.6\" y=\"108\" width=\"66.1\" height=\"20\" rx=\"10\" data-box=\"285.6 108 66.1 20\"/><text x=\"318.7\" y=\"122\" text-anchor=\"middle\">question</text></g><g class=\"node channel f-collab\" data-part=\"chat\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"chat, channel · operator\" x=\"105.6\" y=\"96\" width=\"150\" height=\"44\" rx=\"10\" data-box=\"105.6 96 150 44\"/><rect class=\"icon-bg\" x=\"113.6\" y=\"107\" width=\"22\" height=\"22\" rx=\"5.1\"/><path class=\"icon\" transform=\"translate(119.5 112.9) scale(0.73)\" d=\"M2 2.5h10v7H6.5L3.5 12V9.5H2z\"/><text class=\"name sm\" x=\"143.6\" y=\"115\">chat</text><text class=\"sub\" x=\"143.6\" y=\"130\">channel · operator</text></g><g class=\"pill\"><rect x=\"779.8\" y=\"450\" width=\"48.4\" height=\"20\" rx=\"10\" data-box=\"779.8 450 48.4 20\"/><text x=\"804\" y=\"464\" text-anchor=\"middle\">claim</text></g></g><g class=\"nodes\"><g class=\"node f-principal\" data-part=\"owner\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"owner, principal · human\" x=\"101\" y=\"24\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"101 24 168 52\"/><rect class=\"icon-bg\" x=\"113\" y=\"36\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(121 44) scale(1)\" d=\"M7 6.6a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM2.4 12.6c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2\"/><text class=\"name\" x=\"153\" y=\"48\">owner</text><text class=\"sub\" x=\"153\" y=\"63\">principal · human</text></g><g class=\"node f-agent on-border\" data-part=\"operator\"><rect class=\"border-mark\" x=\"66.5\" y=\"167.5\" width=\"223\" height=\"102\" rx=\"14\"/><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"operator, agent · operator, on the border\" x=\"71.5\" y=\"172.5\" width=\"213\" height=\"92\" rx=\"10\" data-box=\"71.5 172.5 213 92\"/><rect class=\"icon-bg\" x=\"83.5\" y=\"184.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(91.5 192.5) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"123.5\" y=\"196.5\">operator</text><text class=\"sub\" x=\"123.5\" y=\"211.5\">agent · operator</text><g class=\"tag\"><rect x=\"224.2\" y=\"200.5\" width=\"48.3\" height=\"16\" rx=\"8\"/><text x=\"248.3\" y=\"212\" text-anchor=\"middle\">border</text></g><text class=\"prop\" x=\"83.5\" y=\"236.5\"><tspan class=\"prop-k\">acts for</tspan> owner</text><text class=\"prop\" x=\"83.5\" y=\"253.5\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"region per f-agent\" data-region=\"worker\"><rect class=\"region-bg\" x=\"391\" y=\"160\" width=\"582\" height=\"117\" rx=\"12\"/><text class=\"region-sub\" x=\"401\" y=\"176\">per worker</text></g><g class=\"node f-agent\" data-part=\"worker\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"worker, agent · coding, count 12, 1 marked places\" x=\"401\" y=\"184\" width=\"168\" height=\"83\" rx=\"10\" data-box=\"401 184 168 83\"/><rect class=\"icon-bg\" x=\"413\" y=\"196\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(421 204) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"453\" y=\"208\">worker</text><text class=\"sub\" x=\"453\" y=\"223\">agent · coding</text><g class=\"badge\"><rect x=\"524.5\" y=\"195\" width=\"32.5\" height=\"18\" rx=\"9\"/><text x=\"540.8\" y=\"208\" text-anchor=\"middle\">×12</text></g><g class=\"chip\" data-place=\"parts.worker.count\" data-value=\"12\"><title>count 12, range 2…24</title><rect x=\"413\" y=\"238\" width=\"118.5\" height=\"20\" rx=\"10\"/><text class=\"chip-k\" x=\"422\" y=\"252\">count</text><text class=\"chip-v\" x=\"460.3\" y=\"252\">12</text><text class=\"chip-r\" x=\"481.5\" y=\"252\">[2…24]</text></g></g><g class=\"node f-place\" data-part=\"box\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"box, sandbox · process, one per worker\" x=\"585\" y=\"184\" width=\"169\" height=\"75\" rx=\"10\" data-box=\"585 184 169 75\"/><rect class=\"icon-bg\" x=\"597\" y=\"196\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(605 204) scale(1)\" d=\"M7 1.5l5 2v3.6c0 2.9-2.1 4.7-5 5.4-2.9-.7-5-2.5-5-5.4V3.5z\"/><text class=\"name\" x=\"637\" y=\"208\">box</text><text class=\"sub\" x=\"637\" y=\"223\">sandbox · process</text><text class=\"prop\" x=\"597\" y=\"248\"><tspan class=\"prop-k\">egress</tspan> gateway</text></g><g class=\"node f-place\" data-part=\"tree\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"tree, workspace · exclusive, one per worker\" x=\"770\" y=\"184\" width=\"193\" height=\"52\" rx=\"10\" data-box=\"770 184 193 52\"/><rect class=\"icon-bg\" x=\"782\" y=\"196\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(790 204) scale(1)\" d=\"M1.5 3.5h4l1.5 1.5h5.5v6.5h-11z\"/><text class=\"name\" x=\"822\" y=\"208\">tree</text><text class=\"sub\" x=\"822\" y=\"223\">workspace · exclusive</text></g><g class=\"node f-intel\" data-part=\"gateway\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"gateway, gateway, 1 marked places\" x=\"226.5\" y=\"347\" width=\"255\" height=\"83\" rx=\"10\" data-box=\"226.5 347 255 83\"/><rect class=\"icon-bg\" x=\"238.5\" y=\"359\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(246.5 367) scale(1)\" d=\"M2 2.5v9M5 7h7M9 4l3 3-3 3\"/><text class=\"name\" x=\"278.5\" y=\"371\">gateway</text><text class=\"sub\" x=\"278.5\" y=\"386\">gateway</text><g class=\"chip\" data-place=\"parts.gateway.rate_limit_per_minute\" data-value=\"120\"><title>rate_limit_per_minute 120, range 60…240</title><rect x=\"238.5\" y=\"401\" width=\"230.7\" height=\"20\" rx=\"10\"/><text class=\"chip-k\" x=\"247.5\" y=\"415\">rate_limit_per_minute</text><text class=\"chip-v\" x=\"377.2\" y=\"415\">120</text><text class=\"chip-r\" x=\"405.6\" y=\"415\">[60…240]</text></g></g><g class=\"node f-intel\" data-part=\"model\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"model, model · frontier\" x=\"600\" y=\"362.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"600 362.5 168 52\"/><rect class=\"icon-bg\" x=\"612\" y=\"374.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(620 382.5) scale(1)\" d=\"M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5\"/><text class=\"name\" x=\"652\" y=\"386.5\">model</text><text class=\"sub\" x=\"652\" y=\"401.5\">model · frontier</text></g><g class=\"node f-resource\" data-part=\"builds\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"builds, pool · build_slots, 1 marked places\" x=\"723\" y=\"490\" width=\"168\" height=\"100\" rx=\"10\" data-box=\"723 490 168 100\"/><rect class=\"icon-bg\" x=\"735\" y=\"502\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(743 510) scale(1)\" d=\"M2 2.5h10v2.5H2zM2 6.25h10v2.5H2zM2 10h10v2H2z\"/><text class=\"name\" x=\"775\" y=\"514\">builds</text><text class=\"sub\" x=\"775\" y=\"529\">pool · build_slots</text><text class=\"prop\" x=\"735\" y=\"554\"><tspan class=\"prop-k\">job limit</tspan> 10m</text><g class=\"chip\" data-place=\"parts.builds.capacity\" data-value=\"16\"><title>capacity 16, range 8…32</title><rect x=\"735\" y=\"561\" width=\"135.3\" height=\"20\" rx=\"10\"/><text class=\"chip-k\" x=\"744\" y=\"575\">capacity</text><text class=\"chip-v\" x=\"799.1\" y=\"575\">16</text><text class=\"chip-r\" x=\"820.3\" y=\"575\">[8…32]</text></g></g></g></svg>",
+      "width": 991.0
+    }
+  ],
+  "view": "agentic.architecture.Graph"
+}

@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
-use crate::derive::{self, Failure};
+use crate::derive::{self, ControlInputs, Failure};
 
 /// The files of the built operator app, by name, sorted.
 pub const APP: &[(&str, &[u8])] = &[
@@ -41,6 +41,8 @@ const MODEL: &str = include_str!("../../../ui/views/blocks.model.json");
 
 /// The format of `config.json`.
 pub const CONFIG_FORMAT: &str = "agenticspec-operator-config/1";
+/// The `mode` of `config.json` of a control-plane UI.
+pub const CONTROL_PLANE: &str = "control-plane";
 /// The base path of the runtime's adapter when none is named.
 pub const API_BASE: &str = "/api/";
 
@@ -51,6 +53,10 @@ pub struct Inputs {
     pub architecture: PathBuf,
     pub contract: PathBuf,
     pub api_base: String,
+    /// Build the control-plane UI: the operator UI with the pages across parts.
+    pub control_plane: bool,
+    /// A simulator result whose predictions the Metrics page shows; read with `control_plane`.
+    pub prediction: Option<PathBuf>,
 }
 
 /// An architecture document or contract read from `path`, as JSON when it ends in `.json` and as
@@ -100,12 +106,20 @@ fn refused(path: &str, message: String) -> Failure {
 /// architecture or `view:` key the derivation refuses.
 pub fn build(inputs: &Inputs) -> Result<Vec<(String, Vec<u8>)>, Failure> {
     let contract = read_doc(&inputs.contract)?;
-    build_with(
+    let result = match (&inputs.prediction, inputs.control_plane) {
+        (Some(p), true) => Some(read_doc(p)?),
+        _ => None,
+    };
+    let control = inputs.control_plane.then_some(ControlInputs {
+        result: result.as_ref(),
+    });
+    build_ui(
         &inputs.root,
         &inputs.architecture,
         &contract,
         &inputs.contract.display().to_string(),
         &inputs.api_base,
+        control.as_ref(),
     )
 }
 
@@ -122,6 +136,24 @@ pub fn build_with(
     contract: &Value,
     shown: &str,
     api_base: &str,
+) -> Result<Vec<(String, Vec<u8>)>, Failure> {
+    build_ui(root, architecture, contract, shown, api_base, None)
+}
+
+/// Every file of the operator UI of `architecture` as [`build_with`] writes them, or with `control`
+/// of its control-plane UI: the layout holds the pages across parts (`control`), and `config.json`
+/// says `mode: control-plane`.
+///
+/// # Errors
+///
+/// As [`build_with`], and a simulator result of another revision.
+pub fn build_ui(
+    root: &Path,
+    architecture: &Path,
+    contract: &Value,
+    shown: &str,
+    api_base: &str,
+    control: Option<&ControlInputs<'_>>,
 ) -> Result<Vec<(String, Vec<u8>)>, Failure> {
     let ir: Value = serde_json::from_str(MODEL)
         .map_err(|e| Failure::Unreadable(format!("the embedded model: {e}")))?;
@@ -152,6 +184,7 @@ pub fn build_with(
         PANELS,
         Some(&ports),
         Some(contract),
+        control,
     )?;
     let doc: Value = serde_json::from_str(&layout)
         .map_err(|e| Failure::Unreadable(format!("the layout: {e}")))?;
@@ -164,12 +197,16 @@ pub fn build_with(
             format!("the contract is of {of}, not of {architecture}"),
         ));
     }
-    let config = json!({
+    let mut config = json!({
         "format": CONFIG_FORMAT,
         "architecture": architecture,
         "api_base": api_base,
         "title": architecture,
     });
+    if control.is_some() {
+        config["mode"] = json!(CONTROL_PLANE);
+        config["title"] = json!(format!("{architecture} control plane"));
+    }
     let mut files: Vec<(String, Vec<u8>)> = APP
         .iter()
         .map(|(name, bytes)| ((*name).to_string(), bytes.to_vec()))

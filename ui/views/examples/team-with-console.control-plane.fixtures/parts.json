@@ -1,0 +1,125 @@
+{
+  "rows": [
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "count": 1,
+      "kind": "Architecture",
+      "name": "console",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-5a5bf29e997b",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "count": 3,
+      "kind": "Agent",
+      "name": "worker",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-3c7c06989283",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "count": 1,
+      "kind": "Gateway",
+      "name": "gateway",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-64a6c751a3f9",
+      "settings": [
+        {
+          "name": "rate_limit_per_minute",
+          "value": "60"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "count": 1,
+      "kind": "Model",
+      "name": "model",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-a1cdb84057bc",
+      "settings": [
+        {
+          "name": "route",
+          "value": "frontier"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "count": 1,
+      "kind": "Principal",
+      "name": "owner",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-8169e9f87da7",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "count": 1,
+      "kind": "Agent",
+      "name": "helper",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-e0934b838cd2",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "count": 1,
+      "kind": "Agent",
+      "name": "steward",
+      "on_border": true,
+      "part_id": "00000000-0000-4000-8000-8cf8f777bce0",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "orchestrator"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "count": 1,
+      "kind": "Gateway",
+      "name": "gateway",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-ca920be09642",
+      "settings": [
+        {
+          "name": "rate_limit_per_minute",
+          "value": "60"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "count": 1,
+      "kind": "Model",
+      "name": "model",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-b17693b4f9fd",
+      "settings": [
+        {
+          "name": "route",
+          "value": "frontier"
+        }
+      ]
+    }
+  ],
+  "view": "agentic.architecture.Parts"
+}

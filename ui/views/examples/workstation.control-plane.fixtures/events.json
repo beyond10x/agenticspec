@@ -1,0 +1,460 @@
+{
+  "rows": [
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.agent.AgentDefined"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.agent.AgentRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.agent.AgentRevisionPublished"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.agent.AgentRevisionRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.agent.AgentRevisionUsed"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.AgentActsFor"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.ArchitectureCreated"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.ArchitectureRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.ContractRecorded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.DryRunApplied"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.EntityPlaced"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.IngressAdded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.LinkAdded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.PartAdded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.PartBordered"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.PartPerSet"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.PatchApplied"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.PatchRecorded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.PatchRefused"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.PatchRequested"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.PortDeclared"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.RevisionCommitted"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.architecture.SwarmSet"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.ChannelClosed"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.ChannelOpened"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.HeartbeatRecorded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.MessageDelivered"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.MessageLost"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.MessageRead"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.MessageSent"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.PostTaken"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.Posted"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.SharedChannelOpened"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.Subscribed"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.channel.SubscriptionEnded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.CallCompleted"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.CallDecided"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.GatewayDrained"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.GatewayOpened"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.GatewayStopped"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.UpstreamAttached"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.UpstreamDetached"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.UpstreamRestored"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.gateway.UpstreamSaturated"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.HarnessRegistered"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.HarnessRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.PermissionModeRegistered"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.PermissionModeRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.SessionEnded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.SessionOpened"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.SessionRestarted"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.SubAgentSpawned"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.ToolCallCompleted"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.ToolCallDecided"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.ToolCallRequested"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.ToolResultNotRead"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.harness.TurnRecorded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.model.EndpointClosed"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.model.EndpointOpened"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.model.InferenceFinished"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.model.InferenceStarted"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.model.ModelDeclared"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.model.ModelRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.model.RouteDefined"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.model.RouteRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.principal.PrincipalRegistered"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.principal.PrincipalRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.question.AnswerNotRead"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.question.DefaultTaken"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.question.QuestionAnswered"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.question.QuestionAsked"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.question.QuestionWithdrawn"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.resource.ClaimExpired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.resource.ClaimGranted"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.resource.ClaimKilled"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.resource.ClaimQueued"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.resource.ClaimReleased"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.resource.ClaimWithdrawn"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.resource.PoolCreated"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.sandbox.SandboxDefined"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.sandbox.SandboxRetired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.ChangeProposed"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.LeaseExpired"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.LeaseGranted"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.LeaseReleased"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.LeaseRequested"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.PathWritten"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.ProposalMerged"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.ProposalRejected"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.ProposalSuperseded"
+    },
+    {
+      "architecture": "workstation",
+      "channel": "level",
+      "event": "agentic.workspace.WorkspaceCreated"
+    }
+  ],
+  "view": "agentic.architecture.ControlEvents"
+}
