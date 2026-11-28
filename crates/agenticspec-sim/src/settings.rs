@@ -17,6 +17,11 @@ pub const SOURCE: &str = include_str!("../../../blocks/settings.yaml");
 /// architecture (`nest::INNER`).
 pub const NOT_SETTINGS: &[&str] = &["block", crate::nest::INNER];
 
+/// The setting every part may carry whose keys and values are free: what a document records about
+/// a part beyond its typed settings. The check takes it as written (a map) and the simulator and
+/// the search never read it.
+pub const NOTES: &str = "notes";
+
 /// What values a setting takes.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Kind {
@@ -29,13 +34,18 @@ pub enum Kind {
         from: Option<String>,
     },
     Duration,
-    String,
+    /// A text, or with `list` a non-empty list of non-empty texts.
+    String {
+        list: bool,
+    },
     /// The name of another part, or a list of names.
     Part {
         list: bool,
     },
     /// A map from the name of a part to a number of at least 0.
     Shares,
+    /// A map with keys and values of any kind, never typed further and never read.
+    Notes,
 }
 
 /// The type of a setting.
@@ -170,8 +180,11 @@ fn setting(at: &str, v: &Value) -> Result<Setting, String> {
         Some("integer") => Kind::Integer,
         Some("boolean") => Kind::Boolean,
         Some("duration") => Kind::Duration,
-        Some("string") => Kind::String,
+        Some("string") => Kind::String {
+            list: v["list"] == true,
+        },
         Some("shares") => Kind::Shares,
+        Some("notes") => Kind::Notes,
         Some("part") => Kind::Part {
             list: v["list"] == true,
         },
@@ -314,10 +327,12 @@ impl Type {
             Kind::Boolean => "true or false".to_string(),
             Kind::Enum { values, .. } => format!("one of {}", values.join(", ")),
             Kind::Duration => format!("a duration{}", self.range()),
-            Kind::String => "a text".to_string(),
+            Kind::String { list: false } => "a text".to_string(),
+            Kind::String { list: true } => "a non-empty list of texts".to_string(),
             Kind::Part { list: false } => "the name of a part".to_string(),
             Kind::Part { list: true } => "a list of names of parts".to_string(),
             Kind::Shares => "a map from model parts to shares of at least 0".to_string(),
+            Kind::Notes => "a map of free keys and values, never read".to_string(),
         };
         if let Some(u) = &self.unit {
             let _ = write!(s, " ({u})");
@@ -333,10 +348,12 @@ impl Type {
             Kind::Boolean => "boolean",
             Kind::Enum { .. } => "enum",
             Kind::Duration => "duration",
-            Kind::String => "string",
+            Kind::String { list: false } => "string",
+            Kind::String { list: true } => "string list",
             Kind::Part { list: false } => "part",
             Kind::Part { list: true } => "part list",
             Kind::Shares => "shares",
+            Kind::Notes => "notes",
         }
     }
 
@@ -362,7 +379,10 @@ impl Type {
                 Value::String(s) => parse_duration(s).is_some_and(|x| self.within(x)),
                 _ => false,
             },
-            Kind::String => v.is_string(),
+            Kind::String { list: false } => v.is_string(),
+            Kind::String { list: true } => v.as_array().is_some_and(|xs| {
+                !xs.is_empty() && xs.iter().all(|x| x.as_str().is_some_and(|s| !s.is_empty()))
+            }),
             Kind::Part { list } => match v {
                 Value::String(s) => !s.is_empty(),
                 Value::Array(xs) => {
@@ -374,6 +394,7 @@ impl Type {
                 o.values()
                     .all(|x| num(crate::check::value(x)).is_some_and(|x| x >= 0.0))
             }),
+            Kind::Notes => v.is_object(),
         };
         if ok { Ok(()) } else { Err(self.describe()) }
     }

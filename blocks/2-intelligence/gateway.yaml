@@ -441,6 +441,30 @@ commands:
             upstream_id: input.upstream_id
             request: input.request
         summary: The upstream is detached; the call is recorded NoUpstream.
+      - name: no-upstream-foreign
+        when_related: {via: input.upstream_id, predicate: gateway_id != input.gateway_id}
+        creates: agentic.gateway.Call
+        instance: inference_id
+        sets:
+          gateway_id: input.gateway_id
+          caller: input.caller
+          route_id: input.route_id
+          admission: NoUpstream
+          budget_left: input.budget_left
+          upstream_id: input.upstream_id
+        emits: [agentic.gateway.CallDecided]
+        payload:
+          agentic.gateway.CallDecided:
+            inference_id: input.inference_id
+            gateway_id: input.gateway_id
+            caller: input.caller
+            route_id: input.route_id
+            admission: NoUpstream
+            upstream_id: input.upstream_id
+            request: input.request
+        summary: >-
+          The upstream is behind another gateway, so this gateway has no such upstream and no
+          model to pass the call to; the call is recorded NoUpstream.
       - name: rate-limited
         when_related: {via: input.upstream_id, predicate: state == Saturated}
         creates: agentic.gateway.Call

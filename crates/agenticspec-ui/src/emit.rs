@@ -526,6 +526,8 @@ fn app_vue(app: &App) -> String {
 struct PageOut<'a> {
     kit: BTreeSet<&'static str>,
     rt: BTreeSet<&'static str>,
+    /// What it imports from vue itself (`computed`).
+    vue: BTreeSet<&'static str>,
     widgets: BTreeSet<String>,
     field_defs: bool,
     /// A row action sends a field of its row, which the table hands over untyped.
@@ -646,6 +648,26 @@ impl PageOut<'_> {
                 format!(" {} ", params.join(", "))
             }
         );
+        if let Some(ms) = r.poll {
+            self.rt.insert("usePoll");
+            let _ = writeln!(self.script, "usePoll({}, {ms});", r.var);
+        }
+    }
+
+    /// Imports the runtime helpers a compiled predicate calls.
+    fn helpers(&mut self, ts: &str) {
+        for name in ["same", "member", "contains", "truthy", "at"] {
+            let call = format!("{name}(");
+            let used = ts.match_indices(&call).any(|(i, _)| {
+                !ts[..i]
+                    .chars()
+                    .next_back()
+                    .is_some_and(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
+            });
+            if used {
+                self.rt.insert(name);
+            }
+        }
     }
 
     /// An action as template: a link, a copy button or a button that sends a command. A button
@@ -668,6 +690,13 @@ impl PageOut<'_> {
             return tpl;
         }
         let cond = conds.join(" && ");
+        // A confirm draws its button and its question as siblings: the condition wraps them.
+        if a.confirm.is_some() {
+            return format!(
+                "<template v-if=\"{cond}\">\n{}</template>\n",
+                indent(&tpl, 2)
+            );
+        }
         match tpl.find(' ') {
             Some(i) => format!("{} v-if=\"{cond}\"{}", &tpl[..i], &tpl[i..]),
             None => tpl,
@@ -721,7 +750,7 @@ impl PageOut<'_> {
                     format!("{{ {} }}", fields.join(", "))
                 };
                 let client = self.client.map(|c| format!(", {c}")).unwrap_or_default();
-                if in_row {
+                let run = if in_row {
                     let nulls: Vec<String> = input
                         .iter()
                         .map(|(k, _)| format!("{}: null", prop(k)))
@@ -736,28 +765,74 @@ impl PageOut<'_> {
                             format!("{{ {} }}", nulls.join(", "))
                         }
                     );
-                    format!(
-                        "<KitButton tone=\"secondary\" size=\"sm\" :busy=\"{var}.busy\" @click=\"{var}.run({object})\">{}</KitButton>\n",
-                        html(&a.label)
-                    )
+                    format!("{var}.run({object})")
                 } else {
                     let _ = writeln!(
                         self.script,
                         "const {var} = useCommand({}, () => ({object}){client});",
                         ts_str(command)
                     );
-                    format!(
-                        "<KitButton tone=\"primary\" :busy=\"{var}.busy\" :disabled=\"{var}.blocked\" @click=\"{var}.run()\">{}</KitButton>\n",
-                        html(&a.label)
-                    )
-                }
+                    format!("{var}.run()")
+                };
+                // `as: icon` is a compact button; a row's actions are small, a page's primary.
+                let look = if a.icon {
+                    "tone=\"ghost\" size=\"sm\""
+                } else if in_row {
+                    "tone=\"secondary\" size=\"sm\""
+                } else {
+                    "tone=\"primary\""
+                };
+                let disabled = if in_row {
+                    String::new()
+                } else {
+                    format!(" :disabled=\"{var}.blocked\"")
+                };
+                let label = html(&a.label);
+                let Some(c) = &a.confirm else {
+                    return format!(
+                        "<KitButton {look} :busy=\"{var}.busy\"{disabled} @click=\"{run}\">{label}</KitButton>\n"
+                    );
+                };
+                // A confirm asks in place: the question, its button and Cancel stand where the
+                // action stood, for the row (or the page) it was asked for.
+                self.rt.insert("useConfirm");
+                let cf = format!("cf{}", var.strip_prefix('c').unwrap_or(var));
+                let _ = writeln!(self.script, "const {cf} = useConfirm();");
+                let key = if in_row { "row" } else { "true" };
+                let ask = format!("{cf}.ask({key})");
+                let click = match &c.show {
+                    Some(show) => {
+                        self.helpers(show);
+                        format!("{show} ? {ask} : {run}")
+                    }
+                    None => ask,
+                };
+                format!(
+                    "<template v-if=\"{cf}.at === {key}\">\n  {}\n  <KitButton tone=\"danger\" size=\"sm\" :busy=\"{var}.busy\" @click=\"{cf}.close(); {run}\">{}</KitButton>\n  <KitButton tone=\"ghost\" size=\"sm\" @click=\"{cf}.close()\">Cancel</KitButton>\n</template>\n<KitButton v-else {look} :busy=\"{var}.busy\"{disabled} @click=\"{click}\">{label}</KitButton>\n",
+                    html(&c.title),
+                    html(&c.label)
+                )
             }
         }
     }
 
     fn choice(&mut self, c: &ChoiceModel) -> String {
         self.kit("KitSelect");
-        let opts = match &c.read {
+        let opts = self.options_of(c);
+        let state = ts_str(&c.binds);
+        format!(
+            "<KitSelect label=\"{}\"{} :options=\"{opts}\" :model-value=\"page.state[{state}]\" @update:model-value=\"page.state[{state}] = $event\" />\n",
+            html(&c.label),
+            c.placeholder
+                .as_ref()
+                .map(|p| format!(" placeholder=\"{}\"", html(p)))
+                .unwrap_or_default()
+        )
+    }
+
+    /// The options of a choice: read from its view's rows, or fixed.
+    fn options_of(&mut self, c: &ChoiceModel) -> String {
+        match &c.read {
             Some(r) => {
                 self.read_decl(r);
                 self.rt.insert("options");
@@ -776,16 +851,7 @@ impl PageOut<'_> {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
-        };
-        let state = ts_str(&c.binds);
-        format!(
-            "<KitSelect label=\"{}\"{} :options=\"{opts}\" :model-value=\"page.state[{state}]\" @update:model-value=\"page.state[{state}] = $event\" />\n",
-            html(&c.label),
-            c.placeholder
-                .as_ref()
-                .map(|p| format!(" placeholder=\"{}\"", html(p)))
-                .unwrap_or_default()
-        )
+        }
     }
 
     fn search(&mut self, state: &str, label: &str, placeholder: Option<&str>) -> String {
@@ -825,6 +891,32 @@ impl PageOut<'_> {
             "<KitToolbar label=\"{}\">\n{}</KitToolbar>\n",
             html(s.title.as_deref().unwrap_or("Filters")),
             indent(&inner, 2)
+        )
+    }
+
+    /// A metric: its number from the rows of its read (declared by the caller).
+    fn metric(
+        &mut self,
+        s: &SectionModel,
+        aggregate: Option<&str>,
+        field: Option<&str>,
+        match_: Option<&str>,
+        label: &str,
+    ) -> String {
+        self.kit("KitMetric");
+        self.rt.insert("metricValue");
+        let read = s
+            .read
+            .as_ref()
+            .map(|r| r.var.clone())
+            .unwrap_or_else(|| "null".into());
+        let opt = |v: Option<&str>| v.map(ts_str).unwrap_or_else(|| "null".into());
+        format!(
+            "<KitMetric label=\"{}\" :value=\"metricValue({read}, {}, {}, {})\" />\n",
+            html(label),
+            opt(aggregate),
+            opt(field),
+            opt(match_)
         )
     }
 
@@ -907,28 +999,41 @@ impl PageOut<'_> {
                 list,
                 row_actions,
                 search,
+                sort,
+                groups,
             } => {
                 let r = s.read.as_ref();
-                let rows = match (r, r.and_then(|r| r.filter.as_ref())) {
-                    (Some(r), Some((fields, state))) => {
-                        self.rt.insert("contains");
-                        let terms: Vec<String> = fields
-                            .iter()
-                            .map(|f| {
-                                format!(
-                                    "contains(row[{}], page.state[{}])",
-                                    ts_str(f),
-                                    ts_str(state)
-                                )
-                            })
-                            .collect();
-                        format!("{}.rows.filter((row) => {})", r.var, terms.join(" || "))
-                    }
-                    (Some(r), None) => format!("{}.rows", r.var),
-                    (None, _) => "[]".into(),
+                // The rows drawn: the read's, kept by the row predicate, then sorted, then split
+                // into groups, each step a computed value of the script.
+                let mut rows = match r {
+                    Some(r) => format!("{}.rows", r.var),
+                    None => "[]".into(),
                 };
+                let filter = r.and_then(|r| r.filter.as_ref());
+                if let Some(f) = filter {
+                    self.helpers(f);
+                    rows = format!("{rows}.filter((row) => {f})");
+                }
+                if let Some(so) = sort {
+                    self.rt.insert("sortRows");
+                    rows = format!(
+                        "sortRows({rows}, {}, {}, {})",
+                        ts_str(&so.by),
+                        ts_str(if so.desc { "desc" } else { "asc" }),
+                        so.numeric
+                    );
+                }
+                if filter.is_some() || sort.is_some() || groups.is_some() {
+                    self.vue.insert("computed");
+                    let _ = writeln!(
+                        self.script,
+                        "const rows_{} = computed(() => {rows});",
+                        s.var
+                    );
+                    rows = format!("rows_{}", s.var);
+                }
                 let mut out = String::new();
-                if let Some(state) = search {
+                for state in search {
                     let label = format!(
                         "Find in {}",
                         s.title.as_deref().unwrap_or(&s.name).to_lowercase()
@@ -944,24 +1049,64 @@ impl PageOut<'_> {
                     .map(|(_, m)| format!(" empty-message=\"{}\"", html(m)))
                     .unwrap_or_default();
                 let actions = self.row_actions(row_actions);
+                let (label, rows) = match groups {
+                    Some(g) => {
+                        self.rt.insert("groupRows");
+                        let _ = writeln!(
+                            self.script,
+                            "const groups_{} = computed(() => groupRows({rows}.value, {}, [{}], {}));",
+                            s.var,
+                            ts_str(&g.by),
+                            g.order
+                                .iter()
+                                .map(|o| ts_str(o))
+                                .collect::<Vec<_>>()
+                                .join(", "),
+                            g.show_empty
+                        );
+                        (
+                            format!(":label=\"{} + g.name\"", ts_str(&format!("{}: ", s.label))),
+                            "g.rows".to_string(),
+                        )
+                    }
+                    None => (format!("label=\"{}\"", html(&s.label)), rows),
+                };
+                let mut table = String::new();
                 if actions.is_empty() {
                     let _ = writeln!(
-                        out,
-                        "<{tag} label=\"{}\" :columns=\"{var}\" :rows=\"{rows}\" row-key=\"{}\"{empty} />",
-                        html(&s.label),
+                        table,
+                        "<{tag} {label} :columns=\"{var}\" :rows=\"{rows}\" row-key=\"{}\"{empty} />",
                         html(&key)
                     );
                 } else {
                     let _ = write!(
-                        out,
-                        "<{tag} label=\"{}\" :columns=\"{var}\" :rows=\"{rows}\" row-key=\"{}\"{empty}>\n{}</{tag}>\n",
-                        html(&s.label),
+                        table,
+                        "<{tag} {label} :columns=\"{var}\" :rows=\"{rows}\" row-key=\"{}\"{empty}>\n{}</{tag}>\n",
                         html(&key),
                         indent(&actions, 2)
                     );
                 }
+                match groups {
+                    Some(_) => {
+                        self.kit("KitEmpty");
+                        let groups = format!("groups_{}", s.var);
+                        let _ = write!(
+                            out,
+                            "<KitPanel v-for=\"g in {groups}\" :key=\"g.name\" :name=\"g.name\" :title=\"g.name\" bare>\n{}</KitPanel>\n<KitEmpty v-if=\"!{groups}.length\" message=\"{}\" />\n",
+                            indent(&table, 2),
+                            html(s.empty.as_ref().map_or("No rows.", |(_, m)| m.as_str()))
+                        );
+                    }
+                    None => out.push_str(&table),
+                }
                 out
             }
+            SectionKind::Metric {
+                aggregate,
+                field,
+                match_,
+                label,
+            } => self.metric(s, *aggregate, field.as_deref(), match_.as_deref(), label),
             SectionKind::Record { fields, actions } => {
                 self.kit("KitRecord");
                 let var = self.fields_const(&s.var, fields);
@@ -1007,7 +1152,7 @@ impl PageOut<'_> {
             .map(|f| {
                 let v = match f.input {
                     FormInput::Toggle => "false",
-                    FormInput::Number => "null",
+                    FormInput::Number | FormInput::Choice(_) => "null",
                     _ => "''",
                 };
                 format!("{}: {v}", prop(&f.field))
@@ -1043,6 +1188,19 @@ impl PageOut<'_> {
                 )
             };
             match &f.input {
+                FormInput::Choice(c) => {
+                    self.kit("KitSelect");
+                    let opts = self.options_of(c);
+                    let _ = writeln!(
+                        inner,
+                        "<KitSelect label=\"{}\" show-label{} :options=\"{opts}\" :model-value=\"{var}.draft[{key}]\" @update:model-value=\"{var}.draft[{key}] = $event\" />",
+                        html(&f.label),
+                        c.placeholder
+                            .as_ref()
+                            .map(|p| format!(" placeholder=\"{}\"", html(p)))
+                            .unwrap_or_default()
+                    );
+                }
                 FormInput::Toggle => {
                     self.kit("KitSwitch");
                     self.rt.insert("flag");
@@ -1115,6 +1273,13 @@ impl PageOut<'_> {
 /// The import lines of a page or widget component: the kit, the runtime and the widgets it places.
 fn imports(out: &PageOut, widgets_dir: &str) -> String {
     let mut s = String::new();
+    if !out.vue.is_empty() {
+        let _ = writeln!(
+            s,
+            "import {{ {} }} from 'vue';",
+            out.vue.iter().copied().collect::<Vec<_>>().join(", ")
+        );
+    }
     let mut kit: Vec<String> = out.kit.iter().map(|k| k.to_string()).collect();
     if out.field_defs {
         kit.push("type FieldDef".into());
@@ -1152,6 +1317,7 @@ fn widget_vue(w: &WidgetModel) -> String {
     let mut out = PageOut {
         kit: BTreeSet::new(),
         rt: BTreeSet::new(),
+        vue: BTreeSet::new(),
         widgets: BTreeSet::new(),
         field_defs: false,
         row_values: false,
@@ -1224,6 +1390,7 @@ fn page_vue(app: &App, page: &PageModel) -> String {
     let mut out = PageOut {
         kit: BTreeSet::new(),
         rt: BTreeSet::new(),
+        vue: BTreeSet::new(),
         widgets: BTreeSet::new(),
         field_defs: false,
         row_values: false,
@@ -1233,6 +1400,54 @@ fn page_vue(app: &App, page: &PageModel) -> String {
     };
     out.kit("KitShell");
     let mut bar = page.bar.as_ref().map(|b| out.bar(b));
+    if !page.metrics.is_empty() {
+        out.kit("KitToolbar");
+        let mut inner = String::new();
+        for m in &page.metrics {
+            if let Some(r) = &m.read {
+                out.read_decl(r);
+            }
+            if let SectionKind::Metric {
+                aggregate,
+                field,
+                match_,
+                label,
+            } = &m.kind
+            {
+                inner.push_str(&out.metric(
+                    m,
+                    *aggregate,
+                    field.as_deref(),
+                    match_.as_deref(),
+                    label,
+                ));
+            }
+        }
+        let metrics = format!(
+            "<KitToolbar label=\"Metrics\">\n{}</KitToolbar>\n",
+            indent(&inner, 2)
+        );
+        bar = Some(bar.unwrap_or_default() + &metrics);
+    }
+    if let Some((text, link)) = &page.help {
+        out.kit("KitToolbar");
+        let mut inner = String::new();
+        if let Some(t) = text {
+            let _ = writeln!(inner, "{}", html(t));
+        }
+        if let Some(l) = link {
+            out.kit("KitLink");
+            // From the script: a URL written into the template's `href`, static or bound, breaks
+            // vue-tsc's check of every binding after it.
+            let _ = writeln!(out.script, "const help_link = {};", ts_str(l));
+            inner.push_str("<KitLink :href=\"help_link\">Help</KitLink>\n");
+        }
+        let help = format!(
+            "<KitToolbar label=\"Help\">\n{}</KitToolbar>\n",
+            indent(&inner, 2)
+        );
+        bar = Some(bar.unwrap_or_default() + &help);
+    }
     if !page.actions.is_empty() {
         out.kit("KitToolbar");
         let mut inner = String::new();

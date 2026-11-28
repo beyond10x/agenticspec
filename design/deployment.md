@@ -137,6 +137,7 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `unit_config_conflict` | two sources of one unit (its `packing.units` entry, its parts) give one environment variable two different values, or two parts of one unit both give `args`; K20 |
 | `unit_config_invalid` | a unit's `env` or `args` of the wrong form (a name that is not `[A-Z_][A-Z0-9_]*`, a value that is neither a scalar nor `{secret: <name>}`, `args` not a list of strings, on a part in no unit); in a written bundle, also a `config` of the wrong form or not the one the carried binding resolves; K20 |
 | `ui_upstream_unknown` | a UI unit (K17) reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have; in a written bundle, a UI unit's `upstream.unit` that is no other unit of the bundle |
+| `ui_upstream_path_invalid` | a UI unit's (K17) base path of its upstream's adapter (`ui.<ui>.upstream.path`, text) does not start with `/`; in a written bundle, a UI unit's `upstream.path` that is not text starting with `/`. A `path` that is no text is a binding of the wrong form |
 | `nested_document_missing` | in a written bundle (`deploy check`) only: a part of block `architecture`, at any depth, pins a digest the bundle's `nested` carries no document of |
 | `nested_document_mismatch` | in a written bundle (`deploy check`) only: a carried nested document whose `content_base64` is not its `sha256`, does not parse to its `document`, or whose canonical digest is not its key |
 | `requirement_kpi_unknown`, `requirement_invalid` | a requirement (K12) names a KPI no stage knows, or is not `{kpi, at_least \| at_most \| equals, part?, window?}` with one number; `sim check` refuses both as `architecture_refused` |
@@ -205,6 +206,19 @@ its access by the rule below, `per_instance` when the part is `per` another, its
 `volume_mount_missing`. A `job` or `scheduled` unit runs until done and a `model` unit serves a
 model the target runs: none of them holds such a volume (`durable_state_unplaceable`). An external
 runtime part is not started by the target, and its state is not the bundle's.
+
+**Outside writers of durable state (R109).** A service may share its state directory with other
+programs on the same host (a backup, an indexer). Modelled as a workspace with
+`sharing: shared_read_write`, it would make the contract ask for `workspace.lease` and
+`workspace.proposal`, which nothing serves. So the runtime part names them instead:
+`state_writers: [<name>, ...]`, beside `durable_state: true`. A sibling setting, not a map in place
+of `true`: the settings table has one type per setting, `durable_state` stays a boolean, its
+meaning and every bundle without writers are unchanged, and the architecture page shows the list as
+the part's property `state writers`. The new type is `string` with `list: true` (a non-empty list
+of non-empty texts); the writers are not parts of the architecture, so `part` does not fit. The
+volume claim is the one of `durable_state: true`, its access by the rule below (the writers are
+outside the bundle's units), with `writers` added. `state_writers` without `durable_state: true` is
+`setting_invalid`. The contract does not carry the writers: no port is narrowed by them.
 
 **Volume access follows from who mounts it (R93).** A workspace's `sharing` says how its holders
 use it; a claim's access says how many pods attach it, and a single-node storage provisioner
@@ -386,7 +400,7 @@ semantics, `on_message` and `on_event` triggers, spawned sub-agents, principal p
 ## K17 A UI is a unit of its own
 
 Settled with the translator, names exact. A binding asks for a UI under `ui:`:
-`ui: {operator: {port, bind, upstream: {unit, port}}}`, every key optional. Without `ui:` the
+`ui: {operator: {port, bind, upstream: {unit, port, path}}}`, every key optional. Without `ui:` the
 bundle is the bundle it was (K16's fixtures keep their bytes); with it, the bundle stays `/1`: the
 additions are a unit, the optional member `files` and the unit of one ingress entry.
 
@@ -403,11 +417,14 @@ additions are a unit, the optional member `files` and the unit of one ingress en
 - `upstream: {unit, port, path}` is the runtime unit whose adapter (the runtime UI interface,
   `ui/runtime.openapi.yaml`) the page reads: the binding's `upstream.unit`, else the unit that
   serves the operator ingress's `http` export; its port, the binding's, else that export's when it
-  is served by the same unit; `path`, the `api_base` of the UI's `config.json` (`/api/`).
+  is served by the same unit; `path`, the binding's `upstream.path` (`/api/` when absent), the
+  `api_base` of a built-in UI's `config.json` (the archive of a UI of the consumer's own is
+  carried as it is). A binding without `path` gives the bundle it gave before.
 - Its claims and check ports come from the binding as for any other unit, by the unit's name:
   `claims.operator-ui` (500 millicores, 512 MiB and no accelerator when absent) and
   `checks.operator-ui.<ready|alive>.port` (the export's port when absent).
-- Refusals: an upstream that names no unit (`ui_upstream_unknown`, at bundle and check);
+- Refusals: an upstream that names no unit (`ui_upstream_unknown`, at bundle and check); an
+  upstream path that does not start with `/` (`ui_upstream_path_invalid`, at bundle and check);
   `deploy check` hashes the carried archive against the unit's digest (`ui_archive_mismatch`);
   the role is in the accepted list (K16, `unit_not_hosted`); a UI that does not build is
   `ui_build_refused`.

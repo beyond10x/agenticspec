@@ -104,7 +104,17 @@ impl Handler for Commands {
                     Ok(t) => t,
                     Err(e) => return refusal("document_unreadable", format!("{path}: {e}")),
                 };
-                let files = match agenticspec_ui::generate(&text) {
+                let project = inv
+                    .input
+                    .get("project")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let generated = if project {
+                    agenticspec_ui::generate_project(&text)
+                } else {
+                    agenticspec_ui::generate(&text)
+                };
+                let files = match generated {
                     Ok(f) => f,
                     Err(refusals) => {
                         let lines: Vec<String> = refusals.iter().map(ToString::to_string).collect();
@@ -1076,7 +1086,7 @@ fn ui_serve(input: &Value) -> HandlerReply {
 fn ui_derive(input: &Value) -> HandlerReply {
     use agenticspec_ui::derive::{Failure, Inputs, differences, write};
     let opt = |k: &str| input.get(k).and_then(Value::as_str).map(PathBuf::from);
-    let root = opt("root").unwrap_or_else(|| PathBuf::from("."));
+    let root = opt("root");
     let inputs = Inputs {
         architecture: path_of(input, "path"),
         contract: opt("contract"),

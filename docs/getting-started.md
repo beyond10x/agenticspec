@@ -112,6 +112,27 @@ default. The check refuses a setting the block does not declare (`setting_unknow
 outside its type or range (`setting_invalid`, for example `capacity: many` on a pool), each naming
 the part, the setting and what was expected.
 
+What no setting of the block types goes into the part's `notes`, a map with free keys and values
+that every part may carry. The check takes any map there as written, and the simulator, the search
+and the contract never read it. A channel's file, path or audience, or the model and use of an
+agent, are notes, for example:
+
+```yaml
+parts:
+  inbox:
+    block: channel
+    kind: screen
+    notes: { path: /inbox, audience: owner }
+  writer:
+    block: agent
+    notes: { model: small, use: drafts }
+```
+
+The typed settings include a channel of kind `screen` (a page of a user interface), a pool of kind
+`queue` with its `order`, a model's `hosting` and `billing` (where its price comes from), a spend
+cap on an authority or a runtime (`per_day_usd`, `per_month_usd`, and `route`, what happens at the
+cap), and a question part's `default` and `default_after`.
+
 With `--json` it prints one JSON document on standard output, also when it refuses the
 architecture, for a program to read. The exit code stays the same. A file it cannot read prints
 no document.

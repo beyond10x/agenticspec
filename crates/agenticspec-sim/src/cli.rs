@@ -436,9 +436,19 @@ pub fn run(
 }
 
 /// `sim render <architecture> [--result result.json] --out <page.html>`. A nested architecture is
-/// drawn as one box; a reference that does not resolve is drawn as written.
+/// drawn as one box; a reference that does not resolve is drawn as written. A document of format
+/// `agenticspec-render-model/1` is drawn as that page (`--result` is not read); one the page's
+/// check refuses is `document_unreadable` with the check's refusal.
 pub fn render(path: &Path, result: Option<&Path>, out: &Path) -> Result<Value, Refusal> {
     let unreadable = |e: String| refused("document_unreadable", e);
+    if let Ok(doc) = crate::doc::load_yaml(path)
+        && doc.get("format").and_then(Value::as_str) == Some(agenticspec_render::page::FORMAT)
+    {
+        let page: agenticspec_render::page::Page = serde_json::from_value(doc)
+            .map_err(|e| unreadable(format!("{}: {e}", path.display())))?;
+        write(out, &agenticspec_render::page::render(&page))?;
+        return Ok(json!({ "out": out.display().to_string() }));
+    }
     let arch = match nest::load(path) {
         Ok(a) => a,
         Err(nest::Error::Unreadable(e)) => return Err(unreadable(e)),

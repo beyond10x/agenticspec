@@ -1,0 +1,116 @@
+# No link, no reach, also over a channel: a link that carries messages over a channel part is
+# refused when that part does not exist or is not a channel, and no link is added; over a declared
+# channel part it is added. Synthesis arranges no part for these guards (ESS-SYNTH-003), so this
+# scenario walks them by hand.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: message-over-missing-channel
+summary: A message link over a part that does not exist or is not a channel is refused; over a channel part it is added.
+
+arrange:
+  - instance: desk
+    entity: agentic.architecture.Architecture
+
+timeline:
+  - at: 2026-11-28T12:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: desk}
+    outcome: created
+    capture: {instance: desk, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+  - at: 2026-11-28T12:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-0000000008a1
+      architecture_id: {$instance: desk}
+      name: owner
+      kind: Principal
+      count: 1
+      settings: [{name: principal_kind, value: human}]
+    outcome: added
+  - at: 2026-11-28T12:00:02Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-0000000008a2
+      architecture_id: {$instance: desk}
+      name: operator
+      kind: Agent
+      count: 1
+      settings: []
+    outcome: added
+  - at: 2026-11-28T12:00:03Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-0000000008a3
+      architecture_id: {$instance: desk}
+      name: notes
+      kind: Knowledge
+      count: 1
+      settings: []
+    outcome: added
+
+  # over a part that was never declared
+  - at: 2026-11-28T12:00:04Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: desk}
+      from_part_id: 00000000-0000-4000-8000-0000000008a2
+      to_part_id: 00000000-0000-4000-8000-0000000008a1
+      carries: Message
+      over_part_id: 00000000-0000-4000-8000-0000000008ff
+    outcome: no-such-channel-part
+    error:
+      name: agentic.architecture.NoSuchPart
+    no_events: [agentic.architecture.LinkAdded]
+
+  # over a part that is not a channel
+  - at: 2026-11-28T12:00:05Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: desk}
+      from_part_id: 00000000-0000-4000-8000-0000000008a2
+      to_part_id: 00000000-0000-4000-8000-0000000008a1
+      carries: Message
+      over_part_id: 00000000-0000-4000-8000-0000000008a3
+    outcome: not-a-channel
+    error:
+      name: agentic.architecture.NotAChannel
+    no_events: [agentic.architecture.LinkAdded]
+
+  # over a channel part
+  - at: 2026-11-28T12:00:06Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-0000000008a4
+      architecture_id: {$instance: desk}
+      name: chat
+      kind: Channel
+      count: 1
+      settings: [{name: kind, value: operator}]
+    outcome: added
+  - at: 2026-11-28T12:00:07Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: desk}
+      from_part_id: 00000000-0000-4000-8000-0000000008a2
+      to_part_id: 00000000-0000-4000-8000-0000000008a1
+      carries: Message
+      over_part_id: 00000000-0000-4000-8000-0000000008a4
+    outcome: added
+    events:
+      - event: agentic.architecture.LinkAdded
+        payload: {from_part_id: 00000000-0000-4000-8000-0000000008a2, to_part_id: 00000000-0000-4000-8000-0000000008a1, carries: Message}
+
+assert:
+  - view: agentic.architecture.Reach
+    params:
+      architecture_id: {$instance: desk}
+    counts:
+      at_least: 1
+      at_most: 1
+  - view: agentic.architecture.Reach
+    params:
+      architecture_id: {$instance: desk}
+    contains:
+      from_name: operator
+      to_name: owner
+      over_part_id: 00000000-0000-4000-8000-0000000008a4

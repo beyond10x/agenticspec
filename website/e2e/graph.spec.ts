@@ -150,3 +150,42 @@ test('the workstation page at 390 px overflows nothing and shows its whole heade
   expect(r.scroll).toBeLessThanOrEqual(r.client);
   expect(r.parts).toEqual(['ok', 'ok', 'ok']);
 });
+
+// A render model page with collapsed regions (crates/agenticspec-render/tests/fixtures/
+// collapsed-regions.json, rendered into target/site-ux/collapsed-regions.html by scripts/check-site.sh):
+// a region's card opens it in place and its control closes it, by pointer and by keyboard.
+const COLLAPSED = `${OUT}collapsed-regions.html`;
+
+async function collapsed(page: Page): Promise<void> {
+  expect(existsSync(COLLAPSED), `${COLLAPSED} is rendered by scripts/check-site.sh`).toBe(true);
+  await page.setViewportSize({width: 1280, height: 800});
+  await page.goto(`file://${COLLAPSED}?theme=light`, {waitUntil: 'load'});
+}
+
+test('a collapsed region opens in place by click and closes by its control, with no serious axe finding', async ({page}) => {
+  await collapsed(page);
+  const graphEl = page.locator('.graph-view svg.graph');
+  await expect(graphEl.locator('[data-part="edge"]')).toHaveCount(0);
+  await page.getByRole('button', {name: 'Open region gateway, 3 nodes'}).click();
+  await expect(graphEl.locator('[data-part="edge"]')).toHaveCount(1);
+  await expect(page.getByRole('button', {name: 'Close region gateway'})).toBeFocused();
+  const axe = await new AxeBuilder({page}).withTags(adapter.axe_tags).analyze();
+  expect(axe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+  await page.getByRole('button', {name: 'Close region gateway'}).click();
+  await expect(graphEl.locator('[data-part="edge"]')).toHaveCount(0);
+  await expect(page.getByRole('button', {name: 'Open region gateway, 3 nodes'})).toBeFocused();
+});
+
+test('a collapsed region and the one inside it open and close by Enter and Space', async ({page}) => {
+  await collapsed(page);
+  await tabTo(page, 'Open region agents, 5 nodes');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', {name: 'Close region agents'})).toBeFocused();
+  await tabTo(page, 'Open region workers, 3 nodes');
+  await page.keyboard.press(' ');
+  await expect(page.locator('.graph-view svg.graph [data-part="w1"]')).toHaveCount(1);
+  await expect(page.getByRole('button', {name: 'Close region workers'})).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', {name: 'Open region workers, 3 nodes'})).toBeFocused();
+  await expect(page.getByRole('button', {name: 'Close region agents'})).toHaveCount(1);
+});

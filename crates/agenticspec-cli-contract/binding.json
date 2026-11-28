@@ -3865,6 +3865,9 @@
             },
             "path": {
               "kind": "string"
+            },
+            "project": {
+              "kind": "boolean"
             }
           }
         }
@@ -4884,7 +4887,7 @@
       ],
       "aliases": [],
       "callable": "sim_render",
-      "about": "Write the page of an architecture, with the result of a run when given",
+      "about": "Write the page of an architecture, with the result of a run when given, or of a render model page",
       "arguments": [
         {
           "field": "architecture",
@@ -5259,7 +5262,7 @@
       ],
       "aliases": [],
       "callable": "ui_generate",
-      "about": "Generate the Vue app of an ess-ui/1 document over the components of ui/kit",
+      "about": "Generate the Vue app of an ess-ui/1 document over the components of ui/kit, or with --project a project that builds it with node into the archive a binding names",
       "arguments": [
         {
           "field": "path",
@@ -5273,6 +5276,13 @@
           "source": {
             "kind": "option",
             "long": "out"
+          }
+        },
+        {
+          "field": "project",
+          "source": {
+            "kind": "flag",
+            "long": "project"
           }
         }
       ]

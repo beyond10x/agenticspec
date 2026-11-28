@@ -1,7 +1,3 @@
 # Mutants of spec/ that its conformance suite does not kill (scripts/check-mutation.sh spec).
 # One per line: the mutant id, then why no scenario can kill it. Remove a line when its mutant is
 # killed; the check fails on a line whose mutant is killed and on a survivor that is not listed.
-#
-# No view publishes a field of agenticspec.session.Exposure, so what RecordExposure stores is seen
-# only in its event, which carries the input.
-sets-retarget/agenticspec.session.RecordExposure/recorded/alias no view publishes Exposure.alias

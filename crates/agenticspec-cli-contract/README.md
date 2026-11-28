@@ -316,7 +316,7 @@ Error `ports_stale`: `agenticspec.cli.Refusal`.
 
 ### `sim render`
 
-Write the page of an architecture, with the result of a run when given
+Write the page of an architecture, with the result of a run when given, or of a render model page
 
 Callable: `sim_render`. Input: `agenticspec.cli.SimRenderInput`. Result: `agenticspec.cli.SimRenderResult`.
 
@@ -440,7 +440,7 @@ Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 ### `ui generate`
 
-Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+Generate the Vue app of an ess-ui/1 document over the components of ui/kit, or with --project a project that builds it with node into the archive a binding names
 
 Callable: `ui_generate`. Input: `agenticspec.cli.UiGenerateInput`. Result: `agenticspec.cli.UiGenerateResult`.
 

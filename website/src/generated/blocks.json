@@ -433,7 +433,7 @@
       "layer": 8,
       "name": "resource",
       "route": "/docs/blocks/8-place/resource",
-      "summary": "What agents share and wait for: a pool of a fixed capacity (build slots, a rate limit, a cache, seats) and the claims on it.",
+      "summary": "What agents share and wait for: a pool of a fixed capacity (build slots, a rate limit, a cache, seats, a work queue) and the claims on it.",
       "usedBy": [],
       "uses": [
         "channel",

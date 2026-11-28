@@ -5,6 +5,8 @@
 //!   refuses a key it does not declare.
 //! - `check`: parsing with refusals by node path, merging each page over its kind, resolving
 //!   references and compiling expressions into the model the emitter writes.
+//! - `filter`: the row predicate of a read and the condition of a confirm, the grammar of released
+//!   ess-ui/1 compiled into TypeScript.
 //! - `emit`: the files: one page component per page, `App.vue`, the router, the typed client of
 //!   the reads, commands and channels, the host slots' names and props, and the runtime.
 //! - `interface`: the runtime interface the generated client calls, `ui/runtime.openapi.yaml`.
@@ -13,6 +15,8 @@
 //! - `wire`: the small HTTP client and server both use.
 //! - `operator`: `agenticspec ui build`, the embedded operator app with the data files of one
 //!   architecture, and their reproducible archive.
+//! - `project`: `agenticspec ui generate --project`, the generated app as a project that builds on
+//!   its own with node, over the kit and the npm pins the operator app is built with.
 //! - `plane`: the default control plane of an architecture as that interface sees it, read from
 //!   the files of its operator UI.
 //! - `serve`: `agenticspec ui serve`, the operator app and that plane answered from fixtures,
@@ -20,6 +24,7 @@
 //!
 //! The output is a function of the document alone: the same document gives the same bytes.
 
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::path::Path;
@@ -30,6 +35,7 @@ pub mod derive;
 pub mod interface;
 pub mod operator;
 pub mod plane;
+pub mod project;
 pub mod serve;
 pub mod source;
 pub mod wire;
@@ -38,6 +44,7 @@ pub mod wire;
 #[allow(dead_code)]
 mod doc;
 mod emit;
+mod filter;
 
 /// A construct the generator refuses, named by its node path (`pages/draft/sections/patch`).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -67,22 +74,45 @@ pub fn generate(text: &str) -> Result<Files, Vec<Refusal>> {
     Ok(emit::emit(&app))
 }
 
-/// `agenticspec ui derive`: compiles the blocks under `inputs.root` and derives the composition
-/// of the architecture (see [`derive`]).
+/// The compiled blocks a derivation of `inputs` reads: the blocks under `inputs.root` compiled,
+/// or without a root the part of them built into the binary.
+fn derive_ir(inputs: &derive::Inputs) -> Result<Cow<'static, serde_json::Value>, derive::Failure> {
+    match &inputs.root {
+        Some(root) => agenticspec_views::compile(&root.join("blocks"))
+            .map(Cow::Owned)
+            .map_err(derive::Failure::Unreadable),
+        None => operator::built_in_model().map(Cow::Borrowed),
+    }
+}
+
+/// The files of a project that builds the app of the document on its own with node (see
+/// [`project`]): the app under `src/generated/`, the kit, the host page, the build config, the
+/// npm manifest and lock, and the packer. Refused as [`generate`] refuses.
+pub fn generate_project(text: &str) -> Result<Files, Vec<Refusal>> {
+    project::project(&generate(text)?).map_err(|message| {
+        vec![Refusal {
+            path: String::new(),
+            message,
+        }]
+    })
+}
+
+/// `agenticspec ui derive`: compiles the blocks under `inputs.root` (without a root, reads the
+/// part of them built into the binary) and derives the composition of the architecture (see
+/// [`derive`]).
 ///
 /// # Errors
 ///
 /// The blocks do not compile, an input cannot be read, or the architecture or its `view:` key is
 /// refused.
 pub fn derive_ui(inputs: &derive::Inputs) -> Result<derive::Derivation, derive::Failure> {
-    let ir = agenticspec_views::compile(&inputs.root.join("blocks"))
-        .map_err(derive::Failure::Unreadable)?;
-    derive::derive_with(inputs, &ir)
+    derive::derive_with(inputs, derive_ir(inputs)?.as_ref())
 }
 
 /// `agenticspec ui derive` of every UI of the architecture: compiles the blocks under
-/// `inputs.root` once and derives one composition per ingress with a `ui` export when the
-/// contract gives a UI per ingress, else the one operator UI (see [`derive::derive_all`]).
+/// `inputs.root` once (without a root, reads the part of them built into the binary) and derives
+/// one composition per ingress with a `ui` export when the contract gives a UI per ingress, else
+/// the one operator UI (see [`derive::derive_all`]).
 ///
 /// # Errors
 ///
@@ -90,9 +120,7 @@ pub fn derive_ui(inputs: &derive::Inputs) -> Result<derive::Derivation, derive::
 pub fn derive_uis(
     inputs: &derive::Inputs,
 ) -> Result<Vec<(Option<String>, derive::Derivation)>, derive::Failure> {
-    let ir = agenticspec_views::compile(&inputs.root.join("blocks"))
-        .map_err(derive::Failure::Unreadable)?;
-    derive::derive_all(inputs, &ir)
+    derive::derive_all(inputs, derive_ir(inputs)?.as_ref())
 }
 
 /// Replaces `out` with exactly `files`: what was in it before is removed.

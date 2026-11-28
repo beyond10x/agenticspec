@@ -64,6 +64,10 @@
         "label": { "type": "string" },
         "in": { "type": "string" },
         "per": { "type": "string" },
+        "collapsed": {
+          "description": "Drawn as one card (its label and the count of the nodes inside it, nested regions included) until it is opened on the page; edges into it are merged per pair of visible ends, labelled with their count. A collapsed region holds at least one node besides its own, or the page is refused (region_collapsed_empty).",
+          "type": "boolean"
+        },
         "regions": { "type": "array", "items": { "$ref": "#/$defs/Region" } }
       }
     },

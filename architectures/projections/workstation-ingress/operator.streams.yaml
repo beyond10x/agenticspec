@@ -6,7 +6,7 @@ format: agenticspec-streams/1
 specification:
   system: agentic
   version: v1
-  source_digest: sha256:1a9c75e829f70b5fcd1e86362e8903fdfa91bc171a6cc686c64e2bf278a51c2d
+  source_digest: sha256:fa33611f43767fdbf07185f3626c3df5d9f5ca543c2dee623fdb49ceb35bb7be
 ingress:
   architecture: workstation-ingress
   audience: admin

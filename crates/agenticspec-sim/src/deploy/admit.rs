@@ -40,6 +40,7 @@ pub const REFUSALS: &[&str] = &[
     "egress_undeclared",
     "address_in_architecture",
     "ui_upstream_unknown",
+    "ui_upstream_path_invalid",
     "ui_export_unknown",
     "ui_archive_mismatch",
     "ui_build_needs_toolchain",

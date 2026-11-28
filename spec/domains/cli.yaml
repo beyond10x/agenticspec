@@ -803,13 +803,13 @@ types:
         summary: The contract of the architecture (`agenticspec-contract/1`); without it the domains of a part come from the architecture alone and no action is derived.
       - name: ports
         type: Optional<String>
-        summary: The port catalogue (`agenticspec-ports/1`); `blocks/ports.json` when it exists.
+        summary: The port catalogue (`agenticspec-ports/1`); the one built into the binary by default, with `--root` the checkout's `blocks/ports.json` when it exists.
       - name: out
         type: String
         summary: The document to write, `<dir>/<name>.ui.yaml`; its digest, fixtures and layout are written beside it.
       - name: root
         type: Optional<String>
-        summary: The repository root that holds `blocks/` and `ui/views/`; the current directory by default.
+        summary: A checkout of agenticspec whose `blocks/` (compiled with `ess`) and `ui/views/` panels are read instead of the copies built into the binary. Without it the command runs in any directory, and the files read are named relative to the current directory.
       - name: check
         type: Boolean
         summary: Compare a fresh derivation with the files instead of writing them.
@@ -1129,6 +1129,14 @@ types:
       - name: out
         type: String
         summary: The directory the app is written into; what was in it before is replaced.
+      - name: project
+        type: Boolean
+        summary: >-
+          Write a project that builds on its own with node instead: the app under
+          `src/generated/`, the kit's sources under `kit/`, a host page, a vite config, an npm
+          manifest and lock with the versions the operator UI of `ui build` is built with, and a
+          packer; `npm ci && npm run build` in it writes `dist/` and `dist.tar` and prints the
+          archive's sha256.
 
   - name: agenticspec.cli.UiGenerateResult
     kind: struct

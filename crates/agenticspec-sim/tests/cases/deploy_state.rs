@@ -2,6 +2,8 @@
 //! exclusive volume `<part>-state`, mounted where the binding says and sized as a workspace's
 //! volume is; refused without a mount (`volume_mount_missing`) and in a unit that holds no volume
 //! (`durable_state_unplaceable`); `deploy check` applies the same rules to a bundle read back.
+//! Programs outside the runtime that write the state too (`state_writers`, R109) are named in the
+//! claim, which stays one volume.
 
 use super::common::{repo_root, scratch};
 use agenticspec_sim::cli::{self, BundleOptions};
@@ -132,6 +134,49 @@ fn a_runtime_with_durable_state_claims_an_exclusive_volume_mounted_and_sized_by_
         unit(&v, "core")["claims"]["volumes"],
         json!([{ "name": "flow-state", "access": "read_write_once", "per_instance": false, "mount": "/var/lib/flow" }])
     );
+}
+
+/// R109: durable state that programs outside the runtime write too (`state_writers`) is still one
+/// volume of the runtime's unit, `read_write_once` in a unit of one copy; no workspace part, so no
+/// workspace lease or proposal port; the claim and the architecture the bundle carries name the
+/// writers, and `deploy check` admits the bundle read back.
+#[test]
+fn durable_state_with_outside_writers_is_one_volume_that_names_them_and_no_workspace_port() {
+    let dir = scratch("deploy-state-writers");
+    let text = std::fs::read_to_string(architecture()).unwrap().replace(
+        "durable_state: true",
+        "durable_state: true, state_writers: [backup, indexer]",
+    );
+    let file = write(&dir, "writers.yaml", &text);
+    let bundle =
+        bundle_text(&dir, &file, &base()).unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = parse_yaml(&bundle).unwrap();
+    assert_eq!(
+        unit(&v, "flow")["claims"]["volumes"],
+        json!([{
+            "name": "flow-state",
+            "access": "read_write_once",
+            "per_instance": false,
+            "writers": ["backup", "indexer"],
+            "mount": "/var/lib/flow",
+        }])
+    );
+    assert_eq!(unit(&v, "core")["claims"]["volumes"], json!([]));
+    assert_eq!(
+        v["architecture"]["document"]["parts"]["flow"]["state_writers"],
+        json!(["backup", "indexer"])
+    );
+    for port in ["workspace.lease", "workspace.proposal"] {
+        assert!(!bundle.contains(port), "the bundle names {port}");
+    }
+    let accepts = repo_root().join("bundles/cloudspec-accepts.yaml");
+    let checked = write(&dir, "bundle.yaml", &bundle);
+    cli::deploy_check(&checked, Some(&accepts))
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    // Without writers the claim carries no `writers` key: `durable_state: true` alone is as
+    // before.
+    let plain = bundle_text(&dir, &architecture(), &base()).unwrap();
+    assert!(!plain.contains("writers"), "{plain}");
 }
 
 #[test]

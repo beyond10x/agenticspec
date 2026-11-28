@@ -31,8 +31,8 @@ echo 'scenarios: []' >> "$work/studio/ess-inputs.yaml"
 expect_named no-scenarios guard-connective/studio.session.CallTool/dry-run-outside-apply/0 \
   "$work/studio" --known "$root/studio/mutation-known.txt"
 
-grep -v -F 'error-swap/studio.session.FailToolCall/over ' "$root/studio/mutation-known.txt" > "$work/known.txt"
-expect_named known-line-missing error-swap/studio.session.FailToolCall/over \
+grep -v -F 'error-swap/studio.evaluation.FailEvaluation/over ' "$root/studio/mutation-known.txt" > "$work/known.txt"
+expect_named known-line-missing error-swap/studio.evaluation.FailEvaluation/over \
   "$root/studio" --known "$work/known.txt"
 
 [ "$fail" = 0 ] && echo "check-mutation.test: 2 planted defects named"

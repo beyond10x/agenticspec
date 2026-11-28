@@ -396,7 +396,7 @@ commands:
       - {field: events, source: {kind: flag, long: events}}
   - path: [sim, render]
     callable: sim_render
-    about: Write the page of an architecture, with the result of a run when given
+    about: Write the page of an architecture, with the result of a run when given, or of a render model page
     arguments:
       - {field: architecture, source: {kind: positional, index: 1}}
       - {field: result, source: {kind: option, long: result}}
@@ -457,10 +457,11 @@ commands:
       - {field: out, source: {kind: option, long: out}}
   - path: [ui, generate]
     callable: ui_generate
-    about: Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+    about: Generate the Vue app of an ess-ui/1 document over the components of ui/kit, or with --project a project that builds it with node into the archive a binding names
     arguments:
       - {field: path, source: {kind: option, long: path}}
       - {field: out, source: {kind: option, long: out}}
+      - {field: project, source: {kind: flag, long: project}}
   - path: [ui, conform]
     callable: ui_conform
     about: Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml), by a plan or, with --architecture, against the default control plane of an architecture

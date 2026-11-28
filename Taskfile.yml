@@ -328,7 +328,7 @@ tasks:
       - sh scripts/check-elements.sh
 
   check:operator:
-    desc: The operator UI of agenticspec ui build - the committed build of the operator app (ui/operator/built) against the digest of its sources (ui/operator/built.sources.sha256, no node), the app's types, then agenticspec ui build of the workstation into target/operator/workstation and its browser test over one static server and fixture adapter and over one agenticspec ui serve of the workstation. Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-operator.sh.
+    desc: The operator UI of agenticspec ui build - the committed build of the operator app (ui/operator/built) against the digest of its sources (ui/operator/built.sources.sha256, no node), the app's types, then agenticspec ui build of the workstation into target/operator/workstation and its browser test over one static server and fixture adapter and over one agenticspec ui serve of the workstation, and the project of agenticspec ui generate --project built with vite over ui/node_modules with its packer held to the bytes of ui build --archive. Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-operator.sh.
     cmds:
       - sh scripts/check-operator.sh
 
@@ -389,9 +389,9 @@ tasks:
       - cargo clippy --workspace --all-targets --locked -- -D warnings
 
   test:
-    desc: Tests with cargo-nextest; .config/nextest.toml ends a test at 60 s and the run at 120 s.
+    desc: Tests with cargo-nextest on the forge runner's 4 test threads; the flag wins over NEXTEST_TEST_THREADS, which a build pool may set. Limits in .config/nextest.toml. On GitHub Actions the profile forge ends a test at 60 s and the run at 120 s; elsewhere the default profile ends them at 30 s and 75 s (AGENTS.md § "The test step equals the forge").
     cmds:
-      - cargo nextest run --workspace --locked
+      - cargo nextest run --workspace --locked --test-threads 4 --profile "$(if [ "${GITHUB_ACTIONS:-}" = true ]; then echo forge; else echo default; fi)"
 
   ui:build:
     desc: Build the hand-written app of ui/app into target/ui/www, which `agenticspec serve` serves. The lines are in scripts/ui-build.sh.

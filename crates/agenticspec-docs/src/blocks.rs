@@ -536,7 +536,9 @@ fn settings_section(s: &mut String, b: &Block) {
         "\n## Settings\n\nThe settings a part of this block carries in an architecture document. \
          `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside \
          its type (`setting_invalid`); the contract copies a setting into the ports it narrows. \
-         The last rows of each table are the settings every part takes.\n\n",
+         The last rows of each table are the settings every part takes. What no setting here \
+         types (a file, a path, an audience, the use of a model) goes into the part's `notes`, \
+         a map with free keys and values that the check takes as written and nothing reads.\n\n",
     );
     for (kind, settings) in kinds {
         let _ = writeln!(s, "A part `{kind}`:\n");

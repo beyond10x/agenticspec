@@ -1,0 +1,126 @@
+# The studio server answers or fails each tool call it carried out, once. A call already answered
+# takes neither a second answer nor a failure (`over`, ToolCallOver), a failed call takes no
+# answer, and an id no call has is refused (`no-such-call`, NoSuchToolCall). Synthesis does not
+# send a second answer or failure with an assertion of its error, so a mutation audit that swapped
+# the error of `over`, or of AnswerToolCall's `no-such-call`, survived.
+type: ess-scenario/7
+domain: studio.session
+scenario: server-answers-or-fails-once
+summary: The server answers a call and fails another; a second answer or failure of either is refused as over, and an unknown call as no such call.
+
+arrange:
+  - instance: draft
+    entity: studio.draft.Draft
+  - instance: session
+    entity: studio.session.Session
+  - instance: answered
+    entity: studio.session.ToolCall
+  - instance: failed
+    entity: studio.session.ToolCall
+
+timeline:
+  - at: 2026-11-28T10:00:00Z
+    command: studio.draft.OpenDraft
+    actor: studio.session.User
+    input:
+      name: workstation
+      architecture: 00000000-0000-4000-8000-0000000000a1
+    outcome: opened
+    capture: {instance: draft, event: studio.draft.DraftOpened, field: draft_id}
+
+  - at: 2026-11-28T10:00:01Z
+    command: studio.session.StartSession
+    actor: studio.session.User
+    input: {draft_id: {$instance: draft}}
+    outcome: started
+    capture: {instance: session, event: studio.session.SessionStarted, field: session_id}
+
+  - at: 2026-11-28T10:00:02Z
+    command: studio.session.CallTool
+    actor: studio.session.User
+    input:
+      session_id: {$instance: session}
+      tool: Check
+      caller: User
+      arguments: '{}'
+      dry_run: false
+    outcome: called
+    capture: {instance: answered, event: studio.session.ToolCalled, field: call_id}
+
+  - at: 2026-11-28T10:00:03Z
+    command: studio.session.CallTool
+    actor: studio.session.User
+    input:
+      session_id: {$instance: session}
+      tool: Query
+      caller: User
+      arguments: '{}'
+      dry_run: false
+    outcome: called
+    capture: {instance: failed, event: studio.session.ToolCalled, field: call_id}
+
+  - at: 2026-11-28T10:00:04Z
+    command: studio.session.AnswerToolCall
+    actor: studio.session.Server
+    input:
+      call_id: {$instance: answered}
+      answer: '{"valid": true}'
+    outcome: answered
+    events:
+      - event: studio.session.ToolCallAnswered
+        payload: {call_id: {$instance: answered}}
+
+  - at: 2026-11-28T10:00:05Z
+    command: studio.session.FailToolCall
+    actor: studio.session.Server
+    input:
+      call_id: {$instance: failed}
+      failure: 'InvalidArguments: a query takes {"selector": "<rule body>"}'
+    outcome: failed
+    events:
+      - event: studio.session.ToolCallFailed
+        payload: {call_id: {$instance: failed}}
+
+  - at: 2026-11-28T10:00:06Z
+    command: studio.session.AnswerToolCall
+    actor: studio.session.Server
+    input:
+      call_id: {$instance: answered}
+      answer: '{"valid": true}'
+    outcome: over
+    error:
+      name: studio.session.ToolCallOver
+    no_events: [studio.session.ToolCallAnswered]
+
+  - at: 2026-11-28T10:00:07Z
+    command: studio.session.FailToolCall
+    actor: studio.session.Server
+    input:
+      call_id: {$instance: answered}
+      failure: late
+    outcome: over
+    error:
+      name: studio.session.ToolCallOver
+    no_events: [studio.session.ToolCallFailed]
+
+  - at: 2026-11-28T10:00:08Z
+    command: studio.session.AnswerToolCall
+    actor: studio.session.Server
+    input:
+      call_id: {$instance: failed}
+      answer: '{}'
+    outcome: over
+    error:
+      name: studio.session.ToolCallOver
+    no_events: [studio.session.ToolCallAnswered]
+
+  - at: 2026-11-28T10:00:09Z
+    command: studio.session.AnswerToolCall
+    actor: studio.session.Server
+    input:
+      call_id: 00000000-0000-4000-8000-0000000000ff
+      answer: '{}'
+    outcome: no-such-call
+    error:
+      name: studio.session.NoSuchToolCall
+    no_events: [studio.session.ToolCallAnswered]

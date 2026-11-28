@@ -8,17 +8,24 @@
 //! - `runtime`: the runtime interface of `ui/runtime.openapi.yaml`: the fixture source, the
 //!   conformance suite against it and against a source with one fault, and the generated client
 //!   held to the document.
+//! - `constructs`: the constructs of released ess-ui/1 drawn beyond the first set (a row predicate,
+//!   sort, groups, cards, a poll interval, help, metrics, an icon, a confirm, a form choice), and the
+//!   refusal of those still not drawn.
 //! - `derive`: `agenticspec ui derive` on the committed examples and the documents of
 //!   `tests/derive/`.
 //! - `serve`: the default control plane `agenticspec ui serve` answers, and `ui conform
 //!   --architecture` against a server with one fault per obligation.
+//! - `project`: `agenticspec ui generate --project`, held to the kit, the pins and the build
+//!   config of the operator app.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use agenticspec_ui::{Refusal, generate};
 
+mod constructs;
 mod derive;
+mod project;
 mod runtime;
 mod serve;
 
@@ -125,6 +132,11 @@ mod golden {
     #[test]
     fn actions_shown_by_the_action_set_of_their_scope_and_a_condition_of_their_own() {
         check("actions");
+    }
+
+    #[test]
+    fn two_panels_of_one_view_filtered_by_row_predicates_sorted_and_grouped() {
+        check("rows");
     }
 }
 

@@ -1,10 +1,13 @@
 //! The page of the workstation architecture, with and without a simulation result.
 
 mod bands;
+mod collapse;
 mod graph;
+mod lanes;
 mod model;
 mod optim;
 mod page;
+mod wrap;
 
 use agenticspec_render::architecture::page;
 use serde_json::{Value, json};

@@ -1,8 +1,8 @@
 //! The UIs of a bundle: one unit per UI the binding asks for under `ui:`, a `service` unit that
 //! serves static files (`code: {kind: static, archive, digest}`) and reads the adapter of an
-//! upstream unit (`upstream: {unit, port, path}`). The archive is carried inline in the bundle's
-//! `files` member, base64, by its file name. The UI unit serves its export of an ingress; the
-//! other exports stay where they were.
+//! upstream unit (`upstream: {unit, port, path}`, `path` from `ui.<ui>.upstream.path`, `/api/`
+//! when absent). The archive is carried inline in the bundle's `files` member, base64, by its file
+//! name. The UI unit serves its export of an ingress; the other exports stay where they were.
 //!
 //! A UI is one row ([`Ui`]): its key under `ui:`, its unit's name and role, the ingress and export
 //! it serves, and the source of its files ([`Source`]). Two sources are built in, keyed
@@ -90,8 +90,14 @@ pub struct Ui {
     pub source: Source,
 }
 
-/// The base path of the runtime's adapter a UI reads, written into its `config.json`.
+/// The base path of the runtime's adapter a UI reads when its binding names none
+/// (`ui.<ui>.upstream.path`), written into its `config.json` and its unit's `upstream.path`.
 pub const API_BASE: &str = agenticspec_ui::operator::API_BASE;
+
+/// Whether `path` may be the base path a UI reads its upstream's adapter at: it starts with `/`.
+fn is_upstream_path(path: &Value) -> bool {
+    path.as_str().is_some_and(|p| p.starts_with('/'))
+}
 
 /// The keys of a built-in UI's entry under `ui:`.
 const KEYS: &[&str] = &["port", "bind", "upstream"];
@@ -100,7 +106,7 @@ const KEYS: &[&str] = &["port", "bind", "upstream"];
 const OWN_KEYS: &[&str] = &["source", "export", "upstream", "port", "bind"];
 
 /// The keys of its `upstream:`.
-const UPSTREAM_KEYS: &[&str] = &["unit", "port"];
+const UPSTREAM_KEYS: &[&str] = &["unit", "port", "path"];
 
 /// The refusals of a written bundle that a build cannot reach: the archive a UI unit names is not
 /// the archive the bundle carries.
@@ -230,8 +236,9 @@ pub fn asked(binding: &Value) -> Vec<Ui> {
 }
 
 /// The problems of the form of the binding's `ui:`, one line each: `{<ui>: {port?, bind?,
-/// upstream?: {unit?, port?}}}` for a built-in UI, and with `source` and `export` for a UI of the
-/// consumer's own.
+/// upstream?: {unit?, port?, path?}}}` for a built-in UI, and with `source` and `export` for a UI
+/// of the consumer's own. A `path` that is text but does not start with `/` is a finding of
+/// admission ([`findings`], `ui_upstream_path_invalid`).
 pub fn problems(binding: &Value, out: &mut Vec<String>) {
     let ui = match &binding["ui"] {
         Value::Null => return,
@@ -298,7 +305,7 @@ pub fn problems(binding: &Value, out: &mut Vec<String>) {
 
 fn upstream_problems(key: &str, v: &Value, out: &mut Vec<String>) {
     let Some(m) = v.as_object() else {
-        out.push(format!("ui: {key}: upstream is {{unit, port}}"));
+        out.push(format!("ui: {key}: upstream is {{unit, port, path}}"));
         return;
     };
     for (k, x) in m {
@@ -308,6 +315,10 @@ fn upstream_problems(key: &str, v: &Value, out: &mut Vec<String>) {
             "port" if is_port(x) => {}
             "port" => out.push(format!(
                 "ui: {key}: upstream: port is a whole number from 1 to 65535"
+            )),
+            "path" if x.is_string() => {}
+            "path" => out.push(format!(
+                "ui: {key}: upstream: path is text, the base path of the adapter, starting with `/`"
             )),
             other => out.push(format!(
                 "ui: {key}: upstream: unknown key `{other}` (one of {})",
@@ -389,7 +400,8 @@ pub fn serve(entries: &mut [Value], binding: &Value) {
 
 /// The upstream of a UI: the unit the binding names, else the unit that serves the UI's
 /// ingress's API export (`ingress` the bundle's entries); its port, the binding's, else that
-/// export's when it is served by the same unit; and the base path written into `config.json`.
+/// export's when it is served by the same unit; and the base path written into `config.json`, the
+/// binding's ([`path`]).
 pub fn upstream(u: &Ui, binding: &Value, ingress: &[Value]) -> Value {
     let up = &binding["ui"][&u.key]["upstream"];
     let api = ingress
@@ -399,7 +411,7 @@ pub fn upstream(u: &Ui, binding: &Value, ingress: &[Value]) -> Value {
         .as_str()
         .or_else(|| api.and_then(|e| e["unit"].as_str()))
         .unwrap_or("core");
-    let mut out = json!({ "unit": unit, "path": API_BASE });
+    let mut out = json!({ "unit": unit, "path": path(u, binding) });
     let port = up["port"].as_u64().or_else(|| {
         api.filter(|e| e["unit"] == unit)
             .and_then(|e| e["port"].as_u64())
@@ -408,6 +420,13 @@ pub fn upstream(u: &Ui, binding: &Value, ingress: &[Value]) -> Value {
         out["port"] = json!(p);
     }
     out
+}
+
+/// The base path a UI reads its upstream's adapter at: `ui.<ui>.upstream.path`, else [`API_BASE`].
+pub fn path<'a>(u: &Ui, binding: &'a Value) -> &'a str {
+    binding["ui"][&u.key]["upstream"]["path"]
+        .as_str()
+        .unwrap_or(API_BASE)
 }
 
 /// The file a UI of the consumer's own names, read from the directory of the binding file that
@@ -456,7 +475,8 @@ fn given_archive(u: &Ui, binding: &Binding) -> Option<Result<Vec<u8>, Finding>> 
 
 /// The findings of the UIs the binding asks for that do not need a build: an export the
 /// architecture's ingresses do not have (`ui_export_unknown`), an upstream that names no unit of
-/// the packing (`ui_upstream_unknown`), an archive that is not the digest the binding names
+/// the packing (`ui_upstream_unknown`), an upstream path that does not start with `/`
+/// (`ui_upstream_path_invalid`), an archive that is not the digest the binding names
 /// (`ui_archive_mismatch`), an `ess-ui/1` source (`ui_build_needs_toolchain`), a UI role or the
 /// `service` kind the accepted list does not hold (`unit_not_hosted`).
 pub fn findings(
@@ -490,12 +510,25 @@ pub fn findings(
                 ),
             });
         }
+        if !is_upstream_path(&up["path"]) {
+            out.push(path_invalid(&format!("ui: {}", u.key), &up["path"]));
+        }
         if let Some(Err(f)) = given_archive(&u, binding) {
             out.push(f);
         }
         out.extend(hosted(&u.name, u.role, accepts));
     }
     out
+}
+
+/// `ui_upstream_path_invalid` of the upstream path `path` of `at` (`ui: <ui>` or `unit <unit>`).
+fn path_invalid(at: &str, path: &Value) -> Finding {
+    Finding {
+        refusal: "ui_upstream_path_invalid",
+        detail: format!(
+            "{at}: upstream path {path} does not start with `/`, as the path the adapter answers at on its unit does (such as {API_BASE})"
+        ),
+    }
 }
 
 fn hosted(name: &str, role: &str, accepts: &Accepts) -> Vec<Finding> {
@@ -535,7 +568,7 @@ pub fn units(
     for u in &all {
         let tar = match (&u.source, given_archive(u, binding)) {
             (_, Some(given)) => given,
-            (Source::Built(build), None) => build(architecture, contract, API_BASE)
+            (Source::Built(build), None) => build(architecture, contract, path(u, doc))
                 .and_then(|f| agenticspec_ui::operator::archive(&f))
                 .map_err(|e| Finding {
                     refusal: "ui_build_refused",
@@ -608,7 +641,8 @@ pub fn units(
 
 /// The findings of the UI units of a written bundle: an archive the bundle does not carry, or
 /// whose bytes are not the digest the unit names (`ui_archive_mismatch`); an upstream that names
-/// no other unit of the bundle (`ui_upstream_unknown`); a UI role the accepted list does not hold
+/// no other unit of the bundle (`ui_upstream_unknown`); an upstream path that does not start with
+/// `/` (`ui_upstream_path_invalid`); a UI role the accepted list does not hold
 /// (`unit_not_hosted`).
 pub fn check(bundle: &Value, accepts: &Accepts) -> Vec<Finding> {
     let mut out = Vec::new();
@@ -652,6 +686,10 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Vec<Finding> {
                 refusal: "ui_upstream_unknown",
                 detail: format!("unit {name}: upstream unit {up} is no other unit of the bundle"),
             });
+        }
+        let path = &u["upstream"]["path"];
+        if !path.is_null() && !is_upstream_path(path) {
+            out.push(path_invalid(&format!("unit {name}"), path));
         }
         for r in u["roles"].as_array().into_iter().flatten() {
             if let Some(role) = ROLES.iter().find(|x| *r == **x) {

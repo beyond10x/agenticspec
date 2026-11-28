@@ -32,7 +32,7 @@ but `format` and `binding` is optional.
 | `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui`, the control-plane UI's `control-plane-ui` |
 | `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below); the UI units, `operator-ui` and `control-plane-ui`, have `ready` and `alive` |
 | `ingress` | per ingress of the contract and per protocol it exports, where it listens: `{operator: {exports: {http: {port: 8080, bind: all}}}}`. `port` (1 to 65535), `bind` (`loopback`, the default, or `all`), `address` (the address it is reached at, text) and `part` (a part of a unit that serves it, when not the control plane of the core) |
-| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port}}, control-plane: {port, bind, upstream: {unit, port}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) and [the control-plane UI](#the-control-plane-ui) |
+| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port, path}}, control-plane: {port, bind, upstream: {unit, port, path}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) and [the control-plane UI](#the-control-plane-ui) |
 | `packing` | the packing section below |
 
 A binding never changes the architecture: promoting a revision to another target is a new binding
@@ -212,6 +212,7 @@ order of the table, and writes nothing.
 | `egress_undeclared` | a link leaves its unit, for an external part or a part of another unit, and the part it starts at does not declare that destination in its `egress` |
 | `address_in_architecture` | the architecture names an address: a key `address`, `host`, `hostname` or `url` anywhere in it (see [the bundle](#the-bundle)) |
 | `ui_upstream_unknown` | the UI the binding asks for reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have |
+| `ui_upstream_path_invalid` | the path a UI reads its upstream's adapter at (`ui.<ui>.upstream.path`) does not start with `/` |
 | `requirement_kpi_unknown` | a requirement names a KPI that is in neither the KPI catalogue nor the simulator and is not a cloud KPI (`cloudspec:<id>`) |
 | `requirement_invalid` | a requirement of the wrong form: no `kpi`, not exactly one number of `at_least`, `at_most`, `equals`, a `part` the architecture does not have or on a KPI of the architecture as a whole, a `window` that is no duration, an unknown key |
 | `ui_export_unknown` | a UI of your own serves an export (`ui.<name>.export`, `<ingress>.<protocol>`) that no ingress of the architecture has |
@@ -256,12 +257,12 @@ Each unit:
 | `shape` | an agent unit only: `service` (long-running, the packing's `agent`), `job` (until done, started on demand) or `scheduled` (until done, started by a clock) |
 | `replicas` | the copies that run; absent for a `job` or `scheduled` unit |
 | `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (`runtimes.agent-runtime`) (from a local store `<image>:<tag>`, else its config id). A core or service unit runs its image as `runtime`, by the same reference: its own, its parts', or for the core unit the pinned core runtime (`runtimes.core`); a unit without one names the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
-| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace and one per runtime part with durable state ([below](#durable-state)), with its access ([below](#volume-access)), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
+| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace and one per runtime part with durable state ([below](#durable-state)), with its access ([below](#volume-access)), whether there is one per copy of its part, the programs outside the runtime that also write a durable state (`writers`, when its part names any), its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
 | `schedule` | a scheduled unit's cron rule: the one the binding gives (`packing.parts.<part>.schedule`), else the one that states its schedule's `every` exactly ([Packing](#packing)); absent when it has neither |
 | `clock` | a scheduled unit's clock in the architecture: the trigger and schedule that wake it, `every`, `next_fire_at`, and the trigger's `policy` and `max_parallel` as the rule for overlapping runs |
-| `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (`/api/`) |
+| `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (the binding's `ui.<ui>.upstream.path`, else `/api/`) |
 | `config` | the configuration the binding gives the unit, when it gives any: `env`, its environment variables with their keys sorted, each value text or `{secret: <name>}`, and `args`, a list of strings; merged from the unit's entry under `packing.units`, then its parts by name (see [configuration of a unit](#configuration-of-a-unit)) |
 | `secrets` | the secret names its parts declare, never a value |
 | `egress` | every destination its parts declare, each with the part it starts at (`from`), the secret it authenticates with, when declared (`secret`), and `name`, what the target resolves: a link to another unit, with its transport, named by that unit; a link to an external part (`external: true`), named by its reach (its name, or its address, which is then also `address`); or a destination outside the architecture (`named: true`, no link), named by its own name, with the `address` the binding gives it, else `unresolved: true`. Nothing that is not listed is granted |
@@ -308,6 +309,28 @@ until done and a `model` unit serves a model, so a runtime part with durable sta
 is refused `durable_state_unplaceable`; place it in a core, service, agent or store unit. A runtime
 part marked `external` is not started by the target, and the bundle claims nothing for it.
 
+When programs outside the runtime write the same state too, such as a backup job or an indexer on
+the same host, name them with `state_writers`, a non-empty list of texts, beside
+`durable_state: true`:
+
+```yaml
+parts:
+  flow: { block: runtime, role: workflow, durable_state: true, state_writers: [backup, indexer] }
+```
+
+The state is still the runtime's one volume, with the same access, and no workspace part, so the
+contract asks for no `workspace.lease` or `workspace.proposal` port. The claim names the writers,
+and the architecture page lists them with the part:
+
+```yaml
+volumes:
+  - {name: flow-state, access: read_write_once, per_instance: false, writers: [backup, indexer], mount: /var/lib/flow}
+```
+
+`agenticspec sim check` refuses `state_writers` that is not a non-empty list of texts, or that
+stands without `durable_state: true` (`setting_invalid`). Without `state_writers` the claim has no
+`writers` key.
+
 The bundle carries no secret value, host, provider or target name. It copies the architecture as
 written, so an address in the architecture would land in the bundle: a key `address`, `host`,
 `hostname` or `url` anywhere in the architecture document is refused as `address_in_architecture`,
@@ -340,7 +363,8 @@ a local runtime image with neither tag nor digest, a core or service unit whose 
 that enforces no network policy, and a scheduled unit whose `schedule` is not the rule of its
 binding or of its schedule's `every` (`schedule_not_cron`). Of a UI unit it hashes the archive the bundle carries and refuses
 an archive that is missing or whose SHA-256 is not the unit's `digest` (`ui_archive_mismatch`),
-and an `upstream` that names no other unit of the bundle (`ui_upstream_unknown`). A refusal exits
+an `upstream` that names no other unit of the bundle (`ui_upstream_unknown`), and an `upstream.path`
+that does not start with `/` (`ui_upstream_path_invalid`). A refusal exits
 1 with `not_admitted` and names every finding.
 
 ```sh
@@ -407,19 +431,20 @@ agenticspec ui build workstation-ingress.yaml --contract wi.contract.yaml --ingr
 
 A binding with `ui: {operator: {...}}` makes `deploy bundle` add the operator UI as a unit of its
 own. It builds the UI in-process with the library `ui build` uses, from the architecture and its
-contract, and the archive is the same bytes as `ui build --archive` writes for them (`api_base`
-`/api/`). Without `ui:` the bundle is the same as before.
+contract, and the archive is the same bytes as `ui build --archive` writes for them (with
+`--api-base` set to `upstream.path`, `/api/` when absent). Without `ui:` the bundle is the same as before.
 
 | key under `ui.operator` | holds |
 |---|---|
 | `port`, `bind` | where the UI's export listens when the binding's `ingress.operator.exports.ui` gives none. Given in both places, they must agree |
 | `upstream.unit` | the unit whose adapter (the runtime interface, `ui/runtime.openapi.yaml`) the page reads; the unit that serves the operator ingress's `http` export (the core) when absent |
 | `upstream.port` | its port; the `http` export's port when absent and that export is served by the same unit |
+| `upstream.path` | the path the page reads that adapter at, starting with `/`: the `api_base` of the UI's `config.json` and the unit's `upstream.path` (`/api/` when absent). A UI of your own carries its archive as it is; only its unit's `upstream.path` says the path |
 
 The bundle then has:
 
 - a unit `operator-ui`, `kind: service`, `roles: [operator-ui]`, no parts, `code: {kind: static,
-  archive: operator-ui.tar, digest: sha256:<hex>}`, `upstream: {unit, port, path: /api/}`, and
+  archive: operator-ui.tar, digest: sha256:<hex>}`, `upstream: {unit, port, path}`, and
   `ready` and `alive` checks over HTTP at `/` on the export's port, or on the port of
   `checks.operator-ui.<check>.port`, and the claims of `claims.operator-ui` (500 millicores and
   512 MiB when absent);
@@ -431,7 +456,8 @@ The bundle then has:
 `deploy bundle` refuses, with `binding_invalid`, a `ui:` of the wrong form, a packing that has a
 unit named `operator-ui`, and a `part` on the `ui` export; with `not_admitted`, a contract whose
 operator ingress exports no `ui` (`ui_export_unknown`), an upstream that names no unit of the
-packing (`ui_upstream_unknown`), a role `operator-ui` the accepted list does not hold
+packing (`ui_upstream_unknown`), an upstream path that does not start with `/`
+(`ui_upstream_path_invalid`), a role `operator-ui` the accepted list does not hold
 (`unit_not_hosted`), and a UI that does not build (`ui_build_refused`, for example a contract
 from other ports than the binary's). `bundles/bindings/operator-ui.yaml` is the worked example.
 
@@ -496,12 +522,114 @@ it listens on `ui.<name>.port`. The accepted list must hold the role `ui`.
 
 `{ess_ui: <file>}` is refused with `ui_build_needs_toolchain`: the pages `agenticspec ui generate`
 writes from an `ess-ui/1` document are Vue components that need node and vite to build, and the
-binary does not run them. Generate and build the app yourself, pack its output as a tar and name it
-as `{archive, digest}`. Besides the refusals of `ui.operator`, `deploy bundle` refuses, with
+binary does not run them. Build the app on a host with node (below) and name its archive as
+`{archive, digest}`. Besides the refusals of `ui.operator`, `deploy bundle` refuses, with
 `binding_invalid`, a `ui.<name>` without `source` or `export` or of the wrong form, and a name that
 is a unit of the packing or of another UI; with `not_admitted`, an export no ingress has
 (`ui_export_unknown`) and an archive that is not its digest (`ui_archive_mismatch`). The `console`
 UI of `bundles/bindings/operator-ui.yaml` is the worked example.
+
+#### Building a UI of your own from an ess-ui/1 document
+
+`agenticspec ui generate --path <document> --out <dir> --project` writes a project that builds the
+document's app on its own. On a host with node (20.19 or later, or 22.12 or later), the one
+command is:
+
+```sh
+agenticspec ui generate --path console.ui.yaml --out console-ui --project
+cd console-ui && npm ci && npm run build
+```
+
+The build writes `dist/` (`index.html`, `app.js`, `app.css`) and `dist.tar`, packed as `ui build
+--archive` packs (sorted entries, mode 0644, owner 0, time 0), and prints the archive's sha256 as
+`archive_sha256`. The same project gives the same archive. Name it in the binding as `source:
+{archive: dist.tar, digest: "sha256:<hex>"}`, with the path relative to the binding file.
+
+| in the project | holds |
+|---|---|
+| `src/generated/` | the app, the files `ui generate` writes without `--project` |
+| `index.html`, `src/main.ts` | the host page; each host slot of the document shows a placeholder naming it until you pass a component of your own |
+| `kit/` | the sources of the components the pages draw with, the kit the operator UI of `ui build` is built from |
+| `package.json`, `package-lock.json` | the versions of vue, vite and its vue plugin the operator UI is built with, and the lock of exactly those |
+| `vite.config.ts`, `pack.mjs` | the build, with the operator UI's output options, and the packer |
+
+Generating again replaces the directory, `node_modules/` and `dist/` included.
+
+### Generating the pages: `agenticspec ui generate`
+
+`agenticspec ui generate --path <document>.ui.yaml --out <dir>` writes the Vue 3 app of an
+`ess-ui/1` document into `<dir>`, replacing what was there: one page component per page, one
+component per widget, the router, the typed client of the reads, commands and channels, the host
+slots and the runtime, all drawn with the components of `ui/kit`. The same document gives the
+same bytes. Build the app with vite, pack its output as a tar and name it as `{archive, digest}`.
+
+It draws, besides pages, page kinds, shells, navigation, themes, channels and widgets:
+
+- collections as a table, a list or cards (`style: cards` is drawn as the kit's list), their row
+  actions, a sort (`sort: {by, dir}`, sorted in the browser), groups (`group_by`, `group_order`,
+  `show_empty_groups`);
+- records, forms (text, number, toggle, choice and host-slot inputs, a result), filter bars with
+  choices and a search, metrics (`aggregate`, `field`, `match`, as a section or in the header);
+- a read's row predicate (`reads.filter`) in the grammar of ess-ui/1: `==`, `!=`, `in [..]`,
+  `contains`, `not`, `and`, `or` and parentheses over `row`, `state`, `params`, `shell` and widget
+  `args`, so two panels of one view with different filters are two sections; a poll interval
+  (`reads.refresh: 30s`);
+- the header's title, `title_from`, filters, live channels, actions, metrics and help
+  (`{text, link}`); a page's `actor`, which is checked against the model and not drawn;
+- actions that send a command (shown only while the action set of their scope allows it), go
+  to a page or copy a value, `as: button | link | icon`, `visible`, and a confirm in its short
+  form `{title, confirm_label, show}`, asked in place.
+
+A construct it does not draw is refused, the whole document with it: the command exits with
+`document_refused` and prints each refusal as `<node path>: <message>`, the node path naming map
+keys and list entries by their name (`pages/tickets/sections/open/reads/filter`). The messages
+take one of these forms, `(...)` being the reader's own words:
+
+| form | message |
+|---|---|
+| property | ``unknown property `<key>`: this generator does not draw it (...)`` |
+| value | ``` `<value>` is not a value this generator draws here (...) ``` |
+| component | ``` `<name>` is no component this generator draws (it draws collection, record, form, filter_bar, choice, metric) and no widget of the document ``` |
+| misplaced | ``` `<key>` is no property of a <component> this generator draws ``` |
+
+What released `ess-ui/1` (ESS 0.99.2) has and this generator does not draw yet:
+
+| construct | not drawn | refused with |
+|---|---|---|
+| document | `types`, `tokens`, `placement_defaults` | property |
+| shell | `preload`, `guards`, `overlays`, `source` | property |
+| shell region | `props`, `visible`; `kind: overlay_outlet`, `assistant`, `account_menu` | property; value |
+| navigation | `search`, `restrictions`; dynamic entries (`pages: {from_view, ...}`) | property; ``invalid type: map, expected a sequence`` |
+| navigation entry | `roles_today` | property |
+| page | `aliases`, `switch_to`, `visible`, `overlays`, `profile`, `source`, `unmapped` | property |
+| page kind | `extends`, `overlays` | property |
+| page layout | a grid row of more than one area; more than two columns | ``this generator stacks the areas of a one-column grid: each row names one area``; ``this generator lays out at most two columns, a wide and a narrow one`` |
+| section, any node | `load`, `depends_on`, `visible`, `state`, `children`, `profile`, `degrades`, `unmapped` | property |
+| section states | `refreshing`, `forbidden`, `stale` | property |
+| header | `total`, `badge`, `switch`; a header metric that is no metric | property; ``a header metric is a metric here`` |
+| collection | `selection`, `bulk_actions`, `expand`, `item`, `reorder`; `actions`; `style: tree`; `sort.allowed`; `sort.mode: server`; columns chosen by the user (`columns: {binds, all}`) | property; misplaced; value; property; value; ``invalid type: map, expected a sequence`` |
+| record | `groups`, `tabs`, `item` | property |
+| form | `loads`, `groups`, `tabs`, `parts`, `record`, `draft`, `save`, `variant_by`, `endpoint`, `submit.closes`, `submit.auto`; `actions` | property; misplaced |
+| form input | `as:` `badge`, `list`, `timestamp`, `date`, `time`, `percent`, `json` | ``a form input `as: <as>` is not one this generator draws`` |
+| choice | `multiple`, `creatable`, `visible`, `note`; `style` (`dropdown`, `tags`, `radio`, ...); options naming an enum type | property; value; ``` `<name>` names an enum type, which this generator does not resolve; list the options or read them from a view ``` |
+| filter bar | `window`, `inputs`, `reset` | property |
+| metric | `from`, `window`, `unit`, `scale`; `format: duration`, `percent`, `bytes`; a metric without `reads` | property; value; ``a metric reads a view here`` |
+| composites | `confirm`, `chart`, `board`, `graph_editor`, `rich_text`, `references` as a node's `component` | component |
+| primitives | `text`, `badge`, `icon`, `button`, `link`, `input`, `toggle`, `image`, `divider` (a node's `primitive`) | property |
+| overlays | every overlay (`overlays` of a page, page kind or shell) | property |
+| widget | `arrange: row`, `grid`; a use's `visible`, `body` | value; property |
+| field | `unit`, `scale`, `visible`, `binds`, `label_from`, `suggests`, `note`, `help`; `as:` `secret`, `tags`, `date_range`, `duration`, `file`, `rich_text`, `map`, `cron`, `color`, `audio`, `link`, `bytes`; `as: choice` on a column or record field | property; value; ``a column or record field `as: choice` is not drawn here; it is a form input`` |
+| host slot | `commands` | misplaced |
+| reads | `pager`, `debounce`, `cache`, `endpoint`, `derived`; `paging: server`, `client`, `cursor`, `append`; `refresh` as an expression | property; value; ``` `<refresh>` is no poll interval this generator reads: a duration such as 30s, 2m or 1h (an expression is not drawn) ``` |
+| action | `opens`, `export`, `upload`, `sets`, `choice`, `loads`, `checked`, `optimistic`, `bulk`, `endpoint`; `as: toggle`, `choice`, `menu_item`; a confirm naming an overlay; a confirm on an action that sends no command | property; value; ``` `<name>` names an overlay; this generator draws no overlay, only the short form {title, confirm_label, show} ```; ``a confirm stands on an action that sends a command here`` |
+| channel | `sends`, `buffer`, `fields`, `transport_today`, `source`, `unmapped`; `direction: both` | property; value |
+| live | `when_paged_away`, `max_rows`; `effect: patch_row`, `insert_top`, `remove_row`, `replace`; an `only_if` other than `matches(params)` | property; value; ``` expression `<e>` is not one this generator compiles here (matches(params)) ``` |
+| state | `scope`, `sensitive`, `ttl`, `clear_on`, `fallback`, `endpoint`; `class: view_cache`, `channel_buffer`, `credential`; `store: server_session`, `server`; `store: session_storage` | property; value; value; ``this generator keeps state in memory, the URL or local storage`` |
+| theme | any token a theme overrides (the look is the kit's) | property |
+| expressions | outside a filter or a confirm's `show`: anything but `state.<name>`, `params.<name>`, `shell.<name>`, `row.<field>`, `args.<name>` in a widget, `actor.may(<command>)` or a literal | ``` expression `<e>` is not one this generator compiles (...) ``` |
+
+A column's `sortable: true` is accepted and draws no sort control; the sort a collection declares
+is the one it shows.
 
 ### Before a runtime: the UI on fixtures
 

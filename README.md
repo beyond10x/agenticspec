@@ -77,6 +77,7 @@ agenticspec sim check --json <architecture.yaml>   # agenticspec-check/1 on stdo
 agenticspec sim digest <architecture.yaml>          # the pin of a nested architecture
 agenticspec sim run <experiment.yaml> --out out/   # result.json, index.html, best.yaml
 agenticspec sim render <architecture.yaml> --out page.html
+agenticspec sim render <render-model.json> --out page.html   # a page of the render model
 ```
 
 ## What stays on your machine

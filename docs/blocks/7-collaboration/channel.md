@@ -451,7 +451,7 @@ Called by: Participant.
 |---|---|---|
 | `Act`<br/>Request asks the recipient to act; Inform only tells it something. | one of | `Request`, `Inform` |
 | `Audience`<br/>Who reads what is sent on a channel: only parties of the owner's organization, readers outside it, one person alone, or not known. | one of | `Internal`, `External`, `Private`, `Unknown` |
-| `ChannelKind`<br/>Prompt is a human typing into a session; Operator a human's private channel to the agent that acts for it; AgentMessage a message between agents on one host; AgentToAgent the same over a network; Chat a chat adapter; Notification one-way news to a party; Control a page or panel outside any session where a human acts by a button (send, pick, run, retry), each act one Request message or post. | one of | `Prompt`, `Operator`, `AgentMessage`, `AgentToAgent`, `Chat`, `Notification`, `Control` |
+| `ChannelKind`<br/>Prompt is a human typing into a session; Operator a human's private channel to the agent that acts for it; AgentMessage a message between agents on one host; AgentToAgent the same over a network; Chat a chat adapter; Notification one-way news to a party; Control a page or panel outside any session where a human acts by a button (send, pick, run, retry), each act one Request message or post; Screen a page of a user interface that shows a party what the system holds, each page shown one post. | one of | `Prompt`, `Operator`, `AgentMessage`, `AgentToAgent`, `Chat`, `Notification`, `Control`, `Screen` |
 | `Distribution`<br/>Direct joins two fixed parties. Topic delivers each post to every subscriber; Queue gives each post to the one subscriber that takes it; Board holds typed entries every subscriber reads, each entry kind with a length limit. | one of | `Direct`, `Topic`, `Queue`, `Board` |
 | `EntryKind` | one of | `Observed`, `Fact`, `Fail`, `Claim`, `PatchSummary` |
 | `EntryLimits`<br/>The longest content, in the unit of agentic.shared.Content.length, each entry kind of a board admits. | a record | `observed` integer, `fact` integer, `fail` integer, `claim` integer, `patch_summary` integer |
@@ -487,14 +487,15 @@ Called by: Participant.
 
 ## Settings
 
-The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes. What no setting here types (a file, a path, an audience, the use of a model) goes into the part's `notes`, a map with free keys and values that the check takes as written and nothing reads.
 
 A part `channel`:
 
 | setting | type | unit | default | contract | what |
 |---|---|---|---|---|---|
-| `kind` | enum `ChannelKind`: `prompt`, `operator`, `agent_message`, `agent_to_agent`, `chat`, `notification`, `control` |  |  | every port | What the channel carries. |
+| `kind` | enum `ChannelKind`: `prompt`, `operator`, `agent_message`, `agent_to_agent`, `chat`, `notification`, `control`, `screen` |  |  | every port | What the channel carries. |
 | `distribution` | enum `Distribution`: `direct`, `topic`, `queue`, `board` |  | `direct` | every port | Who receives a message; on a topic, queue or board a trigger can listen. |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+| `notes` | notes |  |  |  | Free notes on the part, a map with keys and values of any kind: what no setting of its block types. The check takes any map; the simulator, the search and the contract never read it. |
 

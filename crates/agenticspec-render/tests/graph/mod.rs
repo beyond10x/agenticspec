@@ -16,7 +16,7 @@ fn load(path: &Path) -> Value {
     serde_yaml_ng::from_str(&text).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
 }
 
-fn large() -> Value {
+pub(crate) fn large() -> Value {
     load(&root().join("crates/agenticspec-render/tests/fixtures/large-37.yaml"))
 }
 
@@ -42,13 +42,13 @@ fn all() -> Vec<(String, Value)> {
     out
 }
 
-fn attr<'a>(tag: &'a str, name: &str) -> Option<&'a str> {
+pub(crate) fn attr<'a>(tag: &'a str, name: &str) -> Option<&'a str> {
     let key = format!(" {name}=\"");
     let start = tag.find(&key)? + key.len();
     Some(&tag[start..start + tag[start..].find('"')?])
 }
 
-fn numbers(s: &str) -> Vec<f64> {
+pub(crate) fn numbers(s: &str) -> Vec<f64> {
     s.split([' ', ','])
         .filter(|t| !t.is_empty())
         .map(|t| t.parse().unwrap_or_else(|_| panic!("a number: {t}")))
@@ -56,7 +56,7 @@ fn numbers(s: &str) -> Vec<f64> {
 }
 
 /// The box of the card of each part, and the channel cards drawn on edges.
-fn cards(svg: &str) -> (BTreeMap<String, [f64; 4]>, Vec<String>) {
+pub(crate) fn cards(svg: &str) -> (BTreeMap<String, [f64; 4]>, Vec<String>) {
     let mut boxes = BTreeMap::new();
     let mut channels = Vec::new();
     for piece in svg.split("<g class=\"node").skip(1) {
@@ -78,7 +78,7 @@ fn cards(svg: &str) -> (BTreeMap<String, [f64; 4]>, Vec<String>) {
 }
 
 /// Points along a path of `M`, `L`, `H`, `V` and `C` commands, each curve sampled.
-fn samples(d: &str) -> Vec<(f64, f64)> {
+pub(crate) fn samples(d: &str) -> Vec<(f64, f64)> {
     let mut out = Vec::new();
     let mut cur = (0.0, 0.0);
     let mut cmd = ' ';
@@ -150,7 +150,7 @@ fn samples(d: &str) -> Vec<(f64, f64)> {
     out
 }
 
-fn svg_of(html: &str) -> &str {
+pub(crate) fn svg_of(html: &str) -> &str {
     let start = html.find("<svg class=\"graph\"").expect("the graph");
     &html[start..start + html[start..].find("</svg>").expect("svg ends")]
 }
