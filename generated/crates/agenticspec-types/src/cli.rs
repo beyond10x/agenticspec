@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
+// contract digest abc2efe4b9124d3590d1cfd5ec8ac7618eaf3901e79a176eb47162dd06b4b4ff
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -1273,6 +1273,38 @@ pub struct ToolFigures {
     pub refused: i64,
     /// `failed` — `Integer`.
     pub failed: i64,
+}
+
+/// UiBuildInput — `agenticspec.cli.UiBuildInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiBuildInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `contract` — `String`.
+    pub contract: String,
+    /// `out` — `String`.
+    pub out: String,
+    /// `api_base` — `Optional<String>`.
+    pub api_base: Option<String>,
+    /// `archive` — `Boolean`.
+    pub archive: bool,
+}
+
+/// UiBuildResult — `agenticspec.cli.UiBuildResult`.
+///
+/// The static files of an operator UI: `index.html`, `app.js` and `app.css` of the operator app built into the binary, `views.json` (the layout of the derived UI), `contract.json`, `ports.json` and `config.json`; the same inputs give the same bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiBuildResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `files` — `Integer`.
+    pub files: i64,
+    /// `bytes` — `Integer`.
+    pub bytes: i64,
+    /// `archive` — `Optional<String>`.
+    pub archive: Option<String>,
+    /// `archive_sha256` — `Optional<String>`.
+    pub archive_sha256: Option<String>,
 }
 
 /// UiConformCheck — `agenticspec.cli.UiConformCheck`.

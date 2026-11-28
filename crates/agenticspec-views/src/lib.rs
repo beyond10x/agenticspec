@@ -1,7 +1,8 @@
 //! The block panels of `agenticspec ui panels`: from the ESS system `blocks/`, one `ess-ui/1`
 //! document, `ui/views/blocks.ui.yaml`, with one widget per view and a gallery page per block,
-//! the fixtures the panels render against (`ui/views/fixtures/`), and the digest of every input
-//! read (`ui/views/blocks.sources.sha256`). The bytes are a function of those inputs only.
+//! the fixtures the panels render against (`ui/views/fixtures/`), the part of the compiled
+//! blocks a derivation reads (`ui/views/blocks.model.json`), and the digest of every input read
+//! (`ui/views/blocks.sources.sha256`). The bytes are a function of those inputs only.
 //!
 //! A generation compiles `blocks/` with `ess specify compile` (well under a second), so
 //! `--check` regenerates in memory and compares every byte and the digest; no slow lane is
@@ -22,6 +23,9 @@ pub use panels::Block;
 pub const OUT: &str = "ui/views/blocks.ui.yaml";
 /// The digest of the inputs, beside it.
 pub const DIGEST: &str = "ui/views/blocks.sources.sha256";
+/// The part of the compiled blocks `agenticspec ui derive` reads, beside it: what the binary
+/// embeds so that `agenticspec ui build` derives with neither `ess` nor `blocks/`.
+pub const MODEL: &str = "ui/views/blocks.model.json";
 /// The directory every generated file is in.
 pub const DIR: &str = "ui/views";
 /// The directory of the fixtures, which holds nothing but generated files.
@@ -185,8 +189,61 @@ pub fn generation(root: &Path) -> Result<Vec<(String, String)>, String> {
         .into_iter()
         .map(|(p, t)| (format!("{DIR}/{p}"), t))
         .collect();
+    files.push((MODEL.to_string(), model(&ir)));
     files.push((DIGEST.to_string(), digest(root)?));
     Ok(files)
+}
+
+/// The part of the compiled blocks a derivation reads (`agenticspec_ui::derive::model::Model`):
+/// the system's name, every domain and command with its display name, the names of the entities,
+/// the source of each view, the input fields of each command and the variants of each enum.
+pub fn model(ir: &Value) -> String {
+    let entries = |key: &str| ir[key].as_object().into_iter().flatten();
+    let display = |v: &Value| match v["naming"]["display"].as_str() {
+        Some(d) => json!({ "naming": { "display": d } }),
+        None => json!({}),
+    };
+    let domains: serde_json::Map<String, Value> = entries("domains")
+        .map(|(k, v)| (k.clone(), display(v)))
+        .collect();
+    let entities: serde_json::Map<String, Value> = entries("entities")
+        .map(|(k, _)| (k.clone(), json!({})))
+        .collect();
+    let views: serde_json::Map<String, Value> = entries("views")
+        .map(|(k, v)| match v["source"].as_str() {
+            Some(s) => (k.clone(), json!({ "source": s })),
+            None => (k.clone(), json!({})),
+        })
+        .collect();
+    let commands: serde_json::Map<String, Value> = entries("commands")
+        .map(|(k, v)| {
+            let mut c = display(v);
+            let input: Vec<Value> = v["input"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|f| f["name"].as_str())
+                .map(|n| json!({ "name": n }))
+                .collect();
+            c["input"] = Value::Array(input);
+            (k.clone(), c)
+        })
+        .collect();
+    let types: serde_json::Map<String, Value> = entries("types")
+        .filter_map(|(k, v)| {
+            let variants = v["body"]["variants"].as_array()?;
+            Some((k.clone(), json!({ "body": { "variants": variants } })))
+        })
+        .collect();
+    let doc = json!({
+        "system": ir["system"],
+        "domains": domains,
+        "entities": entities,
+        "views": views,
+        "commands": commands,
+        "types": types,
+    });
+    serde_json::to_string_pretty(&doc).unwrap_or_default() + "\n"
 }
 
 /// The files below `dir`, relative to `root`, sorted.

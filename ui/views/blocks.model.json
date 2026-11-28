@@ -1,0 +1,5295 @@
+{
+  "commands": {
+    "agentic.agent.DefineAgent": {
+      "input": [
+        {
+          "name": "agent_id"
+        },
+        {
+          "name": "principal_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Define an agent"
+      }
+    },
+    "agentic.agent.PublishRevision": {
+      "input": [
+        {
+          "name": "agent_revision_id"
+        },
+        {
+          "name": "agent_id"
+        },
+        {
+          "name": "number"
+        },
+        {
+          "name": "role"
+        },
+        {
+          "name": "instructions"
+        },
+        {
+          "name": "models"
+        },
+        {
+          "name": "tools"
+        },
+        {
+          "name": "knowledge"
+        },
+        {
+          "name": "budget"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Publish an agent revision"
+      }
+    },
+    "agentic.agent.RetireAgent": {
+      "input": [
+        {
+          "name": "agent_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Retire an agent"
+      }
+    },
+    "agentic.agent.RetireRevision": {
+      "input": [
+        {
+          "name": "agent_revision_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Retire an agent revision"
+      }
+    },
+    "agentic.agent.UseRevision": {
+      "input": [
+        {
+          "name": "agent_revision_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Use an agent revision"
+      }
+    },
+    "agentic.architecture.AddExport": {
+      "input": [
+        {
+          "name": "export_id"
+        },
+        {
+          "name": "ingress_id"
+        },
+        {
+          "name": "protocol"
+        }
+      ],
+      "naming": {
+        "display": "Export an ingress over a protocol"
+      }
+    },
+    "agentic.architecture.AddIngress": {
+      "input": [
+        {
+          "name": "ingress_id"
+        },
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "audience_part_id"
+        },
+        {
+          "name": "authenticated"
+        },
+        {
+          "name": "interface"
+        }
+      ],
+      "naming": {
+        "display": "Add an ingress"
+      }
+    },
+    "agentic.architecture.AddLink": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "from_part_id"
+        },
+        {
+          "name": "to_part_id"
+        },
+        {
+          "name": "carries"
+        },
+        {
+          "name": "over_part_id"
+        }
+      ],
+      "naming": {
+        "display": "Allow a link"
+      }
+    },
+    "agentic.architecture.AddPart": {
+      "input": [
+        {
+          "name": "part_id"
+        },
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "count"
+        },
+        {
+          "name": "settings"
+        }
+      ],
+      "naming": {
+        "display": "Add a part"
+      }
+    },
+    "agentic.architecture.ApplyPatch": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "patch_id"
+        },
+        {
+          "name": "dry_run"
+        }
+      ],
+      "naming": {
+        "display": "Apply a patch"
+      }
+    },
+    "agentic.architecture.CommitRevision": {
+      "input": [
+        {
+          "name": "architecture_id"
+        }
+      ],
+      "naming": {
+        "display": "Commit an architecture revision"
+      }
+    },
+    "agentic.architecture.CreateArchitecture": {
+      "input": [
+        {
+          "name": "name"
+        }
+      ],
+      "naming": {
+        "display": "Create an architecture"
+      }
+    },
+    "agentic.architecture.DeclarePort": {
+      "input": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "block"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "intent_event"
+        },
+        {
+          "name": "waiting_state"
+        },
+        {
+          "name": "reports"
+        },
+        {
+          "name": "protocol"
+        }
+      ],
+      "naming": {
+        "display": "Declare a port"
+      }
+    },
+    "agentic.architecture.PlaceEntity": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "revision_id"
+        },
+        {
+          "name": "part_id"
+        },
+        {
+          "name": "instance"
+        },
+        {
+          "name": "entity_name"
+        },
+        {
+          "name": "entity_id"
+        }
+      ],
+      "naming": {
+        "display": "Place an entity on a part"
+      }
+    },
+    "agentic.architecture.RecordContract": {
+      "input": [
+        {
+          "name": "revision_id"
+        },
+        {
+          "name": "ports"
+        },
+        {
+          "name": "invariants"
+        },
+        {
+          "name": "border"
+        },
+        {
+          "name": "ingress"
+        }
+      ],
+      "naming": {
+        "display": "Record the contract of a revision"
+      }
+    },
+    "agentic.architecture.RecordDryRunApplied": {
+      "input": [
+        {
+          "name": "application_id"
+        },
+        {
+          "name": "changed_rows"
+        }
+      ],
+      "naming": {
+        "display": "Record an applied dry run"
+      }
+    },
+    "agentic.architecture.RecordPatch": {
+      "input": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "rules"
+        }
+      ],
+      "naming": {
+        "display": "Record a patch"
+      }
+    },
+    "agentic.architecture.RecordPatchApplied": {
+      "input": [
+        {
+          "name": "application_id"
+        },
+        {
+          "name": "revision_id"
+        },
+        {
+          "name": "changed_rows"
+        }
+      ],
+      "naming": {
+        "display": "Record an applied patch"
+      }
+    },
+    "agentic.architecture.RecordPatchRefused": {
+      "input": [
+        {
+          "name": "application_id"
+        },
+        {
+          "name": "rule_index"
+        },
+        {
+          "name": "error"
+        }
+      ],
+      "naming": {
+        "display": "Record a refused patch"
+      }
+    },
+    "agentic.architecture.RetireArchitecture": {
+      "input": [
+        {
+          "name": "architecture_id"
+        }
+      ],
+      "naming": {
+        "display": "Retire an architecture"
+      }
+    },
+    "agentic.architecture.SetActsFor": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "part_id"
+        },
+        {
+          "name": "principal_part_id"
+        }
+      ],
+      "naming": {
+        "display": "Let an agent part act for a principal part"
+      }
+    },
+    "agentic.architecture.SetBorder": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "part_id"
+        }
+      ],
+      "naming": {
+        "display": "Put a part on the border"
+      }
+    },
+    "agentic.architecture.SetPer": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "part_id"
+        },
+        {
+          "name": "per_part_id"
+        }
+      ],
+      "naming": {
+        "display": "Run a part once per copy of another"
+      }
+    },
+    "agentic.architecture.SetSwarm": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "part_id"
+        },
+        {
+          "name": "coordination"
+        },
+        {
+          "name": "start_stagger"
+        }
+      ],
+      "naming": {
+        "display": "Make an agent part a swarm"
+      }
+    },
+    "agentic.authority.ApproveDecision": {
+      "input": [
+        {
+          "name": "decision_id"
+        },
+        {
+          "name": "approver"
+        },
+        {
+          "name": "delegation"
+        },
+        {
+          "name": "tool_call_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Approve a pending decision"
+      }
+    },
+    "agentic.authority.DecideRequest": {
+      "input": [
+        {
+          "name": "grant_id"
+        },
+        {
+          "name": "requester_kind"
+        },
+        {
+          "name": "requester_id"
+        },
+        {
+          "name": "action_class"
+        },
+        {
+          "name": "scope"
+        },
+        {
+          "name": "verdict"
+        },
+        {
+          "name": "decider"
+        },
+        {
+          "name": "attribution"
+        },
+        {
+          "name": "delegation"
+        },
+        {
+          "name": "tool_call_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Decide a request"
+      }
+    },
+    "agentic.authority.DenyRequest": {
+      "input": [
+        {
+          "name": "requester_kind"
+        },
+        {
+          "name": "requester_id"
+        },
+        {
+          "name": "action_class"
+        },
+        {
+          "name": "scope"
+        },
+        {
+          "name": "decider"
+        },
+        {
+          "name": "attribution"
+        },
+        {
+          "name": "delegation"
+        },
+        {
+          "name": "grant_id"
+        },
+        {
+          "name": "tool_call_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Deny a request"
+      }
+    },
+    "agentic.authority.GrantAuthority": {
+      "input": [
+        {
+          "name": "grantee_kind"
+        },
+        {
+          "name": "grantee_id"
+        },
+        {
+          "name": "action_class"
+        },
+        {
+          "name": "scope"
+        },
+        {
+          "name": "expires_at"
+        },
+        {
+          "name": "granted_by"
+        },
+        {
+          "name": "effect"
+        },
+        {
+          "name": "condition"
+        },
+        {
+          "name": "excludes"
+        },
+        {
+          "name": "supersedes"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Grant authority"
+      }
+    },
+    "agentic.authority.OpenBudget": {
+      "input": [
+        {
+          "name": "owner_kind"
+        },
+        {
+          "name": "owner_id"
+        },
+        {
+          "name": "resource"
+        },
+        {
+          "name": "window"
+        },
+        {
+          "name": "limit"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Open a budget"
+      }
+    },
+    "agentic.authority.RecordSpend": {
+      "input": [
+        {
+          "name": "budget_id"
+        },
+        {
+          "name": "spent_total"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Record spend"
+      }
+    },
+    "agentic.authority.RejectDecision": {
+      "input": [
+        {
+          "name": "decision_id"
+        },
+        {
+          "name": "rejecter"
+        },
+        {
+          "name": "tool_call_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Reject a pending decision"
+      }
+    },
+    "agentic.authority.RevokeGrant": {
+      "input": [
+        {
+          "name": "grant_id"
+        },
+        {
+          "name": "revoked_by"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Revoke a grant"
+      }
+    },
+    "agentic.channel.Beat": {
+      "input": [
+        {
+          "name": "subscription_id"
+        },
+        {
+          "name": "party"
+        }
+      ],
+      "naming": {
+        "display": "Record a heartbeat"
+      }
+    },
+    "agentic.channel.CloseChannel": {
+      "input": [
+        {
+          "name": "channel_id"
+        }
+      ],
+      "naming": {
+        "display": "Close a channel"
+      }
+    },
+    "agentic.channel.CloseSharedChannel": {
+      "input": [
+        {
+          "name": "channel_id"
+        }
+      ],
+      "naming": {
+        "display": "Close a shared channel"
+      }
+    },
+    "agentic.channel.EndSubscription": {
+      "input": [
+        {
+          "name": "subscription_id"
+        },
+        {
+          "name": "party"
+        }
+      ],
+      "naming": {
+        "display": "End a subscription"
+      }
+    },
+    "agentic.channel.MarkDelivered": {
+      "input": [
+        {
+          "name": "message_id"
+        }
+      ],
+      "naming": {
+        "display": "Mark a message delivered"
+      }
+    },
+    "agentic.channel.MarkLost": {
+      "input": [
+        {
+          "name": "message_id"
+        }
+      ],
+      "naming": {
+        "display": "Mark a message lost"
+      }
+    },
+    "agentic.channel.MarkRead": {
+      "input": [
+        {
+          "name": "message_id"
+        },
+        {
+          "name": "reader"
+        },
+        {
+          "name": "turn_id"
+        }
+      ],
+      "naming": {
+        "display": "Mark a message read"
+      }
+    },
+    "agentic.channel.OpenChannel": {
+      "input": [
+        {
+          "name": "kind"
+        },
+        {
+          "name": "peer"
+        },
+        {
+          "name": "peer_kind"
+        },
+        {
+          "name": "ordered"
+        },
+        {
+          "name": "may_lose"
+        },
+        {
+          "name": "owner"
+        },
+        {
+          "name": "delegation_id"
+        },
+        {
+          "name": "audience"
+        }
+      ],
+      "naming": {
+        "display": "Open a channel"
+      }
+    },
+    "agentic.channel.OpenSharedChannel": {
+      "input": [
+        {
+          "name": "kind"
+        },
+        {
+          "name": "distribution"
+        },
+        {
+          "name": "ordered"
+        },
+        {
+          "name": "may_lose"
+        },
+        {
+          "name": "entry_limits"
+        },
+        {
+          "name": "audience"
+        }
+      ],
+      "naming": {
+        "display": "Open a shared channel"
+      }
+    },
+    "agentic.channel.PostMessage": {
+      "input": [
+        {
+          "name": "channel_id"
+        },
+        {
+          "name": "from"
+        },
+        {
+          "name": "act"
+        },
+        {
+          "name": "entry"
+        },
+        {
+          "name": "content"
+        },
+        {
+          "name": "in_reply_to"
+        },
+        {
+          "name": "delegation_id"
+        },
+        {
+          "name": "proof"
+        }
+      ],
+      "naming": {
+        "display": "Post to a shared channel"
+      }
+    },
+    "agentic.channel.SendMessage": {
+      "input": [
+        {
+          "name": "channel_id"
+        },
+        {
+          "name": "from"
+        },
+        {
+          "name": "to"
+        },
+        {
+          "name": "act"
+        },
+        {
+          "name": "content"
+        },
+        {
+          "name": "in_reply_to"
+        },
+        {
+          "name": "delegation_id"
+        },
+        {
+          "name": "proof"
+        },
+        {
+          "name": "sent_by_call"
+        }
+      ],
+      "naming": {
+        "display": "Send a message"
+      }
+    },
+    "agentic.channel.Subscribe": {
+      "input": [
+        {
+          "name": "channel_id"
+        },
+        {
+          "name": "party"
+        },
+        {
+          "name": "filter_act"
+        },
+        {
+          "name": "filter_entry"
+        },
+        {
+          "name": "filter_scope"
+        },
+        {
+          "name": "relays_for"
+        }
+      ],
+      "naming": {
+        "display": "Subscribe to a shared channel"
+      }
+    },
+    "agentic.channel.TakePost": {
+      "input": [
+        {
+          "name": "post_id"
+        },
+        {
+          "name": "reader"
+        }
+      ],
+      "naming": {
+        "display": "Take a post from a queue"
+      }
+    },
+    "agentic.delegation.ActUnderDelegation": {
+      "input": [
+        {
+          "name": "delegation_id"
+        },
+        {
+          "name": "principal_id"
+        },
+        {
+          "name": "action"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Act under a delegation"
+      }
+    },
+    "agentic.delegation.DelegateOnward": {
+      "input": [
+        {
+          "name": "delegation_id"
+        },
+        {
+          "name": "parent_delegation_id"
+        },
+        {
+          "name": "delegator"
+        },
+        {
+          "name": "delegate"
+        },
+        {
+          "name": "action"
+        },
+        {
+          "name": "expires_at"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Delegate onward from a link"
+      }
+    },
+    "agentic.delegation.ExpireDelegation": {
+      "input": [
+        {
+          "name": "delegation_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Record that a delegation expired"
+      }
+    },
+    "agentic.delegation.GrantDelegation": {
+      "input": [
+        {
+          "name": "delegation_id"
+        },
+        {
+          "name": "delegator"
+        },
+        {
+          "name": "delegate"
+        },
+        {
+          "name": "action"
+        },
+        {
+          "name": "expires_at"
+        },
+        {
+          "name": "excludes"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Grant a delegation from a human"
+      }
+    },
+    "agentic.delegation.RevokeDelegation": {
+      "input": [
+        {
+          "name": "delegation_id"
+        },
+        {
+          "name": "principal_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Revoke a delegation"
+      }
+    },
+    "agentic.deployment.CancelRun": {
+      "input": [
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "reason"
+        }
+      ],
+      "naming": {
+        "display": "Cancel a run"
+      }
+    },
+    "agentic.deployment.DrainInstallation": {
+      "input": [
+        {
+          "name": "installation_id"
+        }
+      ],
+      "naming": {
+        "display": "Drain an installation"
+      }
+    },
+    "agentic.deployment.FailRun": {
+      "input": [
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "failure"
+        }
+      ],
+      "naming": {
+        "display": "Report a run failed"
+      }
+    },
+    "agentic.deployment.FinishRun": {
+      "input": [
+        {
+          "name": "run_id"
+        }
+      ],
+      "naming": {
+        "display": "Report a run done"
+      }
+    },
+    "agentic.deployment.InstallRevision": {
+      "input": [
+        {
+          "name": "runtime_id"
+        },
+        {
+          "name": "revision_id"
+        },
+        {
+          "name": "binding"
+        },
+        {
+          "name": "replaces"
+        }
+      ],
+      "naming": {
+        "display": "Install an architecture revision on a runtime"
+      }
+    },
+    "agentic.deployment.MapUnit": {
+      "input": [
+        {
+          "name": "unit_id"
+        },
+        {
+          "name": "target_object"
+        },
+        {
+          "name": "workload_id"
+        }
+      ],
+      "naming": {
+        "display": "Map a unit"
+      }
+    },
+    "agentic.deployment.ObserveUnit": {
+      "input": [
+        {
+          "name": "unit_id"
+        },
+        {
+          "name": "ready"
+        },
+        {
+          "name": "last_failure"
+        }
+      ],
+      "naming": {
+        "display": "Observe a unit"
+      }
+    },
+    "agentic.deployment.QueueRun": {
+      "input": [
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "installation_id"
+        },
+        {
+          "name": "subject_key"
+        },
+        {
+          "name": "task_id"
+        }
+      ],
+      "naming": {
+        "display": "Queue a run of an installation"
+      }
+    },
+    "agentic.deployment.RecordBundle": {
+      "input": [
+        {
+          "name": "deployment_id"
+        },
+        {
+          "name": "bundle_digest"
+        }
+      ],
+      "naming": {
+        "display": "Record the bundle"
+      }
+    },
+    "agentic.deployment.RecordTranslation": {
+      "input": [
+        {
+          "name": "deployment_id"
+        },
+        {
+          "name": "translation_digest"
+        }
+      ],
+      "naming": {
+        "display": "Record the translation"
+      }
+    },
+    "agentic.deployment.RecordUnit": {
+      "input": [
+        {
+          "name": "deployment_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "parts"
+        },
+        {
+          "name": "replicas"
+        }
+      ],
+      "naming": {
+        "display": "Record a unit"
+      }
+    },
+    "agentic.deployment.RefuseCoverage": {
+      "input": [
+        {
+          "name": "deployment_id"
+        },
+        {
+          "name": "findings"
+        }
+      ],
+      "naming": {
+        "display": "Refuse on coverage"
+      }
+    },
+    "agentic.deployment.RefuseOnTarget": {
+      "input": [
+        {
+          "name": "deployment_id"
+        },
+        {
+          "name": "findings"
+        }
+      ],
+      "naming": {
+        "display": "Refuse on the target"
+      }
+    },
+    "agentic.deployment.ReportDeploymentDegraded": {
+      "input": [
+        {
+          "name": "deployment_id"
+        },
+        {
+          "name": "reason"
+        }
+      ],
+      "naming": {
+        "display": "Report the deployment degraded"
+      }
+    },
+    "agentic.deployment.ReportDeploymentFailed": {
+      "input": [
+        {
+          "name": "deployment_id"
+        },
+        {
+          "name": "reason"
+        }
+      ],
+      "naming": {
+        "display": "Report the deployment failed"
+      }
+    },
+    "agentic.deployment.ReportDeploymentRunning": {
+      "input": [
+        {
+          "name": "deployment_id"
+        }
+      ],
+      "naming": {
+        "display": "Report the deployment running"
+      }
+    },
+    "agentic.deployment.ReportDrained": {
+      "input": [
+        {
+          "name": "installation_id"
+        }
+      ],
+      "naming": {
+        "display": "Report an installation drained"
+      }
+    },
+    "agentic.deployment.RequestDeployment": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "revision_id"
+        },
+        {
+          "name": "in_process"
+        },
+        {
+          "name": "target"
+        },
+        {
+          "name": "scope"
+        },
+        {
+          "name": "contract_digest"
+        },
+        {
+          "name": "binding_digest"
+        },
+        {
+          "name": "packing_digest"
+        },
+        {
+          "name": "findings"
+        },
+        {
+          "name": "promoted_from"
+        }
+      ],
+      "naming": {
+        "display": "Request a deployment"
+      }
+    },
+    "agentic.deployment.ResumeRun": {
+      "input": [
+        {
+          "name": "run_id"
+        }
+      ],
+      "naming": {
+        "display": "Resume a waiting run"
+      }
+    },
+    "agentic.deployment.RollBack": {
+      "input": [
+        {
+          "name": "installation_id"
+        }
+      ],
+      "naming": {
+        "display": "Roll an installation back to the one it replaced"
+      }
+    },
+    "agentic.deployment.StartRealizing": {
+      "input": [
+        {
+          "name": "deployment_id"
+        }
+      ],
+      "naming": {
+        "display": "Start realizing"
+      }
+    },
+    "agentic.deployment.StartRun": {
+      "input": [
+        {
+          "name": "run_id"
+        }
+      ],
+      "naming": {
+        "display": "Start a queued run"
+      }
+    },
+    "agentic.deployment.StopDeployment": {
+      "input": [
+        {
+          "name": "deployment_id"
+        }
+      ],
+      "naming": {
+        "display": "Stop a deployment"
+      }
+    },
+    "agentic.deployment.WaitRun": {
+      "input": [
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "reason"
+        }
+      ],
+      "naming": {
+        "display": "Record that a run waits"
+      }
+    },
+    "agentic.experiment.CompleteExperiment": {
+      "input": [
+        {
+          "name": "experiment_id"
+        }
+      ],
+      "naming": {
+        "display": "Complete an experiment"
+      }
+    },
+    "agentic.experiment.FailExperiment": {
+      "input": [
+        {
+          "name": "experiment_id"
+        },
+        {
+          "name": "reason"
+        }
+      ],
+      "naming": {
+        "display": "Fail an experiment"
+      }
+    },
+    "agentic.experiment.PlanExperiment": {
+      "input": [
+        {
+          "name": "architecture_id"
+        },
+        {
+          "name": "work_mode_id"
+        },
+        {
+          "name": "profile_id"
+        },
+        {
+          "name": "load"
+        },
+        {
+          "name": "faults"
+        },
+        {
+          "name": "mutations"
+        },
+        {
+          "name": "mode"
+        },
+        {
+          "name": "weights"
+        },
+        {
+          "name": "gates"
+        }
+      ],
+      "naming": {
+        "display": "Plan an experiment"
+      }
+    },
+    "agentic.experiment.RecordVariant": {
+      "input": [
+        {
+          "name": "experiment_id"
+        },
+        {
+          "name": "values"
+        },
+        {
+          "name": "measurements"
+        },
+        {
+          "name": "fitness"
+        },
+        {
+          "name": "feasible"
+        }
+      ],
+      "naming": {
+        "display": "Record a variant"
+      }
+    },
+    "agentic.experiment.StartExperiment": {
+      "input": [
+        {
+          "name": "experiment_id"
+        }
+      ],
+      "naming": {
+        "display": "Start an experiment"
+      }
+    },
+    "agentic.gateway.AdmitCall": {
+      "input": [
+        {
+          "name": "inference_id"
+        },
+        {
+          "name": "gateway_id"
+        },
+        {
+          "name": "caller"
+        },
+        {
+          "name": "route_id"
+        },
+        {
+          "name": "upstream_id"
+        },
+        {
+          "name": "budget_left"
+        },
+        {
+          "name": "request"
+        }
+      ],
+      "naming": {
+        "display": "Admit a call"
+      }
+    },
+    "agentic.gateway.AttachUpstream": {
+      "input": [
+        {
+          "name": "upstream_id"
+        },
+        {
+          "name": "gateway_id"
+        },
+        {
+          "name": "endpoint_id"
+        }
+      ],
+      "naming": {
+        "display": "Attach an upstream"
+      }
+    },
+    "agentic.gateway.CompleteCall": {
+      "input": [
+        {
+          "name": "inference_id"
+        },
+        {
+          "name": "outcome"
+        },
+        {
+          "name": "usage"
+        }
+      ],
+      "naming": {
+        "display": "Complete a call"
+      }
+    },
+    "agentic.gateway.DetachUpstream": {
+      "input": [
+        {
+          "name": "upstream_id"
+        }
+      ],
+      "naming": {
+        "display": "Detach an upstream"
+      }
+    },
+    "agentic.gateway.DrainGateway": {
+      "input": [
+        {
+          "name": "gateway_id"
+        }
+      ],
+      "naming": {
+        "display": "Drain a gateway"
+      }
+    },
+    "agentic.gateway.OpenGateway": {
+      "input": [
+        {
+          "name": "gateway_id"
+        },
+        {
+          "name": "name"
+        }
+      ],
+      "naming": {
+        "display": "Open a gateway"
+      }
+    },
+    "agentic.gateway.RestoreUpstream": {
+      "input": [
+        {
+          "name": "upstream_id"
+        }
+      ],
+      "naming": {
+        "display": "Restore an upstream"
+      }
+    },
+    "agentic.gateway.SaturateUpstream": {
+      "input": [
+        {
+          "name": "upstream_id"
+        }
+      ],
+      "naming": {
+        "display": "Mark an upstream saturated"
+      }
+    },
+    "agentic.gateway.StopGateway": {
+      "input": [
+        {
+          "name": "gateway_id"
+        }
+      ],
+      "naming": {
+        "display": "Stop a gateway"
+      }
+    },
+    "agentic.harness.CompactContext": {
+      "input": [
+        {
+          "name": "compaction_id"
+        },
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "tokens_before"
+        },
+        {
+          "name": "tokens_after"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Compact the context"
+      }
+    },
+    "agentic.harness.CompleteToolCall": {
+      "input": [
+        {
+          "name": "tool_call_id"
+        },
+        {
+          "name": "ok"
+        },
+        {
+          "name": "output"
+        }
+      ],
+      "naming": {
+        "display": "Complete a tool call"
+      }
+    },
+    "agentic.harness.DecideToolCall": {
+      "input": [
+        {
+          "name": "tool_call_id"
+        },
+        {
+          "name": "verdict"
+        },
+        {
+          "name": "decider"
+        },
+        {
+          "name": "attribution"
+        }
+      ],
+      "naming": {
+        "display": "Decide a tool call"
+      }
+    },
+    "agentic.harness.EndSession": {
+      "input": [
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "End a session"
+      }
+    },
+    "agentic.harness.OpenSession": {
+      "input": [
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "harness_id"
+        },
+        {
+          "name": "agent_revision_id"
+        },
+        {
+          "name": "principal_id"
+        },
+        {
+          "name": "permission_mode"
+        },
+        {
+          "name": "context_window"
+        },
+        {
+          "name": "max_depth"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Open a session"
+      }
+    },
+    "agentic.harness.RecordRestart": {
+      "input": [
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "replaces"
+        }
+      ],
+      "naming": {
+        "display": "Record that a session restarts an ended one"
+      }
+    },
+    "agentic.harness.RecordTurn": {
+      "input": [
+        {
+          "name": "turn_id"
+        },
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "inference_id"
+        },
+        {
+          "name": "usage"
+        },
+        {
+          "name": "context_tokens"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Record a turn"
+      }
+    },
+    "agentic.harness.RecordUnreadableResult": {
+      "input": [
+        {
+          "name": "tool_call_id"
+        },
+        {
+          "name": "read_failure"
+        }
+      ],
+      "naming": {
+        "display": "Record that a tool's result could not be read"
+      }
+    },
+    "agentic.harness.RegisterHarness": {
+      "input": [
+        {
+          "name": "harness_id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "context_window"
+        },
+        {
+          "name": "max_depth"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Register a harness"
+      }
+    },
+    "agentic.harness.RegisterPermissionMode": {
+      "input": [
+        {
+          "name": "permission_mode_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "summary"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Register a permission mode"
+      }
+    },
+    "agentic.harness.RequestToolCall": {
+      "input": [
+        {
+          "name": "tool_call_id"
+        },
+        {
+          "name": "tool_id"
+        },
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "input"
+        }
+      ],
+      "naming": {
+        "display": "Request a tool call"
+      }
+    },
+    "agentic.harness.RetireHarness": {
+      "input": [
+        {
+          "name": "harness_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Retire a harness"
+      }
+    },
+    "agentic.harness.RetirePermissionMode": {
+      "input": [
+        {
+          "name": "permission_mode_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Retire a permission mode"
+      }
+    },
+    "agentic.harness.SpawnSubAgent": {
+      "input": [
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "parent_session_id"
+        },
+        {
+          "name": "agent_revision_id"
+        },
+        {
+          "name": "depth"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "requested_route"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Spawn a sub-agent session"
+      }
+    },
+    "agentic.knowledge.PublishKnowledge": {
+      "input": [
+        {
+          "name": "knowledge_id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "scope"
+        },
+        {
+          "name": "repository"
+        },
+        {
+          "name": "content"
+        }
+      ],
+      "naming": {
+        "display": "Publish knowledge"
+      }
+    },
+    "agentic.knowledge.ReviseKnowledge": {
+      "input": [
+        {
+          "name": "knowledge_id"
+        },
+        {
+          "name": "content"
+        }
+      ],
+      "naming": {
+        "display": "Revise knowledge"
+      }
+    },
+    "agentic.knowledge.WithdrawKnowledge": {
+      "input": [
+        {
+          "name": "knowledge_id"
+        }
+      ],
+      "naming": {
+        "display": "Withdraw knowledge"
+      }
+    },
+    "agentic.kpi.CreateWorkMode": {
+      "input": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "kind"
+        }
+      ],
+      "naming": {
+        "display": "Create a work mode"
+      }
+    },
+    "agentic.kpi.DefineKpi": {
+      "input": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "unit"
+        },
+        {
+          "name": "block"
+        },
+        {
+          "name": "reads"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "percentile"
+        },
+        {
+          "name": "gate"
+        }
+      ],
+      "naming": {
+        "display": "Define a KPI"
+      }
+    },
+    "agentic.kpi.RecordMeasurement": {
+      "input": [
+        {
+          "name": "kpi_id"
+        },
+        {
+          "name": "revision_id"
+        },
+        {
+          "name": "window"
+        },
+        {
+          "name": "value"
+        },
+        {
+          "name": "source"
+        }
+      ],
+      "naming": {
+        "display": "Record a measurement"
+      }
+    },
+    "agentic.kpi.RetireKpi": {
+      "input": [
+        {
+          "name": "kpi_id"
+        }
+      ],
+      "naming": {
+        "display": "Retire a KPI"
+      }
+    },
+    "agentic.kpi.SetDirection": {
+      "input": [
+        {
+          "name": "work_mode_id"
+        },
+        {
+          "name": "kpi_id"
+        },
+        {
+          "name": "direction"
+        }
+      ],
+      "naming": {
+        "display": "Give a KPI a direction under a work mode"
+      }
+    },
+    "agentic.model.CloseEndpoint": {
+      "input": [
+        {
+          "name": "endpoint_id"
+        }
+      ],
+      "naming": {
+        "display": "Close an endpoint"
+      }
+    },
+    "agentic.model.DeclareModel": {
+      "input": [
+        {
+          "name": "model_id"
+        },
+        {
+          "name": "provider_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "capabilities"
+        },
+        {
+          "name": "context_window"
+        },
+        {
+          "name": "price"
+        }
+      ],
+      "naming": {
+        "display": "Declare a model"
+      }
+    },
+    "agentic.model.DefineRoute": {
+      "input": [
+        {
+          "name": "route_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "endpoint_id"
+        },
+        {
+          "name": "model_id"
+        }
+      ],
+      "naming": {
+        "display": "Define a route"
+      }
+    },
+    "agentic.model.FinishInference": {
+      "input": [
+        {
+          "name": "inference_id"
+        },
+        {
+          "name": "outcome"
+        },
+        {
+          "name": "usage"
+        },
+        {
+          "name": "latency"
+        }
+      ],
+      "naming": {
+        "display": "Finish an inference"
+      }
+    },
+    "agentic.model.OpenEndpoint": {
+      "input": [
+        {
+          "name": "endpoint_id"
+        },
+        {
+          "name": "model_id"
+        },
+        {
+          "name": "address"
+        },
+        {
+          "name": "wire"
+        },
+        {
+          "name": "hosting"
+        },
+        {
+          "name": "start_wait_seconds"
+        }
+      ],
+      "naming": {
+        "display": "Open an endpoint"
+      }
+    },
+    "agentic.model.RegisterProvider": {
+      "input": [
+        {
+          "name": "provider_id"
+        },
+        {
+          "name": "name"
+        }
+      ],
+      "naming": {
+        "display": "Register a provider"
+      }
+    },
+    "agentic.model.RetireModel": {
+      "input": [
+        {
+          "name": "model_id"
+        }
+      ],
+      "naming": {
+        "display": "Retire a model"
+      }
+    },
+    "agentic.model.RetireRoute": {
+      "input": [
+        {
+          "name": "route_id"
+        }
+      ],
+      "naming": {
+        "display": "Retire a route"
+      }
+    },
+    "agentic.model.StartInference": {
+      "input": [
+        {
+          "name": "inference_id"
+        },
+        {
+          "name": "route_id"
+        },
+        {
+          "name": "request"
+        }
+      ],
+      "naming": {
+        "display": "Start an inference"
+      }
+    },
+    "agentic.principal.RegisterPrincipal": {
+      "input": [
+        {
+          "name": "principal_id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Register a principal"
+      }
+    },
+    "agentic.principal.RetirePrincipal": {
+      "input": [
+        {
+          "name": "principal_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Retire a principal"
+      }
+    },
+    "agentic.process.PublishProcess": {
+      "input": [
+        {
+          "name": "process_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "version"
+        },
+        {
+          "name": "source_digest"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Publish a process"
+      }
+    },
+    "agentic.process.WithdrawProcess": {
+      "input": [
+        {
+          "name": "process_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Withdraw a process"
+      }
+    },
+    "agentic.question.Answer": {
+      "input": [
+        {
+          "name": "question_id"
+        },
+        {
+          "name": "option"
+        },
+        {
+          "name": "delegation_id"
+        }
+      ],
+      "naming": {
+        "display": "Answer a question"
+      }
+    },
+    "agentic.question.Ask": {
+      "input": [
+        {
+          "name": "addressee"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "text"
+        },
+        {
+          "name": "options"
+        },
+        {
+          "name": "default_option"
+        },
+        {
+          "name": "deadline"
+        },
+        {
+          "name": "topic"
+        },
+        {
+          "name": "run_id"
+        }
+      ],
+      "naming": {
+        "display": "Ask a question"
+      }
+    },
+    "agentic.question.RecordUnreadableAnswer": {
+      "input": [
+        {
+          "name": "question_id"
+        },
+        {
+          "name": "read_failure"
+        },
+        {
+          "name": "delegation_id"
+        }
+      ],
+      "naming": {
+        "display": "Record that an answer could not be read"
+      }
+    },
+    "agentic.question.TakeDefault": {
+      "input": [
+        {
+          "name": "question_id"
+        }
+      ],
+      "naming": {
+        "display": "Take the default"
+      }
+    },
+    "agentic.question.Withdraw": {
+      "input": [
+        {
+          "name": "question_id"
+        }
+      ],
+      "naming": {
+        "display": "Withdraw a question"
+      }
+    },
+    "agentic.resource.CreatePool": {
+      "input": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "capacity"
+        }
+      ],
+      "naming": {
+        "display": "Create a pool"
+      }
+    },
+    "agentic.resource.ExpireClaim": {
+      "input": [
+        {
+          "name": "pool_id"
+        },
+        {
+          "name": "claim_id"
+        }
+      ],
+      "naming": {
+        "display": "Expire a claim"
+      }
+    },
+    "agentic.resource.GrantClaim": {
+      "input": [
+        {
+          "name": "pool_id"
+        },
+        {
+          "name": "claim_id"
+        },
+        {
+          "name": "held_until"
+        }
+      ],
+      "naming": {
+        "display": "Grant a claim"
+      }
+    },
+    "agentic.resource.KillClaim": {
+      "input": [
+        {
+          "name": "pool_id"
+        },
+        {
+          "name": "claim_id"
+        }
+      ],
+      "naming": {
+        "display": "Kill a claim"
+      }
+    },
+    "agentic.resource.ReleaseClaim": {
+      "input": [
+        {
+          "name": "pool_id"
+        },
+        {
+          "name": "claim_id"
+        },
+        {
+          "name": "holder"
+        }
+      ],
+      "naming": {
+        "display": "Release a claim"
+      }
+    },
+    "agentic.resource.RequestClaim": {
+      "input": [
+        {
+          "name": "pool_id"
+        },
+        {
+          "name": "time_limit_seconds"
+        }
+      ],
+      "naming": {
+        "display": "Request a claim"
+      }
+    },
+    "agentic.resource.WithdrawClaim": {
+      "input": [
+        {
+          "name": "claim_id"
+        },
+        {
+          "name": "holder"
+        }
+      ],
+      "naming": {
+        "display": "Withdraw a queued claim"
+      }
+    },
+    "agentic.runtime.DefineWorkload": {
+      "input": [
+        {
+          "name": "runtime_id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "package"
+        },
+        {
+          "name": "shape"
+        },
+        {
+          "name": "sandbox_id"
+        },
+        {
+          "name": "endpoint_id"
+        },
+        {
+          "name": "start_cost"
+        }
+      ],
+      "naming": {
+        "display": "Define a workload"
+      }
+    },
+    "agentic.runtime.RegisterRuntime": {
+      "input": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "kinds"
+        },
+        {
+          "name": "min_isolation"
+        }
+      ],
+      "naming": {
+        "display": "Register a runtime"
+      }
+    },
+    "agentic.runtime.ReportExited": {
+      "input": [
+        {
+          "name": "instance_id"
+        },
+        {
+          "name": "exit_code"
+        }
+      ],
+      "naming": {
+        "display": "Report an instance exited"
+      }
+    },
+    "agentic.runtime.ReportFailed": {
+      "input": [
+        {
+          "name": "instance_id"
+        },
+        {
+          "name": "reason"
+        }
+      ],
+      "naming": {
+        "display": "Report an instance failed"
+      }
+    },
+    "agentic.runtime.ReportRunning": {
+      "input": [
+        {
+          "name": "instance_id"
+        }
+      ],
+      "naming": {
+        "display": "Report an instance running"
+      }
+    },
+    "agentic.runtime.StartInstance": {
+      "input": [
+        {
+          "name": "workload_id"
+        },
+        {
+          "name": "budget_id"
+        }
+      ],
+      "naming": {
+        "display": "Start an instance"
+      }
+    },
+    "agentic.runtime.StopInstance": {
+      "input": [
+        {
+          "name": "instance_id"
+        }
+      ],
+      "naming": {
+        "display": "Stop an instance"
+      }
+    },
+    "agentic.sandbox.CheckEgress": {
+      "input": [
+        {
+          "name": "sandbox_id"
+        },
+        {
+          "name": "host"
+        },
+        {
+          "name": "port"
+        }
+      ],
+      "naming": {
+        "display": "Check an egress"
+      }
+    },
+    "agentic.sandbox.CheckSecretRead": {
+      "input": [
+        {
+          "name": "sandbox_id"
+        },
+        {
+          "name": "name"
+        }
+      ],
+      "naming": {
+        "display": "Check a secret read"
+      }
+    },
+    "agentic.sandbox.CheckWrite": {
+      "input": [
+        {
+          "name": "sandbox_id"
+        },
+        {
+          "name": "path"
+        }
+      ],
+      "naming": {
+        "display": "Check a write"
+      }
+    },
+    "agentic.sandbox.DefineSandbox": {
+      "input": [
+        {
+          "name": "isolation"
+        },
+        {
+          "name": "writable_paths"
+        },
+        {
+          "name": "egress"
+        },
+        {
+          "name": "secret_grants"
+        }
+      ],
+      "naming": {
+        "display": "Define a sandbox"
+      }
+    },
+    "agentic.sandbox.RetireSandbox": {
+      "input": [
+        {
+          "name": "sandbox_id"
+        }
+      ],
+      "naming": {
+        "display": "Retire a sandbox"
+      }
+    },
+    "agentic.store.AnswerQuery": {
+      "input": [
+        {
+          "name": "query_id"
+        },
+        {
+          "name": "answer"
+        },
+        {
+          "name": "count"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Answer a query"
+      }
+    },
+    "agentic.store.ConfirmPut": {
+      "input": [
+        {
+          "name": "record_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Confirm a put"
+      }
+    },
+    "agentic.store.CreateStore": {
+      "input": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "scope"
+        },
+        {
+          "name": "retention"
+        },
+        {
+          "name": "retention_seconds"
+        },
+        {
+          "name": "record_type"
+        }
+      ],
+      "naming": {
+        "display": "Create a store"
+      }
+    },
+    "agentic.store.DeleteRecord": {
+      "input": [
+        {
+          "name": "record_id"
+        },
+        {
+          "name": "deleted_by"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Delete a record"
+      }
+    },
+    "agentic.store.ExpireRecord": {
+      "input": [
+        {
+          "name": "record_id"
+        }
+      ],
+      "naming": {
+        "display": "Expire a record"
+      }
+    },
+    "agentic.store.FailGet": {
+      "input": [
+        {
+          "name": "read_id"
+        },
+        {
+          "name": "reason"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Fail a get"
+      }
+    },
+    "agentic.store.FailPut": {
+      "input": [
+        {
+          "name": "record_id"
+        },
+        {
+          "name": "reason"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Fail a put"
+      }
+    },
+    "agentic.store.FailQuery": {
+      "input": [
+        {
+          "name": "query_id"
+        },
+        {
+          "name": "reason"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Fail a query"
+      }
+    },
+    "agentic.store.GetRecord": {
+      "input": [
+        {
+          "name": "store_id"
+        },
+        {
+          "name": "key"
+        },
+        {
+          "name": "read_by"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Get a record"
+      }
+    },
+    "agentic.store.PutRecord": {
+      "input": [
+        {
+          "name": "store_id"
+        },
+        {
+          "name": "key"
+        },
+        {
+          "name": "content"
+        },
+        {
+          "name": "recorded_by"
+        },
+        {
+          "name": "derived_from"
+        },
+        {
+          "name": "expires_at"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Put a record"
+      }
+    },
+    "agentic.store.QueryStore": {
+      "input": [
+        {
+          "name": "store_id"
+        },
+        {
+          "name": "form"
+        },
+        {
+          "name": "question"
+        },
+        {
+          "name": "limit"
+        },
+        {
+          "name": "read_by"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Query a store"
+      }
+    },
+    "agentic.store.RetireStore": {
+      "input": [
+        {
+          "name": "store_id"
+        }
+      ],
+      "naming": {
+        "display": "Retire a store"
+      }
+    },
+    "agentic.store.ReturnRecord": {
+      "input": [
+        {
+          "name": "read_id"
+        },
+        {
+          "name": "record_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Return a record"
+      }
+    },
+    "agentic.store.ReviseRecord": {
+      "input": [
+        {
+          "name": "supersedes"
+        },
+        {
+          "name": "revision"
+        },
+        {
+          "name": "content"
+        },
+        {
+          "name": "recorded_by"
+        },
+        {
+          "name": "derived_from"
+        },
+        {
+          "name": "expires_at"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Revise a record"
+      }
+    },
+    "agentic.tool.PublishTool": {
+      "input": [
+        {
+          "name": "tool_id"
+        },
+        {
+          "name": "tool_provider_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "input_contract"
+        },
+        {
+          "name": "output_contract"
+        },
+        {
+          "name": "category"
+        },
+        {
+          "name": "leaves_sandbox"
+        }
+      ],
+      "naming": {
+        "display": "Publish a tool"
+      }
+    },
+    "agentic.tool.RegisterToolProvider": {
+      "input": [
+        {
+          "name": "tool_provider_id"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "kind"
+        }
+      ],
+      "naming": {
+        "display": "Register a tool provider"
+      }
+    },
+    "agentic.tool.WithdrawTool": {
+      "input": [
+        {
+          "name": "tool_id"
+        }
+      ],
+      "naming": {
+        "display": "Withdraw a tool"
+      }
+    },
+    "agentic.trigger.AdvanceSchedule": {
+      "input": [
+        {
+          "name": "schedule_id"
+        },
+        {
+          "name": "next_fire_at"
+        }
+      ],
+      "naming": {
+        "display": "Move a schedule to its next fire time"
+      }
+    },
+    "agentic.trigger.CreateSchedule": {
+      "input": [
+        {
+          "name": "expression"
+        },
+        {
+          "name": "timezone"
+        },
+        {
+          "name": "next_fire_at"
+        }
+      ],
+      "naming": {
+        "display": "Create a schedule"
+      }
+    },
+    "agentic.trigger.CreateTrigger": {
+      "input": [
+        {
+          "name": "kind"
+        },
+        {
+          "name": "subscription_id"
+        },
+        {
+          "name": "schedule_id"
+        },
+        {
+          "name": "event_name"
+        },
+        {
+          "name": "agent_revision_id"
+        },
+        {
+          "name": "task_template"
+        },
+        {
+          "name": "policy"
+        },
+        {
+          "name": "max_parallel"
+        },
+        {
+          "name": "condition"
+        },
+        {
+          "name": "process_id"
+        },
+        {
+          "name": "intake"
+        },
+        {
+          "name": "start_mode"
+        },
+        {
+          "name": "subject_policy"
+        }
+      ],
+      "naming": {
+        "display": "Create a trigger"
+      }
+    },
+    "agentic.trigger.DisableSchedule": {
+      "input": [
+        {
+          "name": "schedule_id"
+        }
+      ],
+      "naming": {
+        "display": "Disable a schedule"
+      }
+    },
+    "agentic.trigger.DisableTrigger": {
+      "input": [
+        {
+          "name": "trigger_id"
+        }
+      ],
+      "naming": {
+        "display": "Disable a trigger"
+      }
+    },
+    "agentic.trigger.EnableSchedule": {
+      "input": [
+        {
+          "name": "schedule_id"
+        }
+      ],
+      "naming": {
+        "display": "Enable a schedule"
+      }
+    },
+    "agentic.trigger.EnableTrigger": {
+      "input": [
+        {
+          "name": "trigger_id"
+        }
+      ],
+      "naming": {
+        "display": "Enable a trigger"
+      }
+    },
+    "agentic.trigger.FireTrigger": {
+      "input": [
+        {
+          "name": "firing_id"
+        },
+        {
+          "name": "trigger_id"
+        },
+        {
+          "name": "post_id"
+        },
+        {
+          "name": "tick"
+        },
+        {
+          "name": "subject_key"
+        }
+      ],
+      "naming": {
+        "display": "Fire a trigger"
+      }
+    },
+    "agentic.trigger.PassScheduleChecks": {
+      "input": [
+        {
+          "name": "schedule_id"
+        }
+      ],
+      "naming": {
+        "display": "Record that a schedule's checks passed"
+      }
+    },
+    "agentic.trigger.RecordEnd": {
+      "input": [
+        {
+          "name": "trigger_id"
+        },
+        {
+          "name": "firing_id"
+        }
+      ],
+      "naming": {
+        "display": "Record that a firing's run ended"
+      }
+    },
+    "agentic.trigger.RecordFailure": {
+      "input": [
+        {
+          "name": "firing_id"
+        },
+        {
+          "name": "failure"
+        }
+      ],
+      "naming": {
+        "display": "Record that a firing failed to start"
+      }
+    },
+    "agentic.trigger.RecordReplaced": {
+      "input": [
+        {
+          "name": "trigger_id"
+        },
+        {
+          "name": "firing_id"
+        }
+      ],
+      "naming": {
+        "display": "Record that a firing's run was replaced"
+      }
+    },
+    "agentic.trigger.RecordStart": {
+      "input": [
+        {
+          "name": "trigger_id"
+        },
+        {
+          "name": "firing_id"
+        },
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "harness_session_id"
+        }
+      ],
+      "naming": {
+        "display": "Record that a firing started"
+      }
+    },
+    "agentic.trigger.SkipFiring": {
+      "input": [
+        {
+          "name": "firing_id"
+        }
+      ],
+      "naming": {
+        "display": "Skip a waiting firing"
+      }
+    },
+    "agentic.work.AcceptDeliverable": {
+      "input": [
+        {
+          "name": "deliverable_id"
+        },
+        {
+          "name": "accepted_by"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Accept a deliverable"
+      }
+    },
+    "agentic.work.ActivateAssignment": {
+      "input": [
+        {
+          "name": "assignment_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Activate an offered assignment"
+      }
+    },
+    "agentic.work.CancelTask": {
+      "input": [
+        {
+          "name": "task_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Cancel a task"
+      }
+    },
+    "agentic.work.CompleteTask": {
+      "input": [
+        {
+          "name": "task_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Complete a task"
+      }
+    },
+    "agentic.work.CreateTask": {
+      "input": [
+        {
+          "name": "goal"
+        },
+        {
+          "name": "requested_by"
+        },
+        {
+          "name": "process_id"
+        },
+        {
+          "name": "parent_task_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Create a task"
+      }
+    },
+    "agentic.work.EndAssignment": {
+      "input": [
+        {
+          "name": "assignment_id"
+        },
+        {
+          "name": "outcome"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "End an assignment"
+      }
+    },
+    "agentic.work.EndRun": {
+      "input": [
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "outcome"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "End a run"
+      }
+    },
+    "agentic.work.OfferAssignment": {
+      "input": [
+        {
+          "name": "assignment_id"
+        },
+        {
+          "name": "task_id"
+        },
+        {
+          "name": "agent_revision_id"
+        },
+        {
+          "name": "on_behalf_of"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Offer an assignment of a task to an agent revision"
+      }
+    },
+    "agentic.work.RecordStep": {
+      "input": [
+        {
+          "name": "step_id"
+        },
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "action"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "result"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Record a step of a run"
+      }
+    },
+    "agentic.work.RejectDeliverable": {
+      "input": [
+        {
+          "name": "deliverable_id"
+        },
+        {
+          "name": "rejected_by"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Reject a deliverable"
+      }
+    },
+    "agentic.work.ResumeRun": {
+      "input": [
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Resume a run"
+      }
+    },
+    "agentic.work.StartRun": {
+      "input": [
+        {
+          "name": "assignment_id"
+        },
+        {
+          "name": "harness_session_id"
+        },
+        {
+          "name": "route_id"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Start a run"
+      }
+    },
+    "agentic.work.SubmitDeliverable": {
+      "input": [
+        {
+          "name": "assignment_id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "content"
+        },
+        {
+          "name": "artifact_id"
+        },
+        {
+          "name": "evidence"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Submit a deliverable"
+      }
+    },
+    "agentic.work.SuspendRun": {
+      "input": [
+        {
+          "name": "run_id"
+        },
+        {
+          "name": "reason"
+        },
+        {
+          "name": "at"
+        }
+      ],
+      "naming": {
+        "display": "Suspend a run"
+      }
+    },
+    "agentic.workspace.CreateWorkspace": {
+      "input": [
+        {
+          "name": "kind"
+        },
+        {
+          "name": "sharing"
+        },
+        {
+          "name": "base_revision"
+        }
+      ],
+      "naming": {
+        "display": "Create a workspace"
+      }
+    },
+    "agentic.workspace.ExpireLease": {
+      "input": [
+        {
+          "name": "lease_id"
+        }
+      ],
+      "naming": {
+        "display": "Expire a lease"
+      }
+    },
+    "agentic.workspace.GrantLease": {
+      "input": [
+        {
+          "name": "lease_id"
+        }
+      ],
+      "naming": {
+        "display": "Grant a lease"
+      }
+    },
+    "agentic.workspace.MergeProposal": {
+      "input": [
+        {
+          "name": "proposal_id"
+        },
+        {
+          "name": "merged_revision"
+        },
+        {
+          "name": "merged_under"
+        }
+      ],
+      "naming": {
+        "display": "Merge a proposal"
+      }
+    },
+    "agentic.workspace.Propose": {
+      "input": [
+        {
+          "name": "lease_id"
+        },
+        {
+          "name": "base_revision"
+        },
+        {
+          "name": "change"
+        },
+        {
+          "name": "handback"
+        },
+        {
+          "name": "head_revision"
+        }
+      ],
+      "naming": {
+        "display": "Propose a change"
+      }
+    },
+    "agentic.workspace.RecordWrite": {
+      "input": [
+        {
+          "name": "lease_id"
+        },
+        {
+          "name": "path"
+        }
+      ],
+      "naming": {
+        "display": "Record a write"
+      }
+    },
+    "agentic.workspace.RejectProposal": {
+      "input": [
+        {
+          "name": "proposal_id"
+        }
+      ],
+      "naming": {
+        "display": "Reject a proposal"
+      }
+    },
+    "agentic.workspace.ReleaseLease": {
+      "input": [
+        {
+          "name": "lease_id"
+        }
+      ],
+      "naming": {
+        "display": "Release a lease"
+      }
+    },
+    "agentic.workspace.RequestLease": {
+      "input": [
+        {
+          "name": "workspace_id"
+        },
+        {
+          "name": "expires_at"
+        }
+      ],
+      "naming": {
+        "display": "Request a lease"
+      }
+    },
+    "agentic.workspace.SupersedeProposal": {
+      "input": [
+        {
+          "name": "proposal_id"
+        },
+        {
+          "name": "superseded_by"
+        }
+      ],
+      "naming": {
+        "display": "Supersede a proposal"
+      }
+    }
+  },
+  "domains": {
+    "agentic.agent": {
+      "naming": {
+        "display": "Agent"
+      }
+    },
+    "agentic.architecture": {
+      "naming": {
+        "display": "Architecture"
+      }
+    },
+    "agentic.authority": {
+      "naming": {
+        "display": "Authority"
+      }
+    },
+    "agentic.channel": {
+      "naming": {
+        "display": "Channel"
+      }
+    },
+    "agentic.delegation": {
+      "naming": {
+        "display": "Delegation"
+      }
+    },
+    "agentic.deployment": {
+      "naming": {
+        "display": "Deployment"
+      }
+    },
+    "agentic.experiment": {
+      "naming": {
+        "display": "Experiment"
+      }
+    },
+    "agentic.gateway": {
+      "naming": {
+        "display": "Gateway"
+      }
+    },
+    "agentic.harness": {
+      "naming": {
+        "display": "Harness"
+      }
+    },
+    "agentic.knowledge": {
+      "naming": {
+        "display": "Knowledge"
+      }
+    },
+    "agentic.kpi": {
+      "naming": {
+        "display": "KPI"
+      }
+    },
+    "agentic.model": {
+      "naming": {
+        "display": "Model"
+      }
+    },
+    "agentic.principal": {
+      "naming": {
+        "display": "Principal"
+      }
+    },
+    "agentic.process": {
+      "naming": {
+        "display": "Process"
+      }
+    },
+    "agentic.question": {
+      "naming": {
+        "display": "Question"
+      }
+    },
+    "agentic.resource": {
+      "naming": {
+        "display": "Resource"
+      }
+    },
+    "agentic.runtime": {
+      "naming": {
+        "display": "Runtime"
+      }
+    },
+    "agentic.sandbox": {
+      "naming": {
+        "display": "Sandbox"
+      }
+    },
+    "agentic.shared": {
+      "naming": {
+        "display": "Shared"
+      }
+    },
+    "agentic.store": {
+      "naming": {
+        "display": "Store"
+      }
+    },
+    "agentic.tool": {
+      "naming": {
+        "display": "Tool"
+      }
+    },
+    "agentic.trigger": {
+      "naming": {
+        "display": "Trigger"
+      }
+    },
+    "agentic.work": {
+      "naming": {
+        "display": "Work"
+      }
+    },
+    "agentic.workspace": {
+      "naming": {
+        "display": "Workspace"
+      }
+    }
+  },
+  "entities": {
+    "agentic.agent.Agent": {},
+    "agentic.agent.AgentRevision": {},
+    "agentic.architecture.Architecture": {},
+    "agentic.architecture.ArchitectureRevision": {},
+    "agentic.architecture.Contract": {},
+    "agentic.architecture.Export": {},
+    "agentic.architecture.Ingress": {},
+    "agentic.architecture.Link": {},
+    "agentic.architecture.Part": {},
+    "agentic.architecture.Patch": {},
+    "agentic.architecture.PatchApplication": {},
+    "agentic.architecture.Placement": {},
+    "agentic.architecture.Port": {},
+    "agentic.authority.Budget": {},
+    "agentic.authority.Decision": {},
+    "agentic.authority.Grant": {},
+    "agentic.channel.Channel": {},
+    "agentic.channel.Message": {},
+    "agentic.channel.Post": {},
+    "agentic.channel.Subscription": {},
+    "agentic.delegation.Delegation": {},
+    "agentic.deployment.ArchitectureRun": {},
+    "agentic.deployment.Deployment": {},
+    "agentic.deployment.DeploymentUnit": {},
+    "agentic.deployment.Installation": {},
+    "agentic.experiment.Experiment": {},
+    "agentic.experiment.Variant": {},
+    "agentic.gateway.Call": {},
+    "agentic.gateway.Gateway": {},
+    "agentic.gateway.Upstream": {},
+    "agentic.harness.Compaction": {},
+    "agentic.harness.Harness": {},
+    "agentic.harness.HarnessSession": {},
+    "agentic.harness.PermissionMode": {},
+    "agentic.harness.ToolCall": {},
+    "agentic.harness.Turn": {},
+    "agentic.knowledge.KnowledgeItem": {},
+    "agentic.kpi.Kpi": {},
+    "agentic.kpi.Measurement": {},
+    "agentic.kpi.WorkMode": {},
+    "agentic.kpi.WorkModeDirection": {},
+    "agentic.model.Endpoint": {},
+    "agentic.model.Inference": {},
+    "agentic.model.Model": {},
+    "agentic.model.Provider": {},
+    "agentic.model.Route": {},
+    "agentic.principal.Principal": {},
+    "agentic.process.Process": {},
+    "agentic.question.Question": {},
+    "agentic.resource.Claim": {},
+    "agentic.resource.Pool": {},
+    "agentic.runtime.Instance": {},
+    "agentic.runtime.Runtime": {},
+    "agentic.runtime.Workload": {},
+    "agentic.sandbox.Sandbox": {},
+    "agentic.store.Query": {},
+    "agentic.store.Read": {},
+    "agentic.store.Record": {},
+    "agentic.store.Store": {},
+    "agentic.tool.Tool": {},
+    "agentic.tool.ToolProvider": {},
+    "agentic.trigger.Firing": {},
+    "agentic.trigger.Schedule": {},
+    "agentic.trigger.Trigger": {},
+    "agentic.work.Assignment": {},
+    "agentic.work.Deliverable": {},
+    "agentic.work.Run": {},
+    "agentic.work.Step": {},
+    "agentic.work.Task": {},
+    "agentic.workspace.Lease": {},
+    "agentic.workspace.Proposal": {},
+    "agentic.workspace.Workspace": {}
+  },
+  "system": "agentic",
+  "types": {
+    "agentic.agent.Agent.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.agent.AgentRevision.State": {
+      "body": {
+        "variants": [
+          "Published",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.agent.ModelUse": {
+      "body": {
+        "variants": [
+          "Primary",
+          "Fast",
+          "Review"
+        ]
+      }
+    },
+    "agentic.architecture.Architecture.State": {
+      "body": {
+        "variants": [
+          {
+            "name": "Draft",
+            "summary": "Takes parts, links, a border and commits."
+          },
+          {
+            "name": "Retired",
+            "summary": "Takes no edit and no commit; its revisions stay."
+          }
+        ]
+      }
+    },
+    "agentic.architecture.ArchitectureRevision.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.architecture.Carries": {
+      "body": {
+        "variants": [
+          "Prompt",
+          "Order",
+          "Question",
+          "Answer",
+          "ModelCall",
+          "ToolCall",
+          "Claim",
+          "Message",
+          "Trigger",
+          "Review",
+          "Handoff",
+          "Call",
+          "Context",
+          "Grant",
+          "Proposal",
+          "Spec",
+          "Checkout",
+          "Result",
+          "Report",
+          "Record",
+          "Read",
+          "Run"
+        ]
+      }
+    },
+    "agentic.architecture.Contract.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.architecture.Coordination": {
+      "body": {
+        "variants": [
+          "Orchestrator",
+          "Board",
+          "Mesh",
+          "None"
+        ]
+      }
+    },
+    "agentic.architecture.Export.State": {
+      "body": {
+        "variants": [
+          "Declared"
+        ]
+      }
+    },
+    "agentic.architecture.ExportProtocol": {
+      "body": {
+        "variants": [
+          "Http",
+          "EventStream",
+          "Cli",
+          "Tool",
+          "Agent",
+          "MetricsScrape",
+          "Ui"
+        ]
+      }
+    },
+    "agentic.architecture.Ingress.State": {
+      "body": {
+        "variants": [
+          "Declared"
+        ]
+      }
+    },
+    "agentic.architecture.Link.State": {
+      "body": {
+        "variants": [
+          "Declared"
+        ]
+      }
+    },
+    "agentic.architecture.OperationKind": {
+      "body": {
+        "variants": [
+          "Command",
+          "View",
+          "Feed",
+          "Metric"
+        ]
+      }
+    },
+    "agentic.architecture.Part.State": {
+      "body": {
+        "variants": [
+          "Declared"
+        ]
+      }
+    },
+    "agentic.architecture.PartKind": {
+      "body": {
+        "variants": [
+          "Principal",
+          "Agent",
+          "Harness",
+          "Model",
+          "Gateway",
+          "Tool",
+          "Knowledge",
+          "Channel",
+          "Workspace",
+          "Sandbox",
+          "Runtime",
+          "Pool",
+          "Trigger",
+          "Schedule",
+          "Authority",
+          "Work",
+          "Experiment",
+          "Kpi",
+          "Question",
+          "Process",
+          "Delegation",
+          "Architecture"
+        ]
+      }
+    },
+    "agentic.architecture.Patch.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.architecture.PatchApplication.State": {
+      "body": {
+        "variants": [
+          {
+            "name": "Applied",
+            "summary": "Every rule applied; committed as one revision unless a dry run."
+          },
+          {
+            "name": "Refused",
+            "summary": "One rule or the check refused; nothing changed."
+          },
+          {
+            "name": "Requested",
+            "summary": "Submitted; the applier has not reported."
+          }
+        ]
+      }
+    },
+    "agentic.architecture.PatchVerb": {
+      "body": {
+        "variants": [
+          "Set",
+          "Add",
+          "Remove",
+          "Connect",
+          "Replicate",
+          "Wrap",
+          "Prepend",
+          "Append",
+          "Mark",
+          "Unmark"
+        ]
+      }
+    },
+    "agentic.architecture.Placement.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.architecture.Port.State": {
+      "body": {
+        "variants": [
+          "Declared"
+        ]
+      }
+    },
+    "agentic.architecture.PortKind": {
+      "body": {
+        "variants": [
+          "Outbound",
+          "Clock",
+          "Principal"
+        ]
+      }
+    },
+    "agentic.authority.Budget.State": {
+      "body": {
+        "variants": [
+          "Exhausted",
+          "Open"
+        ]
+      }
+    },
+    "agentic.authority.BudgetOwnerKind": {
+      "body": {
+        "variants": [
+          "Principal",
+          "AgentRevision",
+          "Run",
+          "Route"
+        ]
+      }
+    },
+    "agentic.authority.BudgetResource": {
+      "body": {
+        "variants": [
+          "Tokens",
+          "Money",
+          "WallTime",
+          "ToolCalls"
+        ]
+      }
+    },
+    "agentic.authority.BudgetWindow": {
+      "body": {
+        "variants": [
+          "Total",
+          "Call",
+          "Day",
+          "Month"
+        ]
+      }
+    },
+    "agentic.authority.Decision.State": {
+      "body": {
+        "variants": [
+          "Approved",
+          "Recorded",
+          "Rejected"
+        ]
+      }
+    },
+    "agentic.authority.Grant.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Revoked"
+        ]
+      }
+    },
+    "agentic.authority.SubjectKind": {
+      "body": {
+        "variants": [
+          "Principal",
+          "AgentRevision"
+        ]
+      }
+    },
+    "agentic.channel.Act": {
+      "body": {
+        "variants": [
+          "Request",
+          "Inform"
+        ]
+      }
+    },
+    "agentic.channel.Audience": {
+      "body": {
+        "variants": [
+          "Internal",
+          "External",
+          "Private",
+          "Unknown"
+        ]
+      }
+    },
+    "agentic.channel.Channel.State": {
+      "body": {
+        "variants": [
+          "Closed",
+          "Open"
+        ]
+      }
+    },
+    "agentic.channel.ChannelKind": {
+      "body": {
+        "variants": [
+          "Prompt",
+          "Operator",
+          "AgentMessage",
+          "AgentToAgent",
+          "Chat",
+          "Notification",
+          "Control"
+        ]
+      }
+    },
+    "agentic.channel.Distribution": {
+      "body": {
+        "variants": [
+          "Direct",
+          "Topic",
+          "Queue",
+          "Board"
+        ]
+      }
+    },
+    "agentic.channel.EntryKind": {
+      "body": {
+        "variants": [
+          "Observed",
+          "Fact",
+          "Fail",
+          "Claim",
+          "PatchSummary"
+        ]
+      }
+    },
+    "agentic.channel.Message.State": {
+      "body": {
+        "variants": [
+          "Delivered",
+          "Lost",
+          "Read",
+          "Sent"
+        ]
+      }
+    },
+    "agentic.channel.PartyKind": {
+      "body": {
+        "variants": [
+          "Principal",
+          "Session"
+        ]
+      }
+    },
+    "agentic.channel.Post.State": {
+      "body": {
+        "variants": [
+          "Posted",
+          "Taken"
+        ]
+      }
+    },
+    "agentic.channel.Proof": {
+      "body": {
+        "variants": [
+          "None",
+          "ClientRecord",
+          "ProcessIdentity",
+          "Passkey"
+        ]
+      }
+    },
+    "agentic.channel.Subscription.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Ended"
+        ]
+      }
+    },
+    "agentic.delegation.DelegatedAction": {
+      "body": {
+        "variants": [
+          "AnswerQuestions",
+          "Approve",
+          "Merge",
+          "Publish"
+        ]
+      }
+    },
+    "agentic.delegation.Delegation.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Expired",
+          "Revoked"
+        ]
+      }
+    },
+    "agentic.deployment.ArchitectureRun.State": {
+      "body": {
+        "variants": [
+          {
+            "name": "Cancelled",
+            "summary": "Stopped before it ended, by a principal or by the runner."
+          },
+          {
+            "name": "Done",
+            "summary": "Reached the end of what it was asked."
+          },
+          {
+            "name": "Failed",
+            "summary": "Could not go on."
+          },
+          {
+            "name": "Queued",
+            "summary": "Taken by its installation, not started."
+          },
+          {
+            "name": "Running",
+            "summary": "Doing its work."
+          },
+          {
+            "name": "Waiting",
+            "summary": "Waiting on a decision, an answer, a resource or a request."
+          }
+        ]
+      }
+    },
+    "agentic.deployment.CancelReason": {
+      "body": {
+        "variants": [
+          "Requested",
+          "Replaced",
+          "RolledBack"
+        ]
+      }
+    },
+    "agentic.deployment.Deployment.State": {
+      "body": {
+        "variants": [
+          {
+            "name": "Bundled",
+            "summary": "Its bundle is written and handed to a translator."
+          },
+          {
+            "name": "Degraded",
+            "summary": "A unit runs below its desired replicas or keeps failing."
+          },
+          {
+            "name": "Failed",
+            "summary": "Its target gave up on it."
+          },
+          {
+            "name": "Realizing",
+            "summary": "Its target starts its units."
+          },
+          {
+            "name": "Refused",
+            "summary": "Its translator or its target refused it; nothing runs."
+          },
+          {
+            "name": "Requested",
+            "summary": "Admitted; its bundle is being written."
+          },
+          {
+            "name": "Running",
+            "summary": "Every unit runs as desired."
+          },
+          {
+            "name": "Stopped",
+            "summary": "Taken down by its deployer."
+          },
+          {
+            "name": "Translated",
+            "summary": "Its target's architecture is written, every object covered."
+          }
+        ]
+      }
+    },
+    "agentic.deployment.DeploymentUnit.State": {
+      "body": {
+        "variants": [
+          {
+            "name": "Declared",
+            "summary": "Named by the bundle."
+          },
+          {
+            "name": "Mapped",
+            "summary": "Mapped to an object of the target's architecture."
+          }
+        ]
+      }
+    },
+    "agentic.deployment.Installation.State": {
+      "body": {
+        "variants": [
+          {
+            "name": "Active",
+            "summary": "Takes new runs."
+          },
+          {
+            "name": "Drained",
+            "summary": "Draining ended with no run left that has not ended."
+          },
+          {
+            "name": "Draining",
+            "summary": "Takes no new run; the runs it holds go on until they end."
+          },
+          {
+            "name": "RolledBack",
+            "summary": "A rollback ended it; it takes no run, and its runs keep their revision."
+          }
+        ]
+      }
+    },
+    "agentic.deployment.Refusal": {
+      "body": {
+        "variants": [
+          "CoverageRefused",
+          "TargetRefused"
+        ]
+      }
+    },
+    "agentic.deployment.UnitKind": {
+      "body": {
+        "variants": [
+          "Core",
+          "Agent",
+          "Service",
+          "Job",
+          "Scheduled",
+          "Store",
+          "Model"
+        ]
+      }
+    },
+    "agentic.deployment.WaitReason": {
+      "body": {
+        "variants": [
+          "Approval",
+          "Answer",
+          "Resource",
+          "Requested"
+        ]
+      }
+    },
+    "agentic.experiment.Experiment.State": {
+      "body": {
+        "variants": [
+          "Done",
+          "Failed",
+          "Planned",
+          "Running"
+        ]
+      }
+    },
+    "agentic.experiment.FaultKind": {
+      "body": {
+        "variants": [
+          "PrincipalAway",
+          "PoolEmpty",
+          "ChannelDrop",
+          "RateLimited"
+        ]
+      }
+    },
+    "agentic.experiment.SearchMode": {
+      "body": {
+        "variants": [
+          "Exhaustive",
+          "Fit"
+        ]
+      }
+    },
+    "agentic.experiment.Variant.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.gateway.Admission": {
+      "body": {
+        "variants": [
+          "Admitted",
+          "OverBudget",
+          "RateLimited",
+          "NoUpstream"
+        ]
+      }
+    },
+    "agentic.gateway.Call.State": {
+      "body": {
+        "variants": [
+          "Completed",
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.gateway.Gateway.State": {
+      "body": {
+        "variants": [
+          "Draining",
+          "Serving",
+          "Stopped"
+        ]
+      }
+    },
+    "agentic.gateway.Upstream.State": {
+      "body": {
+        "variants": [
+          "Attached",
+          "Detached",
+          "Saturated"
+        ]
+      }
+    },
+    "agentic.harness.Compaction.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.harness.Harness.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.harness.HarnessKind": {
+      "body": {
+        "variants": [
+          "Vendor",
+          "Driven",
+          "Native"
+        ]
+      }
+    },
+    "agentic.harness.HarnessSession.State": {
+      "body": {
+        "variants": [
+          "Ended",
+          "Open"
+        ]
+      }
+    },
+    "agentic.harness.PermissionMode.State": {
+      "body": {
+        "variants": [
+          "Registered",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.harness.SessionRole": {
+      "body": {
+        "variants": [
+          "Main",
+          "SubAgent"
+        ]
+      }
+    },
+    "agentic.harness.ToolCall.State": {
+      "body": {
+        "variants": [
+          "Allowed",
+          "Completed",
+          "CouldNotRead",
+          "Denied",
+          "Failed",
+          "Requested"
+        ]
+      }
+    },
+    "agentic.harness.Turn.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.knowledge.KnowledgeItem.State": {
+      "body": {
+        "variants": [
+          "Published",
+          "Withdrawn"
+        ]
+      }
+    },
+    "agentic.knowledge.KnowledgeKind": {
+      "body": {
+        "variants": [
+          "Instruction",
+          "Skill",
+          "Memory",
+          "ContextFile",
+          "Concept"
+        ]
+      }
+    },
+    "agentic.knowledge.KnowledgeScope": {
+      "body": {
+        "variants": [
+          "Organization",
+          "Repository"
+        ]
+      }
+    },
+    "agentic.kpi.Block": {
+      "body": {
+        "variants": [
+          "Principal",
+          "Delegation",
+          "Model",
+          "Gateway",
+          "Tool",
+          "Knowledge",
+          "Agent",
+          "Harness",
+          "Work",
+          "Process",
+          "Authority",
+          "Channel",
+          "Question",
+          "Workspace",
+          "Sandbox",
+          "Runtime",
+          "Resource",
+          "Architecture",
+          "Run"
+        ]
+      }
+    },
+    "agentic.kpi.Direction": {
+      "body": {
+        "variants": [
+          "Higher",
+          "Lower",
+          "Ignore"
+        ]
+      }
+    },
+    "agentic.kpi.Kpi.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.kpi.KpiKind": {
+      "body": {
+        "variants": [
+          "Count",
+          "Sum",
+          "Ratio",
+          "Duration",
+          "Percentile"
+        ]
+      }
+    },
+    "agentic.kpi.Measurement.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.kpi.Source": {
+      "body": {
+        "variants": [
+          "Simulated",
+          "Observed"
+        ]
+      }
+    },
+    "agentic.kpi.WorkMode.State": {
+      "body": {
+        "variants": [
+          "Active"
+        ]
+      }
+    },
+    "agentic.kpi.WorkModeDirection.State": {
+      "body": {
+        "variants": [
+          "Set"
+        ]
+      }
+    },
+    "agentic.kpi.WorkModeKind": {
+      "body": {
+        "variants": [
+          "Autonomous",
+          "Pairing",
+          "Review"
+        ]
+      }
+    },
+    "agentic.model.Capability": {
+      "body": {
+        "variants": [
+          "Text",
+          "Vision",
+          "Audio",
+          "ToolUse",
+          "Reasoning",
+          "StructuredOutput",
+          "Embedding"
+        ]
+      }
+    },
+    "agentic.model.Endpoint.State": {
+      "body": {
+        "variants": [
+          "Closed",
+          "Open"
+        ]
+      }
+    },
+    "agentic.model.Hosting": {
+      "body": {
+        "variants": [
+          "Vendor",
+          "Managed",
+          "Local"
+        ]
+      }
+    },
+    "agentic.model.Inference.State": {
+      "body": {
+        "variants": [
+          "Finished",
+          "Started"
+        ]
+      }
+    },
+    "agentic.model.InferenceOutcome": {
+      "body": {
+        "variants": [
+          "Ok",
+          "Refused",
+          "RateLimited",
+          "Error"
+        ]
+      }
+    },
+    "agentic.model.Model.State": {
+      "body": {
+        "variants": [
+          "Current",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.model.Provider.State": {
+      "body": {
+        "variants": [
+          "Registered"
+        ]
+      }
+    },
+    "agentic.model.Route.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.model.Wire": {
+      "body": {
+        "variants": [
+          "Messages",
+          "Chat",
+          "Responses",
+          "Native"
+        ]
+      }
+    },
+    "agentic.principal.Principal.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.process.Process.State": {
+      "body": {
+        "variants": [
+          "Published",
+          "Withdrawn"
+        ]
+      }
+    },
+    "agentic.question.OptionMeaning": {
+      "body": {
+        "variants": [
+          "Approve",
+          "Reject",
+          "Choice"
+        ]
+      }
+    },
+    "agentic.question.Question.State": {
+      "body": {
+        "variants": [
+          "Answered",
+          "CouldNotRead",
+          "DefaultTaken",
+          "Open",
+          "Withdrawn"
+        ]
+      }
+    },
+    "agentic.question.QuestionKind": {
+      "body": {
+        "variants": [
+          "Choice",
+          "Approval"
+        ]
+      }
+    },
+    "agentic.resource.Claim.State": {
+      "body": {
+        "variants": [
+          "Expired",
+          "Held",
+          "Killed",
+          "Queued",
+          "Released",
+          "Withdrawn"
+        ]
+      }
+    },
+    "agentic.resource.Pool.State": {
+      "body": {
+        "variants": [
+          "Open"
+        ]
+      }
+    },
+    "agentic.resource.PoolKind": {
+      "body": {
+        "variants": [
+          "BuildSlots",
+          "RateLimit",
+          "Cache",
+          "Seats"
+        ]
+      }
+    },
+    "agentic.runtime.Instance.State": {
+      "body": {
+        "variants": [
+          "Exited",
+          "Failed",
+          "Pending",
+          "Running"
+        ]
+      }
+    },
+    "agentic.runtime.Runtime.State": {
+      "body": {
+        "variants": [
+          "Available"
+        ]
+      }
+    },
+    "agentic.runtime.Workload.State": {
+      "body": {
+        "variants": [
+          "Defined"
+        ]
+      }
+    },
+    "agentic.runtime.WorkloadKind": {
+      "body": {
+        "variants": [
+          "Agent",
+          "Service",
+          "Job",
+          "Model",
+          "Snippet"
+        ]
+      }
+    },
+    "agentic.sandbox.Sandbox.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.shared.Attribution": {
+      "body": {
+        "variants": [
+          "Known",
+          "Inferred",
+          "NotRecorded"
+        ]
+      }
+    },
+    "agentic.shared.Decider": {
+      "body": {
+        "variants": [
+          "PermissionMode",
+          "Classifier",
+          "Hook",
+          "Rule",
+          "Delegate",
+          "Human",
+          "NotRecorded"
+        ]
+      }
+    },
+    "agentic.shared.IsolationLevel": {
+      "body": {
+        "variants": [
+          "None",
+          "Process",
+          "Container",
+          "UserKernel",
+          "MicroVm"
+        ]
+      }
+    },
+    "agentic.shared.PrincipalKind": {
+      "body": {
+        "variants": [
+          "Human",
+          "Organization",
+          "Service",
+          "Agent"
+        ]
+      }
+    },
+    "agentic.shared.Sharing": {
+      "body": {
+        "variants": [
+          "Exclusive",
+          "SharedReadOnly",
+          "SharedReadWrite"
+        ]
+      }
+    },
+    "agentic.shared.ToolCategory": {
+      "body": {
+        "variants": [
+          "Read",
+          "Search",
+          "Edit",
+          "Execute",
+          "Network",
+          "Spawn",
+          "Message",
+          "Plan",
+          "Other"
+        ]
+      }
+    },
+    "agentic.shared.Verdict": {
+      "body": {
+        "variants": [
+          "Allow",
+          "Deny",
+          "ApprovalRequired"
+        ]
+      }
+    },
+    "agentic.store.Query.State": {
+      "body": {
+        "variants": [
+          "Answered",
+          "Failed",
+          "Requested"
+        ]
+      }
+    },
+    "agentic.store.QueryForm": {
+      "body": {
+        "variants": [
+          "Predicate",
+          "Listing",
+          "Prefix",
+          "Nearest",
+          "Pattern",
+          "Path"
+        ]
+      }
+    },
+    "agentic.store.Read.State": {
+      "body": {
+        "variants": [
+          "Failed",
+          "Requested",
+          "Returned"
+        ]
+      }
+    },
+    "agentic.store.Record.State": {
+      "body": {
+        "variants": [
+          "Deleted",
+          "Expired",
+          "Failed",
+          "Present",
+          "Superseded",
+          "Writing"
+        ]
+      }
+    },
+    "agentic.store.Retention": {
+      "body": {
+        "variants": [
+          "Duration",
+          "Run",
+          "Forever"
+        ]
+      }
+    },
+    "agentic.store.Store.State": {
+      "body": {
+        "variants": [
+          "Open",
+          "Retired"
+        ]
+      }
+    },
+    "agentic.store.StoreKind": {
+      "body": {
+        "variants": [
+          "Record",
+          "Artifact",
+          "KeyValue",
+          "Semantic",
+          "Graph"
+        ]
+      }
+    },
+    "agentic.store.StoreScope": {
+      "body": {
+        "variants": [
+          "Part",
+          "Architecture",
+          "External"
+        ]
+      }
+    },
+    "agentic.tool.Tool.State": {
+      "body": {
+        "variants": [
+          "Published",
+          "Withdrawn"
+        ]
+      }
+    },
+    "agentic.tool.ToolProvider.State": {
+      "body": {
+        "variants": [
+          "Registered"
+        ]
+      }
+    },
+    "agentic.tool.ToolProviderKind": {
+      "body": {
+        "variants": [
+          "BuiltIn",
+          "ToolServer",
+          "Shell",
+          "Connector",
+          "Agent"
+        ]
+      }
+    },
+    "agentic.trigger.ConcurrencyPolicy": {
+      "body": {
+        "variants": [
+          "Skip",
+          "Queue",
+          "Parallel"
+        ]
+      }
+    },
+    "agentic.trigger.Firing.State": {
+      "body": {
+        "variants": [
+          "Ended",
+          "Failed",
+          "Fired",
+          "Replaced",
+          "Skipped",
+          "Started"
+        ]
+      }
+    },
+    "agentic.trigger.Schedule.State": {
+      "body": {
+        "variants": [
+          {
+            "name": "Disabled",
+            "summary": "Its checks passed; it does not tick."
+          },
+          {
+            "name": "Enabled",
+            "summary": "It ticks at next_fire_at."
+          },
+          {
+            "name": "Unchecked",
+            "summary": "Its restriction checks have not passed; it cannot be enabled."
+          }
+        ]
+      }
+    },
+    "agentic.trigger.StartMode": {
+      "body": {
+        "variants": [
+          "Auto",
+          "Offer"
+        ]
+      }
+    },
+    "agentic.trigger.SubjectPolicy": {
+      "body": {
+        "variants": [
+          "Another",
+          "Skip",
+          "Queue",
+          "Replace"
+        ]
+      }
+    },
+    "agentic.trigger.Trigger.State": {
+      "body": {
+        "variants": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    },
+    "agentic.trigger.TriggerKind": {
+      "body": {
+        "variants": [
+          "OnEvent",
+          "OnMessage",
+          "OnSchedule"
+        ]
+      }
+    },
+    "agentic.work.Assignment.State": {
+      "body": {
+        "variants": [
+          "Active",
+          "Completed",
+          "Offered",
+          "Released"
+        ]
+      }
+    },
+    "agentic.work.AssignmentEnd": {
+      "body": {
+        "variants": [
+          "Completed",
+          "Released"
+        ]
+      }
+    },
+    "agentic.work.Deliverable.State": {
+      "body": {
+        "variants": [
+          "Accepted",
+          "Proposed",
+          "Rejected"
+        ]
+      }
+    },
+    "agentic.work.DeliverableKind": {
+      "body": {
+        "variants": [
+          "Proposal",
+          "Artifact"
+        ]
+      }
+    },
+    "agentic.work.Run.State": {
+      "body": {
+        "variants": [
+          "Ended",
+          "Running",
+          "Suspended"
+        ]
+      }
+    },
+    "agentic.work.RunOutcome": {
+      "body": {
+        "variants": [
+          "Done",
+          "Failed",
+          "Stopped",
+          "BudgetExhausted"
+        ]
+      }
+    },
+    "agentic.work.Step.State": {
+      "body": {
+        "variants": [
+          "Recorded"
+        ]
+      }
+    },
+    "agentic.work.StepKind": {
+      "body": {
+        "variants": [
+          "Program",
+          "Agent",
+          "Person",
+          "Child"
+        ]
+      }
+    },
+    "agentic.work.StepResult": {
+      "body": {
+        "variants": [
+          "Passed",
+          "Failed",
+          "Skipped"
+        ]
+      }
+    },
+    "agentic.work.SuspendReason": {
+      "body": {
+        "variants": [
+          "AwaitingApproval",
+          "AwaitingAnswer",
+          "AwaitingResource",
+          "Requested"
+        ]
+      }
+    },
+    "agentic.work.Task.State": {
+      "body": {
+        "variants": [
+          "Assigned",
+          "Closed",
+          "Open"
+        ]
+      }
+    },
+    "agentic.work.TaskEnd": {
+      "body": {
+        "variants": [
+          "Done",
+          "Cancelled"
+        ]
+      }
+    },
+    "agentic.workspace.Lease.State": {
+      "body": {
+        "variants": [
+          "Expired",
+          "Live",
+          "Released",
+          "Requested"
+        ]
+      }
+    },
+    "agentic.workspace.Proposal.State": {
+      "body": {
+        "variants": [
+          "Merged",
+          "Proposed",
+          "Rejected",
+          "Superseded"
+        ]
+      }
+    },
+    "agentic.workspace.Workspace.State": {
+      "body": {
+        "variants": [
+          "Held",
+          "Ready"
+        ]
+      }
+    },
+    "agentic.workspace.WorkspaceKind": {
+      "body": {
+        "variants": [
+          "Checkout",
+          "ScratchCopy",
+          "Worktree"
+        ]
+      }
+    }
+  },
+  "views": {
+    "agentic.agent.AgentRevisions": {
+      "source": "agentic.agent.AgentRevision"
+    },
+    "agentic.agent.Agents": {
+      "source": "agentic.agent.Agent"
+    },
+    "agentic.architecture.Architectures": {
+      "source": "agentic.architecture.Architecture"
+    },
+    "agentic.architecture.Contracts": {
+      "source": "agentic.architecture.Contract"
+    },
+    "agentic.architecture.Ingresses": {
+      "source": "agentic.architecture.Ingress"
+    },
+    "agentic.architecture.Parts": {
+      "source": "agentic.architecture.Part"
+    },
+    "agentic.architecture.PatchApplications": {
+      "source": "agentic.architecture.PatchApplication"
+    },
+    "agentic.architecture.Patches": {
+      "source": "agentic.architecture.Patch"
+    },
+    "agentic.architecture.Placements": {
+      "source": "agentic.architecture.Placement"
+    },
+    "agentic.architecture.Ports": {
+      "source": "agentic.architecture.Port"
+    },
+    "agentic.architecture.Reach": {
+      "source": "agentic.architecture.Link"
+    },
+    "agentic.architecture.Revisions": {
+      "source": "agentic.architecture.ArchitectureRevision"
+    },
+    "agentic.authority.Budgets": {
+      "source": "agentic.authority.Budget"
+    },
+    "agentic.authority.Decisions": {
+      "source": "agentic.authority.Decision"
+    },
+    "agentic.authority.Grants": {
+      "source": "agentic.authority.Grant"
+    },
+    "agentic.authority.OpenApprovals": {
+      "source": "agentic.authority.Decision"
+    },
+    "agentic.channel.ChannelMessages": {
+      "source": "agentic.channel.Message"
+    },
+    "agentic.channel.ChannelPosts": {
+      "source": "agentic.channel.Post"
+    },
+    "agentic.channel.Channels": {
+      "source": "agentic.channel.Channel"
+    },
+    "agentic.channel.Messages": {
+      "source": "agentic.channel.Message"
+    },
+    "agentic.channel.Posts": {
+      "source": "agentic.channel.Post"
+    },
+    "agentic.channel.Subscriptions": {
+      "source": "agentic.channel.Subscription"
+    },
+    "agentic.delegation.ActiveDelegations": {
+      "source": "agentic.delegation.Delegation"
+    },
+    "agentic.delegation.Delegations": {
+      "source": "agentic.delegation.Delegation"
+    },
+    "agentic.deployment.ArchitectureRuns": {
+      "source": "agentic.deployment.ArchitectureRun"
+    },
+    "agentic.deployment.Deployments": {
+      "source": "agentic.deployment.Deployment"
+    },
+    "agentic.deployment.Installations": {
+      "source": "agentic.deployment.Installation"
+    },
+    "agentic.deployment.InstallationsOfRuntime": {
+      "source": "agentic.deployment.Installation"
+    },
+    "agentic.deployment.RunsOfInstallation": {
+      "source": "agentic.deployment.ArchitectureRun"
+    },
+    "agentic.deployment.RunsOfSubject": {
+      "source": "agentic.deployment.ArchitectureRun"
+    },
+    "agentic.deployment.Units": {
+      "source": "agentic.deployment.DeploymentUnit"
+    },
+    "agentic.experiment.BestVariant": {
+      "source": "agentic.experiment.Variant"
+    },
+    "agentic.experiment.Experiments": {
+      "source": "agentic.experiment.Experiment"
+    },
+    "agentic.experiment.Variants": {
+      "source": "agentic.experiment.Variant"
+    },
+    "agentic.gateway.Calls": {
+      "source": "agentic.gateway.Call"
+    },
+    "agentic.gateway.Gateways": {
+      "source": "agentic.gateway.Gateway"
+    },
+    "agentic.gateway.Upstreams": {
+      "source": "agentic.gateway.Upstream"
+    },
+    "agentic.harness.HarnessSessions": {
+      "source": "agentic.harness.HarnessSession"
+    },
+    "agentic.harness.Harnesses": {
+      "source": "agentic.harness.Harness"
+    },
+    "agentic.harness.PermissionModes": {
+      "source": "agentic.harness.PermissionMode"
+    },
+    "agentic.harness.ToolCalls": {
+      "source": "agentic.harness.ToolCall"
+    },
+    "agentic.harness.Turns": {
+      "source": "agentic.harness.Turn"
+    },
+    "agentic.knowledge.Knowledge": {
+      "source": "agentic.knowledge.KnowledgeItem"
+    },
+    "agentic.knowledge.PublishedConcepts": {
+      "source": "agentic.knowledge.KnowledgeItem"
+    },
+    "agentic.kpi.Directions": {
+      "source": "agentic.kpi.WorkModeDirection"
+    },
+    "agentic.kpi.Kpis": {
+      "source": "agentic.kpi.Kpi"
+    },
+    "agentic.kpi.Measurements": {
+      "source": "agentic.kpi.Measurement"
+    },
+    "agentic.model.Endpoints": {
+      "source": "agentic.model.Endpoint"
+    },
+    "agentic.model.Inferences": {
+      "source": "agentic.model.Inference"
+    },
+    "agentic.model.Models": {
+      "source": "agentic.model.Model"
+    },
+    "agentic.model.Routes": {
+      "source": "agentic.model.Route"
+    },
+    "agentic.principal.Principals": {
+      "source": "agentic.principal.Principal"
+    },
+    "agentic.process.Processes": {
+      "source": "agentic.process.Process"
+    },
+    "agentic.question.OpenQuestions": {
+      "source": "agentic.question.Question"
+    },
+    "agentic.question.Questions": {
+      "source": "agentic.question.Question"
+    },
+    "agentic.resource.Claims": {
+      "source": "agentic.resource.Claim"
+    },
+    "agentic.resource.Pools": {
+      "source": "agentic.resource.Pool"
+    },
+    "agentic.resource.Queue": {
+      "source": "agentic.resource.Claim"
+    },
+    "agentic.runtime.Instances": {
+      "source": "agentic.runtime.Instance"
+    },
+    "agentic.runtime.Runtimes": {
+      "source": "agentic.runtime.Runtime"
+    },
+    "agentic.runtime.Workloads": {
+      "source": "agentic.runtime.Workload"
+    },
+    "agentic.sandbox.Sandboxes": {
+      "source": "agentic.sandbox.Sandbox"
+    },
+    "agentic.store.Artifacts": {
+      "source": "agentic.store.Record"
+    },
+    "agentic.store.PresentRecords": {
+      "source": "agentic.store.Record"
+    },
+    "agentic.store.Queries": {
+      "source": "agentic.store.Query"
+    },
+    "agentic.store.Reads": {
+      "source": "agentic.store.Read"
+    },
+    "agentic.store.Records": {
+      "source": "agentic.store.Record"
+    },
+    "agentic.store.Stores": {
+      "source": "agentic.store.Store"
+    },
+    "agentic.tool.ToolProviders": {
+      "source": "agentic.tool.ToolProvider"
+    },
+    "agentic.tool.Tools": {
+      "source": "agentic.tool.Tool"
+    },
+    "agentic.trigger.Firings": {
+      "source": "agentic.trigger.Firing"
+    },
+    "agentic.trigger.RecentFirings": {
+      "source": "agentic.trigger.Firing"
+    },
+    "agentic.trigger.Schedules": {
+      "source": "agentic.trigger.Schedule"
+    },
+    "agentic.trigger.Triggers": {
+      "source": "agentic.trigger.Trigger"
+    },
+    "agentic.trigger.TriggersOfRevision": {
+      "source": "agentic.trigger.Trigger"
+    },
+    "agentic.work.Assignments": {
+      "source": "agentic.work.Assignment"
+    },
+    "agentic.work.Deliverables": {
+      "source": "agentic.work.Deliverable"
+    },
+    "agentic.work.Runs": {
+      "source": "agentic.work.Run"
+    },
+    "agentic.work.Steps": {
+      "source": "agentic.work.Step"
+    },
+    "agentic.work.Tasks": {
+      "source": "agentic.work.Task"
+    },
+    "agentic.workspace.Leases": {
+      "source": "agentic.workspace.Lease"
+    },
+    "agentic.workspace.Proposals": {
+      "source": "agentic.workspace.Proposal"
+    },
+    "agentic.workspace.Workspaces": {
+      "source": "agentic.workspace.Workspace"
+    }
+  }
+}

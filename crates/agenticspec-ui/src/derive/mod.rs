@@ -795,15 +795,55 @@ pub fn derive_with(inputs: &Inputs, ir: &Value) -> Result<Derivation, Failure> {
         Some(p) => Some(read_json(p)?),
         None => None,
     };
-    let ports = ports_doc
-        .as_ref()
-        .map(|d| model::ports(d, &model))
-        .unwrap_or_default();
     let contract_doc = match &inputs.contract {
         Some(p) => Some(read_json(p)?),
         None => None,
     };
-    let contract = contract_doc.as_ref().map(Contract::read);
+    let plan = plan(
+        &tree,
+        &model,
+        &panels,
+        ports_doc.as_ref(),
+        contract_doc.as_ref(),
+    )?;
+    derivation(inputs, &plan, ports_path.as_ref())
+}
+
+/// The layout (`agenticspec-ui-layout/1`) of `architecture`, from inputs held in memory: the
+/// compiled blocks `ir` (or the part of them a derivation reads), the panels document, the port
+/// catalogue and the contract. `root` only names the documents read. The same layout as
+/// [`derive_with`] writes beside its document.
+///
+/// # Errors
+///
+/// An input that cannot be read, or an architecture or `view:` key that is refused.
+pub fn layout_with(
+    root: &Path,
+    architecture: &Path,
+    ir: &Value,
+    panels_text: &str,
+    ports: Option<&Value>,
+    contract: Option<&Value>,
+) -> Result<String, Failure> {
+    let tree = Tree::read(root, architecture).map_err(Failure::Unreadable)?;
+    let panels = Panels::read(panels_text).map_err(Failure::Unreadable)?;
+    let model = Model { ir };
+    let plan = plan(&tree, &model, &panels, ports, contract)?;
+    Ok(write::layout(&plan))
+}
+
+/// The whole composition of `tree`, or every refusal of the architecture and its `view:` key.
+fn plan<'a>(
+    tree: &'a Tree,
+    model: &'a Model<'a>,
+    panels: &'a Panels,
+    ports_doc: Option<&Value>,
+    contract_doc: Option<&Value>,
+) -> Result<Plan<'a>, Failure> {
+    let ports = ports_doc
+        .map(|d| model::ports(d, model))
+        .unwrap_or_default();
+    let contract = contract_doc.map(Contract::read);
 
     let mut refusals = Vec::new();
     for level in &tree.levels {
@@ -819,10 +859,10 @@ pub fn derive_with(inputs: &Inputs, ir: &Value) -> Result<Derivation, Failure> {
     let levels: Vec<LevelPlan> = (0..tree.levels.len())
         .map(|i| {
             plan_level(
-                &tree,
+                tree,
                 i,
-                &model,
-                &panels,
+                model,
+                panels,
                 contract.as_ref(),
                 &ports,
                 &mut refusals,
@@ -836,28 +876,34 @@ pub fn derive_with(inputs: &Inputs, ir: &Value) -> Result<Derivation, Failure> {
         None | Some("overview") => levels[0].overview.clone(),
         Some(p) => part_page(p),
     };
-    let plan = Plan {
-        tree: &tree,
-        model: &model,
-        panels: &panels,
+    Ok(Plan {
+        tree,
+        model,
+        panels,
         levels,
         home,
-    };
+    })
+}
 
+/// The files of a derivation of `plan`: the document, its fixtures, its layout and its digest.
+fn derivation(
+    inputs: &Inputs,
+    plan: &Plan<'_>,
+    ports_path: Option<&PathBuf>,
+) -> Result<Derivation, Failure> {
+    let root = &inputs.root;
+    let tree = plan.tree;
     let name = stem(&inputs.out);
     let dir = inputs.out.parent().unwrap_or(Path::new(".")).to_path_buf();
     let fixtures_dir = dir.join(format!("{name}.fixtures"));
     let to_panels = relative(&fixtures_dir, &root.join(FIXTURES));
     let scripts = write::scripts(&root.join(SCRIPTS));
-    let doc = write::document(&plan, &name, &format!("{name}.fixtures"));
+    let doc = write::document(plan, &name, &format!("{name}.fixtures"));
     let mut files = vec![(inputs.out.clone(), doc)];
-    for (rel, text) in write::fixtures(&plan, &to_panels, &scripts) {
+    for (rel, text) in write::fixtures(plan, &to_panels, &scripts) {
         files.push((fixtures_dir.join(rel), text));
     }
-    files.push((
-        dir.join(format!("{name}.layout.json")),
-        write::layout(&plan),
-    ));
+    files.push((dir.join(format!("{name}.layout.json")), write::layout(plan)));
 
     // The digest of every input read.
     let mut lines: Vec<String> = Vec::new();
@@ -869,7 +915,7 @@ pub fn derive_with(inputs: &Inputs, ir: &Value) -> Result<Derivation, Failure> {
             .map_err(|e| Failure::Unreadable(format!("{rel}: {e}")))?;
         lines.push(format!("{}  {rel}", sha(&bytes)));
     }
-    for p in [&ports_path, &inputs.contract].into_iter().flatten() {
+    for p in [ports_path, inputs.contract.as_ref()].into_iter().flatten() {
         let bytes =
             std::fs::read(p).map_err(|e| Failure::Unreadable(format!("{}: {e}", p.display())))?;
         lines.push(format!(

@@ -3233,6 +3233,103 @@
         }
       }
     },
+    "ui_build": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_build"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiBuildInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "api_base": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "architecture": {
+              "kind": "string"
+            },
+            "archive": {
+              "kind": "boolean"
+            },
+            "contract": {
+              "kind": "string"
+            },
+            "out": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiBuildResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "archive": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "archive_sha256": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "bytes": {
+              "kind": "integer"
+            },
+            "files": {
+              "kind": "integer"
+            },
+            "out": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "ui_conform": {
       "target": {
         "kind": "local",
@@ -4509,6 +4606,52 @@
     {
       "path": [
         "ui",
+        "build"
+      ],
+      "aliases": [],
+      "callable": "ui_build",
+      "about": "Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), and with --archive a reproducible tar beside them with its sha256",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "contract",
+          "source": {
+            "kind": "option",
+            "long": "contract"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "api_base",
+          "source": {
+            "kind": "option",
+            "long": "api-base"
+          }
+        },
+        {
+          "field": "archive",
+          "source": {
+            "kind": "flag",
+            "long": "archive"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ui",
         "conform"
       ],
       "aliases": [],
@@ -4669,6 +4812,7 @@
     "handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_trace: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_build: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_conform: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_derive: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_generate: implement the owner-qualified callable and its declared result/error contract",

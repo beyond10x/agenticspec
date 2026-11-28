@@ -11,6 +11,8 @@
 //! - `source`: the fixture source, an adapter that answers that interface from fixtures.
 //! - `conform`: the conformance suite of that interface, run against a source by its URL.
 //! - `wire`: the small HTTP client and server both use.
+//! - `operator`: `agenticspec ui build`, the embedded operator app with the data files of one
+//!   architecture, and their reproducible archive.
 //!
 //! The output is a function of the document alone: the same document gives the same bytes.
 
@@ -22,6 +24,7 @@ mod check;
 pub mod conform;
 pub mod derive;
 pub mod interface;
+pub mod operator;
 pub mod source;
 pub mod wire;
 // The document types hold every property the schema gives a construct the generator accepts; some
