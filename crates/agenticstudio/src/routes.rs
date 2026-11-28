@@ -274,7 +274,7 @@ fn revision(studio: &Mutex<Studio>, id: &str, number: &str) -> Response {
             &json!({
                 "revision": revision_json(r),
                 "document": r.document,
-                "graph": agenticspec_render::graph(&r.document),
+                "graph": agenticspec_render::architecture::graph(&r.document),
                 "check": check_json(&check::check(&r.document)),
             }),
         ),
@@ -362,7 +362,7 @@ pub fn answer(studio: &Mutex<Studio>, request: &Request) -> Response {
             Ok(d) => Response::new(
                 200,
                 HTML,
-                agenticspec_render::page(&d.current().document, None),
+                agenticspec_render::architecture::page(&d.current().document, None),
             ),
             Err(e) => studio_error(&e),
         },

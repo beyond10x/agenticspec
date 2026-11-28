@@ -207,8 +207,10 @@ pub fn load_field(field: &str, files: &[String], root: &Path) -> Result<Vec<Arch
 
 pub fn html(a: &Architecture) -> String {
     match &a.experiment {
-        Some(r) => agenticspec_render::page(&r.result["architecture"], Some(&r.result)),
-        None => agenticspec_render::page(&a.doc, None),
+        Some(r) => {
+            agenticspec_render::architecture::page(&r.result["architecture"], Some(&r.result))
+        }
+        None => agenticspec_render::architecture::page(&a.doc, None),
     }
 }
 

@@ -1,7 +1,7 @@
 //! The views that explain the optimization: objective, landscape, trade-offs, sensitivity, and
 //! the variants table, on synthetic results in the `agenticspec-sim-result/1` format.
 
-use agenticspec_render::page;
+use agenticspec_render::architecture::page;
 use serde_json::{Map, Value, json};
 
 const WEIGHTS: [(&str, f64); 3] = [

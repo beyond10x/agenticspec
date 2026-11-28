@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "agenticspec-render-model/1",
+  "description": "One page of agenticspec-render: a graph of nodes, ports, edges, regions and marks, and panels beside it. agenticspec_render::page::render draws it as one HTML page.",
+  "$ref": "#/$defs/Page",
+  "$defs": {
+    "Page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "title"],
+      "properties": {
+        "format": { "const": "agenticspec-render-model/1" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "regions": { "type": "array", "items": { "$ref": "#/$defs/Region" } },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/Node" } },
+        "ports": { "type": "array", "items": { "$ref": "#/$defs/Port" } },
+        "edges": { "type": "array", "items": { "$ref": "#/$defs/Edge" } },
+        "marks": { "type": "array", "items": { "$ref": "#/$defs/Mark" } },
+        "panels": { "type": "array", "items": { "$ref": "#/$defs/Panel" } }
+      }
+    },
+    "Region": {
+      "description": "A box that holds nodes. A region whose id is a node's id is that node's card; any other outermost region is a card of its own. Its nodes are headed 'per <per>', 'in <in>' or 'in <label>'.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "in": { "type": "string" },
+        "per": { "type": "string" },
+        "regions": { "type": "array", "items": { "$ref": "#/$defs/Region" } }
+      }
+    },
+    "Node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "group"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "group": { "type": "string" },
+        "badges": { "type": "array", "items": { "$ref": "#/$defs/Badge" } },
+        "region": { "type": "string" }
+      }
+    },
+    "Badge": {
+      "description": "A pill at the card's top right: 'count' reads '×<value>', any other '<name> <value>'.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    },
+    "Port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "name", "kind", "direction"],
+      "properties": {
+        "node": { "type": "string" },
+        "name": { "type": "string" },
+        "kind": { "type": "string" },
+        "direction": { "enum": ["in", "out", "both"] },
+        "contract": { "type": "string" },
+        "via": { "type": "string" },
+        "unresolved": { "type": "boolean", "default": false }
+      }
+    },
+    "Edge": {
+      "description": "From and to name a node id, or 'node.port'.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "label"],
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "label": { "type": "string" },
+        "count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node"],
+      "properties": {
+        "node": { "type": "string" },
+        "port": { "type": "string" }
+      }
+    },
+    "Mark": {
+      "description": "A refusal (the default) or a piece of information on a node or a port. A refusal rings its card or port.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "name"],
+      "properties": {
+        "target": { "$ref": "#/$defs/Target" },
+        "name": { "type": "string" },
+        "detail": { "type": "string" },
+        "level": { "enum": ["info", "refusal"], "default": "refusal" }
+      }
+    },
+    "Panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "columns", "rows"],
+      "properties": {
+        "title": { "type": "string" },
+        "columns": { "type": "array", "items": { "type": "string" } },
+        "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } }
+      }
+    }
+  }
+}

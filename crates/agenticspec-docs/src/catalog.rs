@@ -309,7 +309,7 @@ pub fn files(e: &Entry) -> Result<BTreeMap<String, String>, String> {
     let mut out = BTreeMap::new();
     out.insert(
         format!("{dir}/{}.html", e.name),
-        agenticspec_render::page(&e.result["architecture"], Some(&e.result)),
+        agenticspec_render::architecture::page(&e.result["architecture"], Some(&e.result)),
     );
     out.insert(format!("{dir}/{}.yaml", e.name), e.arch_text.clone());
     if let Ok(shown) = &e.contract {

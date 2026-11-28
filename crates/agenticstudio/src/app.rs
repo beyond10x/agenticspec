@@ -131,7 +131,7 @@ pub fn view(studio: &Mutex<Studio>, name: &str, request: &Request) -> Response {
                 ),
                 "studio.DraftRefusals" => rows(refusal_rows(&check::check(document))),
                 _ => {
-                    let mut g = agenticspec_render::graph(document);
+                    let mut g = agenticspec_render::architecture::graph(document);
                     g["draft_id"] = Value::from(d.row.draft_id.0.as_str());
                     g["revision"] = Value::from(current.row.number.clone());
                     rows(vec![g])
