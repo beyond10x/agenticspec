@@ -34,6 +34,9 @@ pub const REFUSALS: &[&str] = &[
     "egress_undeclared",
     "address_in_architecture",
     "ui_upstream_unknown",
+    "ui_export_unknown",
+    "ui_archive_mismatch",
+    "ui_build_needs_toolchain",
 ];
 
 /// The transport of the link from a clock into the scheduled unit it starts: the target's

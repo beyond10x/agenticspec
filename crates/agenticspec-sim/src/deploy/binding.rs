@@ -59,6 +59,9 @@ pub struct Binding {
     /// Per part that names an agent document, the file it names, read from the directory of the
     /// binding file that named it.
     pub agent_files: BTreeMap<String, PathBuf>,
+    /// Per UI of the consumer's own (`ui.<name>.source`), the file its source names, read from
+    /// the directory of the binding file that named it.
+    pub ui_files: BTreeMap<String, PathBuf>,
 }
 
 /// `base` with `over` laid over it: objects merge key by key, any other value replaces.
@@ -110,6 +113,7 @@ pub fn load(path: &Path) -> Result<Binding, String> {
     }
     let mut doc = Value::Object(Map::new());
     let mut agent_files = BTreeMap::new();
+    let mut ui_files = BTreeMap::new();
     for (layer, dir) in chain.iter().rev() {
         merge(&mut doc, layer);
         if let Some(parts) = layer["parts"].as_object() {
@@ -119,11 +123,21 @@ pub fn load(path: &Path) -> Result<Binding, String> {
                 }
             }
         }
+        for (name, entry) in layer["ui"].as_object().into_iter().flatten() {
+            let source = &entry["source"];
+            if let Some(file) = source["archive"].as_str().or(source["ess_ui"].as_str()) {
+                ui_files.insert(name.clone(), dir.join(file));
+            }
+        }
     }
     if let Value::Object(m) = &mut doc {
         m.remove("refines");
     }
-    Ok(Binding { doc, agent_files })
+    Ok(Binding {
+        doc,
+        agent_files,
+        ui_files,
+    })
 }
 
 /// The problems of a resolved binding's form for one architecture document, one line each:
@@ -413,8 +427,8 @@ fn ingress_problems(name: &str, v: &Value, parts: &Value, out: &mut Vec<String>)
 }
 
 /// The problems of a binding that need the contract and the packing: a claim or a check of a
-/// unit the packing does not have (nor a UI the binding asks for, a `service` unit named by its
-/// role), a check its unit's kind has not, an ingress or a protocol
+/// unit the packing does not have (nor the `service` unit of a UI the binding asks for, named by
+/// its role or its key), a check its unit's kind has not, an ingress or a protocol
 /// the contract does not export, an export served by a part no unit holds. `contract_ingress`
 /// is the contract's `ingress` as data.
 pub fn served_problems(
@@ -425,9 +439,9 @@ pub fn served_problems(
     let mut out = Vec::new();
     // The kind of a unit by name: a unit of the packing, or the `service` unit of a UI the
     // binding asks for.
-    let ui_units: Vec<&str> = super::ui::asked(binding)
+    let ui_units: Vec<String> = super::ui::asked(binding)
         .into_iter()
-        .map(super::ui::unit_name)
+        .map(|u| u.name)
         .collect();
     let kind = |name: &str| {
         packing
@@ -435,7 +449,7 @@ pub fn served_problems(
             .iter()
             .find(|u| u.name == name)
             .map(|u| u.kind.as_str())
-            .or_else(|| ui_units.contains(&name).then_some("service"))
+            .or_else(|| ui_units.iter().any(|u| u == name).then_some("service"))
     };
     for name in binding["claims"]
         .as_object()
@@ -487,11 +501,7 @@ pub fn served_problems(
             }
         }
     }
-    out.extend(super::ui::served_problems(
-        binding,
-        contract_ingress,
-        packing,
-    ));
+    out.extend(super::ui::served_problems(binding, packing));
     out
 }
 

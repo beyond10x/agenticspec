@@ -172,6 +172,9 @@ order of the table, and writes nothing.
 | `egress_undeclared` | a link leaves its unit, for an external part or a part of another unit, and the part it starts at does not declare that destination in its `egress` |
 | `address_in_architecture` | the architecture names an address: a key `address`, `host`, `hostname` or `url` anywhere in it (see [the bundle](#the-bundle)) |
 | `ui_upstream_unknown` | the UI the binding asks for reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have |
+| `ui_export_unknown` | a UI of your own serves an export (`ui.<name>.export`, `<ingress>.<protocol>`) that no ingress of the architecture has |
+| `ui_archive_mismatch` | the archive a UI of your own names (`ui.<name>.source.archive`) is not the SHA-256 its `digest` gives |
+| `ui_build_needs_toolchain` | a UI of your own names an `ess-ui/1` document (`ui.<name>.source.ess_ui`): its pages need node and vite to build, which the binary does not run; name the archive you built from it instead |
 
 The **accepted list** (`bundles/cloudspec-accepts.yaml`, `agenticspec-cloudspec-accepts/1`) is
 the copy of the unit kinds and roles the translator accepts, with the commit it was copied from
@@ -309,10 +312,10 @@ The bundle then has:
 - the `ingress` entry of the operator ingress's `ui` export naming `unit: operator-ui` and `part:
   control`; its other exports stay where they were.
 
-`deploy bundle` refuses, with `binding_invalid`, a `ui:` of the wrong form, a contract whose
-operator ingress exports no `ui`, a packing that has a unit named `operator-ui`, and a `part` on
-the `ui` export; with `not_admitted`, an upstream that names no unit of the packing
-(`ui_upstream_unknown`), a role `operator-ui` the accepted list does not hold
+`deploy bundle` refuses, with `binding_invalid`, a `ui:` of the wrong form, a packing that has a
+unit named `operator-ui`, and a `part` on the `ui` export; with `not_admitted`, a contract whose
+operator ingress exports no `ui` (`ui_export_unknown`), an upstream that names no unit of the
+packing (`ui_upstream_unknown`), a role `operator-ui` the accepted list does not hold
 (`unit_not_hosted`), and a UI that does not build (`ui_build_refused`, for example a contract
 from other ports than the binary's). `bundles/bindings/operator-ui.yaml` is the worked example.
 
@@ -348,6 +351,41 @@ side by side: the operator UI then serves the operator ingress's `ui` export, an
 control-plane UI listens on `ui.control-plane.port` (its checks on that port) and reads the same
 upstream. Asked alone, the control-plane UI serves the export. `bundles/bindings/operator-ui.yaml`
 asks for both.
+
+### A UI of your own
+
+Any other key under `ui:` is a UI you built yourself, carried as a unit of the bundle beside the
+operator and control-plane UIs. The key is the unit's name: lower-case letters, digits and `-`,
+starting with a letter.
+
+```yaml
+ui:
+  console:
+    source: {archive: console-ui.tar, digest: "sha256:<hex>"}
+    export: operator.ui
+    port: 8091
+```
+
+| key under `ui.<name>` | holds |
+|---|---|
+| `source` | `{archive: <file>, digest: sha256:<hex>}`: a tar of the static files you built, read from the directory of the binding file that names it, and the SHA-256 of the file, which `deploy bundle` checks. Or `{ess_ui: <file>}`, your `ess-ui/1` document, which is refused (below) |
+| `export` | `<ingress>.<protocol>`: the export of an ingress of the architecture the UI serves |
+| `port`, `bind`, `upstream` | as for `ui.operator` |
+
+The bundle then has a unit `<name>`, `kind: service`, `roles: [ui]`, `code: {kind: static,
+archive: <name>.tar, digest}`, your archive byte for byte under `files: {<name>.tar: {digest,
+size, base64}}`, and the `upstream`, checks and claims of a UI unit. The first UI that serves an
+export serves it, `operator` and `control-plane` first and then the others by name; a UI beside
+it listens on `ui.<name>.port`. The accepted list must hold the role `ui`.
+
+`{ess_ui: <file>}` is refused with `ui_build_needs_toolchain`: the pages `agenticspec ui generate`
+writes from an `ess-ui/1` document are Vue components that need node and vite to build, and the
+binary does not run them. Generate and build the app yourself, pack its output as a tar and name it
+as `{archive, digest}`. Besides the refusals of `ui.operator`, `deploy bundle` refuses, with
+`binding_invalid`, a `ui.<name>` without `source` or `export` or of the wrong form, and a name that
+is a unit of the packing or of another UI; with `not_admitted`, an export no ingress has
+(`ui_export_unknown`) and an archive that is not its digest (`ui_archive_mismatch`). The `console`
+UI of `bundles/bindings/operator-ui.yaml` is the worked example.
 
 ### Before a runtime: the UI on fixtures
 

@@ -1,0 +1,9 @@
+format: agenticspec-binding/1
+binding: ui-archive-mismatch
+architecture: workstation
+refines: egress/workstation.yaml
+summary: A UI of the consumer's own names an archive whose bytes are not the digest it gives.
+ui:
+  console:
+    source: {archive: ../../../../../bundles/bindings/console-ui.tar, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"}
+    export: operator.ui

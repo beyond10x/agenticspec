@@ -1,67 +1,103 @@
 //! The UIs of a bundle: one unit per UI the binding asks for under `ui:`, a `service` unit that
 //! serves static files (`code: {kind: static, archive, digest}`) and reads the adapter of an
-//! upstream unit (`upstream: {unit, port, path}`). The archive is built in-process with the
-//! library `agenticspec ui build` uses, the same bytes as `ui build --archive` writes, and is
-//! carried inline in the bundle's `files` member, base64, by its file name. The UI unit serves
-//! its export of an ingress (the operator's `ui`); the other exports stay where they were.
+//! upstream unit (`upstream: {unit, port, path}`). The archive is carried inline in the bundle's
+//! `files` member, base64, by its file name. The UI unit serves its export of an ingress; the
+//! other exports stay where they were.
 //!
-//! A UI is one row of [`KINDS`]: its key under `ui:`, its role, the ingress and export it serves
-//! and how its files are built. The operator UI and the control-plane UI (the operator UI with the
-//! pages across parts, `ui build --control-plane`) serve the same export: the first one the binding
-//! asks for serves it, and the other listens beside it on the port `ui.<ui>.port` gives it. A
-//! binding without `ui:` gives the bundle it gave before.
+//! A UI is one row ([`Ui`]): its key under `ui:`, its unit's name and role, the ingress and export
+//! it serves, and the source of its files ([`Source`]). Two sources are built in, keyed
+//! `operator` and `control-plane` ([`BUILT_IN`]): the operator UI and the control-plane UI (the
+//! operator UI with the pages across parts, `ui build --control-plane`), built in-process with the
+//! library `agenticspec ui build` uses, the same bytes as `ui build --archive` writes, both serving
+//! the operator ingress's `ui` export. Any other key is a UI of the consumer's own,
+//! `ui.<name>: {source, export, upstream?, port?, bind?}`: its source is a static archive it built
+//! (`{archive: <file>, digest}`), or an `ess-ui/1` document (`{ess_ui: <file>}`), which is
+//! refused because its pages need node and vite to build. The first UI the binding asks for that
+//! serves an export serves it, the built-in ones first and then the others by key; another one
+//! beside it listens on the port `ui.<ui>.port` gives it. A binding without `ui:` gives the bundle
+//! it gave before.
 
 use super::admit::{Accepts, Finding};
-use super::binding::{BIND, is_port, is_text};
+use super::binding::{BIND, Binding, is_digest, is_port, is_text};
 use super::bundle::CONTROL;
 use super::packing::Packing;
 use super::sha256;
 use serde_json::{Map, Value, json};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// The files of a UI from the architecture's file and its contract: by name, sorted.
 pub type Build = fn(&Path, &Value, &str) -> Result<Vec<(String, Vec<u8>)>, String>;
 
-/// One UI a binding may ask for.
-pub struct Kind {
+/// A UI the binary builds itself.
+pub struct BuiltIn {
     /// Its key under the binding's `ui:`.
     pub key: &'static str,
     /// The role of its unit, which is also the unit's name.
     pub role: &'static str,
-    /// The ingress whose export it serves.
-    pub ingress: &'static str,
-    /// The export of that ingress it serves.
-    pub export: &'static str,
-    /// The export of that ingress whose unit is its default upstream.
-    pub api: &'static str,
     pub build: Build,
 }
 
-/// The UIs a binding may ask for.
-pub const KINDS: &[Kind] = &[
-    Kind {
+/// The UIs the binary builds itself. Both serve the operator ingress's `ui` export.
+pub const BUILT_IN: &[BuiltIn] = &[
+    BuiltIn {
         key: "operator",
         role: "operator-ui",
-        ingress: "operator",
-        export: "ui",
-        api: "http",
         build: operator_files,
     },
-    Kind {
+    BuiltIn {
         key: "control-plane",
         role: "control-plane-ui",
-        ingress: "operator",
-        export: "ui",
-        api: "http",
         build: control_plane_files,
     },
 ];
 
+/// The ingress and export a built-in UI serves.
+const BUILT_IN_EXPORT: (&str, &str) = ("operator", "ui");
+
+/// The role of the unit of a UI of the consumer's own.
+pub const OWN_ROLE: &str = "ui";
+
+/// The roles of UI units.
+pub const ROLES: &[&str] = &["operator-ui", "control-plane-ui", OWN_ROLE];
+
+/// The export of a UI's ingress whose unit is its default upstream.
+const API: &str = "http";
+
+/// Where the files of a UI come from.
+#[derive(Clone)]
+pub enum Source {
+    /// Built by the binary from the architecture and its contract.
+    Built(Build),
+    /// An `ess-ui/1` document, as the binding names it.
+    EssUi(String),
+    /// A static archive the consumer built, as the binding names it, and its digest.
+    Archive { file: String, digest: String },
+}
+
+/// One UI the binding asks for.
+#[derive(Clone)]
+pub struct Ui {
+    /// Its key under the binding's `ui:`.
+    pub key: String,
+    /// The name of its unit: the role of a built-in UI, else the key.
+    pub name: String,
+    /// The role of its unit.
+    pub role: &'static str,
+    /// The ingress whose export it serves.
+    pub ingress: String,
+    /// The export of that ingress it serves.
+    pub export: String,
+    pub source: Source,
+}
+
 /// The base path of the runtime's adapter a UI reads, written into its `config.json`.
 pub const API_BASE: &str = agenticspec_ui::operator::API_BASE;
 
-/// The keys of one UI's entry under `ui:`.
+/// The keys of a built-in UI's entry under `ui:`.
 const KEYS: &[&str] = &["port", "bind", "upstream"];
+
+/// The keys of the entry of a UI of the consumer's own.
+const OWN_KEYS: &[&str] = &["source", "export", "upstream", "port", "bind"];
 
 /// The keys of its `upstream:`.
 const UPSTREAM_KEYS: &[&str] = &["unit", "port"];
@@ -107,35 +143,95 @@ fn ui_files(
         })
 }
 
-/// Whether the unit of `k` serves its export: the first UI the binding asks for that serves that
-/// export of that ingress does; another one beside it listens on a port of its own.
-pub fn serves_export(k: &Kind, binding: &Value) -> bool {
-    asked(binding)
-        .into_iter()
-        .find(|x| x.ingress == k.ingress && x.export == k.export)
-        .is_some_and(|x| x.key == k.key)
+/// Whether `name` may name the unit of a UI of the consumer's own: lower-case letters, digits and
+/// `-`, starting with a letter, at most 63 bytes.
+fn is_unit_name(name: &str) -> bool {
+    name.len() < 64
+        && name.starts_with(|c: char| c.is_ascii_lowercase())
+        && name
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
 }
 
-/// The name of a UI's unit: its role.
-pub fn unit_name(k: &Kind) -> &'static str {
-    k.role
+/// The ingress and protocol of `<ingress>.<protocol>`.
+fn split_export(v: &Value) -> Option<(&str, &str)> {
+    v.as_str()?
+        .split_once('.')
+        .filter(|(i, p)| is_text(i) && is_text(p) && !p.contains('.'))
 }
 
-/// The file name of a UI's archive among the bundle's `files`.
-pub fn archive_name(k: &Kind) -> String {
-    format!("{}.tar", k.role)
+/// The source of a UI of the consumer's own, when it is of the right form.
+fn own_source(v: &Value) -> Option<Source> {
+    let m = v.as_object()?;
+    match (&m.get("ess_ui"), &m.get("archive"), &m.get("digest")) {
+        (Some(Value::String(f)), None, None) if is_text(f) => Some(Source::EssUi(f.clone())),
+        (None, Some(Value::String(f)), Some(Value::String(d))) if is_text(f) && is_digest(d) => {
+            Some(Source::Archive {
+                file: f.clone(),
+                digest: d.clone(),
+            })
+        }
+        _ => None,
+    }
 }
 
-/// The UIs the binding asks for, in the order of [`KINDS`].
-pub fn asked(binding: &Value) -> Vec<&'static Kind> {
+/// Whether `u` serves its export: the first of `all` (the UIs the binding asks for, in their
+/// order) that serves that export of that ingress does; another one beside it listens on a port
+/// of its own.
+pub fn serves_export(u: &Ui, all: &[Ui]) -> bool {
+    all.iter()
+        .find(|x| x.ingress == u.ingress && x.export == u.export)
+        .is_some_and(|x| x.key == u.key)
+}
+
+/// The file name of a UI's archive among the bundle's `files`: `<unit>.tar`.
+pub fn archive_name(u: &Ui) -> String {
+    format!("{}.tar", u.name)
+}
+
+/// The UIs the binding asks for: the built-in ones in the order of [`BUILT_IN`], then the
+/// consumer's own by key. An entry of the consumer's own of the wrong form is left out
+/// ([`problems`] names it).
+pub fn asked(binding: &Value) -> Vec<Ui> {
     let Some(ui) = binding["ui"].as_object() else {
         return Vec::new();
     };
-    KINDS.iter().filter(|k| ui.contains_key(k.key)).collect()
+    let mut out: Vec<Ui> = BUILT_IN
+        .iter()
+        .filter(|b| ui.contains_key(b.key))
+        .map(|b| Ui {
+            key: b.key.to_owned(),
+            name: b.role.to_owned(),
+            role: b.role,
+            ingress: BUILT_IN_EXPORT.0.to_owned(),
+            export: BUILT_IN_EXPORT.1.to_owned(),
+            source: Source::Built(b.build),
+        })
+        .collect();
+    for (key, v) in ui {
+        if BUILT_IN.iter().any(|b| b.key == key) || !is_unit_name(key) {
+            continue;
+        }
+        let (Some((ingress, export)), Some(source)) =
+            (split_export(&v["export"]), own_source(&v["source"]))
+        else {
+            continue;
+        };
+        out.push(Ui {
+            key: key.clone(),
+            name: key.clone(),
+            role: OWN_ROLE,
+            ingress: ingress.to_owned(),
+            export: export.to_owned(),
+            source,
+        });
+    }
+    out
 }
 
-/// The problems of the form of the binding's `ui:`: `{<ui>: {port?, bind?, upstream?: {unit?,
-/// port?}}}`, one line each.
+/// The problems of the form of the binding's `ui:`, one line each: `{<ui>: {port?, bind?,
+/// upstream?: {unit?, port?}}}` for a built-in UI, and with `source` and `export` for a UI of the
+/// consumer's own.
 pub fn problems(binding: &Value, out: &mut Vec<String>) {
     let ui = match &binding["ui"] {
         Value::Null => return,
@@ -146,19 +242,29 @@ pub fn problems(binding: &Value, out: &mut Vec<String>) {
         }
     };
     for (key, v) in ui {
-        if !KINDS.iter().any(|k| k.key == key) {
-            let known: Vec<&str> = KINDS.iter().map(|k| k.key).collect();
-            out.push(format!("ui: `{key}` is not one of {}", known.join(", ")));
+        let built_in = BUILT_IN.iter().any(|b| b.key == key);
+        if !built_in && !is_unit_name(key) {
+            out.push(format!(
+                "ui: `{key}` is neither a built-in UI ({}) nor a unit name (lower-case letters, digits and `-`, starting with a letter)",
+                BUILT_IN.iter().map(|b| b.key).collect::<Vec<_>>().join(", ")
+            ));
             continue;
         }
         let entry = match v {
-            Value::Null => continue,
+            Value::Null if built_in => continue,
             Value::Object(m) => m,
-            _ => {
+            _ if built_in => {
                 out.push(format!("ui: `{key}` is a mapping"));
                 continue;
             }
+            _ => {
+                out.push(format!(
+                    "ui: `{key}` is a mapping with `source` and `export`"
+                ));
+                continue;
+            }
         };
+        let keys = if built_in { KEYS } else { OWN_KEYS };
         for (k, x) in entry {
             match k.as_str() {
                 "port" if is_port(x) => {}
@@ -166,10 +272,25 @@ pub fn problems(binding: &Value, out: &mut Vec<String>) {
                 "bind" if x.as_str().is_some_and(|b| BIND.contains(&b)) => {}
                 "bind" => out.push(format!("ui: {key}: bind is one of {}", BIND.join(", "))),
                 "upstream" => upstream_problems(key, x, out),
+                "source" if !built_in && own_source(x).is_some() => {}
+                "source" if !built_in => out.push(format!(
+                    "ui: {key}: source is {{ess_ui: <file>}} or {{archive: <file>, digest: sha256:<hex>}}"
+                )),
+                "export" if !built_in && split_export(x).is_some() => {}
+                "export" if !built_in => out.push(format!(
+                    "ui: {key}: export is `<ingress>.<protocol>`, the export the UI serves"
+                )),
                 other => out.push(format!(
                     "ui: {key}: unknown key `{other}` (one of {})",
-                    KEYS.join(", ")
+                    keys.join(", ")
                 )),
+            }
+        }
+        if !built_in {
+            for needed in ["source", "export"] {
+                if !entry.contains_key(needed) {
+                    out.push(format!("ui: {key}: needs `{needed}`"));
+                }
             }
         }
     }
@@ -196,53 +317,42 @@ fn upstream_problems(key: &str, v: &Value, out: &mut Vec<String>) {
     }
 }
 
-/// The problems of the binding's `ui:` that need the contract and the packing: an ingress of the
-/// contract that does not export what the UI serves, a unit of the packing that takes the UI
-/// unit's name, a `part` for the export the UI unit serves, and a port or bind given twice,
-/// differently, under `ui:` and under the export.
-pub fn served_problems(
-    binding: &Value,
-    contract_ingress: &Value,
-    packing: &Packing,
-) -> Vec<String> {
+/// The problems of the binding's `ui:` that need the packing: a unit of the packing or of another
+/// UI that takes the UI unit's name, a `part` for the export the UI unit serves, and a port or
+/// bind given twice, differently, under `ui:` and under the export. An export the architecture
+/// does not have is a finding of admission ([`findings`], `ui_export_unknown`).
+pub fn served_problems(binding: &Value, packing: &Packing) -> Vec<String> {
     let mut out = Vec::new();
-    for k in asked(binding) {
-        let exported = contract_ingress
-            .as_array()
-            .into_iter()
-            .flatten()
-            .filter(|i| i["name"] == k.ingress)
-            .flat_map(|i| i["exports"].as_array().into_iter().flatten())
-            .any(|p| p == k.export);
-        if !exported {
-            out.push(format!(
-                "ui: {}: the contract's ingress {} exports no `{}` for the UI to serve",
-                k.key, k.ingress, k.export
-            ));
-        }
-        if packing.units.iter().any(|u| u.name == unit_name(k)) {
+    let all = asked(binding);
+    for (i, u) in all.iter().enumerate() {
+        if packing.units.iter().any(|x| x.name == u.name) {
             out.push(format!(
                 "ui: {}: the packing has a unit {}, the name of the UI's unit",
-                k.key,
-                unit_name(k)
+                u.key, u.name
             ));
         }
-        if !serves_export(k, binding) {
+        if let Some(other) = all[..i].iter().find(|x| x.name == u.name) {
+            out.push(format!(
+                "ui: {}: {} is the name of the unit of the UI {}",
+                u.key, u.name, other.key
+            ));
+        }
+        if !serves_export(u, &all) {
             continue;
         }
-        let e = &binding["ingress"][k.ingress]["exports"][k.export];
+        let e = &binding["ingress"][&u.ingress]["exports"][&u.export];
         if !e["part"].is_null() {
             out.push(format!(
                 "ingress: {}: exports: {}: part: the {} UI's unit serves this export",
-                k.ingress, k.export, k.key
+                u.ingress, u.export, u.key
             ));
         }
-        let ui = &binding["ui"][k.key];
+        let ui = &binding["ui"][&u.key];
         for field in ["port", "bind"] {
             if !ui[field].is_null() && !e[field].is_null() && ui[field] != e[field] {
                 out.push(format!(
                     "ui: {}: {field} {} is not the {field} of ingress {}'s {} export, {}; give it in one place",
-                    k.key, ui[field], k.ingress, k.export, e[field]
+                    u.key, ui[field], u.ingress, u.export, e[field]
                 ));
             }
         }
@@ -253,17 +363,15 @@ pub fn served_problems(
 /// Point each export a UI serves at the UI's unit and the reserved part [`CONTROL`], with the
 /// port and bind of `ui.<ui>` where the binding's export gives none.
 pub fn serve(entries: &mut [Value], binding: &Value) {
-    for k in asked(binding)
-        .into_iter()
-        .filter(|k| serves_export(k, binding))
-    {
-        let ui = &binding["ui"][k.key];
-        let e = &binding["ingress"][k.ingress]["exports"][k.export];
+    let all = asked(binding);
+    for u in all.iter().filter(|u| serves_export(u, &all)) {
+        let ui = &binding["ui"][&u.key];
+        let e = &binding["ingress"][&u.ingress]["exports"][&u.export];
         for entry in entries
             .iter_mut()
-            .filter(|x| x["ingress"] == k.ingress && x["protocol"] == k.export)
+            .filter(|x| x["ingress"] == u.ingress.as_str() && x["protocol"] == u.export.as_str())
         {
-            entry["unit"] = json!(unit_name(k));
+            entry["unit"] = json!(u.name);
             entry["part"] = json!(CONTROL);
             if e["port"].is_null()
                 && let Some(p) = ui["port"].as_u64()
@@ -282,17 +390,17 @@ pub fn serve(entries: &mut [Value], binding: &Value) {
 /// The upstream of a UI: the unit the binding names, else the unit that serves the UI's
 /// ingress's API export (`ingress` the bundle's entries); its port, the binding's, else that
 /// export's when it is served by the same unit; and the base path written into `config.json`.
-pub fn upstream(k: &Kind, binding: &Value, ingress: &[Value]) -> Value {
-    let u = &binding["ui"][k.key]["upstream"];
+pub fn upstream(u: &Ui, binding: &Value, ingress: &[Value]) -> Value {
+    let up = &binding["ui"][&u.key]["upstream"];
     let api = ingress
         .iter()
-        .find(|e| e["ingress"] == k.ingress && e["protocol"] == k.api);
-    let unit = u["unit"]
+        .find(|e| e["ingress"] == u.ingress.as_str() && e["protocol"] == API);
+    let unit = up["unit"]
         .as_str()
         .or_else(|| api.and_then(|e| e["unit"].as_str()))
         .unwrap_or("core");
     let mut out = json!({ "unit": unit, "path": API_BASE });
-    let port = u["port"].as_u64().or_else(|| {
+    let port = up["port"].as_u64().or_else(|| {
         api.filter(|e| e["unit"] == unit)
             .and_then(|e| e["port"].as_u64())
     });
@@ -302,52 +410,106 @@ pub fn upstream(k: &Kind, binding: &Value, ingress: &[Value]) -> Value {
     out
 }
 
-/// The findings of the UIs the binding asks for that do not need their files: an upstream that
-/// names no unit of the packing (`ui_upstream_unknown`), a UI role or the `service` kind the
-/// accepted list does not hold (`unit_not_hosted`).
+/// The file a UI of the consumer's own names, read from the directory of the binding file that
+/// named it.
+fn source_path(u: &Ui, binding: &Binding, file: &str) -> PathBuf {
+    binding
+        .ui_files
+        .get(&u.key)
+        .cloned()
+        .unwrap_or_else(|| PathBuf::from(file))
+}
+
+/// The archive of a UI whose files the binding gives (`None` for a built-in UI): the bytes of
+/// `{archive}` when they are its `digest` (else `ui_archive_mismatch`, or `ui_build_refused` for
+/// a file that cannot be read); `{ess_ui}` is refused (`ui_build_needs_toolchain`).
+fn given_archive(u: &Ui, binding: &Binding) -> Option<Result<Vec<u8>, Finding>> {
+    match &u.source {
+        Source::Built(_) => None,
+        Source::EssUi(file) => Some(Err(Finding {
+            refusal: "ui_build_needs_toolchain",
+            detail: format!(
+                "ui: {}: source ess_ui {file}: the pages of an ess-ui/1 document are Vue components (agenticspec ui generate) that need node and vite to build, which this binary does not run. Build them, pack the output as a tar and name it as source: {{archive: <file>, digest: sha256:<hex>}}",
+                u.key
+            ),
+        })),
+        Source::Archive { file, digest } => {
+            let path = source_path(u, binding, file);
+            Some(match std::fs::read(&path) {
+                Err(e) => Err(Finding {
+                    refusal: "ui_build_refused",
+                    detail: format!("ui: {}: source archive {file}: {e}", u.key),
+                }),
+                Ok(bytes) if sha256(&bytes) != *digest => Err(Finding {
+                    refusal: "ui_archive_mismatch",
+                    detail: format!(
+                        "ui: {}: source archive {file} is {}, and the binding names {digest}",
+                        u.key,
+                        sha256(&bytes)
+                    ),
+                }),
+                Ok(bytes) => Ok(bytes),
+            })
+        }
+    }
+}
+
+/// The findings of the UIs the binding asks for that do not need a build: an export the
+/// architecture's ingresses do not have (`ui_export_unknown`), an upstream that names no unit of
+/// the packing (`ui_upstream_unknown`), an archive that is not the digest the binding names
+/// (`ui_archive_mismatch`), an `ess-ui/1` source (`ui_build_needs_toolchain`), a UI role or the
+/// `service` kind the accepted list does not hold (`unit_not_hosted`).
 pub fn findings(
-    binding: &Value,
+    binding: &Binding,
     ingress: &[Value],
     packing: &Packing,
     accepts: &Accepts,
 ) -> Vec<Finding> {
     let mut out = Vec::new();
-    for k in asked(binding) {
-        let up = upstream(k, binding, ingress);
+    for u in asked(&binding.doc) {
+        if !ingress
+            .iter()
+            .any(|e| e["ingress"] == u.ingress.as_str() && e["protocol"] == u.export.as_str())
+        {
+            out.push(Finding {
+                refusal: "ui_export_unknown",
+                detail: format!(
+                    "ui: {}: export {}.{} is no export of an ingress of the architecture",
+                    u.key, u.ingress, u.export
+                ),
+            });
+        }
+        let up = upstream(&u, &binding.doc, ingress);
         let unit = up["unit"].as_str().unwrap_or("");
-        if !packing.units.iter().any(|u| u.name == unit) {
+        if !packing.units.iter().any(|x| x.name == unit) {
             out.push(Finding {
                 refusal: "ui_upstream_unknown",
                 detail: format!(
                     "ui: {}: upstream unit {unit} is no unit of the bundle",
-                    k.key
+                    u.key
                 ),
             });
         }
-        out.extend(hosted(k, accepts));
+        if let Some(Err(f)) = given_archive(&u, binding) {
+            out.push(f);
+        }
+        out.extend(hosted(&u.name, u.role, accepts));
     }
     out
 }
 
-fn hosted(k: &Kind, accepts: &Accepts) -> Vec<Finding> {
+fn hosted(name: &str, role: &str, accepts: &Accepts) -> Vec<Finding> {
     let mut out = Vec::new();
     if !accepts.unit_kinds.contains("service") {
         out.push(Finding {
             refusal: "unit_not_hosted",
-            detail: format!(
-                "unit {}: kind service is not in the accepted list",
-                unit_name(k)
-            ),
+            detail: format!("unit {name}: kind service is not in the accepted list"),
         });
     }
-    if !accepts.roles.contains(k.role) {
+    if !accepts.roles.contains(role) {
         out.push(Finding {
             refusal: "unit_not_hosted",
-            detail: format!(
-                "unit {}: role {} is not in the accepted list",
-                unit_name(k),
-                k.role
-            ),
+            detail: format!("unit {name}: role {role} is not in the accepted list"),
         });
     }
     out
@@ -358,43 +520,50 @@ pub type Built = (Vec<Value>, Map<String, Value>);
 
 /// The units of the UIs the binding asks for and the files they carry (the `files` member: per
 /// archive name its `digest`, its size and its bytes in base64), or the finding of a UI whose
-/// files cannot be built (`ui_build_refused`).
+/// files cannot be had (`ui_build_refused`, and those of [`findings`] about the source).
 pub fn units(
     architecture: &Path,
     contract: &Value,
-    binding: &Value,
+    binding: &Binding,
     ingress: &[Value],
 ) -> Result<Built, Vec<Finding>> {
     let mut units = Vec::new();
     let mut files = Map::new();
     let mut findings = Vec::new();
-    for k in asked(binding) {
-        let tar = (k.build)(architecture, contract, API_BASE)
-            .and_then(|f| agenticspec_ui::operator::archive(&f));
+    let doc = &binding.doc;
+    let all = asked(doc);
+    for u in &all {
+        let tar = match (&u.source, given_archive(u, binding)) {
+            (_, Some(given)) => given,
+            (Source::Built(build), None) => build(architecture, contract, API_BASE)
+                .and_then(|f| agenticspec_ui::operator::archive(&f))
+                .map_err(|e| Finding {
+                    refusal: "ui_build_refused",
+                    detail: format!("ui: {}: {e}", u.key),
+                }),
+            (_, None) => continue,
+        };
         let tar = match tar {
             Ok(t) => t,
-            Err(e) => {
-                findings.push(Finding {
-                    refusal: "ui_build_refused",
-                    detail: format!("ui: {}: {e}", k.key),
-                });
+            Err(f) => {
+                findings.push(f);
                 continue;
             }
         };
         let digest = sha256(&tar);
-        let archive = archive_name(k);
-        let name = unit_name(k);
+        let archive = archive_name(u);
+        let name = u.name.as_str();
         // The export's port when the unit serves the export, else the port `ui.<ui>` gives it.
-        let port = if serves_export(k, binding) {
+        let port = if serves_export(u, &all) {
             ingress
                 .iter()
-                .find(|e| e["ingress"] == k.ingress && e["protocol"] == k.export)
+                .find(|e| e["ingress"] == u.ingress.as_str() && e["protocol"] == u.export.as_str())
                 .and_then(|e| e["port"].as_u64())
         } else {
-            binding["ui"][k.key]["port"].as_u64()
+            doc["ui"][&u.key]["port"].as_u64()
         };
         // Each check on the export's port, unless `checks.<unit>.<check>.port` gives its own.
-        let given = &binding["checks"][name];
+        let given = &doc["checks"][name];
         let check = |c: &str| {
             let mut v = json!({ "kind": "http", "path": "/" });
             if let Some(p) = given[c]["port"].as_u64().or(port) {
@@ -403,14 +572,14 @@ pub fn units(
             v
         };
         // The claims `claims.<unit>` gives, as for any other unit.
-        let c = &binding["claims"][name];
+        let c = &doc["claims"][name];
         units.push(json!({
             "name": name,
             "kind": "service",
             "parts": [],
             "replicas": 1,
             "code": { "kind": "static", "archive": archive, "digest": digest },
-            "upstream": upstream(k, binding, ingress),
+            "upstream": upstream(u, doc, ingress),
             "claims": {
                 "cpu_millis": c["cpu_millis"].as_u64().unwrap_or(super::bundle::DEFAULT_CPU_MILLIS),
                 "memory_mib": c["memory_mib"].as_u64().unwrap_or(super::bundle::DEFAULT_MEMORY_MIB),
@@ -421,7 +590,7 @@ pub fn units(
             "checks": { "ready": check("ready"), "alive": check("alive") },
             "secrets": [],
             "egress": [],
-            "roles": [k.role],
+            "roles": [u.role],
             "ports": [],
             "source": { "unit": name, "parts": [] },
         }));
@@ -485,8 +654,8 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Vec<Finding> {
             });
         }
         for r in u["roles"].as_array().into_iter().flatten() {
-            if let Some(k) = KINDS.iter().find(|k| r == k.role) {
-                out.extend(hosted(k, accepts));
+            if let Some(role) = ROLES.iter().find(|x| *r == **x) {
+                out.extend(hosted(name, role, accepts));
             }
         }
     }

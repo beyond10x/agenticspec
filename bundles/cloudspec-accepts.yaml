@@ -1,4 +1,4 @@
 format: agenticspec-cloudspec-accepts/1
 cloudspec_commit: null
 unit_kinds: [core, agent, service, job, scheduled, store, model]
-roles: [agent-runtime, core-runtime, start-jobs, model-route, model-server, store, operator-ui, control-plane-ui]
+roles: [agent-runtime, core-runtime, start-jobs, model-route, model-server, store, operator-ui, control-plane-ui, ui]

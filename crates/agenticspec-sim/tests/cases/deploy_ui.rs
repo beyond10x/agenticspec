@@ -355,7 +355,24 @@ fn deploy_bundle_refuses_an_upstream_that_names_no_unit_and_a_ui_of_the_wrong_fo
     assert_eq!(r.code, "not_admitted", "{}", r.detail);
     assert_eq!(names(&r.detail), ["ui_upstream_unknown"], "{}", r.detail);
     for (extra, says) in [
-        ("ui:\n  console: {}\n", "`console` is not one of operator"),
+        ("ui:\n  panel: {}\n", "ui: panel: needs `source`"),
+        ("ui:\n  Console: {}\n", "`Console` is neither a built-in UI"),
+        (
+            "ui:\n  panel: {source: {archive: c.tar}, export: operator.ui}\n",
+            "source is {ess_ui: <file>} or {archive: <file>, digest: sha256:<hex>}",
+        ),
+        (
+            "ui:\n  panel: {source: {ess_ui: c.yaml}, export: ui}\n",
+            "export is `<ingress>.<protocol>`",
+        ),
+        (
+            "ui:\n  operator: {source: {ess_ui: c.yaml}}\n",
+            "unknown key `source`",
+        ),
+        (
+            "ui:\n  gateway: {source: {ess_ui: c.yaml}, export: operator.ui}\n",
+            "the packing has a unit gateway",
+        ),
         (
             "ui:\n  operator: {upstream: {host: x}}\n",
             "unknown key `host`",
@@ -422,4 +439,192 @@ fn base64_reads_back_what_it_writes() {
     for bad in ["Zm8", "Zm=8", "Z===", "Zm8=Zm8=", "Zm!="] {
         assert_eq!(ui::unbase64(bad), None, "{bad}");
     }
+}
+
+/// The archive of the consumer's own UI in the fixture binding.
+const OWN_ARCHIVE: &str = "bundles/bindings/console-ui.tar";
+
+/// `ui.<name>: {source, export, ...}` of a UI of the consumer's own, its archive by absolute path.
+fn own_ui(name: &str, source: &str, export: &str) -> String {
+    format!("ui:\n  {name}:\n    source: {source}\n    export: {export}\n")
+}
+
+fn archive_source(digest: &str) -> String {
+    format!(
+        "{{archive: {}, digest: \"{digest}\"}}",
+        repo_root().join(OWN_ARCHIVE).display()
+    )
+}
+
+fn own_digest() -> String {
+    agenticspec_sim::deploy::sha256(&std::fs::read(repo_root().join(OWN_ARCHIVE)).unwrap())
+}
+
+/// `ui.console: {source: {archive, digest}, export: operator.ui, port: 8091}`: a unit `console`,
+/// `roles: [ui]`, whose code is the consumer's archive, carried byte for byte in `files`, on its
+/// own port beside the operator UI, which keeps the export.
+#[test]
+fn a_ui_of_the_consumers_own_is_a_service_unit_carrying_its_archive() {
+    let v = fixture();
+    let u = unit(&v, "console");
+    assert_eq!(u["kind"], "service");
+    assert_eq!(u["roles"], json!(["ui"]));
+    assert_eq!(u["parts"], json!([]));
+    assert_eq!(u["egress"], json!([]));
+    assert_eq!(
+        u["code"],
+        json!({ "kind": "static", "archive": "console.tar", "digest": own_digest() })
+    );
+    for check in ["ready", "alive"] {
+        assert_eq!(
+            u["checks"][check],
+            json!({ "kind": "http", "path": "/", "port": 8091 }),
+            "{check}"
+        );
+    }
+    assert_eq!(
+        u["upstream"],
+        json!({ "unit": "core", "port": 8080, "path": "/api/" })
+    );
+    let file = &v["files"]["console.tar"];
+    assert_eq!(file["digest"], own_digest());
+    assert_eq!(
+        ui::unbase64(file["base64"].as_str().unwrap()).unwrap(),
+        std::fs::read(repo_root().join(OWN_ARCHIVE)).unwrap()
+    );
+    assert_eq!(entry(&v, "operator", "ui")["unit"], "operator-ui");
+    // Asked alone, it serves its export; the binding's file name is read beside the binding.
+    let dir = scratch("deploy-ui-own-alone");
+    let text = refining(
+        "bundles/bindings/split.yaml",
+        &own_ui("console", &archive_source(&own_digest()), "operator.ui"),
+    );
+    let alone = bundle_of(&dir, &text).unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let e = entry(&alone, "operator", "ui");
+    assert_eq!(
+        (&e["unit"], &e["part"]),
+        (&json!("console"), &json!("control"))
+    );
+    assert_eq!(unit(&alone, "console")["checks"]["ready"]["port"], 8080);
+    // The fixture bundle, with its `console` unit, passes `deploy check`.
+    check_tampered(&dir, |_| {}).unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+}
+
+/// An archive whose bytes are not the digest the binding names is refused at bundle time, and a
+/// carried archive changed afterwards at check time, both `ui_archive_mismatch`.
+#[test]
+fn an_archive_that_is_not_its_digest_is_refused() {
+    let dir = scratch("deploy-ui-own-mismatch");
+    let wrong = format!("sha256:{}", "0".repeat(64));
+    let r = bundle_of(
+        &dir,
+        &refining(
+            "bundles/bindings/split.yaml",
+            &own_ui("console", &archive_source(&wrong), "operator.ui"),
+        ),
+    )
+    .unwrap_err();
+    assert_eq!(r.code, "not_admitted", "{}", r.detail);
+    assert_eq!(names(&r.detail), ["ui_archive_mismatch"], "{}", r.detail);
+    assert!(r.detail.contains(&own_digest()), "{}", r.detail);
+    let r = check_tampered(&dir, |v| {
+        let b = v["files"]["console.tar"]["base64"].as_str().unwrap();
+        let changed = format!("AAAA{}", &b[4..]);
+        v["files"]["console.tar"]["base64"] = json!(changed);
+    })
+    .unwrap_err();
+    assert_eq!(names(&r.detail), ["ui_archive_mismatch"], "{}", r.detail);
+    // A file that cannot be read does not build.
+    let r = bundle_of(
+        &dir,
+        &refining(
+            "bundles/bindings/split.yaml",
+            &own_ui(
+                "console",
+                &format!("{{archive: missing.tar, digest: \"{}\"}}", own_digest()),
+                "operator.ui",
+            ),
+        ),
+    )
+    .unwrap_err();
+    assert_eq!(names(&r.detail), ["ui_build_refused"], "{}", r.detail);
+}
+
+/// `{ess_ui: <file>}` is refused with `ui_build_needs_toolchain`: the pages `ui generate` writes
+/// need node and vite to build; the refusal names the archive form.
+#[test]
+fn an_ess_ui_source_is_refused_naming_the_archive_form() {
+    let dir = scratch("deploy-ui-own-ess-ui");
+    let doc = repo_root().join("ui/views/examples/workstation.ui.yaml");
+    let r = bundle_of(
+        &dir,
+        &refining(
+            "bundles/bindings/split.yaml",
+            &own_ui(
+                "console",
+                &format!("{{ess_ui: {}}}", doc.display()),
+                "operator.ui",
+            ),
+        ),
+    )
+    .unwrap_err();
+    assert_eq!(r.code, "not_admitted", "{}", r.detail);
+    assert_eq!(
+        names(&r.detail),
+        ["ui_build_needs_toolchain"],
+        "{}",
+        r.detail
+    );
+    for says in ["node and vite", "archive: <file>, digest: sha256:<hex>"] {
+        assert!(r.detail.contains(says), "{says}: {}", r.detail);
+    }
+}
+
+/// An export no ingress of the architecture has is refused with `ui_export_unknown`.
+#[test]
+fn a_ui_of_an_export_the_architecture_has_not_is_refused() {
+    let dir = scratch("deploy-ui-own-export");
+    for export in ["operator.console", "nowhere.ui"] {
+        let r = bundle_of(
+            &dir,
+            &refining(
+                "bundles/bindings/split.yaml",
+                &own_ui("console", &archive_source(&own_digest()), export),
+            ),
+        )
+        .unwrap_err();
+        assert_eq!(r.code, "not_admitted", "{export}: {}", r.detail);
+        assert_eq!(
+            names(&r.detail),
+            ["ui_export_unknown"],
+            "{export}: {}",
+            r.detail
+        );
+        assert!(r.detail.contains(export), "{}", r.detail);
+    }
+}
+
+/// The built-in sources give the same units, files and ingress with or without a UI of the
+/// consumer's own beside them.
+#[test]
+fn the_built_in_sources_are_unchanged_by_a_ui_of_the_consumers_own() {
+    let dir = scratch("deploy-ui-own-built-in");
+    let without = bundle_of(
+        &dir,
+        &refining(
+            "bundles/bindings/split.yaml",
+            "ui:\n  operator: {}\n  control-plane: {port: 8090}\n",
+        ),
+    )
+    .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let with = fixture();
+    for name in ["operator-ui", "control-plane-ui"] {
+        assert_eq!(unit(&with, name), unit(&without, name), "{name}");
+        let archive = format!("{name}.tar");
+        assert_eq!(
+            with["files"][&archive], without["files"][&archive],
+            "{name}"
+        );
+    }
+    assert_eq!(with["ingress"], without["ingress"]);
 }

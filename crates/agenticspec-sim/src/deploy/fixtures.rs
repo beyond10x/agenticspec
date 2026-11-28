@@ -8,8 +8,9 @@
 //!
 //! The digest of a bundle's sources covers the generator line, the architecture file, the
 //! binding file and every base it refines, each agent document it names, the ports file, the
-//! accepted list, the generator's own sources (this directory and the contract derivation) and,
-//! for a binding that asks for a UI (`ui:`), what its archive is built from.
+//! accepted list, the generator's own sources (this directory and the contract derivation), for a
+//! binding that asks for a built-in UI (`ui:`), what its archive is built from, and the archive of
+//! each UI of the consumer's own.
 //! [`check`] compares those digests without building a bundle; [`stale`] builds every bundle
 //! afresh and compares bytes.
 
@@ -39,8 +40,8 @@ const GENERATOR: &[&str] = &[
     "crates/agenticspec-sim/src/deploy/ui.rs",
 ];
 
-/// What the archive of a UI is built from, a source of each bundle whose binding asks for a UI
-/// (`ui:`): the embedded operator app, panels and model, and the UI's derivation.
+/// What the archive of a built-in UI is built from, a source of each bundle whose binding asks for
+/// one (`ui:`): the embedded operator app, panels and model, and the UI's derivation.
 const UI_SOURCES: &[&str] = &[
     "crates/agenticspec-ui/src/derive/control.rs",
     "crates/agenticspec-ui/src/derive/mod.rs",
@@ -179,12 +180,15 @@ pub fn sources(root: &Path, f: &Fixture) -> Result<Vec<PathBuf>, String> {
         }
     }
     let b = binding::load(&f.binding)?;
-    let asks_ui = !super::ui::asked(&b.doc).is_empty();
+    let builds_ui = super::ui::asked(&b.doc)
+        .iter()
+        .any(|u| matches!(u.source, super::ui::Source::Built(_)));
     out.extend(b.agent_files.into_values());
+    out.extend(b.ui_files.into_values());
     out.push(root.join("blocks/ports.json"));
     out.push(root.join("bundles/cloudspec-accepts.yaml"));
     out.push(root.join("kpis/catalogue.yaml"));
-    if asks_ui {
+    if builds_ui {
         out.extend(UI_SOURCES.iter().map(|s| root.join(s)));
     }
     Ok(out)
