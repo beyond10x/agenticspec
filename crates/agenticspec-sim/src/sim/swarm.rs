@@ -124,11 +124,13 @@ pub(super) struct TrigAcc {
 }
 
 pub(super) fn stagger_of(p: &Value) -> f64 {
-    num(&p["start_stagger"]).unwrap_or(0.0).max(0.0)
+    num(super::setting(p, "start_stagger"))
+        .unwrap_or(0.0)
+        .max(0.0)
 }
 
 pub(super) fn coordination_of(name: &str, p: &Value) -> Result<Coordination, String> {
-    match &p["coordination"] {
+    match super::setting(p, "coordination") {
         Value::Null => Ok(Coordination::None),
         v => match v.as_str() {
             Some("none") => Ok(Coordination::None),
@@ -144,7 +146,7 @@ pub(super) fn coordination_of(name: &str, p: &Value) -> Result<Coordination, Str
 }
 
 pub(super) fn partition_of(name: &str, p: &Value) -> Result<bool, String> {
-    match &p["partition"] {
+    match super::setting(p, "partition") {
         Value::Null => Ok(false),
         v if v == "scope" => Ok(true),
         v => Err(format!("part `{name}`: partition {v}, expected scope")),
@@ -177,10 +179,12 @@ pub(super) fn schedules(arch: &Value) -> Vec<Schedule> {
         .filter(|(_, p)| p["block"] == "schedule")
         .map(|(n, p)| Schedule {
             part: n.clone(),
-            every: num(&p["every"])
+            every: num(super::setting(p, "every"))
                 .filter(|e| *e > 0.0)
                 .unwrap_or(f64::INFINITY),
-            first: num(&p["next_fire_at"]).unwrap_or(0.0).max(0.0),
+            first: num(super::setting(p, "next_fire_at"))
+                .unwrap_or(0.0)
+                .max(0.0),
         })
         .collect()
 }
@@ -214,16 +218,19 @@ pub(super) fn wire(
     let shared = |c: &str| position(channels, c).filter(|c| dist[*c] != Distribution::Direct);
     let mut triggers = Vec::new();
     for (name, p) in parts(arch).filter(|(_, p)| p["block"] == "trigger") {
-        let source = match p["kind"].as_str() {
-            Some("on_schedule") => p["schedule"]
+        let source = match super::setting(p, "kind").as_str() {
+            Some("on_schedule") => super::setting(p, "schedule")
                 .as_str()
                 .and_then(|s| schedules.iter().position(|x| x.part == s))
                 .map_or(Source::Never, Source::Schedule),
-            Some("on_message") => p["channel"]
+            Some("on_message") => super::setting(p, "channel")
                 .as_str()
                 .and_then(shared)
                 .map_or(Source::Never, Source::Channel),
-            Some("on_event") => match p["event_name"].as_str().filter(|e| !e.is_empty()) {
+            Some("on_event") => match super::setting(p, "event_name")
+                .as_str()
+                .filter(|e| !e.is_empty())
+            {
                 None => Source::Never,
                 Some(e) => match events::trigger_kind(e) {
                     Some(k) => Source::Event(k),
@@ -238,13 +245,16 @@ pub(super) fn wire(
             },
             _ => Source::Never,
         };
-        let policy = match p["policy"].as_str() {
+        let policy = match super::setting(p, "policy").as_str() {
             Some("queue") => Policy::Queue,
             Some("parallel") => Policy::Parallel,
             _ => Policy::Skip,
         };
         let max_parallel = match policy {
-            Policy::Parallel => num(&p["max_parallel"]).unwrap_or(1.0).round().max(1.0) as usize,
+            Policy::Parallel => num(super::setting(p, "max_parallel"))
+                .unwrap_or(1.0)
+                .round()
+                .max(1.0) as usize,
             _ => 1,
         };
         triggers.push(Trigger {
@@ -252,10 +262,10 @@ pub(super) fn wire(
             source,
             policy,
             max_parallel,
-            template: !p["task_template"].is_null(),
-            takes_all: p["takes"] == "all",
+            template: !super::setting(p, "task_template").is_null(),
+            takes_all: super::setting(p, "takes") == "all",
             wakes: Vec::new(),
-            on: p["source"].as_str().map(str::to_string),
+            on: super::setting(p, "source").as_str().map(str::to_string),
         });
     }
     for l in links(arch).filter(|l| l["carries"] == "trigger") {

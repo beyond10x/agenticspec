@@ -5,6 +5,7 @@ use super::common::{ARCH, repo_root, yaml};
 use agenticspec_sim::check::{GATE_KPIS, Refusal, check};
 use agenticspec_sim::settings::{self, Kind, Narrows};
 use serde_json::{Value, json};
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 fn refused(arch: &Value) -> Vec<(String, String)> {
@@ -356,4 +357,114 @@ fn every_committed_architecture_checks_clean() {
             .collect();
         assert!(refusals.is_empty(), "{}: {refusals:?}", path.display());
     }
+}
+
+/// The table and the simulator: every setting `sim::PART_READS` says the simulator reads from a
+/// part of a block is a setting the table declares for that block, so `sim check` accepts what
+/// `sim run` simulates.
+#[test]
+fn every_setting_the_simulator_reads_is_declared_for_its_block() {
+    let t = settings::table();
+    let mut missing = Vec::new();
+    for (block, keys) in agenticspec_sim::sim::PART_READS {
+        assert!(
+            t.block(block).is_some(),
+            "the table lists no block `{block}`"
+        );
+        let names = t.names(block);
+        for key in *keys {
+            if !names.contains(key) {
+                missing.push(format!("{block}.{key}"));
+            }
+        }
+    }
+    assert!(
+        missing.is_empty(),
+        "the simulator reads settings blocks/settings.yaml does not declare: {missing:?}"
+    );
+}
+
+/// The sources of the simulator (`src/sim.rs` and `src/sim/`), the body of `fn setting` left out.
+fn simulator_sources() -> Vec<(String, String)> {
+    let src = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut files = vec![src.join("sim.rs")];
+    let mut sub: Vec<PathBuf> = std::fs::read_dir(src.join("sim"))
+        .unwrap()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == "rs"))
+        .collect();
+    sub.sort();
+    files.extend(sub);
+    files
+        .into_iter()
+        .map(|f| {
+            let text = std::fs::read_to_string(&f).unwrap();
+            let text = match text.find("fn setting<'a>") {
+                Some(start) => {
+                    let end = start + text[start..].find("\n}\n").expect("end of fn setting");
+                    format!("{}{}", &text[..start], &text[end..])
+                }
+                None => text,
+            };
+            (f.display().to_string(), text)
+        })
+        .collect()
+}
+
+/// `PART_READS` cannot fall behind the code: the simulator reads a part's setting only through
+/// `setting` (which asserts in a debug build that the part's block lists the key), every key it
+/// names there is listed, and every listed key is read.
+#[test]
+fn the_simulator_reads_a_part_only_through_setting() {
+    let raw = [
+        // `p["kind"]`, `p[key]`, `p.get("kind")`: a part read past `setting`.
+        regex::Regex::new(r#"\bp\s*\[\s*("(\w+)"|[a-z_]+)\s*\]|\bp\.get\("#).unwrap(),
+        // `part(n)["route"]`, `arch["parts"][n]["route"]`.
+        regex::Regex::new(r#"\bpart\([^)]*\)\s*\[|\["parts"\]\s*\[[^\]]+\]\s*\["#).unwrap(),
+    ];
+    let named = regex::Regex::new(r#"\bsetting\([^,]+,\s*"(\w+)"\s*\)"#).unwrap();
+    let listed: BTreeSet<&str> = agenticspec_sim::sim::PART_READS
+        .iter()
+        .flat_map(|(_, keys)| keys.iter().copied())
+        .collect();
+    let mut read = BTreeSet::new();
+    let mut past = Vec::new();
+    for (file, text) in simulator_sources() {
+        for (n, line) in text.lines().enumerate() {
+            for re in &raw {
+                for m in re.captures_iter(line) {
+                    if m.get(2).map(|k| k.as_str()) != Some("block") {
+                        past.push(format!("{file}:{}: {}", n + 1, line.trim()));
+                    }
+                }
+            }
+            for m in named.captures_iter(line) {
+                read.insert(m[1].to_string());
+            }
+        }
+    }
+    assert!(
+        past.is_empty(),
+        "read a part through sim::setting, and list the key in PART_READS:\n{}",
+        past.join("\n")
+    );
+    let unlisted: Vec<&String> = read
+        .iter()
+        .filter(|k| !listed.contains(k.as_str()))
+        .collect();
+    assert!(
+        unlisted.is_empty(),
+        "read but not in PART_READS: {unlisted:?}"
+    );
+    // Read through `check`, not `setting`: an agent's `role` (also read through `setting`) and a
+    // channel's `distribution`.
+    let stale: Vec<&&str> = listed
+        .iter()
+        .filter(|k| !read.contains(**k) && **k != "distribution")
+        .collect();
+    assert!(
+        stale.is_empty(),
+        "listed in PART_READS, never read: {stale:?}"
+    );
 }
