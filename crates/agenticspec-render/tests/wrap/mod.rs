@@ -346,8 +346,9 @@ fn bands_109() -> Page {
 }
 
 /// The opening zoom of the two large fixtures in the reference view. Before rows wrapped,
-/// `bands-109` was 12408 × 5492 and opened at 0.097 (its band of 65 nodes in one row); the
-/// 37-part fixture was 2761 × 1354 at 0.434, and keeps that: none of its rows of cards is wider
+/// `bands-109` was 12408 × 5492 and opened at 0.097 (its band of 65 nodes in one row); with
+/// wrapped rows but one lane per edge between bands it was 2416 × 6252 at 0.102, and with shared
+/// lanes it is 2416 × 2378 at 0.268. The 37-part fixture was 2761 × 1354 at 0.434, and keeps that: none of its rows of cards is wider
 /// than the wrap width.
 #[test]
 fn large_graphs_open_at_a_larger_fit() {
@@ -361,7 +362,7 @@ fn large_graphs_open_at_a_larger_fit() {
         w <= WRAP_WIDTH + 2.0 * 18.0,
         "bands-109 is {w} wide, the wrap width {WRAP_WIDTH}"
     );
-    assert!(z > 0.097, "bands-109 opens at {z:.3} ({w} x {h})");
+    assert!(z >= 0.25, "bands-109 opens at {z:.3} ({w} x {h})");
     let crossed = crossings(svg);
     assert!(crossed.is_empty(), "{}", crossed.join("\n"));
 
