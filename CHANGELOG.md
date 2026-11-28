@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- The architecture block records where an entity of a lower block sits: `agentic.architecture.Placement` (architecture, revision, part path, copy, entity name and id), recorded by the runtime through `PlaceEntity` and read through the view `Placements`, filtered by part path, copy and entity name. A row of any block view is in scope of a part when its own id, or an id field of its view one hop away, is placed to that part
+
 ## [0.4.1] - 2026-11-28
 
 ### Fixed

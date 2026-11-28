@@ -1,0 +1,315 @@
+# Every refusal of PlaceEntity on two committed architectures. Synthesis arranges no committed
+# revision (CommitRevision needs parts and links it cannot arrange), so none of these outcomes has
+# a synthesized scenario. Architecture `a` has a lead (one copy), three workers and a workspace
+# per worker; architecture `b` has one agent. Only the placements that are not refused are
+# recorded.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: placements-refused
+summary: PlaceEntity refuses each placement it must refuse and records only the three it must not.
+
+arrange:
+  - instance: a
+    entity: agentic.architecture.Architecture
+  - instance: rev-a
+    entity: agentic.architecture.ArchitectureRevision
+  - instance: b
+    entity: agentic.architecture.Architecture
+  - instance: rev-b
+    entity: agentic.architecture.ArchitectureRevision
+
+timeline:
+  # architecture a
+  - at: 2026-11-28T10:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: a}
+    outcome: created
+    capture: {instance: a, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+  - at: 2026-11-28T10:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000201
+      architecture_id: {$instance: a}
+      name: lead
+      kind: Agent
+      count: 1
+      settings: []
+    outcome: added
+  - at: 2026-11-28T10:00:02Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000202
+      architecture_id: {$instance: a}
+      name: worker
+      kind: Agent
+      count: 3
+      settings: []
+    outcome: added
+  - at: 2026-11-28T10:00:03Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000203
+      architecture_id: {$instance: a}
+      name: gateway
+      kind: Gateway
+      count: 1
+      settings: []
+    outcome: added
+  - at: 2026-11-28T10:00:04Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000204
+      architecture_id: {$instance: a}
+      name: tree
+      kind: Workspace
+      count: 1
+      settings: []
+    outcome: added
+  - at: 2026-11-28T10:00:05Z
+    command: agentic.architecture.SetPer
+    input:
+      architecture_id: {$instance: a}
+      part_id: 00000000-0000-4000-8000-000000000204
+      per_part_id: 00000000-0000-4000-8000-000000000202
+    outcome: set
+  - at: 2026-11-28T10:00:06Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: a}
+      from_part_id: 00000000-0000-4000-8000-000000000201
+      to_part_id: 00000000-0000-4000-8000-000000000203
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T10:00:07Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: a}
+      from_part_id: 00000000-0000-4000-8000-000000000202
+      to_part_id: 00000000-0000-4000-8000-000000000203
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T10:00:08Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: a}}
+    outcome: committed
+    capture: {instance: rev-a, event: agentic.architecture.RevisionCommitted, field: revision_id}
+
+  # architecture b
+  - at: 2026-11-28T10:00:09Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: b}
+    outcome: created
+    capture: {instance: b, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+  - at: 2026-11-28T10:00:10Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000211
+      architecture_id: {$instance: b}
+      name: solo
+      kind: Agent
+      count: 1
+      settings: []
+    outcome: added
+  - at: 2026-11-28T10:00:11Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000212
+      architecture_id: {$instance: b}
+      name: gateway
+      kind: Gateway
+      count: 1
+      settings: []
+    outcome: added
+  - at: 2026-11-28T10:00:12Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: b}
+      from_part_id: 00000000-0000-4000-8000-000000000211
+      to_part_id: 00000000-0000-4000-8000-000000000212
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T10:00:13Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: b}}
+    outcome: committed
+    capture: {instance: rev-b, event: agentic.architecture.RevisionCommitted, field: revision_id}
+
+  # The lead's harness session is placed.
+  - at: 2026-11-28T10:00:20Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000201
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a1
+    outcome: placed
+
+  # A copy is counted from 1.
+  - at: 2026-11-28T10:00:21Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000202
+      instance: 0
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a2
+    outcome: invalid-instance
+    error: {name: agentic.architecture.InvalidInstance}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  - at: 2026-11-28T10:00:22Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: 00000000-0000-4000-8000-0000000002ff
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000201
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a3
+    outcome: no-such-architecture
+    error: {name: agentic.architecture.NoSuchArchitecture}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  - at: 2026-11-28T10:00:23Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: 00000000-0000-4000-8000-0000000002fe
+      part_id: 00000000-0000-4000-8000-000000000201
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a3
+    outcome: no-such-revision
+    error: {name: agentic.architecture.NoSuchRevision}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  - at: 2026-11-28T10:00:24Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-0000000002fd
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a3
+    outcome: no-such-part
+    error: {name: agentic.architecture.NoSuchPart}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  # The revision of b is not a revision of a.
+  - at: 2026-11-28T10:00:25Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-b}
+      part_id: 00000000-0000-4000-8000-000000000201
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a3
+    outcome: foreign-revision
+    error: {name: agentic.architecture.ForeignRevision}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  # The part solo of b is not in the revision of a.
+  - at: 2026-11-28T10:00:26Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000211
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a3
+    outcome: part-not-in-revision
+    error: {name: agentic.architecture.PartNotInRevision}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  # The lead runs one copy and is per no part.
+  - at: 2026-11-28T10:00:27Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000201
+      instance: 1
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a3
+    outcome: instance-without-copies
+    error: {name: agentic.architecture.InstanceWithoutCopies}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  # The workers run three copies.
+  - at: 2026-11-28T10:00:28Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000202
+      instance: 4
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a3
+    outcome: instance-out-of-range
+    error: {name: agentic.architecture.InstanceOutOfRange}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  # The lead's harness session a second time.
+  - at: 2026-11-28T10:00:29Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000201
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a1
+    outcome: exists
+    error: {name: agentic.architecture.PlacementExists}
+    no_events: [agentic.architecture.EntityPlaced]
+
+  # The last worker copy, and a workspace of a copy of the per part: the copies of a per part are
+  # not range-checked.
+  - at: 2026-11-28T10:00:30Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000202
+      instance: 3
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000002a4
+    outcome: placed
+  - at: 2026-11-28T10:00:31Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: a}
+      revision_id: {$instance: rev-a}
+      part_id: 00000000-0000-4000-8000-000000000204
+      instance: 7
+      entity_name: agentic.workspace.Workspace
+      entity_id: 00000000-0000-4000-8000-0000000002b1
+    outcome: placed
+
+assert:
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: a}
+    counts:
+      at_least: 3
+      at_most: 3
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: a}
+      entity_name: agentic.workspace.Workspace
+    contains:
+      part_path: tree
+      instance: 7
+      entity_id: 00000000-0000-4000-8000-0000000002b1
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: a}
+      entity_name: agentic.workspace.Workspace
+    counts:
+      at_least: 1
+      at_most: 1
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: b}
+    counts:
+      at_least: 0
+      at_most: 0

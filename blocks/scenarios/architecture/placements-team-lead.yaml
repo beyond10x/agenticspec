@@ -1,0 +1,149 @@
+# A team lowered flat (its parts named by their path), committed, and the harness sessions the
+# runtime created for its parts placed: one on `team.lead`, one on copy 2 of `team.worker`. The
+# Placements view narrows the placements of the architecture to one part path and one copy.
+type: ess-scenario/7
+domain: agentic.architecture
+scenario: placements-team-lead
+summary: A harness session placed to part team.lead of a revision is read back from Placements for that part, and not for another part.
+
+arrange:
+  - instance: arch
+    entity: agentic.architecture.Architecture
+  - instance: rev
+    entity: agentic.architecture.ArchitectureRevision
+
+timeline:
+  - at: 2026-11-28T09:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: team}
+    outcome: created
+    capture: {instance: arch, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+
+  - at: 2026-11-28T09:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000101
+      architecture_id: {$instance: arch}
+      name: team.lead
+      kind: Agent
+      count: 1
+      settings: [{name: harness, value: coding}]
+    outcome: added
+  - at: 2026-11-28T09:00:02Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000102
+      architecture_id: {$instance: arch}
+      name: team.worker
+      kind: Agent
+      count: 3
+      settings: [{name: harness, value: coding}]
+    outcome: added
+  - at: 2026-11-28T09:00:03Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000103
+      architecture_id: {$instance: arch}
+      name: gateway
+      kind: Gateway
+      count: 1
+      settings: []
+    outcome: added
+
+  - at: 2026-11-28T09:00:04Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: arch}
+      from_part_id: 00000000-0000-4000-8000-000000000101
+      to_part_id: 00000000-0000-4000-8000-000000000103
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T09:00:05Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: arch}
+      from_part_id: 00000000-0000-4000-8000-000000000102
+      to_part_id: 00000000-0000-4000-8000-000000000103
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T09:00:06Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: arch}
+      from_part_id: 00000000-0000-4000-8000-000000000101
+      to_part_id: 00000000-0000-4000-8000-000000000102
+      carries: Order
+    outcome: added
+
+  - at: 2026-11-28T09:00:07Z
+    command: agentic.architecture.CommitRevision
+    input:
+      architecture_id: {$instance: arch}
+    outcome: committed
+    capture: {instance: rev, event: agentic.architecture.RevisionCommitted, field: revision_id}
+
+  # The harness session of the lead, on the part as a whole.
+  - at: 2026-11-28T09:00:08Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: arch}
+      revision_id: {$instance: rev}
+      part_id: 00000000-0000-4000-8000-000000000101
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000001a1
+    outcome: placed
+    events:
+      - event: agentic.architecture.EntityPlaced
+        payload:
+          part_path: team.lead
+          entity_id: 00000000-0000-4000-8000-0000000001a1
+
+  # The harness session of the second worker copy.
+  - at: 2026-11-28T09:00:09Z
+    command: agentic.architecture.PlaceEntity
+    input:
+      architecture_id: {$instance: arch}
+      revision_id: {$instance: rev}
+      part_id: 00000000-0000-4000-8000-000000000102
+      instance: 2
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000001a2
+    outcome: placed
+
+assert:
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: arch}
+      part_path: team.lead
+    contains:
+      part_path: team.lead
+      entity_name: agentic.harness.HarnessSession
+      entity_id: 00000000-0000-4000-8000-0000000001a1
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: arch}
+      part_path: team.lead
+    excludes:
+      entity_id: 00000000-0000-4000-8000-0000000001a2
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: arch}
+      part_path: team.worker
+      instance: 2
+    contains:
+      instance: 2
+      entity_id: 00000000-0000-4000-8000-0000000001a2
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: arch}
+      part_path: team.worker
+      instance: 1
+    counts:
+      at_least: 0
+      at_most: 0
+  - view: agentic.architecture.Placements
+    params:
+      architecture_id: {$instance: arch}
+    counts:
+      at_least: 2
+      at_most: 2

@@ -481,9 +481,9 @@
       "y": 290.0
     },
     {
-      "commands": 16,
-      "entities": 8,
-      "events": 16,
+      "commands": 17,
+      "entities": 9,
+      "events": 17,
       "family": "composition",
       "h": 92.0,
       "kpis": 12,
@@ -498,7 +498,7 @@
       "uses": [
         "shared"
       ],
-      "views": 8,
+      "views": 9,
       "w": 181.5,
       "x": 345.5,
       "y": 148.0

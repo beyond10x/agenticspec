@@ -33,6 +33,8 @@ scenarios:
   - scenarios/architecture/workstation-unknown-part.yaml
   - scenarios/architecture/schedule-swarm-committed.yaml
   - scenarios/architecture/trigger-link-to-non-agent.yaml
+  - scenarios/architecture/placements-team-lead.yaml
+  - scenarios/architecture/placements-refused.yaml
   - scenarios/architecture/solo-contract-recorded.yaml
   - scenarios/channel/queue-post-taken-once.yaml
   - scenarios/resource/claim-withdrawn-from-queue.yaml
