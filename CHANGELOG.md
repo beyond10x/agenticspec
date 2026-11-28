@@ -118,6 +118,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Blocks: `agentic.deployment.RollBack` refuses an installation whose replaced installation was rolled back itself (outcome `replaced-not-reactivatable`, error `NothingToRollBackTo`). Before, the rollback ended the current installation and skipped the reactivation, so the runtime held no Active installation
+- Blocks: `agentic.store.PutRecord` refuses a put under a key that a record is being written under, not only one a record is present under (`key-taken`, `KeyTaken`). Before, two puts of one key before either was confirmed were both confirmed, so an artifact store held one content twice
+- Blocks: `agentic.gateway.AdmitCall` records a call that names an upstream behind another gateway as `NoUpstream` (outcome `no-upstream-foreign`). Before, a gateway with no upstream of its own admitted it
+- Blocks: `agentic.architecture.CommitRevision` refuses an architecture with a gateway part that has no link carrying model calls to a model part (outcome `gateway-without-model`, new error `GatewayWithoutModel`), as `agenticspec sim check` already did (`agent_without_model_path`). Before, an agent linked to such a gateway counted as having a path to a model
+- Blocks: the summary of `agentic.store.DeleteRecord` no longer says a delete needs an approval by default: no grant is ApprovalRequired by default and the store block does not check a decision
 - `agenticspec sim check` accepts `model_share` on a runtime or process part, as on an agent: the simulator already split such a part's model calls by it, and the check refused it (`setting_unknown`). The simulator reads `coordination`, `start_stagger` and `partition` only on agent parts; a runtime or process part's copies take the defaults, as the check's `swarm_needs_agent` and the settings table already said
 - The render model (`agenticspec-render-model/1`) draws every edge between two nodes of one region: one between cards that do not stand side by side, or that crosses the frame of a region inside it, runs on a lane of its own below what the region holds. Before, such edges were not drawn at all
 

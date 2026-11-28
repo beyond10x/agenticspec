@@ -185,7 +185,7 @@ Called by: Store owner.
 
 ### DeleteRecord
 
-**Delete a record.** A writer deletes a present record; it leaves a tombstone. Deleting data cannot be undone, so the grant for this action is ApprovalRequired by default (`agentic.authority`).
+**Delete a record.** A writer deletes a present record; it leaves a tombstone. Deleting data cannot be undone; whether it needed an approval is decided by `agentic.authority` before the writer reports the delete here, and this block does not check that decision.
 
 Called by: Writer.
 
@@ -294,7 +294,7 @@ Called by: Reader.
 
 ### PutRecord
 
-**Put a record.** A writer asks the store to hold content under a key no present record holds. The record is Writing, at revision 1, until the service that plays the store confirms or fails the put. A put into an artifact store creates an artifact.
+**Put a record.** A writer asks the store to hold content under a key with no record present or being written. The record is Writing, at revision 1, until the service that plays the store confirms or fails the put. A put into an artifact store creates an artifact.
 
 Called by: Writer.
 
@@ -313,7 +313,7 @@ Called by: Writer.
 | `unknown-store` <span className="as-tag as-tag--refused">refused</span> | no Store for `store_id` | `UnknownStore`: No store of this identity exists. |
 | `store-retired` <span className="as-tag as-tag--refused">refused</span> | the Store of `store_id` has `state != Open` | `StoreNotOpen`: The store is retired and takes no new put. |
 | `artifact-not-at-digest` <span className="as-tag as-tag--refused">refused</span> | the Store of `store_id` has `kind == Artifact and input.key != input.content.digest` | `ArtifactNotAtDigest`: A put into an artifact store names a key other than the digest of its content. |
-| `key-taken` <span className="as-tag as-tag--refused">refused</span> | a Record with `store_id == input.store_id and key == input.key and state == Present` | `KeyTaken`: A record is present under this key and the put does not name it as the one it supersedes. In an artifact store, the same content is already stored. |
+| `key-taken` <span className="as-tag as-tag--refused">refused</span> | a Record with `store_id == input.store_id and key == input.key and (state == Writing or state == Present)` | `KeyTaken`: A record is present or being written under this key and the put does not name it as the one it supersedes. In an artifact store, the same content is already stored or being stored. |
 | `requested` | otherwise | creates a **Record** in `Writing`; emits `PutRequested` |
 
 ### QueryStore

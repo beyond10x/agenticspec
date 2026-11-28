@@ -89,18 +89,36 @@ timeline:
       carries: ModelCall
     outcome: added
   - at: 2026-11-28T10:00:08Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000209
+      architecture_id: {$instance: a}
+      name: model
+      kind: Model
+      count: 1
+      settings: [{name: route, value: frontier}]
+    outcome: added
+  - at: 2026-11-28T10:00:09Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: a}
+      from_part_id: 00000000-0000-4000-8000-000000000203
+      to_part_id: 00000000-0000-4000-8000-000000000209
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T10:00:10Z
     command: agentic.architecture.CommitRevision
     input: {architecture_id: {$instance: a}}
     outcome: committed
     capture: {instance: rev-a, event: agentic.architecture.RevisionCommitted, field: revision_id}
 
   # architecture b
-  - at: 2026-11-28T10:00:09Z
+  - at: 2026-11-28T10:00:11Z
     command: agentic.architecture.CreateArchitecture
     input: {name: b}
     outcome: created
     capture: {instance: b, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
-  - at: 2026-11-28T10:00:10Z
+  - at: 2026-11-28T10:00:12Z
     command: agentic.architecture.AddPart
     input:
       part_id: 00000000-0000-4000-8000-000000000211
@@ -110,7 +128,7 @@ timeline:
       count: 1
       settings: []
     outcome: added
-  - at: 2026-11-28T10:00:11Z
+  - at: 2026-11-28T10:00:13Z
     command: agentic.architecture.AddPart
     input:
       part_id: 00000000-0000-4000-8000-000000000212
@@ -120,7 +138,7 @@ timeline:
       count: 1
       settings: []
     outcome: added
-  - at: 2026-11-28T10:00:12Z
+  - at: 2026-11-28T10:00:14Z
     command: agentic.architecture.AddLink
     input:
       architecture_id: {$instance: b}
@@ -128,14 +146,32 @@ timeline:
       to_part_id: 00000000-0000-4000-8000-000000000212
       carries: ModelCall
     outcome: added
-  - at: 2026-11-28T10:00:13Z
+  - at: 2026-11-28T10:00:15Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000219
+      architecture_id: {$instance: b}
+      name: model
+      kind: Model
+      count: 1
+      settings: [{name: route, value: frontier}]
+    outcome: added
+  - at: 2026-11-28T10:00:16Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: b}
+      from_part_id: 00000000-0000-4000-8000-000000000212
+      to_part_id: 00000000-0000-4000-8000-000000000219
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T10:00:17Z
     command: agentic.architecture.CommitRevision
     input: {architecture_id: {$instance: b}}
     outcome: committed
     capture: {instance: rev-b, event: agentic.architecture.RevisionCommitted, field: revision_id}
 
   # The lead's harness session is placed.
-  - at: 2026-11-28T10:00:20Z
+  - at: 2026-11-28T10:00:24Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -146,7 +182,7 @@ timeline:
     outcome: placed
 
   # A copy is counted from 1.
-  - at: 2026-11-28T10:00:21Z
+  - at: 2026-11-28T10:00:25Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -159,7 +195,7 @@ timeline:
     error: {name: agentic.architecture.InvalidInstance}
     no_events: [agentic.architecture.EntityPlaced]
 
-  - at: 2026-11-28T10:00:22Z
+  - at: 2026-11-28T10:00:26Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: 00000000-0000-4000-8000-0000000002ff
@@ -171,7 +207,7 @@ timeline:
     error: {name: agentic.architecture.NoSuchArchitecture}
     no_events: [agentic.architecture.EntityPlaced]
 
-  - at: 2026-11-28T10:00:23Z
+  - at: 2026-11-28T10:00:27Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -183,7 +219,7 @@ timeline:
     error: {name: agentic.architecture.NoSuchRevision}
     no_events: [agentic.architecture.EntityPlaced]
 
-  - at: 2026-11-28T10:00:24Z
+  - at: 2026-11-28T10:00:28Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -196,7 +232,7 @@ timeline:
     no_events: [agentic.architecture.EntityPlaced]
 
   # The revision of b is not a revision of a.
-  - at: 2026-11-28T10:00:25Z
+  - at: 2026-11-28T10:00:29Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -209,7 +245,7 @@ timeline:
     no_events: [agentic.architecture.EntityPlaced]
 
   # The part solo of b is not in the revision of a.
-  - at: 2026-11-28T10:00:26Z
+  - at: 2026-11-28T10:00:30Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -222,7 +258,7 @@ timeline:
     no_events: [agentic.architecture.EntityPlaced]
 
   # The lead runs one copy and is per no part.
-  - at: 2026-11-28T10:00:27Z
+  - at: 2026-11-28T10:00:31Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -236,7 +272,7 @@ timeline:
     no_events: [agentic.architecture.EntityPlaced]
 
   # The workers run three copies.
-  - at: 2026-11-28T10:00:28Z
+  - at: 2026-11-28T10:00:32Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -250,7 +286,7 @@ timeline:
     no_events: [agentic.architecture.EntityPlaced]
 
   # The lead's harness session a second time.
-  - at: 2026-11-28T10:00:29Z
+  - at: 2026-11-28T10:00:33Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -264,7 +300,7 @@ timeline:
 
   # The last worker copy, and a workspace of a copy of the per part: the copies of a per part are
   # not range-checked.
-  - at: 2026-11-28T10:00:30Z
+  - at: 2026-11-28T10:00:34Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}
@@ -274,7 +310,7 @@ timeline:
       entity_name: agentic.harness.HarnessSession
       entity_id: 00000000-0000-4000-8000-0000000002a4
     outcome: placed
-  - at: 2026-11-28T10:00:31Z
+  - at: 2026-11-28T10:00:35Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: a}

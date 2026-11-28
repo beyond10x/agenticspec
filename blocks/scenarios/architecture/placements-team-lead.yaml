@@ -76,6 +76,24 @@ timeline:
     outcome: added
 
   - at: 2026-11-28T09:00:07Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-000000000109
+      architecture_id: {$instance: arch}
+      name: model
+      kind: Model
+      count: 1
+      settings: [{name: route, value: frontier}]
+    outcome: added
+  - at: 2026-11-28T09:00:08Z
+    command: agentic.architecture.AddLink
+    input:
+      architecture_id: {$instance: arch}
+      from_part_id: 00000000-0000-4000-8000-000000000103
+      to_part_id: 00000000-0000-4000-8000-000000000109
+      carries: ModelCall
+    outcome: added
+  - at: 2026-11-28T09:00:09Z
     command: agentic.architecture.CommitRevision
     input:
       architecture_id: {$instance: arch}
@@ -83,7 +101,7 @@ timeline:
     capture: {instance: rev, event: agentic.architecture.RevisionCommitted, field: revision_id}
 
   # The harness session of the lead, on the part as a whole.
-  - at: 2026-11-28T09:00:08Z
+  - at: 2026-11-28T09:00:10Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: arch}
@@ -99,7 +117,7 @@ timeline:
           entity_id: 00000000-0000-4000-8000-0000000001a1
 
   # The harness session of the second worker copy.
-  - at: 2026-11-28T09:00:09Z
+  - at: 2026-11-28T09:00:11Z
     command: agentic.architecture.PlaceEntity
     input:
       architecture_id: {$instance: arch}

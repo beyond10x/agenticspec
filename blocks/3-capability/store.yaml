@@ -365,8 +365,8 @@ errors:
 
   - name: agentic.store.KeyTaken
     summary: >-
-      A record is present under this key and the put does not name it as the one it supersedes.
-      In an artifact store, the same content is already stored.
+      A record is present or being written under this key and the put does not name it as the one
+      it supersedes. In an artifact store, the same content is already stored or being stored.
     fields:
       - {name: store_id, type: agentic.shared.StoreId}
       - {name: key, type: String}
@@ -496,9 +496,9 @@ commands:
       wire: put-record
       display: Put a record
       summary: >-
-        A writer asks the store to hold content under a key no present record holds. The record is
-        Writing, at revision 1, until the service that plays the store confirms or fails the put. A
-        put into an artifact store creates an artifact.
+        A writer asks the store to hold content under a key with no record present or being
+        written. The record is Writing, at revision 1, until the service that plays the store
+        confirms or fails the put. A put into an artifact store creates an artifact.
     input:
       - {name: store_id, type: agentic.shared.StoreId}
       - {name: key, type: String}
@@ -536,14 +536,15 @@ commands:
             all:
               - store_id == input.store_id
               - key == input.key
-              - state == Present
+              - any: [state == Writing, state == Present]
           exists: true
         error: agentic.store.KeyTaken
         payload:
           agentic.store.KeyTaken: {store_id: input.store_id, key: input.key}
         summary: >-
-          A record is present under the key; replacing it is a revision (ReviseRecord). In an
-          artifact store the same content is stored already.
+          A record is present or being written under the key; replacing a present one is a
+          revision (ReviseRecord). Two first puts of one key cannot both be confirmed, so in an
+          artifact store one content is never stored twice.
       - name: requested
         creates: agentic.store.Record
         instance: record_id
@@ -778,8 +779,16 @@ commands:
       wire: delete-record
       display: Delete a record
       summary: >-
-        A writer deletes a present record; it leaves a tombstone. Deleting data cannot be undone,
-        so the grant for this action is ApprovalRequired by default (`agentic.authority`).
+        A writer deletes a present record; it leaves a tombstone. Deleting data cannot be undone;
+        whether it needed an approval is decided by `agentic.authority` before the writer reports
+        the delete here, and this block does not check that decision.
+    # UNMAPPED: nothing here refuses a delete that no one approved. design/events-and-storage.md
+    # (E5, E6) wants a delete approved, by a default grant effect ApprovalRequired on a delete row
+    # of a planned action class catalog; the action class is still agentic.shared.ToolCategory,
+    # which has no delete, and no grant has a default. The decision lives in agentic.authority
+    # (layer 6), which this block (layer 3) cannot name. Open question for the owner: a delete
+    # that waits in the store for its approval (a new state and an approving command here), or an
+    # approval in agentic.authority that causes the delete through a binding.
     input:
       - {name: record_id, type: agentic.shared.RecordId}
       - {name: deleted_by, type: agentic.shared.PrincipalId}

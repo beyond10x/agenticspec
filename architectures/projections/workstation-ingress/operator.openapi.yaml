@@ -2599,7 +2599,7 @@ info:
     authenticated: true
     ingress: operator
   x-ess-provenance:
-    contract_digest: slice-sha256/2:d7b596de78ada4dd7aa520cd67356d53d5a76ee2ebf2907144ecc735362a7f8d
+    contract_digest: slice-sha256/2:4ef67764f5b3a0b9ede740f814a54ffdc64c7ced87b75771a42ba626d1c91387
     specification_version: v1
     system: agentic
   x-ess-reached-by: network

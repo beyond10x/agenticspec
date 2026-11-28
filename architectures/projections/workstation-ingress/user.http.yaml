@@ -5,7 +5,7 @@ type: ess-http/1
 specification:
   system: agentic
   version: v1
-  source_digest: sha256:1a9c75e829f70b5fcd1e86362e8903fdfa91bc171a6cc686c64e2bf278a51c2d
+  source_digest: sha256:be4ee76013a21a73a84b3e698ead386a8ee0ca504aa04999d9fe9783d20166e4
 routes:
   - {command: agentic.channel.SendMessage, method: post}
   - {command: agentic.question.Answer, method: post}

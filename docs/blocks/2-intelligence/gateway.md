@@ -110,6 +110,7 @@ Called by: Gateway.
 | `no-upstream` | no Upstream for `upstream_id` | creates a **Call** in `Recorded`; emits `CallDecided` |
 | `gateway-not-serving` <span className="as-tag as-tag--refused">refused</span> | the Gateway of `gateway_id` has `state != Serving` | `GatewayNotServing`: The gateway is draining or stopped, so it admits no new call and takes no new upstream. |
 | `no-upstream-detached` | the Upstream of `upstream_id` has `state == Detached` | creates a **Call** in `Recorded`; emits `CallDecided` |
+| `no-upstream-foreign` | the Upstream of `upstream_id` has `gateway_id != input.gateway_id` | creates a **Call** in `Recorded`; emits `CallDecided` |
 | `rate-limited` | the Upstream of `upstream_id` has `state == Saturated` | creates a **Call** in `Recorded`; emits `CallDecided` |
 | `over-budget` | `budget_left.micro_usd == 0` | creates a **Call** in `Recorded`; emits `CallDecided` |
 | `admitted` | otherwise | creates a **Call** in `Recorded`; emits `CallDecided` |

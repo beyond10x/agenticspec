@@ -365,7 +365,9 @@ errors:
     fields:
       - {name: installation_id, type: agentic.shared.InstallationId}
   - name: agentic.deployment.NothingToRollBackTo
-    summary: The installation replaced none, so there is no revision to roll back to; nothing changed.
+    summary: >-
+      The installation replaced none, or the one it replaced was rolled back itself and cannot be
+      made Active again, so there is no revision to roll back to; nothing changed.
     fields:
       - {name: installation_id, type: agentic.shared.InstallationId}
   - name: agentic.deployment.RunKeyUsed
@@ -586,6 +588,14 @@ commands:
       - name: nothing-to-roll-back-to
         when_subject:
           predicate: {all: [state == Active, not defined(replaces)]}
+        error: agentic.deployment.NothingToRollBackTo
+        payload:
+          agentic.deployment.NothingToRollBackTo: {installation_id: input.installation_id}
+      # The reactivation below skips a replaced installation outside Draining and Drained, which
+      # would end the current installation and leave the runtime with none Active. The replaced
+      # one is rolled back itself once a rollback returned to it and then rolled it back.
+      - name: replaced-not-reactivatable
+        when_related: {via: replaces, predicate: {all: [state != Draining, state != Drained]}}
         error: agentic.deployment.NothingToRollBackTo
         payload:
           agentic.deployment.NothingToRollBackTo: {installation_id: input.installation_id}
