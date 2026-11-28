@@ -532,8 +532,11 @@ fn absolute(v: &Value) -> bool {
 /// local store with neither tag nor digest; `unit_image_conflict`, a core or service unit whose
 /// parts name different images and which names none itself; `unit_image_missing`, a core or
 /// service unit that holds a runtime part and has no image ([`binding_form::unit_image`]);
-/// `volume_mount_missing`, a volume of a unit no part of it mounts at an absolute path. A finding
-/// names the unit, part, runtime or volume, never a value.
+/// `durable_state_unplaceable`, a runtime part with durable state in a unit of
+/// [`STATELESS_KINDS`], or whose state volume's name is taken by a part;
+/// `volume_mount_missing`, a volume of a unit (a workspace's, or a runtime part's durable state)
+/// no part of it mounts at an absolute path. A finding names the unit, part, runtime or volume,
+/// never a value.
 pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> {
     let mut out = Vec::new();
     if binding["target"]["network_policy"] == "not_enforced" {
@@ -634,9 +637,55 @@ pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> 
                 detail,
             });
         }
+        for p in u
+            .parts
+            .iter()
+            .filter(|p| binding_form::durable_state(&arch["parts"][*p]))
+        {
+            let v = binding_form::state_volume(p);
+            if STATELESS_KINDS.contains(&u.kind.as_str()) {
+                out.push(Finding {
+                    refusal: "durable_state_unplaceable",
+                    detail: format!(
+                        "runtime part {p} keeps durable state, and its unit {} is a {} unit, which holds no volume for it (place {p} in a core, service, agent or store unit)",
+                        u.name, u.kind
+                    ),
+                });
+                continue;
+            }
+            if !arch["parts"][&v].is_null() {
+                out.push(Finding {
+                    refusal: "durable_state_unplaceable",
+                    detail: format!(
+                        "runtime part {p} keeps durable state in the volume {v}, and a part of the document has that name"
+                    ),
+                });
+                continue;
+            }
+            let detail = match mount_of(binding, &u.parts, &v) {
+                Some(m) if absolute(m) => continue,
+                Some(_) => format!(
+                    "unit {}: volume {v} (durable state of {p}): its mount is not an absolute path",
+                    u.name
+                ),
+                None => format!(
+                    "unit {}: volume {v} (durable state of {p}) has no mount (a part of the unit names it under `volumes:` with `mount:`, an absolute path)",
+                    u.name
+                ),
+            };
+            out.push(Finding {
+                refusal: "volume_mount_missing",
+                detail,
+            });
+        }
     }
     out
 }
+
+/// The kinds of unit that hold no volume for a runtime part's durable state: they run until
+/// done (`job`, `scheduled`) or serve a model the target runs (`model`)
+/// (`durable_state_unplaceable`).
+pub const STATELESS_KINDS: &[&str] = &["job", "scheduled", "model"];
 
 /// The refusals only `deploy check` gives, beside those of [`super::ui::CHECK_REFUSALS`].
 pub const CHECK_REFUSALS: &[&str] = &[
@@ -1125,12 +1174,30 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
 }
 
 /// The volumes a unit claims: one per workspace part, read-write by one copy when it is
-/// exclusive, read-only by many when shared read-only, read-write by many otherwise; per copy of
-/// its part when it is `per` one.
+/// exclusive, read-only by many when shared read-only, read-write by many otherwise; and one per
+/// runtime part with durable state, `<part>-state`, read-write by one copy. Per copy of its part
+/// when it is `per` one; its size is `parts.<p>.size` of the binding, its mount
+/// `parts.<p>.volumes[].mount` of a part of the unit that names it.
 fn volumes(inputs: &Inputs, parts: &[String]) -> Vec<Value> {
     let mut out = Vec::new();
     for p in parts {
         let part = &inputs.arch["parts"][p];
+        if binding_form::durable_state(part) {
+            let name = binding_form::state_volume(p);
+            let mut v = json!({
+                "name": name,
+                "access": "read_write_once",
+                "per_instance": !part["per"].is_null(),
+            });
+            if let Some(size) = inputs.binding.doc["parts"][p]["size"].as_str() {
+                v["size"] = json!(size);
+            }
+            if let Some(m) = mount_of(&inputs.binding.doc, parts, &name).and_then(Value::as_str) {
+                v["mount"] = json!(m);
+            }
+            out.push(v);
+            continue;
+        }
         if part["block"] != "workspace" {
             continue;
         }

@@ -26,7 +26,7 @@ but `format` and `binding` is optional.
 | `architecture` | the name of the architecture it is for; any architecture when absent |
 | `refines` | a base binding file, relative to this one. The base's keys are read first and this file's keys go over them, mapping by mapping |
 | `target` | what the target gives each unit: `isolation`, one of `none`, `process`, `container`, `user_kernel`, `micro_vm` (`container` when absent); `images`, where it takes runtime images from, `registry` (the default) or `local` (its own image store); `network_policy`, `enforced` or `not_enforced` (unknown when absent) |
-| `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists), `image` (the runtime image of its core or service unit, below), `env` and `args` (configuration of its unit, see [configuration of a unit](#configuration-of-a-unit)) |
+| `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume, or of the durable state volume of a runtime part), `volumes` (where the part mounts a workspace's volume or a runtime part's durable state: `[{name: <workspace>, mount: <absolute path>}]`, or `name: <runtime part>-state`), `network: isolated` (the part may reach only what its unit's egress lists), `image` (the runtime image of its core or service unit,below), `env` and `args` (configuration of its unit, see [configuration of a unit](#configuration-of-a-unit)) |
 | `transports` | per carried value (`model_call`, `order`, `question`, `claim`, ...), the transport a link that crosses units uses |
 | `runtimes` | runtime images: `core` for the core unit, `agent-runtime` for the agent units (the role it plays; without it the target binds the role, and the older name `agent` is refused). Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both. A core or service unit may run an image of its own, in the same form: `image` of the unit as `packing.units` lists it, else `parts.<part>.image` of its parts, which must all name the same one (`unit_image_conflict`), else, for the core unit only, `runtimes.core`. A service unit with none names the role `core-runtime`; a core or service unit that holds a runtime part (block `runtime`) and has none is refused (`unit_image_missing`) |
 | `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui`, the control-plane UI's `control-plane-ui` |
@@ -203,7 +203,8 @@ order of the table, and writes nothing.
 | `unit_image_conflict` | parts of one core or service unit name different images under `parts.<part>.image`, and the unit names none under `packing.units` |
 | `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image: neither its own, its parts', nor, for the core unit, `runtimes.core`. The finding names the unit and its runtime parts |
 | `unit_runtime_mismatch` | a core or service unit's `code.runtime` names an image the bundle's `runtimes` do not carry, or is not the image the binding resolves for the unit (none for a unit that names the role `core-runtime`). At bundle time this is two images under one digest with different names: the bundle carries one entry per digest, so give them one name. The finding names the unit, the image found and the image expected |
-| `volume_mount_missing` | a unit claims a workspace's volume and no part of the unit mounts it, or mounts it at a path that is not absolute; there is no default path |
+| `durable_state_unplaceable` | a runtime part with `durable_state: true` is in a `job`, `scheduled` or `model` unit, which runs until done or serves a model and holds no volume (place it in a core, service, agent or store unit), or a part of the document has the name of its state volume, `<part>-state` |
+| `volume_mount_missing` | a unit claims a workspace's volume or a runtime part's durable state volume and no part of the unit mounts it, or mounts it at a path that is not absolute; there is no default path |
 | `unit_config_conflict` | two sources of one unit (its entry under `packing.units`, its parts) give one environment variable two different values, or two parts of one unit both give `args` (see [configuration of a unit](#configuration-of-a-unit)) |
 | `unit_config_invalid` | an `env` or `args` of the wrong form: a name that is not `[A-Z_][A-Z0-9_]*`, a value that is neither text, a number, a boolean nor `{secret: <name>}`, `args` that are not a list of strings, `env` or `args` on a part in no unit; in a written bundle, also a unit's `config` of the wrong form or not the one its binding resolves |
 | `secret_value` | something that looks like a secret's value stands where a secret name belongs (see [secrets and egress](#secrets-and-egress)) |
@@ -255,7 +256,7 @@ Each unit:
 | `shape` | an agent unit only: `service` (long-running, the packing's `agent`), `job` (until done, started on demand) or `scheduled` (until done, started by a clock) |
 | `replicas` | the copies that run; absent for a `job` or `scheduled` unit |
 | `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (`runtimes.agent-runtime`) (from a local store `<image>:<tag>`, else its config id). A core or service unit runs its image as `runtime`, by the same reference: its own, its parts', or for the core unit the pinned core runtime (`runtimes.core`); a unit without one names the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
-| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace, with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
+| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace and one per runtime part with durable state ([below](#durable-state)), with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
 | `schedule` | a scheduled unit's cron rule: the one the binding gives (`packing.parts.<part>.schedule`), else the one that states its schedule's `every` exactly ([Packing](#packing)); absent when it has neither |
@@ -267,6 +268,30 @@ Each unit:
 | `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime` (a core or service unit without an image), `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls, `operator-ui` for the operator UI's unit, `control-plane-ui` for the control-plane UI's unit |
 | `ports` | the contract ports its parts use, by their derived names, with their settings and instances |
 | `source` | the unit and its parts, carried into what the translator makes of it |
+
+### Durable state
+
+A workspace is files at a base revision. A service that keeps state of its own, records it
+writes and reads back after a restart, marks its runtime part `durable_state: true` (default
+`false`):
+
+```yaml
+parts:
+  flow: { block: runtime, role: workflow, durable_state: true }
+```
+
+Its unit then claims one more volume, `flow-state`, `read_write_once`, one per copy when the part
+is `per` another. The binding gives it a mount and, optionally, a size, as for a workspace:
+
+```yaml
+parts:
+  flow: {size: 2Gi, volumes: [{name: flow-state, mount: /var/lib/flow}]}
+```
+
+Without an absolute mount it is refused `volume_mount_missing`. A `job` or `scheduled` unit runs
+until done and a `model` unit serves a model, so a runtime part with durable state in one of them
+is refused `durable_state_unplaceable`; place it in a core, service, agent or store unit. A runtime
+part marked `external` is not started by the target, and the bundle claims nothing for it.
 
 The bundle carries no secret value, host, provider or target name. It copies the architecture as
 written, so an address in the architecture would land in the bundle: a key `address`, `host`,
