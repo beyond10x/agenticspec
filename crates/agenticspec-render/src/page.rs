@@ -23,6 +23,12 @@
 //!   lies in: the node whose id is the region's id, or a card of the region itself. Its edges land
 //!   on that card. An edge between two cards inside one region is drawn too: straight across
 //!   when they stand side by side, else on a lane of its own below what the region holds.
+//! - A row is at most [`WRAP_WIDTH`] wide: the cards of a row, and the cards a region's card
+//!   holds, that side by side would be wider go into as many rows as keep each within it, shared
+//!   out evenly, in the order the one row had them, read row by row. Edges to and between those
+//!   rows run like edges between any two rows; inside a region's card, an edge from a card of a
+//!   row runs into the gap below that row and leaves along the side of the card. A row that fits
+//!   is drawn in one.
 //! - An edge with a `count` is drawn heavier: 2 or 3 wider than 1, 4 or more wider again.
 //! - A badge is a pill on its card, or with `on: panel` a row of the table "Details" under the
 //!   graph.
@@ -84,6 +90,11 @@ const JS: &str = include_str!("../assets/page.js");
 
 /// The format name, the value of `format` of every [`Page`].
 pub const FORMAT: &str = "agenticspec-render-model/1";
+
+/// The widest a row of cards is drawn, in px: twice a reference width of the graph's view
+/// (1200 px). The cards of one row of a page or a band, and the cards a region's frame holds,
+/// that with their gaps would be wider go into as many rows as keep each within it.
+pub const WRAP_WIDTH: f64 = 2400.0;
 
 /// One page: a titled graph and the panels beside it.
 ///

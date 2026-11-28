@@ -5,6 +5,7 @@ mod graph;
 mod model;
 mod optim;
 mod page;
+mod wrap;
 
 use agenticspec_render::architecture::page;
 use serde_json::{Value, json};
