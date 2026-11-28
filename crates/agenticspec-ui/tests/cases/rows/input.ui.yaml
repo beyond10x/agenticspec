@@ -1,0 +1,84 @@
+# A desk of tickets: two panels over one view, each with a row predicate of its own, sorted and
+# grouped, with a poll interval, cards, an actor, a header with help and metrics, a row action
+# shown as an icon behind a confirm, and a form whose field is a choice.
+format: ess-ui/1
+app: desk
+title: Desk
+model: desk
+placement_profile: fat
+
+shells:
+  app:
+    regions:
+      main: {kind: page_outlet}
+    state:
+      mine: {type: boolean, class: preference}
+
+navigation:
+  home: tickets
+  sections:
+    - {name: desk, label: Desk, pages: [tickets]}
+
+page_kinds:
+  plain_page:
+    purpose: sections the page declares
+
+pages:
+  tickets:
+    kind: plain_page
+    title: Tickets
+    actor: desk.Agent
+    state:
+      search: {type: string, class: page_state}
+      owner: {type: string, class: page_state}
+    header:
+      help: {text: Tickets of the desk by their state, link: "https://example.org/desk"}
+      actions:
+        - {name: close_all, does: desk.CloseAll, label: Close all, confirm: {title: Close every open ticket?, confirm_label: Close all}}
+      metrics:
+        - {name: open_count, component: metric, reads: {view: desk.Tickets}, aggregate: count, label: Tickets}
+        - {name: load, component: metric, reads: {view: desk.Load}, aggregate: avg, field: minutes, label: Minutes}
+    sections:
+      - name: open
+        title: Open
+        component: collection
+        reads:
+          view: desk.Tickets
+          filter: row.state == open and (row.owner == state.owner or state.owner == null)
+          refresh: 30s
+        sort: {by: opened_at, dir: desc}
+        group_by: priority
+        group_order: [high, normal, low]
+        columns:
+          - {field: title, label: Title}
+          - {field: owner, label: Owner}
+          - {field: opened_at, as: timestamp, label: Opened}
+        row_actions:
+          - name: close
+            does: desk.CloseTicket
+            bind: {ticket_id: row.id}
+            as: icon
+            label: Close
+            confirm: {title: Close this ticket?, confirm_label: Close, show: row.priority == high}
+      - name: closed
+        title: Closed
+        component: collection
+        style: cards
+        reads:
+          view: desk.Tickets
+          filter: row.state != open and row.title contains state.search
+        sort: {by: minutes}
+        columns:
+          - {field: title, label: Title}
+          - {field: minutes, as: number, label: Minutes}
+      - name: new
+        title: New ticket
+        component: form
+        does: desk.OpenTicket
+        fields:
+          - {field: title, label: Title}
+          - field: priority
+            label: Priority
+            as: choice
+            choice: {component: choice, options: [high, normal, low]}
+        submit: {label: Open}

@@ -7,9 +7,10 @@ use serde_json::Value;
 
 use crate::Refusal;
 use crate::doc::{
-    self, Action, Component, Document, Effect, Field, FieldAs, Labels, Layout, Node, Store, Style,
-    Tone, Width,
+    self, Action, Component, ConfirmOf, Dir, Document, Effect, Field, FieldAs, Labels, Layout,
+    Node, Options, Store, Style, Tone, Width,
 };
+use crate::filter::{self, Predicate, Roots};
 
 // ------------------------------------------------------------------------------------------
 // The model the emitter writes.
@@ -103,6 +104,10 @@ pub struct PageModel {
     pub title: String,
     pub title_from: Option<(String, String)>,
     pub bar: Option<SectionModel>,
+    /// The header's help: its text and its link.
+    pub help: Option<(Option<String>, Option<String>)>,
+    /// The header's metrics, each a metric section of its own.
+    pub metrics: Vec<SectionModel>,
     /// The header's primary actions.
     pub actions: Vec<ActionModel>,
     pub main: Vec<SectionModel>,
@@ -129,7 +134,17 @@ pub enum SectionKind {
         columns: Vec<FieldModel>,
         list: bool,
         row_actions: Vec<ActionModel>,
-        search: Option<String>,
+        /// The states a text search of the filter reads, each drawn as a search box.
+        search: Vec<String>,
+        sort: Option<SortModel>,
+        groups: Option<GroupModel>,
+    },
+    /// One number from the rows of its read.
+    Metric {
+        aggregate: Option<&'static str>,
+        field: Option<String>,
+        match_: Option<String>,
+        label: String,
     },
     Record {
         fields: Vec<FieldModel>,
@@ -165,8 +180,12 @@ pub struct ReadUse {
     pub view: String,
     pub params: Vec<(String, String)>,
     pub key: Option<String>,
-    /// The fields any of which holds the text of the state, and the state.
-    pub filter: Option<(Vec<String>, String)>,
+    /// The row predicate, compiled over `row`.
+    pub filter: Option<String>,
+    /// The poll interval in milliseconds.
+    pub poll: Option<u64>,
+    /// The states a text search of the filter reads.
+    pub searches: Vec<String>,
     pub live: Option<LiveUse>,
 }
 
@@ -183,6 +202,21 @@ pub struct LiveUse {
     pub coalesce: Option<u64>,
 }
 
+/// A client sort: the field, descending or not, and whether its values sort as numbers.
+pub struct SortModel {
+    pub by: String,
+    pub desc: bool,
+    pub numeric: bool,
+}
+
+/// Rows under the value of a field: the values shown first, in order, and whether one no row has
+/// is shown.
+pub struct GroupModel {
+    pub by: String,
+    pub order: Vec<String>,
+    pub show_empty: bool,
+}
+
 pub struct FieldModel {
     pub field: String,
     pub label: String,
@@ -197,6 +231,7 @@ pub enum FormInput {
     Toggle,
     Text,
     Number,
+    Choice(Box<ChoiceModel>),
 }
 
 pub struct FormField {
@@ -220,6 +255,17 @@ pub struct ActionModel {
     pub kind: ActionKind,
     /// `visible`, compiled: shown only while it holds, beyond the action set.
     pub visible: Option<String>,
+    /// `as: icon`: a compact button.
+    pub icon: bool,
+    pub confirm: Option<ConfirmModel>,
+}
+
+/// A confirm before a command: the question, its button, and the compiled condition under which
+/// it asks (always when absent).
+pub struct ConfirmModel {
+    pub title: String,
+    pub label: String,
+    pub show: Option<String>,
 }
 
 pub enum ActionKind {
@@ -281,7 +327,14 @@ fn between_backticks(message: &str) -> Option<&str> {
     Some(&message[start..start + len])
 }
 
-const COMPONENTS: [&str; 5] = ["collection", "record", "form", "filter_bar", "choice"];
+const COMPONENTS: [&str; 6] = [
+    "collection",
+    "record",
+    "form",
+    "filter_bar",
+    "choice",
+    "metric",
+];
 
 /// Refuses a node whose `component` this generator does not draw, by the path of that key, before
 /// the node's other keys are read (the keys of a node are read in their order of names, so an
@@ -562,6 +615,28 @@ fn compile(e: &str, scope: &Scope, path: &str) -> Result<Compiled, Refusal> {
     ))
 }
 
+/// How the paths of a predicate read where it stands: the row, the page's state and parameters,
+/// the shell's state, a widget's parameters.
+struct ScopeRoots<'a>(&'a Scope);
+
+impl Roots for ScopeRoots<'_> {
+    fn root(&self, root: &str, name: &str) -> Option<String> {
+        let s = self.0;
+        match root {
+            "row" if s.row => Some(format!("row[{}]", ts_str(name))),
+            "state" if s.state.contains(name) => Some(format!("page.state[{}]", ts_str(name))),
+            "params" if s.params.contains(name) => Some(format!("page.params[{}]", ts_str(name))),
+            "shell" if s.shell.contains(name) => Some(format!("shell.state[{}]", ts_str(name))),
+            "args" => match s.args.as_ref().and_then(|a| a.get(name)) {
+                Some(a) if a.required => Some(format!("args[{}]", ts_str(name))),
+                Some(_) => Some(format!("(args[{}] ?? null)", ts_str(name))),
+                None => None,
+            },
+            _ => None,
+        }
+    }
+}
+
 /// The properties a node of each kind takes besides `name`, `title`, `collapsed` and `states`.
 fn allowed(component: Option<Component>, host: bool, widget: bool) -> &'static [&'static str] {
     if host {
@@ -578,6 +653,10 @@ fn allowed(component: Option<Component>, host: bool, widget: bool) -> &'static [
             "columns",
             "style",
             "row_actions",
+            "sort",
+            "group_by",
+            "group_order",
+            "show_empty_groups",
         ],
         Some(Component::Record) => &["component", "reads", "live", "fields", "actions"],
         Some(Component::Form) => &["component", "does", "fields", "submit", "result"],
@@ -590,6 +669,16 @@ fn allowed(component: Option<Component>, host: bool, widget: bool) -> &'static [
             "label",
             "placeholder",
             "options",
+        ],
+        Some(Component::Metric) => &[
+            "component",
+            "reads",
+            "live",
+            "aggregate",
+            "field",
+            "match",
+            "format",
+            "label",
         ],
         None => &[],
     }
@@ -612,6 +701,14 @@ fn present(n: &Node) -> Vec<&'static str> {
     add("live", n.live.is_some());
     add("columns", n.columns.is_some());
     add("style", n.style.is_some());
+    add("sort", n.sort.is_some());
+    add("group_by", n.group_by.is_some());
+    add("group_order", n.group_order.is_some());
+    add("show_empty_groups", n.show_empty_groups.is_some());
+    add("aggregate", n.aggregate.is_some());
+    add("field", n.field.is_some());
+    add("match", n.match_.is_some());
+    add("format", n.format.is_some());
     add("row_actions", n.row_actions.is_some());
     add("fields", n.fields.is_some());
     add("actions", n.actions.is_some());
@@ -640,13 +737,15 @@ struct Resolver<'a> {
     widget_channels: BTreeMap<String, BTreeMap<String, BTreeSet<String>>>,
 }
 
-/// `500ms`, `1s`, `2m` in milliseconds.
+/// `500ms`, `1s`, `2m`, `1h` in milliseconds.
 fn duration_ms(d: &str) -> Option<u64> {
     let d = d.trim();
     let (n, unit) = if let Some(n) = d.strip_suffix("ms") {
         (n, 1)
     } else if let Some(n) = d.strip_suffix('s') {
         (n, 1000)
+    } else if let Some(n) = d.strip_suffix('h') {
+        (n, 3_600_000)
     } else {
         let n = d.strip_suffix('m')?;
         (n, 60_000)
@@ -896,6 +995,79 @@ impl<'a> Resolver<'a> {
         }
     }
 
+    /// An expression of the filter grammar compiled where it stands, or refused at `path`. A
+    /// filter's top level is a boolean form; any other condition (a confirm's `show`) is read as
+    /// truthy. The row fields it reads type the read `read`.
+    fn predicate(
+        &mut self,
+        text: &str,
+        scope: &Scope,
+        path: &str,
+        filter: bool,
+        read: Option<&str>,
+    ) -> Option<(String, Predicate)> {
+        let Some(p) = filter::parse(text) else {
+            self.refuse(
+                path,
+                format!(
+                    "expression `{text}` must parse as a comparison, membership, not, and or or expression (==, !=, in [..], contains, not, and, or and parentheses)"
+                ),
+            );
+            return None;
+        };
+        if filter && !p.boolean() {
+            self.refuse(
+                path,
+                format!(
+                    "expression `{text}` needs a boolean top-level form; bare paths and literals are not predicates"
+                ),
+            );
+            return None;
+        }
+        let roots = ScopeRoots(scope);
+        let mut ok = true;
+        let mut fields = Vec::new();
+        for seg in p.paths() {
+            let joined = seg.join(".");
+            if !["row", "params", "state", "shell", "args"].contains(&seg[0].as_str()) {
+                self.refuse(
+                    path,
+                    format!(
+                        "expression `{text}` reads `{joined}`: only row, params, state, shell and widget args may be read here"
+                    ),
+                );
+                ok = false;
+            } else if roots.root(&seg[0], &seg[1]).is_none() {
+                self.refuse(
+                    path,
+                    format!(
+                        "expression `{text}` reads `{joined}`, which is not declared where it stands"
+                    ),
+                );
+                ok = false;
+            } else if seg[0] == "row" {
+                fields.push(seg[1].clone());
+            }
+        }
+        if !ok {
+            return None;
+        }
+        if let Some(view) = read {
+            self.reads
+                .entry(view.to_string())
+                .or_default()
+                .fields
+                .extend(fields);
+        }
+        let ts = filter::compile(&p, &roots);
+        let ts = if p.boolean() {
+            ts
+        } else {
+            format!("truthy({ts})")
+        };
+        Some((ts, p))
+    }
+
     fn labels(&mut self, labels: &Option<Labels>, path: &str) -> Option<BTreeMap<String, String>> {
         match labels {
             None => None,
@@ -916,6 +1088,18 @@ impl<'a> Resolver<'a> {
             self.refuse(
                 format!("{fpath}/host"),
                 "a host slot stands only on a form's input here",
+            );
+        }
+        if f.as_ == Some(FieldAs::Choice) {
+            self.refuse(
+                format!("{fpath}/as"),
+                "a column or record field `as: choice` is not drawn here; it is a form input",
+            );
+        }
+        if f.choice.is_some() {
+            self.refuse(
+                format!("{fpath}/choice"),
+                "`choice` gives the options of a form field `as: choice`",
             );
         }
         let tones = match &f.tone_by {
@@ -978,47 +1162,32 @@ impl<'a> Resolver<'a> {
                 .insert(k.clone());
             params.push((k.clone(), ts));
         }
-        // `row.<field> contains state.<name>`, or several such terms joined by `or` over one state.
-        let filter = r.filter.as_ref().and_then(|f| {
-            let mut fields: Vec<String> = Vec::new();
-            let mut states: BTreeSet<String> = BTreeSet::new();
-            for term in f.split(" or ") {
-                let words: Vec<&str> = term.split_whitespace().collect();
-                match words.as_slice() {
-                    [a, "contains", b] if a.starts_with("row.") && b.starts_with("state.") => {
-                        fields.push(a["row.".len()..].to_string());
-                        states.insert(b["state.".len()..].to_string());
-                    }
-                    _ => {
-                        self.refuse(
-                            format!("{rpath}/filter"),
-                            format!("expression `{f}` is not one this generator compiles as a filter (row.<field> contains state.<name>, joined by `or` over one state)"),
-                        );
-                        return None;
-                    }
+        // The row predicate of released ess-ui/1, over the row, the page's state and parameters,
+        // the shell's state and a widget's parameters.
+        let row_scope = Scope {
+            row: true,
+            ..scope.clone()
+        };
+        let (filter, searches) = match r.filter.as_ref() {
+            None => (None, Vec::new()),
+            Some(f) => {
+                match self.predicate(f, &row_scope, &format!("{rpath}/filter"), true, Some(&view)) {
+                    Some((ts, p)) => (Some(ts), p.searches()),
+                    None => (None, Vec::new()),
                 }
             }
-            let state = match states.into_iter().collect::<Vec<_>>().as_slice() {
-                [one] => one.clone(),
-                _ => {
-                    self.refuse(
-                        format!("{rpath}/filter"),
-                        format!("expression `{f}` reads more than one state; this generator filters by one"),
-                    );
-                    return None;
-                }
-            };
-            if !scope.state.contains(&state) {
+        };
+        let poll = r.refresh.as_ref().and_then(|d| match duration_ms(d) {
+            Some(ms) if ms > 0 => Some(ms),
+            _ => {
                 self.refuse(
-                    format!("{rpath}/filter"),
-                    format!("expression `{f}` reads `state.{state}`, which is not declared where it stands"),
+                    format!("{rpath}/refresh"),
+                    format!(
+                        "`{d}` is no poll interval this generator reads: a duration such as 30s, 2m or 1h (an expression is not drawn)"
+                    ),
                 );
-                return None;
+                None
             }
-            for field in &fields {
-                self.reads.entry(view.clone()).or_default().fields.insert(field.clone());
-            }
-            Some((fields, state))
         });
         let live = n.live.as_ref().and_then(|l| {
             let lpath = format!("{path}/live");
@@ -1136,6 +1305,8 @@ impl<'a> Resolver<'a> {
             params,
             key: r.key.clone(),
             filter,
+            searches,
+            poll,
             live,
         })
     }
@@ -1203,10 +1374,42 @@ impl<'a> Resolver<'a> {
             .visible
             .as_ref()
             .map(|e| self.expr(e, scope, &format!("{apath}/visible"), read));
+        let confirm = match &a.confirm {
+            None => None,
+            Some(ConfirmOf::Overlay(o)) => {
+                self.refuse(
+                    format!("{apath}/confirm"),
+                    format!(
+                        "`{o}` names an overlay; this generator draws no overlay, only the short form {{title, confirm_label, show}}"
+                    ),
+                );
+                None
+            }
+            Some(ConfirmOf::Short(_)) if a.does.is_none() => {
+                self.refuse(
+                    format!("{apath}/confirm"),
+                    "a confirm stands on an action that sends a command here",
+                );
+                None
+            }
+            Some(ConfirmOf::Short(c)) => {
+                let show = c.show.as_ref().and_then(|e| {
+                    self.predicate(e, scope, &format!("{apath}/confirm/show"), false, read)
+                        .map(|(ts, _)| ts)
+                });
+                Some(ConfirmModel {
+                    title: c.title.clone(),
+                    label: c.confirm_label.clone().unwrap_or_else(|| "Delete".into()),
+                    show,
+                })
+            }
+        };
         Some(ActionModel {
             label,
             kind,
             visible,
+            icon: a.as_ == Some(doc::ActionAs::Icon),
+            confirm,
         })
     }
 
@@ -1367,15 +1570,69 @@ impl<'a> Resolver<'a> {
                             )
                         })
                         .collect();
+                    let columns: Vec<FieldModel> = columns;
+                    let sort = n.sort.as_ref().map(|s| {
+                        if let Some(v) = &view {
+                            self.reads
+                                .entry(v.clone())
+                                .or_default()
+                                .fields
+                                .insert(s.by.clone());
+                        }
+                        SortModel {
+                            by: s.by.clone(),
+                            desc: s.dir == Some(Dir::Desc),
+                            numeric: columns.iter().any(|c| {
+                                c.field == s.by
+                                    && matches!(c.as_, FieldAs::Number | FieldAs::Percent)
+                            }),
+                        }
+                    });
+                    let groups = match &n.group_by {
+                        Some(by) => {
+                            if let Some(v) = &view {
+                                self.reads
+                                    .entry(v.clone())
+                                    .or_default()
+                                    .fields
+                                    .insert(by.clone());
+                            }
+                            Some(GroupModel {
+                                by: by.clone(),
+                                order: n.group_order.clone().unwrap_or_default(),
+                                show_empty: n.show_empty_groups.unwrap_or(false),
+                            })
+                        }
+                        None => {
+                            for (k, set) in [
+                                ("group_order", n.group_order.is_some()),
+                                ("show_empty_groups", n.show_empty_groups.is_some()),
+                            ] {
+                                if set {
+                                    self.refuse(
+                                        format!("{path}/{k}"),
+                                        format!(
+                                            "`{k}` orders the groups of group_by, so a collection that has it has group_by"
+                                        ),
+                                    );
+                                }
+                            }
+                            None
+                        }
+                    };
                     SectionKind::Collection {
                         columns,
-                        list: n.style == Some(Style::List),
+                        list: matches!(n.style, Some(Style::List | Style::Cards)),
                         row_actions,
                         search: read
                             .as_ref()
-                            .and_then(|r| r.filter.as_ref().map(|f| f.1.clone())),
+                            .map(|r| r.searches.clone())
+                            .unwrap_or_default(),
+                        sort,
+                        groups,
                     }
                 }
+                Component::Metric => self.metric(n, path, read.as_ref())?,
                 Component::Record => {
                     let fields = n
                         .fields
@@ -1401,7 +1658,7 @@ impl<'a> Resolver<'a> {
                         .collect();
                     SectionKind::Record { fields, actions }
                 }
-                Component::Form => self.form(n, path, scope)?,
+                Component::Form => self.form(n, path, scope, &var)?,
                 Component::FilterBar => self.filter_bar(n, path, scope, &var),
                 Component::Choice => {
                     self.refuse(path, "a choice stands in a filter bar or a field here");
@@ -1423,8 +1680,124 @@ impl<'a> Resolver<'a> {
         })
     }
 
+    /// A metric: one number from the rows of its read, an aggregate over them or the first row's
+    /// value (its `match` field, else `value`, else its first number).
+    fn metric(&mut self, n: &Node, path: &str, read: Option<&ReadUse>) -> Option<SectionKind> {
+        let Some(r) = read else {
+            self.refuse(path, "a metric reads a view here");
+            return None;
+        };
+        let aggregate = n.aggregate.map(doc::Aggregate::word);
+        match (aggregate, &n.field) {
+            (None, Some(_)) => {
+                self.refuse(
+                    format!("{path}/field"),
+                    "`field` is the field an aggregate reads; a metric without aggregate has none",
+                );
+                return None;
+            }
+            (Some(a), None) if a != "count" => {
+                self.refuse(
+                    format!("{path}/aggregate"),
+                    format!("the aggregate `{a}` reads a field; name it with `field`"),
+                );
+                return None;
+            }
+            _ => {}
+        }
+        let sig = self.reads.entry(r.view.clone()).or_default();
+        for f in n.field.iter().chain(n.match_.iter()) {
+            sig.fields.insert(f.clone());
+        }
+        let name = n.name.clone().unwrap_or_default();
+        Some(SectionKind::Metric {
+            aggregate,
+            field: n.field.clone(),
+            match_: n.match_.clone(),
+            label: n.label.clone().unwrap_or_else(|| humanize(&name)),
+        })
+    }
+
+    /// The options of a choice: fixed, or refused when they name an enum type.
+    fn options(&mut self, c: &Node, path: &str) -> Vec<(Value, String)> {
+        match &c.options {
+            None => Vec::new(),
+            Some(Options::List(list)) => list
+                .iter()
+                .map(|o| (o.value.clone(), o.label.clone()))
+                .collect(),
+            Some(Options::Enum(name)) => {
+                self.refuse(
+                    format!("{path}/options"),
+                    format!(
+                        "`{name}` names an enum type, which this generator does not resolve; list the options or read them from a view"
+                    ),
+                );
+                Vec::new()
+            }
+        }
+    }
+
+    /// The choice of a form field `as: choice`: its options, fixed or read.
+    fn form_choice(
+        &mut self,
+        f: &Field,
+        label: &str,
+        fpath: &str,
+        scope: &Scope,
+        owner: &str,
+    ) -> Option<ChoiceModel> {
+        let cpath = format!("{fpath}/choice");
+        let Some(c) = f.choice.as_deref() else {
+            self.refuse(&cpath, "a form field `as: choice` names its choice");
+            return None;
+        };
+        if c.kind() != Some(Component::Choice) {
+            self.refuse(&cpath, "the choice of a field is a choice");
+            return None;
+        }
+        if !self.check_keys(c, &cpath) {
+            return None;
+        }
+        if c.binds.is_some() {
+            self.refuse(
+                format!("{cpath}/binds"),
+                "the choice of a form field writes the field; it binds no state",
+            );
+        }
+        let cvar = format!("{}_{}", ident(owner), ident(&f.field));
+        let read = self.read(c, &format!("r_{cvar}"), scope, &cpath);
+        let value = c
+            .value
+            .clone()
+            .or_else(|| read.as_ref().and_then(|r| r.key.clone()))
+            .unwrap_or_else(|| "id".into());
+        let shows = c.label.clone().unwrap_or_else(|| "label".into());
+        if let Some(r) = &read {
+            let sig = self.reads.entry(r.view.clone()).or_default();
+            sig.fields.insert(value.clone());
+            sig.fields.insert(shows.clone());
+        }
+        let options = self.options(c, &cpath);
+        if read.is_none() && options.is_empty() {
+            self.refuse(
+                &cpath,
+                "a choice offers fixed options or reads them from a view",
+            );
+        }
+        Some(ChoiceModel {
+            label: label.to_string(),
+            binds: String::new(),
+            read,
+            value,
+            shows,
+            placeholder: c.placeholder.clone(),
+            options,
+        })
+    }
+
     /// A form: its command's input is the page's path parameters, then its fields.
-    fn form(&mut self, n: &Node, path: &str, scope: &Scope) -> Option<SectionKind> {
+    fn form(&mut self, n: &Node, path: &str, scope: &Scope, var: &str) -> Option<SectionKind> {
         let Some(command) = n.does.clone() else {
             self.refuse(format!("{path}/does"), "a form names the command it sends");
             return None;
@@ -1474,10 +1847,23 @@ impl<'a> Resolver<'a> {
                         );
                     }
                 }
+                if f.choice.is_some() && f.as_ != Some(FieldAs::Choice) {
+                    self.refuse(
+                        format!("{fpath}/choice"),
+                        "`choice` gives the options of a field `as: choice`",
+                    );
+                }
                 match f.as_.unwrap_or(FieldAs::Text) {
                     FieldAs::Toggle => FormInput::Toggle,
                     FieldAs::Text => FormInput::Text,
                     FieldAs::Number => FormInput::Number,
+                    FieldAs::Choice => {
+                        let label = f.label.clone().unwrap_or_else(|| humanize(&f.field));
+                        match self.form_choice(&f, &label, &fpath, scope, var) {
+                            Some(c) => FormInput::Choice(Box::new(c)),
+                            None => FormInput::Text,
+                        }
+                    }
                     other => {
                         self.refuse(
                             format!("{fpath}/as"),
@@ -1596,6 +1982,7 @@ impl<'a> Resolver<'a> {
                 sig.fields.insert(value.clone());
                 sig.fields.insert(shows.clone());
             }
+            let options = self.options(&c, &cpath);
             choices.push(ChoiceModel {
                 label: humanize(&cname),
                 binds,
@@ -1603,13 +1990,7 @@ impl<'a> Resolver<'a> {
                 value,
                 shows,
                 placeholder: c.placeholder.clone(),
-                options: c
-                    .options
-                    .clone()
-                    .unwrap_or_default()
-                    .iter()
-                    .map(|o| (o.value.clone(), o.label.clone()))
-                    .collect(),
+                options,
             });
         }
         let search = n
@@ -1740,6 +2121,12 @@ impl<'a> Resolver<'a> {
             if !h.actions.is_empty() {
                 header.actions = h.actions.clone();
             }
+            if !h.metrics.is_empty() {
+                header.metrics = h.metrics.clone();
+            }
+            if h.help.is_some() {
+                header.help = h.help.clone();
+            }
         }
         let mut models: Vec<SectionModel> = Vec::new();
         for (spath, s) in sections {
@@ -1752,6 +2139,40 @@ impl<'a> Resolver<'a> {
             .iter()
             .filter_map(|a| self.action(a, &format!("{path}/header/actions"), &scope, name, None))
             .collect();
+        let mut metrics = Vec::new();
+        for m in &header.metrics {
+            let mpath = format!(
+                "{path}/header/metrics/{}",
+                m.name.as_deref().unwrap_or_default()
+            );
+            if m.kind() != Some(Component::Metric) {
+                self.refuse(&mpath, "a header metric is a metric here");
+                continue;
+            }
+            if let Some(model) = self.node(m, &mpath, &scope, Some(name)) {
+                metrics.push(model);
+            }
+        }
+        let help = header.help.as_ref().map(|h| {
+            if let Some(link) = &h.link {
+                let lower = link.to_ascii_lowercase();
+                let scheme = lower.split_once(':').map(|(s, _)| s);
+                let safe = match scheme {
+                    Some(s) if !s.contains('/') => ["http", "https", "mailto"].contains(&s),
+                    _ => true,
+                };
+                if !safe {
+                    self.refuse(
+                        format!("{path}/header/help/link"),
+                        format!("`{link}` is no link this generator draws (http, https, mailto or a path)"),
+                    );
+                }
+            }
+            if h.text.is_none() && h.link.is_none() {
+                self.refuse(format!("{path}/header/help"), "a help gives a text or a link");
+            }
+            (h.text.clone(), h.link.clone())
+        });
         let names: BTreeSet<String> = models.iter().map(|m| m.name.clone()).collect();
         let bar = match &header.filters {
             Some(f) => match models.iter().position(|m| &m.name == f) {
@@ -1939,6 +2360,8 @@ impl<'a> Resolver<'a> {
                 .unwrap_or_else(|| humanize(name)),
             title_from,
             bar,
+            help,
+            metrics,
             actions,
             main,
             side,

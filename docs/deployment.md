@@ -533,6 +533,82 @@ The build writes `dist/` (`index.html`, `app.js`, `app.css`) and `dist.tar`, pac
 
 Generating again replaces the directory, `node_modules/` and `dist/` included.
 
+### Generating the pages: `agenticspec ui generate`
+
+`agenticspec ui generate --path <document>.ui.yaml --out <dir>` writes the Vue 3 app of an
+`ess-ui/1` document into `<dir>`, replacing what was there: one page component per page, one
+component per widget, the router, the typed client of the reads, commands and channels, the host
+slots and the runtime, all drawn with the components of `ui/kit`. The same document gives the
+same bytes. Build the app with vite, pack its output as a tar and name it as `{archive, digest}`.
+
+It draws, besides pages, page kinds, shells, navigation, themes, channels and widgets:
+
+- collections as a table, a list or cards (`style: cards` is drawn as the kit's list), their row
+  actions, a sort (`sort: {by, dir}`, sorted in the browser), groups (`group_by`, `group_order`,
+  `show_empty_groups`);
+- records, forms (text, number, toggle, choice and host-slot inputs, a result), filter bars with
+  choices and a search, metrics (`aggregate`, `field`, `match`, as a section or in the header);
+- a read's row predicate (`reads.filter`) in the grammar of ess-ui/1: `==`, `!=`, `in [..]`,
+  `contains`, `not`, `and`, `or` and parentheses over `row`, `state`, `params`, `shell` and widget
+  `args`, so two panels of one view with different filters are two sections; a poll interval
+  (`reads.refresh: 30s`);
+- the header's title, `title_from`, filters, live channels, actions, metrics and help
+  (`{text, link}`); a page's `actor`, which is checked against the model and not drawn;
+- actions that send a command (shown only while the action set of their scope allows it), go
+  to a page or copy a value, `as: button | link | icon`, `visible`, and a confirm in its short
+  form `{title, confirm_label, show}`, asked in place.
+
+A construct it does not draw is refused, the whole document with it: the command exits with
+`document_refused` and prints each refusal as `<node path>: <message>`, the node path naming map
+keys and list entries by their name (`pages/tickets/sections/open/reads/filter`). The messages
+take one of these forms, `(...)` being the reader's own words:
+
+| form | message |
+|---|---|
+| property | ``unknown property `<key>`: this generator does not draw it (...)`` |
+| value | ``` `<value>` is not a value this generator draws here (...) ``` |
+| component | ``` `<name>` is no component this generator draws (it draws collection, record, form, filter_bar, choice, metric) and no widget of the document ``` |
+| misplaced | ``` `<key>` is no property of a <component> this generator draws ``` |
+
+What released `ess-ui/1` (ESS 0.99.2) has and this generator does not draw yet:
+
+| construct | not drawn | refused with |
+|---|---|---|
+| document | `types`, `tokens`, `placement_defaults` | property |
+| shell | `preload`, `guards`, `overlays`, `source` | property |
+| shell region | `props`, `visible`; `kind: overlay_outlet`, `assistant`, `account_menu` | property; value |
+| navigation | `search`, `restrictions`; dynamic entries (`pages: {from_view, ...}`) | property; ``invalid type: map, expected a sequence`` |
+| navigation entry | `roles_today` | property |
+| page | `aliases`, `switch_to`, `visible`, `overlays`, `profile`, `source`, `unmapped` | property |
+| page kind | `extends`, `overlays` | property |
+| page layout | a grid row of more than one area; more than two columns | ``this generator stacks the areas of a one-column grid: each row names one area``; ``this generator lays out at most two columns, a wide and a narrow one`` |
+| section, any node | `load`, `depends_on`, `visible`, `state`, `children`, `profile`, `degrades`, `unmapped` | property |
+| section states | `refreshing`, `forbidden`, `stale` | property |
+| header | `total`, `badge`, `switch`; a header metric that is no metric | property; ``a header metric is a metric here`` |
+| collection | `selection`, `bulk_actions`, `expand`, `item`, `reorder`; `actions`; `style: tree`; `sort.allowed`; `sort.mode: server`; columns chosen by the user (`columns: {binds, all}`) | property; misplaced; value; property; value; ``invalid type: map, expected a sequence`` |
+| record | `groups`, `tabs`, `item` | property |
+| form | `loads`, `groups`, `tabs`, `parts`, `record`, `draft`, `save`, `variant_by`, `endpoint`, `submit.closes`, `submit.auto`; `actions` | property; misplaced |
+| form input | `as:` `badge`, `list`, `timestamp`, `date`, `time`, `percent`, `json` | ``a form input `as: <as>` is not one this generator draws`` |
+| choice | `multiple`, `creatable`, `visible`, `note`; `style` (`dropdown`, `tags`, `radio`, ...); options naming an enum type | property; value; ``` `<name>` names an enum type, which this generator does not resolve; list the options or read them from a view ``` |
+| filter bar | `window`, `inputs`, `reset` | property |
+| metric | `from`, `window`, `unit`, `scale`; `format: duration`, `percent`, `bytes`; a metric without `reads` | property; value; ``a metric reads a view here`` |
+| composites | `confirm`, `chart`, `board`, `graph_editor`, `rich_text`, `references` as a node's `component` | component |
+| primitives | `text`, `badge`, `icon`, `button`, `link`, `input`, `toggle`, `image`, `divider` (a node's `primitive`) | property |
+| overlays | every overlay (`overlays` of a page, page kind or shell) | property |
+| widget | `arrange: row`, `grid`; a use's `visible`, `body` | value; property |
+| field | `unit`, `scale`, `visible`, `binds`, `label_from`, `suggests`, `note`, `help`; `as:` `secret`, `tags`, `date_range`, `duration`, `file`, `rich_text`, `map`, `cron`, `color`, `audio`, `link`, `bytes`; `as: choice` on a column or record field | property; value; ``a column or record field `as: choice` is not drawn here; it is a form input`` |
+| host slot | `commands` | misplaced |
+| reads | `pager`, `debounce`, `cache`, `endpoint`, `derived`; `paging: server`, `client`, `cursor`, `append`; `refresh` as an expression | property; value; ``` `<refresh>` is no poll interval this generator reads: a duration such as 30s, 2m or 1h (an expression is not drawn) ``` |
+| action | `opens`, `export`, `upload`, `sets`, `choice`, `loads`, `checked`, `optimistic`, `bulk`, `endpoint`; `as: toggle`, `choice`, `menu_item`; a confirm naming an overlay; a confirm on an action that sends no command | property; value; ``` `<name>` names an overlay; this generator draws no overlay, only the short form {title, confirm_label, show} ```; ``a confirm stands on an action that sends a command here`` |
+| channel | `sends`, `buffer`, `fields`, `transport_today`, `source`, `unmapped`; `direction: both` | property; value |
+| live | `when_paged_away`, `max_rows`; `effect: patch_row`, `insert_top`, `remove_row`, `replace`; an `only_if` other than `matches(params)` | property; value; ``` expression `<e>` is not one this generator compiles here (matches(params)) ``` |
+| state | `scope`, `sensitive`, `ttl`, `clear_on`, `fallback`, `endpoint`; `class: view_cache`, `channel_buffer`, `credential`; `store: server_session`, `server`; `store: session_storage` | property; value; value; ``this generator keeps state in memory, the URL or local storage`` |
+| theme | any token a theme overrides (the look is the kit's) | property |
+| expressions | outside a filter or a confirm's `show`: anything but `state.<name>`, `params.<name>`, `shell.<name>`, `row.<field>`, `args.<name>` in a widget, `actor.may(<command>)` or a literal | ``` expression `<e>` is not one this generator compiles (...) ``` |
+
+A column's `sortable: true` is accepted and draws no sort control; the sort a collection declares
+is the one it shows.
+
 ### Before a runtime: the UI on fixtures
 
 `agenticspec ui serve <architecture> [--contract <file>] [--port <n>] [--sim <profile>]` serves the same operator

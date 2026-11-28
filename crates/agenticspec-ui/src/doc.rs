@@ -364,6 +364,9 @@ pub struct Page {
     pub title: Option<String>,
     #[serde(default)]
     pub nav: Option<NavEntry>,
+    /// The ESS actor the page is built for: checked against the model, not read by a renderer.
+    #[serde(default)]
+    pub actor: Option<String>,
     #[serde(default)]
     pub params: BTreeMap<String, String>,
     #[serde(default)]
@@ -399,6 +402,20 @@ pub struct Header {
     /// Primary actions, drawn above the page's sections.
     #[serde(default)]
     pub actions: Vec<Action>,
+    /// Headline metrics, drawn in the bar.
+    #[serde(default)]
+    pub metrics: Vec<Node>,
+    #[serde(default)]
+    pub help: Option<Help>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Help {
+    #[serde(default)]
+    pub text: Option<String>,
+    #[serde(default)]
+    pub link: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -495,6 +512,7 @@ pub enum Component {
     Form,
     FilterBar,
     Choice,
+    Metric,
 }
 
 impl Component {
@@ -505,6 +523,7 @@ impl Component {
             Component::Form => "form",
             Component::FilterBar => "filter_bar",
             Component::Choice => "choice",
+            Component::Metric => "metric",
         }
     }
 
@@ -515,6 +534,7 @@ impl Component {
             Component::Form,
             Component::FilterBar,
             Component::Choice,
+            Component::Metric,
         ]
         .into_iter()
         .find(|c| c.word() == word)
@@ -574,6 +594,22 @@ pub struct Node {
     #[serde(default)]
     pub style: Option<Style>,
     #[serde(default)]
+    pub sort: Option<Sort>,
+    #[serde(default)]
+    pub group_by: Option<String>,
+    #[serde(default)]
+    pub group_order: Option<Vec<String>>,
+    #[serde(default)]
+    pub show_empty_groups: Option<bool>,
+    #[serde(default)]
+    pub aggregate: Option<Aggregate>,
+    #[serde(default)]
+    pub field: Option<String>,
+    #[serde(default, rename = "match")]
+    pub match_: Option<String>,
+    #[serde(default)]
+    pub format: Option<MetricFormat>,
+    #[serde(default)]
     pub row_actions: Option<Vec<Action>>,
     #[serde(default)]
     pub fields: Option<Vec<Field>>,
@@ -598,7 +634,68 @@ pub struct Node {
     #[serde(default)]
     pub placeholder: Option<String>,
     #[serde(default)]
-    pub options: Option<Vec<ChoiceOption>>,
+    pub options: Option<Options>,
+}
+
+/// A choice's options: fixed, or the name of an enum type (which this generator does not resolve).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Options {
+    List(Vec<ChoiceOption>),
+    Enum(String),
+}
+
+/// A collection's sort: the field, its direction, and who sorts (only the client here).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Sort {
+    pub by: String,
+    #[serde(default)]
+    pub dir: Option<Dir>,
+    #[serde(default)]
+    pub mode: Option<SortMode>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Dir {
+    Asc,
+    Desc,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SortMode {
+    Client,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Aggregate {
+    Count,
+    Sum,
+    Min,
+    Max,
+    Avg,
+}
+
+impl Aggregate {
+    pub fn word(self) -> &'static str {
+        match self {
+            Aggregate::Count => "count",
+            Aggregate::Sum => "sum",
+            Aggregate::Min => "min",
+            Aggregate::Max => "max",
+            Aggregate::Avg => "avg",
+        }
+    }
+}
+
+/// The format of a metric: a number only here.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MetricFormat {
+    Number,
 }
 
 impl Node {
@@ -624,6 +721,8 @@ impl Node {
 pub enum Style {
     Table,
     List,
+    /// A presentation hint: drawn as the kit's list.
+    Cards,
 }
 
 /// `binds`: a list of expressions on a filter bar, one expression on a choice.
@@ -657,6 +756,8 @@ pub struct FieldFull {
     #[serde(default)]
     pub reason: Option<String>,
     #[serde(default)]
+    pub choice: Option<Box<Node>>,
+    #[serde(default)]
     pub stands_in_for: Option<String>,
 }
 
@@ -674,6 +775,7 @@ impl FromShort for FieldFull {
             host: None,
             reason: None,
             stands_in_for: None,
+            choice: None,
         }
     }
 }
@@ -696,6 +798,7 @@ pub enum FieldAs {
     Time,
     Percent,
     Json,
+    Choice,
 }
 
 impl FieldAs {
@@ -711,6 +814,7 @@ impl FieldAs {
             FieldAs::Time => "time",
             FieldAs::Percent => "percent",
             FieldAs::Json => "json",
+            FieldAs::Choice => "choice",
         }
     }
 }
@@ -739,9 +843,30 @@ pub struct Action {
     pub label: Option<String>,
     #[serde(default, rename = "as")]
     pub as_: Option<ActionAs>,
+    #[serde(default)]
+    pub confirm: Option<ConfirmOf>,
     /// Shows the action only while it holds, beyond the action set of the scope.
     #[serde(default)]
     pub visible: Option<String>,
+}
+
+/// A confirm before an action: the name of an overlay (which this generator does not draw), or
+/// the short form of a question and its button.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum ConfirmOf {
+    Short(ConfirmShort),
+    Overlay(String),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ConfirmShort {
+    pub title: String,
+    #[serde(default)]
+    pub show: Option<String>,
+    #[serde(default)]
+    pub confirm_label: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -749,6 +874,7 @@ pub struct Action {
 pub enum ActionAs {
     Button,
     Link,
+    Icon,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -776,6 +902,9 @@ pub struct ReadsFull {
     pub paging: Option<Paging>,
     #[serde(default)]
     pub filter: Option<String>,
+    /// The poll interval: a duration here.
+    #[serde(default)]
+    pub refresh: Option<String>,
 }
 
 impl FromShort for ReadsFull {
@@ -788,6 +917,7 @@ impl FromShort for ReadsFull {
             params: BTreeMap::new(),
             paging: None,
             filter: None,
+            refresh: None,
         }
     }
 }
