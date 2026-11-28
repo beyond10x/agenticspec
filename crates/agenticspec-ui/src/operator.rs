@@ -105,6 +105,20 @@ fn refused(path: &str, message: String) -> Failure {
 /// An input that cannot be read, a contract of another architecture or of other ports, or an
 /// architecture or `view:` key the derivation refuses.
 pub fn build(inputs: &Inputs) -> Result<Vec<(String, Vec<u8>)>, Failure> {
+    build_for(inputs, None)
+}
+
+/// Every file of the UI of the ingress `ingress` of `inputs.architecture` (`operator` when none is
+/// named), by name, sorted: as [`build`], scoped to the ingress's interface when the contract
+/// gives a UI per ingress (see [`crate::derive::ingress`]).
+///
+/// # Errors
+///
+/// As [`build`], and an ingress with no `ui` export.
+pub fn build_for(
+    inputs: &Inputs,
+    ingress: Option<&str>,
+) -> Result<Vec<(String, Vec<u8>)>, Failure> {
     let contract = read_doc(&inputs.contract)?;
     let result = match (&inputs.prediction, inputs.control_plane) {
         (Some(p), true) => Some(read_doc(p)?),
@@ -113,13 +127,14 @@ pub fn build(inputs: &Inputs) -> Result<Vec<(String, Vec<u8>)>, Failure> {
     let control = inputs.control_plane.then_some(ControlInputs {
         result: result.as_ref(),
     });
-    build_ui(
+    build_ingress(
         &inputs.root,
         &inputs.architecture,
         &contract,
         &inputs.contract.display().to_string(),
         &inputs.api_base,
         control.as_ref(),
+        ingress,
     )
 }
 
@@ -155,6 +170,26 @@ pub fn build_ui(
     api_base: &str,
     control: Option<&ControlInputs<'_>>,
 ) -> Result<Vec<(String, Vec<u8>)>, Failure> {
+    build_ingress(root, architecture, contract, shown, api_base, control, None)
+}
+
+/// Every file of the UI of the ingress `ingress` of `architecture` (`operator` when none is named)
+/// as [`build_ui`] writes them, scoped to the ingress's interface when the contract gives a UI per
+/// ingress (see [`crate::derive::ingress`]); `config.json` then names the ingress and its title
+/// says it.
+///
+/// # Errors
+///
+/// As [`build_ui`], and an ingress with no `ui` export.
+pub fn build_ingress(
+    root: &Path,
+    architecture: &Path,
+    contract: &Value,
+    shown: &str,
+    api_base: &str,
+    control: Option<&ControlInputs<'_>>,
+    ingress: Option<&str>,
+) -> Result<Vec<(String, Vec<u8>)>, Failure> {
     let ir: Value = serde_json::from_str(MODEL)
         .map_err(|e| Failure::Unreadable(format!("the embedded model: {e}")))?;
     let ports: Value = serde_json::from_str(PORTS)
@@ -177,7 +212,7 @@ pub fn build_ui(
             ),
         ));
     }
-    let layout = derive::layout_with(
+    let layout = derive::layout_for(
         root,
         architecture,
         &ir,
@@ -185,6 +220,7 @@ pub fn build_ui(
         Some(&ports),
         Some(contract),
         control,
+        ingress,
     )?;
     let doc: Value = serde_json::from_str(&layout)
         .map_err(|e| Failure::Unreadable(format!("the layout: {e}")))?;
@@ -203,6 +239,11 @@ pub fn build_ui(
         "api_base": api_base,
         "title": architecture,
     });
+    let scoped = doc["ingress"].as_str();
+    if let Some(i) = scoped {
+        config["ingress"] = json!(i);
+        config["title"] = json!(format!("{architecture} ({i})"));
+    }
     if control.is_some() {
         config["mode"] = json!(CONTROL_PLANE);
         config["title"] = json!(format!("{architecture} control plane"));

@@ -279,7 +279,7 @@ node and no app of your own. The directory holds:
 | `views.json` | the layout of the UI, the pages and panels `agenticspec ui derive` derives from the architecture and its contract |
 | `contract.json` | the contract, as JSON |
 | `ports.json` | the port catalogue the binary carries |
-| `config.json` | the architecture, the title, and `api_base`: where the runtime's adapter answers the runtime interface (`/api/` unless `--api-base` names another path or URL) |
+| `config.json` | the architecture, the title, and `api_base`: where the runtime's adapter answers the runtime interface (`/api/` unless `--api-base` names another path or URL); for the UI of an ingress (see "One UI per ingress"), `ingress` |
 
 The app reads these files when it starts and calls the adapter at
 `<api_base>/scopes/<architecture>/<part>`. Serve the directory as it is; `config.json` may be
@@ -293,6 +293,34 @@ time 0, and prints its SHA-256 as `archive_sha256`, the digest a bundle carries 
 ```sh
 agenticspec sim contract workstation.yaml --out workstation.contract.yaml
 agenticspec ui build workstation.yaml --contract workstation.contract.yaml --out ui --archive
+```
+
+### One UI per ingress
+
+An operator UI is the `ui` export of an ingress. When the contract gives a `ui` export to an
+ingress other than `operator` (`architectures/workstation-ingress.yaml` gives one to `user` and
+one to `operator`), each such ingress has a UI of its own, scoped to its interface: its pages show
+only the panels of the interface's views (a part page with none left is dropped), its actions are
+the interface's commands, and its channels carry only the interface's feeds. A command of the
+interface that no link or principal port places becomes a row action on each panel of its domain
+whose row key is one of its inputs. An architecture whose only `ui` export is the operator
+ingress's keeps its one operator UI, byte for byte.
+
+- `agenticspec ui derive --out <dir>/<name>.ui.yaml` writes one composition per such ingress,
+  `<dir>/<name>.<ingress>.ui.yaml`, each with its fixtures, layout and digest, and lists them
+  under `ingresses`.
+- `agenticspec ui build ... --ingress <name>` writes the UI of that ingress (`operator` by
+  default); `config.json` names the ingress and its title says it. An ingress without a `ui`
+  export is refused with `document_refused`. Point `--api-base` at the ingress's own root,
+  `/ingress/<name>`.
+- `agenticspec ui serve` serves each such UI at `/ingress/<name>/`, its runtime interface below
+  `/ingress/<name>/scopes/`, R5 listing only the commands of that ingress. The operator UI is
+  at `/` as well, and the control-plane UI, scoped to the operator ingress, at `/control/`.
+
+```sh
+agenticspec sim contract workstation-ingress.yaml --out wi.contract.yaml
+agenticspec ui build workstation-ingress.yaml --contract wi.contract.yaml --ingress user \
+  --api-base /ingress/user --out user-ui
 ```
 
 ### The operator UI in a bundle
@@ -403,7 +431,8 @@ from the block fixtures built into the binary: rows from the panels' fixtures, t
 channel scripts, each command recorded and answered with a scripted outcome, every action allowed.
 It needs no checkout: a released binary serves from any directory, given the architecture's path.
 `--fixtures <dir>` answers from your own fixtures instead. Open the printed URL to see the operator
-UI with no runtime; the runtime interface is below `/ingress/operator`. `ui/README.md` § "Served
+UI with no runtime; the runtime interface is below `/ingress/operator`. The UI of every other
+ingress with a `ui` export is at `/ingress/<ingress>/`, its interface below that root. `ui/README.md` § "Served
 on fixtures" lists its paths and the layout of a fixtures directory.
 
 ### Proving the runtime answers the interface

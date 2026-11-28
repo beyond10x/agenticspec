@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b8f23e9b2c092077465347f0fbbae30dec676cfb4ee76e860761fa72b4bc5749
+// contract digest 7d11d25d7fef32d7b76d91e8b03a6eb8fea1f6c0915288d49fac9326766d8d6d
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -4900,6 +4900,10 @@ pub fn encode_agenticspec_cli_ui_build_input(value: &agenticspec_types::cli::UiB
         json::member(out, "prediction");
         json::push_text(out, &*held0);
     }
+    if let Some(held0) = &value.ingress {
+        json::member(out, "ingress");
+        json::push_text(out, &*held0);
+    }
     out.push('}');
 }
 
@@ -4909,7 +4913,7 @@ pub fn encode_agenticspec_cli_ui_build_input(value: &agenticspec_types::cli::UiB
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_build_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiBuildInput, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "contract", "out", "api_base", "archive", "control_plane", "prediction"])?;
+    json::closed_at(value, at, &["architecture", "contract", "out", "api_base", "archive", "control_plane", "prediction", "ingress"])?;
     Ok(agenticspec_types::cli::UiBuildInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -4948,6 +4952,13 @@ pub fn decode_agenticspec_cli_ui_build_input(value: &json::Value, at: &str) -> R
             Some(member6) => {
                 let at6 = json::nested(at, "prediction");
                 Some(json::text_at(member6, &at6, "a string")?.to_owned())
+            }
+        },
+        ingress: match value.member("ingress") {
+            None | Some(json::Value::Null) => None,
+            Some(member7) => {
+                let at7 = json::nested(at, "ingress");
+                Some(json::text_at(member7, &at7, "a string")?.to_owned())
             }
         },
     })
@@ -5293,6 +5304,17 @@ pub fn encode_agenticspec_cli_ui_derive_result(value: &agenticspec_types::cli::U
     json::push_integer(out, value.files);
     json::member(out, "written");
     json::push_bool(out, value.written);
+    if let Some(held0) = &value.ingresses {
+        json::member(out, "ingresses");
+        out.push('[');
+        for (index1, item1) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            encode_agenticspec_cli_ui_ingress_derived(&*item1, out);
+        }
+        out.push(']');
+    }
     out.push('}');
 }
 
@@ -5302,7 +5324,7 @@ pub fn encode_agenticspec_cli_ui_derive_result(value: &agenticspec_types::cli::U
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_derive_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiDeriveResult, json::DecodeError> {
-    json::closed_at(value, at, &["out", "pages", "actions", "channels", "files", "written"])?;
+    json::closed_at(value, at, &["out", "pages", "actions", "channels", "files", "written", "ingresses"])?;
     Ok(agenticspec_types::cli::UiDeriveResult {
         out: {
             let at0 = json::nested(at, "out");
@@ -5333,6 +5355,20 @@ pub fn decode_agenticspec_cli_ui_derive_result(value: &json::Value, at: &str) ->
             let at5 = json::nested(at, "written");
             let member5 = json::member_at(value, at, "written")?;
             json::bool_at(member5, &at5, "a boolean")?
+        },
+        ingresses: match value.member("ingresses") {
+            None | Some(json::Value::Null) => None,
+            Some(member6) => {
+                let at6 = json::nested(at, "ingresses");
+                Some({
+                let mut items6 = Vec::new();
+                for (index6, element6) in json::items_at(member6, &at6, "an array")?.iter().enumerate() {
+                    let nested6 = json::nested(&at6, &index6.to_string());
+                    items6.push(decode_agenticspec_cli_ui_ingress_derived(element6, &nested6)?);
+                }
+                items6
+            })
+            }
         },
     })
 }
@@ -5409,6 +5445,96 @@ pub fn decode_agenticspec_cli_ui_generate_result(value: &json::Value, at: &str) 
                 }
                 items1
             }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiIngressDerived` as JSON.
+pub fn encode_agenticspec_cli_ui_ingress_derived(value: &agenticspec_types::cli::UiIngressDerived, out: &mut String) {
+    out.push('{');
+    json::member(out, "ingress");
+    json::push_text(out, &value.ingress);
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "pages");
+    json::push_integer(out, value.pages);
+    json::member(out, "actions");
+    json::push_integer(out, value.actions);
+    json::member(out, "channels");
+    json::push_integer(out, value.channels);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiIngressDerived` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_ingress_derived(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiIngressDerived, json::DecodeError> {
+    json::closed_at(value, at, &["ingress", "out", "pages", "actions", "channels"])?;
+    Ok(agenticspec_types::cli::UiIngressDerived {
+        ingress: {
+            let at0 = json::nested(at, "ingress");
+            let member0 = json::member_at(value, at, "ingress")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        out: {
+            let at1 = json::nested(at, "out");
+            let member1 = json::member_at(value, at, "out")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        pages: {
+            let at2 = json::nested(at, "pages");
+            let member2 = json::member_at(value, at, "pages")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        actions: {
+            let at3 = json::nested(at, "actions");
+            let member3 = json::member_at(value, at, "actions")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        channels: {
+            let at4 = json::nested(at, "channels");
+            let member4 = json::member_at(value, at, "channels")?;
+            json::integer_at(member4, &at4, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiIngressServed` as JSON.
+pub fn encode_agenticspec_cli_ui_ingress_served(value: &agenticspec_types::cli::UiIngressServed, out: &mut String) {
+    out.push('{');
+    json::member(out, "ingress");
+    json::push_text(out, &value.ingress);
+    json::member(out, "url");
+    json::push_text(out, &value.url);
+    json::member(out, "interface");
+    json::push_text(out, &value.interface);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiIngressServed` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_ingress_served(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiIngressServed, json::DecodeError> {
+    json::closed_at(value, at, &["ingress", "url", "interface"])?;
+    Ok(agenticspec_types::cli::UiIngressServed {
+        ingress: {
+            let at0 = json::nested(at, "ingress");
+            let member0 = json::member_at(value, at, "ingress")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        url: {
+            let at1 = json::nested(at, "url");
+            let member1 = json::member_at(value, at, "url")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        interface: {
+            let at2 = json::nested(at, "interface");
+            let member2 = json::member_at(value, at, "interface")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
         },
     })
 }
@@ -5559,6 +5685,17 @@ pub fn encode_agenticspec_cli_ui_serve_result(value: &agenticspec_types::cli::Ui
     json::push_text(out, &value.control);
     json::member(out, "interface");
     json::push_text(out, &value.interface);
+    if let Some(held0) = &value.ingresses {
+        json::member(out, "ingresses");
+        out.push('[');
+        for (index1, item1) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            encode_agenticspec_cli_ui_ingress_served(&*item1, out);
+        }
+        out.push(']');
+    }
     out.push('}');
 }
 
@@ -5568,7 +5705,7 @@ pub fn encode_agenticspec_cli_ui_serve_result(value: &agenticspec_types::cli::Ui
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_serve_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiServeResult, json::DecodeError> {
-    json::closed_at(value, at, &["url", "control", "interface"])?;
+    json::closed_at(value, at, &["url", "control", "interface", "ingresses"])?;
     Ok(agenticspec_types::cli::UiServeResult {
         url: {
             let at0 = json::nested(at, "url");
@@ -5584,6 +5721,20 @@ pub fn decode_agenticspec_cli_ui_serve_result(value: &json::Value, at: &str) -> 
             let at2 = json::nested(at, "interface");
             let member2 = json::member_at(value, at, "interface")?;
             json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        ingresses: match value.member("ingresses") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "ingresses");
+                Some({
+                let mut items3 = Vec::new();
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
+                    let nested3 = json::nested(&at3, &index3.to_string());
+                    items3.push(decode_agenticspec_cli_ui_ingress_served(element3, &nested3)?);
+                }
+                items3
+            })
+            }
         },
     })
 }

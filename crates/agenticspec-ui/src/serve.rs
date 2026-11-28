@@ -2,7 +2,10 @@
 //! runtime. It answers the runtime interface (`ui/runtime.openapi.yaml`) under the operator
 //! ingress, `{url}/ingress/operator/scopes/{architecture}[/{part}[/{instance}]]`, and serves the
 //! operator app `agenticspec ui build` writes for the same architecture at `/`, its `config.json`
-//! pointing at those routes:
+//! pointing at those routes. When the contract gives a UI to another ingress too (a `ui` export,
+//! `design/ingress.md` I10), each such ingress gets its own app at `{url}/ingress/{ingress}/` and
+//! its own plane below `{url}/ingress/{ingress}/scopes/`, scoped to its interface; the operator
+//! app is then served at `{url}/ingress/operator/` too:
 //!
 //! - R1 answers each view of the plane (see [`crate::plane`]) with the rows of the panels'
 //!   fixture file (`ui/views/fixtures/<view>.json`) at every scope of the architecture;
@@ -12,7 +15,8 @@
 //!   events after it;
 //! - R4 records each command (`GET /fixture/commands` lists them) and answers the outcome
 //!   `ui/views/source/outcomes.json` scripts for it, `{"row": null}` when none does;
-//! - R5 allows every command of the plane at every scope.
+//! - R5 allows every command of the plane at every scope: per ingress, only the commands of that
+//!   ingress's plane.
 //!
 //! Those files are built into the binary as one compact file, [`BUNDLE_FILE`] (written by
 //! `agenticspec ui panels` with [`write_bundle`], held by `ui panels --check`), so a released
@@ -45,6 +49,14 @@ use crate::wire::{self, Request};
 
 /// The base path of the operator ingress; the scopes are below `{ROOT}/scopes/`.
 pub const ROOT: &str = "/ingress/operator";
+/// The prefix of the base path of every ingress, `/ingress/{ingress}`.
+pub const INGRESS_PREFIX: &str = "/ingress/";
+
+/// The base path of the ingress `ingress`, `/ingress/{ingress}`: its app is served at it with a
+/// `/` after it, its interface below `{root}/scopes/`.
+pub fn root_of(ingress: &str) -> String {
+    format!("{INGRESS_PREFIX}{ingress}")
+}
 /// The path the control-plane UI is served below, beside the operator app at `/`.
 pub const CONTROL_PATH: &str = "/control/";
 /// The port when none is named, the default `root` of `ui/runtime.openapi.yaml`.
@@ -418,6 +430,8 @@ pub fn random_token() -> String {
 /// A running server. Dropping it stops it.
 pub struct Served {
     url: String,
+    /// The ingress of the first UI, the operator UI at `/`.
+    primary: String,
     recorded: Arc<Mutex<Vec<Value>>>,
     stop: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
@@ -453,13 +467,36 @@ impl Served {
         fixtures: Fixtures,
         options: Options,
     ) -> io::Result<Served> {
+        Served::start_uis(vec![(plane, app)], control, fixtures, options)
+    }
+
+    /// Starts the server as [`Served::start_with`] does with one UI per ingress, each a plane and
+    /// the files of its app (what [`crate::operator::build_ingress`] writes with `api_base`
+    /// [`root_of`] the ingress): each app at `/ingress/{ingress}/`, its interface below
+    /// `/ingress/{ingress}/scopes/`; the first, the operator UI, at `/` too.
+    ///
+    /// # Errors
+    ///
+    /// The port cannot be bound, or no UI is given.
+    pub fn start_uis(
+        uis: Vec<(Plane, AppFiles)>,
+        control: Vec<(String, Vec<u8>)>,
+        fixtures: Fixtures,
+        options: Options,
+    ) -> io::Result<Served> {
+        if uis.is_empty() {
+            return Err(io::Error::other("no UI to serve"));
+        }
+        let primary = uis[0].0.ingress.clone();
         let listener = TcpListener::bind(("127.0.0.1", options.port))?;
         let url = format!("http://{}", listener.local_addr()?);
         let recorded = Arc::new(Mutex::new(Vec::new()));
         let stop = Arc::new(AtomicBool::new(false));
         let shared = Arc::new(Shared {
-            plane,
-            app,
+            uis: uis
+                .into_iter()
+                .map(|(plane, app)| Ui { plane, app })
+                .collect(),
             control,
             fixtures,
             token: options.token,
@@ -479,6 +516,7 @@ impl Served {
         });
         Ok(Served {
             url,
+            primary,
             recorded,
             stop,
             thread: Some(thread),
@@ -490,12 +528,18 @@ impl Served {
         &self.url
     }
 
-    /// The root of the runtime interface, `{url}/ingress/operator`.
+    /// The root of the runtime interface of the first UI, `{url}/ingress/operator`.
     pub fn interface_root(&self) -> String {
-        format!("{}{ROOT}", self.url)
+        self.ingress_root(&self.primary)
     }
 
-    /// The commands received so far, oldest first: `{scope, command, input, status}`.
+    /// The root of the runtime interface of the ingress `ingress`, `{url}/ingress/{ingress}`; its
+    /// app is served at that root with a `/` after it.
+    pub fn ingress_root(&self, ingress: &str) -> String {
+        format!("{}{}", self.url, root_of(ingress))
+    }
+
+    /// The commands received so far, oldest first: `{ingress, scope, command, input, status}`.
     pub fn recorded(&self) -> Vec<Value> {
         self.recorded.lock().map(|r| r.clone()).unwrap_or_default()
     }
@@ -517,9 +561,18 @@ impl Drop for Served {
     }
 }
 
-struct Shared {
+/// The files of an app by name.
+pub type AppFiles = Vec<(String, Vec<u8>)>;
+
+/// The UI of one ingress: the plane its interface answers and the files of its app.
+struct Ui {
     plane: Plane,
     app: Vec<(String, Vec<u8>)>,
+}
+
+struct Shared {
+    /// The UIs, the operator UI first.
+    uis: Vec<Ui>,
     control: Vec<(String, Vec<u8>)>,
     fixtures: Fixtures,
     token: String,
@@ -573,8 +626,8 @@ struct Scope {
 }
 
 impl Shared {
-    fn scope_text(&self, s: &Scope) -> String {
-        interface::scope_path(&self.plane.architecture, s.part.as_deref(), s.instance)
+    fn scope_text(plane: &Plane, s: &Scope) -> String {
+        interface::scope_path(&plane.architecture, s.part.as_deref(), s.instance)
     }
 
     fn connection(&self, stream: TcpStream) {
@@ -627,11 +680,34 @@ impl Shared {
             );
             return wire::write_json(out, s, &[], &b);
         }
-        let interface = r
-            .path
-            .strip_prefix(ROOT)
-            .filter(|rest| rest.starts_with('/'));
-        if interface.is_some() || r.path == RECORD {
+        let path = r.path.split('?').next().unwrap_or("");
+        // Below an ingress: its name and what follows it, `/ingress/{name}[/{below}]`.
+        let ingress = path.strip_prefix(INGRESS_PREFIX).map(|rest| {
+            rest.split_once('/')
+                .map_or((rest, None), |(name, below)| (name, Some(below)))
+        });
+        if let Some((name, None)) = ingress
+            && r.method == "GET"
+            && self.ui(name).is_some()
+        {
+            let location = format!("{}/", root_of(name));
+            return write_bytes(out, 308, &[("Location", &location)], "text/plain", b"");
+        }
+        if let Some((name, Some(below))) = ingress {
+            let scopes = format!("/{below}").starts_with(&interface::scope_prefix());
+            let file = match below {
+                "" => "index.html",
+                n => n,
+            };
+            if r.method == "GET"
+                && !scopes
+                && let Some(ui) = self.ui(name)
+                && ui.app.iter().any(|(n, _)| n == file)
+            {
+                return self.file(&ui.app, file, r, out);
+            }
+        }
+        if ingress.is_some_and(|(_, below)| below.is_some()) || r.path == RECORD {
             if !self.authenticated(r) {
                 let (s, b) = error(
                     401,
@@ -644,25 +720,55 @@ impl Shared {
                 let list = self.recorded.lock().map(|l| l.clone()).unwrap_or_default();
                 return wire::write_json(out, 200, &[], &Value::Array(list).to_string());
             }
-            return self.interface(r, interface.unwrap_or(""), out);
+            let name = ingress.map_or("", |(n, _)| n);
+            let Some(ui) = self.ui(name) else {
+                let names: Vec<&str> = self.uis.iter().map(|u| u.plane.ingress.as_str()).collect();
+                let (s, b) = error(
+                    404,
+                    "NoSuchIngress",
+                    format!(
+                        "{}: no ingress {name} with a UI; served: {}",
+                        r.path,
+                        names.join(", ")
+                    ),
+                );
+                return wire::write_json(out, s, &[], &b);
+            };
+            let rest = &r.path[INGRESS_PREFIX.len() + name.len()..];
+            return self.interface(&ui.plane, r, rest, out);
         }
         if r.method != "GET" {
             let (s, b) = error(405, "MethodNotAllowed", format!("{} {}", r.method, r.path));
             return wire::write_json(out, s, &[], &b);
         }
-        let path = r.path.split('?').next().unwrap_or("");
         let control_root = CONTROL_PATH.trim_end_matches('/');
         if !self.control.is_empty() && path == control_root {
             return write_bytes(out, 308, &[("Location", CONTROL_PATH)], "text/plain", b"");
         }
         let (files, rest) = match path.strip_prefix(CONTROL_PATH) {
             Some(rest) if !self.control.is_empty() => (&self.control, rest),
-            _ => (&self.app, path.trim_start_matches('/')),
+            _ => (&self.uis[0].app, path.trim_start_matches('/')),
         };
         let name = match rest {
             "" => "index.html",
             n => n,
         };
+        self.file(files, name, r, out)
+    }
+
+    /// The UI of the ingress `name`.
+    fn ui(&self, name: &str) -> Option<&Ui> {
+        self.uis.iter().find(|u| u.plane.ingress == name)
+    }
+
+    /// The file `name` of an app; its page sets the session cookie.
+    fn file(
+        &self,
+        files: &[(String, Vec<u8>)],
+        name: &str,
+        r: &Request,
+        out: &mut TcpStream,
+    ) -> io::Result<()> {
         let Some((_, bytes)) = files.iter().find(|(n, _)| n == name) else {
             let (s, b) = error(404, "NotFound", format!("{} is no file of the app", r.path));
             return wire::write_json(out, s, &[], &b);
@@ -680,19 +786,25 @@ impl Shared {
         write_bytes(out, 200, &extra, content_type(name), bytes)
     }
 
-    /// A request below the operator ingress, `/scopes/{scope}/api/...`.
-    fn interface(&self, r: &Request, path: &str, out: &mut TcpStream) -> io::Result<()> {
-        let (scope, rest) = match self.scope_of(path) {
+    /// A request below the root of an ingress, `/scopes/{scope}/api/...`.
+    fn interface(
+        &self,
+        plane: &Plane,
+        r: &Request,
+        path: &str,
+        out: &mut TcpStream,
+    ) -> io::Result<()> {
+        let (scope, rest) = match Self::scope_of(plane, path) {
             Ok(x) => x,
             Err((s, b)) => return wire::write_json(out, s, &[], &b),
         };
         let mut words = rest.splitn(2, '/');
         let (kind, name) = (words.next().unwrap_or(""), words.next().unwrap_or(""));
         let (status, body) = match (r.method.as_str(), kind) {
-            ("GET", "views") if !name.is_empty() => self.read(name),
-            ("GET", "channels") if !name.is_empty() => return self.stream(r, name, out),
-            ("POST", "commands") if !name.is_empty() => self.command(r, &scope, name),
-            ("GET", "actions") if name.is_empty() => self.actions(),
+            ("GET", "views") if !name.is_empty() => self.read(plane, name),
+            ("GET", "channels") if !name.is_empty() => return self.stream(plane, r, name, out),
+            ("POST", "commands") if !name.is_empty() => self.command(plane, r, &scope, name),
+            ("GET", "actions") if name.is_empty() => self.actions(plane),
             (_, "views" | "channels" | "commands" | "actions") => {
                 error(405, "MethodNotAllowed", format!("{} {}", r.method, r.path))
             }
@@ -705,31 +817,32 @@ impl Shared {
         wire::write_json(out, status, &[], &body)
     }
 
-    fn scope_of<'a>(&self, path: &'a str) -> Result<(Scope, &'a str), (u16, String)> {
+    fn scope_of<'a>(plane: &Plane, path: &'a str) -> Result<(Scope, &'a str), (u16, String)> {
         let prefix = interface::scope_prefix();
+        let root = root_of(&plane.ingress);
         let no_scope = || {
             error(
                 404,
                 "NoSuchScope",
                 format!(
-                    "{ROOT}{path}: the interface answers below {ROOT}{prefix}{}",
-                    self.plane.architecture
+                    "{root}{path}: the interface answers below {root}{prefix}{}",
+                    plane.architecture
                 ),
             )
         };
         let below = path.strip_prefix(&prefix).ok_or_else(no_scope)?;
         let (scope, rest) = below.split_once("/api/").ok_or_else(no_scope)?;
         let segs: Vec<&str> = scope.split('/').collect();
-        if segs.len() > 3 || segs[0] != self.plane.architecture {
+        if segs.len() > 3 || segs[0] != plane.architecture {
             return Err(no_scope());
         }
         let part = match segs.get(1) {
             None => None,
-            Some(p) => Some(self.plane.part(p).ok_or_else(|| {
+            Some(p) => Some(plane.part(p).ok_or_else(|| {
                 error(
                     404,
                     "NoSuchScope",
-                    format!("no part {p} in {}", self.plane.architecture),
+                    format!("no part {p} in {}", plane.architecture),
                 )
             })?),
         };
@@ -759,12 +872,12 @@ impl Shared {
         ))
     }
 
-    fn read(&self, view: &str) -> (u16, String) {
+    fn read(&self, plane: &Plane, view: &str) -> (u16, String) {
         let rows = self
             .fixtures
             .views
             .get(view)
-            .filter(|_| self.plane.views.contains(view));
+            .filter(|_| plane.views.contains(view));
         let Some(rows) = rows else {
             return error(
                 404,
@@ -786,8 +899,8 @@ impl Shared {
     }
 
     /// The events of a channel, each the operator ingress carries, in order.
-    fn events(&self, channel: &str) -> Option<Vec<&(String, Value)>> {
-        let level = self.plane.channels.iter().any(|c| c == channel);
+    fn events(&self, plane: &Plane, channel: &str) -> Option<Vec<&(String, Value)>> {
+        let level = plane.channels.iter().any(|c| c == channel);
         let scripts: Vec<_> = self
             .fixtures
             .scripts
@@ -797,7 +910,7 @@ impl Shared {
         if scripts.is_empty() {
             return None;
         }
-        let feeds = &self.plane.feeds;
+        let feeds = &plane.feeds;
         Some(
             scripts
                 .into_iter()
@@ -807,8 +920,14 @@ impl Shared {
         )
     }
 
-    fn stream(&self, r: &Request, channel: &str, out: &mut TcpStream) -> io::Result<()> {
-        let Some(events) = self.events(channel) else {
+    fn stream(
+        &self,
+        plane: &Plane,
+        r: &Request,
+        channel: &str,
+        out: &mut TcpStream,
+    ) -> io::Result<()> {
+        let Some(events) = self.events(plane, channel) else {
             let (s, b) = error(
                 404,
                 "NoSuchChannel",
@@ -844,12 +963,12 @@ impl Shared {
         Ok(())
     }
 
-    fn command(&self, r: &Request, scope: &Scope, command: &str) -> (u16, String) {
+    fn command(&self, plane: &Plane, r: &Request, scope: &Scope, command: &str) -> (u16, String) {
         let input: Map<String, Value> = match serde_json::from_slice(&r.body) {
             Ok(Value::Object(m)) => m,
             _ => return error(400, "InvalidRequest", "a command's input is a JSON object"),
         };
-        if !self.plane.commands.contains(command) {
+        if !plane.commands.contains(command) {
             return error(
                 404,
                 "NoSuchCommand",
@@ -874,7 +993,8 @@ impl Shared {
         };
         if let Ok(mut list) = self.recorded.lock() {
             list.push(json!({
-                "scope": self.scope_text(scope),
+                "ingress": plane.ingress,
+                "scope": Self::scope_text(plane, scope),
                 "command": command,
                 "input": input,
                 "status": status,
@@ -883,9 +1003,8 @@ impl Shared {
         (status, json!({ "row": row }).to_string())
     }
 
-    fn actions(&self) -> (u16, String) {
-        let list: Vec<Value> = self
-            .plane
+    fn actions(&self, plane: &Plane) -> (u16, String) {
+        let list: Vec<Value> = plane
             .commands
             .iter()
             .map(|c| {

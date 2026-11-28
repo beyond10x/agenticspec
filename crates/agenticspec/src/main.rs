@@ -728,17 +728,21 @@ fn ui_conform(input: &Value) -> HandlerReply {
 /// The files of an operator UI by name.
 type OperatorFiles = Vec<(String, Vec<u8>)>;
 
-/// The files of the operator UI of `architecture` with `api_base`, and of its control-plane UI:
-/// from the contract at
-/// `contract`, or from the contract derived here from the architecture with the port and KPI
-/// catalogues built into the binary (`sim contract`), so no file of a checkout is read.
+/// The UI of each ingress `ui serve` serves beside the operator UI: its plane and its files.
+type IngressUis = Vec<(agenticspec_ui::plane::Plane, OperatorFiles)>;
+
+/// The files of the operator UI of `architecture` with `api_base`, of its control-plane UI, and
+/// of the UI of every other ingress with a `ui` export, each with the base path of its ingress
+/// (`/ingress/<ingress>`) and its plane: from the contract at `contract`, or from the contract
+/// derived here from the architecture with the port and KPI catalogues built into the binary
+/// (`sim contract`), so no file of a checkout is read.
 fn operator_files(
     architecture: &std::path::Path,
     contract: Option<&str>,
     api_base: &str,
-) -> Result<(OperatorFiles, OperatorFiles), HandlerReply> {
-    use agenticspec_ui::derive::{ControlInputs, Failure};
-    use agenticspec_ui::operator;
+) -> Result<(OperatorFiles, OperatorFiles, IngressUis), HandlerReply> {
+    use agenticspec_ui::derive::{ControlInputs, Failure, ingress};
+    use agenticspec_ui::{operator, plane::Plane, serve};
     let failed = |f: Failure| match f {
         Failure::Unreadable(e) => refusal("document_unreadable", e),
         Failure::Refused(rs) => {
@@ -780,22 +784,49 @@ fn operator_files(
         Some(&ControlInputs::default()),
     )
     .map_err(failed)?;
-    Ok((files, control))
+    let mut others = Vec::new();
+    if ingress::per_ingress(&doc) {
+        for i in ingress::ui_ingresses(&doc)
+            .into_iter()
+            .filter(|i| i.name != ingress::OPERATOR)
+        {
+            let base = serve::root_of(&i.name);
+            let f = operator::build_ingress(
+                root,
+                architecture,
+                &doc,
+                &shown,
+                &base,
+                None,
+                Some(&i.name),
+            )
+            .map_err(failed)?;
+            let plane = Plane::from_files(&f).map_err(|e| refusal("document_refused", e))?;
+            others.push((plane, f));
+        }
+    }
+    Ok((files, control, others))
 }
 
 /// The UIs of a control plane and what `ui serve` answers for them.
-type Served = (OperatorFiles, OperatorFiles, agenticspec_ui::plane::Plane);
+type Served = (
+    OperatorFiles,
+    OperatorFiles,
+    agenticspec_ui::plane::Plane,
+    IngressUis,
+);
 
 /// The control plane of an architecture: the files of its operator UI and of its control-plane UI
 /// with the API base of `ui serve`, and the plane read from the control-plane UI, which holds
-/// every read of both.
+/// every read of both; and the UI of every other ingress with a `ui` export with its plane.
 fn plane_of(input: &Value) -> Result<Served, HandlerReply> {
     let architecture = path_of(input, "architecture");
     let contract = input.get("contract").and_then(Value::as_str);
-    let (files, control) = operator_files(&architecture, contract, agenticspec_ui::serve::ROOT)?;
+    let (files, control, others) =
+        operator_files(&architecture, contract, agenticspec_ui::serve::ROOT)?;
     let plane = agenticspec_ui::plane::Plane::from_files(&control)
         .map_err(|e| refusal("document_refused", e))?;
-    Ok((files, control, plane))
+    Ok((files, control, plane, others))
 }
 
 /// The token of `ui serve` and `ui conform`: `AGENTICSPEC_UI_TOKEN` when set.
@@ -817,7 +848,7 @@ fn ui_conform_plane(input: &Value) -> HandlerReply {
             "--plan and --architecture name two plans; name one".to_string(),
         );
     }
-    let (files, control, plane) = match plane_of(input) {
+    let (files, control, plane, _) = match plane_of(input) {
         Ok(x) => x,
         Err(r) => return r,
     };
@@ -875,7 +906,7 @@ fn ui_conform_plane(input: &Value) -> HandlerReply {
 /// the process is stopped.
 fn ui_serve(input: &Value) -> HandlerReply {
     use agenticspec_ui::serve;
-    let (files, control, plane) = match plane_of(input) {
+    let (files, control, plane, others) = match plane_of(input) {
         Ok(x) => x,
         Err(r) => return r,
     };
@@ -894,9 +925,12 @@ fn ui_serve(input: &Value) -> HandlerReply {
     let given = ui_token();
     let token = given.clone().unwrap_or_else(serve::random_token);
     let architecture = plane.architecture.clone();
-    let served = match serve::Served::start_with(
-        plane,
-        files,
+    let primary = plane.ingress.clone();
+    let names: Vec<String> = others.iter().map(|(p, _)| p.ingress.clone()).collect();
+    let mut uis = vec![(plane, files)];
+    uis.extend(others);
+    let served = match serve::Served::start_uis(
+        uis,
         control,
         fixtures,
         serve::Options {
@@ -916,6 +950,17 @@ fn ui_serve(input: &Value) -> HandlerReply {
         err,
         "agenticspec: serving {url} (the operator UI of {architecture} on fixtures, its control-plane UI at {control}; the runtime interface at {interface})"
     );
+    let mut ingresses = Vec::new();
+    if !names.is_empty() {
+        for name in std::iter::once(&primary).chain(&names) {
+            let root = served.ingress_root(name);
+            let _ = writeln!(
+                err,
+                "agenticspec: the UI of ingress {name} at {root}/, its runtime interface at {root}"
+            );
+            ingresses.push(json!({"ingress": name, "url": format!("{root}/"), "interface": root}));
+        }
+    }
     if given.is_none() {
         let _ = writeln!(
             err,
@@ -924,7 +969,11 @@ fn ui_serve(input: &Value) -> HandlerReply {
     }
     drop(err);
     served.wait();
-    HandlerReply::Success(json!({ "url": url, "control": control, "interface": interface }))
+    let mut answer = json!({ "url": url, "control": control, "interface": interface });
+    if !ingresses.is_empty() {
+        answer["ingresses"] = Value::Array(ingresses);
+    }
+    HandlerReply::Success(answer)
 }
 
 /// `agenticspec ui derive`: derive, then write the files or with `--check` compare them.
@@ -945,7 +994,7 @@ fn ui_derive(input: &Value) -> HandlerReply {
         prediction: opt("prediction"),
     };
     let check = input.get("check").and_then(Value::as_bool).unwrap_or(false);
-    let d = match agenticspec_ui::derive_ui(&inputs) {
+    let all = match agenticspec_ui::derive_uis(&inputs) {
         Ok(d) => d,
         Err(Failure::Unreadable(e)) => return refusal("document_unreadable", e),
         Err(Failure::Refused(rs)) => {
@@ -957,17 +1006,38 @@ fn ui_derive(input: &Value) -> HandlerReply {
         }
     };
     let answer = |written: bool| {
-        json!({
+        let mut a = json!({
             "out": inputs.out.to_string_lossy(),
-            "pages": d.pages,
-            "actions": d.actions,
-            "channels": d.channels,
-            "files": d.files.len(),
+            "pages": all.iter().map(|(_, d)| d.pages).sum::<usize>(),
+            "actions": all.iter().map(|(_, d)| d.actions).sum::<usize>(),
+            "channels": all.iter().map(|(_, d)| d.channels).sum::<usize>(),
+            "files": all.iter().map(|(_, d)| d.files.len()).sum::<usize>(),
             "written": written,
-        })
+        });
+        let ingresses: Vec<Value> = all
+            .iter()
+            .filter_map(|(i, d)| {
+                let i = i.as_ref()?;
+                let out = d
+                    .files
+                    .first()
+                    .map(|(p, _)| p.to_string_lossy().into_owned());
+                Some(json!({
+                    "ingress": i,
+                    "out": out,
+                    "pages": d.pages,
+                    "actions": d.actions,
+                    "channels": d.channels,
+                }))
+            })
+            .collect();
+        if !ingresses.is_empty() {
+            a["ingresses"] = Value::Array(ingresses);
+        }
+        a
     };
     if check {
-        let diff = differences(&d);
+        let diff: Vec<String> = all.iter().flat_map(|(_, d)| differences(d)).collect();
         if diff.is_empty() {
             return HandlerReply::Success(answer(false));
         }
@@ -979,8 +1049,14 @@ fn ui_derive(input: &Value) -> HandlerReply {
             ),
         );
     }
-    if let Err(e) = write(&d) {
-        return refusal("out_unwritable", format!("{}: {e}", inputs.out.display()));
+    for (_, d) in &all {
+        if let Err(e) = write(d) {
+            let out = d
+                .files
+                .first()
+                .map_or(inputs.out.clone(), |(p, _)| p.clone());
+            return refusal("out_unwritable", format!("{}: {e}", out.display()));
+        }
     }
     HandlerReply::Success(answer(true))
 }
@@ -1011,7 +1087,8 @@ fn ui_build(input: &Value) -> HandlerReply {
             .and_then(Value::as_str)
             .map(PathBuf::from),
     };
-    let files = match operator::build(&inputs) {
+    let ingress = input.get("ingress").and_then(Value::as_str);
+    let files = match operator::build_for(&inputs, ingress) {
         Ok(f) => f,
         Err(Failure::Unreadable(e)) => return refusal("document_unreadable", e),
         Err(Failure::Refused(rs)) => {

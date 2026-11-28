@@ -1,0 +1,17 @@
+{
+  "rows": [
+    {
+      "architecture": "workstation-ingress",
+      "place": "policies.operator_answers_alone",
+      "search": "",
+      "value": "false"
+    },
+    {
+      "architecture": "workstation-ingress",
+      "place": "policies.question_default_after",
+      "search": "",
+      "value": "15m"
+    }
+  ],
+  "view": "agentic.architecture.Settings"
+}

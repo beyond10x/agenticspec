@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b8f23e9b2c092077465347f0fbbae30dec676cfb4ee76e860761fa72b4bc5749
+// contract digest 7d11d25d7fef32d7b76d91e8b03a6eb8fea1f6c0915288d49fac9326766d8d6d
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -1294,6 +1294,8 @@ pub struct UiBuildInput {
     pub control_plane: bool,
     /// `prediction` — `Optional<String>`.
     pub prediction: Option<String>,
+    /// `ingress` — `Optional<String>`.
+    pub ingress: Option<String>,
 }
 
 /// UiBuildResult — `agenticspec.cli.UiBuildResult`.
@@ -1379,7 +1381,7 @@ pub struct UiDeriveInput {
 
 /// UiDeriveResult — `agenticspec.cli.UiDeriveResult`.
 ///
-/// The operator UI of an architecture: one `ess-ui/1` document (an overview per level, a page per part, a channel per level, the actions of the contract) with `<name>.sources.sha256`, `<name>.fixtures/` and `<name>.layout.json` beside it.
+/// The operator UI of an architecture: one `ess-ui/1` document (an overview per level, a page per part, a channel per level, the actions of the contract) with `<name>.sources.sha256`, `<name>.fixtures/` and `<name>.layout.json` beside it; when the contract gives a `ui` export to an ingress other than `operator`, one such document per ingress with a `ui` export, `<name>.<ingress>.ui.yaml`, each scoped to the ingress's interface, and the counts summed over them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UiDeriveResult {
     /// `out` — `String`.
@@ -1394,6 +1396,8 @@ pub struct UiDeriveResult {
     pub files: i64,
     /// `written` — `Boolean`.
     pub written: bool,
+    /// `ingresses` — `Optional<List<agenticspec.cli.UiIngressDerived>>`.
+    pub ingresses: Option<Vec<UiIngressDerived>>,
 }
 
 /// UiGenerateInput — `agenticspec.cli.UiGenerateInput`.
@@ -1412,6 +1416,36 @@ pub struct UiGenerateResult {
     pub out: String,
     /// `files` — `List<String>`.
     pub files: Vec<String>,
+}
+
+/// UiIngressDerived — `agenticspec.cli.UiIngressDerived`.
+///
+/// The composition of one ingress with a `ui` export.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiIngressDerived {
+    /// `ingress` — `String`.
+    pub ingress: String,
+    /// `out` — `String`.
+    pub out: String,
+    /// `pages` — `Integer`.
+    pub pages: i64,
+    /// `actions` — `Integer`.
+    pub actions: i64,
+    /// `channels` — `Integer`.
+    pub channels: i64,
+}
+
+/// UiIngressServed — `agenticspec.cli.UiIngressServed`.
+///
+/// Where the UI of one ingress with a `ui` export is served.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiIngressServed {
+    /// `ingress` — `String`.
+    pub ingress: String,
+    /// `url` — `String`.
+    pub url: String,
+    /// `interface` — `String`.
+    pub interface: String,
 }
 
 /// UiPanelsInput — `agenticspec.cli.UiPanelsInput`.
@@ -1453,7 +1487,7 @@ pub struct UiServeInput {
 
 /// UiServeResult — `agenticspec.cli.UiServeResult`.
 ///
-/// Where the operator UI was served, `http://127.0.0.1:<port>/`, the control-plane UI, `<url>control/`, and the root of their runtime interface, `<url>ingress/operator`. The server runs until it is stopped.
+/// Where the operator UI was served, `http://127.0.0.1:<port>/`, the control-plane UI, `<url>control/`, and the root of their runtime interface, `<url>ingress/operator`, and the UI of every other ingress with a `ui` export at `<url>ingress/<ingress>/`. The server runs until it is stopped.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UiServeResult {
     /// `url` — `String`.
@@ -1462,4 +1496,6 @@ pub struct UiServeResult {
     pub control: String,
     /// `interface` — `String`.
     pub interface: String,
+    /// `ingresses` — `Optional<List<agenticspec.cli.UiIngressServed>>`.
+    pub ingresses: Option<Vec<UiIngressServed>>,
 }

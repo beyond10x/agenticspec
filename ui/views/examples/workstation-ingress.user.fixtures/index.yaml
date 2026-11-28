@@ -1,0 +1,24 @@
+views:
+  agentic.architecture.Parts: parts.json
+  agentic.architecture.Reach: reach.json
+  agentic.agent.AgentRevisions: ../../fixtures/agentic.agent.AgentRevisions.json
+  agentic.agent.Agents: ../../fixtures/agentic.agent.Agents.json
+  agentic.channel.ChannelMessages: ../../fixtures/agentic.channel.ChannelMessages.json
+  agentic.channel.ChannelPosts: ../../fixtures/agentic.channel.ChannelPosts.json
+  agentic.channel.Channels: ../../fixtures/agentic.channel.Channels.json
+  agentic.channel.Messages: ../../fixtures/agentic.channel.Messages.json
+  agentic.channel.Posts: ../../fixtures/agentic.channel.Posts.json
+  agentic.channel.Subscriptions: ../../fixtures/agentic.channel.Subscriptions.json
+  agentic.harness.HarnessSessions: ../../fixtures/agentic.harness.HarnessSessions.json
+  agentic.harness.Harnesses: ../../fixtures/agentic.harness.Harnesses.json
+  agentic.harness.PermissionModes: ../../fixtures/agentic.harness.PermissionModes.json
+  agentic.harness.ToolCalls: ../../fixtures/agentic.harness.ToolCalls.json
+  agentic.harness.Turns: ../../fixtures/agentic.harness.Turns.json
+  agentic.model.Endpoints: ../../fixtures/agentic.model.Endpoints.json
+  agentic.model.Inferences: ../../fixtures/agentic.model.Inferences.json
+  agentic.model.Models: ../../fixtures/agentic.model.Models.json
+  agentic.model.Routes: ../../fixtures/agentic.model.Routes.json
+  agentic.question.OpenQuestions: ../../fixtures/agentic.question.OpenQuestions.json
+  agentic.question.Questions: ../../fixtures/agentic.question.Questions.json
+scripts:
+  level: scripts/level.json

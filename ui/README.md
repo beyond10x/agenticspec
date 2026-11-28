@@ -212,6 +212,11 @@ agenticspec ui serve architectures/workstation.yaml   # http://127.0.0.1:7430/
 agenticspec ui serve workstation.yaml --fixtures my-fixtures/
 ```
 
+When the contract gives a `ui` export to an ingress other than `operator`
+(`architectures/workstation-ingress.yaml`: `user` and `operator`), each such ingress gets its own
+UI, scoped to its interface (`agenticspec ui build --ingress <name>`), at `/ingress/<name>/`, and
+its own plane below `/ingress/<name>/scopes/`; R5 there lists only that ingress's commands.
+
 `--fixtures <dir>` answers from a directory instead: one `<view>.json` per view
 (`{"view", "rows"}`), the channel scripts in `scripts/` (`{"channel", "events"}`) and the scripted
 outcomes in `outcomes.json` (`agenticspec-command-outcomes/1`); the last two may be absent. A
@@ -227,7 +232,9 @@ the built-in fixtures, or on those below `--root` when it is named.
 | `/ingress/operator/scopes/{scope}/api/channels/{channel}` | R2: a level's channel plays every script of `views/fixtures/scripts/` in turn, a block's channel its own, each event the operator ingress carries, the cursor its position; a reconnect with `Last-Event-ID` gets the events after it |
 | `/ingress/operator/scopes/{scope}/api/commands/{command}` | R4: records the command and answers the outcome `views/source/outcomes.json` scripts for it (per command, optionally per input, the accepted row or the refusal's row with 422), `{"row": null}` when none does |
 | `/ingress/operator/scopes/{scope}/api/actions` | R5: every command of the plane, allowed |
-| `/fixture/commands` | the commands recorded so far, `[{scope, command, input, status}]` |
+| `/ingress/{ingress}/` | the app of an ingress with a `ui` export, its `config.json` with `api_base` `/ingress/{ingress}` and `ingress` its name; `/ingress/{ingress}` redirects here. The operator app is always here as well as at `/`; another ingress's app is served when the contract gives that ingress a `ui` export |
+| `/ingress/{ingress}/scopes/{scope}/api/...` | R1, R2, R4 and R5 of that ingress's plane, as above for the operator: only the views, commands and feeds of its interface; an ingress with no UI is `NoSuchIngress` |
+| `/fixture/commands` | the commands recorded so far, `[{ingress, scope, command, input, status}]` |
 
 Every request of the interface carries the token, as `Authorization: Bearer <token>` or the
 session cookie; the token is `AGENTICSPEC_UI_TOKEN`, else a new one printed at start. A request to

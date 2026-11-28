@@ -3265,6 +3265,12 @@
             "control_plane": {
               "kind": "boolean"
             },
+            "ingress": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
             "out": {
               "kind": "string"
             },
@@ -3545,6 +3551,32 @@
             "files": {
               "kind": "integer"
             },
+            "ingresses": {
+              "kind": "optional",
+              "of": {
+                "kind": "list",
+                "of": {
+                  "kind": "struct",
+                  "fields": {
+                    "actions": {
+                      "kind": "integer"
+                    },
+                    "channels": {
+                      "kind": "integer"
+                    },
+                    "ingress": {
+                      "kind": "string"
+                    },
+                    "out": {
+                      "kind": "string"
+                    },
+                    "pages": {
+                      "kind": "integer"
+                    }
+                  }
+                }
+              }
+            },
             "out": {
               "kind": "string"
             },
@@ -3798,6 +3830,26 @@
           "fields": {
             "control": {
               "kind": "string"
+            },
+            "ingresses": {
+              "kind": "optional",
+              "of": {
+                "kind": "list",
+                "of": {
+                  "kind": "struct",
+                  "fields": {
+                    "ingress": {
+                      "kind": "string"
+                    },
+                    "interface": {
+                      "kind": "string"
+                    },
+                    "url": {
+                      "kind": "string"
+                    }
+                  }
+                }
+              }
             },
             "interface": {
               "kind": "string"
@@ -4764,7 +4816,7 @@
       ],
       "aliases": [],
       "callable": "ui_build",
-      "about": "Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), or with --control-plane of its control-plane UI, and with --archive a reproducible tar beside them with its sha256",
+      "about": "Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), or with --control-plane of its control-plane UI, and with --archive a reproducible tar beside them with its sha256; with --ingress the UI of another ingress with a ui export, scoped to its interface",
       "arguments": [
         {
           "field": "architecture",
@@ -4813,6 +4865,13 @@
           "source": {
             "kind": "option",
             "long": "prediction"
+          }
+        },
+        {
+          "field": "ingress",
+          "source": {
+            "kind": "option",
+            "long": "ingress"
           }
         }
       ]
@@ -4870,7 +4929,7 @@
       ],
       "aliases": [],
       "callable": "ui_derive",
-      "about": "Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check; with --control-plane the control-plane UI, the pages across parts beside it",
+      "about": "Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check; with --control-plane the control-plane UI, the pages across parts beside it; when the contract gives a ui export to an ingress other than operator, one composition per ingress with a ui export, <name>.<ingress>.ui.yaml, each scoped to its interface",
       "arguments": [
         {
           "field": "path",
@@ -4987,7 +5046,7 @@
       ],
       "aliases": [],
       "callable": "ui_serve",
-      "about": "Serve the operator UI of an architecture at / and its control-plane UI at /control/ over its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures",
+      "about": "Serve the operator UI of an architecture at / and its control-plane UI at /control/ and the UI of every other ingress with a ui export at /ingress/<ingress>/ over its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures",
       "arguments": [
         {
           "field": "architecture",
