@@ -2460,7 +2460,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__ui__subcmd__build)
-            opts="-h --contract --out --api-base --archive --control-plane --prediction --config --state-dir --output --help"
+            opts="-h --contract --out --api-base --archive --control-plane --prediction --ingress --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -2479,6 +2479,10 @@ _agenticspec() {
                     return 0
                     ;;
                 --prediction)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --ingress)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

@@ -239,7 +239,10 @@ pub fn document(plan: &Plan<'_>, name: &str, fixtures: &str) -> String {
         y,
         "format: ess-ui/1\napp: {}\ntitle: {}",
         super::snake(name),
-        q(&top.name)
+        q(&match &plan.ingress {
+            None => top.name.clone(),
+            Some(i) => format!("{} ({i})", top.name),
+        })
     );
     let _ = writeln!(y, "model: {}", q(plan.model.system()));
     y.push_str("actor: from_session\nplacement_profile: fat\n");
@@ -896,6 +899,9 @@ pub fn layout(plan: &Plan<'_>) -> String {
         "home": plan.home,
         "levels": levels,
     });
+    if let Some(i) = &plan.ingress {
+        doc["ingress"] = json!(i);
+    }
     if let Some(c) = &plan.control {
         doc["control"] = control_layout(plan, c);
     }

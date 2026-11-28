@@ -1,13 +1,13 @@
 <!--
   generated from agenticspec v1
-  contract digest 8327c6087032a6b0336294d572ae3aea87ab8f0576c77ff0d6b70c617bab8df2
+  contract digest 83b278bc64e69d0ff14c4ad9938baf4c52e82aabbc26e337de7aa13ed6f4290f
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-233 capabilities: **230 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+235 capabilities: **232 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -107,6 +107,8 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.UiDeriveResult` |
 | domain type | `agenticspec.cli.UiGenerateInput` |
 | domain type | `agenticspec.cli.UiGenerateResult` |
+| domain type | `agenticspec.cli.UiIngressDerived` |
+| domain type | `agenticspec.cli.UiIngressServed` |
 | domain type | `agenticspec.cli.UiPanelsInput` |
 | domain type | `agenticspec.cli.UiPanelsResult` |
 | domain type | `agenticspec.cli.UiServeInput` |

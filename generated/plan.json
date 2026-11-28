@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "2932b15db90d5ef77fb6c6cddc5f5139a49b6c781416c85463dbf9ca5f6b80aa",
-    "contract_digest": "8327c6087032a6b0336294d572ae3aea87ab8f0576c77ff0d6b70c617bab8df2"
+    "source_digest": "b9b12db1cda30bc31cfd1e2ec96434992d14d5a597bee37d0734163ad85cce53",
+    "contract_digest": "83b278bc64e69d0ff14c4ad9938baf4c52e82aabbc26e337de7aa13ed6f4290f"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -663,6 +663,20 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.UiGenerateResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.UiIngressDerived",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.UiIngressServed",
       "disposition": {
         "disposition": "generated"
       }

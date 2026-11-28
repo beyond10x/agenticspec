@@ -394,7 +394,7 @@ Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
 ### `ui build`
 
-Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), or with --control-plane of its control-plane UI, and with --archive a reproducible tar beside them with its sha256
+Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), or with --control-plane of its control-plane UI, and with --archive a reproducible tar beside them with its sha256; with --ingress the UI of another ingress with a ui export, scoped to its interface
 
 Callable: `ui_build`. Input: `agenticspec.cli.UiBuildInput`. Result: `agenticspec.cli.UiBuildResult`.
 
@@ -422,7 +422,7 @@ Error `source_unavailable`: `agenticspec.cli.Refusal`.
 
 ### `ui derive`
 
-Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check; with --control-plane the control-plane UI, the pages across parts beside it
+Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check; with --control-plane the control-plane UI, the pages across parts beside it; when the contract gives a ui export to an ingress other than operator, one composition per ingress with a ui export, <name>.<ingress>.ui.yaml, each scoped to its interface
 
 Callable: `ui_derive`. Input: `agenticspec.cli.UiDeriveInput`. Result: `agenticspec.cli.UiDeriveResult`.
 
@@ -460,7 +460,7 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 
 ### `ui serve`
 
-Serve the operator UI of an architecture at / and its control-plane UI at /control/ over its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures; with --sim <profile> R1 and R2 answer a simulator run of the architecture instead, its state and its event log replayed in order
+Serve the operator UI of an architecture at / and its control-plane UI at /control/ and the UI of every other ingress with a ui export at /ingress/<ingress>/ over its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures; with --sim <profile> R1 and R2 of every UI answer a simulator run of the architecture instead, its state and its event log replayed in order
 
 Callable: `ui_serve`. Input: `agenticspec.cli.UiServeInput`. Result: `agenticspec.cli.UiServeResult`.
 

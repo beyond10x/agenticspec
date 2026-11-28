@@ -196,3 +196,293 @@ fn a_fixtures_directory_reads_views_scripts_and_outcomes() {
     let err = Fixtures::from_dir(&dir.join("absent")).unwrap_err();
     assert!(err.contains("absent"), "{err}");
 }
+
+/// The UI of one ingress of the workstation with ingresses, with the base path `ui serve` gives
+/// it, and its plane.
+fn ingress_ui(name: &str) -> (Plane, Vec<(String, Vec<u8>)>) {
+    let root = root();
+    let contract =
+        operator::read_doc(&root.join("ui/views/examples/workstation-ingress.contract.yaml"))
+            .unwrap();
+    let files = operator::build_ingress(
+        &root,
+        &root.join("architectures/workstation-ingress.yaml"),
+        &contract,
+        "workstation-ingress.contract.yaml",
+        &serve::root_of(name),
+        None,
+        Some(name),
+    )
+    .unwrap_or_else(|_| panic!("the UI of {name}"));
+    (Plane::from_files(&files).unwrap(), files)
+}
+
+fn get(url: &str, token: Option<&str>) -> agenticspec_ui::wire::Response {
+    let auth = token.map(|t| format!("Bearer {t}"));
+    let headers: Vec<(&str, &str)> = auth.iter().map(|a| ("Authorization", a.as_str())).collect();
+    agenticspec_ui::wire::request("GET", url, &headers, None, Duration::from_secs(5)).unwrap()
+}
+
+fn json(r: &agenticspec_ui::wire::Response) -> serde_json::Value {
+    serde_json::from_slice(&r.body).unwrap()
+}
+
+/// Two ingresses with a `ui` export, `operator` and `user`, are served from one server: each app
+/// at its own root with its `config.json` pointing at `/ingress/<ingress>`, each interface below
+/// `/ingress/<ingress>/scopes/` answering its own plane, R5 listing only the commands of that
+/// ingress, and each plane passing `ui conform` at its root.
+#[test]
+fn each_ingress_with_a_ui_is_served_at_its_own_root_and_answers_its_own_plane() {
+    let (op_plane, op_files) = ingress_ui("operator");
+    let (user_plane, user_files) = ingress_ui("user");
+    assert_eq!(
+        (op_plane.ingress.as_str(), user_plane.ingress.as_str()),
+        ("operator", "user")
+    );
+    let served = Served::start_uis(
+        vec![
+            (op_plane.clone(), op_files),
+            (user_plane.clone(), user_files),
+        ],
+        Vec::new(),
+        Fixtures::embedded(),
+        serve::Options {
+            port: 0,
+            token: TOKEN.into(),
+            faults: Faults::default(),
+        },
+    )
+    .unwrap();
+    let url = served.url().to_string();
+
+    // Each app at its own root; the operator's at `/` too.
+    let moved = get(&format!("{url}/ingress/user"), None);
+    assert_eq!(moved.status, 308);
+    assert_eq!(moved.header("location"), Some("/ingress/user/"));
+    let page = get(&format!("{url}/ingress/user/"), None);
+    assert_eq!(page.status, 200);
+    assert!(page.header("set-cookie").is_some());
+    for (name, at) in [
+        ("user", format!("{url}/ingress/user/config.json")),
+        ("operator", format!("{url}/ingress/operator/config.json")),
+        ("operator", format!("{url}/config.json")),
+    ] {
+        let config = json(&get(&at, None));
+        assert_eq!(config["ingress"], name, "{at}");
+        assert_eq!(config["api_base"], format!("/ingress/{name}"), "{at}");
+    }
+
+    // The operator UI reads its views below its own ingress.
+    let read = agenticspec_ui::interface::scope_url(
+        &served.ingress_root("operator"),
+        &op_plane.architecture,
+        Some("gateway"),
+        None,
+    );
+    assert!(
+        read.starts_with(&format!("{url}/ingress/operator/scopes/")),
+        "{read}"
+    );
+    let rows = get(
+        &format!("{read}/api/views/agentic.gateway.Gateways"),
+        Some(TOKEN),
+    );
+    assert_eq!(rows.status, 200, "{}", String::from_utf8_lossy(&rows.body));
+
+    // R5 of each ingress lists exactly the commands of its interface.
+    let r5 = |name: &str| -> Vec<String> {
+        let at = agenticspec_ui::interface::scope_url(
+            &served.ingress_root(name),
+            &op_plane.architecture,
+            None,
+            None,
+        );
+        let list = json(&get(&format!("{at}/api/actions"), Some(TOKEN)));
+        list.as_array()
+            .unwrap()
+            .iter()
+            .map(|a| a["command"].as_str().unwrap().to_string())
+            .collect()
+    };
+    assert_eq!(
+        r5("user"),
+        ["agentic.channel.SendMessage", "agentic.question.Answer"]
+    );
+    assert_eq!(
+        r5("operator"),
+        [
+            "agentic.gateway.DetachUpstream",
+            "agentic.gateway.DrainGateway",
+            "agentic.gateway.StopGateway",
+        ]
+    );
+    // The user's interface holds no view of the gateway; an ingress with no UI answers none.
+    let user_root = served.ingress_root("user");
+    let gateway = agenticspec_ui::interface::scope_url(
+        &user_root,
+        &user_plane.architecture,
+        Some("gateway"),
+        None,
+    );
+    let refused = get(
+        &format!("{gateway}/api/views/agentic.gateway.Gateways"),
+        Some(TOKEN),
+    );
+    assert_eq!(refused.status, 404);
+    assert_eq!(json(&refused)["error"], "NoSuchView");
+    let none = get(
+        &format!("{url}/ingress/metrics/scopes/workstation-ingress/api/actions"),
+        Some(TOKEN),
+    );
+    assert_eq!(none.status, 404);
+    assert_eq!(json(&none)["error"], "NoSuchIngress");
+    assert_eq!(
+        get(
+            &format!("{user_root}/scopes/workstation-ingress/api/actions"),
+            None
+        )
+        .status,
+        401
+    );
+
+    let options = || conform::Options {
+        timeout: Duration::from_secs(5),
+        idle: Duration::from_millis(200),
+    };
+    for (plane, at) in [
+        (&user_plane, user_root.clone()),
+        (&op_plane, served.interface_root()),
+    ] {
+        let report = conform::run_plane(&at, plane, Some(TOKEN), options());
+        let failed: Vec<String> = report.failed().iter().map(ToString::to_string).collect();
+        assert!(failed.is_empty(), "{at}: {failed:?}");
+        assert!(report.count(Status::Passed) > 5, "{at}");
+    }
+}
+
+/// With a simulator run (`ui serve --sim`) every ingress's plane answers from the one run, each
+/// kept to its own views and feeds: a row of a view only the operator ingress exports is read
+/// there and refused at the user's ingress; the level channel of each sends only the events of
+/// its own feeds, with the log's `seq` as the cursor.
+#[test]
+fn a_replayed_run_answers_each_ingress_from_its_own_plane() {
+    use agenticspec_ui::interface::Ordered;
+    use agenticspec_ui::serve::{At, Replay, ReplayEvent, ReplayRow};
+    let (op_plane, op_files) = ingress_ui("operator");
+    let (user_plane, user_files) = ingress_ui("user");
+    let gateways = "agentic.gateway.Gateways";
+    assert!(op_plane.views.contains(gateways) && !user_plane.views.contains(gateways));
+    assert!(!op_plane.feeds.is_empty() && !user_plane.feeds.is_empty());
+    let op_only = op_plane
+        .feeds
+        .difference(&user_plane.feeds)
+        .next()
+        .expect("a feed only the operator ingress carries")
+        .clone();
+    let user_feed = user_plane
+        .feeds
+        .iter()
+        .next()
+        .expect("a feed the user ingress carries")
+        .clone();
+    assert!(op_plane.feeds.contains(&user_feed));
+    let at = |part: &str| At {
+        part: part.to_string(),
+        instance: None,
+    };
+    let event = |seq: u64, name: &str, part: &str| ReplayEvent {
+        seq,
+        event: name.to_string(),
+        payload: serde_json::json!({}),
+        at: at(part),
+    };
+    let replay = Replay {
+        views: [(
+            gateways.to_string(),
+            vec![ReplayRow {
+                row: Ordered(vec![("id".into(), serde_json::json!("gateway"))]),
+                at: vec![at("gateway")],
+            }],
+        )]
+        .into(),
+        events: vec![
+            event(7, &op_only, "gateway"),
+            event(9, &user_feed, "operator"),
+        ],
+        channels: Default::default(),
+    };
+    let served = Served::start_uis(
+        vec![
+            (op_plane.clone(), op_files),
+            (user_plane.clone(), user_files),
+        ],
+        Vec::new(),
+        Fixtures::replay(replay),
+        serve::Options {
+            port: 0,
+            token: TOKEN.into(),
+            faults: Faults::default(),
+        },
+    )
+    .unwrap();
+    let scope = |ingress: &str, plane: &Plane| {
+        agenticspec_ui::interface::scope_url(
+            &served.ingress_root(ingress),
+            &plane.architecture,
+            None,
+            None,
+        )
+    };
+
+    let read = get(
+        &format!("{}/api/views/{gateways}", scope("operator", &op_plane)),
+        Some(TOKEN),
+    );
+    assert_eq!(read.status, 200, "{}", String::from_utf8_lossy(&read.body));
+    assert_eq!(json(&read)["rows"][0]["id"], "gateway");
+    let refused = get(
+        &format!("{}/api/views/{gateways}", scope("user", &user_plane)),
+        Some(TOKEN),
+    );
+    assert_eq!(refused.status, 404);
+
+    // The first `n` events of the level channel of an ingress, `(event, id)`, read within 5 s:
+    // the stream stays open after them.
+    let sent = |ingress: &str, plane: &Plane, n: usize| -> Vec<(String, String)> {
+        use std::io::{BufRead, BufReader, Write};
+        let url = format!(
+            "{}/api/channels/{}",
+            scope(ingress, plane),
+            plane.channels[0]
+        );
+        let rest = url.strip_prefix("http://").unwrap();
+        let (addr, path) = rest.split_at(rest.find('/').unwrap());
+        let mut s = std::net::TcpStream::connect(addr).unwrap();
+        s.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+        let head = format!(
+            "GET {path} HTTP/1.1\r\nHost: {addr}\r\nAuthorization: Bearer {TOKEN}\r\nAccept: text/event-stream\r\n\r\n"
+        );
+        s.write_all(head.as_bytes()).unwrap();
+        let (mut out, mut event) = (Vec::new(), String::new());
+        for line in BufReader::new(s).lines().map_while(Result::ok) {
+            if let Some(v) = line.strip_prefix("event: ") {
+                event = v.to_string();
+            } else if let Some(v) = line.strip_prefix("id: ") {
+                out.push((event.clone(), v.to_string()));
+                if out.len() == n {
+                    break;
+                }
+            }
+        }
+        out
+    };
+    // Ordered by `seq`, so the user's first event being 9 shows 7 was kept from it.
+    assert_eq!(
+        sent("operator", &op_plane, 2),
+        [
+            (op_only, "7".to_string()),
+            (user_feed.clone(), "9".to_string())
+        ]
+    );
+    assert_eq!(sent("user", &user_plane, 1), [(user_feed, "9".to_string())]);
+}

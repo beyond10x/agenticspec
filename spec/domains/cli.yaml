@@ -833,7 +833,10 @@ types:
       summary: >-
         The operator UI of an architecture: one `ess-ui/1` document (an overview per level, a page
         per part, a channel per level, the actions of the contract) with `<name>.sources.sha256`,
-        `<name>.fixtures/` and `<name>.layout.json` beside it.
+        `<name>.fixtures/` and `<name>.layout.json` beside it; when the contract gives a `ui`
+        export to an ingress other than `operator`, one such document per ingress with a `ui`
+        export, `<name>.<ingress>.ui.yaml`, each scoped to the ingress's interface, and the counts
+        summed over them.
     fields:
       - {name: out, type: String}
       - {name: pages, type: Integer}
@@ -843,6 +846,20 @@ types:
       - name: written
         type: Boolean
         summary: The files were written; false with `--check`, where they were found current.
+      - name: ingresses
+        type: Optional<List<agenticspec.cli.UiIngressDerived>>
+        summary: The document of each ingress with a `ui` export; absent when the architecture has only the operator UI.
+
+  - name: agenticspec.cli.UiIngressDerived
+    kind: struct
+    naming:
+      summary: The composition of one ingress with a `ui` export.
+    fields:
+      - {name: ingress, type: String}
+      - {name: out, type: String}
+      - {name: pages, type: Integer}
+      - {name: actions, type: Integer}
+      - {name: channels, type: Integer}
 
   - name: agenticspec.cli.UiBuildInput
     kind: struct
@@ -874,6 +891,12 @@ types:
           A simulator result of the same revision of the architecture
           (`agenticspec-sim-result/1`); with `--control-plane` the Metrics page shows its
           predicted value beside each KPI. A result of another revision is refused.
+      - name: ingress
+        type: Optional<String>
+        summary: >-
+          The ingress whose UI to build, one with a `ui` export; `operator` by default. When the
+          contract gives a `ui` export to an ingress other than `operator`, the UI is scoped to
+          the ingress's interface and `config.json` names the ingress.
 
   - name: agenticspec.cli.UiBuildResult
     kind: struct
@@ -927,12 +950,29 @@ types:
     naming:
       summary: >-
         Where the operator UI was served, `http://127.0.0.1:<port>/`, the control-plane UI,
-        `<url>control/`, and the root of their runtime interface, `<url>ingress/operator`. The
-        server runs until it is stopped.
+        `<url>control/`, and the root of their runtime interface, `<url>ingress/operator`, and the
+        UI of every other ingress with a `ui` export at `<url>ingress/<ingress>/`. The server runs
+        until it is stopped.
     fields:
       - {name: url, type: String}
       - {name: control, type: String}
       - {name: interface, type: String}
+      - name: ingresses
+        type: Optional<List<agenticspec.cli.UiIngressServed>>
+        summary: The UI of each ingress with a `ui` export; absent when the architecture has only the operator UI.
+
+  - name: agenticspec.cli.UiIngressServed
+    kind: struct
+    naming:
+      summary: Where the UI of one ingress with a `ui` export is served.
+    fields:
+      - {name: ingress, type: String}
+      - name: url
+        type: String
+        summary: The app, `<url>ingress/<ingress>/`.
+      - name: interface
+        type: String
+        summary: The root of its runtime interface, `<url>ingress/<ingress>`.
 
   - name: agenticspec.cli.SimPortsInput
     kind: struct

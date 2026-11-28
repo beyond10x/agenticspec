@@ -8,6 +8,7 @@ use agenticspec_ui::derive::{self, Derivation, Failure, Inputs};
 use serde_yaml_ng::Value;
 
 mod control;
+mod ingress;
 
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")

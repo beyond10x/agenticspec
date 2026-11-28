@@ -8,8 +8,8 @@
 //! - the R1 reads of each part: each panel of its page with the parameters the layout binds;
 //! - the R1 reads of the pages across parts of a control-plane UI (`control` of `views.json`), at
 //!   the scope of the architecture or of the part a section is scoped to;
-//! - the views, commands and feeds of the contract's `operator` ingress, with the reads and the
-//!   actions of the layout and the R3 views;
+//! - the views, commands and feeds of the contract's ingress the UI is of (the layout's `ingress`,
+//!   `operator` when it names none), with the reads and the actions of the layout and the R3 views;
 //! - the channels: the channel of each level of the layout;
 //! - the declared shape of each view: its row key and its fields, from the panels document.
 
@@ -45,6 +45,9 @@ pub struct Shape {
 /// The default control plane of one architecture.
 #[derive(Debug, Clone)]
 pub struct Plane {
+    /// The ingress whose UI and interface the plane is, `{root}/ingress/{ingress}/scopes/...`: the
+    /// layout's `ingress`, `operator` when it names none.
+    pub ingress: String,
     /// The architecture id of the scopes, `{root}/scopes/{architecture}/...`.
     pub architecture: String,
     pub parts: Vec<Part>,
@@ -209,11 +212,15 @@ impl Plane {
             }
         }
         let mut feeds = BTreeSet::new();
+        let ingress = layout["ingress"]
+            .as_str()
+            .unwrap_or(crate::derive::ingress::OPERATOR)
+            .to_string();
         let operator = contract["ingress"]
             .as_array()
             .into_iter()
             .flatten()
-            .find(|i| i["name"].as_str() == Some("operator"));
+            .find(|i| i["name"].as_str() == Some(ingress.as_str()));
         for op in operator
             .and_then(|i| i["operations"].as_array())
             .into_iter()
@@ -256,6 +263,7 @@ impl Plane {
             })
             .collect();
         Ok(Plane {
+            ingress,
             architecture,
             parts,
             across,
