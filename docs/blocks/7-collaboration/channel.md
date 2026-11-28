@@ -25,7 +25,7 @@ How parties exchange messages. A direct channel joins exactly two parties, each 
 
 ## Used by
 
-- [question](question.md) · layer 7 · 7 references
+- [question](question.md) · layer 7 · 9 references
 - [trigger](trigger.md) · layer 7 · 9 references
 - [resource](../8-place/resource.md) · layer 8 · 7 references
 - [workspace](../8-place/workspace.md) · layer 8 · 8 references

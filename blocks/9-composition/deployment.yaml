@@ -1,0 +1,765 @@
+# Deployment: an architecture revision brought to a runtime, and the runs it serves. It sits beside
+# agentic.architecture (layer 9) because an installation names an architecture revision, which no
+# block below layer 9 may name. Source: design/architecture-runtime.md (the binding, the smallest
+# first runtime) and the run lifecycle, pinning, idempotency, install, drain and rollback a
+# consumer's review asked for (M29, M30, M32, M33).
+domain: agentic.deployment
+
+summary: >-
+  An architecture revision brought to a runtime, and the runs it serves. An installation puts one
+  architecture revision on one runtime with a binding (which concrete thing plays each part); a
+  runtime holds one Active installation at a time. Draining takes no new run and lets the runs it
+  holds end; a rollback ends the current installation and makes the one it replaced Active again.
+  An architecture run is one run of an installation for one subject: queued, running, waiting, and
+  done, failed or cancelled. It keeps the revision and binding of the installation it was queued
+  on, so a newer revision never changes a run already queued. The caller names a run's identity
+  once per intent; a repeat with the same identity starts nothing.
+
+naming:
+  wire: deployment
+  display: Deployment
+
+types:
+  - name: agentic.deployment.BindingDigest
+    kind: newtype
+    of: String
+    naming:
+      summary: >-
+        Digest of the binding document (agenticspec-binding/1) that says which concrete thing plays
+        each part of the architecture on this runtime.
+
+  - name: agentic.deployment.WaitReason
+    kind: enum
+    variants: [Approval, Answer, Resource, Requested]
+    naming:
+      summary: "Why a run waits: on a decision, on a principal's answer, on a shared resource, or because it was asked to. Carried by the event, not stored on the run."
+
+  - name: agentic.deployment.CancelReason
+    kind: enum
+    variants: [Requested, Replaced, RolledBack]
+    naming:
+      summary: >-
+        Why a run was cancelled: a principal asked for it, a trigger's Replace policy started
+        another run for its subject, or its installation was rolled back. Recorded as the caller
+        states it; no guard checks it.
+
+entities:
+  # UNMAPPED: the binding format (agenticspec-binding/1) is not specified yet
+  # (design/architecture-runtime.md, "Three documents"). Its digest is a claim of the deployer; no
+  # guard reads the binding or checks it against the revision's parts.
+  - name: agentic.deployment.Installation
+    naming:
+      summary: >-
+        One architecture revision put on one runtime with a binding. Active while it takes runs;
+        Draining takes no new run; Drained once its last run ended; RolledBack when a rollback
+        ended it. It names the installation it replaced, which a rollback makes Active again.
+    identity:
+      name: installation_id
+      type: agentic.shared.InstallationId
+    fields:
+      - name: runtime_id
+        type: agentic.shared.RuntimeId
+      - name: revision_id
+        type: agentic.shared.ArchitectureRevisionId
+      - name: binding
+        type: agentic.deployment.BindingDigest
+      - name: replaces
+        type: Optional<agentic.shared.InstallationId>
+        summary: The installation of the same runtime this one took over from; a rollback returns to it.
+      - name: installed_at
+        type: Timestamp
+    relations:
+      - {name: runtime, kind: references, target: agentic.runtime.Runtime, cardinality: one, via: runtime_id}
+      - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
+      - {name: replaced, kind: references, target: agentic.deployment.Installation, cardinality: one, via: replaces}
+    lifecycle:
+      initial: Active
+      states:
+        - {name: Active, summary: "Takes new runs."}
+        - {name: Draining, summary: "Takes no new run; the runs it holds go on until they end."}
+        - {name: Drained, summary: "Draining ended with no run left that has not ended."}
+        - {name: RolledBack, summary: "A rollback ended it; it takes no run, and its runs keep their revision."}
+      terminal: [RolledBack]
+      transitions:
+        - {name: drain, from: [Active], to: Draining, summary: "The deployer drains it (DrainInstallation)."}
+        - {name: finish_drain, from: [Draining], to: Drained, summary: "The runner reports it drained once every run of it ended (ReportDrained)."}
+        - {name: roll_back, from: [Active], to: RolledBack, summary: "The deployer rolls it back (RollBack)."}
+        - {name: reactivate, from: [Draining, Drained], to: Active, summary: "The installation a rolled-back one replaced takes runs again."}
+
+  # A run of an installation. `revision_id` and `binding` are read from the installation when the
+  # run is queued and no command changes them: a run keeps the revision it was queued under, and a
+  # newer installation on the same runtime leaves it as it is (M30).
+  - name: agentic.deployment.ArchitectureRun
+    naming:
+      summary: >-
+        One run of an installed architecture revision for one subject, pinned to the revision and
+        binding of its installation. Queued, then Running and Waiting in turn, and Done, Failed or
+        Cancelled once.
+    identity:
+      name: run_id
+      type: agentic.shared.ArchitectureRunId
+    fields:
+      - name: installation_id
+        type: agentic.shared.InstallationId
+      - name: revision_id
+        type: agentic.shared.ArchitectureRevisionId
+        summary: The architecture revision of its installation when it was queued.
+      - name: binding
+        type: agentic.deployment.BindingDigest
+        summary: The binding of its installation when it was queued.
+      - name: subject_key
+        type: Optional<String>
+        summary: What the run is for (the subject of the event or the firing that started it), so runs of one subject can be found.
+      - name: task_id
+        type: Optional<agentic.shared.TaskId>
+        summary: The task the run works on; the agent runs of that task are its work (agentic.work Run).
+      - name: queued_at
+        type: Timestamp
+      - name: failure
+        type: Optional<String>
+        summary: Why it failed, as the runner reports it.
+      - name: cancelled_for
+        type: Optional<agentic.deployment.CancelReason>
+    relations:
+      - {name: installation, kind: references, target: agentic.deployment.Installation, cardinality: one, via: installation_id}
+      - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
+      - {name: task, kind: references, target: agentic.work.Task, cardinality: one, via: task_id}
+    lifecycle:
+      initial: Queued
+      states:
+        - {name: Queued, summary: "Taken by its installation, not started."}
+        - {name: Running, summary: "Doing its work."}
+        - {name: Waiting, summary: "Waiting on a decision, an answer, a resource or a request."}
+        - {name: Done, summary: "Reached the end of what it was asked."}
+        - {name: Failed, summary: "Could not go on."}
+        - {name: Cancelled, summary: "Stopped before it ended, by a principal or by the runner."}
+      terminal: [Done, Failed, Cancelled]
+      transitions:
+        - {name: start, from: [Queued], to: Running, summary: "The runner starts it (StartRun)."}
+        - {name: wait, from: [Running], to: Waiting, summary: "The runner records what it waits on (WaitRun)."}
+        - {name: resume, from: [Waiting], to: Running, summary: "The runner resumes it (ResumeRun)."}
+        - {name: finish, from: [Running], to: Done, summary: "The runner reports it done (FinishRun)."}
+        - {name: fail, from: [Queued, Running, Waiting], to: Failed, summary: "The runner reports it failed (FailRun)."}
+        - {name: cancel, from: [Queued, Running, Waiting], to: Cancelled, summary: "A requester or the runner cancels it (CancelRun)."}
+
+actors:
+  - name: agentic.deployment.Deployer
+    naming:
+      display: Deployer
+      summary: Who installs architecture revisions on a runtime, drains them and rolls them back.
+    may:
+      - agentic.deployment.InstallRevision
+      - agentic.deployment.DrainInstallation
+      - agentic.deployment.RollBack
+      - agentic.deployment.Installations
+      - agentic.deployment.InstallationsOfRuntime
+
+  - name: agentic.deployment.Runner
+    naming:
+      display: Runner
+      summary: The runtime running an installation, which queues, starts and reports its runs.
+    may:
+      - agentic.deployment.QueueRun
+      - agentic.deployment.StartRun
+      - agentic.deployment.WaitRun
+      - agentic.deployment.ResumeRun
+      - agentic.deployment.FinishRun
+      - agentic.deployment.FailRun
+      - agentic.deployment.CancelRun
+      - agentic.deployment.ReportDrained
+      - agentic.deployment.ArchitectureRuns
+      - agentic.deployment.RunsOfInstallation
+      - agentic.deployment.RunsOfSubject
+
+  - name: agentic.deployment.Requester
+    naming:
+      display: Requester
+      summary: A principal who asked for a run and may cancel it.
+    may:
+      - agentic.deployment.CancelRun
+      - agentic.deployment.ArchitectureRuns
+      - agentic.deployment.RunsOfSubject
+
+errors:
+  - name: agentic.deployment.UnknownRuntime
+    summary: No runtime has this identity; nothing was installed.
+    fields:
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+  - name: agentic.deployment.UnknownRevision
+    summary: No architecture revision has this identity; nothing was installed.
+    fields:
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+  - name: agentic.deployment.UnknownInstallation
+    summary: No installation has this identity; nothing changed.
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.ReplacedOnOtherRuntime
+    summary: The installation named as replaced is on another runtime; nothing was installed.
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.ReplacedRolledBack
+    summary: The installation named as replaced was rolled back, so no rollback could return to it; nothing was installed.
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.RuntimeHasActiveInstallation
+    summary: The runtime already holds an Active installation; drain it before installing another. Nothing was installed.
+    fields:
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+  - name: agentic.deployment.InstallationStateConflict
+    summary: The installation is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.deployment.Installation.State}
+  - name: agentic.deployment.RunsNotEnded
+    summary: A run of the installation has not ended, so it is not drained yet.
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.NothingToRollBackTo
+    summary: The installation replaced none, so there is no revision to roll back to; nothing changed.
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.RunKeyUsed
+    summary: >-
+      A run with this identity exists: the request repeats one already taken, and starts nothing.
+      The run it names is the first request's result, read in the views.
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+  - name: agentic.deployment.UnknownTask
+    summary: No task has this identity; no run was queued.
+    fields:
+      - {name: task_id, type: agentic.shared.TaskId}
+  - name: agentic.deployment.InstallationDraining
+    summary: The installation drains and takes no new run; queue it on the installation that replaced it.
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.InstallationNotActive
+    summary: The installation is drained or rolled back and takes no run.
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.UnknownRun
+    summary: No architecture run has this identity; nothing changed.
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+  - name: agentic.deployment.RunStateConflict
+    summary: The run is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.deployment.ArchitectureRun.State}
+
+commands:
+  # One Active installation per runtime: a second is refused until the first drains. A new
+  # installation that replaces a drained or draining one names it, so a rollback can return to it.
+  - name: agentic.deployment.InstallRevision
+    naming:
+      wire: install-revision
+      display: Install an architecture revision on a runtime
+    input:
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: binding, type: agentic.deployment.BindingDigest}
+      - {name: replaces, type: Optional<agentic.shared.InstallationId>}
+    outcomes:
+      - name: unknown-runtime
+        when_related: {via: input.runtime_id, exists: false}
+        error: agentic.deployment.UnknownRuntime
+        payload:
+          agentic.deployment.UnknownRuntime: {runtime_id: input.runtime_id}
+      - name: unknown-revision
+        when_related: {via: input.revision_id, exists: false}
+        error: agentic.deployment.UnknownRevision
+        payload:
+          agentic.deployment.UnknownRevision: {revision_id: input.revision_id}
+      - name: unknown-replaced
+        when_related: {via: input.replaces, exists: false}
+        error: agentic.deployment.UnknownInstallation
+        payload:
+          agentic.deployment.UnknownInstallation: {installation_id: input.replaces}
+      - name: replaced-on-other-runtime
+        when_related: {via: input.replaces, predicate: runtime_id != input.runtime_id}
+        error: agentic.deployment.ReplacedOnOtherRuntime
+        payload:
+          agentic.deployment.ReplacedOnOtherRuntime: {installation_id: input.replaces}
+      - name: replaced-rolled-back
+        when_related: {via: input.replaces, predicate: state == RolledBack}
+        error: agentic.deployment.ReplacedRolledBack
+        payload:
+          agentic.deployment.ReplacedRolledBack: {installation_id: input.replaces}
+      - name: runtime-has-active
+        when_related:
+          entity: agentic.deployment.Installation
+          where:
+            all:
+              - runtime_id == input.runtime_id
+              - state == Active
+          exists: true
+        error: agentic.deployment.RuntimeHasActiveInstallation
+        payload:
+          agentic.deployment.RuntimeHasActiveInstallation: {runtime_id: input.runtime_id}
+      - name: installed
+        creates: agentic.deployment.Installation
+        instance: installation_id
+        sets:
+          runtime_id: input.runtime_id
+          revision_id: input.revision_id
+          binding: input.binding
+          replaces: input.replaces
+          installed_at: {generated: true}
+        emits: [agentic.deployment.RevisionInstalled]
+        payload:
+          agentic.deployment.RevisionInstalled:
+            installation_id: {generated: true}
+            runtime_id: input.runtime_id
+            revision_id: input.revision_id
+            binding: input.binding
+            replaces: input.replaces
+
+  - name: agentic.deployment.DrainInstallation
+    naming:
+      wire: drain-installation
+      display: Drain an installation
+      summary: The installation takes no new run; the runs it holds go on until they end.
+    input:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownInstallation
+        payload:
+          agentic.deployment.UnknownInstallation: {installation_id: input.installation_id}
+      - name: draining
+        moves: agentic.deployment.Installation.drain
+        instance: installation_id
+        emits: [agentic.deployment.DrainStarted]
+        payload:
+          agentic.deployment.DrainStarted: {installation_id: input.installation_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.InstallationStateConflict
+        payload:
+          agentic.deployment.InstallationStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.ReportDrained
+    naming:
+      wire: report-drained
+      display: Report an installation drained
+    input:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownInstallation
+        payload:
+          agentic.deployment.UnknownInstallation: {installation_id: input.installation_id}
+      - name: runs-not-ended
+        when_related:
+          entity: agentic.deployment.ArchitectureRun
+          where:
+            all:
+              - installation_id == input.installation_id
+              - any: [state == Queued, state == Running, state == Waiting]
+          exists: true
+        error: agentic.deployment.RunsNotEnded
+        payload:
+          agentic.deployment.RunsNotEnded: {installation_id: input.installation_id}
+      - name: drained
+        moves: agentic.deployment.Installation.finish_drain
+        instance: installation_id
+        emits: [agentic.deployment.InstallationDrained]
+        payload:
+          agentic.deployment.InstallationDrained: {installation_id: input.installation_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.InstallationStateConflict
+        payload:
+          agentic.deployment.InstallationStateConflict: {state: {subject: state}}
+
+  # The current installation ends and the one it replaced takes runs again, whether it still drains
+  # or has drained. Runs of the rolled-back installation keep their revision; the runner cancels or
+  # finishes them (CancelReason RolledBack).
+  - name: agentic.deployment.RollBack
+    naming:
+      wire: roll-back
+      display: Roll an installation back to the one it replaced
+    input:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownInstallation
+        payload:
+          agentic.deployment.UnknownInstallation: {installation_id: input.installation_id}
+      - name: nothing-to-roll-back-to
+        when_subject:
+          predicate: {all: [state == Active, not defined(replaces)]}
+        error: agentic.deployment.NothingToRollBackTo
+        payload:
+          agentic.deployment.NothingToRollBackTo: {installation_id: input.installation_id}
+      - name: rolled-back
+        moves: agentic.deployment.Installation.roll_back
+        instance: installation_id
+        affects:
+          - entity: agentic.deployment.Installation
+            where: installation_id == subject.replaces
+            moves: agentic.deployment.Installation.reactivate
+        emits: [agentic.deployment.InstallationRolledBack]
+        payload:
+          agentic.deployment.InstallationRolledBack:
+            installation_id: input.installation_id
+            reactivated: {subject: replaces}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.InstallationStateConflict
+        payload:
+          agentic.deployment.InstallationStateConflict: {state: {subject: state}}
+
+  # The caller names the run's identity, once per intent: it is the idempotency key. A repeat with
+  # the same identity is refused before anything else is read and starts nothing; its error names
+  # the run the first request queued (M32).
+  # UNMAPPED: a repeat returns the first result as a refusal that names the run, not as the first
+  # response replayed: `replays:` validates, and the interpreted target answers it ESS-CF-TARGET
+  # ("the retained result ... is not interpreted yet").
+  - name: agentic.deployment.QueueRun
+    naming:
+      wire: queue-architecture-run
+      display: Queue a run of an installation
+      summary: >-
+        The installation takes a run for a subject, pinned to its revision and binding. A draining,
+        drained or rolled-back installation takes none.
+    input:
+      - name: run_id
+        type: agentic.shared.ArchitectureRunId
+        summary: Chosen by the caller once per intent; a repeat with the same identity starts nothing.
+      - {name: installation_id, type: agentic.shared.InstallationId}
+      - {name: subject_key, type: Optional<String>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+    outcomes:
+      - name: repeated
+        existing_instance: true
+        error: agentic.deployment.RunKeyUsed
+        payload:
+          agentic.deployment.RunKeyUsed: {run_id: input.run_id}
+      - name: unknown-installation
+        when_related: {via: input.installation_id, exists: false}
+        error: agentic.deployment.UnknownInstallation
+        payload:
+          agentic.deployment.UnknownInstallation: {installation_id: input.installation_id}
+      - name: unknown-task
+        when_related: {via: input.task_id, exists: false}
+        error: agentic.deployment.UnknownTask
+        payload:
+          agentic.deployment.UnknownTask: {task_id: input.task_id}
+      - name: installation-draining
+        when_related: {via: input.installation_id, predicate: state == Draining}
+        error: agentic.deployment.InstallationDraining
+        payload:
+          agentic.deployment.InstallationDraining: {installation_id: input.installation_id}
+      - name: installation-not-active
+        when_related: {via: input.installation_id, predicate: {any: [state == Drained, state == RolledBack]}}
+        error: agentic.deployment.InstallationNotActive
+        payload:
+          agentic.deployment.InstallationNotActive: {installation_id: input.installation_id}
+      - name: queued
+        creates: agentic.deployment.ArchitectureRun
+        instance: run_id
+        sets:
+          installation_id: input.installation_id
+          revision_id: {related: {via: input.installation_id, field: revision_id}}
+          binding: {related: {via: input.installation_id, field: binding}}
+          subject_key: input.subject_key
+          task_id: input.task_id
+          queued_at: {generated: true}
+        emits: [agentic.deployment.RunQueued]
+        payload:
+          agentic.deployment.RunQueued:
+            run_id: input.run_id
+            installation_id: input.installation_id
+            revision_id: {related: {via: input.installation_id, field: revision_id}}
+            binding: {related: {via: input.installation_id, field: binding}}
+            subject_key: input.subject_key
+            task_id: input.task_id
+
+  # A queued run starts while its installation is Active or Draining: draining takes no new run
+  # and lets the ones it took go on. A rolled-back installation starts none.
+  - name: agentic.deployment.StartRun
+    naming:
+      wire: start-architecture-run
+      display: Start a queued run
+    input:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownRun
+        payload:
+          agentic.deployment.UnknownRun: {run_id: input.run_id}
+      - name: installation-not-active
+        when_related: {via: installation_id, predicate: {any: [state == Drained, state == RolledBack]}}
+        error: agentic.deployment.InstallationNotActive
+        payload:
+          agentic.deployment.InstallationNotActive: {installation_id: {subject: installation_id}}
+      - name: started
+        moves: agentic.deployment.ArchitectureRun.start
+        instance: run_id
+        emits: [agentic.deployment.RunStarted]
+        payload:
+          agentic.deployment.RunStarted: {run_id: input.run_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.RunStateConflict
+        payload:
+          agentic.deployment.RunStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.WaitRun
+    naming:
+      wire: wait-architecture-run
+      display: Record that a run waits
+    input:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: reason, type: agentic.deployment.WaitReason}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownRun
+        payload:
+          agentic.deployment.UnknownRun: {run_id: input.run_id}
+      - name: waiting
+        moves: agentic.deployment.ArchitectureRun.wait
+        instance: run_id
+        emits: [agentic.deployment.RunWaiting]
+        payload:
+          agentic.deployment.RunWaiting: {run_id: input.run_id, reason: input.reason}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.RunStateConflict
+        payload:
+          agentic.deployment.RunStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.ResumeRun
+    naming:
+      wire: resume-architecture-run
+      display: Resume a waiting run
+    input:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownRun
+        payload:
+          agentic.deployment.UnknownRun: {run_id: input.run_id}
+      - name: resumed
+        moves: agentic.deployment.ArchitectureRun.resume
+        instance: run_id
+        emits: [agentic.deployment.RunResumed]
+        payload:
+          agentic.deployment.RunResumed: {run_id: input.run_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.RunStateConflict
+        payload:
+          agentic.deployment.RunStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.FinishRun
+    naming:
+      wire: finish-architecture-run
+      display: Report a run done
+    input:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownRun
+        payload:
+          agentic.deployment.UnknownRun: {run_id: input.run_id}
+      - name: done
+        moves: agentic.deployment.ArchitectureRun.finish
+        instance: run_id
+        emits: [agentic.deployment.RunDone]
+        payload:
+          agentic.deployment.RunDone: {run_id: input.run_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.RunStateConflict
+        payload:
+          agentic.deployment.RunStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.FailRun
+    naming:
+      wire: fail-architecture-run
+      display: Report a run failed
+    input:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: failure, type: String}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownRun
+        payload:
+          agentic.deployment.UnknownRun: {run_id: input.run_id}
+      - name: failed
+        moves: agentic.deployment.ArchitectureRun.fail
+        instance: run_id
+        sets:
+          failure: input.failure
+        emits: [agentic.deployment.RunFailed]
+        payload:
+          agentic.deployment.RunFailed: {run_id: input.run_id, failure: input.failure}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.RunStateConflict
+        payload:
+          agentic.deployment.RunStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.CancelRun
+    naming:
+      wire: cancel-architecture-run
+      display: Cancel a run
+    input:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: reason, type: agentic.deployment.CancelReason}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownRun
+        payload:
+          agentic.deployment.UnknownRun: {run_id: input.run_id}
+      - name: cancelled
+        moves: agentic.deployment.ArchitectureRun.cancel
+        instance: run_id
+        sets:
+          cancelled_for: input.reason
+        emits: [agentic.deployment.RunCancelled]
+        payload:
+          agentic.deployment.RunCancelled: {run_id: input.run_id, reason: input.reason}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.RunStateConflict
+        payload:
+          agentic.deployment.RunStateConflict: {state: {subject: state}}
+
+events:
+  - name: agentic.deployment.RevisionInstalled
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: binding, type: agentic.deployment.BindingDigest}
+      - {name: replaces, type: Optional<agentic.shared.InstallationId>}
+  - name: agentic.deployment.DrainStarted
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.InstallationDrained
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+  - name: agentic.deployment.InstallationRolledBack
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+      - {name: reactivated, type: Optional<agentic.shared.InstallationId>}
+  - name: agentic.deployment.RunQueued
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: installation_id, type: agentic.shared.InstallationId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: binding, type: agentic.deployment.BindingDigest}
+      - {name: subject_key, type: Optional<String>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+  - name: agentic.deployment.RunStarted
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+  - name: agentic.deployment.RunWaiting
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: reason, type: agentic.deployment.WaitReason}
+  - name: agentic.deployment.RunResumed
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+  - name: agentic.deployment.RunDone
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+  - name: agentic.deployment.RunFailed
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: failure, type: String}
+  - name: agentic.deployment.RunCancelled
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: reason, type: agentic.deployment.CancelReason}
+
+views:
+  - name: agentic.deployment.Installations
+    source: agentic.deployment.Installation
+    consistency: read_your_writes
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: binding, type: agentic.deployment.BindingDigest}
+      - {name: replaces, type: Optional<agentic.shared.InstallationId>}
+      - {name: installed_at, type: Timestamp}
+      - {name: state, type: agentic.deployment.Installation.State}
+    naming:
+      wire: installations
+      display: Installations
+
+  - name: agentic.deployment.InstallationsOfRuntime
+    source: agentic.deployment.Installation
+    consistency: read_your_writes
+    params:
+      - {name: runtime_id, type: agentic.shared.RuntimeId}
+    filter: runtime_id == param.runtime_id
+    fields:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: replaces, type: Optional<agentic.shared.InstallationId>}
+      - {name: installed_at, type: Timestamp}
+      - {name: state, type: agentic.deployment.Installation.State}
+    naming:
+      wire: installations-of-runtime
+      display: Installations of a runtime
+
+  - name: agentic.deployment.ArchitectureRuns
+    source: agentic.deployment.ArchitectureRun
+    consistency: read_your_writes
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: installation_id, type: agentic.shared.InstallationId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: binding, type: agentic.deployment.BindingDigest}
+      - {name: subject_key, type: Optional<String>}
+      - {name: task_id, type: Optional<agentic.shared.TaskId>}
+      - {name: queued_at, type: Timestamp}
+      - {name: failure, type: Optional<String>}
+      - {name: cancelled_for, type: Optional<agentic.deployment.CancelReason>}
+      - {name: state, type: agentic.deployment.ArchitectureRun.State}
+    naming:
+      wire: architecture-runs
+      display: Architecture runs
+
+  - name: agentic.deployment.RunsOfInstallation
+    source: agentic.deployment.ArchitectureRun
+    consistency: read_your_writes
+    params:
+      - {name: installation_id, type: agentic.shared.InstallationId}
+    filter: installation_id == param.installation_id
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: subject_key, type: Optional<String>}
+      - {name: queued_at, type: Timestamp}
+      - {name: state, type: agentic.deployment.ArchitectureRun.State}
+    naming:
+      wire: runs-of-installation
+      display: Runs of an installation
+
+  - name: agentic.deployment.RunsOfSubject
+    source: agentic.deployment.ArchitectureRun
+    consistency: read_your_writes
+    params:
+      - {name: subject_key, type: String}
+    filter: subject_key == param.subject_key
+    fields:
+      - {name: run_id, type: agentic.shared.ArchitectureRunId}
+      - {name: installation_id, type: agentic.shared.InstallationId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: queued_at, type: Timestamp}
+      - {name: state, type: agentic.deployment.ArchitectureRun.State}
+    naming:
+      wire: runs-of-subject
+      display: Runs of a subject

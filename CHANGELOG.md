@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
+- Run and runtime lifecycle in the building blocks: a new block, `deployment` (layer 9), installs an architecture revision on a runtime, drains it (no new runs, started runs end) and rolls it back to the installation it replaced; an architecture run is queued, running, waiting, done, failed or cancelled and keeps the revision and binding it was queued under. A run, a firing and a harness session take their identity from the caller, so a repeat is refused and starts nothing. A trigger declares what a firing does for a subject that already has a started firing (another, skip, queue, replace). A tool result or an answer that could not be read is recorded as such (`CouldNotRead`), and a restarted session records the session it replaces and the lineage it belongs to (`RecordRestart`). Eight KPIs for them in the catalogue
 
 ### Changed
 

@@ -132,6 +132,10 @@ Each line: the block, what it is from first principles, and where the concept ex
 - `architecture`: the composed setup. Parts (instances of blocks), links (who may call or
   message whom), a border (what a human reaches), revisions. No link, no reach. From weft's
   formation, component, link and border.
+- `deployment`: an architecture revision installed on a runtime, and the runs started under it.
+  An installation drains (takes no new runs, lets started ones end) and rolls back to the one it
+  replaced. A run is queued, running, waiting, done, failed or cancelled, and keeps the revision
+  and binding it was queued under. A run's identity is the caller's idempotency key.
 
 ### 10 evaluation
 

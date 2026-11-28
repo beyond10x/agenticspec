@@ -22,6 +22,7 @@ specification:
   - 8-place/runtime.yaml
   - 8-place/resource.yaml
   - 9-composition/architecture.yaml
+  - 9-composition/deployment.yaml
   - 10-evaluation/kpi.yaml
   - 10-evaluation/experiment.yaml
 scenarios:
@@ -34,7 +35,11 @@ scenarios:
   - scenarios/architecture/schedule-swarm-committed.yaml
   - scenarios/architecture/trigger-link-to-non-agent.yaml
   - scenarios/channel/queue-post-taken-once.yaml
+  - scenarios/deployment/install-drain-roll-back.yaml
+  - scenarios/deployment/install-refusals.yaml
+  - scenarios/harness/restart-lineage.yaml
   - scenarios/resource/claim-withdrawn-from-queue.yaml
   - scenarios/trigger/schedule-queue-and-skip.yaml
+  - scenarios/trigger/subject-one-run.yaml
   - scenarios/work/run-records-steps.yaml
   - scenarios/workspace/exclusive-and-shared-leases.yaml

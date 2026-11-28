@@ -1,0 +1,172 @@
+# The refusals of installing a revision and of queueing a run, walked by hand (M33, M29):
+# synthesis cannot reach a committed architecture revision. An install names a runtime, a revision
+# and the installation it replaces, each of which must exist; the replaced one must be of the same
+# runtime and not rolled back. A rolled-back installation neither rolls back nor drains again. A run
+# names a task that exists, and an unknown run does not start.
+type: ess-scenario/7
+domain: agentic.deployment
+scenario: install-refusals
+summary: An install naming an unknown runtime, revision or replaced installation, or replacing one of another runtime or one rolled back, is refused and installs nothing.
+
+arrange:
+  - instance: arch
+    entity: agentic.architecture.Architecture
+  - instance: rev1
+    entity: agentic.architecture.ArchitectureRevision
+  - instance: rev2
+    entity: agentic.architecture.ArchitectureRevision
+  - instance: rta
+    entity: agentic.runtime.Runtime
+  - instance: rtb
+    entity: agentic.runtime.Runtime
+  - instance: inst1
+    entity: agentic.deployment.Installation
+  - instance: inst2
+    entity: agentic.deployment.Installation
+
+timeline:
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.architecture.CreateArchitecture
+    input: {name: review-desk}
+    outcome: created
+    capture: {instance: arch, event: agentic.architecture.ArchitectureCreated, field: architecture_id}
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.architecture.AddPart
+    input:
+      part_id: 00000000-0000-4000-8000-0000000008a1
+      architecture_id: {$instance: arch}
+      name: owner
+      kind: Principal
+      count: 1
+      settings: [{name: principal_kind, value: human}]
+    outcome: added
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: arch}}
+    outcome: committed
+    capture: {instance: rev1, event: agentic.architecture.RevisionCommitted, field: revision_id}
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.architecture.CommitRevision
+    input: {architecture_id: {$instance: arch}}
+    outcome: committed
+    capture: {instance: rev2, event: agentic.architecture.RevisionCommitted, field: revision_id}
+  - at: 2026-11-27T09:01:00Z
+    command: agentic.runtime.RegisterRuntime
+    input: {name: runtime-a, kinds: [Agent], min_isolation: Container}
+    outcome: registered
+    capture: {instance: rta, event: agentic.runtime.RuntimeRegistered, field: runtime_id}
+  - at: 2026-11-27T09:01:01Z
+    command: agentic.runtime.RegisterRuntime
+    input: {name: runtime-b, kinds: [Agent], min_isolation: Container}
+    outcome: registered
+    capture: {instance: rtb, event: agentic.runtime.RuntimeRegistered, field: runtime_id}
+
+  # unknown runtime, unknown revision
+  - at: 2026-11-27T09:02:00Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: 00000000-0000-4000-8000-0000000008f1, revision_id: {$instance: rev1}, binding: sha256-binding-1}
+    outcome: unknown-runtime
+    error:
+      name: agentic.deployment.UnknownRuntime
+    no_events: [agentic.deployment.RevisionInstalled]
+  - at: 2026-11-27T09:02:01Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rta}, revision_id: 00000000-0000-4000-8000-0000000008f2, binding: sha256-binding-1}
+    outcome: unknown-revision
+    error:
+      name: agentic.deployment.UnknownRevision
+    no_events: [agentic.deployment.RevisionInstalled]
+
+  # runtime a installs revision 1
+  - at: 2026-11-27T09:02:02Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rta}, revision_id: {$instance: rev1}, binding: sha256-binding-1}
+    outcome: installed
+    capture: {instance: inst1, event: agentic.deployment.RevisionInstalled, field: installation_id}
+
+  # runtime b: an unknown replaced installation, and one of runtime a
+  - at: 2026-11-27T09:03:00Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rtb}, revision_id: {$instance: rev2}, binding: sha256-binding-2, replaces: 00000000-0000-4000-8000-0000000008f3}
+    outcome: unknown-replaced
+    error:
+      name: agentic.deployment.UnknownInstallation
+    no_events: [agentic.deployment.RevisionInstalled]
+  - at: 2026-11-27T09:03:01Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rtb}, revision_id: {$instance: rev2}, binding: sha256-binding-2, replaces: {$instance: inst1}}
+    outcome: replaced-on-other-runtime
+    error:
+      name: agentic.deployment.ReplacedOnOtherRuntime
+    no_events: [agentic.deployment.RevisionInstalled]
+
+  # a run for a task that does not exist; an unknown run
+  - at: 2026-11-27T09:04:00Z
+    command: agentic.deployment.QueueRun
+    input: {run_id: 00000000-0000-4000-8000-0000000008c1, installation_id: {$instance: inst1}, task_id: 00000000-0000-4000-8000-0000000008f4}
+    outcome: unknown-task
+    error:
+      name: agentic.deployment.UnknownTask
+    no_events: [agentic.deployment.RunQueued]
+  - at: 2026-11-27T09:04:01Z
+    command: agentic.deployment.StartRun
+    input: {run_id: 00000000-0000-4000-8000-0000000008c1}
+    outcome: unknown
+    error:
+      name: agentic.deployment.UnknownRun
+    no_events: [agentic.deployment.RunStarted]
+
+  # revision 2 replaces revision 1 on runtime a and rolls back
+  - at: 2026-11-27T09:05:00Z
+    command: agentic.deployment.DrainInstallation
+    input: {installation_id: {$instance: inst1}}
+    outcome: draining
+  - at: 2026-11-27T09:05:01Z
+    command: agentic.deployment.ReportDrained
+    input: {installation_id: {$instance: inst1}}
+    outcome: drained
+  - at: 2026-11-27T09:05:02Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rta}, revision_id: {$instance: rev2}, binding: sha256-binding-2, replaces: {$instance: inst1}}
+    outcome: installed
+    capture: {instance: inst2, event: agentic.deployment.RevisionInstalled, field: installation_id}
+  - at: 2026-11-27T09:05:03Z
+    command: agentic.deployment.RollBack
+    input: {installation_id: {$instance: inst2}}
+    outcome: rolled-back
+
+  # a rolled-back installation is not replaced, rolled back or drained again
+  - at: 2026-11-27T09:06:00Z
+    command: agentic.deployment.InstallRevision
+    input: {runtime_id: {$instance: rta}, revision_id: {$instance: rev2}, binding: sha256-binding-2, replaces: {$instance: inst2}}
+    outcome: replaced-rolled-back
+    error:
+      name: agentic.deployment.ReplacedRolledBack
+    no_events: [agentic.deployment.RevisionInstalled]
+  - at: 2026-11-27T09:06:01Z
+    command: agentic.deployment.RollBack
+    input: {installation_id: {$instance: inst2}}
+    outcome: wrong-state
+    error:
+      name: agentic.deployment.InstallationStateConflict
+    no_events: [agentic.deployment.InstallationRolledBack]
+  - at: 2026-11-27T09:06:02Z
+    command: agentic.deployment.DrainInstallation
+    input: {installation_id: {$instance: inst2}}
+    outcome: wrong-state
+    error:
+      name: agentic.deployment.InstallationStateConflict
+    no_events: [agentic.deployment.DrainStarted]
+
+assert:
+  - view: agentic.deployment.InstallationsOfRuntime
+    params:
+      runtime_id: {$instance: rtb}
+    counts:
+      at_most: 0
+  - view: agentic.deployment.InstallationsOfRuntime
+    params:
+      runtime_id: {$instance: rta}
+    contains:
+      installation_id: {$instance: inst1}
+      state: Active

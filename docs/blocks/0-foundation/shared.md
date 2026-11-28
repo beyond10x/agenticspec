@@ -51,6 +51,7 @@ Nothing: this block is the foundation.
 | `AgentRevisionId` | an identifier or value | `uuid` |
 | `ArchitectureId` | an identifier or value | `uuid` |
 | `ArchitectureRevisionId` | an identifier or value | `uuid` |
+| `ArchitectureRunId` | an identifier or value | `uuid` |
 | `AssignmentId` | an identifier or value | `uuid` |
 | `Attribution` | one of | `Known`, `Inferred`, `NotRecorded` |
 | `BudgetId` | an identifier or value | `uuid` |
@@ -69,6 +70,7 @@ Nothing: this block is the foundation.
 | `HarnessId` | an identifier or value | `uuid` |
 | `HarnessSessionId` | an identifier or value | `uuid` |
 | `InferenceId` | an identifier or value | `uuid` |
+| `InstallationId` | an identifier or value | `uuid` |
 | `InstanceId` | an identifier or value | `uuid` |
 | `IsolationLevel` | one of | `None`, `Process`, `Container`, `UserKernel`, `MicroVm` |
 | `KnowledgeId` | an identifier or value | `uuid` |

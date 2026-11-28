@@ -55,7 +55,7 @@ fn every_domain_has_a_page_linked_from_the_layer_map() {
     let g = generated_with_fixture();
     let index = &g.files["docs/blocks/index.md"];
     let ds = domains();
-    assert_eq!(ds.len(), 22, "the blocks system has 22 domains");
+    assert_eq!(ds.len(), 23, "the blocks system has 23 domains");
     for domain in &ds {
         let block = domain.strip_prefix("agentic.").expect("agentic prefix");
         let page = g

@@ -2724,6 +2724,173 @@
       "status": "simulated",
       "summary": "Merges that touched a scope another merge changed since the work started.",
       "unit": "count"
+    },
+    {
+      "block": "deployment",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "RunFailed events divided by RunQueued events, per installation and per architecture revision, so a revision that fails more than the one it replaced shows before a rollback.",
+      "id": "run_failure_share",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.deployment.RunQueued",
+        "agentic.deployment.RunFailed"
+      ],
+      "route": "/docs/blocks/9-composition/deployment#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of architecture runs that failed.",
+      "unit": "share"
+    },
+    {
+      "block": "deployment",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Seconds between RunQueued and RunStarted of one run, median per installation.",
+      "id": "run_queue_wait_p50_seconds",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.deployment.RunQueued",
+        "agentic.deployment.RunStarted"
+      ],
+      "route": "/docs/blocks/9-composition/deployment#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Median time an architecture run waits queued before it starts.",
+      "unit": "seconds"
+    },
+    {
+      "block": "deployment",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "InstallationRolledBack events divided by RevisionInstalled events that replaced an installation, per runtime.",
+      "id": "rollback_share",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.deployment.RevisionInstalled",
+        "agentic.deployment.InstallationRolledBack"
+      ],
+      "route": "/docs/blocks/9-composition/deployment#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of installations that were rolled back.",
+      "unit": "share"
+    },
+    {
+      "block": "deployment",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Seconds between DrainStarted and InstallationDrained of one installation, 90th percentile per runtime. Long drains hold an old revision running beside the new one.",
+      "id": "drain_p90_seconds",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.deployment.DrainStarted",
+        "agentic.deployment.InstallationDrained"
+      ],
+      "route": "/docs/blocks/9-composition/deployment#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "90th percentile of the time an installation takes to drain.",
+      "unit": "seconds"
+    },
+    {
+      "block": "harness",
+      "direction": "lower",
+      "family": "agent",
+      "gate": false,
+      "how": "SessionRestarted events divided by SessionOpened events, per principal. Time and tokens of a lineage are summed over its sessions, grouped by the lineage each restart names.",
+      "id": "session_restart_share",
+      "kind": "quality",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.harness.SessionOpened",
+        "agentic.harness.SessionRestarted"
+      ],
+      "route": "/docs/blocks/4-agent/harness#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of opened sessions that restart an ended one.",
+      "unit": "share"
+    },
+    {
+      "block": "harness",
+      "direction": "lower",
+      "family": "agent",
+      "gate": false,
+      "how": "ToolResultNotRead events per session and per tool. Each is recorded as could not read, never as an empty result.",
+      "id": "tool_results_not_read",
+      "kind": "quality",
+      "layer": 4,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.harness.ToolResultNotRead"
+      ],
+      "route": "/docs/blocks/4-agent/harness#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Tool calls whose result could not be read.",
+      "unit": "count"
+    },
+    {
+      "block": "question",
+      "direction": "lower",
+      "family": "collab",
+      "gate": false,
+      "how": "AnswerNotRead events divided by QuestionAsked events, per addressee. A reply that could not be read ends the question; its default is never taken in its place.",
+      "id": "answers_not_read_share",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.question.QuestionAsked",
+        "agentic.question.AnswerNotRead"
+      ],
+      "route": "/docs/blocks/7-collaboration/question#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of questions whose answer could not be read.",
+      "unit": "share"
+    },
+    {
+      "block": "trigger",
+      "direction": "lower",
+      "family": "other",
+      "gate": false,
+      "how": "FiringReplaced events divided by FiringStarted events, per trigger with the Replace subject policy. High means work is started and thrown away.",
+      "id": "firings_replaced_share",
+      "kind": "quality",
+      "layer": 7,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.trigger.FiringStarted",
+        "agentic.trigger.FiringReplaced"
+      ],
+      "route": "/docs/blocks/7-collaboration/trigger#kpis",
+      "source": "design",
+      "status": "planned",
+      "summary": "Share of started firings that a newer firing for the same subject replaced.",
+      "unit": "share"
     }
   ]
 }
