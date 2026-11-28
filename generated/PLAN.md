@@ -1,6 +1,6 @@
 <!--
   generated from agenticspec v1
-  contract digest ca4c9e75228ab9679330c21f51ee71fa5ca55f4b89546af413be40d991d1a07f
+  contract digest 6107cda5fc3da4e3cc9ada6dcc08af755bfd9d53f930d1be89b1d7b1f074179f
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1

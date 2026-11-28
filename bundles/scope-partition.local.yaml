@@ -68,7 +68,7 @@ architecture:
   sha256: sha256:39c335debbd256f23afd3fc1a0398b7c728ee8a687156b5ba9ba9cfbd703d8ab
 nested: {}
 contract:
-  digest: sha256:70bd24fc831802ebcb5472e90246a4282b57c342dcbf327eebd061baa28a3c13
+  digest: sha256:171bf0c8fbe089ed8468c146adcddcb11dedeec8b937a79d28d02606abb3335f
   document:
     architecture: scope-partition
     border: []
@@ -359,7 +359,7 @@ contract:
       protocol: Propose (MergeProposal | RejectProposal | SupersedeProposal)
       settings:
         sharing: exclusive
-    ports_digest: 645138bee76982e5b23d9cadbf0fef35f297060505fa9fc1ff779eeae8c624f6
+    ports_digest: fdab54454893cc2728ce53df0ea4e30341abf884c778d0944a865a39991cb23d
 binding:
   digest: sha256:2e36b2c159fe6853627b84cb55870da28a3c8bed2ea2a31e266921687a7262d5
   document:
@@ -531,4 +531,4 @@ ingress:
 requirements: []
 agents: {}
 runtimes: {}
-digest: sha256:3a9aaa022b6d1b91b9e10d7565d3c1bcb9dcee3408deeb8d80c871014e389613
+digest: sha256:3aa2163456f494ee360a92ed8ab138ec09da0d1c74f60c172a4f58c741546575

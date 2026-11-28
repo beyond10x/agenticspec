@@ -1,6 +1,6 @@
 format: agenticspec-contract/1
 architecture: team-with-console
-ports_digest: 645138bee76982e5b23d9cadbf0fef35f297060505fa9fc1ff779eeae8c624f6
+ports_digest: fdab54454893cc2728ce53df0ea4e30341abf884c778d0944a865a39991cb23d
 ports:
   - port: gateway.call
     part: console.gateway
