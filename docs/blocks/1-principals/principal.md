@@ -24,6 +24,7 @@ Who can want something and answer for it. A principal is a human, an organizatio
 
 - [delegation](delegation.md) · layer 1 · 19 references
 - [gateway](../2-intelligence/gateway.md) · layer 2 · 4 references
+- [store](../3-capability/store.md) · layer 3 · 19 references
 - [agent](../4-agent/agent.md) · layer 4 · 8 references
 - [harness](../4-agent/harness.md) · layer 4 · 8 references
 - [work](../5-work/work.md) · layer 5 · 12 references

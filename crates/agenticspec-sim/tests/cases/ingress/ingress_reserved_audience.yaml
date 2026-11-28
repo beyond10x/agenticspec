@@ -1,0 +1,24 @@
+format: agenticspec-architecture/1
+architecture: ingress-small
+summary: "Refused: the reserved path control holds control.operator and control.monitor only."
+
+parts:
+  owner:    { block: principal, kind: human }
+  operator: { block: agent, harness: coding, acts_for: owner }
+  gateway:  { block: gateway }
+  model:    { block: model }
+  chat:     { block: channel }
+
+links:
+  - { from: owner,    to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner,    carries: question, over: chat }
+  - { from: operator, to: gateway,  carries: model_call }
+  - { from: gateway,  to: model,    carries: model_call }
+
+border: [operator]
+
+ingress:
+  oncall:
+    audience: control.oncall
+    interface: { scope: all, views: true }
+    exports: [{ protocol: http }]

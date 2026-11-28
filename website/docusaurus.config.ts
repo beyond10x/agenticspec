@@ -75,6 +75,23 @@ const pages: Record<string, Page> = {
     title: 'Scenarios and task corpora',
     lede: 'Test an architecture with given inputs and scripted outside parts, and check the events it should record.',
   },
+  'docs/contract.md': {
+    slug: '/contract',
+    title: 'The contract of an architecture',
+    sidebar_label: 'Contract',
+    lede: 'The ports a runtime implements, derived from the building blocks, and the contract of each architecture.',
+  },
+  'docs/studio.md': {
+    slug: '/studio',
+    title: 'agenticstudio',
+    lede: 'Open an architecture as a draft, change it with patches, and see its graph and its check.',
+  },
+  'docs/deployment.md': {
+    slug: '/deployment',
+    title: 'Deploying an architecture',
+    sidebar_label: 'Deployment',
+    lede: 'The binding and its packing, admission, and the deployment bundle a target translates.',
+  },
 };
 
 const config: Config = {

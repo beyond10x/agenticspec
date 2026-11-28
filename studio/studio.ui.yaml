@@ -1,0 +1,196 @@
+# The page of agenticstudio as an ess-ui/1 document. `agenticspec ui generate` writes the Vue app
+# of ui/studio/src/generated/ from it, out of the components of ui/kit; what no ess-ui construct
+# says (the graph canvas, the patch editor) is a host slot, written by hand in
+# ui/studio/src/slots/. The reads the studio model does not hold yet (the architectures, a
+# draft's revision, parts, check and graph) are placeholders that `agenticstudio serve` answers;
+# their fixtures are in fixtures/.
+
+format: ess-ui/1
+app: studio
+title: agenticstudio
+model: studio
+actor: from_session
+placement_profile: fat
+fixtures: {dir: fixtures, index: fixtures/index.yaml}
+
+unmapped:
+  - "UNMAPPED: opening the new draft after studio.draft.OpenDraft; ess-ui/1 has no navigate on a command's outcome, so the host's command hook (ui/studio/src/hooks.ts) opens the draft page"
+  - "UNMAPPED: studio.session.CallTool names a session, and the page has no form state that holds one; the patch form sends the draft page's draft_id, and agenticstudio serve makes the call in the draft's editor session (caller User), started on its first call"
+
+tone_maps:
+  outcome: {Applied: success, DryRun: info, Refused: danger}
+  check: {"true": success, "false": danger}
+
+label_maps:
+  check: {"true": passes, "false": refuses}
+  outcome: {Applied: Applied, DryRun: Dry run, Refused: Refused}
+
+shells:
+  app:
+    regions:
+      main: {kind: page_outlet}
+      notify: {kind: notifications}
+    state:
+      theme: {type: {enum: [light, dark]}, class: preference, store: local_storage, pinned: true}
+
+channels:
+  draft_events:
+    carries:
+      events: [studio.draft.DraftRevised, studio.session.ToolCallAnswered, studio.session.ToolCallFailed]
+    direction: server_to_client
+    delivery: every_event
+    resume: refetch
+    scope: param
+    session: {per: draft_id}
+    lifecycle: [connecting, live, reconnecting, stale, closed]
+
+themes:
+  light: {}
+  dark: {}
+theme: {default: light, chosen_by: shell.theme}
+
+navigation:
+  home: studio
+  sections:
+    - {name: studio, label: Studio, pages: [studio]}
+  hidden: [draft]
+
+page_kinds:
+  studio_page:
+    purpose: a page of the studio, with the bar that opens a draft of an architecture in its header
+    state:
+      architecture: {type: string, class: page_state, store: url, pinned: true}
+    header: {filters: bar}
+    sections:
+      - name: bar
+        component: filter_bar
+        binds: [state.architecture]
+        choices:
+          - name: architecture
+            component: choice
+            binds: state.architecture
+            reads: {placeholder: studio.Architectures, fixture: architectures.json, key: source}
+            value: source
+            label: name
+            placeholder: Choose an architecture
+        actions:
+          - {name: open, does: studio.draft.OpenDraft, bind: {source: state.architecture}, label: Open draft}
+
+pages:
+  studio:
+    kind: studio_page
+    title: Drafts
+    nav: {label: Drafts}
+    sections:
+      - name: drafts
+        title: Open drafts
+        component: collection
+        reads: {view: studio.draft.Drafts, key: draft_id}
+        columns:
+          - {field: name, label: Draft}
+          - {field: source, label: Opened from}
+          - {field: state, as: badge, label: State}
+        row_actions:
+          - {name: open, navigate: {to: draft, params: {draft_id: row.draft_id}}, label: Open}
+        states:
+          empty: {title: No draft open, message: Choose an architecture above and open a draft of it.}
+
+  draft:
+    kind: studio_page
+    title: Draft
+    params: {draft_id: DraftId}
+    header:
+      title_from: {section: summary, field: name}
+      live: [draft_events]
+    state:
+      part_search: {type: string, class: page_state, store: memory}
+    layout:
+      columns:
+        - {name: canvas, sections: [graph], width: wide}
+        - {name: panel, sections: [patch, summary, refusals, parts, panels], width: narrow}
+    sections:
+      - name: graph
+        host: DraftGraph
+        reason: >-
+          draws the parts and links of the draft's current revision on a canvas with pan, zoom and
+          selection, and shows the selected part's properties; no ess-ui composite lays out and
+          draws an architecture graph
+        stands_in_for: graph_editor
+        reads: {placeholder: studio.DraftGraph, fixture: graph.json, params: {draft_id: params.draft_id}}
+        live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
+
+      - name: panels
+        title: Panels of a part
+        host: DraftPanels
+        reason: >-
+          shows the block panels of one part of the draft, imported from the package of ui/views
+          and answered by the panels' fixtures; ess-ui places no widget of another document
+        stands_in_for: none
+        reads: {placeholder: studio.DraftGraph, fixture: graph.json, params: {draft_id: params.draft_id}}
+
+      - name: patch
+        title: Patch
+        component: form
+        does: studio.session.CallTool
+        fields:
+          - field: arguments
+            label: Patch
+            host: PatchEditor
+            reason: edits the rules of an agenticspec-patch/1 patch with its syntax marked; ess-ui has no editor of a rule language
+            stands_in_for: rich_text
+          - {field: dry_run, as: toggle, label: Dry run}
+        submit: {label: Apply}
+        result:
+          name: outcome
+          component: record
+          fields:
+            - {field: outcome, as: badge, tone_by: outcome, labels: outcome, label: Outcome}
+            - {field: message, label: Result}
+            - {field: rule, as: number, label: Rule}
+            - {field: error, label: Error}
+            - {field: diff, as: list, label: Changes}
+
+      - name: summary
+        title: Draft
+        component: record
+        reads: {placeholder: studio.DraftSummary, fixture: summary.json, params: {draft_id: params.draft_id}, key: draft_id}
+        live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
+        fields:
+          - {field: revision, as: number, label: Revision}
+          - {field: digest, label: Digest}
+          - {field: passed, as: badge, tone_by: check, labels: check, label: Check}
+          - {field: description, label: Description}
+        actions:
+          - {name: copy_digest, copy: row.digest, label: Copy digest}
+
+      - name: refusals
+        title: Check
+        component: collection
+        style: list
+        reads: {placeholder: studio.DraftRefusals, fixture: refusals.json, params: {draft_id: params.draft_id}, key: id}
+        live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
+        columns:
+          - {field: rule, label: Rule}
+          - {field: part, label: Part}
+          - {field: message, label: Refusal}
+        states:
+          empty: {message: The check passes.}
+
+      - name: parts
+        title: Parts
+        collapsed: true
+        component: collection
+        reads:
+          placeholder: studio.DraftParts
+          fixture: parts.json
+          params: {draft_id: params.draft_id}
+          key: id
+          paging: none
+          filter: row.id contains state.part_search
+        live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
+        columns:
+          - {field: id, label: Part}
+          - {field: block, label: Block}
+          - {field: count, as: number, label: Count}
+        states:
+          empty: {message: No part matches.}

@@ -1,0 +1,6 @@
+domain: fixture.base
+summary: Fixture.
+entities:
+  - name: fixture.base.Base
+    fields:
+      - {name: branch, type: String}

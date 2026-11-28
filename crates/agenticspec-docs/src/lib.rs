@@ -10,6 +10,7 @@
 mod arch;
 mod blocks;
 mod catalog;
+mod contract;
 mod kpis;
 mod layout;
 mod md;
@@ -19,6 +20,7 @@ mod results;
 
 pub use kpis::{Catalogue, Kpi};
 pub use model::layer_edges;
+pub use results::without_view;
 
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
@@ -178,6 +180,12 @@ pub fn generate(root: &Path, catalogue: Option<Catalogue>) -> Result<Generated, 
             format!("website/static/architectures/{}.html", a.name),
             arch::html(a),
         );
+        if let Ok(shown) = &a.contract {
+            files.insert(
+                format!("website/static/architectures/{}.contract.yaml", a.name),
+                shown.contract.text(),
+            );
+        }
     }
     let names: Vec<String> = archs.iter().map(|a| a.name.clone()).collect();
 

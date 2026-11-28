@@ -1,0 +1,108 @@
+format: agenticspec-profile/1
+profile: coding
+summary: >-
+  Behaviour of coding agents and their owner. Values are estimates or come from papers; `sources`
+  names the paper (arXiv id) or says estimate for each value of the failure dynamics. All of them
+  are refitted from the session store.
+
+roles:
+  coding:
+    task_turns:           { dist: lognormal, median: 40, p90: 160 }
+    turn_seconds:         { dist: lognormal, median: 12, p90: 60 }
+    tokens_per_turn:      { input: 2000, cache_read: 60000, cache_write: 4000, output: 600 }
+    builds_per_task:      { dist: poisson, mean: 4 }
+    build_seconds:        { dist: lognormal, median: 90, p90: 420 }
+    questions_per_task:   { dist: poisson, mean: 0.6 }
+    question_needs_owner: 0.3
+    step_turns:           { dist: lognormal, median: 5, p90: 15 }
+    step_pass_after_pass: 0.702
+    step_pass_after_fail: 0.141
+    rework_turns:         { dist: lognormal, median: 3, p90: 12 }
+    default_wrong:        0.3
+    rework_share:         0.5
+    false_completion:     0.701
+  planner:
+    task_turns:           1
+    turn_seconds:         { dist: lognormal, median: 12, p90: 60 }
+    tokens_per_turn:      { input: 2000, cache_read: 60000, cache_write: 4000, output: 600 }
+  executor:
+    task_turns:           { dist: lognormal, median: 40, p90: 160 }
+    turn_seconds:         { dist: lognormal, median: 12, p90: 60 }
+    tokens_per_turn:      { input: 2000, cache_read: 60000, cache_write: 4000, output: 600 }
+    builds_per_task:      { dist: poisson, mean: 4 }
+    build_seconds:        { dist: lognormal, median: 90, p90: 420 }
+    questions_per_task:   { dist: poisson, mean: 0.6 }
+    question_needs_owner: 0.3
+    step_turns:           { dist: lognormal, median: 5, p90: 15 }
+    step_pass_after_pass: 0.702
+    step_pass_after_fail: 0.212
+    rework_turns:         { dist: lognormal, median: 3, p90: 12 }
+    default_wrong:        0.3
+    rework_share:         0.5
+    false_completion:     0.701
+  orchestrator:
+    task_turns:           3
+    turn_seconds:         { dist: lognormal, median: 12, p90: 60 }
+    tokens_per_turn:      { input: 2000, cache_read: 20000, cache_write: 2000, output: 400 }
+    answer_seconds:       { dist: lognormal, median: 30, p90: 120 }
+  reviewer:
+    turn_seconds:         { dist: lognormal, median: 12, p90: 60 }
+    tokens_per_turn:      { input: 2000, cache_read: 60000, cache_write: 4000, output: 600 }
+  operator:
+    answer_seconds:       { dist: lognormal, median: 30, p90: 120 }
+
+principals:
+  human:
+    answer_seconds:       { dist: lognormal, median: 600, p90: 7200 }
+    away:                 [{ from: 12h, for: 1h, every: 24h }]
+
+review:
+  turns:                  { dist: lognormal, median: 4, p90: 12 }
+  strictness:
+    lenient:              { false_accept: 0.86, false_reject: 0.05 }
+    balanced:             { false_accept: 0.58, false_reject: 0.27 }
+    strict:               { false_accept: 0.30, false_reject: 0.495 }
+
+coordination:
+  board_read_seconds:     { dist: exponential, mean: 60 }
+  claim_window_seconds:   10
+  mesh_read_calls:        1
+  scope_overlap:          0.05
+
+load:
+  tasks_per_hour: 8
+
+prices:
+  frontier: { input: 5.0, cache_read: 0.5, cache_write: 6.25, output: 25.0, per: 1M_tokens_usd }
+  agent_hour_usd: 1.0
+
+sources:
+  roles.coding.step_turns: estimate
+  roles.coding.step_pass_after_pass: "2611.07166: a step passes after a passed step in 70.2%"
+  roles.coding.step_pass_after_fail: "2611.07166: a step passes after a failed step in 14.1%"
+  roles.coding.rework_turns: estimate
+  roles.coding.default_wrong: "2609.39957: assuming instead of asking resolved 23 against 33 tasks; 1 - 23/33, rounded"
+  roles.coding.rework_share: estimate
+  roles.coding.false_completion: "2610.04375: 665 of 949 failed runs were reported done (70.1%)"
+  review.turns: estimate
+  review.strictness.lenient.false_accept: "2611.02207: lenient reviewers accept 77-95% of wrong patches; the middle"
+  review.strictness.strict.false_reject: "2611.02207: strict reviewers reject 41-58% of correct patches; the middle"
+  review.strictness.lenient.false_reject: estimate
+  review.strictness.strict.false_accept: estimate
+  review.strictness.balanced: estimate, between lenient and strict
+  roles.planner.task_turns: "2610.29870: the planner used under 2% of the executor's tokens; one turn against the executor's median of 40"
+  roles.planner.turn_seconds: estimate, as roles.coding
+  roles.planner.tokens_per_turn: estimate, as roles.coding
+  roles.executor.step_pass_after_fail: "2610.29870 and 2611.07166: a plan raised resolved from 50.2% to 65.0% (x1.295); applied to the share of tasks whose last step passes under the coding chain (0.321 to 0.416), which gives 0.212 after a failed step"
+  roles.executor: as roles.coding apart from step_pass_after_fail
+  roles.orchestrator.task_turns: estimate of the calls an orchestrator spends handing out one task
+  roles.orchestrator.tokens_per_turn: estimate, a smaller context than a coding turn
+  roles.orchestrator.answer_seconds: estimate, as roles.operator.answer_seconds; an orchestrator answers the agents it orders
+  roles.reviewer: as roles.coding; the calls of one review are review.turns
+  roles.operator.answer_seconds: estimate of how long an agent acting for the owner takes to answer or pass on a question
+  coordination.board_read_seconds: estimate of how long an idle copy takes to read a new board entry
+  coordination.claim_window_seconds: estimate of how long a claim stays unseen by other readers
+  coordination.mesh_read_calls: estimate, one model call per message read
+  coordination.scope_overlap: estimate; 2610.07261 reports scope leakage 0.00 with a forbidden-file list, so this is the share of tasks that need a second scope, not leakage
+  load.tasks_per_hour: estimate
+  prices.agent_hour_usd: estimate of a live agent's share of a workstation and its seat

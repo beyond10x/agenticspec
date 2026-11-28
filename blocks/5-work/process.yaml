@@ -35,6 +35,16 @@ entities:
           from: [Published]
           to: Withdrawn
 
+actors:
+  - name: agentic.process.Viewer
+    naming:
+      display: Process viewer
+      summary: >-
+        Whoever looks at the published and withdrawn processes, such as an operator's view of a
+        running system. It reads the views of this block and issues none of its commands.
+    may:
+      - agentic.process.Processes
+
 errors:
   - name: agentic.process.ProcessAlreadyPublished
     summary: A process of this identifier exists; a changed procedure is a new identifier.

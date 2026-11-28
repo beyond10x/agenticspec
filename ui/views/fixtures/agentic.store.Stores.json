@@ -1,0 +1,8 @@
+{
+  "view": "agentic.store.Stores",
+  "rows": [
+    {"store_id": "00000000-0000-4000-8000-78c858f60000", "name": "name 1", "kind": "Record", "scope": "Part", "retention": "Duration", "retention_seconds": 1, "record_type": "record type 1", "state": "Open"},
+    {"store_id": "00000000-0000-4000-8000-78c858f60001", "name": "name 2", "kind": "Artifact", "scope": "Architecture", "retention": "Run", "state": "Retired"},
+    {"store_id": "00000000-0000-4000-8000-78c858f60002", "name": "name 3", "kind": "KeyValue", "scope": "External", "retention": "Forever", "retention_seconds": 3, "record_type": "record type 3", "state": "Open"}
+  ]
+}

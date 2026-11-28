@@ -3,8 +3,9 @@
 # missing, builds the site into website/build only when its inputs changed or there is no build,
 # then runs the fast loop of the ui-iteration-loop (ux/site/adapter.json) on the build, served by
 # docusaurus serve on a free port: the layout contract, axe-core, the keyboard, the screen-only
-# user and the page sweep (L2, L3), then the ratchet against ux/site/baseline.json and the findings
-# rule. Playwright ends a test at 60 s and the run at 120 s.
+# user, the page sweep (L2, L3) and the large-graph checks on the page of a 37-part fixture, then
+# the ratchet against ux/site/baseline.json and the findings rule. Playwright ends a test at
+# 60 s and the run at 120 s.
 #
 # Builds and tests go through slot where the host has it (scripts/pool.sh); on the forge's runner
 # they run as they are. The browser is the one of ui/app's Playwright (the same version, checked
@@ -57,6 +58,10 @@ else
 fi
 echo "$digest" > "../$stamp"
 [ "${1:-}" = --build-only ] && exit 0
+
+# The page of the 37-part fixture that e2e/graph.spec.ts opens, rendered by the simulator.
+cargo build --quiet --locked -p agenticspec
+../target/debug/agenticspec sim render ../crates/agenticspec-render/tests/fixtures/large-37.yaml --out "../$scratch/large-37.html" >/dev/null
 
 npx playwright install --only-shell chromium >/dev/null
 started=$(date +%s)

@@ -1,6 +1,6 @@
 # Trigger: what wakes an agent. Source: the brief of 2026-11-27 (triggers, schedules, firings) and
 # design/research-findings.md: wake rules on intake cut total coordination failure from 21 of 50
-# to 4 of 32 (2611.00689); scheduled agent loops went from 2.2 to about 35 merged pull requests per
+# to 4 of 32 (2611.00689); scheduled agent loops went from 2.2 to about 35 merged changes per
 # day (2610.36254).
 domain: agentic.trigger
 
@@ -32,6 +32,18 @@ types:
   - name: agentic.trigger.ConcurrencyPolicy
     kind: enum
     variants: [Skip, Queue, Parallel]
+
+  # What a trigger does with a firing for a subject that already has a firing started and not
+  # ended (M35). The subject is the firing's `subject_key`. Another starts one more run beside it,
+  # under the trigger's ConcurrencyPolicy. Skip, Queue and Replace allow one started run per
+  # subject: RecordStart refuses to start a second one (SubjectRunning). The dispatcher then skips
+  # the waiting firing (SkipFiring) under Skip, starts it after the running one ended (RecordEnd)
+  # under Queue, and under Replace ends the running one (RecordReplaced) and starts the waiting one.
+  # UNMAPPED: which of the three the dispatcher does after the refusal is a claim; the guard is that
+  # no second run starts. Another comes first: synthesis builds its inputs with the first variant.
+  - name: agentic.trigger.SubjectPolicy
+    kind: enum
+    variants: [Another, Skip, Queue, Replace]
 
   - name: agentic.trigger.StartMode
     kind: enum
@@ -130,6 +142,11 @@ entities:
       - name: start_mode
         type: Optional<agentic.trigger.StartMode>
         summary: Absent means Auto.
+      - name: subject_policy
+        type: Optional<agentic.trigger.SubjectPolicy>
+        summary: >-
+          What a firing for a subject that already has a started firing does. Absent means
+          Another; any other policy needs a subject key on every firing.
     invariants:
       - max_parallel >= 1
       - running >= 0
@@ -181,17 +198,19 @@ entities:
           The subject and the state entry an OnEvent firing is for, so a second firing for the
           same entry can be told as a duplicate. UNMAPPED: the refusal of a duplicate is not
           written; it needs a row-set guard over the trigger's firings, which costs synthesis time
-          (see RecordStart) (consumer gap G15).
+          (see RecordStart) (consumer gap G15). Under a subject policy other than Another, RecordStart
+          refuses to start a firing while another of the same subject has started.
     relations:
       - {name: run, kind: references, target: agentic.work.Run, cardinality: one, via: run_id}
       - {name: harness_session, kind: references, target: agentic.harness.HarnessSession, cardinality: one, via: harness_session_id}
     lifecycle:
       initial: Fired
-      states: [Fired, Started, Ended, Skipped, Failed]
-      terminal: [Ended, Skipped, Failed]
+      states: [Fired, Started, Ended, Skipped, Failed, Replaced]
+      terminal: [Ended, Skipped, Failed, Replaced]
       transitions:
         - {name: start, from: [Fired], to: Started}
         - {name: end, from: [Started], to: Ended}
+        - {name: replace, from: [Started], to: Replaced}
         - {name: skip, from: [Fired], to: Skipped}
         - {name: fail, from: [Fired], to: Failed}
 
@@ -230,6 +249,7 @@ actors:
     may:
       - agentic.trigger.RecordStart
       - agentic.trigger.RecordEnd
+      - agentic.trigger.RecordReplaced
       - agentic.trigger.RecordFailure
       - agentic.trigger.SkipFiring
 
@@ -278,6 +298,14 @@ errors:
       - {name: state, type: agentic.trigger.Firing.State}
   - name: agentic.trigger.StartWithoutRun
     summary: A started firing names the run or the harness session it started.
+  - name: agentic.trigger.FiringExists
+    summary: A firing with this identity exists; the request repeats one already recorded, and records and starts nothing.
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+  - name: agentic.trigger.SubjectKeyMissing
+    summary: The trigger answers a firing by its subject (a subject policy other than Another), and the firing names no subject key; nothing was recorded.
+  - name: agentic.trigger.SubjectRunning
+    summary: Another firing of the trigger for the same subject has started and not ended, and the trigger answers a subject with one run at a time (a subject policy other than Another); nothing started.
 
 commands:
   - name: agentic.trigger.CreateSchedule
@@ -426,6 +454,7 @@ commands:
       - {name: process_id, type: Optional<agentic.shared.ProcessId>}
       - {name: intake, type: Optional<String>}
       - {name: start_mode, type: Optional<agentic.trigger.StartMode>}
+      - {name: subject_policy, type: Optional<agentic.trigger.SubjectPolicy>}
     outcomes:
       - name: invalid-concurrency
         when:
@@ -466,6 +495,7 @@ commands:
           process_id: input.process_id
           intake: input.intake
           start_mode: input.start_mode
+          subject_policy: input.subject_policy
         emits: [agentic.trigger.TriggerCreated]
         payload:
           agentic.trigger.TriggerCreated:
@@ -529,18 +559,31 @@ commands:
           agentic.trigger.TriggerStateConflict:
             state: {subject: state}
 
-  # The trigger fires. A disabled trigger is refused. While its started runs fill its limit, the
-  # policy answers: Skip records the firing Skipped, Queue records it Fired to start when a run
-  # ends, Parallel refuses it.
+  # The trigger fires. The caller names the firing's identity once per firing it means (the tick,
+  # the post, the event's state entry): it is the idempotency key, and a repeat records and starts
+  # nothing (M32). A disabled trigger is refused, and so is a firing beyond a Parallel trigger's
+  # limit, and so is a firing without a subject key for a trigger whose subject policy is not
+  # Another (M35). While its started runs fill its limit, the concurrency policy answers: Skip
+  # records the firing Skipped, Queue records it Fired to start when a run ends. The subject policy
+  # answers when the firing starts (RecordStart): FireTrigger reads no other firing, because a
+  # guard over the trigger's firings here left synthesis with a wrong witness for cause-missing.
   - name: agentic.trigger.FireTrigger
     naming:
       display: Fire a trigger
     input:
+      - name: firing_id
+        type: agentic.shared.FiringId
+        summary: Chosen by the caller once per firing it means; a repeat with the same identity records nothing.
       - {name: trigger_id, type: agentic.shared.TriggerId}
       - {name: post_id, type: Optional<agentic.shared.PostId>}
       - {name: tick, type: Optional<Timestamp>}
       - {name: subject_key, type: Optional<String>}
     outcomes:
+      - name: repeated
+        existing_instance: true
+        error: agentic.trigger.FiringExists
+        payload:
+          agentic.trigger.FiringExists: {firing_id: input.firing_id}
       - name: unknown-trigger
         when_related: {via: input.trigger_id, exists: false}
         error: agentic.trigger.UnknownTrigger
@@ -555,6 +598,12 @@ commands:
               - all: [kind == OnMessage, not defined(input.post_id)]
               - all: [kind == OnSchedule, not defined(input.tick)]
         error: agentic.trigger.FiringCauseMissing
+      - name: subject-key-missing
+        when_related:
+          via: input.trigger_id
+          predicate:
+            all: [defined(subject_policy), subject_policy != Another, not defined(input.subject_key)]
+        error: agentic.trigger.SubjectKeyMissing
       - name: limit-reached
         when_related:
           via: input.trigger_id
@@ -576,7 +625,7 @@ commands:
         emits: [agentic.trigger.FiringSkipped]
         payload:
           agentic.trigger.FiringSkipped:
-            firing_id: {generated: true}
+            firing_id: input.firing_id
             trigger_id: input.trigger_id
       - name: queued
         when_related:
@@ -593,7 +642,7 @@ commands:
         emits: [agentic.trigger.FiringQueued]
         payload:
           agentic.trigger.FiringQueued:
-            firing_id: {generated: true}
+            firing_id: input.firing_id
             trigger_id: input.trigger_id
       - name: fired
         creates: agentic.trigger.Firing
@@ -607,7 +656,7 @@ commands:
         emits: [agentic.trigger.TriggerFired]
         payload:
           agentic.trigger.TriggerFired:
-            firing_id: {generated: true}
+            firing_id: input.firing_id
             trigger_id: input.trigger_id
             post_id: input.post_id
             tick: input.tick
@@ -620,6 +669,9 @@ commands:
   # related row (ESS-COMMAND-009); reading each firing through its identity instead (unknown,
   # foreign, not fired) made the suite synthesis about 40 s slower. Taken: the dispatcher starts a
   # queued firing only after a run ended; this contract does not refuse it.
+  # Under a subject policy other than Another, a firing does not start while another firing of
+  # the trigger for the same subject has started and not ended (M35, SubjectRunning). Such a
+  # trigger has no firing without a subject key: FireTrigger refuses it (SubjectKeyMissing).
   - name: agentic.trigger.RecordStart
     naming:
       display: Record that a firing started
@@ -646,6 +698,23 @@ commands:
               - state == Fired
           exists: false
         error: agentic.trigger.FiringNotWaiting
+      - name: subject-running
+        when_related:
+          entity: agentic.trigger.Firing
+          where:
+            all:
+              - trigger_id == input.trigger_id
+              - state == Started
+              - exists:
+                  in: {entity: agentic.trigger.Firing}
+                  as: waiting
+                  that: {all: [waiting.firing_id == input.firing_id, waiting.subject_key == subject_key]}
+              - exists:
+                  in: {entity: agentic.trigger.Trigger}
+                  as: t
+                  that: {all: [t.trigger_id == trigger_id, defined(t.subject_policy), t.subject_policy != Another]}
+          exists: true
+        error: agentic.trigger.SubjectRunning
       - name: started
         updates: agentic.trigger.Trigger
         instance: trigger_id
@@ -702,6 +771,46 @@ commands:
         emits: [agentic.trigger.FiringEnded]
         payload:
           agentic.trigger.FiringEnded:
+            firing_id: input.firing_id
+            trigger_id: input.trigger_id
+
+  # Under the Replace subject policy: the dispatcher stopped the run of a started firing because a
+  # newer firing for its subject takes its place. The firing ends Replaced and the trigger counts
+  # one run less; the dispatcher then starts the replacing firing (RecordStart).
+  - name: agentic.trigger.RecordReplaced
+    naming:
+      display: Record that a firing's run was replaced
+    input:
+      - {name: trigger_id, type: agentic.shared.TriggerId}
+      - {name: firing_id, type: agentic.shared.FiringId}
+    outcomes:
+      - name: unknown-trigger
+        unknown_instance: true
+        error: agentic.trigger.UnknownTrigger
+      - name: firing-not-running
+        when_related:
+          entity: agentic.trigger.Firing
+          where:
+            all:
+              - firing_id == input.firing_id
+              - trigger_id == input.trigger_id
+              - state == Started
+          exists: false
+        error: agentic.trigger.FiringNotRunning
+      - name: replaced
+        updates: agentic.trigger.Trigger
+        instance: trigger_id
+        sets:
+          running: {increment: -1}
+        affects:
+          - entity: agentic.trigger.Firing
+            where: firing_id == input.firing_id
+            moves: agentic.trigger.Firing.replace
+            sets:
+              ended_at: {generated: true}
+        emits: [agentic.trigger.FiringReplaced]
+        payload:
+          agentic.trigger.FiringReplaced:
             firing_id: input.firing_id
             trigger_id: input.trigger_id
 
@@ -815,6 +924,10 @@ events:
     fields:
       - {name: firing_id, type: agentic.shared.FiringId}
       - {name: trigger_id, type: agentic.shared.TriggerId}
+  - name: agentic.trigger.FiringReplaced
+    fields:
+      - {name: firing_id, type: agentic.shared.FiringId}
+      - {name: trigger_id, type: agentic.shared.TriggerId}
   - name: agentic.trigger.FiringFailed
     fields:
       - {name: firing_id, type: agentic.shared.FiringId}
@@ -839,6 +952,7 @@ views:
       - {name: process_id, type: Optional<agentic.shared.ProcessId>}
       - {name: intake, type: Optional<String>}
       - {name: start_mode, type: Optional<agentic.trigger.StartMode>}
+      - {name: subject_policy, type: Optional<agentic.trigger.SubjectPolicy>}
       - {name: state, type: agentic.trigger.Trigger.State}
 
   - name: agentic.trigger.TriggersOfRevision

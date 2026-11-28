@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: workstation-egress
+architecture: workstation
+summary: The base of the refusing bindings of the workstation, every destination of its links declared, so that each is refused for its own reason alone.
+parts:
+  operator: {egress: [gateway, owner, worker]}
+  worker: {egress: [builds, gateway, operator]}
+  gateway: {egress: [model]}

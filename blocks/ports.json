@@ -1,0 +1,1413 @@
+{
+  "actors": {
+    "agentic.agent.Viewer": [],
+    "agentic.architecture.Deployer": [
+      "agentic.agent.RetireAgent",
+      "agentic.agent.RetireRevision",
+      "agentic.architecture.RetireArchitecture",
+      "agentic.authority.RevokeGrant",
+      "agentic.channel.CloseChannel",
+      "agentic.channel.CloseSharedChannel",
+      "agentic.delegation.RevokeDelegation",
+      "agentic.deployment.StopDeployment",
+      "agentic.gateway.DetachUpstream",
+      "agentic.gateway.DrainGateway",
+      "agentic.gateway.StopGateway",
+      "agentic.harness.RetireHarness",
+      "agentic.knowledge.ReviseKnowledge",
+      "agentic.knowledge.WithdrawKnowledge",
+      "agentic.kpi.RetireKpi",
+      "agentic.model.RetireModel",
+      "agentic.model.RetireRoute",
+      "agentic.principal.RetirePrincipal",
+      "agentic.process.WithdrawProcess",
+      "agentic.runtime.DefineWorkload",
+      "agentic.sandbox.RetireSandbox",
+      "agentic.tool.WithdrawTool",
+      "agentic.trigger.DisableSchedule",
+      "agentic.trigger.DisableTrigger",
+      "agentic.trigger.EnableSchedule",
+      "agentic.trigger.EnableTrigger",
+      "agentic.trigger.PassScheduleChecks"
+    ],
+    "agentic.architecture.Principal": [
+      "agentic.authority.ApproveDecision",
+      "agentic.authority.RejectDecision",
+      "agentic.question.Answer",
+      "agentic.work.AcceptDeliverable",
+      "agentic.work.RejectDeliverable"
+    ],
+    "agentic.architecture.Viewer": [],
+    "agentic.authority.Authority": [
+      "agentic.authority.DecideRequest",
+      "agentic.authority.DenyRequest"
+    ],
+    "agentic.authority.Meter": [
+      "agentic.authority.RecordSpend"
+    ],
+    "agentic.authority.Steward": [
+      "agentic.authority.ApproveDecision",
+      "agentic.authority.GrantAuthority",
+      "agentic.authority.OpenBudget",
+      "agentic.authority.RejectDecision",
+      "agentic.authority.RevokeGrant"
+    ],
+    "agentic.channel.Participant": [
+      "agentic.channel.Beat",
+      "agentic.channel.CloseChannel",
+      "agentic.channel.CloseSharedChannel",
+      "agentic.channel.EndSubscription",
+      "agentic.channel.MarkRead",
+      "agentic.channel.OpenChannel",
+      "agentic.channel.OpenSharedChannel",
+      "agentic.channel.PostMessage",
+      "agentic.channel.SendMessage",
+      "agentic.channel.Subscribe",
+      "agentic.channel.TakePost"
+    ],
+    "agentic.channel.Transport": [
+      "agentic.channel.MarkDelivered",
+      "agentic.channel.MarkLost"
+    ],
+    "agentic.delegation.Viewer": [],
+    "agentic.deployment.Deployer": [
+      "agentic.deployment.DrainInstallation",
+      "agentic.deployment.InstallRevision",
+      "agentic.deployment.RecordBundle",
+      "agentic.deployment.RecordUnit",
+      "agentic.deployment.RequestDeployment",
+      "agentic.deployment.RollBack",
+      "agentic.deployment.StopDeployment"
+    ],
+    "agentic.deployment.Requester": [
+      "agentic.deployment.CancelRun"
+    ],
+    "agentic.deployment.Runner": [
+      "agentic.deployment.CancelRun",
+      "agentic.deployment.FailRun",
+      "agentic.deployment.FinishRun",
+      "agentic.deployment.QueueRun",
+      "agentic.deployment.ReportDrained",
+      "agentic.deployment.ResumeRun",
+      "agentic.deployment.StartRun",
+      "agentic.deployment.WaitRun"
+    ],
+    "agentic.deployment.Target": [
+      "agentic.deployment.ObserveUnit",
+      "agentic.deployment.RefuseOnTarget",
+      "agentic.deployment.ReportDeploymentDegraded",
+      "agentic.deployment.ReportDeploymentFailed",
+      "agentic.deployment.ReportDeploymentRunning",
+      "agentic.deployment.StartRealizing"
+    ],
+    "agentic.deployment.Translator": [
+      "agentic.deployment.MapUnit",
+      "agentic.deployment.RecordTranslation",
+      "agentic.deployment.RefuseCoverage"
+    ],
+    "agentic.experiment.Viewer": [],
+    "agentic.gateway.GatewayOperator": [
+      "agentic.gateway.AttachUpstream",
+      "agentic.gateway.DetachUpstream",
+      "agentic.gateway.DrainGateway",
+      "agentic.gateway.OpenGateway",
+      "agentic.gateway.StopGateway"
+    ],
+    "agentic.gateway.GatewayProcess": [
+      "agentic.gateway.AdmitCall",
+      "agentic.gateway.CompleteCall",
+      "agentic.gateway.RestoreUpstream",
+      "agentic.gateway.SaturateUpstream"
+    ],
+    "agentic.harness.CallDecider": [
+      "agentic.harness.DecideToolCall"
+    ],
+    "agentic.harness.CallingHarness": [
+      "agentic.harness.CompleteToolCall",
+      "agentic.harness.RecordUnreadableResult",
+      "agentic.harness.RequestToolCall"
+    ],
+    "agentic.knowledge.KnowledgeAuthor": [
+      "agentic.knowledge.PublishKnowledge",
+      "agentic.knowledge.ReviseKnowledge",
+      "agentic.knowledge.WithdrawKnowledge"
+    ],
+    "agentic.kpi.Viewer": [],
+    "agentic.model.Caller": [
+      "agentic.model.FinishInference",
+      "agentic.model.StartInference"
+    ],
+    "agentic.model.Operator": [
+      "agentic.model.CloseEndpoint",
+      "agentic.model.DeclareModel",
+      "agentic.model.DefineRoute",
+      "agentic.model.OpenEndpoint",
+      "agentic.model.RegisterProvider",
+      "agentic.model.RetireModel",
+      "agentic.model.RetireRoute"
+    ],
+    "agentic.principal.Viewer": [],
+    "agentic.process.Viewer": [],
+    "agentic.question.Answerer": [
+      "agentic.question.Answer",
+      "agentic.question.RecordUnreadableAnswer"
+    ],
+    "agentic.question.Asker": [
+      "agentic.question.Ask",
+      "agentic.question.Withdraw"
+    ],
+    "agentic.question.Clock": [
+      "agentic.question.TakeDefault"
+    ],
+    "agentic.resource.Claimant": [
+      "agentic.resource.ReleaseClaim",
+      "agentic.resource.RequestClaim",
+      "agentic.resource.WithdrawClaim"
+    ],
+    "agentic.resource.Scheduler": [
+      "agentic.resource.CreatePool",
+      "agentic.resource.ExpireClaim",
+      "agentic.resource.GrantClaim",
+      "agentic.resource.KillClaim"
+    ],
+    "agentic.runtime.Host": [
+      "agentic.runtime.ReportExited",
+      "agentic.runtime.ReportFailed",
+      "agentic.runtime.ReportRunning"
+    ],
+    "agentic.runtime.Operator": [
+      "agentic.runtime.DefineWorkload",
+      "agentic.runtime.RegisterRuntime",
+      "agentic.runtime.StartInstance",
+      "agentic.runtime.StopInstance"
+    ],
+    "agentic.sandbox.Enforcer": [
+      "agentic.sandbox.CheckEgress",
+      "agentic.sandbox.CheckSecretRead",
+      "agentic.sandbox.CheckWrite"
+    ],
+    "agentic.sandbox.Operator": [
+      "agentic.sandbox.DefineSandbox",
+      "agentic.sandbox.RetireSandbox"
+    ],
+    "agentic.store.Reader": [
+      "agentic.store.GetRecord",
+      "agentic.store.QueryStore"
+    ],
+    "agentic.store.StoreOwner": [
+      "agentic.store.CreateStore",
+      "agentic.store.RetireStore"
+    ],
+    "agentic.store.StoreService": [
+      "agentic.store.AnswerQuery",
+      "agentic.store.ConfirmPut",
+      "agentic.store.ExpireRecord",
+      "agentic.store.FailGet",
+      "agentic.store.FailPut",
+      "agentic.store.FailQuery",
+      "agentic.store.ReturnRecord"
+    ],
+    "agentic.store.Writer": [
+      "agentic.store.DeleteRecord",
+      "agentic.store.PutRecord",
+      "agentic.store.ReviseRecord"
+    ],
+    "agentic.tool.ToolCatalogue": [
+      "agentic.tool.PublishTool",
+      "agentic.tool.RegisterToolProvider",
+      "agentic.tool.WithdrawTool"
+    ],
+    "agentic.trigger.Checker": [
+      "agentic.trigger.PassScheduleChecks"
+    ],
+    "agentic.trigger.Dispatcher": [
+      "agentic.trigger.RecordEnd",
+      "agentic.trigger.RecordFailure",
+      "agentic.trigger.RecordReplaced",
+      "agentic.trigger.RecordStart",
+      "agentic.trigger.SkipFiring"
+    ],
+    "agentic.trigger.Scheduler": [
+      "agentic.trigger.AdvanceSchedule",
+      "agentic.trigger.FireTrigger"
+    ],
+    "agentic.trigger.TriggerOwner": [
+      "agentic.trigger.CreateSchedule",
+      "agentic.trigger.CreateTrigger",
+      "agentic.trigger.DisableSchedule",
+      "agentic.trigger.DisableTrigger",
+      "agentic.trigger.EnableSchedule",
+      "agentic.trigger.EnableTrigger"
+    ],
+    "agentic.work.Requester": [
+      "agentic.work.AcceptDeliverable",
+      "agentic.work.ActivateAssignment",
+      "agentic.work.CancelTask",
+      "agentic.work.CompleteTask",
+      "agentic.work.CreateTask",
+      "agentic.work.EndAssignment",
+      "agentic.work.OfferAssignment",
+      "agentic.work.RejectDeliverable"
+    ],
+    "agentic.work.Worker": [
+      "agentic.work.EndRun",
+      "agentic.work.RecordStep",
+      "agentic.work.ResumeRun",
+      "agentic.work.StartRun",
+      "agentic.work.SubmitDeliverable",
+      "agentic.work.SuspendRun"
+    ],
+    "agentic.workspace.Keeper": [
+      "agentic.workspace.ExpireLease",
+      "agentic.workspace.GrantLease",
+      "agentic.workspace.MergeProposal",
+      "agentic.workspace.RejectProposal",
+      "agentic.workspace.SupersedeProposal"
+    ],
+    "agentic.workspace.Worker": [
+      "agentic.workspace.CreateWorkspace",
+      "agentic.workspace.Propose",
+      "agentic.workspace.RecordWrite",
+      "agentic.workspace.ReleaseLease",
+      "agentic.workspace.RequestLease"
+    ]
+  },
+  "bindings": {
+    "allow-tool-call-on-approval": "agentic.harness.DecideToolCall",
+    "decide-tool-call-on-decision": "agentic.harness.DecideToolCall",
+    "deny-tool-call-on-rejection": "agentic.harness.DecideToolCall",
+    "start-inference-on-admitted-call": "agentic.model.StartInference"
+  },
+  "domains": {
+    "agentic.agent": {
+      "commands": {
+        "agentic.agent.DefineAgent": "configuration",
+        "agentic.agent.PublishRevision": "intent",
+        "agentic.agent.RetireAgent": "administration",
+        "agentic.agent.RetireRevision": "administration",
+        "agentic.agent.UseRevision": "report"
+      },
+      "events": [
+        "agentic.agent.AgentDefined",
+        "agentic.agent.AgentRetired",
+        "agentic.agent.AgentRevisionPublished",
+        "agentic.agent.AgentRevisionRetired",
+        "agentic.agent.AgentRevisionUsed"
+      ],
+      "views": [
+        "agentic.agent.AgentRevisions",
+        "agentic.agent.Agents"
+      ]
+    },
+    "agentic.architecture": {
+      "commands": {
+        "agentic.architecture.AddExport": "configuration",
+        "agentic.architecture.AddIngress": "configuration",
+        "agentic.architecture.AddLink": "configuration",
+        "agentic.architecture.AddPart": "configuration",
+        "agentic.architecture.ApplyPatch": "intent",
+        "agentic.architecture.CommitRevision": "configuration",
+        "agentic.architecture.CreateArchitecture": "configuration",
+        "agentic.architecture.DeclarePort": "configuration",
+        "agentic.architecture.PlaceEntity": "configuration",
+        "agentic.architecture.RecordContract": "configuration",
+        "agentic.architecture.RecordDryRunApplied": "report",
+        "agentic.architecture.RecordPatch": "configuration",
+        "agentic.architecture.RecordPatchApplied": "report",
+        "agentic.architecture.RecordPatchRefused": "report",
+        "agentic.architecture.RetireArchitecture": "administration",
+        "agentic.architecture.SetActsFor": "administration",
+        "agentic.architecture.SetBorder": "administration",
+        "agentic.architecture.SetPer": "administration",
+        "agentic.architecture.SetSwarm": "administration"
+      },
+      "events": [
+        "agentic.architecture.AgentActsFor",
+        "agentic.architecture.ArchitectureCreated",
+        "agentic.architecture.ArchitectureRetired",
+        "agentic.architecture.ContractRecorded",
+        "agentic.architecture.DryRunApplied",
+        "agentic.architecture.EntityPlaced",
+        "agentic.architecture.ExportAdded",
+        "agentic.architecture.IngressAdded",
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded",
+        "agentic.architecture.PartBordered",
+        "agentic.architecture.PartPerSet",
+        "agentic.architecture.PatchApplied",
+        "agentic.architecture.PatchRecorded",
+        "agentic.architecture.PatchRefused",
+        "agentic.architecture.PatchRequested",
+        "agentic.architecture.PortDeclared",
+        "agentic.architecture.RevisionCommitted",
+        "agentic.architecture.SwarmSet"
+      ],
+      "views": [
+        "agentic.architecture.Architectures",
+        "agentic.architecture.Contracts",
+        "agentic.architecture.Ingresses",
+        "agentic.architecture.Parts",
+        "agentic.architecture.PatchApplications",
+        "agentic.architecture.Patches",
+        "agentic.architecture.Placements",
+        "agentic.architecture.Ports",
+        "agentic.architecture.Reach",
+        "agentic.architecture.Revisions"
+      ]
+    },
+    "agentic.authority": {
+      "commands": {
+        "agentic.authority.ApproveDecision": "report",
+        "agentic.authority.DecideRequest": "intent",
+        "agentic.authority.DenyRequest": "intent",
+        "agentic.authority.GrantAuthority": "configuration",
+        "agentic.authority.OpenBudget": "intent",
+        "agentic.authority.RecordSpend": "report",
+        "agentic.authority.RejectDecision": "report",
+        "agentic.authority.RevokeGrant": "administration"
+      },
+      "events": [
+        "agentic.authority.ApprovalGranted",
+        "agentic.authority.ApprovalRejected",
+        "agentic.authority.BudgetExhausted",
+        "agentic.authority.BudgetOpened",
+        "agentic.authority.DecisionRecorded",
+        "agentic.authority.GrantIssued",
+        "agentic.authority.GrantRevoked",
+        "agentic.authority.SpendRecorded"
+      ],
+      "views": [
+        "agentic.authority.Budgets",
+        "agentic.authority.Decisions",
+        "agentic.authority.Grants",
+        "agentic.authority.OpenApprovals"
+      ]
+    },
+    "agentic.channel": {
+      "commands": {
+        "agentic.channel.Beat": "report",
+        "agentic.channel.CloseChannel": "administration",
+        "agentic.channel.CloseSharedChannel": "administration",
+        "agentic.channel.EndSubscription": "report",
+        "agentic.channel.MarkDelivered": "report",
+        "agentic.channel.MarkLost": "report",
+        "agentic.channel.MarkRead": "report",
+        "agentic.channel.OpenChannel": "configuration",
+        "agentic.channel.OpenSharedChannel": "configuration",
+        "agentic.channel.PostMessage": "intent",
+        "agentic.channel.SendMessage": "intent",
+        "agentic.channel.Subscribe": "intent",
+        "agentic.channel.TakePost": "report"
+      },
+      "events": [
+        "agentic.channel.ChannelClosed",
+        "agentic.channel.ChannelOpened",
+        "agentic.channel.HeartbeatRecorded",
+        "agentic.channel.MessageDelivered",
+        "agentic.channel.MessageLost",
+        "agentic.channel.MessageRead",
+        "agentic.channel.MessageSent",
+        "agentic.channel.PostTaken",
+        "agentic.channel.Posted",
+        "agentic.channel.SharedChannelOpened",
+        "agentic.channel.Subscribed",
+        "agentic.channel.SubscriptionEnded"
+      ],
+      "views": [
+        "agentic.channel.ChannelMessages",
+        "agentic.channel.ChannelPosts",
+        "agentic.channel.Channels",
+        "agentic.channel.Messages",
+        "agentic.channel.Posts",
+        "agentic.channel.Subscriptions"
+      ]
+    },
+    "agentic.delegation": {
+      "commands": {
+        "agentic.delegation.ActUnderDelegation": "report",
+        "agentic.delegation.DelegateOnward": "intent",
+        "agentic.delegation.ExpireDelegation": "report",
+        "agentic.delegation.GrantDelegation": "intent",
+        "agentic.delegation.RevokeDelegation": "administration"
+      },
+      "events": [
+        "agentic.delegation.DelegatedActionTaken",
+        "agentic.delegation.DelegationExpiredRecorded",
+        "agentic.delegation.DelegationGranted",
+        "agentic.delegation.DelegationPassedOn",
+        "agentic.delegation.DelegationRevoked"
+      ],
+      "views": [
+        "agentic.delegation.ActiveDelegations",
+        "agentic.delegation.Delegations"
+      ]
+    },
+    "agentic.deployment": {
+      "commands": {
+        "agentic.deployment.CancelRun": "report",
+        "agentic.deployment.DrainInstallation": "report",
+        "agentic.deployment.FailRun": "report",
+        "agentic.deployment.FinishRun": "report",
+        "agentic.deployment.InstallRevision": "intent",
+        "agentic.deployment.MapUnit": "report",
+        "agentic.deployment.ObserveUnit": "administration",
+        "agentic.deployment.QueueRun": "intent",
+        "agentic.deployment.RecordBundle": "report",
+        "agentic.deployment.RecordTranslation": "report",
+        "agentic.deployment.RecordUnit": "intent",
+        "agentic.deployment.RefuseCoverage": "report",
+        "agentic.deployment.RefuseOnTarget": "report",
+        "agentic.deployment.ReportDeploymentDegraded": "report",
+        "agentic.deployment.ReportDeploymentFailed": "report",
+        "agentic.deployment.ReportDeploymentRunning": "report",
+        "agentic.deployment.ReportDrained": "report",
+        "agentic.deployment.RequestDeployment": "intent",
+        "agentic.deployment.ResumeRun": "report",
+        "agentic.deployment.RollBack": "report",
+        "agentic.deployment.StartRealizing": "report",
+        "agentic.deployment.StartRun": "report",
+        "agentic.deployment.StopDeployment": "administration",
+        "agentic.deployment.WaitRun": "report"
+      },
+      "events": [
+        "agentic.deployment.DeploymentBundled",
+        "agentic.deployment.DeploymentDegraded",
+        "agentic.deployment.DeploymentFailed",
+        "agentic.deployment.DeploymentRefused",
+        "agentic.deployment.DeploymentRequested",
+        "agentic.deployment.DeploymentRunning",
+        "agentic.deployment.DeploymentStopped",
+        "agentic.deployment.DeploymentTranslated",
+        "agentic.deployment.DrainStarted",
+        "agentic.deployment.InstallationDrained",
+        "agentic.deployment.InstallationRolledBack",
+        "agentic.deployment.RealizingStarted",
+        "agentic.deployment.RevisionInstalled",
+        "agentic.deployment.RunCancelled",
+        "agentic.deployment.RunDone",
+        "agentic.deployment.RunFailed",
+        "agentic.deployment.RunQueued",
+        "agentic.deployment.RunResumed",
+        "agentic.deployment.RunStarted",
+        "agentic.deployment.RunWaiting",
+        "agentic.deployment.UnitMapped",
+        "agentic.deployment.UnitObserved",
+        "agentic.deployment.UnitRecorded"
+      ],
+      "views": [
+        "agentic.deployment.ArchitectureRuns",
+        "agentic.deployment.Deployments",
+        "agentic.deployment.Installations",
+        "agentic.deployment.InstallationsOfRuntime",
+        "agentic.deployment.RunsOfInstallation",
+        "agentic.deployment.RunsOfSubject",
+        "agentic.deployment.Units"
+      ]
+    },
+    "agentic.experiment": {
+      "commands": {
+        "agentic.experiment.CompleteExperiment": "report",
+        "agentic.experiment.FailExperiment": "report",
+        "agentic.experiment.PlanExperiment": "intent",
+        "agentic.experiment.RecordVariant": "report",
+        "agentic.experiment.StartExperiment": "report"
+      },
+      "events": [
+        "agentic.experiment.ExperimentDone",
+        "agentic.experiment.ExperimentFailed",
+        "agentic.experiment.ExperimentPlanned",
+        "agentic.experiment.ExperimentStarted",
+        "agentic.experiment.VariantRecorded"
+      ],
+      "views": [
+        "agentic.experiment.BestVariant",
+        "agentic.experiment.Experiments",
+        "agentic.experiment.Variants"
+      ]
+    },
+    "agentic.gateway": {
+      "commands": {
+        "agentic.gateway.AdmitCall": "intent",
+        "agentic.gateway.AttachUpstream": "intent",
+        "agentic.gateway.CompleteCall": "report",
+        "agentic.gateway.DetachUpstream": "administration",
+        "agentic.gateway.DrainGateway": "administration",
+        "agentic.gateway.OpenGateway": "configuration",
+        "agentic.gateway.RestoreUpstream": "report",
+        "agentic.gateway.SaturateUpstream": "report",
+        "agentic.gateway.StopGateway": "administration"
+      },
+      "events": [
+        "agentic.gateway.CallCompleted",
+        "agentic.gateway.CallDecided",
+        "agentic.gateway.GatewayDrained",
+        "agentic.gateway.GatewayOpened",
+        "agentic.gateway.GatewayStopped",
+        "agentic.gateway.UpstreamAttached",
+        "agentic.gateway.UpstreamDetached",
+        "agentic.gateway.UpstreamRestored",
+        "agentic.gateway.UpstreamSaturated"
+      ],
+      "views": [
+        "agentic.gateway.Calls",
+        "agentic.gateway.Gateways",
+        "agentic.gateway.Upstreams"
+      ]
+    },
+    "agentic.harness": {
+      "commands": {
+        "agentic.harness.CompactContext": "report",
+        "agentic.harness.CompleteToolCall": "report",
+        "agentic.harness.DecideToolCall": "internal",
+        "agentic.harness.EndSession": "report",
+        "agentic.harness.OpenSession": "intent",
+        "agentic.harness.RecordRestart": "report",
+        "agentic.harness.RecordTurn": "report",
+        "agentic.harness.RecordUnreadableResult": "report",
+        "agentic.harness.RegisterHarness": "configuration",
+        "agentic.harness.RegisterPermissionMode": "intent",
+        "agentic.harness.RequestToolCall": "configuration",
+        "agentic.harness.RetireHarness": "administration",
+        "agentic.harness.RetirePermissionMode": "report",
+        "agentic.harness.SpawnSubAgent": "intent"
+      },
+      "events": [
+        "agentic.harness.ContextCompacted",
+        "agentic.harness.HarnessRegistered",
+        "agentic.harness.HarnessRetired",
+        "agentic.harness.PermissionModeRegistered",
+        "agentic.harness.PermissionModeRetired",
+        "agentic.harness.SessionEnded",
+        "agentic.harness.SessionOpened",
+        "agentic.harness.SessionRestarted",
+        "agentic.harness.SubAgentSpawned",
+        "agentic.harness.ToolCallCompleted",
+        "agentic.harness.ToolCallDecided",
+        "agentic.harness.ToolCallRequested",
+        "agentic.harness.ToolResultNotRead",
+        "agentic.harness.TurnRecorded"
+      ],
+      "views": [
+        "agentic.harness.HarnessSessions",
+        "agentic.harness.Harnesses",
+        "agentic.harness.PermissionModes",
+        "agentic.harness.ToolCalls",
+        "agentic.harness.Turns"
+      ]
+    },
+    "agentic.knowledge": {
+      "commands": {
+        "agentic.knowledge.PublishKnowledge": "configuration",
+        "agentic.knowledge.ReviseKnowledge": "administration",
+        "agentic.knowledge.WithdrawKnowledge": "administration"
+      },
+      "events": [
+        "agentic.knowledge.KnowledgePublished",
+        "agentic.knowledge.KnowledgeRevised",
+        "agentic.knowledge.KnowledgeWithdrawn"
+      ],
+      "views": [
+        "agentic.knowledge.Knowledge",
+        "agentic.knowledge.PublishedConcepts"
+      ]
+    },
+    "agentic.kpi": {
+      "commands": {
+        "agentic.kpi.CreateWorkMode": "configuration",
+        "agentic.kpi.DefineKpi": "configuration",
+        "agentic.kpi.RecordMeasurement": "configuration",
+        "agentic.kpi.RetireKpi": "administration",
+        "agentic.kpi.SetDirection": "configuration"
+      },
+      "events": [
+        "agentic.kpi.DirectionSet",
+        "agentic.kpi.KpiDefined",
+        "agentic.kpi.KpiRetired",
+        "agentic.kpi.MeasurementRecorded",
+        "agentic.kpi.WorkModeCreated"
+      ],
+      "views": [
+        "agentic.kpi.Directions",
+        "agentic.kpi.Kpis",
+        "agentic.kpi.Measurements"
+      ]
+    },
+    "agentic.model": {
+      "commands": {
+        "agentic.model.CloseEndpoint": "report",
+        "agentic.model.DeclareModel": "configuration",
+        "agentic.model.DefineRoute": "configuration",
+        "agentic.model.FinishInference": "report",
+        "agentic.model.OpenEndpoint": "intent",
+        "agentic.model.RegisterProvider": "configuration",
+        "agentic.model.RetireModel": "administration",
+        "agentic.model.RetireRoute": "administration",
+        "agentic.model.StartInference": "internal"
+      },
+      "events": [
+        "agentic.model.EndpointClosed",
+        "agentic.model.EndpointOpened",
+        "agentic.model.InferenceFinished",
+        "agentic.model.InferenceStarted",
+        "agentic.model.ModelDeclared",
+        "agentic.model.ModelRetired",
+        "agentic.model.ProviderRegistered",
+        "agentic.model.RouteDefined",
+        "agentic.model.RouteRetired"
+      ],
+      "views": [
+        "agentic.model.Endpoints",
+        "agentic.model.Inferences",
+        "agentic.model.Models",
+        "agentic.model.Routes"
+      ]
+    },
+    "agentic.principal": {
+      "commands": {
+        "agentic.principal.RegisterPrincipal": "configuration",
+        "agentic.principal.RetirePrincipal": "administration"
+      },
+      "events": [
+        "agentic.principal.PrincipalRegistered",
+        "agentic.principal.PrincipalRetired"
+      ],
+      "views": [
+        "agentic.principal.Principals"
+      ]
+    },
+    "agentic.process": {
+      "commands": {
+        "agentic.process.PublishProcess": "configuration",
+        "agentic.process.WithdrawProcess": "administration"
+      },
+      "events": [
+        "agentic.process.ProcessPublished",
+        "agentic.process.ProcessWithdrawn"
+      ],
+      "views": [
+        "agentic.process.Processes"
+      ]
+    },
+    "agentic.question": {
+      "commands": {
+        "agentic.question.Answer": "report",
+        "agentic.question.Ask": "intent",
+        "agentic.question.RecordUnreadableAnswer": "report",
+        "agentic.question.TakeDefault": "report",
+        "agentic.question.Withdraw": "report"
+      },
+      "events": [
+        "agentic.question.AnswerNotRead",
+        "agentic.question.DefaultTaken",
+        "agentic.question.QuestionAnswered",
+        "agentic.question.QuestionAsked",
+        "agentic.question.QuestionWithdrawn"
+      ],
+      "views": [
+        "agentic.question.OpenQuestions",
+        "agentic.question.Questions"
+      ]
+    },
+    "agentic.resource": {
+      "commands": {
+        "agentic.resource.CreatePool": "configuration",
+        "agentic.resource.ExpireClaim": "report",
+        "agentic.resource.GrantClaim": "report",
+        "agentic.resource.KillClaim": "report",
+        "agentic.resource.ReleaseClaim": "report",
+        "agentic.resource.RequestClaim": "intent",
+        "agentic.resource.WithdrawClaim": "report"
+      },
+      "events": [
+        "agentic.resource.ClaimExpired",
+        "agentic.resource.ClaimGranted",
+        "agentic.resource.ClaimKilled",
+        "agentic.resource.ClaimQueued",
+        "agentic.resource.ClaimReleased",
+        "agentic.resource.ClaimWithdrawn",
+        "agentic.resource.PoolCreated"
+      ],
+      "views": [
+        "agentic.resource.Claims",
+        "agentic.resource.Pools",
+        "agentic.resource.Queue"
+      ]
+    },
+    "agentic.runtime": {
+      "commands": {
+        "agentic.runtime.DefineWorkload": "configuration",
+        "agentic.runtime.RegisterRuntime": "configuration",
+        "agentic.runtime.ReportExited": "report",
+        "agentic.runtime.ReportFailed": "report",
+        "agentic.runtime.ReportRunning": "report",
+        "agentic.runtime.StartInstance": "intent",
+        "agentic.runtime.StopInstance": "report"
+      },
+      "events": [
+        "agentic.runtime.InstanceExited",
+        "agentic.runtime.InstanceFailed",
+        "agentic.runtime.InstanceRunning",
+        "agentic.runtime.InstanceStarted",
+        "agentic.runtime.InstanceStopped",
+        "agentic.runtime.RuntimeRegistered",
+        "agentic.runtime.WorkloadDefined"
+      ],
+      "views": [
+        "agentic.runtime.Instances",
+        "agentic.runtime.Runtimes",
+        "agentic.runtime.Workloads"
+      ]
+    },
+    "agentic.sandbox": {
+      "commands": {
+        "agentic.sandbox.CheckEgress": "report",
+        "agentic.sandbox.CheckSecretRead": "report",
+        "agentic.sandbox.CheckWrite": "report",
+        "agentic.sandbox.DefineSandbox": "intent",
+        "agentic.sandbox.RetireSandbox": "administration"
+      },
+      "events": [
+        "agentic.sandbox.SandboxDefined",
+        "agentic.sandbox.SandboxRetired"
+      ],
+      "views": [
+        "agentic.sandbox.Sandboxes"
+      ]
+    },
+    "agentic.store": {
+      "commands": {
+        "agentic.store.AnswerQuery": "report",
+        "agentic.store.ConfirmPut": "report",
+        "agentic.store.CreateStore": "intent",
+        "agentic.store.DeleteRecord": "report",
+        "agentic.store.ExpireRecord": "report",
+        "agentic.store.FailGet": "report",
+        "agentic.store.FailPut": "report",
+        "agentic.store.FailQuery": "report",
+        "agentic.store.GetRecord": "intent",
+        "agentic.store.PutRecord": "intent",
+        "agentic.store.QueryStore": "intent",
+        "agentic.store.RetireStore": "report",
+        "agentic.store.ReturnRecord": "report",
+        "agentic.store.ReviseRecord": "intent"
+      },
+      "events": [
+        "agentic.store.PutFailed",
+        "agentic.store.PutRequested",
+        "agentic.store.QueryAnswered",
+        "agentic.store.QueryFailed",
+        "agentic.store.QueryRequested",
+        "agentic.store.ReadFailed",
+        "agentic.store.ReadRequested",
+        "agentic.store.RecordDeleted",
+        "agentic.store.RecordExpired",
+        "agentic.store.RecordPut",
+        "agentic.store.RecordReturned",
+        "agentic.store.RecordSuperseded",
+        "agentic.store.RevisionRequested",
+        "agentic.store.StoreCreated",
+        "agentic.store.StoreRetired"
+      ],
+      "views": [
+        "agentic.store.Artifacts",
+        "agentic.store.PresentRecords",
+        "agentic.store.Queries",
+        "agentic.store.Reads",
+        "agentic.store.Records",
+        "agentic.store.Stores"
+      ]
+    },
+    "agentic.tool": {
+      "commands": {
+        "agentic.tool.PublishTool": "configuration",
+        "agentic.tool.RegisterToolProvider": "configuration",
+        "agentic.tool.WithdrawTool": "administration"
+      },
+      "events": [
+        "agentic.tool.ToolProviderRegistered",
+        "agentic.tool.ToolPublished",
+        "agentic.tool.ToolWithdrawn"
+      ],
+      "views": [
+        "agentic.tool.ToolProviders",
+        "agentic.tool.Tools"
+      ]
+    },
+    "agentic.trigger": {
+      "commands": {
+        "agentic.trigger.AdvanceSchedule": "report",
+        "agentic.trigger.CreateSchedule": "intent",
+        "agentic.trigger.CreateTrigger": "configuration",
+        "agentic.trigger.DisableSchedule": "administration",
+        "agentic.trigger.DisableTrigger": "administration",
+        "agentic.trigger.EnableSchedule": "administration",
+        "agentic.trigger.EnableTrigger": "administration",
+        "agentic.trigger.FireTrigger": "intent",
+        "agentic.trigger.PassScheduleChecks": "administration",
+        "agentic.trigger.RecordEnd": "report",
+        "agentic.trigger.RecordFailure": "report",
+        "agentic.trigger.RecordReplaced": "report",
+        "agentic.trigger.RecordStart": "report",
+        "agentic.trigger.SkipFiring": "report"
+      },
+      "events": [
+        "agentic.trigger.FiringEnded",
+        "agentic.trigger.FiringFailed",
+        "agentic.trigger.FiringQueued",
+        "agentic.trigger.FiringReplaced",
+        "agentic.trigger.FiringSkipped",
+        "agentic.trigger.FiringStarted",
+        "agentic.trigger.ScheduleAdvanced",
+        "agentic.trigger.ScheduleChecked",
+        "agentic.trigger.ScheduleCreated",
+        "agentic.trigger.ScheduleDisabled",
+        "agentic.trigger.ScheduleEnabled",
+        "agentic.trigger.TriggerCreated",
+        "agentic.trigger.TriggerDisabled",
+        "agentic.trigger.TriggerEnabled",
+        "agentic.trigger.TriggerFired"
+      ],
+      "views": [
+        "agentic.trigger.Firings",
+        "agentic.trigger.RecentFirings",
+        "agentic.trigger.Schedules",
+        "agentic.trigger.Triggers",
+        "agentic.trigger.TriggersOfRevision"
+      ]
+    },
+    "agentic.work": {
+      "commands": {
+        "agentic.work.AcceptDeliverable": "report",
+        "agentic.work.ActivateAssignment": "report",
+        "agentic.work.CancelTask": "report",
+        "agentic.work.CompleteTask": "report",
+        "agentic.work.CreateTask": "intent",
+        "agentic.work.EndAssignment": "report",
+        "agentic.work.EndRun": "report",
+        "agentic.work.OfferAssignment": "intent",
+        "agentic.work.RecordStep": "report",
+        "agentic.work.RejectDeliverable": "report",
+        "agentic.work.ResumeRun": "report",
+        "agentic.work.StartRun": "intent",
+        "agentic.work.SubmitDeliverable": "intent",
+        "agentic.work.SuspendRun": "report"
+      },
+      "events": [
+        "agentic.work.AssignmentActivated",
+        "agentic.work.AssignmentEnded",
+        "agentic.work.AssignmentOffered",
+        "agentic.work.DeliverableAccepted",
+        "agentic.work.DeliverableRejected",
+        "agentic.work.DeliverableSubmitted",
+        "agentic.work.RunEnded",
+        "agentic.work.RunResumed",
+        "agentic.work.RunStarted",
+        "agentic.work.RunSuspended",
+        "agentic.work.StepRecorded",
+        "agentic.work.TaskCancelled",
+        "agentic.work.TaskCompleted",
+        "agentic.work.TaskCreated"
+      ],
+      "views": [
+        "agentic.work.Assignments",
+        "agentic.work.Deliverables",
+        "agentic.work.Runs",
+        "agentic.work.Steps",
+        "agentic.work.Tasks"
+      ]
+    },
+    "agentic.workspace": {
+      "commands": {
+        "agentic.workspace.CreateWorkspace": "configuration",
+        "agentic.workspace.ExpireLease": "report",
+        "agentic.workspace.GrantLease": "report",
+        "agentic.workspace.MergeProposal": "report",
+        "agentic.workspace.Propose": "intent",
+        "agentic.workspace.RecordWrite": "report",
+        "agentic.workspace.RejectProposal": "report",
+        "agentic.workspace.ReleaseLease": "report",
+        "agentic.workspace.RequestLease": "intent",
+        "agentic.workspace.SupersedeProposal": "report"
+      },
+      "events": [
+        "agentic.workspace.ChangeProposed",
+        "agentic.workspace.LeaseExpired",
+        "agentic.workspace.LeaseGranted",
+        "agentic.workspace.LeaseReleased",
+        "agentic.workspace.LeaseRequested",
+        "agentic.workspace.PathWritten",
+        "agentic.workspace.ProposalMerged",
+        "agentic.workspace.ProposalRejected",
+        "agentic.workspace.ProposalSuperseded",
+        "agentic.workspace.WorkspaceCreated"
+      ],
+      "views": [
+        "agentic.workspace.Leases",
+        "agentic.workspace.Proposals",
+        "agentic.workspace.Workspaces"
+      ]
+    }
+  },
+  "ess": "ess 0.99.2",
+  "format": "agenticspec-ports/1",
+  "ports": [
+    {
+      "block": "agent",
+      "intent_event": "agentic.agent.AgentRevisionPublished",
+      "kind": "Outbound",
+      "name": "agent.revision",
+      "protocol": "PublishRevision UseRevision*",
+      "reports": [
+        "agentic.agent.UseRevision"
+      ],
+      "waiting_state": "agentic.agent.AgentRevision.Published"
+    },
+    {
+      "block": "architecture",
+      "intent_event": "agentic.architecture.PatchRequested",
+      "kind": "Outbound",
+      "name": "architecture.patch-application",
+      "protocol": "ApplyPatch (RecordDryRunApplied | RecordPatchApplied | RecordPatchRefused)",
+      "reports": [
+        "agentic.architecture.RecordDryRunApplied",
+        "agentic.architecture.RecordPatchApplied",
+        "agentic.architecture.RecordPatchRefused"
+      ],
+      "waiting_state": "agentic.architecture.PatchApplication.Requested"
+    },
+    {
+      "block": "authority",
+      "intent_event": "agentic.authority.BudgetOpened",
+      "kind": "Outbound",
+      "name": "authority.budget",
+      "protocol": "OpenBudget RecordSpend* RecordSpend",
+      "reports": [
+        "agentic.authority.RecordSpend"
+      ],
+      "waiting_state": "agentic.authority.Budget.Open"
+    },
+    {
+      "block": "authority",
+      "intent_event": "agentic.authority.DecisionRecorded",
+      "kind": "Principal",
+      "name": "authority.decision",
+      "protocol": "(DecideRequest | DenyRequest) (ApproveDecision | RejectDecision)",
+      "reports": [
+        "agentic.authority.ApproveDecision",
+        "agentic.authority.RejectDecision"
+      ],
+      "waiting_state": "agentic.authority.Decision.Recorded"
+    },
+    {
+      "block": "channel",
+      "intent_event": "agentic.channel.MessageSent",
+      "kind": "Outbound",
+      "name": "channel.message",
+      "protocol": "SendMessage (MarkDelivered MarkRead? | MarkLost)",
+      "reports": [
+        "agentic.channel.MarkDelivered",
+        "agentic.channel.MarkLost",
+        "agentic.channel.MarkRead"
+      ],
+      "waiting_state": "agentic.channel.Message.Sent"
+    },
+    {
+      "block": "channel",
+      "intent_event": "agentic.channel.Posted",
+      "kind": "Outbound",
+      "name": "channel.post",
+      "protocol": "PostMessage TakePost?",
+      "reports": [
+        "agentic.channel.TakePost"
+      ],
+      "waiting_state": "agentic.channel.Post.Posted"
+    },
+    {
+      "block": "channel",
+      "intent_event": "agentic.channel.Subscribed",
+      "kind": "Outbound",
+      "name": "channel.subscription",
+      "protocol": "Subscribe Beat* EndSubscription",
+      "reports": [
+        "agentic.channel.Beat",
+        "agentic.channel.EndSubscription"
+      ],
+      "waiting_state": "agentic.channel.Subscription.Active"
+    },
+    {
+      "block": "delegation",
+      "intent_event": "agentic.delegation.DelegationPassedOn",
+      "kind": "Outbound",
+      "name": "delegation.delegation",
+      "protocol": "(DelegateOnward | GrantDelegation) ActUnderDelegation* ExpireDelegation?",
+      "reports": [
+        "agentic.delegation.ActUnderDelegation",
+        "agentic.delegation.ExpireDelegation"
+      ],
+      "waiting_state": "agentic.delegation.Delegation.Active"
+    },
+    {
+      "block": "deployment",
+      "intent_event": "agentic.deployment.RunQueued",
+      "kind": "Outbound",
+      "name": "deployment.architecture-run",
+      "protocol": "QueueRun (CancelRun | FailRun | StartRun (WaitRun ResumeRun)* (CancelRun | FailRun | FinishRun | WaitRun (CancelRun | FailRun)))",
+      "reports": [
+        "agentic.deployment.CancelRun",
+        "agentic.deployment.FailRun",
+        "agentic.deployment.FinishRun",
+        "agentic.deployment.ResumeRun",
+        "agentic.deployment.StartRun",
+        "agentic.deployment.WaitRun"
+      ],
+      "waiting_state": "agentic.deployment.ArchitectureRun.Queued"
+    },
+    {
+      "block": "deployment",
+      "intent_event": "agentic.deployment.DeploymentRequested",
+      "kind": "Outbound",
+      "name": "deployment.deployment",
+      "protocol": "RequestDeployment (RecordBundle (RecordTranslation (RefuseOnTarget | StartRealizing (RefuseOnTarget | ReportDeploymentFailed | ReportDeploymentRunning (ReportDeploymentDegraded ReportDeploymentRunning)* (ReportDeploymentDegraded ReportDeploymentFailed? | ReportDeploymentFailed)?)?)? | RefuseCoverage)?)?",
+      "reports": [
+        "agentic.deployment.RecordBundle",
+        "agentic.deployment.RecordTranslation",
+        "agentic.deployment.RefuseCoverage",
+        "agentic.deployment.RefuseOnTarget",
+        "agentic.deployment.ReportDeploymentDegraded",
+        "agentic.deployment.ReportDeploymentFailed",
+        "agentic.deployment.ReportDeploymentRunning",
+        "agentic.deployment.StartRealizing"
+      ],
+      "waiting_state": "agentic.deployment.Deployment.Requested"
+    },
+    {
+      "block": "deployment",
+      "intent_event": "agentic.deployment.RevisionInstalled",
+      "kind": "Outbound",
+      "name": "deployment.installation",
+      "protocol": "(InstallRevision | RollBack) (DrainInstallation ReportDrained | RollBack)",
+      "reports": [
+        "agentic.deployment.DrainInstallation",
+        "agentic.deployment.ReportDrained",
+        "agentic.deployment.RollBack"
+      ],
+      "waiting_state": "agentic.deployment.Installation.Active"
+    },
+    {
+      "block": "deployment",
+      "intent_event": "agentic.deployment.UnitRecorded",
+      "kind": "Outbound",
+      "name": "deployment.unit",
+      "protocol": "RecordUnit MapUnit",
+      "reports": [
+        "agentic.deployment.MapUnit"
+      ],
+      "waiting_state": "agentic.deployment.DeploymentUnit.Declared"
+    },
+    {
+      "block": "experiment",
+      "intent_event": "agentic.experiment.ExperimentPlanned",
+      "kind": "Outbound",
+      "name": "experiment.experiment",
+      "protocol": "PlanExperiment RecordVariant* (FailExperiment | StartExperiment RecordVariant* (CompleteExperiment | FailExperiment))",
+      "reports": [
+        "agentic.experiment.CompleteExperiment",
+        "agentic.experiment.FailExperiment",
+        "agentic.experiment.RecordVariant",
+        "agentic.experiment.StartExperiment"
+      ],
+      "waiting_state": "agentic.experiment.Experiment.Planned"
+    },
+    {
+      "block": "gateway",
+      "intent_event": "agentic.gateway.CallDecided",
+      "kind": "Outbound",
+      "name": "gateway.call",
+      "protocol": "AdmitCall CompleteCall",
+      "reports": [
+        "agentic.gateway.CompleteCall"
+      ],
+      "waiting_state": "agentic.gateway.Call.Recorded"
+    },
+    {
+      "block": "gateway",
+      "intent_event": "agentic.gateway.UpstreamAttached",
+      "kind": "Outbound",
+      "name": "gateway.upstream",
+      "protocol": "AttachUpstream (SaturateUpstream RestoreUpstream)* SaturateUpstream?",
+      "reports": [
+        "agentic.gateway.RestoreUpstream",
+        "agentic.gateway.SaturateUpstream"
+      ],
+      "waiting_state": "agentic.gateway.Upstream.Attached"
+    },
+    {
+      "block": "harness",
+      "intent_event": "agentic.harness.PermissionModeRegistered",
+      "kind": "Outbound",
+      "name": "harness.permission-mode",
+      "protocol": "RegisterPermissionMode RetirePermissionMode",
+      "reports": [
+        "agentic.harness.RetirePermissionMode"
+      ],
+      "waiting_state": "agentic.harness.PermissionMode.Registered"
+    },
+    {
+      "block": "harness",
+      "intent_event": "agentic.harness.SessionOpened",
+      "kind": "Outbound",
+      "name": "harness.session",
+      "protocol": "(OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession",
+      "reports": [
+        "agentic.harness.CompactContext",
+        "agentic.harness.EndSession",
+        "agentic.harness.RecordRestart",
+        "agentic.harness.RecordTurn"
+      ],
+      "waiting_state": "agentic.harness.HarnessSession.Open"
+    },
+    {
+      "block": "harness",
+      "intent_event": "agentic.harness.ToolCallDecided",
+      "kind": "Outbound",
+      "name": "harness.tool-call",
+      "protocol": "DecideToolCall (CompleteToolCall | RecordUnreadableResult)",
+      "reports": [
+        "agentic.harness.CompleteToolCall",
+        "agentic.harness.RecordUnreadableResult"
+      ],
+      "waiting_state": "agentic.harness.ToolCall.Allowed"
+    },
+    {
+      "block": "model",
+      "intent_event": "agentic.model.EndpointOpened",
+      "kind": "Outbound",
+      "name": "model.endpoint",
+      "protocol": "OpenEndpoint CloseEndpoint",
+      "reports": [
+        "agentic.model.CloseEndpoint"
+      ],
+      "waiting_state": "agentic.model.Endpoint.Open"
+    },
+    {
+      "block": "model",
+      "intent_event": "agentic.model.InferenceStarted",
+      "kind": "Outbound",
+      "name": "model.inference",
+      "protocol": "StartInference FinishInference",
+      "reports": [
+        "agentic.model.FinishInference"
+      ],
+      "waiting_state": "agentic.model.Inference.Started"
+    },
+    {
+      "block": "question",
+      "intent_event": "agentic.question.QuestionAsked",
+      "kind": "Principal",
+      "name": "question.question",
+      "protocol": "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)",
+      "reports": [
+        "agentic.question.Answer",
+        "agentic.question.RecordUnreadableAnswer",
+        "agentic.question.TakeDefault",
+        "agentic.question.Withdraw"
+      ],
+      "waiting_state": "agentic.question.Question.Open"
+    },
+    {
+      "block": "resource",
+      "intent_event": "agentic.resource.ClaimQueued",
+      "kind": "Outbound",
+      "name": "resource.claim",
+      "protocol": "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)",
+      "reports": [
+        "agentic.resource.ExpireClaim",
+        "agentic.resource.GrantClaim",
+        "agentic.resource.KillClaim",
+        "agentic.resource.ReleaseClaim",
+        "agentic.resource.WithdrawClaim"
+      ],
+      "waiting_state": "agentic.resource.Claim.Queued"
+    },
+    {
+      "block": "runtime",
+      "intent_event": "agentic.runtime.InstanceStarted",
+      "kind": "Outbound",
+      "name": "runtime.instance",
+      "protocol": "StartInstance (ReportFailed | ReportRunning (ReportExited | ReportFailed | StopInstance) | StopInstance)",
+      "reports": [
+        "agentic.runtime.ReportExited",
+        "agentic.runtime.ReportFailed",
+        "agentic.runtime.ReportRunning",
+        "agentic.runtime.StopInstance"
+      ],
+      "waiting_state": "agentic.runtime.Instance.Pending"
+    },
+    {
+      "block": "sandbox",
+      "intent_event": "agentic.sandbox.SandboxDefined",
+      "kind": "Outbound",
+      "name": "sandbox.sandbox",
+      "protocol": "DefineSandbox (CheckEgress | CheckSecretRead | CheckWrite)*",
+      "reports": [
+        "agentic.sandbox.CheckEgress",
+        "agentic.sandbox.CheckSecretRead",
+        "agentic.sandbox.CheckWrite"
+      ],
+      "waiting_state": "agentic.sandbox.Sandbox.Active"
+    },
+    {
+      "block": "store",
+      "intent_event": "agentic.store.QueryRequested",
+      "kind": "Outbound",
+      "name": "store.query",
+      "protocol": "QueryStore (AnswerQuery | FailQuery)",
+      "reports": [
+        "agentic.store.AnswerQuery",
+        "agentic.store.FailQuery"
+      ],
+      "waiting_state": "agentic.store.Query.Requested"
+    },
+    {
+      "block": "store",
+      "intent_event": "agentic.store.ReadRequested",
+      "kind": "Outbound",
+      "name": "store.read",
+      "protocol": "GetRecord (FailGet | ReturnRecord)",
+      "reports": [
+        "agentic.store.FailGet",
+        "agentic.store.ReturnRecord"
+      ],
+      "waiting_state": "agentic.store.Read.Requested"
+    },
+    {
+      "block": "store",
+      "intent_event": "agentic.store.PutRequested",
+      "kind": "Outbound",
+      "name": "store.record",
+      "protocol": "(PutRecord | ReviseRecord) (ConfirmPut (DeleteRecord | ExpireRecord) | FailPut)",
+      "reports": [
+        "agentic.store.ConfirmPut",
+        "agentic.store.DeleteRecord",
+        "agentic.store.ExpireRecord",
+        "agentic.store.FailPut"
+      ],
+      "waiting_state": "agentic.store.Record.Writing"
+    },
+    {
+      "block": "store",
+      "intent_event": "agentic.store.StoreCreated",
+      "kind": "Outbound",
+      "name": "store.store",
+      "protocol": "CreateStore RetireStore",
+      "reports": [
+        "agentic.store.RetireStore"
+      ],
+      "waiting_state": "agentic.store.Store.Open"
+    },
+    {
+      "block": "trigger",
+      "intent_event": "agentic.trigger.TriggerFired",
+      "kind": "Outbound",
+      "name": "trigger.firing",
+      "protocol": "FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)",
+      "reports": [
+        "agentic.trigger.RecordEnd",
+        "agentic.trigger.RecordFailure",
+        "agentic.trigger.RecordReplaced",
+        "agentic.trigger.RecordStart",
+        "agentic.trigger.SkipFiring"
+      ],
+      "waiting_state": "agentic.trigger.Firing.Fired"
+    },
+    {
+      "block": "trigger",
+      "intent_event": "agentic.trigger.ScheduleCreated",
+      "kind": "Outbound",
+      "name": "trigger.schedule",
+      "protocol": "CreateSchedule AdvanceSchedule*",
+      "reports": [
+        "agentic.trigger.AdvanceSchedule"
+      ],
+      "waiting_state": "agentic.trigger.Schedule.Unchecked"
+    },
+    {
+      "block": "work",
+      "intent_event": "agentic.work.AssignmentOffered",
+      "kind": "Outbound",
+      "name": "work.assignment",
+      "protocol": "OfferAssignment (ActivateAssignment EndAssignment | EndAssignment)",
+      "reports": [
+        "agentic.work.ActivateAssignment",
+        "agentic.work.EndAssignment"
+      ],
+      "waiting_state": "agentic.work.Assignment.Offered"
+    },
+    {
+      "block": "work",
+      "intent_event": "agentic.work.DeliverableSubmitted",
+      "kind": "Principal",
+      "name": "work.deliverable",
+      "protocol": "SubmitDeliverable (AcceptDeliverable | RejectDeliverable)",
+      "reports": [
+        "agentic.work.AcceptDeliverable",
+        "agentic.work.RejectDeliverable"
+      ],
+      "waiting_state": "agentic.work.Deliverable.Proposed"
+    },
+    {
+      "block": "work",
+      "intent_event": "agentic.work.RunStarted",
+      "kind": "Outbound",
+      "name": "work.run",
+      "protocol": "StartRun (RecordStep | SuspendRun RecordStep* ResumeRun)* (EndRun | SuspendRun RecordStep* EndRun)",
+      "reports": [
+        "agentic.work.EndRun",
+        "agentic.work.RecordStep",
+        "agentic.work.ResumeRun",
+        "agentic.work.SuspendRun"
+      ],
+      "waiting_state": "agentic.work.Run.Running"
+    },
+    {
+      "block": "work",
+      "intent_event": "agentic.work.TaskCreated",
+      "kind": "Outbound",
+      "name": "work.task",
+      "protocol": "CreateTask (CancelTask | CompleteTask)",
+      "reports": [
+        "agentic.work.CancelTask",
+        "agentic.work.CompleteTask"
+      ],
+      "waiting_state": "agentic.work.Task.Open"
+    },
+    {
+      "block": "workspace",
+      "intent_event": "agentic.workspace.LeaseRequested",
+      "kind": "Outbound",
+      "name": "workspace.lease",
+      "protocol": "RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)",
+      "reports": [
+        "agentic.workspace.ExpireLease",
+        "agentic.workspace.GrantLease",
+        "agentic.workspace.RecordWrite",
+        "agentic.workspace.ReleaseLease"
+      ],
+      "waiting_state": "agentic.workspace.Lease.Requested"
+    },
+    {
+      "block": "workspace",
+      "intent_event": "agentic.workspace.ChangeProposed",
+      "kind": "Outbound",
+      "name": "workspace.proposal",
+      "protocol": "Propose (MergeProposal | RejectProposal | SupersedeProposal)",
+      "reports": [
+        "agentic.workspace.MergeProposal",
+        "agentic.workspace.RejectProposal",
+        "agentic.workspace.SupersedeProposal"
+      ],
+      "waiting_state": "agentic.workspace.Proposal.Proposed"
+    }
+  ],
+  "sources_sha256": "c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4"
+}

@@ -64,6 +64,15 @@ change.
 - `task check:layers` runs the check and its negative fixtures (`scripts/fixtures/layers/`, each
   must fail). `task layers:graph` prints the dependency graph with counts.
 - A new identifier goes into `agentic.shared` in the same change as the entity it identifies.
+- `blocks/components.yaml` declares one component, `blocks`, that owns every domain and is
+  `reached_by: network`, so an `ess-ui/1` document over `agentic` reads its views. Every view is
+  readable by some actor: a domain whose actors may none of its commands has a `Viewer` that may
+  its views (`ess ui check` refuses a section over a view no actor may read). A new view goes into
+  such a `Viewer`'s `may` in the same change.
+- The block panels (`ui/views/`) are generated from `blocks/` by `agenticspec ui panels`
+  (`task ui:panels`): a change of `blocks/` that changes a view, an event or a type runs it in the
+  same change, and `task check:ui` fails on any byte difference or a digest that no longer
+  matches.
 - `task check:blocks` runs the conformance suite of `blocks/` with every authored scenario that
   `blocks/ess-inputs.yaml` lists (`scripts/check-blocks-conform.sh`). Synthesis runs once per
   digest of those sources and is kept in `target/blocks-conform/` (the suite is about 9 MB, too
@@ -83,13 +92,36 @@ change.
   `best.yaml` from `agenticspec_sim::best`, the experiment pointing at the files beside it,
   `result.json`) and the index cards. The results of the experiments at their own budget and seeds
   are committed inputs: `website/static/catalog/<entry>/result.json` with `sources.sha256` beside
-  it (the experiment, architecture, profile, the simulator's sources that change a result, its
-  dependency versions in `Cargo.lock`, `rust-toolchain.toml`). `task docs:generate` never runs a
+  it (the experiment, architecture, profile, the simulator's sources that change a result, the
+  part kinds and `carries` values of the architecture block, its dependency versions in
+  `Cargo.lock`, `rust-toolchain.toml`). `task docs:generate` never runs a
   full experiment and refuses a result whose digest file no longer matches; `task catalog:generate`
   runs them (and refuses a `best.yaml` that does not score the best fitness), then
   `task docs:generate`; `task slow:catalog` runs them afresh and compares bytes. The catalog
   components are in `website/src/components/catalog/`; a ladder stage on a card comes from
-  `STAGES` in `catalog.rs`.
+  `STAGES` in `catalog.rs`; the sortable table of the architectures as a whole on the index is
+  `ArchitectureKpis.tsx`, from `agenticspec_sim::whole`.
+- Cross-block causation is declared as ESS bindings in `blocks/components.yaml` (one component
+  owns every block); `scripts/check-layers.sh` counts a binding as a dependency of the event's
+  domain on the command's, and `scripts/check-blocks-conform.sh` fails when a binding has no
+  `<binding>/binding/...` scenario. A causation ESS cannot express gets a reproduction under
+  `design/ess-repro/<gap>/` (a header comment says what `ess specify validate` answers).
+- That component is `reached_by: network` and `accepts` each entry command an ingress may export:
+  every command whose role in `blocks/ports.json` is intent or administration, or that the
+  actor `agentic.architecture.Principal` may issue, and that some actor may issue (a test in
+  `tests/cases/control_plane.rs` holds the list). A new such command goes into `accepts` in the
+  same change.
+- `blocks/ports.json` (`agenticspec-ports/1`) holds the ports derived from the compiled blocks
+  and the surface an ingress selects from: each command's role, each domain's views and events,
+  each actor's `may:` (`agenticspec sim ports`, `docs/contract.md`). A change of a file
+  `blocks/ess-inputs.yaml` lists runs `task ports:generate` in the same change; `task check:ports`
+  (in the gate) compares the digest without `ess`, `task slow:ports` derives afresh. The actors
+  `agentic.architecture.Deployer` and `agentic.architecture.Principal` decide configuration and
+  principal ports; a new command a deployer issues to end something goes into the deployer's
+  `may:`.
+- Each architecture page and catalog entry has a "Contract" section and a contract file
+  (`website/static/architectures/<name>.contract.yaml`, `<entry>/<entry>.contract.yaml`), from
+  `agenticspec_sim::contract::derive` over the committed `blocks/ports.json`.
 
 ## Packs (`packs/`) and fields (`fields/`)
 
@@ -100,8 +132,22 @@ change.
     than one field reuses, in the namespace `agentic.<word>` (`source-control` is `agentic.scm`,
     then `tracking`, `files`, `shell`); a pack depends on the core and on the packs its
     `pack.yaml` lists under `uses:`;
-  - fields: `fields/<field>/` (`field.yaml`, `architectures/`, `README.md`), one kind of work; a
-    field lists the packs it uses and adds a block only for a concept no other field shares.
+  - fields: `fields/<field>/`, one kind of work; a field lists the packs it uses and adds a block
+    only for a concept no other field shares. `field.yaml` (`agenticspec-field/1`) lists its
+    `packs`, `architectures`, `profiles` (behaviour profiles, the simulator's input), `kpis`
+    (its catalogue), `rows` (`agenticspec-rows/1`: rows it registers in core catalog entities, as
+    inputs of a core register command) and `words` (the words only it uses).
+- The rule of the tiers: a term only one field uses is never an enum variant, entity or field of
+  a core block. Where a core block must tell such values apart, it holds a catalog entity whose
+  rows a field registers (`agentic.harness.PermissionMode`; the coding field registers
+  `accept-edits`). The test for a new core term: would a security-review or AI-research setup need
+  it under the same name? If not, it is a row, a KPI or a profile of a field.
+- `scripts/check-neutral.sh` (`task check:neutral`, in `check:blocks`) refuses every word of a
+  field's `words.txt` in `blocks/` and `kpis/catalogue.yaml`; each fixture under
+  `scripts/fixtures/neutral/` must fail. A new coding term in a core block or core KPI goes into
+  the field, or gets a neutral name in the core.
+- Every experiment under `experiments/` names its `field:` and runs a profile that field lists
+  (`scripts/check-packs.sh`); the catalog of the docs groups its entries by field.
 - The root `ess-inputs.yaml` is the whole system: `packs/system.yaml` (the core domains and the
   pack domains), every core file, every pack file and the packs' authored scenarios. It pins
   `ess 0.99` (the minor line), so it does not take over every `ess` run at the root. A new block of
@@ -122,8 +168,10 @@ change.
   those fail. `task slow:fields` synthesizes afresh and compares bytes.
 - A refusal synthesis cannot reach gets an authored scenario in `packs/<pack>/scenarios/`.
 - KPIs of a pack are in `packs/<pack>/kpis.yaml` (same format as `kpis/catalogue.yaml`, `block`
-  is the domain without `agentic.`, at least 2 per block); `scripts/check-kpis.sh` checks every
-  catalogue.
+  is the domain without `agentic.`, at least 2 per block). KPIs of a field are in
+  `fields/<field>/kpis.yaml`: `block` is the core block or pack block whose events it reads, no
+  least number per block; a core KPI whose `block` is a field is refused.
+  `scripts/check-kpis.sh` checks every catalogue.
 - The docs pages of the packs and fields are generated with the others: `docs/packs/`,
   `docs/fields/`, `website/static/fields/`.
 
@@ -151,15 +199,36 @@ change.
 | `agenticspec-records` | `store.rs` | the local store `<state-dir>/sessions.db` (SQLite): `sync`, stored commands, view rows |
 | `agenticspec-records` | `wire.rs` | the wire source: one finished gateway call to IR commands (`lift_call`), the session hash, `join` on the message id |
 | `agenticspec-records` | `append.rs` | the non-blocking writer a gateway appends through (`Appender::spawn`, a bounded queue, drops counted) |
+| `agenticspec-records` | `blocks.rs` | the lift of one session into rows of the building blocks (`lift`, the rules of `queries/blocks.sq` run by sq; fields the session does not record in `not_recorded`, identifiers derived from nodes so two lifts give the same bytes) and the draft scenario of its outside inputs (`draft`), joined through the receiving turn to the rows they caused |
 | `agenticspec-records` | `view.rs`, `sq/`, `pricing.rs`, `time.rs` | view projection, the sq engine, API list prices, time helpers |
 | `agenticspec` | `mine.rs`, `export.rs` | pattern mining, procedure export to canon |
+| `agenticspec` | `draft.rs` | `agenticspec blocks lift\|scenario`: the lifted rows checked against the blocks built into the simulator, the draft scenario checked against its architecture and profile before it is written |
 | `agenticspec` | `serve.rs` | `agenticspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `agenticspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
-| `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
-| `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
-| `agenticspec-sim` | `scenario.rs`, `corpus.rs`, `events.rs`, `reader.rs`, `sim/script.rs` | `agenticspec sim scenario check\|run` and `sim corpus run` (`docs/scenarios.md`): scenarios (`agenticspec-scenario/1`) and task corpora (`agenticspec-corpus/1`), read by a typed reader that refuses an unknown key by its path. A run drives the simulator with a `Script` (arrivals, run outcomes, build times, replies) on the scenario's seed, and `events::TABLE` is the one map from the simulator's event kinds to block events and marks the eight an `on_event` trigger waits for; a test holds it against every kind the sources record and every event `blocks/` declares. `scenario.rs` does not change an experiment's result and is left out of the catalog digest (`events.rs` is in it, for the trigger rows); a profile draws its tasks from a corpus with `load.corpus` |
-| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
+| `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli`, `agenticspec ui panels` calls `agenticspec_views::run`, `agenticspec ui derive` calls `agenticspec_ui::derive_ui`, `agenticspec ui conform` runs `agenticspec_ui::conform` (against the fixture source of `agenticspec_ui::source` without `--source`) |
+| `agenticspec-sim` | `check.rs`, `whole.rs`, `nest.rs`, `sim.rs`, `sim/swarm.rs`, `sim/record.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|digest\|run\|render\|ladder` (`cli.rs`, no binary of its own); `sim check --json` prints the `agenticspec-check/1` document (`cli::check_document`, in `cli.rs` because the catalog digest leaves it out): an architecture document (`architectures/`) checked, measured as a whole (`whole.rs`: the KPIs `sim check` reports and every variant of a result carries), simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count. `check.rs` reads the part kinds and `carries` values from `blocks/9-composition/architecture.yaml` (compiled in), so the check and the block cannot differ. `nest.rs` resolves a part of block `architecture` (`ref`, `digest` of the canonical parts, links and border) and flattens it into parts named `<part>.<inner part>` before the check and the simulation |
+| `agenticspec-sim` | `scenario.rs`, `unavailable.rs`, `corpus.rs`, `events.rs`, `reader.rs`, `sim/script.rs` | `agenticspec sim scenario check\|run` and `sim corpus run` (`docs/scenarios.md`): scenarios (`agenticspec-scenario/1`) and task corpora (`agenticspec-corpus/1`), read by a typed reader that refuses an unknown key by its path. A run drives the simulator with a `Script` (arrivals, run outcomes, build times, replies) on the scenario's seed, and `events::TABLE` is the one map from the simulator's event kinds to block events and marks the eight an `on_event` trigger waits for; a test holds it against every kind the sources record and every event `blocks/` declares. `unavailable.rs` reads `unavailable` and `then.parts`, checks views, commands and errors against the block files it includes (`SOURCES`, held against the root `ess-inputs.yaml` by a test) and plans the faults and refused inputs of a run. `scenario.rs` and `unavailable.rs` do not change an experiment's result and are left out of the catalog digest (`events.rs` is in it, for the trigger rows); a profile draws its tasks from a corpus with `load.corpus` |
+| `agenticspec-sim` | `event_log.rs` | the event log of a recorded run (`sim run --events`, `events.jsonl`): each timeline kind written as the block event of its table `LOG` (or listed in `SILENT`), with part path, copy and subject key. Not an input of a catalog result (`SIM_EXCLUDED` in `crates/agenticspec-docs/src/results.rs`); a new timeline kind needs a row in `LOG` or `SILENT`, and `tests/cases/event_log.rs` checks each row against `blocks/` |
+| `agenticspec-sim` | `rows.rs` | the declarations of `blocks/` built into the binary (`SOURCES`, a test holds it against the files) and the check of a row `{ entity, id, state, fields, not_recorded, evidence }` of a scenario's `given.rows`; left out of the catalog digest |
+| `agenticspec-sim` | `contract/ports.rs`, `contract/protocol.rs` | `agenticspec sim ports`: the ports of the building blocks from their compiled ESS system, their protocols (regular expressions over command names), `blocks/ports.json` and its digest |
+| `agenticspec-sim` | `contract/derive.rs`, `contract/predicate.rs` | `agenticspec sim contract`: the contract of an architecture document (`agenticspec-contract/1`), its check, the predicate language of routing invariants, and the table of the ports each part kind uses (`PART_KINDS`, the variants of `agentic.architecture.PartKind`; `sim check` refuses any other block) |
+| `agenticspec-sim` | `contract/suite.rs` | `agenticspec sim contract --suite`: the blocks' conformance suite cut to the scenarios about a command of a port of the contract (`task contract:conform`, `scripts/contract-conform.sh`) |
+| `agenticspec-sim` | `contract/trace.rs`, `sim/record.rs` | `agenticspec sim trace`: the port uses of one recorded run (`sim/record.rs`, kept only when a run records) as a trace (`agenticspec-trace/1`), and `agenticspec sim contract --trace`, the check of the routing invariants on it |
+| `agenticspec-sim` | `contract/ingress.rs` | the `ingress:` key of an architecture document: its check (`ingress_*` rules, one refusing fixture each in `tests/cases/ingress/`) and each interface resolved into operations for the contract, from the surface of `blocks/ports.json` and `kpis/catalogue.yaml` |
 | `agenticspec-docs` | `lib.rs`, `main.rs`, `packs.rs` | the generated docs pages of the blocks, architectures and KPI catalogue, and of the packs and fields (`packs.rs`, from the root `ess-inputs.yaml`) (`task docs:generate`, `--check`) |
+| `agenticspec-views` | `lib.rs`, `panels.rs`, `values.rs` | the library of `agenticspec ui panels`: from the compiled `blocks/`, one `ess-ui/1` widget per view (`panels.rs`, naming no block, view or command), the synthetic fixture rows and script payloads (`values.rs`), the digest of the inputs and `--check` (`lib.rs`) |
+| `agenticspec-sim` | `deploy/binding.rs`, `deploy/packing.rs`, `deploy/admit.rs`, `deploy/grants.rs`, `deploy/bundle.rs` | `agenticspec packing default`, `agenticspec deploy bundle` and `agenticspec deploy check`: the binding (`agenticspec-binding/1`, its `refines:` chain), its `packing:` section and strategies, admission with its named refusals, the secrets and egress each part declares by name (`grants.rs`), the deployment bundle (`agenticspec-deployment/1`) and its check when read back; `docs/deployment.md`. Left out of the catalog digest |
+| `agenticspec-sim` | `deploy/fixtures.rs` | the fixture bundles of `bundles/` and `bundles/sources.sha256` (`agenticspec-docs --bundles`, `task bundles:generate`, `check:bundles`, `slow:bundles`) |
+| `agenticspec-sim` | `contract/ingress.rs` (defaults) | the default control plane: the ingresses `operator` and `metrics` every document has by name (`DEFAULTS`), `none`, the reserved path `control` of the implied audiences, `agenticspec ingress default` |
+| `agenticspec-sim` | `contract/projection.rs` | `agenticspec ingress project`: per `http` export the `ess-http/1` protocol binding and the narrowed OpenAPI document; the committed projections of the worked example are in `architectures/projections/workstation-ingress/` (`task projections:generate`, `task check:projections`) |
+| `agenticspec-docs` | `contract.rs` | the "Contract" section of an architecture page and a catalog entry |
+| `agenticspec-render` | `lib.rs`, `graph.rs` | `page(architecture, result)`: one HTML page with the architecture graph (at natural size, with pan, zoom and fit), the tables of its parts and links and, when given, the search result; a nested architecture (resolved beside its part as `inner`) is one box with its border parts as ports; `graph(architecture)`: the graph alone (SVG, size, parts with their properties, links) for agenticstudio to draw inline. `graph.rs` lays the graph out in rows by block layer; links with one label into or out of one card share one label and a trunk |
+| `agenticspec-records` | `sq/architecture.rs` | the fact base of an architecture (`part`, `setting`, `link`, `marker`), compiled apart from the session relations |
+| `agenticspec-patch` | `lib.rs`, `facts.rs`, `text.rs`, `diff.rs` | `agenticspec-patch/1`: the facts of an architecture document, the verbs `set` and `add`, atomic application checked by `agenticspec-sim`'s check, refusals by rule position and error name (`ErrorName`, each listed in `docs/studio.md`) |
+| `agenticspec-ui` | `doc.rs`, `check.rs`, `emit.rs`, `runtime.ts`, `interface.rs`, `source.rs`, `conform.rs`, `wire.rs` | `agenticspec ui generate --path --out`: an `ess-ui/1` document to Vue pages, one component per widget (`widgets/<Widget>.vue`, the same bytes for the same widget in any document), a hash router with the navigation, a typed client and a runtime (live re-read coalesced or row patch, the scope client of a widget) over `ui/kit` components and host slots only, byte for byte the same each run. A construct it cannot draw is refused by its node path; the look is never generated. An action that sends a command shows only while the action set (R5) of its scope allows it. Golden tests in `tests/cases/` (`UPDATE_GOLDEN=1` rewrites them). Beside it, the runtime interface (`ui/runtime.openapi.yaml`, `interface.rs`): the fixture source that answers it (`source.rs`), the conformance suite of `agenticspec ui conform` run against a source by URL (`conform.rs`) and the small HTTP client and server both use (`wire.rs`) |
+| `agenticspec-ui` | `derive/` (`mod.rs`, `model.rs`, `view_key.rs`, `write.rs`) | `agenticspec ui derive`: an architecture (its nested documents, its `view:` key), its contract and ports into one `ess-ui/1` document over the block panels, copying each widget of `ui/views/blocks.ui.yaml` byte for byte, with its fixtures (`<name>.fixtures/`), its layout (`<name>.layout.json`, `agenticspec-ui-layout/1`, read by the package of `ui/views`) and the digest of its inputs; tests in `tests/derive/` |
+| `agenticstudio` | `studio.rs`, `tools.rs`, `live.rs`, `routes.rs`, `app.rs`, `http.rs`, `main.rs` | `agenticstudio serve`: drafts, revisions, patches and applications, studio sessions and their tool calls in memory; the four tools (`tools.rs`: query, apply, check, simulate, each answer with a `summary`); the event channel of each draft (`live.rs`, server-sent events of `studio.draft.DraftRevised` and the answered or failed calls) and the source files of open drafts read again every 500 ms (a change on disk is a new revision); the views and commands of `studio/studio.ui.yaml` (`/api/views`, `/api/commands`, `app.rs`), the older `/api` routes, and the built app of `ui/studio` from `--www`. Its types are `src/generated/` (`ess generate types` from `studio/` and the architecture block, held by `task check:generated`), included as modules; its browser test is `e2e/` (`task check:studio`) |
+| `agenticstudio-mcp` | `lib.rs`, `main.rs` | the agent channel: an MCP server over stdio (`agenticstudio-mcp --studio <url> [--draft <id> \| --open <source>]`) whose tools `query`, `apply`, `check` and `simulate` are calls with caller `Agent` in a studio session, through `POST /api/sessions/<id>/calls` of a running `agenticstudio serve` (`Http`) or a studio in the same process (`Local`, which its tests use). Its tests replay the recorded exchange `tests/exchange.jsonl` |
 
 Beside the crates, `ui/` holds:
 
@@ -171,6 +240,53 @@ Beside the crates, `ui/` holds:
   the views page by page and the SSE channels (`app/src/client.ts`).
 - `app/src/testing/fixtures.ts`, which answers every view from `fixtures/` the way `serve`'s queries
   do. vitest uses it and so does Playwright (`app/e2e/harness.ts`), so no test starts a server.
+- `kit/`, the design system: the tokens (`kit/src/tokens.css`, from the docs site's product theme,
+  light and dark), the base styles and the `Kit*` components every generated page draws with; no
+  colour, size or font is written outside the tokens. Its gallery (`kit/gallery/`) shows every
+  component in both themes; `task check:ui-kit` (`scripts/check-ui-kit.sh`) runs its types, vitest,
+  the gallery build and its browser test.
+- `studio/`, the agenticstudio app: `src/generated/` is written by `agenticspec ui generate` from
+  `studio/studio.ui.yaml` (`task ui:generate`, held by `task check:generated`), never edited;
+  `src/slots/` holds the host slots (`DraftGraph`, `DraftPanels`, `PatchEditor`) and `src/hooks.ts` the command
+  hooks. `task studio:build` builds it into `target/studio/www`; `task check:studio`
+  (`scripts/check-studio.sh`) checks the document, its types and vitest, and runs
+  `crates/agenticstudio/e2e`.
+- `package.json`, one npm package for `kit/`, `studio/`, `views/` and its apps; `app/` keeps its own.
+- `views/`, generated by `agenticspec ui panels` and never edited by hand: `blocks.ui.yaml`, the
+  block panels as an `ess-ui/1` document over `blocks/` (one widget per view, named as the view,
+  and a gallery page per block), `fixtures/` (three rows per view, a script per block channel)
+  and `blocks.sources.sha256`, the digest of the inputs. `task check:ui` holds them. Beside them,
+  `views/gallery/` is the gallery app of the panels: `src/generated/` is written by
+  `agenticspec ui generate` from `blocks.ui.yaml` (held by `task check:generated`), never edited;
+  `src/fixtures.ts` answers its reads from `fixtures/` in the browser. `task views:build` builds it
+  into `target/views/gallery`; `task check:views` (`scripts/check-views.sh`) runs its types,
+  vitest, the build and its browser test (`views/gallery/e2e`).
+- `runtime.openapi.yaml`, the runtime interface the generated client calls (R1 read, R2 feed with a
+  cursor, R3 placement views, R4 command, R5 action set, at `{root}/scopes/{scope}`); the
+  `agenticspec-ui` crate includes it, and a test holds the client to its operations.
+- `views/source/`, written by hand: `source.json`, the fixture source (principals by token,
+  placements, parts, grants, the action class of each command, command answers), and `plan.json`,
+  its conformance plan. Synthetic ids only; `agenticspec ui conform` and the gallery read them.
+- `views/examples/`, written by `agenticspec ui derive` (`task ui:derive`) and never edited by
+  hand: `workstation.ui.yaml` from `architectures/workstation.yaml` with
+  `workstation.contract.yaml` (written by `agenticspec sim contract`) and `ports.json` (a copy of
+  `blocks/ports.json`), both written by `task ui:derive` and held by `task check:ui`,
+  `large-37.ui.yaml` from
+  `crates/agenticspec-render/tests/fixtures/large-37.yaml`, each with `<name>.fixtures/`,
+  `<name>.layout.json` and `<name>.sources.sha256`; `task check:ui` compares them and holds them
+  at 0 errors and 0 warnings. `host-slot.ui.yaml` (hand-written) places the custom element through
+  a host slot. `views/examples/app/` shows both over the fixtures: `src/<name>/generated/` is
+  written by `agenticspec ui generate` (held by `task check:generated`); `task check:examples`
+  (`scripts/check-examples.sh`) runs its types, vitest, build and browser test
+  (`views/examples/app/e2e`).
+- `views/package.json`, `views/src/`: the Vue package `@agenticspec/views` (the panels of
+  `views/gallery/src/generated/widgets`, `AgenticPartPage` and `AgenticOverview` drawn from a
+  layout, `AgenticBlockPanels`, the panels' runtime re-exported) and `src/elements.ts`, the custom
+  elements built from the same components (`task elements:build`, into `target/views/elements`).
+  `views/hosts/` holds the plain and React test pages; `task check:elements`
+  (`scripts/check-elements.sh`) runs the package's types and vitest, both builds and the browser
+  test (`views/hosts/e2e`). agenticstudio imports the panels from here (`studio/src/slots/DraftPanels.vue`);
+  no panel file is written under `ui/studio/`.
 
 `task ui:build` builds the app into `target/ui/www`. Outside `task check:app`, vitest runs as
 `slot --local npx vitest run --maxWorkers=2` from `ui/app`.
@@ -203,6 +319,10 @@ Beside the crates, `ui/` holds:
   fast loop is `task check:site` (`scripts/check-site.sh`, specs in `website/e2e/`) on the built
   site, run as `slot task check:site`; only `task docs:generate` runs with `slot --here`. axe-core
   results are cached under `target/site-ux/axe/` by a digest of the built HTML.
+- `website/e2e/graph.spec.ts` checks the rendered page of a large architecture on the 37-part fixture
+  `crates/agenticspec-render/tests/fixtures/large-37.yaml`, which `scripts/check-site.sh` renders
+  into `target/site-ux/large-37.html` with `agenticspec sim render`. The fixture is not under
+  `architectures/`, so it is neither a docs page nor a catalog entry.
 
 ## Repository files
 
@@ -210,8 +330,11 @@ Beside the crates, `ui/` holds:
 |---|---|
 | `README.md`, `LICENSE`, `CHANGELOG.md` | for humans; Apache-2.0; the changelog in the Keep a Changelog 1.1.0 form, `## [Unreleased]` first. A change a user of the repository notices writes its line there |
 | `scripts/check-generated.sh` | one line per generated directory, the drift check and the regeneration |
+| `bundles/` | the fixture deployment bundles, `<architecture>.<binding>.yaml`, one per catalog architecture and test binding of `bindings/`, the agent documents they name (`agents/`), the bindings (`bindings/`: `local.yaml` is the base of one `local-<architecture>.yaml` per catalog architecture, which declares its egress), the digest of their sources (`sources.sha256`, held by `task check:bundles`) and the copy of the translator's accepted unit kinds and roles (`cloudspec-accepts.yaml`). A change of a bundle's sources runs `task bundles:generate` in the same change |
 | `scripts/ui-build.sh` | `task ui:build` |
 | `scripts/check-app.sh` | `task check:app`: types, vitest, the build, and the Playwright gates and ratchet of `ux/` |
+| `scripts/check-ui-kit.sh`, `scripts/check-studio.sh` | `task check:ui-kit` and `task check:studio` (`ui/kit`, `ui/studio`, `crates/agenticstudio/e2e`); `SCREENS=1` writes screenshots into `target/screens` |
+| `studio/studio.ui.yaml` | the studio app as an `ess-ui/1` document over the `studio` model (`studio/components.yaml` serves it); its `unmapped` entries name what the document cannot say yet |
 | `ux/` | the ui-iteration-loop: adapter, scenarios, `baseline.json`, `round.sh`, rounds and findings |
 | `scripts/change-class.sh`, `change-class.test.sh` | the change classifier of `pages.yml` (planning, docs-site, code) and its cases, run by `task check:scripts`. `design/` and `research/` are planning; `website/` and `docs/` are the site. A new site source goes into its path list with a case |
 | `scenarios/` | example scenarios and one corpus per architecture (`<architecture>/*.scenario.yaml`, `*.corpus.yaml`), run by `task check:scenarios` (in the gate); each names the files it reads with their sha256, so a change of the architecture or the profile updates the digests there |

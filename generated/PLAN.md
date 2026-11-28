@@ -1,13 +1,13 @@
 <!--
   generated from agenticspec v1
-  contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
+  contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-193 capabilities: **190 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+229 capabilities: **226 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -17,6 +17,10 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.AnalyzeInput` |
 | domain type | `agenticspec.cli.AnalyzeResult` |
 | domain type | `agenticspec.cli.AutonomyFigures` |
+| domain type | `agenticspec.cli.BlocksLiftInput` |
+| domain type | `agenticspec.cli.BlocksLiftResult` |
+| domain type | `agenticspec.cli.BlocksScenarioInput` |
+| domain type | `agenticspec.cli.BlocksScenarioResult` |
 | domain type | `agenticspec.cli.BustCause` |
 | domain type | `agenticspec.cli.BustFigures` |
 | domain type | `agenticspec.cli.CacheFigures` |
@@ -27,9 +31,19 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.CorpusAction` |
 | domain type | `agenticspec.cli.Dashboard` |
 | domain type | `agenticspec.cli.DecisionFigures` |
+| domain type | `agenticspec.cli.DeployBundleInput` |
+| domain type | `agenticspec.cli.DeployBundleResult` |
+| domain type | `agenticspec.cli.DeployCheckInput` |
+| domain type | `agenticspec.cli.DeployCheckResult` |
+| domain type | `agenticspec.cli.EntityRows` |
 | domain type | `agenticspec.cli.ExportInput` |
 | domain type | `agenticspec.cli.ExportResult` |
 | domain type | `agenticspec.cli.ExposureFigures` |
+| domain type | `agenticspec.cli.IngressDefaultInput` |
+| domain type | `agenticspec.cli.IngressDefaultResult` |
+| domain type | `agenticspec.cli.IngressProjectInput` |
+| domain type | `agenticspec.cli.IngressProjectResult` |
+| domain type | `agenticspec.cli.InvariantStatus` |
 | domain type | `agenticspec.cli.KpiInput` |
 | domain type | `agenticspec.cli.KpiReport` |
 | domain type | `agenticspec.cli.LiftInput` |
@@ -39,6 +53,8 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.MineInput` |
 | domain type | `agenticspec.cli.MineReport` |
 | domain type | `agenticspec.cli.ModelFigures` |
+| domain type | `agenticspec.cli.PackingDefaultInput` |
+| domain type | `agenticspec.cli.PackingDefaultResult` |
 | domain type | `agenticspec.cli.Pattern` |
 | domain type | `agenticspec.cli.Procedure` |
 | domain type | `agenticspec.cli.ProcedureInput` |
@@ -55,22 +71,42 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.SessionSummary` |
 | domain type | `agenticspec.cli.SimCheckInput` |
 | domain type | `agenticspec.cli.SimCheckResult` |
+| domain type | `agenticspec.cli.SimCheckViolation` |
+| domain type | `agenticspec.cli.SimContractInput` |
+| domain type | `agenticspec.cli.SimContractResult` |
 | domain type | `agenticspec.cli.SimCorpusInput` |
 | domain type | `agenticspec.cli.SimCorpusResult` |
 | domain type | `agenticspec.cli.SimCorpusRow` |
+| domain type | `agenticspec.cli.SimDigestInput` |
+| domain type | `agenticspec.cli.SimDigestResult` |
+| domain type | `agenticspec.cli.SimInvariantCheck` |
 | domain type | `agenticspec.cli.SimLadderInput` |
 | domain type | `agenticspec.cli.SimLadderResult` |
+| domain type | `agenticspec.cli.SimNested` |
+| domain type | `agenticspec.cli.SimPortsInput` |
+| domain type | `agenticspec.cli.SimPortsResult` |
 | domain type | `agenticspec.cli.SimRenderInput` |
 | domain type | `agenticspec.cli.SimRenderResult` |
 | domain type | `agenticspec.cli.SimRunInput` |
 | domain type | `agenticspec.cli.SimRunResult` |
 | domain type | `agenticspec.cli.SimScenarioInput` |
 | domain type | `agenticspec.cli.SimScenarioResult` |
+| domain type | `agenticspec.cli.SimTraceInput` |
+| domain type | `agenticspec.cli.SimTraceResult` |
 | domain type | `agenticspec.cli.StepKind` |
 | domain type | `agenticspec.cli.SyncInput` |
 | domain type | `agenticspec.cli.SyncResult` |
 | domain type | `agenticspec.cli.TimelineMark` |
 | domain type | `agenticspec.cli.ToolFigures` |
+| domain type | `agenticspec.cli.UiConformCheck` |
+| domain type | `agenticspec.cli.UiConformInput` |
+| domain type | `agenticspec.cli.UiConformResult` |
+| domain type | `agenticspec.cli.UiDeriveInput` |
+| domain type | `agenticspec.cli.UiDeriveResult` |
+| domain type | `agenticspec.cli.UiGenerateInput` |
+| domain type | `agenticspec.cli.UiGenerateResult` |
+| domain type | `agenticspec.cli.UiPanelsInput` |
+| domain type | `agenticspec.cli.UiPanelsResult` |
 | domain type | `agenticspec.session.Agent.State` |
 | domain type | `agenticspec.session.AgentId` |
 | domain type | `agenticspec.session.AgentRole` |

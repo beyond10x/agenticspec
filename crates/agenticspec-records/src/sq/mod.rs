@@ -1,7 +1,9 @@
 //! sq: a query language over the session IR (`design/query-design.md`). A module of rules,
 //! queries and checks is compiled once and run over the fact base of each session; rows are
-//! definite or possible, and a check gives one verdict per session.
+//! definite or possible, and a check gives one verdict per session. The same language reads an
+//! architecture through its own fact base (`architecture`).
 
+pub mod architecture;
 pub mod eval;
 pub mod facts;
 pub mod syntax;

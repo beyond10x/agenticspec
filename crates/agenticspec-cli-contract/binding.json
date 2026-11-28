@@ -90,6 +90,478 @@
         }
       }
     },
+    "blocks_lift": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "blocks_lift"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.BlocksLiftInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "transcript": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.BlocksLiftResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "entities": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "entity": {
+                    "kind": "string"
+                  },
+                  "rows": {
+                    "kind": "integer"
+                  }
+                }
+              }
+            },
+            "given": {
+              "kind": "json"
+            },
+            "not_observable": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "session_id": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "rows_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "transcript_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "blocks_scenario": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "blocks_scenario"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.BlocksScenarioInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "map": {
+              "kind": "string"
+            },
+            "name": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "string"
+            },
+            "profile": {
+              "kind": "string"
+            },
+            "transcript": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.BlocksScenarioResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "expectations": {
+              "kind": "integer"
+            },
+            "inputs": {
+              "kind": "integer"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "scenario": {
+              "kind": "string"
+            },
+            "unjoined": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "unmapped": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "map_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "scenario_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "transcript_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deploy_bundle": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "deploy_bundle"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.DeployBundleInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "accepts": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "architecture": {
+              "kind": "string"
+            },
+            "binding": {
+              "kind": "string"
+            },
+            "kpis": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.DeployBundleResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "binding": {
+              "kind": "string"
+            },
+            "bundle": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "digest": {
+              "kind": "string"
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "units": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "accepts_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "binding_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "contract_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "kpis_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "not_admitted": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deploy_check": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "deploy_check"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.DeployCheckInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "accepts": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "bundle": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.DeployCheckResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "binding": {
+              "kind": "string"
+            },
+            "digest": {
+              "kind": "string"
+            },
+            "units": {
+              "kind": "integer"
+            }
+          }
+        }
+      },
+      "errors": {
+        "accepts_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "bundle_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "not_admitted": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "export": {
       "target": {
         "kind": "local",
@@ -143,6 +615,240 @@
           }
         },
         "procedure_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ingress_default": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ingress_default"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.IngressDefaultInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.IngressDefaultResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "defaults": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ingress": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ingress_project": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ingress_project"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.IngressProjectInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "blocks": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "check": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "kpis": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.IngressProjectResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "exports": {
+              "kind": "integer"
+            },
+            "files": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "blocks_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "contract_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "kpis_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "projection_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "projections_stale": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -671,6 +1377,85 @@
         }
       }
     },
+    "packing_default": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "packing_default"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.PackingDefaultInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "strategy": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.PackingDefaultResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "packing": {
+              "kind": "string"
+            },
+            "strategy": {
+              "kind": "string"
+            },
+            "units": {
+              "kind": "integer"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "packing_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "procedure": {
       "target": {
         "kind": "local",
@@ -1146,6 +1931,21 @@
           "fields": {
             "architecture": {
               "kind": "string"
+            },
+            "json": {
+              "kind": "boolean"
+            },
+            "kpis": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
             }
           }
         }
@@ -1158,11 +1958,102 @@
             "architecture": {
               "kind": "string"
             },
+            "counts": {
+              "kind": "optional",
+              "of": {
+                "kind": "map",
+                "value": {
+                  "kind": "integer"
+                }
+              }
+            },
+            "format": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ingresses": {
+              "kind": "integer"
+            },
+            "kpis": {
+              "kind": "json"
+            },
             "links": {
               "kind": "integer"
             },
+            "nested": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "architecture": {
+                    "kind": "string"
+                  },
+                  "digest": {
+                    "kind": "string"
+                  },
+                  "links": {
+                    "kind": "integer"
+                  },
+                  "part": {
+                    "kind": "string"
+                  },
+                  "parts": {
+                    "kind": "integer"
+                  },
+                  "reference": {
+                    "kind": "string"
+                  }
+                }
+              }
+            },
             "parts": {
               "kind": "integer"
+            },
+            "single_points": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "valid": {
+              "kind": "optional",
+              "of": {
+                "kind": "boolean"
+              }
+            },
+            "violations": {
+              "kind": "optional",
+              "of": {
+                "kind": "list",
+                "of": {
+                  "kind": "struct",
+                  "fields": {
+                    "gate": {
+                      "kind": "boolean"
+                    },
+                    "link": {
+                      "kind": "optional",
+                      "of": {
+                        "kind": "integer"
+                      }
+                    },
+                    "message": {
+                      "kind": "string"
+                    },
+                    "part": {
+                      "kind": "string"
+                    },
+                    "rule": {
+                      "kind": "string"
+                    },
+                    "subject": {
+                      "kind": "string"
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -1180,6 +2071,261 @@
           }
         },
         "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "kpis_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sim_contract": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_contract"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimContractInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "check": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "kpis": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "suite": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "trace": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimContractResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "checks": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "detail": {
+                    "kind": "optional",
+                    "of": {
+                      "kind": "string"
+                    }
+                  },
+                  "event": {
+                    "kind": "optional",
+                    "of": {
+                      "kind": "integer"
+                    }
+                  },
+                  "link": {
+                    "kind": "string"
+                  },
+                  "predicate": {
+                    "kind": "string"
+                  },
+                  "status": {
+                    "kind": "enum",
+                    "variants": [
+                      "held",
+                      "violated",
+                      "not_checked"
+                    ]
+                  },
+                  "uses": {
+                    "kind": "integer"
+                  }
+                }
+              }
+            },
+            "contract": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ingresses": {
+              "kind": "integer"
+            },
+            "invariants": {
+              "kind": "integer"
+            },
+            "kept_scenarios": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "ports": {
+              "kind": "integer"
+            },
+            "suite_scenarios": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "contract_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "invariant_violated": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "kpis_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "suite_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "trace_unreadable": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -1325,6 +2471,51 @@
         }
       }
     },
+    "sim_digest": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_digest"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimDigestInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimDigestResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "digest": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "sim_ladder": {
       "target": {
         "kind": "local",
@@ -1412,6 +2603,142 @@
         }
       }
     },
+    "sim_ports": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_ports"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimPortsInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "blocks": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "check": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "expect": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimPortsResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "differences": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "file": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "integer"
+            },
+            "sources_sha256": {
+              "kind": "string"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "blocks_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_differ": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_stale": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "sim_render": {
       "target": {
         "kind": "local",
@@ -1485,6 +2812,9 @@
         "shape": {
           "kind": "struct",
           "fields": {
+            "events": {
+              "kind": "boolean"
+            },
             "experiment": {
               "kind": "string"
             },
@@ -1507,6 +2837,12 @@
           "fields": {
             "best_written": {
               "kind": "boolean"
+            },
+            "events": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
             },
             "out": {
               "kind": "string"
@@ -1703,6 +3039,120 @@
         }
       }
     },
+    "sim_trace": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_trace"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimTraceInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "horizon": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "profile": {
+              "kind": "string"
+            },
+            "seed": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimTraceResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "events": {
+              "kind": "integer"
+            },
+            "seed": {
+              "kind": "integer"
+            },
+            "trace": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "uses": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "simulation_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "sync": {
       "target": {
         "kind": "local",
@@ -1782,6 +3232,377 @@
           }
         }
       }
+    },
+    "ui_conform": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_conform"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiConformInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "plan": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "source": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiConformResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "checks": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "detail": {
+                    "kind": "string"
+                  },
+                  "name": {
+                    "kind": "string"
+                  },
+                  "status": {
+                    "kind": "string"
+                  }
+                }
+              }
+            },
+            "failed": {
+              "kind": "integer"
+            },
+            "passed": {
+              "kind": "integer"
+            },
+            "skipped": {
+              "kind": "integer"
+            },
+            "source": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "conformance_failed": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "plan_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "source_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ui_derive": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_derive"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiDeriveInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "check": {
+              "kind": "boolean"
+            },
+            "contract": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "string"
+            },
+            "path": {
+              "kind": "string"
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiDeriveResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "actions": {
+              "kind": "integer"
+            },
+            "channels": {
+              "kind": "integer"
+            },
+            "files": {
+              "kind": "integer"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "pages": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "derived_stale": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ui_generate": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_generate"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiGenerateInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "out": {
+              "kind": "string"
+            },
+            "path": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiGenerateResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "files": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ui_panels": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_panels"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiPanelsInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "check": {
+              "kind": "boolean"
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiPanelsResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "files": {
+              "kind": "integer"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "panels": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "blocks_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "panels_stale": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "commands": [
@@ -1818,6 +3639,155 @@
     },
     {
       "path": [
+        "blocks",
+        "lift"
+      ],
+      "aliases": [],
+      "callable": "blocks_lift",
+      "about": "Lift one Claude Code session into rows of the building blocks, each naming the node it came from",
+      "arguments": [
+        {
+          "field": "transcript",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "blocks",
+        "scenario"
+      ],
+      "aliases": [],
+      "callable": "blocks_scenario",
+      "about": "Write a draft scenario of a session's outside inputs and the block events of the turns they started",
+      "arguments": [
+        {
+          "field": "transcript",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "option",
+            "long": "architecture"
+          }
+        },
+        {
+          "field": "profile",
+          "source": {
+            "kind": "option",
+            "long": "profile"
+          }
+        },
+        {
+          "field": "map",
+          "source": {
+            "kind": "option",
+            "long": "map"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "name",
+          "source": {
+            "kind": "option",
+            "long": "name"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "deploy",
+        "bundle"
+      ],
+      "aliases": [],
+      "callable": "deploy_bundle",
+      "about": "Admit an architecture with its binding and packing and write its deployment bundle (agenticspec-deployment/1); a refusal writes nothing and names every finding",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "binding",
+          "source": {
+            "kind": "option",
+            "long": "binding"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "accepts",
+          "source": {
+            "kind": "option",
+            "long": "accepts"
+          }
+        },
+        {
+          "field": "kpis",
+          "source": {
+            "kind": "option",
+            "long": "kpis"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "deploy",
+        "check"
+      ],
+      "aliases": [],
+      "callable": "deploy_check",
+      "about": "Admit a written deployment bundle again from what it carries, for a reader that did not write it; refuses a digest that does not hold, an undeclared secret or egress, a secret value and every other finding of admission",
+      "arguments": [
+        {
+          "field": "bundle",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "accepts",
+          "source": {
+            "kind": "option",
+            "long": "accepts"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
         "export"
       ],
       "aliases": [],
@@ -1836,6 +3806,77 @@
           "source": {
             "kind": "option",
             "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ingress",
+        "default"
+      ],
+      "aliases": [],
+      "callable": "ingress_default",
+      "about": "Print the default ingresses an architecture has, as the ingress section to paste into it and change",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ingress",
+        "project"
+      ],
+      "aliases": [],
+      "callable": "ingress_project",
+      "about": "Write the ess-http/1 protocol binding and the OpenAPI document of each http export of an architecture, or compare them with --check",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "option",
+            "long": "check"
+          }
+        },
+        {
+          "field": "blocks",
+          "source": {
+            "kind": "option",
+            "long": "blocks"
+          }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "kpis",
+          "source": {
+            "kind": "option",
+            "long": "kpis"
           }
         }
       ]
@@ -1929,6 +3970,31 @@
           "source": {
             "kind": "option",
             "long": "top"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "packing",
+        "default"
+      ],
+      "aliases": [],
+      "callable": "packing_default",
+      "about": "Print the resolved packing section of a binding (agenticspec-binding/1) for an architecture, single by default, to paste and change",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "strategy",
+          "source": {
+            "kind": "option",
+            "long": "strategy"
           }
         }
       ]
@@ -2069,6 +4135,87 @@
             "kind": "positional",
             "index": 1
           }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "kpis",
+          "source": {
+            "kind": "option",
+            "long": "kpis"
+          }
+        },
+        {
+          "field": "json",
+          "source": {
+            "kind": "flag",
+            "long": "json"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
+        "contract"
+      ],
+      "aliases": [],
+      "callable": "sim_contract",
+      "about": "Derive and check the contract of an architecture (agenticspec-contract/1), check a written contract with --check, cut the blocks' conformance suite to its ports with --suite, or check its routing invariants on a trace with --trace",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "kpis",
+          "source": {
+            "kind": "option",
+            "long": "kpis"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "option",
+            "long": "check"
+          }
+        },
+        {
+          "field": "suite",
+          "source": {
+            "kind": "option",
+            "long": "suite"
+          }
+        },
+        {
+          "field": "trace",
+          "source": {
+            "kind": "option",
+            "long": "trace"
+          }
         }
       ]
     },
@@ -2093,6 +4240,24 @@
           "source": {
             "kind": "positional",
             "index": 2
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
+        "digest"
+      ],
+      "aliases": [],
+      "callable": "sim_digest",
+      "about": "Print the digest a document pins a nested architecture with (sha256 of its canonical parts, links and border)",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
           }
         }
       ]
@@ -2125,6 +4290,45 @@
           "source": {
             "kind": "flag",
             "long": "check"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
+        "ports"
+      ],
+      "aliases": [],
+      "callable": "sim_ports",
+      "about": "Derive the ports of the building blocks into blocks/ports.json, check its digest with --check, or list how they differ from an expected list with --expect",
+      "arguments": [
+        {
+          "field": "blocks",
+          "source": {
+            "kind": "option",
+            "long": "blocks"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "option",
+            "long": "check"
+          }
+        },
+        {
+          "field": "expect",
+          "source": {
+            "kind": "option",
+            "long": "expect"
           }
         }
       ]
@@ -2168,7 +4372,7 @@
       ],
       "aliases": [],
       "callable": "sim_run",
-      "about": "Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml",
+      "about": "Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml, with --events also events.jsonl",
       "arguments": [
         {
           "field": "experiment",
@@ -2189,6 +4393,13 @@
           "source": {
             "kind": "option",
             "long": "threads"
+          }
+        },
+        {
+          "field": "events",
+          "source": {
+            "kind": "flag",
+            "long": "events"
           }
         }
       ]
@@ -2227,6 +4438,52 @@
     },
     {
       "path": [
+        "sim",
+        "trace"
+      ],
+      "aliases": [],
+      "callable": "sim_trace",
+      "about": "Simulate an architecture once at its built values and write the port uses of the run as a trace (agenticspec-trace/1)",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "profile",
+          "source": {
+            "kind": "option",
+            "long": "profile"
+          }
+        },
+        {
+          "field": "seed",
+          "source": {
+            "kind": "option",
+            "long": "seed"
+          }
+        },
+        {
+          "field": "horizon",
+          "source": {
+            "kind": "option",
+            "long": "horizon"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
         "sync"
       ],
       "aliases": [],
@@ -2248,23 +4505,173 @@
           }
         }
       ]
+    },
+    {
+      "path": [
+        "ui",
+        "conform"
+      ],
+      "aliases": [],
+      "callable": "ui_conform",
+      "about": "Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)",
+      "arguments": [
+        {
+          "field": "source",
+          "source": {
+            "kind": "option",
+            "long": "source"
+          }
+        },
+        {
+          "field": "plan",
+          "source": {
+            "kind": "option",
+            "long": "plan"
+          }
+        },
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ui",
+        "derive"
+      ],
+      "aliases": [],
+      "callable": "ui_derive",
+      "about": "Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check",
+      "arguments": [
+        {
+          "field": "path",
+          "source": {
+            "kind": "option",
+            "long": "path"
+          }
+        },
+        {
+          "field": "contract",
+          "source": {
+            "kind": "option",
+            "long": "contract"
+          }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "flag",
+            "long": "check"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ui",
+        "generate"
+      ],
+      "aliases": [],
+      "callable": "ui_generate",
+      "about": "Generate the Vue app of an ess-ui/1 document over the components of ui/kit",
+      "arguments": [
+        {
+          "field": "path",
+          "source": {
+            "kind": "option",
+            "long": "path"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ui",
+        "panels"
+      ],
+      "aliases": [],
+      "callable": "ui_panels",
+      "about": "Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check",
+      "arguments": [
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "flag",
+            "long": "check"
+          }
+        }
+      ]
     }
   ],
   "obligations": [
     "handler:analyze: implement the owner-qualified callable and its declared result/error contract",
+    "handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract",
+    "handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract",
+    "handler:deploy_bundle: implement the owner-qualified callable and its declared result/error contract",
+    "handler:deploy_check: implement the owner-qualified callable and its declared result/error contract",
     "handler:export: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ingress_default: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ingress_project: implement the owner-qualified callable and its declared result/error contract",
     "handler:kpi: implement the owner-qualified callable and its declared result/error contract",
     "handler:lift: implement the owner-qualified callable and its declared result/error contract",
     "handler:mine: implement the owner-qualified callable and its declared result/error contract",
+    "handler:packing_default: implement the owner-qualified callable and its declared result/error contract",
     "handler:procedure: implement the owner-qualified callable and its declared result/error contract",
     "handler:query: implement the owner-qualified callable and its declared result/error contract",
     "handler:serve: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_check: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_contract: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_corpus: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_digest: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_ports: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract",
-    "handler:sync: implement the owner-qualified callable and its declared result/error contract"
+    "handler:sim_trace: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sync: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_conform: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_derive: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_generate: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract"
   ]
 }

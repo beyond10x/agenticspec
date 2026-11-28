@@ -1,0 +1,196 @@
+# A record ends by expiry at its time or by deletion, and a failed get is recorded. Synthesis
+# arranges no record (ESS-SYNTH-004), cannot decide a missing number of seconds (ESS-SYNTH-002),
+# and arranges no present record for a get (ESS-SYNTH-001), so this scenario walks the path by
+# hand: a Duration retention without seconds is refused, three key-value records are put and
+# confirmed, the one with no expiry and the one whose time lies ahead are refused by the clock,
+# the one whose time has passed expires once, a get of its key finds nothing, a get the service
+# cannot answer fails, and a record is deleted once. The interpreter's clock is the time of the
+# run, so the passed expiry lies in the past of any run and the one ahead far in its future.
+type: ess-scenario/7
+domain: agentic.store
+scenario: expire-and-delete
+summary: A record expires at its time and not before, a delete leaves a tombstone once, and a failed get is recorded.
+
+arrange:
+  - instance: store
+    entity: agentic.store.Store
+  - instance: timed
+    entity: agentic.store.Record
+  - instance: later
+    entity: agentic.store.Record
+  - instance: kept
+    entity: agentic.store.Record
+  - instance: get
+    entity: agentic.store.Read
+
+timeline:
+  - at: 2026-01-15T11:00:00Z
+    command: agentic.store.CreateStore
+    actor: agentic.store.StoreOwner
+    input: {name: cache, kind: KeyValue, scope: Part, retention: Duration}
+    outcome: seconds-missing
+    error:
+      name: agentic.store.InvalidRetention
+    no_events: [agentic.store.StoreCreated]
+
+  - at: 2026-01-15T11:00:01Z
+    command: agentic.store.CreateStore
+    actor: agentic.store.StoreOwner
+    input: {name: cache, kind: KeyValue, scope: Part, retention: Duration, retention_seconds: 3600}
+    outcome: created
+    capture: {instance: store, event: agentic.store.StoreCreated, field: store_id}
+
+  - at: 2026-01-15T11:00:02Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: answer-1
+      content: {digest: sha256-answer-1, length: 32, class: value}
+      recorded_by: 00000000-0000-4000-8000-0000000000d1
+      derived_from: []
+      expires_at: 2026-01-15T12:00:02Z
+      at: 2026-01-15T11:00:02Z
+    outcome: requested
+    capture: {instance: timed, event: agentic.store.PutRequested, field: record_id}
+
+  - at: 2026-01-15T11:00:03Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: answer-2
+      content: {digest: sha256-answer-2, length: 32, class: value}
+      recorded_by: 00000000-0000-4000-8000-0000000000d1
+      derived_from: []
+      expires_at: 2999-12-31T00:00:00Z
+      at: 2026-01-15T11:00:03Z
+    outcome: requested
+    capture: {instance: later, event: agentic.store.PutRequested, field: record_id}
+
+  - at: 2026-01-15T11:00:04Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: answer-3
+      content: {digest: sha256-answer-3, length: 32, class: value}
+      recorded_by: 00000000-0000-4000-8000-0000000000d1
+      derived_from: []
+      at: 2026-01-15T11:00:04Z
+    outcome: requested
+    capture: {instance: kept, event: agentic.store.PutRequested, field: record_id}
+
+  - at: 2026-01-15T11:00:05Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: timed}, at: 2026-01-15T11:00:05Z}
+    outcome: confirmed
+
+  - at: 2026-01-15T11:00:06Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: later}, at: 2026-01-15T11:00:06Z}
+    outcome: confirmed
+
+  - at: 2026-01-15T11:00:07Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: kept}, at: 2026-01-15T11:00:07Z}
+    outcome: confirmed
+
+  - at: 2026-01-15T11:00:08Z
+    command: agentic.store.ExpireRecord
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: kept}}
+    outcome: no-expiry
+    error:
+      name: agentic.store.NotExpired
+    no_events: [agentic.store.RecordExpired]
+
+  - at: 2026-01-15T11:00:09Z
+    command: agentic.store.ExpireRecord
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: later}}
+    outcome: not-yet
+    error:
+      name: agentic.store.NotExpired
+    no_events: [agentic.store.RecordExpired]
+
+  - at: 2026-01-15T12:00:03Z
+    command: agentic.store.ExpireRecord
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: timed}}
+    outcome: expired
+    events:
+      - event: agentic.store.RecordExpired
+        payload: {record_id: {$instance: timed}}
+
+  - at: 2026-01-15T12:00:04Z
+    command: agentic.store.ExpireRecord
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: timed}}
+    outcome: wrong-state
+    error:
+      name: agentic.store.RecordStateConflict
+
+  - at: 2026-01-15T12:00:05Z
+    command: agentic.store.GetRecord
+    actor: agentic.store.Reader
+    input: {store_id: {$instance: store}, key: answer-1, read_by: 00000000-0000-4000-8000-0000000000d2, at: 2026-01-15T12:00:05Z}
+    outcome: key-not-found
+    error:
+      name: agentic.store.KeyNotFound
+    no_events: [agentic.store.ReadRequested]
+
+  - at: 2026-01-15T12:00:06Z
+    command: agentic.store.GetRecord
+    actor: agentic.store.Reader
+    input: {store_id: {$instance: store}, key: answer-3, read_by: 00000000-0000-4000-8000-0000000000d2, at: 2026-01-15T12:00:06Z}
+    outcome: requested
+    capture: {instance: get, event: agentic.store.ReadRequested, field: read_id}
+
+  - at: 2026-01-15T12:00:07Z
+    command: agentic.store.FailGet
+    actor: agentic.store.StoreService
+    input: {read_id: {$instance: get}, reason: unavailable, at: 2026-01-15T12:00:07Z}
+    outcome: failed
+    events:
+      - event: agentic.store.ReadFailed
+        payload: {read_id: {$instance: get}}
+
+  - at: 2026-01-15T12:00:08Z
+    command: agentic.store.DeleteRecord
+    actor: agentic.store.Writer
+    input: {record_id: {$instance: kept}, deleted_by: 00000000-0000-4000-8000-0000000000d1, at: 2026-01-15T12:00:08Z}
+    outcome: deleted
+    events:
+      - event: agentic.store.RecordDeleted
+        payload: {record_id: {$instance: kept}}
+
+  - at: 2026-01-15T12:00:09Z
+    command: agentic.store.DeleteRecord
+    actor: agentic.store.Writer
+    input: {record_id: {$instance: kept}, deleted_by: 00000000-0000-4000-8000-0000000000d1, at: 2026-01-15T12:00:09Z}
+    outcome: wrong-state
+    error:
+      name: agentic.store.RecordStateConflict
+    no_events: [agentic.store.RecordDeleted]
+
+assert:
+  - view: agentic.store.Records
+    contains:
+      record_id: {$instance: timed}
+      state: Expired
+  - view: agentic.store.Records
+    contains:
+      record_id: {$instance: later}
+      state: Present
+  - view: agentic.store.Records
+    contains:
+      record_id: {$instance: kept}
+      state: Deleted
+  - view: agentic.store.Reads
+    contains:
+      read_id: {$instance: get}
+      state: Failed

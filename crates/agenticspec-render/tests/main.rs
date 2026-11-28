@@ -1,5 +1,6 @@
 //! The page of the workstation architecture, with and without a simulation result.
 
+mod graph;
 mod optim;
 
 use agenticspec_render::page;
@@ -151,8 +152,8 @@ fn no_two_boxes_of_the_graph_overlap() {
             boxes.push((text.to_string(), [v[0], v[1], v[2], v[3]]));
         }
         assert!(
-            boxes.len() >= 9 + 6,
-            "nodes and edge labels carry a box: {}",
+            boxes.len() >= 9 + 4,
+            "nodes and edge labels carry a box (links with one label into one part share one): {}",
             boxes.len()
         );
         for (i, (a, ra)) in boxes.iter().enumerate() {
@@ -182,4 +183,141 @@ fn absent_and_partial_inputs_render() {
     );
     assert!(!hostile.contains("</script><b>"));
     assert!(!hostile.contains(">a<b<"));
+}
+
+/// The graph alone, for a host that draws it inline: its SVG without the page around it, its size,
+/// and the parts and links it shows, each part with its properties.
+#[test]
+fn the_graph_alone_holds_the_svg_its_size_and_every_part_and_link() {
+    let arch = workstation();
+    let g = agenticspec_render::graph(&arch);
+    let svg = g["svg"].as_str().expect("svg");
+    assert!(svg.starts_with("<svg class=\"graph\""), "{}", &svg[..40]);
+    assert!(svg.ends_with("</svg>"));
+    assert!(!svg.contains("<html") && !svg.contains("data-theme-choice"));
+    assert!(g["width"].as_f64().unwrap() > 100.0 && g["height"].as_f64().unwrap() > 80.0);
+    let parts = g["parts"].as_array().expect("parts");
+    assert_eq!(parts.len(), 9);
+    let worker = parts.iter().find(|p| p["id"] == "worker").expect("worker");
+    assert_eq!(worker["block"], "agent");
+    assert_eq!(worker["count"], "12");
+    assert!(worker["properties"].is_array());
+    assert_eq!(
+        g["links"].as_array().unwrap().len(),
+        arch["links"].as_array().unwrap().len()
+    );
+    assert_eq!(g["name"], arch["architecture"]);
+}
+
+/// An outer document as the simulator loads it: the nested architecture beside its part.
+fn nested() -> Value {
+    json!({
+        "format": "agenticspec-architecture/1",
+        "architecture": "team",
+        "parts": {
+            "owner": { "block": "principal", "kind": "human" },
+            "console": {
+                "block": "architecture",
+                "ref": "console.yaml",
+                "digest": format!("sha256:{}", "a".repeat(64)),
+                "inner": {
+                    "architecture": "console",
+                    "parts": {
+                        "steward": { "block": "agent" },
+                        "desk": { "block": "agent" },
+                        "model": { "block": "model" }
+                    },
+                    "links": [
+                        { "from": "steward", "to": "model", "carries": "model_call" },
+                        { "from": "desk", "to": "model", "carries": "model_call" },
+                        { "from": "steward", "to": "desk", "carries": "order" }
+                    ],
+                    "border": ["steward", "desk"]
+                }
+            },
+            "worker": { "block": "agent", "count": 2 },
+            "model": { "block": "model" }
+        },
+        "links": [
+            { "from": "owner", "to": "console.steward", "carries": "prompt" },
+            { "from": "console.desk", "to": "worker", "carries": "order" },
+            { "from": "worker", "to": "model", "carries": "model_call" }
+        ],
+        "border": ["console.steward"]
+    })
+}
+
+#[test]
+fn a_nested_architecture_is_one_box_with_its_border_parts_as_ports() {
+    let html = page(&nested(), None);
+    assert_eq!(
+        html.matches("class=\"node f-nested").count(),
+        1,
+        "one box for the nested architecture"
+    );
+    assert!(html.contains("data-part=\"console\""));
+    assert!(
+        html.contains(">console · 3 parts<"),
+        "named with its part count"
+    );
+    for port in ["console.steward", "console.desk"] {
+        assert!(
+            html.contains(&format!("data-port=\"{port}\"")),
+            "{port} is a port"
+        );
+    }
+    assert!(
+        !html.contains("data-part=\"console.steward\""),
+        "an inner part is no box of its own"
+    );
+    assert!(
+        html.contains("<tr data-from=\"owner\" data-to=\"console.steward\""),
+        "a link to a port is listed"
+    );
+    // Both links that address a port reach the box: an edge labelled with the port it reaches.
+    assert!(
+        html.contains(">prompt · steward<"),
+        "the prompt edge names its port"
+    );
+    assert!(
+        html.contains(">order · desk<"),
+        "the order edge names its port"
+    );
+}
+
+#[test]
+fn the_nested_box_overlaps_nothing() {
+    let html = page(&nested(), None);
+    let mut boxes: Vec<(String, [f64; 4])> = Vec::new();
+    for piece in html.split("data-box=\"").skip(1) {
+        let text = &piece[..piece.find('"').expect("closed")];
+        let v: Vec<f64> = text
+            .split(' ')
+            .map(|n| n.parse().expect("a number"))
+            .collect();
+        boxes.push((text.to_string(), [v[0], v[1], v[2], v[3]]));
+    }
+    assert!(boxes.len() >= 4, "{}", boxes.len());
+    for (i, (a, ra)) in boxes.iter().enumerate() {
+        for (b, rb) in &boxes[i + 1..] {
+            let apart = ra[0] + ra[2] <= rb[0]
+                || rb[0] + rb[2] <= ra[0]
+                || ra[1] + ra[3] <= rb[1]
+                || rb[1] + rb[3] <= ra[1];
+            assert!(apart, "boxes {a} and {b} overlap");
+        }
+    }
+}
+
+#[test]
+fn a_nested_part_not_yet_resolved_still_renders_as_a_box() {
+    let mut doc = nested();
+    doc["parts"]["console"]
+        .as_object_mut()
+        .unwrap()
+        .remove("inner");
+    let html = page(&doc, None);
+    assert!(html.contains("data-part=\"console\""));
+    assert!(html.contains(">console.yaml<") || html.contains("console.yaml"));
+    assert!(html.contains("data-port=\"console.steward\""));
 }

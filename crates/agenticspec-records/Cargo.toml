@@ -18,3 +18,6 @@ regex.workspace = true
 rayon.workspace = true
 rusqlite.workspace = true
 zstd.workspace = true
+
+[dev-dependencies]
+agenticspec-sim.workspace = true

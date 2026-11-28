@@ -21,6 +21,53 @@ mdx:
 
 <span className="as-tag as-tag--accepted">accepted</span> 3 parts and 3 links; the structural check refuses nothing.
 
+## The architecture as a whole
+
+Read from the document alone, before any simulation: its size, autonomy, exposure, weak points and fixed limits. `agenticspec sim check` reports the same numbers; a marked place counts at its value as built. The KPIs are in the [KPI catalogue](../kpis-catalogue.md) under the block `architecture`.
+
+| KPI | value | what it counts |
+|---|---|---|
+| `agents_total` | 1 | Agent copies: the sum of count over the agent parts. |
+| `principals_total` | 1 | Principal parts. |
+| `human_touchpoints` | 1 | Links that end at a principal and carry a question or a proposal. |
+| `autonomy_depth` | 0 | Links in the longest chain of order and question links from agent to agent. |
+| `model_call_paths` | 1 | Distinct paths of model_call links from an agent part to a model part. |
+| `ungated_model_calls` | 1 | Paths of model_call links from an agent to a model that pass no gateway part. |
+| `single_points` | 1 (`model`) | Parts whose removal leaves some agent with no model_call path to a model. |
+| `border_parts` | 0 | Parts named in the border, the parts that take input from outside. |
+| `egress_targets` | 0 | Distinct parts named in the egress of the sandbox parts. |
+| `shared_workspaces` | 0 | Workspace parts whose sharing is not exclusive. |
+| `capacity_ratio` | 0 | Agent copies that claim a pool divided by its capacity, the largest over the pools. |
+
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [solo.contract.yaml](pathname:///architectures/solo.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `agent` | `harness: coding` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `agent` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `agent` | none | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `agent -> owner carries question`: `every question.question@agent to owner`
+- `agent -> model carries model_call`: `every model.inference@agent to model`
+
+Border: none.
+
+Ingresses: who reaches the architecture from outside, what each audience may use, and over which protocols.
+
+| ingress | audience | authenticated | exports | commands | views | feeds | metrics |
+|---|---|---|---|---|---|---|---|
+| **metrics** | `control.monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 9 |
+| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 1 | 14 | 35 | 0 |
+
+- **metrics**: `cache_bust_count`, `cache_hit_share`, `context_size_p90_tokens`, `cost_usd`, `human_prompt_share`, `owner_wait_share`, `priced_message_share`, `sub_agents_started`, `subagent_cost_share`
+- **operator**: `agentic.question.Answer`
+
 ## Parts
 
 | part | block | settings |

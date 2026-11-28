@@ -1,0 +1,34 @@
+{
+  "name": "agenticspec-ui-kit-and-studio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The design system of ui/kit, the generated studio app of ui/studio, the package of ui/views with its gallery, its derived examples and its custom elements, which share these dependencies (React only for the React host page of the elements test). ui/app is a package of its own.",
+  "scripts": {
+    "kit:typecheck": "vue-tsc --noEmit -p kit/tsconfig.json",
+    "kit:test": "vitest run --config kit/vite.config.ts",
+    "kit:build": "vite build --config kit/vite.config.ts --logLevel warn",
+    "studio:typecheck": "vue-tsc --noEmit -p studio/tsconfig.json",
+    "studio:test": "vitest run --config studio/vite.config.ts",
+    "studio:build": "vite build --config studio/vite.config.ts --logLevel warn",
+    "views:typecheck": "vue-tsc --noEmit -p views/gallery/tsconfig.json",
+    "views:test": "vitest run --config views/gallery/vite.config.ts",
+    "views:build": "vite build --config views/gallery/vite.config.ts --logLevel warn"
+  },
+  "dependencies": {
+    "vue": "3.5.46"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
+    "@playwright/test": "1.65.1",
+    "@vitejs/plugin-vue": "6.0.11",
+    "@vue/test-utils": "2.6.0",
+    "happy-dom": "21.0.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "typescript": "6.0.3",
+    "vite": "8.3.8",
+    "vitest": "5.1.2",
+    "vue-tsc": "3.3.14"
+  }
+}

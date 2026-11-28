@@ -1,0 +1,640 @@
+format: agenticspec-deployment/1
+generator: agenticspec 0.4.1
+architecture:
+  document:
+    architecture: shared-board
+    format: agenticspec-architecture/1
+    links:
+    - carries: message
+      from: owner
+      to: board
+    - carries: trigger
+      from: on_entry
+      to: team
+    - carries: question
+      from: team
+      to: owner
+    - carries: model_call
+      from: team
+      to: gateway
+    - carries: model_call
+      from: gateway
+      to: model
+    - carries: claim
+      from: team
+      to: builds
+    parts:
+      board:
+        block: channel
+        distribution: board
+        kind: agent_message
+      builds:
+        block: pool
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+      gateway:
+        block: gateway
+        rate_limit_per_minute: 120
+      model:
+        block: model
+        route: frontier
+      on_entry:
+        block: trigger
+        channel: board
+        kind: on_message
+        max_parallel: 16
+        policy: parallel
+      owner:
+        block: principal
+        kind: human
+      team:
+        block: agent
+        coordination: board
+        count:
+          value: 8
+          vary:
+          - 4
+          - 8
+          - 12
+          - 16
+        harness: coding
+        start_stagger:
+          value: 3s
+          vary:
+          - 0s
+          - 3s
+          - 30s
+      tree:
+        block: workspace
+        per: team
+        sharing: exclusive
+    policies:
+      question_default_after: 15m
+    summary: 'A team without an orchestrator on a shared board: the owner posts every task to the board, each post wakes the team, and every idle copy reads it and races to claim it. A team without an orchestrator on one repository resolved 19.31% at 1 agent and 28.78% at 128, with a typed board of length-limited entries (2609.26781); that study started one agent every 30 s, then every 3 s. The simulator charges each read of a post by an idle copy one model call and counts a claim conflict when a reader reads within `claim_window_seconds` of the copy that claims; a start stagger holds copies back so that a burst of posts is claimed one by one. A post that finds the team at its limit is offered again when a run ends. The simulator does not model the board''s entry kinds and length limits, entries other than tasks (facts, failures, patch summaries), a reader that is busy while it reads, nor any effect of the team''s size on how often a task succeeds.'
+  name: shared-board
+  revision: sha256:510a65381790e912fb59c69c778793347608400bca1eb88e1fdb2395e57aea49
+  sha256: sha256:b70807a8341d44d3cec3f862bdc46e7d57c610d6aa29f37f3199c2a0b167491b
+nested: {}
+contract:
+  digest: sha256:0f312221f7e2ed1dc45ea62df4f3acf3e43edaad6c325d9b63d2f283702762d3
+  document:
+    architecture: shared-board
+    border: []
+    format: agenticspec-contract/1
+    ingress:
+    - audience: control.monitor
+      authenticated: false
+      exports:
+      - metrics_scrape
+      name: metrics
+      operations:
+      - kind: metric
+        name: cache_bust_count
+      - kind: metric
+        name: cache_hit_share
+      - kind: metric
+        name: context_size_p90_tokens
+      - kind: metric
+        name: cost_usd
+      - kind: metric
+        name: human_prompt_share
+      - kind: metric
+        name: owner_wait_share
+      - kind: metric
+        name: priced_message_share
+      - kind: metric
+        name: sub_agents_started
+      - kind: metric
+        name: subagent_cost_share
+    - audience: control.operator
+      authenticated: true
+      exports:
+      - http
+      - event_stream
+      - ui
+      - tool
+      name: operator
+      operations:
+      - kind: command
+        name: agentic.gateway.DetachUpstream
+      - kind: command
+        name: agentic.gateway.DrainGateway
+      - kind: command
+        name: agentic.gateway.StopGateway
+      - kind: command
+        name: agentic.question.Answer
+      - kind: command
+        name: agentic.trigger.DisableSchedule
+      - kind: command
+        name: agentic.trigger.DisableTrigger
+      - kind: command
+        name: agentic.trigger.EnableSchedule
+      - kind: command
+        name: agentic.trigger.EnableTrigger
+      - kind: command
+        name: agentic.trigger.PassScheduleChecks
+      - kind: view
+        name: agentic.agent.AgentRevisions
+      - kind: view
+        name: agentic.agent.Agents
+      - kind: view
+        name: agentic.channel.ChannelMessages
+      - kind: view
+        name: agentic.channel.ChannelPosts
+      - kind: view
+        name: agentic.channel.Channels
+      - kind: view
+        name: agentic.channel.Messages
+      - kind: view
+        name: agentic.channel.Posts
+      - kind: view
+        name: agentic.channel.Subscriptions
+      - kind: view
+        name: agentic.gateway.Calls
+      - kind: view
+        name: agentic.gateway.Gateways
+      - kind: view
+        name: agentic.gateway.Upstreams
+      - kind: view
+        name: agentic.harness.HarnessSessions
+      - kind: view
+        name: agentic.harness.Harnesses
+      - kind: view
+        name: agentic.harness.PermissionModes
+      - kind: view
+        name: agentic.harness.ToolCalls
+      - kind: view
+        name: agentic.harness.Turns
+      - kind: view
+        name: agentic.model.Endpoints
+      - kind: view
+        name: agentic.model.Inferences
+      - kind: view
+        name: agentic.model.Models
+      - kind: view
+        name: agentic.model.Routes
+      - kind: view
+        name: agentic.principal.Principals
+      - kind: view
+        name: agentic.question.OpenQuestions
+      - kind: view
+        name: agentic.question.Questions
+      - kind: view
+        name: agentic.resource.Claims
+      - kind: view
+        name: agentic.resource.Pools
+      - kind: view
+        name: agentic.resource.Queue
+      - kind: view
+        name: agentic.trigger.Firings
+      - kind: view
+        name: agentic.trigger.RecentFirings
+      - kind: view
+        name: agentic.trigger.Schedules
+      - kind: view
+        name: agentic.trigger.Triggers
+      - kind: view
+        name: agentic.trigger.TriggersOfRevision
+      - kind: view
+        name: agentic.workspace.Leases
+      - kind: view
+        name: agentic.workspace.Proposals
+      - kind: view
+        name: agentic.workspace.Workspaces
+      - kind: feed
+        name: agentic.agent.AgentDefined
+      - kind: feed
+        name: agentic.agent.AgentRetired
+      - kind: feed
+        name: agentic.agent.AgentRevisionPublished
+      - kind: feed
+        name: agentic.agent.AgentRevisionRetired
+      - kind: feed
+        name: agentic.agent.AgentRevisionUsed
+      - kind: feed
+        name: agentic.channel.ChannelClosed
+      - kind: feed
+        name: agentic.channel.ChannelOpened
+      - kind: feed
+        name: agentic.channel.HeartbeatRecorded
+      - kind: feed
+        name: agentic.channel.MessageDelivered
+      - kind: feed
+        name: agentic.channel.MessageLost
+      - kind: feed
+        name: agentic.channel.MessageRead
+      - kind: feed
+        name: agentic.channel.MessageSent
+      - kind: feed
+        name: agentic.channel.PostTaken
+      - kind: feed
+        name: agentic.channel.Posted
+      - kind: feed
+        name: agentic.channel.SharedChannelOpened
+      - kind: feed
+        name: agentic.channel.Subscribed
+      - kind: feed
+        name: agentic.channel.SubscriptionEnded
+      - kind: feed
+        name: agentic.gateway.CallCompleted
+      - kind: feed
+        name: agentic.gateway.CallDecided
+      - kind: feed
+        name: agentic.gateway.GatewayDrained
+      - kind: feed
+        name: agentic.gateway.GatewayOpened
+      - kind: feed
+        name: agentic.gateway.GatewayStopped
+      - kind: feed
+        name: agentic.gateway.UpstreamAttached
+      - kind: feed
+        name: agentic.gateway.UpstreamDetached
+      - kind: feed
+        name: agentic.gateway.UpstreamRestored
+      - kind: feed
+        name: agentic.gateway.UpstreamSaturated
+      - kind: feed
+        name: agentic.harness.ContextCompacted
+      - kind: feed
+        name: agentic.harness.HarnessRegistered
+      - kind: feed
+        name: agentic.harness.HarnessRetired
+      - kind: feed
+        name: agentic.harness.PermissionModeRegistered
+      - kind: feed
+        name: agentic.harness.PermissionModeRetired
+      - kind: feed
+        name: agentic.harness.SessionEnded
+      - kind: feed
+        name: agentic.harness.SessionOpened
+      - kind: feed
+        name: agentic.harness.SessionRestarted
+      - kind: feed
+        name: agentic.harness.SubAgentSpawned
+      - kind: feed
+        name: agentic.harness.ToolCallCompleted
+      - kind: feed
+        name: agentic.harness.ToolCallDecided
+      - kind: feed
+        name: agentic.harness.ToolCallRequested
+      - kind: feed
+        name: agentic.harness.ToolResultNotRead
+      - kind: feed
+        name: agentic.harness.TurnRecorded
+      - kind: feed
+        name: agentic.model.EndpointClosed
+      - kind: feed
+        name: agentic.model.EndpointOpened
+      - kind: feed
+        name: agentic.model.InferenceFinished
+      - kind: feed
+        name: agentic.model.InferenceStarted
+      - kind: feed
+        name: agentic.model.ModelDeclared
+      - kind: feed
+        name: agentic.model.ModelRetired
+      - kind: feed
+        name: agentic.model.ProviderRegistered
+      - kind: feed
+        name: agentic.model.RouteDefined
+      - kind: feed
+        name: agentic.model.RouteRetired
+      - kind: feed
+        name: agentic.principal.PrincipalRegistered
+      - kind: feed
+        name: agentic.principal.PrincipalRetired
+      - kind: feed
+        name: agentic.question.AnswerNotRead
+      - kind: feed
+        name: agentic.question.DefaultTaken
+      - kind: feed
+        name: agentic.question.QuestionAnswered
+      - kind: feed
+        name: agentic.question.QuestionAsked
+      - kind: feed
+        name: agentic.question.QuestionWithdrawn
+      - kind: feed
+        name: agentic.resource.ClaimExpired
+      - kind: feed
+        name: agentic.resource.ClaimGranted
+      - kind: feed
+        name: agentic.resource.ClaimKilled
+      - kind: feed
+        name: agentic.resource.ClaimQueued
+      - kind: feed
+        name: agentic.resource.ClaimReleased
+      - kind: feed
+        name: agentic.resource.ClaimWithdrawn
+      - kind: feed
+        name: agentic.resource.PoolCreated
+      - kind: feed
+        name: agentic.trigger.FiringEnded
+      - kind: feed
+        name: agentic.trigger.FiringFailed
+      - kind: feed
+        name: agentic.trigger.FiringQueued
+      - kind: feed
+        name: agentic.trigger.FiringReplaced
+      - kind: feed
+        name: agentic.trigger.FiringSkipped
+      - kind: feed
+        name: agentic.trigger.FiringStarted
+      - kind: feed
+        name: agentic.trigger.ScheduleAdvanced
+      - kind: feed
+        name: agentic.trigger.ScheduleChecked
+      - kind: feed
+        name: agentic.trigger.ScheduleCreated
+      - kind: feed
+        name: agentic.trigger.ScheduleDisabled
+      - kind: feed
+        name: agentic.trigger.ScheduleEnabled
+      - kind: feed
+        name: agentic.trigger.TriggerCreated
+      - kind: feed
+        name: agentic.trigger.TriggerDisabled
+      - kind: feed
+        name: agentic.trigger.TriggerEnabled
+      - kind: feed
+        name: agentic.trigger.TriggerFired
+      - kind: feed
+        name: agentic.workspace.ChangeProposed
+      - kind: feed
+        name: agentic.workspace.LeaseExpired
+      - kind: feed
+        name: agentic.workspace.LeaseGranted
+      - kind: feed
+        name: agentic.workspace.LeaseReleased
+      - kind: feed
+        name: agentic.workspace.LeaseRequested
+      - kind: feed
+        name: agentic.workspace.PathWritten
+      - kind: feed
+        name: agentic.workspace.ProposalMerged
+      - kind: feed
+        name: agentic.workspace.ProposalRejected
+      - kind: feed
+        name: agentic.workspace.ProposalSuperseded
+      - kind: feed
+        name: agentic.workspace.WorkspaceCreated
+    invariants:
+    - link: owner -> board carries message
+      port: channel.post
+      predicate: every channel.post@owner to board
+    - link: on_entry -> team carries trigger
+      port: trigger.firing
+      predicate: every trigger.firing@on_entry to team
+    - link: team -> owner carries question
+      port: question.question
+      predicate: every question.question@team to owner
+    - link: team -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@team inside gateway.call@gateway
+      within: gateway.call
+    - link: gateway -> model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@gateway to model
+    - link: team -> builds carries claim
+      port: resource.claim
+      predicate: every resource.claim@team to builds
+    ports:
+    - instances: 1
+      part: board
+      port: channel.post
+      protocol: PostMessage TakePost?
+      settings:
+        distribution: board
+        kind: agent_message
+    - instances: 1
+      part: board
+      port: channel.subscription
+      protocol: Subscribe Beat* EndSubscription
+      settings:
+        distribution: board
+        kind: agent_message
+    - instances: 1
+      part: builds
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings:
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+    - instances: 1
+      part: gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 120
+    - instances: 1
+      part: model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: on_entry
+      port: trigger.firing
+      protocol: FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)
+      settings:
+        channel: board
+        kind: on_message
+        max_parallel: 16
+        policy: parallel
+    - instances: 1
+      part: owner
+      port: channel.post
+      protocol: PostMessage TakePost?
+      settings: {}
+    - instances: 1
+      part: owner
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings:
+        kind: human
+    - instances: 8
+      part: team
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 8
+      part: team
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 8
+      part: team
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 8
+      part: team
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings: {}
+    - instances: 8
+      part: tree
+      port: workspace.lease
+      protocol: RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)
+      settings:
+        sharing: exclusive
+    - instances: 8
+      part: tree
+      port: workspace.proposal
+      protocol: Propose (MergeProposal | RejectProposal | SupersedeProposal)
+      settings:
+        sharing: exclusive
+    ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
+binding:
+  digest: sha256:d58a65394c9be2270523d0e9f99dca148f978f357c15ea777bc4dd455412999b
+  document:
+    architecture: shared-board
+    binding: local
+    format: agenticspec-binding/1
+    parts:
+      gateway:
+        egress:
+        - model
+      team:
+        egress:
+        - owner
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. The base of each local-<architecture>.yaml, which declares where its parts reach. Fits any architecture whose sandboxes ask for no more than a container.'
+  name: local
+packing:
+  digest: sha256:1d2e14e31d46ae30f6ba20b9084249263e54ee40c43bf4cc02450cf6290c1a9a
+  document:
+    external:
+    - model
+    - owner
+    units:
+    - kind: core
+      name: core
+      parts:
+      - board
+      - builds
+      - gateway
+      - on_entry
+      - team
+      - tree
+      replicas: 1
+  strategy: single
+units:
+- checks:
+    alive:
+      kind: http
+      path: /alive
+    ready:
+      kind: http
+      path: /ready
+  claims:
+    accelerators: 0
+    cpu_millis: 500
+    memory_mib: 512
+    volumes:
+    - access: read_write_once
+      name: tree
+      per_instance: true
+  code:
+    role: core-runtime
+  egress:
+  - carries: model_call
+    external: true
+    from: gateway
+    link: gateway -> model carries model_call
+    to: model
+  - carries: question
+    external: true
+    from: team
+    link: team -> owner carries question
+    to: owner
+  isolation: none
+  kind: core
+  name: core
+  parts:
+  - board
+  - builds
+  - gateway
+  - on_entry
+  - team
+  - tree
+  ports:
+  - instances: 1
+    part: board
+    port: channel.post
+    settings:
+      distribution: board
+      kind: agent_message
+  - instances: 1
+    part: board
+    port: channel.subscription
+    settings:
+      distribution: board
+      kind: agent_message
+  - instances: 1
+    part: builds
+    port: resource.claim
+    settings:
+      capacity: 16
+      job_limit: 10m
+      kind: build_slots
+  - instances: 1
+    part: gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 120
+  - instances: 1
+    part: on_entry
+    port: trigger.firing
+    settings:
+      channel: board
+      kind: on_message
+      max_parallel: 16
+      policy: parallel
+  - instances: 8
+    part: team
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 8
+    part: team
+    port: model.inference
+    settings: {}
+  - instances: 8
+    part: team
+    port: question.question
+    settings: {}
+  - instances: 8
+    part: team
+    port: resource.claim
+    settings: {}
+  - instances: 8
+    part: tree
+    port: workspace.lease
+    settings:
+      sharing: exclusive
+  - instances: 8
+    part: tree
+    port: workspace.proposal
+    settings:
+      sharing: exclusive
+  replicas: 1
+  roles:
+  - core-runtime
+  - model-route:frontier
+  secrets: []
+  source:
+    parts:
+    - board
+    - builds
+    - gateway
+    - on_entry
+    - team
+    - tree
+    unit: core
+ingress: []
+requirements: []
+agents: {}
+runtimes: {}
+digest: sha256:8ec3bd5a2382bf999c43e4045a0b636a6302d4588d95974980b2561619313599

@@ -1,0 +1,1020 @@
+{
+  "architecture": "workstation",
+  "format": "agenticspec-ui-layout/1",
+  "home": "overview",
+  "levels": [
+    {
+      "channel": "level",
+      "instances": 1,
+      "name": "workstation",
+      "overview": "overview",
+      "pages": [
+        {
+          "actions": [],
+          "block": "sandbox",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "sandbox_sandboxes",
+                  "part": "box",
+                  "row_actions": [],
+                  "title": "Sandboxes",
+                  "widget": "agentic.sandbox.Sandboxes"
+                }
+              ],
+              "title": null
+            }
+          ],
+          "label": "box",
+          "page": "part.box",
+          "part": "box"
+        },
+        {
+          "actions": [],
+          "block": "pool",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "resource_pools",
+                  "part": "builds",
+                  "row_actions": [],
+                  "title": "Pools",
+                  "widget": "agentic.resource.Pools"
+                }
+              ],
+              "title": null
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "resource_claims",
+                  "part": "builds",
+                  "row_actions": [],
+                  "title": "Claims",
+                  "widget": "agentic.resource.Claims"
+                },
+                {
+                  "args": {
+                    "channel": "level",
+                    "pool_id": "00000000-0000-4000-8000-e7e96cf90000"
+                  },
+                  "name": "resource_queue",
+                  "part": "builds",
+                  "row_actions": [],
+                  "title": "Queue of a pool",
+                  "widget": "agentic.resource.Queue"
+                }
+              ],
+              "title": "Resource"
+            }
+          ],
+          "label": "build slots",
+          "page": "part.builds",
+          "part": "builds"
+        },
+        {
+          "actions": [],
+          "block": "channel",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_channels",
+                  "part": "chat",
+                  "row_actions": [],
+                  "title": "Channels",
+                  "widget": "agentic.channel.Channels"
+                }
+              ],
+              "title": null
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level",
+                    "channel_id": "00000000-0000-4000-8000-f4f3536e0000"
+                  },
+                  "name": "channel_channel_messages",
+                  "part": "chat",
+                  "row_actions": [],
+                  "title": "Messages of a channel",
+                  "widget": "agentic.channel.ChannelMessages"
+                },
+                {
+                  "args": {
+                    "channel": "level",
+                    "channel_id": "00000000-0000-4000-8000-f4f3536e0000"
+                  },
+                  "name": "channel_channel_posts",
+                  "part": "chat",
+                  "row_actions": [],
+                  "title": "Posts of a channel",
+                  "widget": "agentic.channel.ChannelPosts"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_messages",
+                  "part": "chat",
+                  "row_actions": [],
+                  "title": "Messages",
+                  "widget": "agentic.channel.Messages"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_posts",
+                  "part": "chat",
+                  "row_actions": [],
+                  "title": "Posts",
+                  "widget": "agentic.channel.Posts"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_subscriptions",
+                  "part": "chat",
+                  "row_actions": [],
+                  "title": "Subscriptions",
+                  "widget": "agentic.channel.Subscriptions"
+                }
+              ],
+              "title": "Channel"
+            }
+          ],
+          "label": "chat",
+          "page": "part.chat",
+          "part": "chat"
+        },
+        {
+          "actions": [],
+          "block": "gateway",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "gateway_gateways",
+                  "part": "gateway",
+                  "row_actions": [],
+                  "title": "Gateways",
+                  "widget": "agentic.gateway.Gateways"
+                }
+              ],
+              "title": null
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "gateway_calls",
+                  "part": "gateway",
+                  "row_actions": [],
+                  "title": "Calls",
+                  "widget": "agentic.gateway.Calls"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "gateway_upstreams",
+                  "part": "gateway",
+                  "row_actions": [],
+                  "title": "Upstreams",
+                  "widget": "agentic.gateway.Upstreams"
+                }
+              ],
+              "title": "Gateway"
+            }
+          ],
+          "label": "gateway",
+          "page": "part.gateway",
+          "part": "gateway"
+        },
+        {
+          "actions": [],
+          "block": "model",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_models",
+                  "part": "model",
+                  "row_actions": [],
+                  "title": "Models",
+                  "widget": "agentic.model.Models"
+                }
+              ],
+              "title": null
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_endpoints",
+                  "part": "model",
+                  "row_actions": [],
+                  "title": "Endpoints",
+                  "widget": "agentic.model.Endpoints"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_inferences",
+                  "part": "model",
+                  "row_actions": [],
+                  "title": "Inferences",
+                  "widget": "agentic.model.Inferences"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_routes",
+                  "part": "model",
+                  "row_actions": [],
+                  "title": "Routes",
+                  "widget": "agentic.model.Routes"
+                }
+              ],
+              "title": "Model"
+            }
+          ],
+          "label": "model",
+          "page": "part.model",
+          "part": "model"
+        },
+        {
+          "actions": [
+            {
+              "bind": {},
+              "command": "agentic.channel.SendMessage",
+              "label": "Send a message",
+              "name": "send_message"
+            }
+          ],
+          "block": "agent",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_agents",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Agents",
+                  "widget": "agentic.agent.Agents"
+                }
+              ],
+              "title": null
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_agent_revisions",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Agent revisions",
+                  "widget": "agentic.agent.AgentRevisions"
+                }
+              ],
+              "title": "Agent"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_endpoints",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Endpoints",
+                  "widget": "agentic.model.Endpoints"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_inferences",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Inferences",
+                  "widget": "agentic.model.Inferences"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_models",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Models",
+                  "widget": "agentic.model.Models"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_routes",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Routes",
+                  "widget": "agentic.model.Routes"
+                }
+              ],
+              "title": "Model"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_harness_sessions",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Harness sessions",
+                  "widget": "agentic.harness.HarnessSessions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_harnesses",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Harnesses",
+                  "widget": "agentic.harness.Harnesses"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_permission_modes",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Permission modes",
+                  "widget": "agentic.harness.PermissionModes"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_tool_calls",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Tool calls",
+                  "widget": "agentic.harness.ToolCalls"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_turns",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Turns",
+                  "widget": "agentic.harness.Turns"
+                }
+              ],
+              "title": "Harness"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level",
+                    "channel_id": "00000000-0000-4000-8000-f4f3536e0000"
+                  },
+                  "name": "channel_channel_messages",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Messages of a channel",
+                  "widget": "agentic.channel.ChannelMessages"
+                },
+                {
+                  "args": {
+                    "channel": "level",
+                    "channel_id": "00000000-0000-4000-8000-f4f3536e0000"
+                  },
+                  "name": "channel_channel_posts",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Posts of a channel",
+                  "widget": "agentic.channel.ChannelPosts"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_channels",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Channels",
+                  "widget": "agentic.channel.Channels"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_messages",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Messages",
+                  "widget": "agentic.channel.Messages"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_posts",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Posts",
+                  "widget": "agentic.channel.Posts"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_subscriptions",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Subscriptions",
+                  "widget": "agentic.channel.Subscriptions"
+                }
+              ],
+              "title": "Channel"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "addressee": "00000000-0000-4000-8000-761908b00000",
+                    "channel": "level"
+                  },
+                  "name": "question_open_questions",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Open questions of an addressee",
+                  "widget": "agentic.question.OpenQuestions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "question_questions",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Questions",
+                  "widget": "agentic.question.Questions"
+                }
+              ],
+              "title": "Question"
+            }
+          ],
+          "label": "operator",
+          "page": "part.operator",
+          "part": "operator"
+        },
+        {
+          "actions": [],
+          "block": "principal",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "principal_principals",
+                  "part": "owner",
+                  "row_actions": [],
+                  "title": "Principals",
+                  "widget": "agentic.principal.Principals"
+                }
+              ],
+              "title": null
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level",
+                    "channel_id": "00000000-0000-4000-8000-f4f3536e0000"
+                  },
+                  "name": "channel_channel_messages",
+                  "part": "owner",
+                  "row_actions": [],
+                  "title": "Messages of a channel",
+                  "widget": "agentic.channel.ChannelMessages"
+                },
+                {
+                  "args": {
+                    "channel": "level",
+                    "channel_id": "00000000-0000-4000-8000-f4f3536e0000"
+                  },
+                  "name": "channel_channel_posts",
+                  "part": "owner",
+                  "row_actions": [],
+                  "title": "Posts of a channel",
+                  "widget": "agentic.channel.ChannelPosts"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_channels",
+                  "part": "owner",
+                  "row_actions": [],
+                  "title": "Channels",
+                  "widget": "agentic.channel.Channels"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_messages",
+                  "part": "owner",
+                  "row_actions": [],
+                  "title": "Messages",
+                  "widget": "agentic.channel.Messages"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_posts",
+                  "part": "owner",
+                  "row_actions": [],
+                  "title": "Posts",
+                  "widget": "agentic.channel.Posts"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "channel_subscriptions",
+                  "part": "owner",
+                  "row_actions": [],
+                  "title": "Subscriptions",
+                  "widget": "agentic.channel.Subscriptions"
+                }
+              ],
+              "title": "Channel"
+            },
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "addressee": "00000000-0000-4000-8000-761908b00000",
+                    "channel": "level"
+                  },
+                  "name": "question_open_questions",
+                  "part": "owner",
+                  "row_actions": [
+                    {
+                      "bind": {
+                        "question_id": "question_id"
+                      },
+                      "command": "agentic.question.Answer",
+                      "label": "Answer a question",
+                      "name": "answer"
+                    }
+                  ],
+                  "title": "Open questions of an addressee",
+                  "widget": "agentic.question.OpenQuestions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "question_questions",
+                  "part": "owner",
+                  "row_actions": [],
+                  "title": "Questions",
+                  "widget": "agentic.question.Questions"
+                }
+              ],
+              "title": "Question"
+            }
+          ],
+          "label": "owner",
+          "page": "part.owner",
+          "part": "owner"
+        },
+        {
+          "actions": [],
+          "block": "workspace",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "workspace_workspaces",
+                  "part": "tree",
+                  "row_actions": [],
+                  "title": "Workspaces",
+                  "widget": "agentic.workspace.Workspaces"
+                }
+              ],
+              "title": null
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "workspace_leases",
+                  "part": "tree",
+                  "row_actions": [],
+                  "title": "Leases",
+                  "widget": "agentic.workspace.Leases"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "workspace_proposals",
+                  "part": "tree",
+                  "row_actions": [],
+                  "title": "Proposals",
+                  "widget": "agentic.workspace.Proposals"
+                }
+              ],
+              "title": "Workspace"
+            }
+          ],
+          "label": "tree",
+          "page": "part.tree",
+          "part": "tree"
+        },
+        {
+          "actions": [],
+          "block": "agent",
+          "frames": [
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_agents",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Agents",
+                  "widget": "agentic.agent.Agents"
+                }
+              ],
+              "title": null
+            },
+            {
+              "collapsed": false,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "per_box_sandbox_sandboxes",
+                  "part": "box",
+                  "row_actions": [],
+                  "title": "Sandboxes of box",
+                  "widget": "agentic.sandbox.Sandboxes"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "per_tree_workspace_workspaces",
+                  "part": "tree",
+                  "row_actions": [],
+                  "title": "Workspaces of tree",
+                  "widget": "agentic.workspace.Workspaces"
+                }
+              ],
+              "title": "One per worker: box, tree"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_agent_revisions",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Agent revisions",
+                  "widget": "agentic.agent.AgentRevisions"
+                }
+              ],
+              "title": "Agent"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_endpoints",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Endpoints",
+                  "widget": "agentic.model.Endpoints"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_inferences",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Inferences",
+                  "widget": "agentic.model.Inferences"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_models",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Models",
+                  "widget": "agentic.model.Models"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "model_routes",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Routes",
+                  "widget": "agentic.model.Routes"
+                }
+              ],
+              "title": "Model"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_harness_sessions",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Harness sessions",
+                  "widget": "agentic.harness.HarnessSessions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_harnesses",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Harnesses",
+                  "widget": "agentic.harness.Harnesses"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_permission_modes",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Permission modes",
+                  "widget": "agentic.harness.PermissionModes"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_tool_calls",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Tool calls",
+                  "widget": "agentic.harness.ToolCalls"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "harness_turns",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Turns",
+                  "widget": "agentic.harness.Turns"
+                }
+              ],
+              "title": "Harness"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "addressee": "00000000-0000-4000-8000-761908b00000",
+                    "channel": "level"
+                  },
+                  "name": "question_open_questions",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Open questions of an addressee",
+                  "widget": "agentic.question.OpenQuestions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "question_questions",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Questions",
+                  "widget": "agentic.question.Questions"
+                }
+              ],
+              "title": "Question"
+            },
+            {
+              "collapsed": true,
+              "sections": [
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "resource_claims",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Claims",
+                  "widget": "agentic.resource.Claims"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "resource_pools",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Pools",
+                  "widget": "agentic.resource.Pools"
+                },
+                {
+                  "args": {
+                    "channel": "level",
+                    "pool_id": "00000000-0000-4000-8000-e7e96cf90000"
+                  },
+                  "name": "resource_queue",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Queue of a pool",
+                  "widget": "agentic.resource.Queue"
+                }
+              ],
+              "title": "Resource"
+            }
+          ],
+          "label": "coding agents",
+          "page": "part.worker",
+          "part": "worker"
+        }
+      ],
+      "parts": [
+        {
+          "block": "principal",
+          "count": 1,
+          "label": "owner",
+          "name": "owner",
+          "page": "part.owner",
+          "path": "owner"
+        },
+        {
+          "block": "agent",
+          "count": 1,
+          "label": "operator",
+          "name": "operator",
+          "page": "part.operator",
+          "path": "operator"
+        },
+        {
+          "block": "agent",
+          "count": 12,
+          "label": "coding agents",
+          "name": "worker",
+          "page": "part.worker",
+          "path": "worker"
+        },
+        {
+          "block": "channel",
+          "count": 1,
+          "label": "chat",
+          "name": "chat",
+          "page": "part.chat",
+          "path": "chat"
+        },
+        {
+          "block": "gateway",
+          "count": 1,
+          "label": "gateway",
+          "name": "gateway",
+          "page": "part.gateway",
+          "path": "gateway"
+        },
+        {
+          "block": "model",
+          "count": 1,
+          "label": "model",
+          "name": "model",
+          "page": "part.model",
+          "path": "model"
+        },
+        {
+          "block": "pool",
+          "count": 1,
+          "label": "build slots",
+          "name": "builds",
+          "page": "part.builds",
+          "path": "builds"
+        },
+        {
+          "block": "sandbox",
+          "count": 1,
+          "label": "box",
+          "name": "box",
+          "page": "part.box",
+          "path": "box"
+        },
+        {
+          "block": "workspace",
+          "count": 1,
+          "label": "tree",
+          "name": "tree",
+          "page": "part.tree",
+          "path": "tree"
+        }
+      ],
+      "path": ""
+    }
+  ]
+}

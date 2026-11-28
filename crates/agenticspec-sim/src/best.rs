@@ -31,12 +31,15 @@ pub fn apply(architecture: &Value, params: &Map<String, Value>) -> Result<Value,
 }
 
 /// The best variant of a result (`agenticspec-sim-result/1`) as an architecture document, or
-/// `None` when no variant passed the gates.
+/// `None` when no variant passed the gates. A nested architecture stays a reference, as its
+/// author writes it.
 pub fn from_result(result: &Value) -> Result<Option<Value>, String> {
     let Some(params) = result["best"]["params"].as_object() else {
         return Ok(None);
     };
-    apply(&result["architecture"], params).map(Some)
+    apply(&result["architecture"], params)
+        .map(|d| crate::nest::strip(&d))
+        .map(Some)
 }
 
 /// The best variant of a result as YAML text, or `None` when no variant passed the gates. With
@@ -58,6 +61,8 @@ pub fn fitness_as_written(
     architecture: Value,
     threads: usize,
 ) -> Result<f64, String> {
+    // Its nested architectures are the ones `e` resolved, when it pins the same.
+    let architecture = crate::nest::graft(&architecture, &e.architecture);
     let mut again = Experiment::from_docs(e.doc.clone(), architecture, e.profile.clone())?;
     again.search.mode = "fit".into();
     again.search.budget = 1;
@@ -76,7 +81,9 @@ const TOP: &[&str] = &[
     "parts",
     "links",
     "border",
+    "ingress",
     "policies",
+    "view",
 ];
 
 /// Keys inside a part, a link or a marker, when no source gives the order: first these, the rest

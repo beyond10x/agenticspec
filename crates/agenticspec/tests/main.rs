@@ -347,5 +347,7 @@ fn a_message_is_priced_by_the_longest_model_prefix() {
     assert_eq!(cost_nanodollars("<synthetic>", &u), None);
 }
 
+mod blocks;
 mod sim;
 mod store;
+mod ui;

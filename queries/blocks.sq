@@ -1,0 +1,83 @@
+// The lift of a session into rows of the building blocks (blocks/). Run:
+//   agenticspec query queries/blocks.sq --transcript <session>.jsonl
+// `agenticspec blocks lift` reads the block_* relations of this file and writes one row per
+// answer, each naming the node it came from. Rules and relations: docs/queries.md.
+
+// Outside inputs: a prompt of the main agent by a human, a delegate or another session. A prompt
+// by the harness or a hook (a task notification, a compaction summary) is not one.
+block_input(P, A, Author, T) :-
+    prompt{node: P, agent: A, author: Author}, Author ~ "^(Human|Delegate|PeerSession)$",
+    agent{id: A, role: "Main"}, at(P, T).
+
+// agentic.work.Task: an outside input classed Task.
+block_task(P, A, Author, Bytes, Digest, T) :-
+    block_input(P, A, Author, T), prompt{node: P, class: "Task", bytes: Bytes, digest: Digest}.
+
+// The task a step of the main agent works on: the latest task prompt at or before it.
+task_seq(P, A, S) :- block_task(P, A, _, _, _, _), cmd{node: P, seq: S}.
+later_task(P, N) :-
+    task_seq(P, A, S), cmd{node: N, agent: A, seq: SN}, task_seq(_, A, S2), S < S2, S2 <= SN.
+works_on(N, P) :- task_seq(P, A, S), cmd{node: N, agent: A, seq: SN}, S <= SN, !later_task(P, N).
+
+// agentic.work.Run (with its agentic.work.Assignment): the main agent works each task in one run
+// from the task's prompt on; a sub-agent works the task of the run whose call spawned it.
+// Columns: the node the run is lifted from, the agent, the task, the start.
+block_run(P, A, P, T) :- block_task(P, A, _, _, _, T).
+block_run(C, Child, Task, T) :-
+    spawned(C, Child), in_run(C, R), block_run(R, _, Task, _), agent{id: Child, started_at: T}.
+
+// The run a node of the session belongs to.
+in_run(N, P) :- works_on(N, P).
+in_run(N, C) :- spawned(C, Child), block_run(C, Child, _, _), cmd{node: N, agent: Child}.
+
+// agentic.work.Step: each model turn and each tool call of a run, in order. Kind: Agent for a
+// turn, Child for a call that spawns, Person for a question to the user, Program for any other
+// call. Result: Passed, Failed, Skipped (refused), or NotRecorded (no result in the record).
+block_step(N, R, "model_turn", "Agent", "Passed", T) :- turn{node: N}, in_run(N, R), at(N, T).
+block_step(N, R, Tool, Kind, Result, T) :-
+    call{node: N, tool: Tool}, in_run(N, R), at(N, T), step_kind(N, Kind), step_result(N, Result).
+
+step_kind(N, "Child") :- call{node: N, category: "Spawn"}.
+step_kind(N, "Person") :- call{node: N, tool: "AskUserQuestion"}.
+step_kind(N, "Program") :-
+    call{node: N, tool: Tool, category: C}, C != "Spawn", Tool != "AskUserQuestion".
+
+refused_call(I) :- decided{call: I, decision: "Refuse"}.
+done_call(I) :- completed{call: I}.
+step_result(N, "Skipped") :- call{node: N, id: I}, refused_call(I).
+step_result(N, "Passed") :- call{node: N, id: I}, completed{call: I, ok: true}, !refused_call(I).
+step_result(N, "Failed") :- call{node: N, id: I}, completed{call: I, ok: false}, !refused_call(I).
+step_result(N, "NotRecorded") :- call{node: N, id: I}, !done_call(I), !refused_call(I).
+
+// agentic.question.Question: a call that asks the user (asked by the agent, "Agent"), or an
+// outside input classed Question (asked by its author). Answered: the call has a result.
+block_question(N, A, "Agent", Bytes, Digest, T) :-
+    call{node: N, agent: A, tool: "AskUserQuestion", bytes: Bytes, digest: Digest}, at(N, T).
+block_question(P, A, Author, Bytes, Digest, T) :-
+    block_input(P, A, Author, T), prompt{node: P, class: "Question", bytes: Bytes, digest: Digest}.
+block_answered(N) :-
+    call{node: N, id: I, tool: "AskUserQuestion"}, completed{call: I, ok: true}.
+
+// agentic.channel.Message: a call that sends a message (sent by the agent, "Agent", with the
+// call's id), or an input by a delegate or another session (received by the agent).
+block_message(N, A, "Agent", I, Bytes, Digest, T) :-
+    call{node: N, id: I, agent: A, tool: "SendMessage", bytes: Bytes, digest: Digest}, at(N, T).
+block_message(P, A, Author, "", Bytes, Digest, T) :-
+    block_input(P, A, Author, T), Author ~ "^(Delegate|PeerSession)$",
+    prompt{node: P, bytes: Bytes, digest: Digest}.
+
+// The turn that received an input: the first model turn of the turn the input started.
+block_received(P, Turn) :-
+    block_input(P, A, _, _), seq(P, Turn, scope: agent), turn{node: Turn, agent: A},
+    turn_of(Turn, P).
+
+// agentic.resource.Claim: no relation of the session IR records a claim on a pool, so no rule
+// writes one, and the lift reports the entity as not observable.
+
+?- block_task(Node, Agent, Author, Bytes, Digest, At).
+?- block_run(Node, Agent, Task, StartedAt).
+?- block_step(Node, Run, Action, Kind, Result, At).
+?- block_question(Node, Agent, AskedBy, Bytes, Digest, At).
+?- block_message(Node, Agent, From, Call, Bytes, Digest, At).
+?- block_input(Node, Agent, Author, At).
+?- block_received(Node, Turn).

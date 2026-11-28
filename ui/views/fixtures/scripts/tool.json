@@ -1,0 +1,8 @@
+{
+  "channel": "tool",
+  "events": [
+    {"at": "1s", "event": "agentic.tool.ToolProviderRegistered", "payload": {"tool_provider_id": "00000000-0000-4000-8000-bb81f3180000", "name": "name 1", "kind": "BuiltIn"}},
+    {"at": "2s", "event": "agentic.tool.ToolPublished", "payload": {"tool_id": "00000000-0000-4000-8000-b84588820000", "tool_provider_id": "00000000-0000-4000-8000-bb81f3180000", "name": "name 1", "category": "Read", "leaves_sandbox": true}},
+    {"at": "3s", "event": "agentic.tool.ToolWithdrawn", "payload": {"tool_id": "00000000-0000-4000-8000-b84588820000"}}
+  ]
+}

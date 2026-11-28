@@ -1,0 +1,7 @@
+{
+  "channel": "sandbox",
+  "events": [
+    {"at": "1s", "event": "agentic.sandbox.SandboxDefined", "payload": {"sandbox_id": "00000000-0000-4000-8000-df1af3610000", "isolation": "None"}},
+    {"at": "2s", "event": "agentic.sandbox.SandboxRetired", "payload": {"sandbox_id": "00000000-0000-4000-8000-df1af3610000"}}
+  ]
+}

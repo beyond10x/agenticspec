@@ -1,0 +1,32 @@
+format: agenticspec-scenario/1
+scenario: operator-exits-without-gateway
+summary: >-
+  The operator reaches its model through the gateway and needs that route to start. With the
+  gateway unavailable to it from the start, its process exits with status 1 before it listens:
+  the owner's prompt is refused and makes no task. The workers do not need the operator to start,
+  and their views answer.
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
+profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
+seed: 1
+horizon: 1h
+
+unavailable:
+  - { part: operator, dependency: gateway, from: 0s }
+
+when:
+  - { at: operator, kind: prompt, author: owner, after: 1m, text: "Make the failing build pass." }
+
+then:
+  order: sequence
+  events:
+    - { event: refusal, part: operator, author: owner, rule: part_unavailable }
+    - { event: task_created, absent: true }
+  kpis:
+    tasks_arrived: { max: 0 }
+  parts:
+    operator:
+      exits: 1
+    worker:
+      views:
+        - { view: agentic.work.Runs, shows: empty }
+      rest: answers

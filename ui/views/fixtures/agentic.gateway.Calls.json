@@ -1,0 +1,8 @@
+{
+  "view": "agentic.gateway.Calls",
+  "rows": [
+    {"inference_id": "00000000-0000-4000-8000-d56952c90000", "gateway_id": "00000000-0000-4000-8000-9121f2990000", "caller": "00000000-0000-4000-8000-322d9f1c0000", "route_id": "00000000-0000-4000-8000-176f59df0000", "admission": "Admitted", "budget_left": {"micro_usd":1}, "upstream_id": "00000000-0000-4000-8000-0085ef940000", "usage": {"cache_read_tokens":1,"cache_write_tokens":1,"input_tokens":1,"output_tokens":1}, "outcome": "Ok", "state": "Completed"},
+    {"inference_id": "00000000-0000-4000-8000-d56952c90001", "gateway_id": "00000000-0000-4000-8000-9121f2990001", "caller": "00000000-0000-4000-8000-322d9f1c0001", "route_id": "00000000-0000-4000-8000-176f59df0001", "admission": "OverBudget", "budget_left": {"micro_usd":2}, "upstream_id": "00000000-0000-4000-8000-0085ef940001", "state": "Recorded"},
+    {"inference_id": "00000000-0000-4000-8000-d56952c90002", "gateway_id": "00000000-0000-4000-8000-9121f2990002", "caller": "00000000-0000-4000-8000-322d9f1c0002", "route_id": "00000000-0000-4000-8000-176f59df0002", "admission": "RateLimited", "budget_left": {"micro_usd":3}, "upstream_id": "00000000-0000-4000-8000-0085ef940002", "usage": {"cache_read_tokens":3,"cache_write_tokens":3,"input_tokens":3,"output_tokens":3}, "outcome": "RateLimited", "state": "Completed"}
+  ]
+}

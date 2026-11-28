@@ -8,12 +8,14 @@
   "scenarios": {
     "find-harness-kpis@1440x900": {
       "screen_only.actions": {
-        "value": 5,
-        "tolerance": 0
+        "value": 6,
+        "tolerance": 0,
+        "decision": "integration of the 2026-11-28 work: new blocks and pages"
       },
       "screen_only.looks": {
-        "value": 6,
-        "tolerance": 0
+        "value": 7,
+        "tolerance": 0,
+        "decision": "integration of the 2026-11-28 work: new blocks and pages"
       },
       "screen_only.steers": {
         "value": 0,
@@ -32,12 +34,13 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 403,
-        "tolerance": 20.15
+        "value": 438,
+        "tolerance": 21.9,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 349.5,
-        "tolerance": 17.48
+        "value": 322,
+        "tolerance": 16.1
       },
       "layout_shift.score": {
         "value": 0,
@@ -46,12 +49,14 @@
     },
     "find-harness-kpis@1280x800": {
       "screen_only.actions": {
-        "value": 5,
-        "tolerance": 0
+        "value": 6,
+        "tolerance": 0,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator; story field-packs: the harness block gains the registered PermissionMode entity, its two commands, two errors, two events and a view, so its page is longer; open decision for the owner, default A: take the longer page"
       },
       "screen_only.looks": {
-        "value": 6,
-        "tolerance": 0
+        "value": 7,
+        "tolerance": 0,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator; story field-packs: the harness block gains the registered PermissionMode entity, its two commands, two errors, two events and a view, so its page is longer; open decision for the owner, default A: take the longer page"
       },
       "screen_only.steers": {
         "value": 0,
@@ -70,12 +75,14 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 421,
-        "tolerance": 21.05
+        "value": 453,
+        "tolerance": 22.65,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 273.5,
-        "tolerance": 13.68
+        "value": 302,
+        "tolerance": 15.1,
+        "decision": "integration of the 2026-11-28 work: new blocks and pages"
       },
       "layout_shift.score": {
         "value": 0,
@@ -108,12 +115,14 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 403,
-        "tolerance": 20.15
+        "value": 424,
+        "tolerance": 21.2,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 367,
-        "tolerance": 18.35
+        "value": 388,
+        "tolerance": 19.4,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "layout_shift.score": {
         "value": 0,
@@ -146,12 +155,14 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 397,
-        "tolerance": 19.85
+        "value": 415,
+        "tolerance": 20.75,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 278,
-        "tolerance": 13.9
+        "value": 296,
+        "tolerance": 14.8,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "layout_shift.score": {
         "value": 0,
@@ -184,12 +195,12 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 307,
-        "tolerance": 15.35
+        "value": 306,
+        "tolerance": 15.3
       },
       "reading_load.median": {
-        "value": 265,
-        "tolerance": 13.25
+        "value": 257,
+        "tolerance": 12.85
       },
       "layout_shift.score": {
         "value": 0,
@@ -222,12 +233,12 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 223,
-        "tolerance": 11.15
+        "value": 219,
+        "tolerance": 10.95
       },
       "reading_load.median": {
-        "value": 215,
-        "tolerance": 10.75
+        "value": 211,
+        "tolerance": 10.55
       },
       "layout_shift.score": {
         "value": 0,
@@ -260,12 +271,14 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 427,
-        "tolerance": 21.35
+        "value": 462,
+        "tolerance": 23.1,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 185,
-        "tolerance": 9.25
+        "value": 209,
+        "tolerance": 10.45,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "layout_shift.score": {
         "value": 0,
@@ -298,12 +311,13 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 419,
-        "tolerance": 20.95
+        "value": 451,
+        "tolerance": 22.55,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 178,
-        "tolerance": 8.9,
+        "value": 191,
+        "tolerance": 9.55,
         "decision": "story architecture-catalog: the navbar entry Catalog and the sidebar entries Catalog and The agentic ladder add their words to every look of this task (measured 175 and 178 on two runs); decision D3, 2026-11-27: taken, the owner asked for the catalog and the ladder in the navigation"
       },
       "layout_shift.score": {
@@ -337,13 +351,13 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 318,
-        "tolerance": 15.9,
+        "value": 326,
+        "tolerance": 16.3,
         "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; decision D4, 2026-11-27: taken, the owner asked for the search result to lead the page"
       },
       "reading_load.median": {
-        "value": 240,
-        "tolerance": 12,
+        "value": 249,
+        "tolerance": 12.45,
         "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; decision D4, 2026-11-27: taken, the owner asked for the search result to lead the page"
       },
       "layout_shift.score": {
@@ -377,12 +391,12 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 269,
-        "tolerance": 13.45
+        "value": 268,
+        "tolerance": 13.4
       },
       "reading_load.median": {
-        "value": 210,
-        "tolerance": 10.5,
+        "value": 215,
+        "tolerance": 10.75,
         "decision": "S-02 change set 2 (SUF-002): the search result tables fill the first screens of the architecture page; the S-01 value counted no word of the frame, an iframe the word count does not read; decision D4, 2026-11-27: taken, the owner asked for the search result to lead the page"
       },
       "layout_shift.score": {
@@ -416,12 +430,14 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 403,
-        "tolerance": 20.15
+        "value": 438,
+        "tolerance": 21.9,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 293,
-        "tolerance": 14.65
+        "value": 320,
+        "tolerance": 16,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator; story field-packs: the harness block gains the registered PermissionMode entity, its two commands, two errors, two events and a view, so its page is longer; open decision for the owner, default A: take the longer page"
       },
       "layout_shift.score": {
         "value": 0,
@@ -454,12 +470,14 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 421,
-        "tolerance": 21.05
+        "value": 453,
+        "tolerance": 22.65,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 253,
-        "tolerance": 12.65
+        "value": 296,
+        "tolerance": 14.8,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator; story field-packs: the harness block gains the registered PermissionMode entity, its two commands, two errors, two events and a view, so its page is longer; open decision for the owner, default A: take the longer page"
       },
       "layout_shift.score": {
         "value": 0,
@@ -468,12 +486,14 @@
     },
     "trigger-block-lifecycle@1440x900": {
       "screen_only.actions": {
-        "value": 5,
-        "tolerance": 0
+        "value": 6,
+        "tolerance": 0,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "screen_only.looks": {
-        "value": 6,
-        "tolerance": 0
+        "value": 7,
+        "tolerance": 0,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "screen_only.steers": {
         "value": 0,
@@ -492,12 +512,13 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 441,
-        "tolerance": 22.05
+        "value": 462,
+        "tolerance": 23.1,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 203.5,
-        "tolerance": 10.18
+        "value": 209,
+        "tolerance": 10.45
       },
       "layout_shift.score": {
         "value": 0,
@@ -530,12 +551,14 @@
         "tolerance": 0
       },
       "reading_load.max": {
-        "value": 433,
-        "tolerance": 21.65
+        "value": 451,
+        "tolerance": 22.55,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "reading_load.median": {
-        "value": 171,
-        "tolerance": 8.55
+        "value": 192,
+        "tolerance": 9.6,
+        "decision": "consumer gaps M29, M30, M32, M33, M35, M36, M42 (run and runtime lifecycle): the new block deployment adds a sidebar entry and a layer-map card to every look, and the harness and trigger pages grow by the commands of M36, M42 and M35; decision D1, 2026-11-28: taken (A), relayed by the coordinator"
       },
       "layout_shift.score": {
         "value": 0,

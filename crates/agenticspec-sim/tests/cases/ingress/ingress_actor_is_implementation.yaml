@@ -1,0 +1,29 @@
+format: agenticspec-architecture/1
+architecture: ingress-small
+summary: "Refused: the gateway process reports into a port, so no audience plays it."
+
+parts:
+  owner:    { block: principal, kind: human }
+  admin:    { block: principal, kind: human }
+  operator: { block: agent, harness: coding, acts_for: owner }
+  gateway:  { block: gateway }
+  model:    { block: model }
+  chat:     { block: channel }
+
+links:
+  - { from: owner,    to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner,    carries: question, over: chat }
+  - { from: operator, to: gateway,  carries: model_call }
+  - { from: gateway,  to: model,    carries: model_call }
+
+border: [operator]
+
+ingress:
+  user:
+    audience: owner
+    interface: { commands: [principal], views: true }
+    exports: [{ protocol: http }]
+  ops:
+    audience: admin
+    interface: { scope: all, commands: { plays: [agentic.gateway.GatewayProcess] } }
+    exports: [{ protocol: http }]

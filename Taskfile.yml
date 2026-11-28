@@ -7,8 +7,16 @@ tasks:
       - task: check:spec
       - task: check:blocks
       - task: check:fields
+      - task: check:ports
+      - task: check:bundles
+      - task: check:projections
       - task: check:ui
       - task: check:app
+      - task: check:ui-kit
+      - task: check:studio
+      - task: check:views
+      - task: check:examples
+      - task: check:elements
       - task: check:generated
       - task: check:docs
       - task: check:ladder
@@ -19,12 +27,13 @@ tasks:
       - task: test
 
   check:blocks:
-    desc: Validate the building blocks (blocks/) and the agenticstudio system (studio/), hold their layering, and run their conformance suite, authored scenarios included, on the interpreter. The suite is synthesized once per digest of its sources into target/blocks-conform/ (scripts/check-blocks-conform.sh).
+    desc: Validate the building blocks (blocks/) and the agenticstudio system (studio/), hold their layering, keep the words of every field out of the core (check:neutral), and run their conformance suite, authored scenarios included, on the interpreter. The suite is synthesized once per digest of its sources into target/blocks-conform/ (scripts/check-blocks-conform.sh).
     cmds:
       - ess specify validate --path blocks --strict-requires
       - ess specify validate --path studio --strict-requires
       - task: check:layers
       - task: check:kpis
+      - task: check:neutral
       - scripts/check-blocks-conform.sh
 
   slow:blocks:
@@ -54,10 +63,72 @@ tasks:
     cmds:
       - scripts/check-blocks-conform.sh --path . --slow
 
+  ports:generate:
+    desc: Derive the ports of the building blocks (bindings and lifecycles of blocks/, compiled by ess) into the committed blocks/ports.json, with the digest of its sources.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec sim ports --blocks blocks --out blocks/ports.json
+
+  check:ports:
+    desc: Fail when blocks/ports.json was derived from other sources than blocks/ (its digest only, no ess call); names task ports:generate.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec sim ports --blocks blocks --check blocks/ports.json
+
+  slow:ports:
+    desc: Slow lane. Derive the ports afresh and compare them byte for byte with blocks/ports.json.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - mkdir -p target/ports
+      - target/debug/agenticspec sim ports --blocks blocks --out target/ports/ports.json
+      - cmp blocks/ports.json target/ports/ports.json
+
+  contract:conform:
+    desc: Cut the conformance suite of the building blocks to one architecture's contract and run it on the interpreter (task contract:conform -- <architecture.yaml>). The suite is the cached one of scripts/check-blocks-conform.sh; the lines are in scripts/contract-conform.sh.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - scripts/contract-conform.sh {{.CLI_ARGS}}
+
+  bundles:generate:
+    desc: Write the fixture bundles, bundles/<architecture>.<binding>.yaml (agenticspec deploy bundle of each catalog architecture under each binding of bundles/bindings/), and the digest of their sources, bundles/sources.sha256.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --bundles
+
+  check:bundles:
+    desc: Fail when a fixture bundle was written from other sources than the current ones (bundles/sources.sha256, digests only; builds no bundle); names task bundles:generate.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --bundles --check
+
+  slow:bundles:
+    desc: Slow lane. Build every fixture bundle afresh and compare it byte for byte with the committed one.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --bundles --slow
+
+  projections:generate:
+    desc: Write the projections of the http exports of the worked example architectures/workstation-ingress.yaml (per ingress its ess-http/1 protocol binding and OpenAPI document) into architectures/projections/workstation-ingress/.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec ingress project architectures/workstation-ingress.yaml --out architectures/projections/workstation-ingress
+
+  check:projections:
+    desc: Fail when a committed projection of the worked example differs from a fresh one (ess compiles the blocks and writes their OpenAPI document, about a second), naming the command that writes them again.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec ingress project architectures/workstation-ingress.yaml --check architectures/projections/workstation-ingress
+
   check:kpis:
-    desc: Check kpis/catalogue.yaml and every packs/<pack>/kpis.yaml against their format, their blocks and the events they may read.
+    desc: Check kpis/catalogue.yaml, every packs/<pack>/kpis.yaml and every fields/<field>/kpis.yaml against their format, their blocks and the events they may read.
     cmds:
       - scripts/check-kpis.sh
+
+  check:neutral:
+    desc: Fail when a word a field lists in fields/<field>/words.txt appears in the core, blocks/ or kpis/catalogue.yaml; then each fixture under scripts/fixtures/neutral must fail.
+    cmds:
+      - scripts/check-neutral.sh
+      - scripts/check-neutral.sh --negative
 
   check:layers:
     desc: Fail when a block depends on a block of a higher layer, two blocks of one layer depend on each other, a core block depends on a pack or field, a pack on a field or an undeclared pack, or a field on another field; for blocks/ and for the whole system. Then each fixture under scripts/fixtures/layers must fail and each under scripts/fixtures/layers-pass must pass.
@@ -156,15 +227,95 @@ tasks:
       - mkdir -p target/spec && ess verify conform synthesize --path spec --out target/spec/suite.json
 
   check:ui:
-    desc: Check the ess-ui document against the specification and run its headless tests on the fixtures.
+    desc: Check the ess-ui document against the specification and run its headless tests on the fixtures; then fail when the block panels (ui/views/) differ from a fresh generation from blocks/ or their digest no longer matches, and check them against blocks/ with no finding.
     cmds:
       - ess ui check --path ui/agenticspec.ui.yaml --model spec
       - ess ui test --path ui/agenticspec.ui.yaml ui/tests/session.yaml
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec ui panels --check
+      - |
+        out=$(ess ui check --path ui/views/blocks.ui.yaml --model blocks) || { echo "$out"; exit 1; }
+        echo "$out"
+        echo "$out" | grep -q ': 0 error(s), 0 warning(s)$' || { echo "check:ui: ui/views/blocks.ui.yaml has a warning"; exit 1; }
+      - target/debug/agenticspec sim contract architectures/workstation.yaml --check ui/views/examples/workstation.contract.yaml
+      - |
+        cmp blocks/ports.json ui/views/examples/ports.json || { echo "check:ui: ui/views/examples/ports.json differs from blocks/ports.json; run task ui:derive"; exit 1; }
+      - target/debug/agenticspec ui derive --check --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.ui.yaml
+      - target/debug/agenticspec ui derive --check --path crates/agenticspec-render/tests/fixtures/large-37.yaml --out ui/views/examples/large-37.ui.yaml
+      - |
+        for f in ui/views/examples/workstation.ui.yaml ui/views/examples/large-37.ui.yaml ui/views/examples/host-slot.ui.yaml; do
+          out=$(ess ui check --path "$f" --model blocks) || { echo "$out"; exit 1; }
+          echo "$out" | tail -n 1
+          echo "$out" | grep -q ': 0 error(s), 0 warning(s)$' || { echo "check:ui: $f has a warning"; exit 1; }
+        done
+
+  ui:derive:
+    desc: Write the derived examples of ui/views/examples/ with agenticspec ui derive - workstation.ui.yaml from architectures/workstation.yaml, its contract (written first by agenticspec sim contract) and a copy of blocks/ports.json beside it, and large-37.ui.yaml from the 37-part fixture alone - each with its fixtures, its layout and the digest of its inputs. Never edited by hand; task check:ui holds them.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec sim contract architectures/workstation.yaml --out ui/views/examples/workstation.contract.yaml
+      - cp blocks/ports.json ui/views/examples/ports.json
+      - target/debug/agenticspec ui derive --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.ui.yaml
+      - target/debug/agenticspec ui derive --path crates/agenticspec-render/tests/fixtures/large-37.yaml --out ui/views/examples/large-37.ui.yaml
+
+  ui:panels:
+    desc: Write the block panels from blocks/ - ui/views/blocks.ui.yaml (one ess-ui/1 widget per view, a gallery page per block), its fixtures in ui/views/fixtures/ and the digest of its inputs, ui/views/blocks.sources.sha256. Never edited by hand.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec ui panels
 
   check:app:
     desc: Types, unit tests and a build of the app in ui/app, then its layout, accessibility, keyboard and screen-only-user gates on the fixtures and the ratchet against ux/baseline.json. The lines are in scripts/check-app.sh.
     cmds:
       - sh scripts/check-app.sh
+
+  check:ui-kit:
+    desc: Types, unit tests and a build of the gallery of the design system in ui/kit, then its axe-core, overflow and select-keyboard gates in a browser (SCREENS=1 writes target/screens). The lines are in scripts/check-ui-kit.sh.
+    cmds:
+      - sh scripts/check-ui-kit.sh
+
+  check:studio:
+    desc: The studio app - studio/studio.ui.yaml against the studio model, the types, unit tests and build of ui/studio, then the browser test of crates/agenticstudio/e2e (axe-core, overflow, the first slice, the 09-factory layout) against one agenticstudio serve. Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-studio.sh.
+    cmds:
+      - sh scripts/check-studio.sh
+
+  ui:generate:
+    desc: Generate the pages, router, client and runtime of the studio app (ui/studio/src/generated) from studio/studio.ui.yaml, and the widgets and pages of the block panels' gallery (ui/views/gallery/src/generated) from ui/views/blocks.ui.yaml, and the apps of the derived examples (ui/views/examples/app/src/<name>/generated) from ui/views/examples/<name>.ui.yaml, with agenticspec ui generate. task check:generated holds them.
+    cmds:
+      - cargo run --quiet --locked -p agenticspec -- ui generate --path studio/studio.ui.yaml --out ui/studio/src/generated
+      - cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/blocks.ui.yaml --out ui/views/gallery/src/generated
+      - cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/examples/workstation.ui.yaml --out ui/views/examples/app/src/workstation/generated
+      - cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/examples/large-37.ui.yaml --out ui/views/examples/app/src/large-37/generated
+
+  check:views:
+    desc: The gallery of the block panels - the types and unit tests of ui/views/gallery (live re-read and patch, the scope of a widget, the fixture client), a build into target/views/gallery, then its browser test (every panel shows its fixture rows; axe-core and overflow at 1366x768 and 390x844 in both themes). Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-views.sh.
+    cmds:
+      - sh scripts/check-views.sh
+
+  check:examples:
+    desc: The derived examples - the types and unit tests of ui/views/examples/app (the fixture client), a build into target/views/examples, then its browser test (the 37-part example at 1366x768 - the parts table on the first screen, no sideways overflow, every part in one step, the reach table filtered by part, the graph with pan, zoom and fit - and the workstation's labels, frames and actions). Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-examples.sh.
+    cmds:
+      - sh scripts/check-examples.sh
+
+  check:elements:
+    desc: The package of ui/views (the block panels, part pages and overviews as Vue components) - its types and unit tests, the bundle of its custom elements into target/views/elements, the React host page into target/views/hosts, then the browser test of the elements in a plain page and a React page over one fixture server (the rows, the host's --kit-accent, the agentic-navigate and agentic-command events). Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-elements.sh.
+    cmds:
+      - sh scripts/check-elements.sh
+
+  elements:build:
+    desc: Build the custom elements of ui/views (agentic-part-panel, agentic-overview, agentic-panel, agentic-block-panels and one element per panel) with Vue into target/views/elements/agentic-views.js and the kit's stylesheet into agentic-views.css; a host page loads both.
+    cmds:
+      - cd ui && ([ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund --loglevel=error) && npx vite build --config views/vite.config.ts --logLevel warn
+
+  views:build:
+    desc: Build the gallery of the block panels (ui/views/gallery, generated from ui/views/blocks.ui.yaml by agenticspec ui generate and held by task check:generated) into target/views/gallery; it reads the fixtures of ui/views/fixtures in the browser and needs no server.
+    cmds:
+      - cd ui && ([ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund --loglevel=error) && npx vite build --config views/gallery/vite.config.ts --logLevel warn
+
+  studio:build:
+    desc: Build the studio app of ui/studio into target/studio/www, which agenticstudio serve serves.
+    cmds:
+      - cd ui && ([ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund --loglevel=error) && npx vite build --config studio/vite.config.ts --logLevel warn
 
   ux:round:
     desc: Measure a round of the ui-iteration-loop into ux/rounds/R-nn (task ux:round -- R-nn). The lines are in ux/round.sh.

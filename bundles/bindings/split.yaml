@@ -1,0 +1,32 @@
+format: agenticspec-binding/1
+binding: split
+architecture: workstation
+refines: local.yaml
+summary: >-
+  The workstation with one unit per part: the operator and the coding agents run as agents of
+  their own, the gateway and the build pool as services that keep their state in one place.
+target:
+  isolation: container
+parts:
+  operator:
+    agent: ../agents/operator.yaml
+    secrets: [chat-token]
+    egress: [gateway, owner, worker, {to: chat-relay, secret: chat-token}]
+  worker: {agent: ../agents/coder.yaml, egress: [builds, gateway, operator]}
+  gateway:
+    state: service
+    secrets: [model-api-key]
+    egress: [{to: model, secret: model-api-key}]
+  builds: {state: service}
+  tree: {size: 20Gi}
+transports:
+  model_call: http
+  order: a2a
+  question: a2a
+  claim: http
+runtimes:
+  core: {image: registry.example/agenticspec-core, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000001"}
+claims:
+  worker: {cpu_millis: 2000, memory_mib: 4096}
+packing:
+  strategy: by_part

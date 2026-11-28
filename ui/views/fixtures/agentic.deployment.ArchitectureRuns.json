@@ -1,0 +1,8 @@
+{
+  "view": "agentic.deployment.ArchitectureRuns",
+  "rows": [
+    {"run_id": "00000000-0000-4000-8000-4300c32a0000", "installation_id": "00000000-0000-4000-8000-7128a6e00000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "binding": "binding 1", "subject_key": "subject key 1", "task_id": "00000000-0000-4000-8000-7b7975d50000", "queued_at": "2026-11-20T09:06:00Z", "failure": "failure 1", "cancelled_for": "Requested", "state": {"name":"Cancelled","summary":"Stopped before it ended, by a principal or by the runner."}},
+    {"run_id": "00000000-0000-4000-8000-4300c32a0001", "installation_id": "00000000-0000-4000-8000-7128a6e00001", "revision_id": "00000000-0000-4000-8000-8dac41280001", "binding": "binding 2", "queued_at": "2026-11-20T10:06:00Z", "state": {"name":"Done","summary":"Reached the end of what it was asked."}},
+    {"run_id": "00000000-0000-4000-8000-4300c32a0002", "installation_id": "00000000-0000-4000-8000-7128a6e00002", "revision_id": "00000000-0000-4000-8000-8dac41280002", "binding": "binding 3", "subject_key": "subject key 3", "task_id": "00000000-0000-4000-8000-7b7975d50002", "queued_at": "2026-11-20T11:06:00Z", "failure": "failure 3", "cancelled_for": "RolledBack", "state": {"name":"Failed","summary":"Could not go on."}}
+  ]
+}

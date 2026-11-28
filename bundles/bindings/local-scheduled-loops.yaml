@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: local
+architecture: scheduled-loops
+refines: local.yaml
+parts:
+  sweeper: {egress: [owner]}
+  triager: {egress: [owner]}
+  gateway: {egress: [model]}

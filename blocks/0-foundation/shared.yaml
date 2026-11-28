@@ -27,12 +27,17 @@ types:
   - {name: agentic.shared.ToolProviderId, kind: newtype, of: Uuid}
   - {name: agentic.shared.ToolId, kind: newtype, of: Uuid}
   - {name: agentic.shared.KnowledgeId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.StoreId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.RecordId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ReadId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.QueryId, kind: newtype, of: Uuid}
 
   # 4 agent
   - {name: agentic.shared.AgentId, kind: newtype, of: Uuid}
   - {name: agentic.shared.AgentRevisionId, kind: newtype, of: Uuid}
   - {name: agentic.shared.HarnessId, kind: newtype, of: Uuid}
   - {name: agentic.shared.HarnessSessionId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.PermissionModeId, kind: newtype, of: Uuid}
   - {name: agentic.shared.TurnId, kind: newtype, of: Uuid}
   - {name: agentic.shared.ToolCallId, kind: newtype, of: Uuid}
 
@@ -77,8 +82,15 @@ types:
   - {name: agentic.shared.ArchitectureRevisionId, kind: newtype, of: Uuid}
   - {name: agentic.shared.PatchId, kind: newtype, of: Uuid}
   - {name: agentic.shared.PatchApplicationId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.PlacementId, kind: newtype, of: Uuid}
   - {name: agentic.shared.PortId, kind: newtype, of: Uuid}
   - {name: agentic.shared.ContractId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.IngressId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ExportId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.InstallationId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.ArchitectureRunId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.DeploymentId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.DeploymentUnitId, kind: newtype, of: Uuid}
 
   # 10 evaluation
   - {name: agentic.shared.KpiId, kind: newtype, of: Uuid}

@@ -143,4 +143,17 @@ else
 fi
 tail -n 1 "$work/run.txt"
 [ "$status" = 0 ] || echo "check-blocks-conform: exit $status; report $work/report.json, output $work/run.txt" >&2
+
+# Every binding of blocks/components.yaml is tested: the report holds a `<binding>/binding/...`
+# scenario for each.
+if [ "$status" = 0 ] && [ -f "$spec/components.yaml" ]; then
+  bindings=$(sed -n 's/^  - id: *//p' "$spec/components.yaml")
+  for b in $bindings; do
+    if ! grep -q "\"$b/binding/" "$work/report.json"; then
+      echo "check-blocks-conform: binding $b has no scenario in $work/report.json" >&2
+      status=1
+    fi
+  done
+  [ "$status" = 0 ] && echo "check-blocks-conform: $(echo "$bindings" | wc -w | tr -d ' ') binding(s), each with a scenario"
+fi
 exit "$status"

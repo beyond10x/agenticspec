@@ -1,0 +1,84 @@
+# A question that is not answered by its deadline takes its default; a claim, a lease and a
+# delegation expire at the time their row holds. The cause is the passing of a time a row stores.
+# A binding is caused by an event or by a fixed-period poll; there is no cause "when the time in
+# this row has passed". Writing one is refused:
+#
+#   ess specify validate --path design/ess-repro/cause-at-row-time
+#
+# answers `unknown field `at`, expected one of `event`, `periodic`, `context_authority`,
+# `context_fields`, `where``; without the binding the file validates. A command guard can
+# compare the deadline with the time of the call, so `TakeDefault` can refuse a call before the
+# deadline; what calls it at the deadline stays outside the specification.
+domain: repro.question
+
+types:
+  - {name: repro.question.QuestionId, kind: newtype, of: Uuid}
+
+entities:
+  - name: repro.question.Question
+    identity: {name: question_id, type: repro.question.QuestionId}
+    fields:
+      - {name: deadline, type: Timestamp}
+    lifecycle:
+      initial: Open
+      states: [Open, Defaulted]
+      terminal: [Defaulted]
+      transitions:
+        - {name: take_default, from: [Open], to: Defaulted}
+
+errors:
+  - name: repro.question.UnknownQuestion
+
+commands:
+  - name: repro.question.Ask
+    input:
+      - {name: deadline, type: Timestamp}
+    outcomes:
+      - name: asked
+        creates: repro.question.Question
+        instance: question_id
+        sets: {deadline: input.deadline}
+        emits: [repro.question.Asked]
+        payload:
+          repro.question.Asked: {question_id: {generated: true}}
+  - name: repro.question.TakeDefault
+    input:
+      - {name: question_id, type: repro.question.QuestionId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: repro.question.UnknownQuestion
+      - name: defaulted
+        moves: repro.question.Question.take_default
+        instance: question_id
+        emits: [repro.question.Defaulted]
+        payload:
+          repro.question.Defaulted: {question_id: input.question_id}
+
+events:
+  - name: repro.question.Asked
+    fields:
+      - {name: question_id, type: repro.question.QuestionId}
+  - name: repro.question.Defaulted
+    fields:
+      - {name: question_id, type: repro.question.QuestionId}
+
+components:
+  - component: questions
+    owns:
+      domains: [repro.question]
+    accepts:
+      commands: [repro.question.Ask, repro.question.TakeDefault]
+    publishes:
+      events: [repro.question.Asked, repro.question.Defaulted]
+
+bindings:
+  - id: take-the-default-at-the-deadline
+    when:
+      at: {entity: repro.question.Question, field: deadline}
+    invoke:
+      command: repro.question.TakeDefault
+    mapping:
+      question_id: row.question_id
+    delivery: at_most_once
+    on_failure: drop

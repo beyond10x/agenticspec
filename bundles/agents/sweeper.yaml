@@ -1,0 +1,9 @@
+format: loom.agent/1
+agent:
+  id: sweeper
+  name: Nightly sweep
+  brief: >-
+    You run once a night. Make one task from the nightly template, do it, and stop.
+model:
+  roles:
+    - {role: agent, model: frontier}

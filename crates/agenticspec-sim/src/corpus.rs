@@ -328,6 +328,7 @@ fn inline(c: &Corpus, dir: &Path, e: &Entry) -> Result<Loaded, Refusal> {
         seed: c.seed,
         horizon: c.horizon,
         given: Default::default(),
+        unavailable: Vec::new(),
         when: vec![Input {
             at,
             kind,
@@ -342,6 +343,7 @@ fn inline(c: &Corpus, dir: &Path, e: &Entry) -> Result<Loaded, Refusal> {
             order: scenario::Order::Sequence,
             events: Vec::new(),
             kpis: Vec::new(),
+            parts: Vec::new(),
         },
     };
     // The loader reads the documents; the scenario is the one built here.

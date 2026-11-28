@@ -76,6 +76,17 @@ fn written_like_its_source_the_parts_keep_their_order() {
 }
 
 #[test]
+fn written_like_its_source_the_view_key_is_kept_unchanged() {
+    let source =
+        std::fs::read_to_string(repo_root().join("architectures/workstation.yaml")).unwrap();
+    let doc = parse_yaml(&source).unwrap();
+    assert!(doc["view"].is_object(), "workstation.yaml has a view key");
+    let text = best::yaml_like(&doc, &source).unwrap();
+    assert_eq!(parse_yaml(&text).unwrap()["view"], doc["view"], "{text}");
+    assert!(text.contains("\nview:"), "{text}");
+}
+
+#[test]
 fn no_best_variant_means_no_document() {
     let e = experiment("fit", 4, 256);
     let mut result = run(&e, 2).unwrap();
@@ -145,7 +156,7 @@ fn run_writes_best_yaml_that_check_accepts() {
     std::fs::write(dir.join("exp.yaml"), experiment_yaml("fit", 6, 256)).unwrap();
     let out_dir = dir.join("out");
     let mut log = Vec::new();
-    let ran = cli::run(&dir.join("exp.yaml"), &out_dir, Some(2), &mut log)
+    let ran = cli::run(&dir.join("exp.yaml"), &out_dir, Some(2), false, &mut log)
         .unwrap_or_else(|e| panic!("{e:?}\n{}", String::from_utf8_lossy(&log)));
     assert_eq!(ran["best_written"], true);
     let best_file = out_dir.join("best.yaml");

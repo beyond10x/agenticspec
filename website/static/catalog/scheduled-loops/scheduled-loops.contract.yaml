@@ -1,0 +1,235 @@
+format: agenticspec-contract/1
+architecture: scheduled-loops
+ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
+ports:
+  - port: resource.claim
+    part: builds
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {capacity: 8, job_limit: 10m, kind: build_slots}
+  - port: trigger.schedule
+    part: clock
+    protocol: "CreateSchedule AdvanceSchedule*"
+    instances: 1
+    settings: {every: 1h}
+  - port: gateway.call
+    part: gateway
+    protocol: "AdmitCall CompleteCall"
+    instances: 1
+    settings: {rate_limit_per_minute: 120}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: trigger.schedule
+    part: nightly
+    protocol: "CreateSchedule AdvanceSchedule*"
+    instances: 1
+    settings: {every: 24h, next_fire_at: 2h}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+  - port: trigger.firing
+    part: sweep
+    protocol: "FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)"
+    instances: 1
+    settings: {kind: on_schedule, max_parallel: 1, policy: skip, schedule: nightly}
+  - port: harness.session
+    part: sweeper
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding}
+  - port: model.inference
+    part: sweeper
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: sweeper
+    protocol: "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {}
+  - port: resource.claim
+    part: sweeper
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {}
+  - port: trigger.firing
+    part: triage
+    protocol: "FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)"
+    instances: 1
+    settings: {kind: on_schedule, max_parallel: 1, policy: skip, schedule: clock}
+  - port: harness.session
+    part: triager
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession"
+    instances: 2
+    settings: {harness: coding}
+  - port: model.inference
+    part: triager
+    protocol: "StartInference FinishInference"
+    instances: 2
+    settings: {}
+  - port: question.question
+    part: triager
+    protocol: "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)"
+    instances: 2
+    settings: {}
+  - port: resource.claim
+    part: triager
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 2
+    settings: {}
+invariants:
+  - link: "sweep -> sweeper carries trigger"
+    port: trigger.firing
+    predicate: "every trigger.firing@sweep to sweeper"
+  - link: "triage -> triager carries trigger"
+    port: trigger.firing
+    predicate: "every trigger.firing@triage to triager"
+  - link: "triager -> owner carries question"
+    port: question.question
+    predicate: "every question.question@triager to owner"
+  - link: "sweeper -> owner carries question"
+    port: question.question
+    predicate: "every question.question@sweeper to owner"
+  - link: "sweeper -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@sweeper inside gateway.call@gateway"
+  - link: "triager -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@triager inside gateway.call@gateway"
+  - link: "gateway -> model carries model_call"
+    port: gateway.call
+    predicate: "every gateway.call@gateway to model"
+  - link: "sweeper -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@sweeper to builds"
+  - link: "triager -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@triager to builds"
+border: []
+ingress:
+  - name: metrics
+    audience: control.monitor
+    authenticated: false
+    exports: [metrics_scrape]
+    operations:
+      - {kind: metric, name: cache_bust_count}
+      - {kind: metric, name: cache_hit_share}
+      - {kind: metric, name: context_size_p90_tokens}
+      - {kind: metric, name: cost_usd}
+      - {kind: metric, name: human_prompt_share}
+      - {kind: metric, name: owner_wait_share}
+      - {kind: metric, name: priced_message_share}
+      - {kind: metric, name: sub_agents_started}
+      - {kind: metric, name: subagent_cost_share}
+  - name: operator
+    audience: control.operator
+    authenticated: true
+    exports: [http, event_stream, ui, tool]
+    operations:
+      - {kind: command, name: agentic.gateway.DetachUpstream}
+      - {kind: command, name: agentic.gateway.DrainGateway}
+      - {kind: command, name: agentic.gateway.StopGateway}
+      - {kind: command, name: agentic.question.Answer}
+      - {kind: command, name: agentic.trigger.DisableSchedule}
+      - {kind: command, name: agentic.trigger.DisableTrigger}
+      - {kind: command, name: agentic.trigger.EnableSchedule}
+      - {kind: command, name: agentic.trigger.EnableTrigger}
+      - {kind: command, name: agentic.trigger.PassScheduleChecks}
+      - {kind: view, name: agentic.agent.AgentRevisions}
+      - {kind: view, name: agentic.agent.Agents}
+      - {kind: view, name: agentic.gateway.Calls}
+      - {kind: view, name: agentic.gateway.Gateways}
+      - {kind: view, name: agentic.gateway.Upstreams}
+      - {kind: view, name: agentic.harness.HarnessSessions}
+      - {kind: view, name: agentic.harness.Harnesses}
+      - {kind: view, name: agentic.harness.PermissionModes}
+      - {kind: view, name: agentic.harness.ToolCalls}
+      - {kind: view, name: agentic.harness.Turns}
+      - {kind: view, name: agentic.model.Endpoints}
+      - {kind: view, name: agentic.model.Inferences}
+      - {kind: view, name: agentic.model.Models}
+      - {kind: view, name: agentic.model.Routes}
+      - {kind: view, name: agentic.principal.Principals}
+      - {kind: view, name: agentic.question.OpenQuestions}
+      - {kind: view, name: agentic.question.Questions}
+      - {kind: view, name: agentic.resource.Claims}
+      - {kind: view, name: agentic.resource.Pools}
+      - {kind: view, name: agentic.resource.Queue}
+      - {kind: view, name: agentic.trigger.Firings}
+      - {kind: view, name: agentic.trigger.RecentFirings}
+      - {kind: view, name: agentic.trigger.Schedules}
+      - {kind: view, name: agentic.trigger.Triggers}
+      - {kind: view, name: agentic.trigger.TriggersOfRevision}
+      - {kind: feed, name: agentic.agent.AgentDefined}
+      - {kind: feed, name: agentic.agent.AgentRetired}
+      - {kind: feed, name: agentic.agent.AgentRevisionPublished}
+      - {kind: feed, name: agentic.agent.AgentRevisionRetired}
+      - {kind: feed, name: agentic.agent.AgentRevisionUsed}
+      - {kind: feed, name: agentic.gateway.CallCompleted}
+      - {kind: feed, name: agentic.gateway.CallDecided}
+      - {kind: feed, name: agentic.gateway.GatewayDrained}
+      - {kind: feed, name: agentic.gateway.GatewayOpened}
+      - {kind: feed, name: agentic.gateway.GatewayStopped}
+      - {kind: feed, name: agentic.gateway.UpstreamAttached}
+      - {kind: feed, name: agentic.gateway.UpstreamDetached}
+      - {kind: feed, name: agentic.gateway.UpstreamRestored}
+      - {kind: feed, name: agentic.gateway.UpstreamSaturated}
+      - {kind: feed, name: agentic.harness.ContextCompacted}
+      - {kind: feed, name: agentic.harness.HarnessRegistered}
+      - {kind: feed, name: agentic.harness.HarnessRetired}
+      - {kind: feed, name: agentic.harness.PermissionModeRegistered}
+      - {kind: feed, name: agentic.harness.PermissionModeRetired}
+      - {kind: feed, name: agentic.harness.SessionEnded}
+      - {kind: feed, name: agentic.harness.SessionOpened}
+      - {kind: feed, name: agentic.harness.SessionRestarted}
+      - {kind: feed, name: agentic.harness.SubAgentSpawned}
+      - {kind: feed, name: agentic.harness.ToolCallCompleted}
+      - {kind: feed, name: agentic.harness.ToolCallDecided}
+      - {kind: feed, name: agentic.harness.ToolCallRequested}
+      - {kind: feed, name: agentic.harness.ToolResultNotRead}
+      - {kind: feed, name: agentic.harness.TurnRecorded}
+      - {kind: feed, name: agentic.model.EndpointClosed}
+      - {kind: feed, name: agentic.model.EndpointOpened}
+      - {kind: feed, name: agentic.model.InferenceFinished}
+      - {kind: feed, name: agentic.model.InferenceStarted}
+      - {kind: feed, name: agentic.model.ModelDeclared}
+      - {kind: feed, name: agentic.model.ModelRetired}
+      - {kind: feed, name: agentic.model.ProviderRegistered}
+      - {kind: feed, name: agentic.model.RouteDefined}
+      - {kind: feed, name: agentic.model.RouteRetired}
+      - {kind: feed, name: agentic.principal.PrincipalRegistered}
+      - {kind: feed, name: agentic.principal.PrincipalRetired}
+      - {kind: feed, name: agentic.question.AnswerNotRead}
+      - {kind: feed, name: agentic.question.DefaultTaken}
+      - {kind: feed, name: agentic.question.QuestionAnswered}
+      - {kind: feed, name: agentic.question.QuestionAsked}
+      - {kind: feed, name: agentic.question.QuestionWithdrawn}
+      - {kind: feed, name: agentic.resource.ClaimExpired}
+      - {kind: feed, name: agentic.resource.ClaimGranted}
+      - {kind: feed, name: agentic.resource.ClaimKilled}
+      - {kind: feed, name: agentic.resource.ClaimQueued}
+      - {kind: feed, name: agentic.resource.ClaimReleased}
+      - {kind: feed, name: agentic.resource.ClaimWithdrawn}
+      - {kind: feed, name: agentic.resource.PoolCreated}
+      - {kind: feed, name: agentic.trigger.FiringEnded}
+      - {kind: feed, name: agentic.trigger.FiringFailed}
+      - {kind: feed, name: agentic.trigger.FiringQueued}
+      - {kind: feed, name: agentic.trigger.FiringReplaced}
+      - {kind: feed, name: agentic.trigger.FiringSkipped}
+      - {kind: feed, name: agentic.trigger.FiringStarted}
+      - {kind: feed, name: agentic.trigger.ScheduleAdvanced}
+      - {kind: feed, name: agentic.trigger.ScheduleChecked}
+      - {kind: feed, name: agentic.trigger.ScheduleCreated}
+      - {kind: feed, name: agentic.trigger.ScheduleDisabled}
+      - {kind: feed, name: agentic.trigger.ScheduleEnabled}
+      - {kind: feed, name: agentic.trigger.TriggerCreated}
+      - {kind: feed, name: agentic.trigger.TriggerDisabled}
+      - {kind: feed, name: agentic.trigger.TriggerEnabled}
+      - {kind: feed, name: agentic.trigger.TriggerFired}

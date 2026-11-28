@@ -1,0 +1,154 @@
+{
+  "format": "ess-types-report/3",
+  "source_digest": "0d65903506fab22b8d85227ed597e4202371f99af3fe6e408fec0b83901d58b3",
+  "input": {
+    "kind": "model",
+    "system": "studio",
+    "specification_version": "v1",
+    "contract_digest": "slice-sha256/2:d829d0803cc327706a03bcb269470ef73214d69b8cae4490a115119071f7ff4e",
+    "projection_digest": "3ed9b8b89692f65bfa0b91f99257bd999aeb5f213d0617c722d918f20bfdcb5b"
+  },
+  "generator_version": "0.99.2",
+  "target": "rust",
+  "configuration": {
+    "language": "rust",
+    "package": "agenticstudio-studio-types",
+    "declared_field_order": true,
+    "box_only_recursion": true
+  },
+  "roots": [
+    "studio.draft.Drafts.row"
+  ],
+  "declarations": {
+    "studio.draft.Draft.State": "State",
+    "studio.draft.Drafts.row": "DraftsRow",
+    "studio.shared.ArchitectureRef": "ArchitectureRef",
+    "studio.shared.DraftId": "DraftId",
+    "studio.shared.Name": "Name",
+    "studio.shared.RevisionRef": "RevisionRef"
+  },
+  "annotations": [
+    {
+      "pointer": "/$defs/studio.draft.Draft.State/title",
+      "rule": "title",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.draft.Draft.State/x-ess-kind",
+      "rule": "x-ess-kind",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.draft.Draft.State/x-ess-name",
+      "rule": "x-ess-name",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.draft.Drafts.row/title",
+      "rule": "title",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.draft.Drafts.row/x-ess-kind",
+      "rule": "x-ess-kind",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.draft.Drafts.row/x-ess-name",
+      "rule": "x-ess-name",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.shared.ArchitectureRef/format",
+      "rule": "format",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.shared.ArchitectureRef/title",
+      "rule": "title",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.shared.ArchitectureRef/x-ess-kind",
+      "rule": "x-ess-kind",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.shared.ArchitectureRef/x-ess-name",
+      "rule": "x-ess-name",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.shared.DraftId/format",
+      "rule": "format",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.shared.DraftId/title",
+      "rule": "title",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.shared.DraftId/x-ess-kind",
+      "rule": "x-ess-kind",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.shared.DraftId/x-ess-name",
+      "rule": "x-ess-name",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.shared.Name/title",
+      "rule": "title",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.shared.Name/x-ess-kind",
+      "rule": "x-ess-kind",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.shared.Name/x-ess-name",
+      "rule": "x-ess-name",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.shared.RevisionRef/format",
+      "rule": "format",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.shared.RevisionRef/title",
+      "rule": "title",
+      "detail": "retained in source.schema.json; no decoder behavior inferred"
+    },
+    {
+      "pointer": "/$defs/studio.shared.RevisionRef/x-ess-kind",
+      "rule": "x-ess-kind",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    },
+    {
+      "pointer": "/$defs/studio.shared.RevisionRef/x-ess-name",
+      "rule": "x-ess-name",
+      "detail": "model identity and wire mapping retained in source.schema.json"
+    }
+  ],
+  "obligations": [
+    {
+      "pointer": "/$defs/studio.shared.ArchitectureRef/pattern",
+      "rule": "pattern",
+      "detail": "validate this constraint against the source schema at runtime"
+    },
+    {
+      "pointer": "/$defs/studio.shared.DraftId/pattern",
+      "rule": "pattern",
+      "detail": "validate this constraint against the source schema at runtime"
+    },
+    {
+      "pointer": "/$defs/studio.shared.RevisionRef/pattern",
+      "rule": "pattern",
+      "detail": "validate this constraint against the source schema at runtime"
+    }
+  ]
+}

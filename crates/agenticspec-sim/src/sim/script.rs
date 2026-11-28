@@ -64,9 +64,17 @@ pub struct TaskRecord {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stamp {
     pub t: f64,
+    /// The part it happened at.
     pub part: String,
+    /// The moment, a kind of the timeline (`task_arrived`, `build_queued`, ...).
     pub kind: &'static str,
     pub task: Option<usize>,
     /// The index into `Script::replies` of the reply an answered or defaulted question took.
     pub reply: Option<usize>,
+    /// The number of the simulated entity it is about, for the kinds whose event is keyed by
+    /// one: a task, a question, a build's claim, a firing, a post, a deliverable. Numbers count
+    /// per entity from 0 within the run. Kept for the event log (`crate::event_log`).
+    pub subject: Option<usize>,
+    /// The copy of the part that made it, when a copy of a worker or reviewer did.
+    pub copy: Option<usize>,
 }

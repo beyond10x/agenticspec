@@ -21,6 +21,69 @@ mdx:
 
 <span className="as-tag as-tag--accepted">accepted</span> 9 parts and 8 links; the structural check refuses nothing.
 
+## The architecture as a whole
+
+Read from the document alone, before any simulation: its size, autonomy, exposure, weak points and fixed limits. `agenticspec sim check` reports the same numbers; a marked place counts at its value as built. The KPIs are in the [KPI catalogue](../kpis-catalogue.md) under the block `architecture`.
+
+| KPI | value | what it counts |
+|---|---|---|
+| `agents_total` | 9 | Agent copies: the sum of count over the agent parts. |
+| `principals_total` | 1 | Principal parts. |
+| `human_touchpoints` | 1 | Links that end at a principal and carry a question or a proposal. |
+| `autonomy_depth` | 0 | Links in the longest chain of order and question links from agent to agent. |
+| `model_call_paths` | 2 | Distinct paths of model_call links from an agent part to a model part. |
+| `ungated_model_calls` | 0 | Paths of model_call links from an agent to a model that pass no gateway part. |
+| `single_points` | 2 (`gateway`, `model`) | Parts whose removal leaves some agent with no model_call path to a model. |
+| `border_parts` | 0 | Parts named in the border, the parts that take input from outside. |
+| `egress_targets` | 0 | Distinct parts named in the egress of the sandbox parts. |
+| `shared_workspaces` | 0 | Workspace parts whose sharing is not exclusive. |
+| `capacity_ratio` | 0.5 | Agent copies that claim a pool divided by its capacity, the largest over the pools. |
+
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [planner-executor.contract.yaml](pathname:///architectures/planner-executor.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 16`, `job_limit: 10m`, `kind: build_slots` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `executor` | `harness: coding`, `role: executor` | 8 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `executor` | none | 8 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `executor` | none | 8 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `executor` | none | 8 |
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart (RecordEnd \| RecordReplaced) \| SkipFiring)` | `on_plan` | `channel: plans`, `kind: on_message`, `max_parallel: 8`, `policy: parallel` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `channel.post` | `Outbound` | `channel` | `PostMessage TakePost?` | `planner` | none | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `planner` | `harness: coding`, `role: planner` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `planner` | none | 1 |
+| `channel.post` | `Outbound` | `channel` | `PostMessage TakePost?` | `plans` | `distribution: queue`, `kind: agent_message` | 1 |
+| `channel.subscription` | `Outbound` | `channel` | `Subscribe Beat* EndSubscription` | `plans` | `distribution: queue`, `kind: agent_message` | 1 |
+| `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 8 |
+| `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 8 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `planner -> plans carries message`: `every channel.post@planner to plans`
+- `on_plan -> executor carries trigger`: `every trigger.firing@on_plan to executor`
+- `executor -> owner carries question`: `every question.question@executor to owner`
+- `planner -> gateway carries model_call`: `every model.inference@planner inside gateway.call@gateway`
+- `executor -> gateway carries model_call`: `every model.inference@executor inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+- `executor -> builds carries claim`: `every resource.claim@executor to builds`
+
+Border: none.
+
+Ingresses: who reaches the architecture from outside, what each audience may use, and over which protocols.
+
+| ingress | audience | authenticated | exports | commands | views | feeds | metrics |
+|---|---|---|---|---|---|---|---|
+| **metrics** | `control.monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 9 |
+| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 9 | 34 | 88 | 0 |
+
+- **metrics**: `cache_bust_count`, `cache_hit_share`, `context_size_p90_tokens`, `cost_usd`, `human_prompt_share`, `owner_wait_share`, `priced_message_share`, `sub_agents_started`, `subagent_cost_share`
+- **operator**: `agentic.gateway.DetachUpstream`, `agentic.gateway.DrainGateway`, `agentic.gateway.StopGateway`, `agentic.question.Answer`, `agentic.trigger.DisableSchedule`, `agentic.trigger.DisableTrigger`, `agentic.trigger.EnableSchedule`, `agentic.trigger.EnableTrigger`, `agentic.trigger.PassScheduleChecks`
+
 ## Parts
 
 | part | block | settings |

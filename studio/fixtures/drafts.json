@@ -1,0 +1,3 @@
+{"view": "studio.draft.Drafts", "rows": [
+  {"draft_id": "00000000-0000-4000-8000-000000000001", "name": "workstation", "architecture": "00000000-0000-4000-8000-0000000000a1", "source": "architectures/workstation.yaml", "opened_at_revision": "00000000-0000-4000-8000-0000000000b1", "state": "Open"}
+]}

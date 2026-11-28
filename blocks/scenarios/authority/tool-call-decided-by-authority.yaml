@@ -1,0 +1,205 @@
+# The authority decides a harness tool call through three bindings (blocks/components.yaml):
+# decide-tool-call-on-decision, allow-tool-call-on-approval and deny-tool-call-on-rejection.
+# Synthesis has no flow scenario for them: DecideToolCall's outcome is chosen by the verdict the
+# event fills (ESS-SYNTH-010). So this scenario walks each one by hand: a denial denies one call, an
+# approved request allows a second, a rejected request denies a third, and a request no tool call
+# names decides none.
+type: ess-scenario/7
+domain: agentic.authority
+scenario: tool-call-decided-by-authority
+summary: A decision, an approval and a rejection of a tool call's request decide the tool call.
+
+arrange:
+  - instance: grant
+    entity: agentic.authority.Grant
+  - instance: approve-me
+    entity: agentic.authority.Decision
+  - instance: reject-me
+    entity: agentic.authority.Decision
+
+timeline:
+  - at: 2026-11-28T09:00:00Z
+    command: agentic.tool.RegisterToolProvider
+    actor: agentic.tool.ToolCatalogue
+    input:
+      tool_provider_id: 00000000-0000-4000-8000-00000000c001
+      name: shell
+      kind: Shell
+    outcome: registered
+
+  - at: 2026-11-28T09:00:01Z
+    command: agentic.tool.PublishTool
+    actor: agentic.tool.ToolCatalogue
+    input:
+      tool_id: 00000000-0000-4000-8000-00000000c101
+      tool_provider_id: 00000000-0000-4000-8000-00000000c001
+      name: run
+      input_contract: {digest: sha256-in, length: 10, class: contract}
+      output_contract: {digest: sha256-out, length: 10, class: contract}
+      category: Execute
+      leaves_sandbox: false
+    outcome: published
+
+  - at: 2026-11-28T09:00:02Z
+    command: agentic.harness.RequestToolCall
+    actor: agentic.harness.CallingHarness
+    input:
+      tool_call_id: 00000000-0000-4000-8000-00000000d001
+      tool_id: 00000000-0000-4000-8000-00000000c101
+      harness_session_id: 00000000-0000-4000-8000-00000000e001
+      input: {digest: sha256-call-1, length: 20, class: command}
+    outcome: requested
+  - at: 2026-11-28T09:00:03Z
+    command: agentic.harness.RequestToolCall
+    actor: agentic.harness.CallingHarness
+    input:
+      tool_call_id: 00000000-0000-4000-8000-00000000d002
+      tool_id: 00000000-0000-4000-8000-00000000c101
+      harness_session_id: 00000000-0000-4000-8000-00000000e001
+      input: {digest: sha256-call-2, length: 20, class: command}
+    outcome: requested
+  - at: 2026-11-28T09:00:04Z
+    command: agentic.harness.RequestToolCall
+    actor: agentic.harness.CallingHarness
+    input:
+      tool_call_id: 00000000-0000-4000-8000-00000000d003
+      tool_id: 00000000-0000-4000-8000-00000000c101
+      harness_session_id: 00000000-0000-4000-8000-00000000e001
+      input: {digest: sha256-call-3, length: 20, class: command}
+    outcome: requested
+  - at: 2026-11-28T09:00:05Z
+    command: agentic.harness.RequestToolCall
+    actor: agentic.harness.CallingHarness
+    input:
+      tool_call_id: 00000000-0000-4000-8000-00000000d004
+      tool_id: 00000000-0000-4000-8000-00000000c101
+      harness_session_id: 00000000-0000-4000-8000-00000000e001
+      input: {digest: sha256-call-4, length: 20, class: command}
+    outcome: requested
+
+  # A denial of call 1's request: decide-tool-call-on-decision denies call 1.
+  - at: 2026-11-28T09:00:06Z
+    command: agentic.authority.DenyRequest
+    actor: agentic.authority.Authority
+    input:
+      requester_kind: AgentRevision
+      requester_id: 00000000-0000-4000-8000-00000000f001
+      action_class: Execute
+      scope: repo
+      decider: Rule
+      attribution: Known
+      tool_call_id: 00000000-0000-4000-8000-00000000d001
+      at: 2026-11-28T09:00:06Z
+    outcome: denied
+
+  - at: 2026-11-28T09:00:07Z
+    command: agentic.authority.GrantAuthority
+    actor: agentic.authority.Steward
+    input:
+      grantee_kind: AgentRevision
+      grantee_id: 00000000-0000-4000-8000-00000000f001
+      action_class: Execute
+      scope: repo
+      expires_at: 2026-11-29T09:00:00Z
+      granted_by: 00000000-0000-4000-8000-00000000a001
+      effect: ApprovalRequired
+      excludes: []
+      at: 2026-11-28T09:00:07Z
+    outcome: granted
+    capture: {instance: grant, event: agentic.authority.GrantIssued, field: grant_id}
+
+  # Requests of calls 2 and 3 await approval: the binding does not decide them yet.
+  - at: 2026-11-28T09:00:08Z
+    command: agentic.authority.DecideRequest
+    actor: agentic.authority.Authority
+    input:
+      grant_id: {$instance: grant}
+      requester_kind: AgentRevision
+      requester_id: 00000000-0000-4000-8000-00000000f001
+      action_class: Execute
+      scope: repo
+      verdict: ApprovalRequired
+      decider: Rule
+      attribution: Known
+      tool_call_id: 00000000-0000-4000-8000-00000000d002
+      at: 2026-11-28T09:00:08Z
+    outcome: recorded
+    capture: {instance: approve-me, event: agentic.authority.DecisionRecorded, field: decision_id}
+    no_events: [agentic.harness.ToolCallDecided]
+  - at: 2026-11-28T09:00:09Z
+    command: agentic.authority.DecideRequest
+    actor: agentic.authority.Authority
+    input:
+      grant_id: {$instance: grant}
+      requester_kind: AgentRevision
+      requester_id: 00000000-0000-4000-8000-00000000f001
+      action_class: Execute
+      scope: repo
+      verdict: ApprovalRequired
+      decider: Rule
+      attribution: Known
+      tool_call_id: 00000000-0000-4000-8000-00000000d003
+      at: 2026-11-28T09:00:09Z
+    outcome: recorded
+    capture: {instance: reject-me, event: agentic.authority.DecisionRecorded, field: decision_id}
+
+  # An approval allows call 2 (allow-tool-call-on-approval); a rejection denies call 3
+  # (deny-tool-call-on-rejection).
+  - at: 2026-11-28T09:00:10Z
+    command: agentic.authority.ApproveDecision
+    actor: agentic.authority.Steward
+    input:
+      decision_id: {$instance: approve-me}
+      approver: Human
+      tool_call_id: 00000000-0000-4000-8000-00000000d002
+      at: 2026-11-28T09:00:10Z
+    outcome: approved
+  - at: 2026-11-28T09:00:11Z
+    command: agentic.authority.RejectDecision
+    actor: agentic.authority.Steward
+    input:
+      decision_id: {$instance: reject-me}
+      rejecter: Human
+      tool_call_id: 00000000-0000-4000-8000-00000000d003
+      at: 2026-11-28T09:00:11Z
+    outcome: rejected
+
+  # A request no tool call names decides no tool call: call 4 stays Requested.
+  - at: 2026-11-28T09:00:12Z
+    command: agentic.authority.DenyRequest
+    actor: agentic.authority.Authority
+    input:
+      requester_kind: AgentRevision
+      requester_id: 00000000-0000-4000-8000-00000000f001
+      action_class: Execute
+      scope: repo
+      decider: Rule
+      attribution: Known
+      at: 2026-11-28T09:00:12Z
+    outcome: denied
+
+assert:
+  - view: agentic.harness.ToolCalls
+    contains:
+      tool_call_id: 00000000-0000-4000-8000-00000000d001
+      verdict: Deny
+      decider: Rule
+      attribution: Known
+      state: Denied
+  - view: agentic.harness.ToolCalls
+    contains:
+      tool_call_id: 00000000-0000-4000-8000-00000000d002
+      verdict: Allow
+      decider: Human
+      attribution: Known
+      state: Allowed
+  - view: agentic.harness.ToolCalls
+    contains:
+      tool_call_id: 00000000-0000-4000-8000-00000000d003
+      verdict: Deny
+      decider: Human
+      state: Denied
+  - view: agentic.harness.ToolCalls
+    contains:
+      tool_call_id: 00000000-0000-4000-8000-00000000d004
+      state: Requested

@@ -1,0 +1,23 @@
+format: agenticspec-architecture/1
+architecture: console
+summary: >-
+  A console as an architecture of its own, made to be nested in another one: a steward agent is
+  the one part on its border, hands work to a helper agent, and both reach their model through a
+  gateway. A document that nests it reaches the steward as `console.steward` and nothing else of
+  it. On its own the console has no principal: it is checked and drawn here, and simulated inside
+  the architecture that nests it, team-with-console.
+
+parts:
+  steward: { block: agent, harness: coding, role: orchestrator }
+  helper:  { block: agent, harness: coding }
+  gateway: { block: gateway, rate_limit_per_minute: 60 }
+  model:   { block: model, route: frontier }
+
+links:
+  - { from: steward, to: helper,  carries: order }
+  - { from: helper,  to: steward, carries: question }
+  - { from: steward, to: gateway, carries: model_call }
+  - { from: helper,  to: gateway, carries: model_call }
+  - { from: gateway, to: model,   carries: model_call }
+
+border: [steward]

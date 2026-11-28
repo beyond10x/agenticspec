@@ -1,0 +1,9 @@
+{
+  "channel": "kpi",
+  "events": [
+    {"at": "1s", "event": "agentic.kpi.DirectionSet", "payload": {"direction_id": "00000000-0000-4000-8000-5a83e4710000", "work_mode_id": "00000000-0000-4000-8000-63f5f35e0000", "kpi_id": "00000000-0000-4000-8000-67cf74a30000", "direction": "Higher"}},
+    {"at": "2s", "event": "agentic.kpi.KpiDefined", "payload": {"kpi_id": "00000000-0000-4000-8000-67cf74a30000", "name": "name 1", "block": "Principal", "kind": "Count", "gate": true}},
+    {"at": "3s", "event": "agentic.kpi.KpiRetired", "payload": {"kpi_id": "00000000-0000-4000-8000-67cf74a30000"}},
+    {"at": "4s", "event": "agentic.kpi.MeasurementRecorded", "payload": {"measurement_id": "00000000-0000-4000-8000-5dbe3f310000", "kpi_id": "00000000-0000-4000-8000-67cf74a30000", "value": "1.50", "source": "Simulated"}}
+  ]
+}

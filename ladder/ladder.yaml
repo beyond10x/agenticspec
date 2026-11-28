@@ -139,7 +139,7 @@ rungs:
       verifier: grows with the teams, four copies
 
 simulation:
-  profile: ../profiles/coding.yaml
+  profile: ../fields/coding/profiles/coding.yaml
   horizon: 24h
   seeds: 4
   seed: 1

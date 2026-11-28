@@ -1,0 +1,13 @@
+format: agenticspec-binding/1
+binding: agent-document-digest
+architecture: workstation
+refines: egress/workstation.yaml
+summary: The binding pins the coding agents' document by a digest it does not have.
+parts:
+  operator: {agent: ../../../../../bundles/agents/operator.yaml}
+  worker: {agent: ../../../../../bundles/agents/coder.yaml, digest: "sha256:1111111111111111111111111111111111111111111111111111111111111111"}
+  gateway: {state: service}
+  builds: {state: service}
+transports: {question: a2a, order: a2a, model_call: http, claim: http}
+packing:
+  strategy: by_part

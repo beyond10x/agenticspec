@@ -1,0 +1,10 @@
+format: agenticspec-binding/1
+binding: scheduled-loops-egress
+architecture: scheduled-loops
+summary: The base of the refusing bindings of the scheduled loops, every destination of its links declared, so that each is refused for its own reason alone.
+parts:
+  sweep: {egress: [sweeper]}
+  triage: {egress: [triager]}
+  sweeper: {egress: [builds, gateway, owner]}
+  triager: {egress: [builds, gateway, owner]}
+  gateway: {egress: [model]}

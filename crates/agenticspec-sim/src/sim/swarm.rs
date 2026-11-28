@@ -2,7 +2,7 @@
 //! their concurrency policies, shared channels (topic, queue, board), an orchestrator, mesh
 //! messages, a scope partition with its merges, and a start stagger.
 
-use super::{Sim, Task, TaskScript, Who, WorkerKind, position, span};
+use super::{PortUse, Sim, Task, TaskScript, Who, WorkerKind, next, position, span};
 use crate::check;
 use crate::corpus::Class;
 use crate::doc::num;
@@ -103,9 +103,9 @@ impl Trigger {
     }
 }
 
-/// A firing waiting for a free copy or for a run to end: when it fired, and the topic copy it
-/// carries.
-type Waiting = (f64, Option<usize>);
+/// A firing waiting for a free copy or for a run to end: when it fired, the topic copy it
+/// carries, and its number.
+type Waiting = (f64, Option<usize>, usize);
 
 #[derive(Debug, Default, Clone)]
 pub(super) struct TrigAcc {
@@ -185,14 +185,20 @@ pub(super) fn schedules(arch: &Value) -> Vec<Schedule> {
         .collect()
 }
 
-/// The shared channel a principal posts to: arrivals become posts there.
-pub(super) fn intake(arch: &Value, channels: &[String], dist: &[Distribution]) -> Option<usize> {
+/// The shared channel a principal posts to, and that principal: arrivals become posts there.
+pub(super) fn intake(
+    arch: &Value,
+    channels: &[String],
+    dist: &[Distribution],
+) -> Option<(usize, String)> {
     links(arch).find_map(|l| {
         let from = l["from"].as_str()?;
         if check::block(arch, from) != Some("principal") || l["carries"] != "message" {
             return None;
         }
-        position(channels, l["to"].as_str()?).filter(|c| dist[*c] != Distribution::Direct)
+        position(channels, l["to"].as_str()?)
+            .filter(|c| dist[*c] != Distribution::Direct)
+            .map(|c| (c, from.to_owned()))
     })
 }
 
@@ -336,6 +342,8 @@ impl Sim<'_> {
             script: None,
             arrival: None,
             fixture: None,
+            by: 0,
+            deliverable: 0,
         });
         self.shipped.push(false);
         if origin.is_none() {
@@ -355,7 +363,7 @@ impl Sim<'_> {
             None | Some(Class::Open) => None,
             Some(Class::Refused) => {
                 if let Some(p) = part {
-                    self.rec(t, p, "corpus_refused");
+                    self.rec(t, p, "corpus_refused", None, None);
                 }
                 return;
             }
@@ -410,10 +418,10 @@ impl Sim<'_> {
         self.tasks[id].script = script;
         self.tasks[id].arrival = arrival;
         if let Some(p) = part {
-            self.rec_task(t, p, "task_arrived", Some(id));
+            self.rec_task(t, p, "task_arrived", Some(id), Some(id), None);
         }
-        if let Some(c) = m.intake {
-            return self.post(c, id, t);
+        if let Some((c, by)) = &m.intake {
+            return self.post(*c, id, t, Some((by.as_str(), 0)));
         }
         if let Some(k) = m.partition {
             let n = m.workers[k].exec.count;
@@ -447,10 +455,20 @@ impl Sim<'_> {
         (s, other)
     }
 
-    pub(super) fn post(&mut self, c: usize, id: usize, now: f64) {
+    /// Task `id` is posted to channel `c`, by the part instance `by` when one posts it.
+    pub(super) fn post(&mut self, c: usize, id: usize, now: f64, by: Option<(&str, usize)>) {
         let m = self.m;
         self.posted[c] += 1.0;
-        self.rec_task(now, &m.channels[c], "posted", Some(id));
+        if let Some((part, instance)) = by {
+            let port = if m.distribution[c] == Distribution::Direct {
+                "channel.message"
+            } else {
+                "channel.post"
+            };
+            self.port_use(PortUse::new(port, part, instance, now, now).to(&m.channels[c]));
+        }
+        let post = next(&mut self.ids.post);
+        self.rec_task(now, &m.channels[c], "posted", Some(id), Some(post), None);
         let subs: Vec<usize> = (0..m.triggers.len())
             .filter(|tr| m.triggers[*tr].source == Source::Channel(c))
             .collect();
@@ -485,7 +503,7 @@ impl Sim<'_> {
     pub(super) fn tick(&mut self, sc: usize, now: f64) {
         let m = self.m;
         self.ticks[sc] += 1.0;
-        self.rec(now, &m.schedules[sc].part, "schedule_ticked");
+        self.rec(now, &m.schedules[sc].part, "schedule_ticked", None, None);
         for tr in 0..m.triggers.len() {
             if m.triggers[tr].source == Source::Schedule(sc) {
                 self.fire(tr, now, None);
@@ -503,20 +521,21 @@ impl Sim<'_> {
     fn fire(&mut self, tr: usize, now: f64, item: Option<usize>) {
         let t = &self.m.triggers[tr];
         self.trig[tr].fired += 1.0;
-        self.rec(now, &t.part, "trigger_fired");
+        let firing = next(&mut self.ids.firing);
+        self.rec(now, &t.part, "trigger_fired", Some(firing), None);
         if self.at_limit(tr) {
             let a = &mut self.trig[tr];
             if t.policy == Policy::Queue {
                 a.queued_n += 1.0;
-                a.queued.push_back((now, item));
-                self.rec(now, &t.part, "firing_queued");
+                a.queued.push_back((now, item, firing));
+                self.rec(now, &t.part, "firing_queued", Some(firing), None);
             } else {
                 a.skipped += 1.0;
-                self.rec(now, &t.part, "firing_skipped");
+                self.rec(now, &t.part, "firing_skipped", Some(firing), None);
             }
             return;
         }
-        self.trig[tr].waiting.push_back((now, item));
+        self.trig[tr].waiting.push_back((now, item, firing));
         self.dispatch_firings(tr, now);
     }
 
@@ -530,8 +549,8 @@ impl Sim<'_> {
                 .flat_map(|k| self.copies[*k].iter().copied())
                 .find(|i| self.idle(*i, now));
             let Some(i) = free else { break };
-            let (fired, item) = self.trig[tr].waiting.pop_front().expect("not empty");
-            self.start_run(i, tr, fired, item, now);
+            let waiting = self.trig[tr].waiting.pop_front().expect("not empty");
+            self.start_run(i, tr, waiting, now);
         }
     }
 
@@ -539,19 +558,19 @@ impl Sim<'_> {
     pub(super) fn take_firing(&mut self, i: usize, k: usize, now: f64) {
         let mut best: Option<(f64, usize)> = None;
         for &tr in &self.m.workers[k].triggers {
-            if let Some(&(fired, _)) = self.trig[tr].waiting.front()
+            if let Some(&(fired, _, _)) = self.trig[tr].waiting.front()
                 && best.is_none_or(|(b, _)| fired < b)
             {
                 best = Some((fired, tr));
             }
         }
         if let Some((_, tr)) = best {
-            let (fired, item) = self.trig[tr].waiting.pop_front().expect("not empty");
-            self.start_run(i, tr, fired, item, now);
+            let waiting = self.trig[tr].waiting.pop_front().expect("not empty");
+            self.start_run(i, tr, waiting, now);
         }
     }
 
-    fn start_run(&mut self, i: usize, tr: usize, fired: f64, item: Option<usize>, now: f64) {
+    fn start_run(&mut self, i: usize, tr: usize, (fired, item, firing): Waiting, now: f64) {
         let m = self.m;
         let t = &m.triggers[tr];
         let Who::Worker(k) = self.insts[i].who else {
@@ -561,7 +580,9 @@ impl Sim<'_> {
         a.running += 1;
         a.started += 1.0;
         self.insts[i].run = Some(tr);
-        self.rec(now, &t.part, "firing_started");
+        self.insts[i].firing = firing;
+        self.rec(now, &t.part, "firing_started", Some(firing), None);
+        self.record_firing(tr, i, fired, now);
         if item.is_none()
             && let Source::Channel(c) = t.source
             && m.distribution[c] == Distribution::Board
@@ -585,7 +606,7 @@ impl Sim<'_> {
             None => {
                 // Nothing to take: the run looks once and ends.
                 self.trig[tr].empty += 1.0;
-                let dur = self.side_call(k);
+                let dur = self.side_call(k, i, now);
                 self.kinds[k].busy += span(now, now + dur, m.horizon);
                 self.insts[i].hold = true;
                 self.at(now + dur, super::Ev::EmptyDone(i));
@@ -605,7 +626,7 @@ impl Sim<'_> {
         match t.source {
             Source::Schedule(_) | Source::Event(_) if t.template => {
                 let id = self.new_task(now, None);
-                self.rec_task(now, &t.part, "task_arrived", Some(id));
+                self.rec_task(now, &t.part, "task_arrived", Some(id), Some(id), None);
                 Some(id)
             }
             Source::Schedule(_) | Source::Event(_) => self.backlog.pop_front(),
@@ -638,12 +659,13 @@ impl Sim<'_> {
         let first = delays.iter().copied().fold(f64::INFINITY, f64::min);
         let at = delays.iter().position(|d| *d == first).unwrap_or(0);
         delays.swap(0, at);
-        for (n, &(_, k)) in readers.iter().enumerate() {
-            self.side_call(k);
+        for (n, &(j, k)) in readers.iter().enumerate() {
+            self.side_call(k, j, now);
             self.kinds[k].coordination_calls += 1.0;
             if delays[n + 1] - first < m.coord.claim_window_seconds {
                 self.kinds[k].claim_conflicts += 1.0;
-                self.rec(now, &m.workers[k].exec.part, "claim_conflict");
+                let copy = Some(self.insts[j].copy);
+                self.rec(now, &m.workers[k].exec.part, "claim_conflict", None, copy);
             }
         }
         first
@@ -663,7 +685,13 @@ impl Sim<'_> {
         if id.is_some_and(|id| !self.tasks[id].correct) && !self.insts[i].run_failed {
             self.insts[i].run_failed = true;
             self.trig[tr].failed += 1.0;
-            self.rec(now, &t.part, "firing_failed");
+            self.rec(
+                now,
+                &t.part,
+                "firing_failed",
+                Some(self.insts[i].firing),
+                None,
+            );
         }
         if t.takes_all && id.is_some() {
             let next = match t.source {
@@ -708,7 +736,7 @@ impl Sim<'_> {
                 self.kinds[k].coordination_messages += others as f64;
                 let calls = (others as f64 * m.coord.mesh_read_calls).round() as usize;
                 for _ in 0..calls {
-                    self.side_call(k);
+                    self.side_call(k, i, now);
                 }
                 self.kinds[k].coordination_calls += calls as f64;
             }
@@ -731,7 +759,14 @@ impl Sim<'_> {
         if conflict {
             let m = self.m;
             self.kinds[k].merge_conflicts += 1.0;
-            self.rec_task(now, &m.workers[k].exec.part, "merge_conflict", Some(id));
+            self.rec_task(
+                now,
+                &m.workers[k].exec.part,
+                "merge_conflict",
+                Some(id),
+                None,
+                None,
+            );
             if m.workers[k].coordination == Coordination::Mesh {
                 return false;
             }
@@ -747,9 +782,10 @@ impl Sim<'_> {
 
     /// One model call of worker kind `k` outside a task (a read, an empty run): priced and
     /// counted on its model, drawn from the coordination stream; it waits on no rate limit.
-    /// Returns its duration.
-    fn side_call(&mut self, k: usize) -> f64 {
-        let e = &self.m.workers[k].exec;
+    /// Returns its duration. Instance `i` makes it at `now`.
+    fn side_call(&mut self, k: usize, i: usize, now: f64) -> f64 {
+        let m = self.m;
+        let e = &m.workers[k].exec;
         let route = e.route(&mut self.coord);
         let dur = e.turn_seconds.sample(&mut self.coord).max(0.0);
         let mut tokens = [0.0; 4];
@@ -763,6 +799,8 @@ impl Sim<'_> {
         let Some(r) = route else {
             return dur;
         };
+        let copy = self.insts[i].copy;
+        self.model_call(&e.part, copy, (r.model, r.gateway), now, now + dur);
         self.kinds[k].model_calls += 1.0;
         if let Some(g) = r.gateway {
             self.gateways[g].calls += 1.0;

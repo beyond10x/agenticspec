@@ -30,6 +30,14 @@ narrowed by it. A host that shows one session (the LLM gateway UI) opens an `emb
 `app/src/generated/` (`ess generate types`). `app/src/testing/fixtures.ts` answers its views from
 `fixtures/` for the unit tests and the browser tests of `app/e2e/` (`task check:app`).
 
+## The design system and the studio app
+
+`kit/` is the design system every generated page draws with: tokens taken from the docs site, a
+light and a dark theme, and the `Kit*` components; its gallery shows them all (`task check:ui-kit`).
+`studio/` is the agenticstudio app, generated from `../studio/studio.ui.yaml` by `agenticspec ui
+generate` into `studio/src/generated/` (`task ui:generate`), with its host slots in
+`studio/src/slots/`. Both share `package.json` here; `docs/studio.md` describes the app.
+
 ## Served from the local store
 
 ```console
@@ -91,3 +99,75 @@ A script is
 is the offset from the start of the script; a payload is the event's fields, which are the fields
 of the row it adds or replaces. A live source (the gateway) sends the same payloads on the
 channel.
+
+## Block panels
+
+`views/` holds the panels of the building blocks, generated from `blocks/` and never edited by
+hand:
+
+```console
+agenticspec ui panels           # task ui:panels: write views/
+agenticspec ui panels --check   # held by task check:ui
+ess ui check --path ui/views/blocks.ui.yaml --model blocks
+ess ui run --tui --path ui/views/blocks.ui.yaml
+```
+
+| file | what |
+|---|---|
+| `views/blocks.ui.yaml` | an `ess-ui/1` document over the system `agentic`: one widget per view, named as the view (`agentic.agent.Agents`), and a gallery page per block that places each of its widgets |
+| `views/fixtures/` | three synthetic rows per view, in the format above, and one script per block channel that plays each event once |
+| `views/blocks.sources.sha256` | the SHA-256 of every input: `ess --version`, `blocks/ess-inputs.yaml` and each file it lists, and the generator's sources |
+
+A panel is a `collection` of its view's rows: one column per field, the first field as row key,
+an enum (the `state` among them) as a badge, a time as a timestamp. It takes a scope, `source`,
+`architecture`, `part` and `instance`, which no read binds: the runtime that answers the read
+narrows the rows. A view parameter is a required parameter of the panel. When events change the
+view's rows, the panel takes them on the channel its page names (`channel`): it inserts or patches
+a row when each event carries every field of the view, and re-reads the view otherwise.
+
+`views/gallery/` draws the panels: `agenticspec ui generate` writes one Vue component per widget
+(`src/generated/widgets/`, the same file for the same widget in any document), a page per block and
+the navigation of the layers into `src/generated/` (`task ui:generate`, held by
+`task check:generated`), and `src/fixtures.ts` answers every read from `views/fixtures/` and plays
+its channel scripts in the browser, so the gallery needs no server (`?still` keeps it from playing).
+A widget reads through the client of its scope: the adapter at `source`, else the app's own under
+`/scopes/<architecture>[/<part>[/<instance>]]`. `task views:build` builds it into
+`target/views/gallery`; `task check:views` runs its unit tests and its browser test.
+
+## The runtime interface
+
+`runtime.openapi.yaml` (OpenAPI 3.1) is what a host serving the panels answers: the adapter of the
+runtime that admitted the architecture, at `{root}/scopes/{architecture_id}[/{part path}[/{instance}]]`.
+The generated client calls exactly its operations (a test in `crates/agenticspec-ui` holds them
+equal):
+
+| request | wire |
+|---|---|
+| R1 read | `GET {source}/api/views/{view}?{params}` answers `{"rows": [...]}`, only the rows in scope: the row's key, or a field of it that holds an entity's identifier, is the `entity_id` of a placement (`agentic.architecture.Placements`) to that part and copy |
+| R2 feed | `GET {source}/api/channels/{channel}?{params}`, server-sent events with `event:` the qualified name, `data:` the event JSON and `id:` its cursor; a reconnect with `Last-Event-ID` gets exactly the events after it, in order |
+| R3 placements | R1 on `Placements`, `Parts`, `Reach`, `Revisions` and `Contracts` of the scope's architecture |
+| R4 command | `POST {source}/api/commands/{command}` answers `{"row"}`, or 422 with the refusal's row (`error` its qualified name) |
+| R5 action set | `GET {source}/api/actions` answers `[{command, allowed, grant_id?}]` for the signed-in principal; 404 when the source has none |
+
+Every request carries `Authorization: Bearer <token>` or the session cookie of the host's sign-in
+(the client sends cookies, also to another origin); without them the answer is 401, with no row,
+before anything is dispatched. An action that sends a command shows only while R5 of its scope
+allows the command (and its own `visible`, which may read `actor.may(<command>)`); with no R5 every
+action shows. Hiding is a convenience: R4 refuses what the grants do not allow.
+
+`views/source/` is the fixture source: `source.json` holds the principals by token, the placements,
+the parts of the architecture, the grants, the action class of each command (standing in for a
+catalog of action classes) and the answers of the commands; with the panels' fixtures it answers
+R1-R5 at a scope, in the gallery (`src/fixtures.ts`) and as a local server in tests.
+`plan.json` is its conformance plan (`agenticspec-runtime-conformance/1`): the scopes and their
+views, a channel and the cursor to resume from, commands with their expected answer, and the
+principal's grants with an input for each command R5 may hide.
+
+```console
+agenticspec ui conform                                   # against the fixture source
+AGENTICSPEC_UI_TOKEN=<token> agenticspec ui conform --source http://127.0.0.1:7430 --plan <plan.json>
+```
+
+It checks scoped reads (a row out of scope or left out fails, named by view and key), resuming a
+channel from a cursor, the R3 views, the shape of an answer and a refusal, R5 against the grants
+(and R4 refusing what R5 hides), and a request without credentials. Plain `http://` only.

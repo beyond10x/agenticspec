@@ -1,7 +1,8 @@
 //! The committed results of the catalog's experiments: `website/static/catalog/<entry>/result.json`
 //! and beside it `sources.sha256`, the SHA-256 of every source the result depends on (the
-//! experiment, its architecture and profile, the simulator's source files, the versions of the
-//! simulator's dependencies in `Cargo.lock`, and `rust-toolchain.toml`).
+//! experiment, its architecture and profile, the simulator's source files, the part kinds and
+//! carries values the check reads from the architecture block, the versions of the simulator's
+//! dependencies in `Cargo.lock`, and `rust-toolchain.toml`).
 //!
 //! `task catalog:generate` runs every experiment at its own budget and seeds and writes both files;
 //! `task slow:catalog` runs them again and compares bytes. The docs generator never runs a full
@@ -22,9 +23,22 @@ pub const REGENERATE: &str = "task catalog:generate";
 
 /// Files of the simulator that do not change a result: the commands of `agenticspec sim`, the
 /// module list, the ladder, the best variant as a document (derived from the result by the docs
-/// generator), the scenario runner. `events.rs` counts: its table names the events an
-/// `on_event` trigger fires on.
-const SIM_EXCLUDED: &[&str] = &["cli.rs", "lib.rs", "ladder.rs", "best.rs", "scenario.rs"];
+/// generator), the scenario runner, its unavailable parts and the rows of its `given`, the contract
+/// module, the deploy module, and the event log of a recorded run (`event_log.rs`, written beside
+/// the result, never into it). `events.rs` counts: its table names the events an `on_event` trigger
+/// fires on. An entry ending in `/` leaves out every file under it.
+const SIM_EXCLUDED: &[&str] = &[
+    "cli.rs",
+    "lib.rs",
+    "ladder.rs",
+    "best.rs",
+    "scenario.rs",
+    "rows.rs",
+    "event_log.rs",
+    "contract/",
+    "deploy/",
+    "unavailable.rs",
+];
 
 /// The simulator's dependencies from crates.io whose versions a result depends on.
 const SIM_DEPS: &[&str] = &["rayon", "serde_json", "serde_yaml_ng"];
@@ -40,6 +54,8 @@ pub struct Source {
     pub arch_text: String,
     pub profile_path: PathBuf,
     pub profile_text: String,
+    /// The field of work the experiment names (`field:`), a directory under `fields/`.
+    pub field: String,
     /// The entry: the architecture's file stem, or the experiment's when another entry has it.
     pub name: String,
 }
@@ -91,6 +107,13 @@ pub fn sources(root: &Path) -> Result<Vec<Source>, String> {
         };
         let arch_path = field("architecture")?;
         let profile_path = field("profile")?;
+        let field_name = edoc["field"]
+            .as_str()
+            .filter(|f| root.join("fields").join(f).join("field.yaml").exists())
+            .ok_or(format!(
+                "{exp_file}: needs `field`, the name of a field under fields/"
+            ))?
+            .to_string();
         let mut name = stem(&arch_path);
         if out.iter().any(|s| s.name == name) {
             name = stem(&ep);
@@ -104,10 +127,43 @@ pub fn sources(root: &Path) -> Result<Vec<Source>, String> {
             edoc,
             arch_path,
             profile_path,
+            field: field_name,
             name,
         });
     }
     Ok(out)
+}
+
+/// The text of an architecture without its top-level `view:` key and the blank or comment lines
+/// right before it: the view key is presentation only, so editing it leaves the digest of a result
+/// as it was.
+pub fn without_view(text: &str) -> String {
+    let lines: Vec<&str> = text.split_inclusive('\n').collect();
+    let Some(start) = lines
+        .iter()
+        .position(|l| l.starts_with("view:") || l.starts_with("view :"))
+    else {
+        return text.to_string();
+    };
+    let mut from = start;
+    while from > 0 && {
+        let t = lines[from - 1].trim();
+        t.is_empty() || lines[from - 1].starts_with('#')
+    } {
+        from -= 1;
+    }
+    let mut to = start + 1;
+    while to < lines.len() {
+        let l = lines[to];
+        let t = l.trim();
+        if !(t.is_empty() || l.starts_with(' ') || l.starts_with('\t') || l.starts_with('#')) {
+            break;
+        }
+        to += 1;
+    }
+    let mut out: String = lines[..from].concat();
+    out.push_str(&lines[to..].concat());
+    out
 }
 
 fn hex(bytes: &[u8]) -> String {
@@ -162,7 +218,10 @@ pub fn digest(root: &Path, s: &Source) -> Result<String, String> {
     let mut lines: Vec<String> = Vec::new();
     let mut add = |bytes: &[u8], what: String| lines.push(format!("{}  {what}", hex(bytes)));
     add(s.exp_text.as_bytes(), s.exp_file.clone());
-    add(s.arch_text.as_bytes(), relative(root, &s.arch_path));
+    add(
+        without_view(&s.arch_text).as_bytes(),
+        relative(root, &s.arch_path),
+    );
     add(s.profile_text.as_bytes(), relative(root, &s.profile_path));
     let sim = root.join("crates/agenticspec-sim/src");
     let mut files = Vec::new();
@@ -176,14 +235,29 @@ pub fn digest(root: &Path, s: &Source) -> Result<String, String> {
     }
     for f in files {
         let rel = relative(root, &f);
-        if SIM_EXCLUDED
-            .iter()
-            .any(|x| rel == format!("crates/agenticspec-sim/src/{x}"))
-        {
+        if SIM_EXCLUDED.iter().any(|x| {
+            let x = format!("crates/agenticspec-sim/src/{x}");
+            if x.ends_with('/') {
+                rel.starts_with(&x)
+            } else {
+                rel == x
+            }
+        }) {
             continue;
         }
         add(&std::fs::read(&f).map_err(|e| format!("{rel}: {e}"))?, rel);
     }
+    // The check reads its part kinds and carries values from the architecture block; a result's
+    // gate KPIs depend on those lists, not on the rest of the block.
+    let kinds = format!(
+        "{}\n{}\n",
+        agenticspec_sim::check::part_kinds().join(","),
+        agenticspec_sim::check::carries().join(",")
+    );
+    add(
+        kinds.as_bytes(),
+        "blocks/9-composition/architecture.yaml (PartKind, Carries)".into(),
+    );
     let lock = read(&root.join("Cargo.lock"))?;
     let versions = locked_versions(&lock);
     add(

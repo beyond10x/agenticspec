@@ -1,0 +1,8 @@
+{
+  "view": "agentic.store.PresentRecords",
+  "rows": [
+    {"record_id": "00000000-0000-4000-8000-ad68d5e40000", "store_id": "00000000-0000-4000-8000-78c858f60000", "key": "key 1", "revision": 1, "content": {"class":"class 1","digest":"digest 1","length":1}, "expires_at": "2026-11-20T09:05:00Z"},
+    {"record_id": "00000000-0000-4000-8000-ad68d5e40001", "store_id": "00000000-0000-4000-8000-78c858f60001", "key": "key 2", "revision": 2, "content": {"class":"class 2","digest":"digest 2","length":2}},
+    {"record_id": "00000000-0000-4000-8000-ad68d5e40002", "store_id": "00000000-0000-4000-8000-78c858f60002", "key": "key 3", "revision": 3, "content": {"class":"class 3","digest":"digest 3","length":3}, "expires_at": "2026-11-20T11:05:00Z"}
+  ]
+}

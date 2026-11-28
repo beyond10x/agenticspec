@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.Parts",
+  "rows": [
+    {"part_id": "00000000-0000-4000-8000-7784d89c0000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "name 1", "kind": "Principal", "count": 1, "per_part_id": "00000000-0000-4000-8000-7784d89c0000", "acts_for_part_id": "00000000-0000-4000-8000-7784d89c0000", "settings": [{"name":"name 1","value":"value 1"}], "on_border": true, "coordination": "Orchestrator", "start_stagger": "PT5M"},
+    {"part_id": "00000000-0000-4000-8000-7784d89c0001", "architecture_id": "00000000-0000-4000-8000-463ec9280001", "name": "name 2", "kind": "Agent", "count": 2, "settings": [{"name":"name 2","value":"value 2"}], "on_border": false, "coordination": "Board"},
+    {"part_id": "00000000-0000-4000-8000-7784d89c0002", "architecture_id": "00000000-0000-4000-8000-463ec9280002", "name": "name 3", "kind": "Harness", "count": 3, "per_part_id": "00000000-0000-4000-8000-7784d89c0002", "acts_for_part_id": "00000000-0000-4000-8000-7784d89c0002", "settings": [{"name":"name 3","value":"value 3"}], "on_border": true, "coordination": "Mesh", "start_stagger": "PT15M"}
+  ]
+}

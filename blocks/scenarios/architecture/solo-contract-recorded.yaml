@@ -68,6 +68,7 @@ timeline:
       ports: []
       invariants: []
       border: []
+      ingress: []
     outcome: empty
     error:
       name: agentic.architecture.EmptyContract
@@ -91,6 +92,7 @@ timeline:
           port_id: 00000000-0000-4000-8000-000000000202
           predicate: every model.infer of agent is a call of model
       border: []
+      ingress: []
     outcome: recorded
     events:
       - event: agentic.architecture.ContractRecorded
@@ -107,6 +109,7 @@ timeline:
           instances: 1
       invariants: []
       border: []
+      ingress: []
     outcome: contract-exists
     error:
       name: agentic.architecture.ContractExists

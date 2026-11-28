@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
+// contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -186,6 +186,253 @@ pub fn decode_agenticspec_cli_autonomy_figures(value: &json::Value, at: &str) ->
                     items4.push(decode_agenticspec_cli_decision_figures(element4, &nested4)?);
                 }
                 items4
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.BlocksLiftInput` as JSON.
+pub fn encode_agenticspec_cli_blocks_lift_input(value: &agenticspec_types::cli::BlocksLiftInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "transcript");
+    json::push_text(out, &value.transcript);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.BlocksLiftInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_blocks_lift_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksLiftInput, json::DecodeError> {
+    json::closed_at(value, at, &["transcript"])?;
+    Ok(agenticspec_types::cli::BlocksLiftInput {
+        transcript: {
+            let at0 = json::nested(at, "transcript");
+            let member0 = json::member_at(value, at, "transcript")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.BlocksLiftResult` as JSON.
+pub fn encode_agenticspec_cli_blocks_lift_result(value: &agenticspec_types::cli::BlocksLiftResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "session_id");
+    json::push_text(out, &value.session_id);
+    json::member(out, "given");
+    json::push_value(out, &value.given);
+    json::member(out, "entities");
+    out.push('[');
+    for (index0, item0) in value.entities.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        encode_agenticspec_cli_entity_rows(&*item0, out);
+    }
+    out.push(']');
+    json::member(out, "not_observable");
+    out.push('[');
+    for (index0, item0) in value.not_observable.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.BlocksLiftResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_blocks_lift_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksLiftResult, json::DecodeError> {
+    json::closed_at(value, at, &["session_id", "given", "entities", "not_observable"])?;
+    Ok(agenticspec_types::cli::BlocksLiftResult {
+        session_id: {
+            let at0 = json::nested(at, "session_id");
+            let member0 = json::member_at(value, at, "session_id")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        given: {
+            let at1 = json::nested(at, "given");
+            let member1 = json::member_at(value, at, "given")?;
+            json::value_at(member1, &at1)
+        },
+        entities: {
+            let at2 = json::nested(at, "entities");
+            let member2 = json::member_at(value, at, "entities")?;
+            {
+                let mut items2 = Vec::new();
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
+                    let nested2 = json::nested(&at2, &index2.to_string());
+                    items2.push(decode_agenticspec_cli_entity_rows(element2, &nested2)?);
+                }
+                items2
+            }
+        },
+        not_observable: {
+            let at3 = json::nested(at, "not_observable");
+            let member3 = json::member_at(value, at, "not_observable")?;
+            {
+                let mut items3 = Vec::new();
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
+                    let nested3 = json::nested(&at3, &index3.to_string());
+                    items3.push(json::text_at(element3, &nested3, "a string")?.to_owned());
+                }
+                items3
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.BlocksScenarioInput` as JSON.
+pub fn encode_agenticspec_cli_blocks_scenario_input(value: &agenticspec_types::cli::BlocksScenarioInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "transcript");
+    json::push_text(out, &value.transcript);
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "profile");
+    json::push_text(out, &value.profile);
+    json::member(out, "map");
+    json::push_text(out, &value.map);
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    if let Some(held0) = &value.name {
+        json::member(out, "name");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.BlocksScenarioInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_blocks_scenario_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksScenarioInput, json::DecodeError> {
+    json::closed_at(value, at, &["transcript", "architecture", "profile", "map", "out", "name"])?;
+    Ok(agenticspec_types::cli::BlocksScenarioInput {
+        transcript: {
+            let at0 = json::nested(at, "transcript");
+            let member0 = json::member_at(value, at, "transcript")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        architecture: {
+            let at1 = json::nested(at, "architecture");
+            let member1 = json::member_at(value, at, "architecture")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        profile: {
+            let at2 = json::nested(at, "profile");
+            let member2 = json::member_at(value, at, "profile")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        map: {
+            let at3 = json::nested(at, "map");
+            let member3 = json::member_at(value, at, "map")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
+        },
+        out: {
+            let at4 = json::nested(at, "out");
+            let member4 = json::member_at(value, at, "out")?;
+            json::text_at(member4, &at4, "a string")?.to_owned()
+        },
+        name: match value.member("name") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "name");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.BlocksScenarioResult` as JSON.
+pub fn encode_agenticspec_cli_blocks_scenario_result(value: &agenticspec_types::cli::BlocksScenarioResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "scenario");
+    json::push_text(out, &value.scenario);
+    json::member(out, "inputs");
+    json::push_integer(out, value.inputs);
+    json::member(out, "expectations");
+    json::push_integer(out, value.expectations);
+    json::member(out, "unjoined");
+    out.push('[');
+    for (index0, item0) in value.unjoined.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    json::member(out, "unmapped");
+    out.push('[');
+    for (index0, item0) in value.unmapped.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.BlocksScenarioResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_blocks_scenario_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::BlocksScenarioResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "scenario", "inputs", "expectations", "unjoined", "unmapped"])?;
+    Ok(agenticspec_types::cli::BlocksScenarioResult {
+        out: {
+            let at0 = json::nested(at, "out");
+            let member0 = json::member_at(value, at, "out")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        scenario: {
+            let at1 = json::nested(at, "scenario");
+            let member1 = json::member_at(value, at, "scenario")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        inputs: {
+            let at2 = json::nested(at, "inputs");
+            let member2 = json::member_at(value, at, "inputs")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        expectations: {
+            let at3 = json::nested(at, "expectations");
+            let member3 = json::member_at(value, at, "expectations")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        unjoined: {
+            let at4 = json::nested(at, "unjoined");
+            let member4 = json::member_at(value, at, "unjoined")?;
+            {
+                let mut items4 = Vec::new();
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
+                    let nested4 = json::nested(&at4, &index4.to_string());
+                    items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
+                }
+                items4
+            }
+        },
+        unmapped: {
+            let at5 = json::nested(at, "unmapped");
+            let member5 = json::member_at(value, at, "unmapped")?;
+            {
+                let mut items5 = Vec::new();
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
+                    let nested5 = json::nested(&at5, &index5.to_string());
+                    items5.push(json::text_at(element5, &nested5, "a string")?.to_owned());
+                }
+                items5
             }
         },
     })
@@ -592,6 +839,266 @@ pub fn decode_agenticspec_cli_decision_figures(value: &json::Value, at: &str) ->
     })
 }
 
+/// Writes `agenticspec.cli.DeployBundleInput` as JSON.
+pub fn encode_agenticspec_cli_deploy_bundle_input(value: &agenticspec_types::cli::DeployBundleInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "binding");
+    json::push_text(out, &value.binding);
+    if let Some(held0) = &value.out {
+        json::member(out, "out");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.ports {
+        json::member(out, "ports");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.accepts {
+        json::member(out, "accepts");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.kpis {
+        json::member(out, "kpis");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.DeployBundleInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_deploy_bundle_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployBundleInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "binding", "out", "ports", "accepts", "kpis"])?;
+    Ok(agenticspec_types::cli::DeployBundleInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        binding: {
+            let at1 = json::nested(at, "binding");
+            let member1 = json::member_at(value, at, "binding")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        out: match value.member("out") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "out");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+        ports: match value.member("ports") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "ports");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        accepts: match value.member("accepts") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "accepts");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
+            }
+        },
+        kpis: match value.member("kpis") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "kpis");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.DeployBundleResult` as JSON.
+pub fn encode_agenticspec_cli_deploy_bundle_result(value: &agenticspec_types::cli::DeployBundleResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "binding");
+    json::push_text(out, &value.binding);
+    json::member(out, "digest");
+    json::push_text(out, &value.digest);
+    json::member(out, "units");
+    json::push_integer(out, value.units);
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    if let Some(held0) = &value.out {
+        json::member(out, "out");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.bundle {
+        json::member(out, "bundle");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.DeployBundleResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_deploy_bundle_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployBundleResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "binding", "digest", "units", "written", "out", "bundle"])?;
+    Ok(agenticspec_types::cli::DeployBundleResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        binding: {
+            let at1 = json::nested(at, "binding");
+            let member1 = json::member_at(value, at, "binding")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        digest: {
+            let at2 = json::nested(at, "digest");
+            let member2 = json::member_at(value, at, "digest")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        units: {
+            let at3 = json::nested(at, "units");
+            let member3 = json::member_at(value, at, "units")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        written: {
+            let at4 = json::nested(at, "written");
+            let member4 = json::member_at(value, at, "written")?;
+            json::bool_at(member4, &at4, "a boolean")?
+        },
+        out: match value.member("out") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "out");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+        bundle: match value.member("bundle") {
+            None | Some(json::Value::Null) => None,
+            Some(member6) => {
+                let at6 = json::nested(at, "bundle");
+                Some(json::text_at(member6, &at6, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.DeployCheckInput` as JSON.
+pub fn encode_agenticspec_cli_deploy_check_input(value: &agenticspec_types::cli::DeployCheckInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "bundle");
+    json::push_text(out, &value.bundle);
+    if let Some(held0) = &value.accepts {
+        json::member(out, "accepts");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.DeployCheckInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_deploy_check_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployCheckInput, json::DecodeError> {
+    json::closed_at(value, at, &["bundle", "accepts"])?;
+    Ok(agenticspec_types::cli::DeployCheckInput {
+        bundle: {
+            let at0 = json::nested(at, "bundle");
+            let member0 = json::member_at(value, at, "bundle")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        accepts: match value.member("accepts") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "accepts");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.DeployCheckResult` as JSON.
+pub fn encode_agenticspec_cli_deploy_check_result(value: &agenticspec_types::cli::DeployCheckResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "binding");
+    json::push_text(out, &value.binding);
+    json::member(out, "digest");
+    json::push_text(out, &value.digest);
+    json::member(out, "units");
+    json::push_integer(out, value.units);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.DeployCheckResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_deploy_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::DeployCheckResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "binding", "digest", "units"])?;
+    Ok(agenticspec_types::cli::DeployCheckResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        binding: {
+            let at1 = json::nested(at, "binding");
+            let member1 = json::member_at(value, at, "binding")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        digest: {
+            let at2 = json::nested(at, "digest");
+            let member2 = json::member_at(value, at, "digest")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        units: {
+            let at3 = json::nested(at, "units");
+            let member3 = json::member_at(value, at, "units")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.EntityRows` as JSON.
+pub fn encode_agenticspec_cli_entity_rows(value: &agenticspec_types::cli::EntityRows, out: &mut String) {
+    out.push('{');
+    json::member(out, "entity");
+    json::push_text(out, &value.entity);
+    json::member(out, "rows");
+    json::push_integer(out, value.rows);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.EntityRows` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_entity_rows(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::EntityRows, json::DecodeError> {
+    json::closed_at(value, at, &["entity", "rows"])?;
+    Ok(agenticspec_types::cli::EntityRows {
+        entity: {
+            let at0 = json::nested(at, "entity");
+            let member0 = json::member_at(value, at, "entity")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        rows: {
+            let at1 = json::nested(at, "rows");
+            let member1 = json::member_at(value, at, "rows")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+    })
+}
+
 /// Writes `agenticspec.cli.ExportInput` as JSON.
 pub fn encode_agenticspec_cli_export_input(value: &agenticspec_types::cli::ExportInput, out: &mut String) {
     out.push('{');
@@ -724,6 +1231,243 @@ pub fn decode_agenticspec_cli_exposure_figures(value: &json::Value, at: &str) ->
             let member5 = json::member_at(value, at, "sessions")?;
             json::integer_at(member5, &at5, "an integer")?
         },
+    })
+}
+
+/// Writes `agenticspec.cli.IngressDefaultInput` as JSON.
+pub fn encode_agenticspec_cli_ingress_default_input(value: &agenticspec_types::cli::IngressDefaultInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.IngressDefaultInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ingress_default_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressDefaultInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture"])?;
+    Ok(agenticspec_types::cli::IngressDefaultInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.IngressDefaultResult` as JSON.
+pub fn encode_agenticspec_cli_ingress_default_result(value: &agenticspec_types::cli::IngressDefaultResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "defaults");
+    out.push('[');
+    for (index0, item0) in value.defaults.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    json::member(out, "ingress");
+    json::push_text(out, &value.ingress);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.IngressDefaultResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ingress_default_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressDefaultResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "defaults", "ingress"])?;
+    Ok(agenticspec_types::cli::IngressDefaultResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        defaults: {
+            let at1 = json::nested(at, "defaults");
+            let member1 = json::member_at(value, at, "defaults")?;
+            {
+                let mut items1 = Vec::new();
+                for (index1, element1) in json::items_at(member1, &at1, "an array")?.iter().enumerate() {
+                    let nested1 = json::nested(&at1, &index1.to_string());
+                    items1.push(json::text_at(element1, &nested1, "a string")?.to_owned());
+                }
+                items1
+            }
+        },
+        ingress: {
+            let at2 = json::nested(at, "ingress");
+            let member2 = json::member_at(value, at, "ingress")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.IngressProjectInput` as JSON.
+pub fn encode_agenticspec_cli_ingress_project_input(value: &agenticspec_types::cli::IngressProjectInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    if let Some(held0) = &value.out {
+        json::member(out, "out");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.check {
+        json::member(out, "check");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.blocks {
+        json::member(out, "blocks");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.ports {
+        json::member(out, "ports");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.kpis {
+        json::member(out, "kpis");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.IngressProjectInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ingress_project_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressProjectInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "out", "check", "blocks", "ports", "kpis"])?;
+    Ok(agenticspec_types::cli::IngressProjectInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        out: match value.member("out") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "out");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        check: match value.member("check") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "check");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+        blocks: match value.member("blocks") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "blocks");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        ports: match value.member("ports") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "ports");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
+            }
+        },
+        kpis: match value.member("kpis") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "kpis");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.IngressProjectResult` as JSON.
+pub fn encode_agenticspec_cli_ingress_project_result(value: &agenticspec_types::cli::IngressProjectResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "exports");
+    json::push_integer(out, value.exports);
+    json::member(out, "files");
+    out.push('[');
+    for (index0, item0) in value.files.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.IngressProjectResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ingress_project_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::IngressProjectResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "exports", "files", "written"])?;
+    Ok(agenticspec_types::cli::IngressProjectResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        exports: {
+            let at1 = json::nested(at, "exports");
+            let member1 = json::member_at(value, at, "exports")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        files: {
+            let at2 = json::nested(at, "files");
+            let member2 = json::member_at(value, at, "files")?;
+            {
+                let mut items2 = Vec::new();
+                for (index2, element2) in json::items_at(member2, &at2, "an array")?.iter().enumerate() {
+                    let nested2 = json::nested(&at2, &index2.to_string());
+                    items2.push(json::text_at(element2, &nested2, "a string")?.to_owned());
+                }
+                items2
+            }
+        },
+        written: {
+            let at3 = json::nested(at, "written");
+            let member3 = json::member_at(value, at, "written")?;
+            json::bool_at(member3, &at3, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.InvariantStatus` as JSON.
+pub fn encode_agenticspec_cli_invariant_status(value: &agenticspec_types::cli::InvariantStatus, out: &mut String) {
+    match value {
+        agenticspec_types::cli::InvariantStatus::Held => json::push_text(out, "held"),
+        agenticspec_types::cli::InvariantStatus::Violated => json::push_text(out, "violated"),
+        agenticspec_types::cli::InvariantStatus::NotChecked => json::push_text(out, "not_checked"),
+    }
+}
+
+/// Reads `agenticspec.cli.InvariantStatus` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_invariant_status(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::InvariantStatus, json::DecodeError> {
+    Ok(match json::text_at(value, at, "one of `held`, `violated`, `not_checked`")? {
+        "held" => agenticspec_types::cli::InvariantStatus::Held,
+        "violated" => agenticspec_types::cli::InvariantStatus::Violated,
+        "not_checked" => agenticspec_types::cli::InvariantStatus::NotChecked,
+        other => return Err(json::DecodeError { at: at.to_owned(), expected: "one of `held`, `violated`, `not_checked`".to_owned(), found: format!("`{other}`") }),
     })
 }
 
@@ -1344,6 +2088,86 @@ pub fn decode_agenticspec_cli_model_figures(value: &json::Value, at: &str) -> Re
             let at7 = json::nested(at, "cost_microdollars");
             let member7 = json::member_at(value, at, "cost_microdollars")?;
             json::integer_at(member7, &at7, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.PackingDefaultInput` as JSON.
+pub fn encode_agenticspec_cli_packing_default_input(value: &agenticspec_types::cli::PackingDefaultInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    if let Some(held0) = &value.strategy {
+        json::member(out, "strategy");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.PackingDefaultInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_packing_default_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::PackingDefaultInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "strategy"])?;
+    Ok(agenticspec_types::cli::PackingDefaultInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        strategy: match value.member("strategy") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "strategy");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.PackingDefaultResult` as JSON.
+pub fn encode_agenticspec_cli_packing_default_result(value: &agenticspec_types::cli::PackingDefaultResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "strategy");
+    json::push_text(out, &value.strategy);
+    json::member(out, "units");
+    json::push_integer(out, value.units);
+    json::member(out, "packing");
+    json::push_text(out, &value.packing);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.PackingDefaultResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_packing_default_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::PackingDefaultResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "strategy", "units", "packing"])?;
+    Ok(agenticspec_types::cli::PackingDefaultResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        strategy: {
+            let at1 = json::nested(at, "strategy");
+            let member1 = json::member_at(value, at, "strategy")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        units: {
+            let at2 = json::nested(at, "units");
+            let member2 = json::member_at(value, at, "units")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        packing: {
+            let at3 = json::nested(at, "packing");
+            let member3 = json::member_at(value, at, "packing")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
         },
     })
 }
@@ -2337,6 +3161,16 @@ pub fn encode_agenticspec_cli_sim_check_input(value: &agenticspec_types::cli::Si
     out.push('{');
     json::member(out, "architecture");
     json::push_text(out, &value.architecture);
+    if let Some(held0) = &value.ports {
+        json::member(out, "ports");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.kpis {
+        json::member(out, "kpis");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "json");
+    json::push_bool(out, value.json);
     out.push('}');
 }
 
@@ -2346,12 +3180,31 @@ pub fn encode_agenticspec_cli_sim_check_input(value: &agenticspec_types::cli::Si
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckInput, json::DecodeError> {
-    json::closed_at(value, at, &["architecture"])?;
+    json::closed_at(value, at, &["architecture", "ports", "kpis", "json"])?;
     Ok(agenticspec_types::cli::SimCheckInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
             let member0 = json::member_at(value, at, "architecture")?;
             json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        ports: match value.member("ports") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "ports");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        kpis: match value.member("kpis") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "kpis");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+        json: {
+            let at3 = json::nested(at, "json");
+            let member3 = json::member_at(value, at, "json")?;
+            json::bool_at(member3, &at3, "a boolean")?
         },
     })
 }
@@ -2365,6 +3218,60 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
     json::push_integer(out, value.parts);
     json::member(out, "links");
     json::push_integer(out, value.links);
+    json::member(out, "kpis");
+    json::push_value(out, &value.kpis);
+    json::member(out, "single_points");
+    out.push('[');
+    for (index0, item0) in value.single_points.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    json::member(out, "nested");
+    out.push('[');
+    for (index0, item0) in value.nested.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        encode_agenticspec_cli_sim_nested(&*item0, out);
+    }
+    out.push(']');
+    json::member(out, "ingresses");
+    json::push_integer(out, value.ingresses);
+    if let Some(held0) = &value.format {
+        json::member(out, "format");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.valid {
+        json::member(out, "valid");
+        json::push_bool(out, *held0);
+    }
+    if let Some(held0) = &value.violations {
+        json::member(out, "violations");
+        out.push('[');
+        for (index1, item1) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            encode_agenticspec_cli_sim_check_violation(&*item1, out);
+        }
+        out.push(']');
+    }
+    if let Some(held0) = &value.counts {
+        json::member(out, "counts");
+        out.push('{');
+        for (index1, (key1, item1)) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            json::push_text(out, key1);
+            out.push(':');
+            json::push_integer(out, *item1);
+        }
+        out.push('}');
+    }
     out.push('}');
 }
 
@@ -2374,7 +3281,7 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckResult, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "parts", "links"])?;
+    json::closed_at(value, at, &["architecture", "parts", "links", "kpis", "single_points", "nested", "ingresses", "format", "valid", "violations", "counts"])?;
     Ok(agenticspec_types::cli::SimCheckResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -2390,6 +3297,341 @@ pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) ->
             let at2 = json::nested(at, "links");
             let member2 = json::member_at(value, at, "links")?;
             json::integer_at(member2, &at2, "an integer")?
+        },
+        kpis: {
+            let at3 = json::nested(at, "kpis");
+            let member3 = json::member_at(value, at, "kpis")?;
+            json::value_at(member3, &at3)
+        },
+        single_points: {
+            let at4 = json::nested(at, "single_points");
+            let member4 = json::member_at(value, at, "single_points")?;
+            {
+                let mut items4 = Vec::new();
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
+                    let nested4 = json::nested(&at4, &index4.to_string());
+                    items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
+                }
+                items4
+            }
+        },
+        nested: {
+            let at5 = json::nested(at, "nested");
+            let member5 = json::member_at(value, at, "nested")?;
+            {
+                let mut items5 = Vec::new();
+                for (index5, element5) in json::items_at(member5, &at5, "an array")?.iter().enumerate() {
+                    let nested5 = json::nested(&at5, &index5.to_string());
+                    items5.push(decode_agenticspec_cli_sim_nested(element5, &nested5)?);
+                }
+                items5
+            }
+        },
+        ingresses: {
+            let at6 = json::nested(at, "ingresses");
+            let member6 = json::member_at(value, at, "ingresses")?;
+            json::integer_at(member6, &at6, "an integer")?
+        },
+        format: match value.member("format") {
+            None | Some(json::Value::Null) => None,
+            Some(member7) => {
+                let at7 = json::nested(at, "format");
+                Some(json::text_at(member7, &at7, "a string")?.to_owned())
+            }
+        },
+        valid: match value.member("valid") {
+            None | Some(json::Value::Null) => None,
+            Some(member8) => {
+                let at8 = json::nested(at, "valid");
+                Some(json::bool_at(member8, &at8, "a boolean")?)
+            }
+        },
+        violations: match value.member("violations") {
+            None | Some(json::Value::Null) => None,
+            Some(member9) => {
+                let at9 = json::nested(at, "violations");
+                Some({
+                let mut items9 = Vec::new();
+                for (index9, element9) in json::items_at(member9, &at9, "an array")?.iter().enumerate() {
+                    let nested9 = json::nested(&at9, &index9.to_string());
+                    items9.push(decode_agenticspec_cli_sim_check_violation(element9, &nested9)?);
+                }
+                items9
+            })
+            }
+        },
+        counts: match value.member("counts") {
+            None | Some(json::Value::Null) => None,
+            Some(member10) => {
+                let at10 = json::nested(at, "counts");
+                Some({
+                let mut entries10 = std::collections::BTreeMap::new();
+                for (key10, element10) in json::members_at(member10, &at10, "an object")? {
+                    let nested10 = json::nested(&at10, key10);
+                    entries10.insert(key10.clone(), json::integer_at(element10, &nested10, "an integer")?);
+                }
+                entries10
+            })
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimCheckViolation` as JSON.
+pub fn encode_agenticspec_cli_sim_check_violation(value: &agenticspec_types::cli::SimCheckViolation, out: &mut String) {
+    out.push('{');
+    json::member(out, "rule");
+    json::push_text(out, &value.rule);
+    json::member(out, "gate");
+    json::push_bool(out, value.gate);
+    json::member(out, "subject");
+    json::push_text(out, &value.subject);
+    json::member(out, "part");
+    json::push_text(out, &value.part);
+    if let Some(held0) = &value.link {
+        json::member(out, "link");
+        json::push_integer(out, *held0);
+    }
+    json::member(out, "message");
+    json::push_text(out, &value.message);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimCheckViolation` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_check_violation(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckViolation, json::DecodeError> {
+    json::closed_at(value, at, &["rule", "gate", "subject", "part", "link", "message"])?;
+    Ok(agenticspec_types::cli::SimCheckViolation {
+        rule: {
+            let at0 = json::nested(at, "rule");
+            let member0 = json::member_at(value, at, "rule")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        gate: {
+            let at1 = json::nested(at, "gate");
+            let member1 = json::member_at(value, at, "gate")?;
+            json::bool_at(member1, &at1, "a boolean")?
+        },
+        subject: {
+            let at2 = json::nested(at, "subject");
+            let member2 = json::member_at(value, at, "subject")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        part: {
+            let at3 = json::nested(at, "part");
+            let member3 = json::member_at(value, at, "part")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
+        },
+        link: match value.member("link") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "link");
+                Some(json::integer_at(member4, &at4, "an integer")?)
+            }
+        },
+        message: {
+            let at5 = json::nested(at, "message");
+            let member5 = json::member_at(value, at, "message")?;
+            json::text_at(member5, &at5, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimContractInput` as JSON.
+pub fn encode_agenticspec_cli_sim_contract_input(value: &agenticspec_types::cli::SimContractInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    if let Some(held0) = &value.ports {
+        json::member(out, "ports");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.out {
+        json::member(out, "out");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.check {
+        json::member(out, "check");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.suite {
+        json::member(out, "suite");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.trace {
+        json::member(out, "trace");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.kpis {
+        json::member(out, "kpis");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimContractInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_contract_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimContractInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "ports", "out", "check", "suite", "trace", "kpis"])?;
+    Ok(agenticspec_types::cli::SimContractInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        ports: match value.member("ports") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "ports");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        out: match value.member("out") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "out");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+        check: match value.member("check") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "check");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        suite: match value.member("suite") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "suite");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
+            }
+        },
+        trace: match value.member("trace") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "trace");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+        kpis: match value.member("kpis") {
+            None | Some(json::Value::Null) => None,
+            Some(member6) => {
+                let at6 = json::nested(at, "kpis");
+                Some(json::text_at(member6, &at6, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimContractResult` as JSON.
+pub fn encode_agenticspec_cli_sim_contract_result(value: &agenticspec_types::cli::SimContractResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "ports");
+    json::push_integer(out, value.ports);
+    json::member(out, "invariants");
+    json::push_integer(out, value.invariants);
+    json::member(out, "ingresses");
+    json::push_integer(out, value.ingresses);
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    if let Some(held0) = &value.contract {
+        json::member(out, "contract");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.suite_scenarios {
+        json::member(out, "suite_scenarios");
+        json::push_integer(out, *held0);
+    }
+    if let Some(held0) = &value.kept_scenarios {
+        json::member(out, "kept_scenarios");
+        json::push_integer(out, *held0);
+    }
+    json::member(out, "checks");
+    out.push('[');
+    for (index0, item0) in value.checks.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        encode_agenticspec_cli_sim_invariant_check(&*item0, out);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimContractResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_contract_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimContractResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "ports", "invariants", "ingresses", "written", "contract", "suite_scenarios", "kept_scenarios", "checks"])?;
+    Ok(agenticspec_types::cli::SimContractResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        ports: {
+            let at1 = json::nested(at, "ports");
+            let member1 = json::member_at(value, at, "ports")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        invariants: {
+            let at2 = json::nested(at, "invariants");
+            let member2 = json::member_at(value, at, "invariants")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        ingresses: {
+            let at3 = json::nested(at, "ingresses");
+            let member3 = json::member_at(value, at, "ingresses")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        written: {
+            let at4 = json::nested(at, "written");
+            let member4 = json::member_at(value, at, "written")?;
+            json::bool_at(member4, &at4, "a boolean")?
+        },
+        contract: match value.member("contract") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "contract");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+        suite_scenarios: match value.member("suite_scenarios") {
+            None | Some(json::Value::Null) => None,
+            Some(member6) => {
+                let at6 = json::nested(at, "suite_scenarios");
+                Some(json::integer_at(member6, &at6, "an integer")?)
+            }
+        },
+        kept_scenarios: match value.member("kept_scenarios") {
+            None | Some(json::Value::Null) => None,
+            Some(member7) => {
+                let at7 = json::nested(at, "kept_scenarios");
+                Some(json::integer_at(member7, &at7, "an integer")?)
+            }
+        },
+        checks: {
+            let at8 = json::nested(at, "checks");
+            let member8 = json::member_at(value, at, "checks")?;
+            {
+                let mut items8 = Vec::new();
+                for (index8, element8) in json::items_at(member8, &at8, "an array")?.iter().enumerate() {
+                    let nested8 = json::nested(&at8, &index8.to_string());
+                    items8.push(decode_agenticspec_cli_sim_invariant_check(element8, &nested8)?);
+                }
+                items8
+            }
         },
     })
 }
@@ -2564,6 +3806,128 @@ pub fn decode_agenticspec_cli_sim_corpus_row(value: &json::Value, at: &str) -> R
     })
 }
 
+/// Writes `agenticspec.cli.SimDigestInput` as JSON.
+pub fn encode_agenticspec_cli_sim_digest_input(value: &agenticspec_types::cli::SimDigestInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimDigestInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_digest_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimDigestInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture"])?;
+    Ok(agenticspec_types::cli::SimDigestInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimDigestResult` as JSON.
+pub fn encode_agenticspec_cli_sim_digest_result(value: &agenticspec_types::cli::SimDigestResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "digest");
+    json::push_text(out, &value.digest);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimDigestResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_digest_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimDigestResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "digest"])?;
+    Ok(agenticspec_types::cli::SimDigestResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        digest: {
+            let at1 = json::nested(at, "digest");
+            let member1 = json::member_at(value, at, "digest")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimInvariantCheck` as JSON.
+pub fn encode_agenticspec_cli_sim_invariant_check(value: &agenticspec_types::cli::SimInvariantCheck, out: &mut String) {
+    out.push('{');
+    json::member(out, "link");
+    json::push_text(out, &value.link);
+    json::member(out, "predicate");
+    json::push_text(out, &value.predicate);
+    json::member(out, "status");
+    encode_agenticspec_cli_invariant_status(&value.status, out);
+    json::member(out, "uses");
+    json::push_integer(out, value.uses);
+    if let Some(held0) = &value.event {
+        json::member(out, "event");
+        json::push_integer(out, *held0);
+    }
+    if let Some(held0) = &value.detail {
+        json::member(out, "detail");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimInvariantCheck` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_invariant_check(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimInvariantCheck, json::DecodeError> {
+    json::closed_at(value, at, &["link", "predicate", "status", "uses", "event", "detail"])?;
+    Ok(agenticspec_types::cli::SimInvariantCheck {
+        link: {
+            let at0 = json::nested(at, "link");
+            let member0 = json::member_at(value, at, "link")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        predicate: {
+            let at1 = json::nested(at, "predicate");
+            let member1 = json::member_at(value, at, "predicate")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        status: {
+            let at2 = json::nested(at, "status");
+            let member2 = json::member_at(value, at, "status")?;
+            decode_agenticspec_cli_invariant_status(member2, &at2)?
+        },
+        uses: {
+            let at3 = json::nested(at, "uses");
+            let member3 = json::member_at(value, at, "uses")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        event: match value.member("event") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "event");
+                Some(json::integer_at(member4, &at4, "an integer")?)
+            }
+        },
+        detail: match value.member("detail") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "detail");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
 /// Writes `agenticspec.cli.SimLadderInput` as JSON.
 pub fn encode_agenticspec_cli_sim_ladder_input(value: &agenticspec_types::cli::SimLadderInput, out: &mut String) {
     out.push('{');
@@ -2636,6 +4000,196 @@ pub fn decode_agenticspec_cli_sim_ladder_result(value: &json::Value, at: &str) -
             let at2 = json::nested(at, "written");
             let member2 = json::member_at(value, at, "written")?;
             json::bool_at(member2, &at2, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimNested` as JSON.
+pub fn encode_agenticspec_cli_sim_nested(value: &agenticspec_types::cli::SimNested, out: &mut String) {
+    out.push('{');
+    json::member(out, "part");
+    json::push_text(out, &value.part);
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "reference");
+    json::push_text(out, &value.reference);
+    json::member(out, "digest");
+    json::push_text(out, &value.digest);
+    json::member(out, "parts");
+    json::push_integer(out, value.parts);
+    json::member(out, "links");
+    json::push_integer(out, value.links);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimNested` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_nested(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimNested, json::DecodeError> {
+    json::closed_at(value, at, &["part", "architecture", "reference", "digest", "parts", "links"])?;
+    Ok(agenticspec_types::cli::SimNested {
+        part: {
+            let at0 = json::nested(at, "part");
+            let member0 = json::member_at(value, at, "part")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        architecture: {
+            let at1 = json::nested(at, "architecture");
+            let member1 = json::member_at(value, at, "architecture")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        reference: {
+            let at2 = json::nested(at, "reference");
+            let member2 = json::member_at(value, at, "reference")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        digest: {
+            let at3 = json::nested(at, "digest");
+            let member3 = json::member_at(value, at, "digest")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
+        },
+        parts: {
+            let at4 = json::nested(at, "parts");
+            let member4 = json::member_at(value, at, "parts")?;
+            json::integer_at(member4, &at4, "an integer")?
+        },
+        links: {
+            let at5 = json::nested(at, "links");
+            let member5 = json::member_at(value, at, "links")?;
+            json::integer_at(member5, &at5, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimPortsInput` as JSON.
+pub fn encode_agenticspec_cli_sim_ports_input(value: &agenticspec_types::cli::SimPortsInput, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.blocks {
+        json::member(out, "blocks");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.out {
+        json::member(out, "out");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.check {
+        json::member(out, "check");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.expect {
+        json::member(out, "expect");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimPortsInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_ports_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimPortsInput, json::DecodeError> {
+    json::closed_at(value, at, &["blocks", "out", "check", "expect"])?;
+    Ok(agenticspec_types::cli::SimPortsInput {
+        blocks: match value.member("blocks") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "blocks");
+                Some(json::text_at(member0, &at0, "a string")?.to_owned())
+            }
+        },
+        out: match value.member("out") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "out");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        check: match value.member("check") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "check");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+        expect: match value.member("expect") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "expect");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimPortsResult` as JSON.
+pub fn encode_agenticspec_cli_sim_ports_result(value: &agenticspec_types::cli::SimPortsResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "ports");
+    json::push_integer(out, value.ports);
+    json::member(out, "sources_sha256");
+    json::push_text(out, &value.sources_sha256);
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    if let Some(held0) = &value.file {
+        json::member(out, "file");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "differences");
+    out.push('[');
+    for (index0, item0) in value.differences.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimPortsResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_ports_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimPortsResult, json::DecodeError> {
+    json::closed_at(value, at, &["ports", "sources_sha256", "written", "file", "differences"])?;
+    Ok(agenticspec_types::cli::SimPortsResult {
+        ports: {
+            let at0 = json::nested(at, "ports");
+            let member0 = json::member_at(value, at, "ports")?;
+            json::integer_at(member0, &at0, "an integer")?
+        },
+        sources_sha256: {
+            let at1 = json::nested(at, "sources_sha256");
+            let member1 = json::member_at(value, at, "sources_sha256")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        written: {
+            let at2 = json::nested(at, "written");
+            let member2 = json::member_at(value, at, "written")?;
+            json::bool_at(member2, &at2, "a boolean")?
+        },
+        file: match value.member("file") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "file");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        differences: {
+            let at4 = json::nested(at, "differences");
+            let member4 = json::member_at(value, at, "differences")?;
+            {
+                let mut items4 = Vec::new();
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
+                    let nested4 = json::nested(&at4, &index4.to_string());
+                    items4.push(json::text_at(element4, &nested4, "a string")?.to_owned());
+                }
+                items4
+            }
         },
     })
 }
@@ -2717,6 +4271,8 @@ pub fn encode_agenticspec_cli_sim_run_input(value: &agenticspec_types::cli::SimR
         json::member(out, "threads");
         json::push_integer(out, *held0);
     }
+    json::member(out, "events");
+    json::push_bool(out, value.events);
     out.push('}');
 }
 
@@ -2726,7 +4282,7 @@ pub fn encode_agenticspec_cli_sim_run_input(value: &agenticspec_types::cli::SimR
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_run_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimRunInput, json::DecodeError> {
-    json::closed_at(value, at, &["experiment", "out", "threads"])?;
+    json::closed_at(value, at, &["experiment", "out", "threads", "events"])?;
     Ok(agenticspec_types::cli::SimRunInput {
         experiment: {
             let at0 = json::nested(at, "experiment");
@@ -2745,6 +4301,11 @@ pub fn decode_agenticspec_cli_sim_run_input(value: &json::Value, at: &str) -> Re
                 Some(json::integer_at(member2, &at2, "an integer")?)
             }
         },
+        events: {
+            let at3 = json::nested(at, "events");
+            let member3 = json::member_at(value, at, "events")?;
+            json::bool_at(member3, &at3, "a boolean")?
+        },
     })
 }
 
@@ -2761,6 +4322,10 @@ pub fn encode_agenticspec_cli_sim_run_result(value: &agenticspec_types::cli::Sim
     json::push_integer(out, value.threads);
     json::member(out, "best_written");
     json::push_bool(out, value.best_written);
+    if let Some(held0) = &value.events {
+        json::member(out, "events");
+        json::push_integer(out, *held0);
+    }
     out.push('}');
 }
 
@@ -2770,7 +4335,7 @@ pub fn encode_agenticspec_cli_sim_run_result(value: &agenticspec_types::cli::Sim
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_run_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimRunResult, json::DecodeError> {
-    json::closed_at(value, at, &["out", "variants", "seeds", "threads", "best_written"])?;
+    json::closed_at(value, at, &["out", "variants", "seeds", "threads", "best_written", "events"])?;
     Ok(agenticspec_types::cli::SimRunResult {
         out: {
             let at0 = json::nested(at, "out");
@@ -2796,6 +4361,13 @@ pub fn decode_agenticspec_cli_sim_run_result(value: &json::Value, at: &str) -> R
             let at4 = json::nested(at, "best_written");
             let member4 = json::member_at(value, at, "best_written")?;
             json::bool_at(member4, &at4, "a boolean")?
+        },
+        events: match value.member("events") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "events");
+                Some(json::integer_at(member5, &at5, "an integer")?)
+            }
         },
     })
 }
@@ -2948,6 +4520,133 @@ pub fn decode_agenticspec_cli_sim_scenario_result(value: &json::Value, at: &str)
             Some(member9) => {
                 let at9 = json::nested(at, "not_checked");
                 Some(json::integer_at(member9, &at9, "an integer")?)
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimTraceInput` as JSON.
+pub fn encode_agenticspec_cli_sim_trace_input(value: &agenticspec_types::cli::SimTraceInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "profile");
+    json::push_text(out, &value.profile);
+    if let Some(held0) = &value.seed {
+        json::member(out, "seed");
+        json::push_integer(out, *held0);
+    }
+    if let Some(held0) = &value.horizon {
+        json::member(out, "horizon");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.out {
+        json::member(out, "out");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimTraceInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_trace_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimTraceInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "profile", "seed", "horizon", "out"])?;
+    Ok(agenticspec_types::cli::SimTraceInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        profile: {
+            let at1 = json::nested(at, "profile");
+            let member1 = json::member_at(value, at, "profile")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        seed: match value.member("seed") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "seed");
+                Some(json::integer_at(member2, &at2, "an integer")?)
+            }
+        },
+        horizon: match value.member("horizon") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "horizon");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        out: match value.member("out") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "out");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimTraceResult` as JSON.
+pub fn encode_agenticspec_cli_sim_trace_result(value: &agenticspec_types::cli::SimTraceResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "seed");
+    json::push_integer(out, value.seed);
+    json::member(out, "uses");
+    json::push_integer(out, value.uses);
+    json::member(out, "events");
+    json::push_integer(out, value.events);
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    if let Some(held0) = &value.trace {
+        json::member(out, "trace");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimTraceResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_trace_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimTraceResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "seed", "uses", "events", "written", "trace"])?;
+    Ok(agenticspec_types::cli::SimTraceResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        seed: {
+            let at1 = json::nested(at, "seed");
+            let member1 = json::member_at(value, at, "seed")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        uses: {
+            let at2 = json::nested(at, "uses");
+            let member2 = json::member_at(value, at, "uses")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        events: {
+            let at3 = json::nested(at, "events");
+            let member3 = json::member_at(value, at, "events")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        written: {
+            let at4 = json::nested(at, "written");
+            let member4 = json::member_at(value, at, "written")?;
+            json::bool_at(member4, &at4, "a boolean")?
+        },
+        trace: match value.member("trace") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "trace");
+                Some(json::text_at(member5, &at5, "a string")?.to_owned())
             }
         },
     })
@@ -3169,6 +4868,446 @@ pub fn decode_agenticspec_cli_tool_figures(value: &json::Value, at: &str) -> Res
             let at3 = json::nested(at, "failed");
             let member3 = json::member_at(value, at, "failed")?;
             json::integer_at(member3, &at3, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiConformCheck` as JSON.
+pub fn encode_agenticspec_cli_ui_conform_check(value: &agenticspec_types::cli::UiConformCheck, out: &mut String) {
+    out.push('{');
+    json::member(out, "name");
+    json::push_text(out, &value.name);
+    json::member(out, "status");
+    json::push_text(out, &value.status);
+    json::member(out, "detail");
+    json::push_text(out, &value.detail);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiConformCheck` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_conform_check(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformCheck, json::DecodeError> {
+    json::closed_at(value, at, &["name", "status", "detail"])?;
+    Ok(agenticspec_types::cli::UiConformCheck {
+        name: {
+            let at0 = json::nested(at, "name");
+            let member0 = json::member_at(value, at, "name")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        status: {
+            let at1 = json::nested(at, "status");
+            let member1 = json::member_at(value, at, "status")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        detail: {
+            let at2 = json::nested(at, "detail");
+            let member2 = json::member_at(value, at, "detail")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiConformInput` as JSON.
+pub fn encode_agenticspec_cli_ui_conform_input(value: &agenticspec_types::cli::UiConformInput, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.source {
+        json::member(out, "source");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.plan {
+        json::member(out, "plan");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.root {
+        json::member(out, "root");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiConformInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_conform_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformInput, json::DecodeError> {
+    json::closed_at(value, at, &["source", "plan", "root"])?;
+    Ok(agenticspec_types::cli::UiConformInput {
+        source: match value.member("source") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "source");
+                Some(json::text_at(member0, &at0, "a string")?.to_owned())
+            }
+        },
+        plan: match value.member("plan") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "plan");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        root: match value.member("root") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "root");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiConformResult` as JSON.
+pub fn encode_agenticspec_cli_ui_conform_result(value: &agenticspec_types::cli::UiConformResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "source");
+    json::push_text(out, &value.source);
+    json::member(out, "passed");
+    json::push_integer(out, value.passed);
+    json::member(out, "failed");
+    json::push_integer(out, value.failed);
+    json::member(out, "skipped");
+    json::push_integer(out, value.skipped);
+    json::member(out, "checks");
+    out.push('[');
+    for (index0, item0) in value.checks.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        encode_agenticspec_cli_ui_conform_check(&*item0, out);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiConformResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_conform_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiConformResult, json::DecodeError> {
+    json::closed_at(value, at, &["source", "passed", "failed", "skipped", "checks"])?;
+    Ok(agenticspec_types::cli::UiConformResult {
+        source: {
+            let at0 = json::nested(at, "source");
+            let member0 = json::member_at(value, at, "source")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        passed: {
+            let at1 = json::nested(at, "passed");
+            let member1 = json::member_at(value, at, "passed")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        failed: {
+            let at2 = json::nested(at, "failed");
+            let member2 = json::member_at(value, at, "failed")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        skipped: {
+            let at3 = json::nested(at, "skipped");
+            let member3 = json::member_at(value, at, "skipped")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        checks: {
+            let at4 = json::nested(at, "checks");
+            let member4 = json::member_at(value, at, "checks")?;
+            {
+                let mut items4 = Vec::new();
+                for (index4, element4) in json::items_at(member4, &at4, "an array")?.iter().enumerate() {
+                    let nested4 = json::nested(&at4, &index4.to_string());
+                    items4.push(decode_agenticspec_cli_ui_conform_check(element4, &nested4)?);
+                }
+                items4
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiDeriveInput` as JSON.
+pub fn encode_agenticspec_cli_ui_derive_input(value: &agenticspec_types::cli::UiDeriveInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "path");
+    json::push_text(out, &value.path);
+    if let Some(held0) = &value.contract {
+        json::member(out, "contract");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.ports {
+        json::member(out, "ports");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    if let Some(held0) = &value.root {
+        json::member(out, "root");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "check");
+    json::push_bool(out, value.check);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiDeriveInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_derive_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiDeriveInput, json::DecodeError> {
+    json::closed_at(value, at, &["path", "contract", "ports", "out", "root", "check"])?;
+    Ok(agenticspec_types::cli::UiDeriveInput {
+        path: {
+            let at0 = json::nested(at, "path");
+            let member0 = json::member_at(value, at, "path")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        contract: match value.member("contract") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "contract");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
+        },
+        ports: match value.member("ports") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "ports");
+                Some(json::text_at(member2, &at2, "a string")?.to_owned())
+            }
+        },
+        out: {
+            let at3 = json::nested(at, "out");
+            let member3 = json::member_at(value, at, "out")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
+        },
+        root: match value.member("root") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "root");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
+            }
+        },
+        check: {
+            let at5 = json::nested(at, "check");
+            let member5 = json::member_at(value, at, "check")?;
+            json::bool_at(member5, &at5, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiDeriveResult` as JSON.
+pub fn encode_agenticspec_cli_ui_derive_result(value: &agenticspec_types::cli::UiDeriveResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "pages");
+    json::push_integer(out, value.pages);
+    json::member(out, "actions");
+    json::push_integer(out, value.actions);
+    json::member(out, "channels");
+    json::push_integer(out, value.channels);
+    json::member(out, "files");
+    json::push_integer(out, value.files);
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiDeriveResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_derive_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiDeriveResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "pages", "actions", "channels", "files", "written"])?;
+    Ok(agenticspec_types::cli::UiDeriveResult {
+        out: {
+            let at0 = json::nested(at, "out");
+            let member0 = json::member_at(value, at, "out")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        pages: {
+            let at1 = json::nested(at, "pages");
+            let member1 = json::member_at(value, at, "pages")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        actions: {
+            let at2 = json::nested(at, "actions");
+            let member2 = json::member_at(value, at, "actions")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        channels: {
+            let at3 = json::nested(at, "channels");
+            let member3 = json::member_at(value, at, "channels")?;
+            json::integer_at(member3, &at3, "an integer")?
+        },
+        files: {
+            let at4 = json::nested(at, "files");
+            let member4 = json::member_at(value, at, "files")?;
+            json::integer_at(member4, &at4, "an integer")?
+        },
+        written: {
+            let at5 = json::nested(at, "written");
+            let member5 = json::member_at(value, at, "written")?;
+            json::bool_at(member5, &at5, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiGenerateInput` as JSON.
+pub fn encode_agenticspec_cli_ui_generate_input(value: &agenticspec_types::cli::UiGenerateInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "path");
+    json::push_text(out, &value.path);
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiGenerateInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_generate_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiGenerateInput, json::DecodeError> {
+    json::closed_at(value, at, &["path", "out"])?;
+    Ok(agenticspec_types::cli::UiGenerateInput {
+        path: {
+            let at0 = json::nested(at, "path");
+            let member0 = json::member_at(value, at, "path")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        out: {
+            let at1 = json::nested(at, "out");
+            let member1 = json::member_at(value, at, "out")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiGenerateResult` as JSON.
+pub fn encode_agenticspec_cli_ui_generate_result(value: &agenticspec_types::cli::UiGenerateResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "files");
+    out.push('[');
+    for (index0, item0) in value.files.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiGenerateResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_generate_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiGenerateResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "files"])?;
+    Ok(agenticspec_types::cli::UiGenerateResult {
+        out: {
+            let at0 = json::nested(at, "out");
+            let member0 = json::member_at(value, at, "out")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        files: {
+            let at1 = json::nested(at, "files");
+            let member1 = json::member_at(value, at, "files")?;
+            {
+                let mut items1 = Vec::new();
+                for (index1, element1) in json::items_at(member1, &at1, "an array")?.iter().enumerate() {
+                    let nested1 = json::nested(&at1, &index1.to_string());
+                    items1.push(json::text_at(element1, &nested1, "a string")?.to_owned());
+                }
+                items1
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiPanelsInput` as JSON.
+pub fn encode_agenticspec_cli_ui_panels_input(value: &agenticspec_types::cli::UiPanelsInput, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.root {
+        json::member(out, "root");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "check");
+    json::push_bool(out, value.check);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiPanelsInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_panels_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiPanelsInput, json::DecodeError> {
+    json::closed_at(value, at, &["root", "check"])?;
+    Ok(agenticspec_types::cli::UiPanelsInput {
+        root: match value.member("root") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "root");
+                Some(json::text_at(member0, &at0, "a string")?.to_owned())
+            }
+        },
+        check: {
+            let at1 = json::nested(at, "check");
+            let member1 = json::member_at(value, at, "check")?;
+            json::bool_at(member1, &at1, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiPanelsResult` as JSON.
+pub fn encode_agenticspec_cli_ui_panels_result(value: &agenticspec_types::cli::UiPanelsResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "panels");
+    json::push_integer(out, value.panels);
+    json::member(out, "files");
+    json::push_integer(out, value.files);
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiPanelsResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_panels_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiPanelsResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "panels", "files", "written"])?;
+    Ok(agenticspec_types::cli::UiPanelsResult {
+        out: {
+            let at0 = json::nested(at, "out");
+            let member0 = json::member_at(value, at, "out")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        panels: {
+            let at1 = json::nested(at, "panels");
+            let member1 = json::member_at(value, at, "panels")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        files: {
+            let at2 = json::nested(at, "files");
+            let member2 = json::member_at(value, at, "files")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        written: {
+            let at3 = json::nested(at, "written");
+            let member3 = json::member_at(value, at, "written")?;
+            json::bool_at(member3, &at3, "a boolean")?
         },
     })
 }

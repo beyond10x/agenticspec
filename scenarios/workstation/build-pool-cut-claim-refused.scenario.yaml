@@ -1,0 +1,38 @@
+format: agenticspec-scenario/1
+scenario: build-pool-cut-claim-refused
+summary: >-
+  The workers, the build pool's only users, lose it from the start. A task whose run builds once
+  never gets its claim granted and does not complete, while a task that needs no build completes
+  as usual. The worker refuses the one command that reaches the pool, the claim, and answers
+  everything else.
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
+profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
+seed: 1
+horizon: 2h
+
+unavailable:
+  - { part: worker, dependency: builds, from: 0s }
+
+when:
+  - { at: operator, kind: prompt, author: owner, text: "Make the failing build pass." }
+  - { at: operator, kind: prompt, author: owner, after: 1m, text: "Fix the typo in the README." }
+
+fixtures:
+  model:
+    - { for: worker, outcome: correct, turns: 4, builds: 1 }
+    - { for: worker, outcome: correct, turns: 2 }
+
+then:
+  order: set
+  events:
+    - { event: run_started, part: worker, task: when.0 }
+    - { event: claim_granted, absent: true }
+    - { event: task_completed, task: when.0, absent: true }
+    - { event: task_completed, part: worker, task: when.1 }
+  kpis:
+    tasks_done: { min: 1, max: 1 }
+  parts:
+    worker:
+      commands:
+        - { command: agentic.resource.RequestClaim, shows: refused }
+      rest: answers

@@ -203,6 +203,14 @@ entities:
       - name: sent_by_call
         type: Optional<agentic.shared.ToolCallId>
         summary: The tool call of the sending session that sent the message, so the two records join.
+      # The receiving session reads a message in a turn; a harness turn (layer 4) names nothing it
+      # received, so the message (layer 7) names the turn, and a lifted session joins each received
+      # message to the turn it caused.
+      - name: received_in_turn
+        type: Optional<agentic.shared.TurnId>
+        summary: >-
+          The turn of the receiving session that read the message, when the recipient is a
+          session; it joins the message to what that turn did.
     relations:
       - name: channel
         kind: references
@@ -224,10 +232,16 @@ entities:
         target: agentic.harness.ToolCall
         cardinality: one
         via: sent_by_call
+      - name: received_in
+        kind: references
+        target: agentic.harness.Turn
+        cardinality: one
+        via: received_in_turn
+    # Delivered is terminal and still has a way out: a delivered message may never be read.
     lifecycle:
       initial: Sent
       states: [Sent, Delivered, Read, Lost]
-      terminal: [Read, Lost]
+      terminal: [Delivered, Read, Lost]
       transitions:
         - name: deliver
           from: [Sent]
@@ -357,10 +371,11 @@ entities:
         target: agentic.delegation.Delegation
         cardinality: one
         via: delegation_id
+    # Posted is terminal and still has a way out: only a queue post is taken.
     lifecycle:
       initial: Posted
       states: [Posted, Taken]
-      terminal: [Taken]
+      terminal: [Posted, Taken]
       transitions:
         - name: take
           from: [Posted]
@@ -825,6 +840,9 @@ commands:
         type: agentic.shared.MessageId
       - name: reader
         type: agentic.channel.PartyId
+      - name: turn_id
+        type: Optional<agentic.shared.TurnId>
+        summary: The turn in which a reading session read the message.
     outcomes:
       - name: reader-not-the-caller
         when: reader != caller.party
@@ -844,10 +862,12 @@ commands:
         instance: message_id
         sets:
           read_at: {generated: true}
+          received_in_turn: input.turn_id
         emits: [agentic.channel.MessageRead]
         payload:
           agentic.channel.MessageRead:
             message_id: input.message_id
+            turn_id: input.turn_id
       - name: wrong-state
         wrong_state: true
         error: agentic.channel.MessageStateConflict
@@ -1230,6 +1250,7 @@ events:
   - name: agentic.channel.MessageRead
     fields:
       - {name: message_id, type: agentic.shared.MessageId}
+      - {name: turn_id, type: Optional<agentic.shared.TurnId>}
 
   - name: agentic.channel.MessageLost
     fields:

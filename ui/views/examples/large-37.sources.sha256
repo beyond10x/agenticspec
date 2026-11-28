@@ -1,0 +1,5 @@
+21c2e6b6e6c0e0fc0006118b901e6f6d8532f42294229b932044df34e1b732b8  crates/agenticspec-render/tests/fixtures/large-37.yaml
+ae342a79085824a7ffef6242a8f5df4a783a31498ce2e675a92d4fcfbd95f8ca  ui/views/blocks.ui.yaml
+731f6fde4e1bb6968876c50dc776621f47259c7c602fd79e9b98037e8fe484a1  ui/views/blocks.sources.sha256
+94b8462bd2aac6292659d2ae2847df24a46aeecfc3bd384fd801719eb06b5e27  blocks/ports.json
+46f423ae29b2f64eaff1932cb02437537c77ae182d8e9cf27c8c496cd9c64af8  agenticspec ui derive 0.4.1

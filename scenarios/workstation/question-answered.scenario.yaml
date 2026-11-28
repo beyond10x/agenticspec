@@ -4,8 +4,8 @@ summary: >-
   The worker on the owner's task asks a question only the owner can answer. The operator passes it
   on over the chat, the owner picks option B after ten minutes, inside the default deadline, and
   the worker completes the task.
-architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
-profile: { ref: ../../profiles/coding.yaml, digest: f9986e82bfc8e4b0c14f2d871e437ed19689aae2a450bae1a9f006e0589c6802 }
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
+profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
 seed: 1
 horizon: 2h
 

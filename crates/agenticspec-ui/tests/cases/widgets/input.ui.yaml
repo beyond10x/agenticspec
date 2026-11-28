@@ -1,0 +1,89 @@
+# Two widgets placed on one page of a gallery, with a navigation: a widget with parameters (the
+# scope, a channel and a view parameter), a collection that re-reads on its channel's events
+# coalesced over a second, and one that patches the row an event matches.
+format: ess-ui/1
+app: depot
+title: Depot
+model: depot
+placement_profile: fat
+
+shells:
+  app:
+    regions:
+      nav: {kind: navigation}
+      main: {kind: page_outlet}
+
+navigation:
+  home: crates
+  sections:
+    - {name: stock, label: Stock, pages: [crates, moves]}
+
+page_kinds:
+  gallery:
+    purpose: every panel of one block, over the fixtures
+
+channels:
+  depot:
+    carries:
+      events: [depot.CrateStored, depot.CrateMoved]
+    direction: server_to_client
+    delivery: every_event
+    resume: from_last_seen
+    lifecycle: [connecting, live, reconnecting, stale, closed]
+
+widgets:
+  depot.Crates:
+    summary: Rows of the view depot.Crates, keyed by crate_id.
+    params:
+      source: {type: {optional: string}, note: the base URL of the adapter that answers this scope}
+      architecture: {type: {optional: string}, note: the architecture the rows are scoped to}
+      part: {type: {optional: string}, note: the path of the part}
+      instance: {type: {optional: integer}, note: the copy of a part}
+      channel: {type: {ref: channel}, required: true, note: the channel of the page}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: depot.Crates, key: crate_id}
+        live: {channel: args.channel, on: [depot.CrateStored], effect: refetch, coalesce: 1s}
+        columns:
+          - crate_id
+          - {field: weight, as: number}
+          - {field: contents, as: json}
+          - {field: state, as: badge}
+  depot.MovesOfCrate:
+    summary: Rows of the view depot.MovesOfCrate, keyed by move_id.
+    params:
+      channel: {type: {ref: channel}, required: true, note: the channel of the page}
+      crate_id: {type: CrateId, required: true, note: the parameter crate_id of the view}
+    body:
+      - name: rows
+        component: collection
+        reads: {view: depot.MovesOfCrate, key: move_id, params: {crate_id: args.crate_id}}
+        live: {channel: args.channel, on: [depot.CrateMoved], effect: insert_or_patch, match: move_id, only_if: matches(params)}
+        columns:
+          - move_id
+          - {field: at, as: timestamp}
+
+pages:
+  crates:
+    kind: gallery
+    title: Crates
+    nav: {label: All crates}
+    sections:
+      - name: crates
+        title: Crates
+        component: depot.Crates
+        args: {channel: depot}
+      - name: moves
+        title: Moves of a crate
+        component: depot.MovesOfCrate
+        args: {channel: depot, crate_id: "'c-1'"}
+  moves:
+    kind: gallery
+    title: Moves
+    sections:
+      - name: moves
+        title: Moves of a crate
+        component: depot.MovesOfCrate
+        args: {channel: depot, crate_id: "'c-2'"}

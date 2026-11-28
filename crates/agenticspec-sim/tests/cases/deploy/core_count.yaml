@@ -1,0 +1,13 @@
+format: agenticspec-binding/1
+binding: core-count
+architecture: workstation
+refines: egress/workstation.yaml
+summary: Two core units.
+parts:
+  gateway: {state: service}
+transports: {question: a2a, order: a2a, model_call: http}
+packing:
+  units:
+    - {name: front, kind: core, parts: [chat, operator]}
+    - {name: core, kind: core, parts: [box, builds, gateway, tree, worker]}
+  external: [model, owner]

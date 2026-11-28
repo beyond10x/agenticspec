@@ -1,6 +1,7 @@
 {
   "architectures": [
     "docs/architectures/author-reviewer",
+    "docs/architectures/console",
     "docs/architectures/handoff",
     "docs/architectures/orchestrator-workers",
     "docs/architectures/parallel-unaware",
@@ -9,6 +10,8 @@
     "docs/architectures/scope-partition",
     "docs/architectures/shared-board",
     "docs/architectures/solo",
+    "docs/architectures/team-with-console",
+    "docs/architectures/workstation-ingress",
     "docs/architectures/workstation"
   ],
   "blocks": [
@@ -42,6 +45,7 @@
       "collapsed": true,
       "items": [
         "docs/blocks/3-capability/knowledge",
+        "docs/blocks/3-capability/store",
         "docs/blocks/3-capability/tool"
       ],
       "label": "3 · capability",
@@ -97,7 +101,8 @@
     {
       "collapsed": true,
       "items": [
-        "docs/blocks/9-composition/architecture"
+        "docs/blocks/9-composition/architecture",
+        "docs/blocks/9-composition/deployment"
       ],
       "label": "9 · composition",
       "type": "category"

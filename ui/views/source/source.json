@@ -1,0 +1,36 @@
+{
+  "format": "agenticspec-fixture-source/1",
+  "architecture_id": "00000000-0000-4000-8000-463ec9280000",
+  "principals": [
+    {"token": "fixture-operator", "principal_id": "00000000-0000-4000-8000-322d9f1c0000"}
+  ],
+  "views": {
+    "agentic.architecture.Parts": [
+      {"part_id": "00000000-0000-4000-8000-7784d89c0100", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "team.lead", "kind": "Agent", "count": 1, "settings": [], "on_border": true},
+      {"part_id": "00000000-0000-4000-8000-7784d89c0101", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "team.worker", "kind": "Agent", "count": 2, "settings": [], "on_border": false}
+    ],
+    "agentic.architecture.Contracts": []
+  },
+  "placements": [
+    {"placement_id": "00000000-0000-4000-8000-5ace00000001", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "part_id": "00000000-0000-4000-8000-7784d89c0100", "part_path": "team.lead", "entity_name": "agentic.harness.HarnessSession", "entity_id": "00000000-0000-4000-8000-a83fcb5e0000"},
+    {"placement_id": "00000000-0000-4000-8000-5ace00000003", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "part_id": "00000000-0000-4000-8000-7784d89c0100", "part_path": "team.lead", "entity_name": "agentic.question.Question", "entity_id": "00000000-0000-4000-8000-d74009500000"},
+    {"placement_id": "00000000-0000-4000-8000-5ace00000004", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "part_id": "00000000-0000-4000-8000-7784d89c0101", "part_path": "team.worker", "instance": 2, "entity_name": "agentic.harness.HarnessSession", "entity_id": "00000000-0000-4000-8000-a83fcb5e0001"},
+    {"placement_id": "00000000-0000-4000-8000-5ace00000005", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "part_id": "00000000-0000-4000-8000-7784d89c0101", "part_path": "team.worker", "instance": 2, "entity_name": "agentic.question.Question", "entity_id": "00000000-0000-4000-8000-d74009500001"}
+  ],
+  "action_classes": {
+    "agentic.question.Answer": "Message",
+    "agentic.question.TakeDefault": "Execute",
+    "agentic.question.Withdraw": "Edit"
+  },
+  "grants": [
+    {"grant_id": "00000000-0000-4000-8000-69f9b46e0100", "grantee_kind": "Principal", "grantee_id": "00000000-0000-4000-8000-322d9f1c0000", "action_class": "Message", "scope": "00000000-0000-4000-8000-463ec9280000/team.lead", "effect": "Allow", "state": "Active"},
+    {"grant_id": "00000000-0000-4000-8000-69f9b46e0101", "grantee_kind": "Principal", "grantee_id": "00000000-0000-4000-8000-322d9f1c0000", "action_class": "Edit", "scope": "00000000-0000-4000-8000-463ec9280000", "effect": "Allow", "state": "Active"},
+    {"grant_id": "00000000-0000-4000-8000-69f9b46e0102", "grantee_kind": "Principal", "grantee_id": "00000000-0000-4000-8000-322d9f1c0000", "action_class": "Execute", "scope": "00000000-0000-4000-8000-463ec9280000/team.lead", "effect": "Deny", "state": "Active"},
+    {"grant_id": "00000000-0000-4000-8000-69f9b46e0103", "grantee_kind": "Principal", "grantee_id": "00000000-0000-4000-8000-322d9f1c0000", "action_class": "Message", "scope": "00000000-0000-4000-8000-463ec9280000/team.worker", "effect": "Allow", "state": "Revoked"}
+  ],
+  "commands": [
+    {"command": "agentic.question.Answer", "input": {"question_id": "00000000-0000-4000-8000-d74009500000", "option": "A"}, "accepted": {"question_id": "00000000-0000-4000-8000-d74009500000", "option": "A", "state": "Answered"}},
+    {"command": "agentic.question.Answer", "input": {"question_id": "00000000-0000-4000-8000-d740095000ff", "option": "A"}, "refused": {"outcome": "unknown", "error": "agentic.question.UnknownQuestion", "question_id": "00000000-0000-4000-8000-d740095000ff"}},
+    {"command": "agentic.question.Withdraw", "input": {"question_id": "00000000-0000-4000-8000-d74009500001"}, "accepted": {"question_id": "00000000-0000-4000-8000-d74009500001", "state": "Withdrawn"}}
+  ]
+}

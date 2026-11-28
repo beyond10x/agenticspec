@@ -1,0 +1,213 @@
+{
+  "$defs": {
+    "studio.draft.DraftRevised": {
+      "additionalProperties": false,
+      "properties": {
+        "cause": {
+          "$ref": "#/$defs/studio.draft.RevisionCause"
+        },
+        "draft_id": {
+          "$ref": "#/$defs/studio.shared.DraftId"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "revision": {
+          "$ref": "#/$defs/studio.shared.RevisionRef"
+        }
+      },
+      "required": [
+        "draft_id",
+        "revision",
+        "number",
+        "cause"
+      ],
+      "title": "DraftRevised",
+      "type": "object",
+      "x-ess-kind": "event-payload",
+      "x-ess-name": "studio.draft.DraftRevised"
+    },
+    "studio.draft.RevisionCause": {
+      "enum": [
+        "Patch",
+        "SourceChanged"
+      ],
+      "title": "RevisionCause",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "studio.draft.RevisionCause"
+    },
+    "studio.session.Caller": {
+      "enum": [
+        "User",
+        "Agent"
+      ],
+      "title": "Caller",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "studio.session.Caller"
+    },
+    "studio.session.Session.State": {
+      "enum": [
+        "Closed",
+        "Open"
+      ],
+      "title": "State",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "studio.session.Session.State"
+    },
+    "studio.session.Sessions.row": {
+      "additionalProperties": false,
+      "properties": {
+        "draft_id": {
+          "$ref": "#/$defs/studio.shared.DraftId"
+        },
+        "session_id": {
+          "$ref": "#/$defs/studio.shared.SessionId"
+        },
+        "state": {
+          "$ref": "#/$defs/studio.session.Session.State"
+        }
+      },
+      "required": [
+        "session_id",
+        "draft_id",
+        "state"
+      ],
+      "title": "Sessions row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "studio.session.Sessions"
+    },
+    "studio.session.Tool": {
+      "enum": [
+        "Query",
+        "Apply",
+        "Check",
+        "Simulate"
+      ],
+      "title": "Tool",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "studio.session.Tool"
+    },
+    "studio.session.ToolCall.State": {
+      "enum": [
+        "Answered",
+        "Failed",
+        "Running"
+      ],
+      "title": "State",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "studio.session.ToolCall.State"
+    },
+    "studio.session.ToolCalls.row": {
+      "additionalProperties": false,
+      "properties": {
+        "answer": {
+          "type": "string"
+        },
+        "application": {
+          "$ref": "#/$defs/studio.shared.PatchApplicationRef"
+        },
+        "arguments": {
+          "type": "string"
+        },
+        "call_id": {
+          "$ref": "#/$defs/studio.shared.ToolCallId"
+        },
+        "caller": {
+          "$ref": "#/$defs/studio.session.Caller"
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "evaluation_id": {
+          "$ref": "#/$defs/studio.shared.EvaluationId"
+        },
+        "failure": {
+          "type": "string"
+        },
+        "session_id": {
+          "$ref": "#/$defs/studio.shared.SessionId"
+        },
+        "state": {
+          "$ref": "#/$defs/studio.session.ToolCall.State"
+        },
+        "tool": {
+          "$ref": "#/$defs/studio.session.Tool"
+        }
+      },
+      "required": [
+        "call_id",
+        "session_id",
+        "tool",
+        "caller",
+        "arguments",
+        "dry_run",
+        "state"
+      ],
+      "title": "ToolCalls row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "studio.session.ToolCalls"
+    },
+    "studio.shared.DraftId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "DraftId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.DraftId"
+    },
+    "studio.shared.EvaluationId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "EvaluationId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.EvaluationId"
+    },
+    "studio.shared.PatchApplicationRef": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "PatchApplicationRef",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.PatchApplicationRef"
+    },
+    "studio.shared.RevisionRef": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "RevisionRef",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.RevisionRef"
+    },
+    "studio.shared.SessionId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "SessionId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.SessionId"
+    },
+    "studio.shared.ToolCallId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "ToolCallId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.ToolCallId"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-ess-provenance": {
+    "contract_digest": "slice-sha256/2:7a71fe0fb89a196c2e517a6c01bb5ca45de08020f163a875a1b558e42f7bd79f",
+    "source_digest": "0d65903506fab22b8d85227ed597e4202371f99af3fe6e408fec0b83901d58b3",
+    "specification_version": "v1",
+    "system": "studio"
+  }
+}

@@ -98,3 +98,41 @@ says it was sent on someone's order also counts as a delegate's.
 
 The older names `AGENTSPEC_DELEGATES` and `SESSIONSPEC_DELEGATES` are still read when
 `AGENTICSPEC_DELEGATES` is not set.
+
+## Check an architecture
+
+`agenticspec sim check <architecture.yaml>` checks an architecture document against the building
+blocks. It exits 0 and prints the architecture with its counts of parts and links, the KPIs of the
+architecture as a whole, the parts it cannot lose (`single_points`), the architectures it nests and
+the count of its ingresses, or exits 1 and names each refusal on standard error.
+
+With `--json` it prints one JSON document on standard output, also when it refuses the
+architecture, for a program to read. The exit code stays the same. A file it cannot read prints
+no document.
+
+```console
+$ agenticspec sim check --json broken.yaml
+{"architecture":"broken","counts":{"acts_for_without_part":0,…,"unknown_link_parts":1,"unreachable_parts":0},"format":"agenticspec-check/1","links":1,"parts":1,"valid":false,"violations":[{"gate":true,"link":0,"message":"link 0 names a part that does not exist","part":"nobody","rule":"unknown_link_parts","subject":"you->nobody:prompt"}]}
+```
+
+| field | what |
+|---|---|
+| `format` | `agenticspec-check/1` |
+| `architecture`, `parts`, `links` | the architecture's name and its counts of parts and links |
+| `valid` | `true` when no violation is of a gate rule |
+| `violations` | every violation, sorted by rule, subject, part, link and message |
+| `counts` | the number of violations of every rule of the check, 0 included |
+| `kpis`, `single_points`, `nested`, `ingresses` | only when the architecture is accepted: what `sim check` prints without `--json` |
+
+Each violation has:
+
+| field | what |
+|---|---|
+| `rule` | the rule, for example `unknown_link_parts` |
+| `gate` | `true` when the rule refuses the architecture, `false` when it only warns; every rule of the check is a gate |
+| `subject` | the part, or the link as `<from>-><to>:<carries>` |
+| `part` | the part the violation names; for a link, the end at fault |
+| `link` | for a link, its index in `links`, counted from 0 |
+| `message` | what is wrong, in words |
+
+Keys are sorted, so the same document gives the same bytes on every run.

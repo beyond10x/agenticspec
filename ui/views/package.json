@@ -1,0 +1,14 @@
+{
+  "name": "@agenticspec/views",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The block panels, part pages and overviews of a derived UI: a Vue package over ui/kit and a bundle of custom elements from the same components. Its dependencies are those of ui/package.json.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./elements": "./src/elements.ts"
+  },
+  "peerDependencies": {
+    "vue": "3.5.46"
+  }
+}

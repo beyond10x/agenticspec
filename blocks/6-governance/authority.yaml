@@ -594,6 +594,9 @@ commands:
         type: agentic.shared.Attribution
       - name: delegation
         type: Optional<agentic.shared.DelegationId>
+      - name: tool_call_id
+        type: Optional<agentic.shared.ToolCallId>
+        summary: The harness tool call the request is for, when it is one.
       - name: at
         type: Timestamp
     outcomes:
@@ -651,6 +654,7 @@ commands:
             attribution: input.attribution
             delegation: input.delegation
             grant_id: input.grant_id
+            tool_call_id: input.tool_call_id
             at: input.at
 
   - name: agentic.authority.DenyRequest
@@ -676,6 +680,9 @@ commands:
       - name: grant_id
         type: Optional<agentic.shared.GrantId>
         summary: The standing prohibition the denial rests on, when one does.
+      - name: tool_call_id
+        type: Optional<agentic.shared.ToolCallId>
+        summary: The harness tool call the request is for, when it is one.
       - name: at
         type: Timestamp
     outcomes:
@@ -710,6 +717,7 @@ commands:
             attribution: input.attribution
             delegation: input.delegation
             grant_id: input.grant_id
+            tool_call_id: input.tool_call_id
             at: input.at
 
   - name: agentic.authority.ApproveDecision
@@ -726,6 +734,13 @@ commands:
         type: agentic.shared.Decider
       - name: delegation
         type: Optional<agentic.shared.DelegationId>
+      - name: tool_call_id
+        type: Optional<agentic.shared.ToolCallId>
+        summary: >-
+          The harness tool call the approved request is for, when it is one. UNMAPPED: nothing
+          checks that it is the tool call the decision was recorded for; a value read from the
+          stored decision left the binding that decides the call without a scenario
+          (ESS-SYNTH-010), so the approver names it again.
       - name: at
         type: Timestamp
     outcomes:
@@ -771,6 +786,7 @@ commands:
             decision_id: input.decision_id
             approver: input.approver
             delegation: input.delegation
+            tool_call_id: input.tool_call_id
             at: input.at
       - name: wrong-state
         wrong_state: true
@@ -789,6 +805,9 @@ commands:
         type: agentic.shared.DecisionId
       - name: rejecter
         type: agentic.shared.Decider
+      - name: tool_call_id
+        type: Optional<agentic.shared.ToolCallId>
+        summary: The harness tool call the rejected request is for, when it is one (see ApproveDecision).
       - name: at
         type: Timestamp
     outcomes:
@@ -815,6 +834,7 @@ commands:
           agentic.authority.ApprovalRejected:
             decision_id: input.decision_id
             rejecter: input.rejecter
+            tool_call_id: input.tool_call_id
             at: input.at
       - name: wrong-state
         wrong_state: true
@@ -876,6 +896,7 @@ events:
       - {name: attribution, type: agentic.shared.Attribution}
       - {name: delegation, type: "Optional<agentic.shared.DelegationId>"}
       - {name: grant_id, type: "Optional<agentic.shared.GrantId>"}
+      - {name: tool_call_id, type: "Optional<agentic.shared.ToolCallId>"}
       - {name: at, type: Timestamp}
 
   - name: agentic.authority.ApprovalGranted
@@ -883,12 +904,14 @@ events:
       - {name: decision_id, type: agentic.shared.DecisionId}
       - {name: approver, type: agentic.shared.Decider}
       - {name: delegation, type: "Optional<agentic.shared.DelegationId>"}
+      - {name: tool_call_id, type: "Optional<agentic.shared.ToolCallId>"}
       - {name: at, type: Timestamp}
 
   - name: agentic.authority.ApprovalRejected
     fields:
       - {name: decision_id, type: agentic.shared.DecisionId}
       - {name: rejecter, type: agentic.shared.Decider}
+      - {name: tool_call_id, type: "Optional<agentic.shared.ToolCallId>"}
       - {name: at, type: Timestamp}
 
 views:

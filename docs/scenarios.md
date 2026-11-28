@@ -25,6 +25,7 @@ agenticspec sim corpus run scenarios/workstation/workstation.corpus.yaml
 | `sim scenario check <scenario>` | reads the scenario and checks it against its architecture and profile | the scenario name, the architecture, the number of inputs and of expectations |
 | `sim scenario run <scenario> --out <dir>` | checks the scenario, runs it and writes `<dir>/scenario-result.json` | the same, with the verdict, the predicted class and the counts of expectations held, failed and not checked |
 | `sim corpus run <corpus>` | runs every entry of the corpus | the rows as JSON; the table goes to standard error |
+| `blocks scenario <session> ...` | writes a draft scenario of a session (below) | the file, the counts, the inputs left unjoined or unmapped |
 
 `task check:scenarios` runs every `scenarios/*/*.scenario.yaml` and every
 `scenarios/*/*.corpus.yaml`.
@@ -35,7 +36,7 @@ A refused command exits 1 and prints `<code>: <detail>` to standard error:
 |---|---|
 | `document_unreadable` | a file cannot be read or is not YAML |
 | `scenario_invalid` | the scenario is not a valid `agenticspec-scenario/1` document; every problem is named by its path, such as `when.0.atx: unknown key` |
-| `scenario_refused` | the scenario does not fit its architecture: a digest does not match, an input is not at a border part, an author or a fixture names no part, or the architecture itself is refused |
+| `scenario_refused` | the scenario does not fit its architecture: a digest does not match, an input is not at a border part, an author or a fixture names no part, an `unavailable` entry or a part of `then.parts` names no part or no dependency, a view, command or error is not declared by a block, or the architecture itself is refused |
 | `out_missing` | `scenario run` without `--out` |
 | `out_unwritable` | `scenario-result.json` cannot be written |
 | `expectation_failed` | an expected event or a KPI bound failed; `scenario-result.json` is written first |
@@ -48,8 +49,8 @@ A refused command exits 1 and prints `<code>: <detail>` to standard error:
 format: agenticspec-scenario/1
 scenario: question-answered
 summary: The worker asks a question only the owner can answer; the owner picks B.
-architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
-profile: { ref: ../../profiles/coding.yaml, digest: f9986e82bfc8e4b0c14f2d871e437ed19689aae2a450bae1a9f006e0589c6802 }
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
+profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
 seed: 1
 horizon: 2h
 
@@ -88,7 +89,8 @@ then:
 | `given` | no | rows that exist when the run starts |
 | `when` | yes | the inputs, in order |
 | `fixtures` | no | stand-ins for the parts outside the architecture |
-| `then` | no | the expected events and KPI bounds |
+| `unavailable` | no | the parts and dependencies that are unavailable, and from when ([below](#unavailable-parts-and-dependencies)) |
+| `then` | no | the expected events, KPI bounds and what each part shows |
 
 Every key that is not in these tables is refused with its path. Durations are written `90s`,
 `15m`, `2h` or `1d`.
@@ -116,6 +118,7 @@ The run admits an input or refuses it by a rule:
 | `control_without_proof` | a control input carries no proof | none: no block refuses a message without proof |
 | `claim_conflict` | a copy claims a board entry another copy claimed first | `agentic.channel.PostAlreadyTaken` |
 | `corpus_refused` | a corpus entry a profile drew was refused, so it makes no task | none |
+| `part_unavailable` | the part, the author or the channel of the input is unavailable at its time, or the part is cut from the author or the channel ([below](#unavailable-parts-and-dependencies)) | none: no block declares one |
 
 An admitted prompt (`send`), order (`send`, `dispatch`) or control input (`run`, `retry`,
 `dispatch`) makes a task, named after the input: `when.0` for the first. Other admitted inputs are
@@ -134,6 +137,34 @@ given:
 A given task waits in the backlog at the start. A given question is open at the start: a copy of
 `asked_by` holds it and waits for the answer of `addressee`. Neither records a creation event; the
 events that follow carry the row's `id` as their task.
+
+`rows` holds rows of any block entity, such as the rows `agenticspec blocks lift` writes for a
+session ([Queries](queries.md)):
+
+```yaml
+given:
+  rows:
+    - entity: agentic.question.Question
+      id: e77e1af7-84f9-f4c4-12b9-2c0d99596d5c
+      state: Answered
+      fields: { asked_by: 19faf7cc-c2aa-c558-1b93-cdd35cd4c467, addressee: c1582bfa-36f6-f8ad-4777-2e7feb7f5a80, text: { digest: cc780a105da069ae2ec1b36669e62f7891da7c136719992ea3752c419d572b56, length: 100, class: tool_input } }
+      not_recorded: [kind, options, default_option, deadline]
+      evidence: "lift-demo#16"
+```
+
+| key | required | what |
+|---|---|---|
+| `entity` | yes | a block entity, by its full name |
+| `id` | yes | its identifier |
+| `state` | no | a state of the entity's lifecycle |
+| `fields` | no | field values, each a field the entity declares, of its type |
+| `not_recorded` | no | required fields the record the row comes from does not hold |
+| `evidence` | no | where the row comes from, such as a node of a session |
+
+`scenario check` refuses a row of an entity no block declares, a field the entity does not have,
+a value of the wrong type, a state outside its lifecycle, and a required field that is neither in
+`fields` nor in `not_recorded`, each by its path (`given.rows.0.fields.pool_id`). The simulator
+does not read `rows`.
 
 ### Fixtures
 
@@ -227,6 +258,101 @@ An expectation of an event the simulator does not record is `not_checked`, not f
 that records it can check the same scenario. `kpis` bounds any KPI of a simulator run with `min`,
 `max` or both, inclusive.
 
+## Unavailable parts and dependencies
+
+A scenario can make a part unavailable, or only one dependency of a part: a store, a model route,
+an upstream it reaches over a link. `then.parts` then says what each remaining part shows. The
+same scenario runs on the simulator now and on a runtime later.
+
+```yaml
+unavailable:
+  - { part: chat, from: 30m }
+  - { part: worker, dependency: builds, from: 0s }
+
+then:
+  parts:
+    operator:
+      views:
+        - { view: agentic.channel.ChannelMessages, shows: error, error: agentic.channel.ChannelIsClosed }
+      rest: answers
+    worker:
+      commands:
+        - { command: agentic.resource.RequestClaim, shows: refused }
+```
+
+| key | required | what |
+|---|---|---|
+| `part` | yes | the part that is unavailable; with `dependency`, the part that loses it |
+| `dependency` | no | a part that `part` depends on: one its links go to or over, one in its `egress`, one that exists once `per` copy of it, or one any of those reach over their links. Only `part` loses it; the other parts still reach it |
+| `from` | yes | when it becomes unavailable; `0s` is at the start, before the part listens |
+| `for` | no | how long it stays unavailable; to the end of the run by default |
+
+`then.parts` maps a part to what it shows. A part that is unavailable itself shows nothing and is
+refused there.
+
+| key | what |
+|---|---|
+| `views` | a list of `{ view, shows, error }`. `view` is the block name of a view; `shows` is `answer` (no error, rows or none), `empty` (no rows, no error) or `error`; `error`, only with `shows: error`, is the block name of the error the view answers with, any error when left out |
+| `commands` | a list of `{ command, shows, error }`. `command` is the block name of a command; `shows` is `accepted` or `refused`; `error`, only with `shows: refused`, is the block name of the error it is refused with, any error when left out |
+| `exits` | the status, 1 to 255, the part's process exits with before it listens. Only for a part with a dependency unavailable from `0s`, and with no views, commands or `rest` |
+| `rest` | `answers`: every view and command of the part that is not named answers as it does with nothing unavailable |
+
+`check` refuses, each by its path and name: a part or a dependency that is not in the
+architecture, a dependency the part does not reach, a part named as its own dependency, a `from`
+at or after the horizon, a view or a command that no block declares, an error that no block
+declares, and a view or command of a block that is neither the part's own nor one of a part it
+depends on. An agent part also shows the views and takes the commands of the blocks it works in:
+`agentic.harness`, `agentic.work` and `agentic.question`. A pack block covers every domain under
+it (`scm` covers `agentic.scm.change` and the others).
+
+The four kinds of outcome, each with an example in
+[`scenarios/workstation/`](https://github.com/beyond10x/agenticspec/tree/main/scenarios/workstation):
+
+| outcome | how it is written | example |
+|---|---|---|
+| an error inside one view while the rest answers | `views: [{ view, shows: error, error }]` and `rest: answers` | `chat-closed-view-error` |
+| an empty view with no error | `views: [{ view, shows: empty }]` | `model-route-down-empty-view` |
+| the process exits with a status before it listens | `unavailable` with `from: 0s` and `exits: <status>` | `operator-exits-without-gateway` |
+| a dependency only one command reaches: that command is refused, nothing else is missed | `commands: [{ command, shows: refused }]` and `rest: answers` | `build-pool-cut-claim-refused` |
+
+### On the simulator
+
+The simulator makes an entry unavailable where it can model it, and `scenario-result.json` says
+how in `unavailable[].simulated`:
+
+| `simulated` | when | what the run does |
+|---|---|---|
+| `fault` | a pool or a gateway, or a principal; a pool, gateway or principal only `part` reaches; a gateway's only model | the pool or gateway falls to no capacity, the principal is away, for the window |
+| `inputs_refused` | a channel; a border part, also one that exits at the start, when the scenario has no given rows; a border part cut from a channel | the inputs that reach the part, come from it or come over the channel in the window are refused by the rule `part_unavailable` |
+| `not_modeled` | anything else, or an `inputs_refused` entry while the simulation still records an event of the part or over the channel in the window | none of the expected events and bounds is checked: each is `not_checked` with the reason |
+
+The simulator serves no views, decides no commands of a part and starts no processes, so each
+observable of `then.parts` is `not_checked` on it, with the reason. The expected events and KPI
+bounds say what the simulator can see of the same outage: an input refused, a claim never
+granted, a task that does not complete while another one does.
+
+### On a runtime
+
+A conformance run of a runtime reads the same scenario and writes the same result document, with
+the observables checked:
+
+1. It starts the system with every entry that has `from: 0s` in force: the part is stopped, or
+   the link from the part to its dependency is cut (the store, the model route, the upstream does
+   not answer the part). The other entries come into force at `from` and end after `for`.
+2. A part with `exits` must exit with that status and must not listen: no port of it accepts a
+   connection. Its status is `held` or `failed`.
+3. It sends the inputs of `when` at their times. An input the runtime refuses because a part or
+   a link is unavailable counts as a refusal by `part_unavailable`.
+4. While the entries are in force it queries each named view of each part of `then.parts` and
+   compares: `answer` holds when the view answers with no error; `empty` when it answers with no
+   rows and no error; `error` when it answers with an error, the named one when `error` is given.
+5. It sends each named command with an input the scenario would accept with nothing
+   unavailable: `refused` holds when the command is refused, with the named error when given;
+   `accepted` when it is not refused.
+6. For `rest: answers` it queries every other view of the part's blocks: each must answer with no
+   error. A command of the part that is not named must not be refused because of the entry.
+7. It checks the expected events and KPI bounds on the events it records, as the simulator does.
+
 ## The result
 
 `scenario-result.json` (format `agenticspec-scenario-result/1`):
@@ -252,13 +378,17 @@ that records it can check the same scenario. `kpis` bounds any KPI of a simulato
 
 | field | what |
 |---|---|
-| `verdict` | `held` when no expectation and no bound failed |
+| `verdict` | `held` when no expectation, no bound and no observable failed |
 | `predicted` | the outcome class of the run (below) |
 | `expectations` | each expected event with `status` `held`, `failed` or `not_checked`, the index of the trace event it matched, and the reason when it did not hold |
 | `kpi_bounds` | each bound with the measured value and its status |
 | `inputs` | each input, when it arrived, and whether it was accepted or refused by which rule |
 | `trace` | every event of the run in block terms, in time order: the block event, its name, the part, the task, and `sim`, the simulator's own event it comes from |
 | `kpis` | every KPI of the run |
+| `unavailable` | each `unavailable` entry, its window (`from_seconds`, `until_seconds`) and how the simulator made it unavailable: `simulated` is `fault`, `inputs_refused` or `not_modeled` with the reason |
+| `observables` | each observable of `then.parts`: the part, `observable` (`view`, `command`, `exits` or `rest`), the expectation as written, its status and the reason when it was not checked |
+
+`counts` adds up the expected events, the bounds and the observables.
 
 ## Outcome classes
 
@@ -278,13 +408,13 @@ The class a run predicts is the first that applies:
 ```yaml
 format: agenticspec-corpus/1
 corpus: workstation-examples
-architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
-profile: { ref: ../../profiles/coding.yaml, digest: f9986e82bfc8e4b0c14f2d871e437ed19689aae2a450bae1a9f006e0589c6802 }
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
+profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
 seed: 1
 horizon: 4h
 
 entries:
-  - scenario: { ref: question-answered.scenario.yaml, digest: b3308e370fbc4042ab6da7f240873b17903f5fa917ee360d0c5fc30311ddb75a }
+  - scenario: { ref: question-answered.scenario.yaml, digest: c41a31c4225f675d2e429f2e155b54c74c2ee866f63851dbf862d73b265f63b5 }
     kind: prompt
     input_digest: 674bead15a2e6fe07d6bffb0d9e6c35e414ddeb8701cd9b3521840636b2d3d62
     expected: question
@@ -327,3 +457,42 @@ Tasks still arrive at `tasks_per_hour`. Each arrival draws one entry by its weig
 class decides how the task's first run ends: `correct`, `wrong`, `false_completion` and `question`
 as the model fixture of that name, `refused` makes no task, and `open` leaves the run to the
 profile. The path is relative to the profile file.
+
+## A draft scenario from a session
+
+```sh
+agenticspec blocks scenario <session>.jsonl --architecture architectures/workstation.yaml \
+  --profile fields/coding/profiles/coding.yaml --map main=operator,sub=worker --out drafts/session.scenario.yaml
+```
+
+`blocks scenario` lifts the session, writes each of its outside inputs as an entry of `when`, and
+the block events of the rows each input caused as `then`. An outside input is a prompt of the
+main agent by a human (kind `prompt`), a delegate or another session (kind `message`), with proof
+`none` and the time since the input before it. A prompt of the harness or a hook, such as a task
+notification, is no input. What an input caused is every row lifted from the turn that received it
+and from every step after it, up to the next input: a task makes `task_created`, a run
+`run_started`, a question `question_asked` (and `question_answered`), a sent message `post_sent`,
+each with the input's task, `when.<n>`. A comment beside each entry names the node it comes from.
+
+`--map` names the part each side of the session plays, as `key=part` pairs:
+
+| key | the part of |
+|---|---|
+| `main` | the main agent; required, and a border part of the architecture, where every input arrives |
+| `sub` | every sub-agent |
+| `human` | the human who prompts; the part `main` acts for when not given |
+| `delegate` | a delegate's prompts; the human's part when not given |
+| `peer` | another session's messages |
+
+The draft is checked like any scenario before it is written; a draft the check refuses exits 1
+with `scenario_refused` and writes nothing. It prints:
+
+| field | what |
+|---|---|
+| `out`, `scenario` | the file written and the scenario's name (`--name`, or the file name) |
+| `inputs`, `expectations` | the entries of `when` and of `then.events` |
+| `unjoined` | inputs no turn received, as `when.<n> (<node>)`: in the scenario, with no expectation |
+| `unmapped` | inputs whose author plays no part, as `<node> (<author>)`: left out of the scenario |
+
+Other refusals: `transcript_unreadable`, `document_unreadable` (the architecture or profile),
+`map_invalid` (a pair that is not `key=part`, an unknown key, no `main`) and `out_unwritable`.

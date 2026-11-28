@@ -25,7 +25,7 @@ One principal acts for another. A delegation names who is acted for, who acts, t
 
 - [authority](../6-governance/authority.md) · layer 6 · 9 references
 - [channel](../7-collaboration/channel.md) · layer 7 · 14 references
-- [question](../7-collaboration/question.md) · layer 7 · 4 references
+- [question](../7-collaboration/question.md) · layer 7 · 6 references
 
 ## Entities
 

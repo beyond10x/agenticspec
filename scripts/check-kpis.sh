@@ -1,6 +1,7 @@
 #!/bin/sh
-# Hold the KPI catalogues: kpis/catalogue.yaml (the core blocks) and packs/<pack>/kpis.yaml (one per
-# pack) parse, follow kpis/README.md, and name real blocks and real events.
+# Hold the KPI catalogues: kpis/catalogue.yaml (the core blocks), packs/<pack>/kpis.yaml (one per
+# pack) and fields/<field>/kpis.yaml (one per field that has KPIs) parse, follow kpis/README.md,
+# and name real blocks and real events.
 #
 # Rules, per catalogue:
 #   1. format is agenticspec-kpis/1; every KPI has id, block, kind, unit, summary, how,
@@ -11,12 +12,19 @@
 #        excluded) or one of the planned blocks;
 #      - packs/<pack>/kpis.yaml: a domain of a block file its pack.yaml lists (without
 #        `agentic.`), so `scm.change`; every pack has this file;
+#      - fields/<field>/kpis.yaml: a core block or a block of a pack its field.yaml lists, the
+#        block whose events it reads, with no least number per block;
+#      a core KPI whose block is a field is refused with a pointer to the field's catalogue;
 #   4. kind, unit, direction, status and each mode value come from their lists; a correctness KPI
 #      is a gate unless it says `gate: false`; source is `design`, `docs/kpis.md` or
 #      `research/<id>`;
 #   5. every event in `reads` is declared in the `events:` section of a block the catalogue may
 #      read, or of the session IR: the core reads core blocks; a pack reads core blocks, its own
-#      and those of the packs its pack.yaml `uses:`.
+#      and those of the packs its pack.yaml `uses:`; a field reads core blocks and those of
+#      the packs its field.yaml lists;
+#   6. every KPI of the architecture as a whole that `agenticspec sim check` reports (`whole` below,
+#      the list of crates/agenticspec-sim/src/whole.rs) is listed in the core catalogue with block
+#      architecture and source design.
 # Needs yq (mikefarah, v4).
 #
 # Usage: scripts/check-kpis.sh          every catalogue
@@ -25,6 +33,8 @@ set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 planned="verification memory plan monitor"
+whole="agents_total principals_total human_touchpoints autonomy_depth model_call_paths ungated_model_calls
+single_points border_parts egress_targets shared_workspaces capacity_ratio"
 
 command -v yq >/dev/null 2>&1 || { echo "check-kpis: yq is needed" >&2; exit 2; }
 work="$(mktemp -d)"
@@ -39,9 +49,10 @@ events() {
   done
 }
 
-# check <catalogue> <blocks> <events file>: rules 1 and 3 to 5 for one catalogue; ids go to $work/ids
+# check <catalogue> <blocks> <events file> [min]: rules 1 and 3 to 5 for one catalogue, with at least
+# <min> KPIs per block (2 when not given); ids go to $work/ids
 check() {
-  file=$1; blocks=$2; events=$3
+  file=$1; blocks=$2; events=$3; min=${4:-2}
   rel="${file#"$root"/}"
   yq '.format' "$file" >"$work/format" 2>"$work/err" || { cat "$work/err" >&2; echo x >>"$work/fail"; return; }
   [ "$(cat "$work/format")" = "agenticspec-kpis/1" ] || say "$rel: format is not agenticspec-kpis/1"
@@ -66,13 +77,18 @@ check() {
   while read -r id block; do
     case " $(echo $blocks) " in
       *" $block "*) ;;
-      *) say "$rel: $id: block $block is not a block of this catalogue" ;;
+      *)
+        if [ -f "$root/fields/$block/field.yaml" ]; then
+          say "$rel: $id: block $block is a field; a KPI of a field goes in fields/$block/kpis.yaml and names the block it reads"
+        else
+          say "$rel: $id: block $block is not a block of this catalogue"
+        fi ;;
     esac
   done <"$work/id-block"
-  for b in $blocks; do
+  if [ "$min" -gt 0 ]; then for b in $blocks; do
     n="$(cut -d' ' -f2 "$work/id-block" | grep -c -x "$b" || true)"
-    [ "$n" -ge 2 ] || say "$rel: block $b has $n KPIs, needs at least 2"
-  done
+    [ "$n" -ge "$min" ] || say "$rel: block $b has $n KPIs, needs at least $min"
+  done; fi
 
   while read -r id kind unit direction status gatetag; do
     case "$kind" in correctness|completeness|quality) ;; *) say "$rel: $id: kind $kind" ;; esac
@@ -119,7 +135,13 @@ check() {
 events "$root"/blocks/*/*.yaml "$root"/spec/domains/session.yaml | sort -u >"$work/core-events"
 
 core_blocks="$(yq '.domains[]' "$root/blocks/system.yaml" | sed -n 's/^agentic\.//p' | grep -v '^shared$') $planned"
-check "${1:-$root/kpis/catalogue.yaml}" "$core_blocks" "$work/core-events"
+core_file="${1:-$root/kpis/catalogue.yaml}"
+check "$core_file" "$core_blocks" "$work/core-events"
+yq '.kpis[] | .id + " " + .block + " " + .source' "$core_file" >"$work/id-block-source" 2>/dev/null || : >"$work/id-block-source"
+for id in $whole; do
+  grep -q -x "$id architecture design" "$work/id-block-source" ||
+    say "$id: agenticspec sim check reports it; list it with block architecture and source design"
+done
 
 if [ $# -eq 0 ]; then
   for manifest in "$root"/packs/*/pack.yaml; do
@@ -137,6 +159,19 @@ if [ $# -eq 0 ]; then
     used_files="$(for u in $used; do yq '.blocks // [] | .[]' "$root/packs/$u/pack.yaml" | sed "s#^#$root/packs/$u/#"; done)"
     { cat "$work/core-events"; events $files $used_files; } | sort -u >"$work/pack-events"
     check "$dir/kpis.yaml" "$pack_blocks" "$work/pack-events"
+  done
+
+  for manifest in "$root"/fields/*/field.yaml; do
+    [ -f "$manifest" ] || continue
+    dir="$(dirname "$manifest")"
+    [ -f "$dir/kpis.yaml" ] || continue
+    field_files=""
+    for p in $(yq '.packs // [] | .[]' "$manifest"); do
+      field_files="$field_files $(yq '.blocks // [] | .[]' "$root/packs/$p/pack.yaml" | sed "s#^#$root/packs/$p/#")"
+    done
+    field_blocks="$core_blocks $(for f in $field_files; do sed -n 's/^domain: *agentic\.//p' "$f" | head -n 1; done)"
+    { cat "$work/core-events"; events $field_files; } | sort -u >"$work/field-events"
+    check "$dir/kpis.yaml" "$field_blocks" "$work/field-events" 0
   done
 fi
 

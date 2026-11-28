@@ -1,0 +1,4 @@
+{"rows": [
+  {"name": "workstation", "source": "architectures/workstation.yaml"},
+  {"name": "solo", "source": "architectures/solo.yaml"}
+]}

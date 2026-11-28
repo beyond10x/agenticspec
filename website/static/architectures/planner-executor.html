@@ -119,7 +119,7 @@ html, body {
 }
 
 h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
-h1 { font-size: 24px; line-height: 1.25; }
+h1 { font-size: 24px; line-height: 1.25; overflow-wrap: anywhere; }
 h2 { font-size: 15px; }
 h3 { font-size: 15px; }
 h4 { font-size: 12px; color: var(--muted); font-weight: 500; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -130,6 +130,7 @@ button { font: inherit; color: inherit; }
 
 header.top {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
@@ -137,6 +138,7 @@ header.top {
   margin: 0 auto;
   padding: 24px 24px 8px;
 }
+.title { flex: 1 1 320px; min-width: 0; }
 .eyebrow { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
 .summary { margin: 6px 0 0; color: var(--ink-2); max-width: 760px; }
 .facts { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 12px 0 0; padding: 0; }
@@ -182,10 +184,49 @@ footer { max-width: 1440px; margin: 0 auto; padding: 8px 24px 32px; color: var(-
 .f-capability { --c: var(--s3); }
 .f-place { --c: var(--s2); }
 .f-resource { --c: var(--s8); }
+.f-nested { --c: var(--accent); }
 .f-other { --c: var(--other); }
 
-.graph-wrap { overflow-x: auto; }
-svg.graph { display: block; margin: 0 auto; max-width: 100%; height: auto; font-family: var(--font); }
+.graph-view { overflow: auto; max-height: 640px; border-radius: 8px; }
+.graph-view.pannable { cursor: grab; box-shadow: inset 0 0 0 1px var(--ring); background: var(--plane); }
+.graph-view.dragging { cursor: grabbing; user-select: none; }
+.graph-view:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+svg.graph { display: block; margin: 0 auto; font-family: var(--font); }
+.graph-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; }
+.graph-tools[hidden] { display: none; }
+.graph-tools button { min-width: 32px; min-height: 28px; padding: 3px 10px; border: 0; border-radius: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); font-size: 13px; color: var(--ink); cursor: pointer; }
+.graph-tools button:hover { box-shadow: inset 0 0 0 1px var(--accent); }
+.graph-tools button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.graph-tools .hint { margin-left: 6px; font-size: 12.5px; color: var(--muted); }
+.zoom-level { min-width: 52px; text-align: center; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+.table-wrap.scroll-y { max-height: 320px; overflow: auto; padding-top: 0; margin-top: 8px; }
+.table-wrap.scroll-y thead th { position: sticky; top: 0; z-index: 1; }
+.parts-card table.data td, .links-card table.data td { white-space: normal; overflow-wrap: anywhere; }
+.parts-card table.data th:first-child, .parts-card table.data td:first-child,
+.links-card table.data th:first-child, .links-card table.data td:first-child { padding-left: 20px; }
+.parts-card table.data th:last-child, .parts-card table.data td:last-child,
+.links-card table.data th:last-child, .links-card table.data td:last-child { padding-right: 20px; }
+button.pick { display: inline-flex; align-items: center; gap: 6px; padding: 2px 0; border: 0; background: none; font-size: 12.5px; font-weight: 500; color: var(--accent-text); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+button.pick:hover { text-decoration: underline; }
+button.pick[aria-pressed='true'] { color: var(--ink); font-weight: 600; }
+button.pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.filter-row { padding-top: 10px; padding-bottom: 0; }
+.filter-row label { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.filter-row select { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--surface-2); border: 0; box-shadow: inset 0 0 0 1px var(--ring); border-radius: 6px; padding: 4px 8px; max-width: 100%; }
+.filter-row select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+tr[hidden] { display: none; }
+
+@media (max-width: 640px) {
+  header.top { gap: 12px; padding: 16px 16px 4px; }
+  h1 { font-size: 20px; }
+  main { padding: 8px 16px 16px; }
+  footer { padding: 8px 16px 24px; }
+  .card-head { flex-wrap: wrap; padding: 14px 16px 0; }
+  .card-head .hint { text-align: left; }
+  .card-body { padding: 12px 16px 16px; }
+  .graph-tools .hint { display: none; }
+}
 svg text { fill: var(--ink); }
 .edge { fill: none; stroke: var(--edge); stroke-width: 1.4; marker-end: url(#arrow); transition: stroke 120ms, opacity 120ms; }
 .arrowhead { fill: var(--edge); }
@@ -205,13 +246,14 @@ svg text { fill: var(--ink); }
 .sub.xs { font-size: 11px; }
 .prop { font-size: 11.5px; fill: var(--ink-2); }
 .prop-k { fill: var(--muted); }
-.per-head { font-size: 10.5px; fill: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.per-head { font-size: 11px; fill: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .child-bg { fill: var(--surface-2); stroke: var(--ring); }
 .badge rect { fill: var(--ink); }
 .badge text { fill: var(--surface); font-family: var(--mono); font-size: 11px; font-weight: 600; }
 .tag rect { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 0.8; }
-.tag text { fill: var(--accent-text); font-size: 10.5px; font-weight: 500; }
+.tag text { fill: var(--accent-text); font-size: 11px; font-weight: 500; }
 .border-mark { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 5 4; }
+.port-mark { fill: var(--surface); stroke: var(--c, var(--accent)); stroke-width: 1.6; }
 .chip rect { fill: var(--accent-wash); stroke: var(--accent); stroke-opacity: 0.45; }
 .chip.changed rect { stroke-opacity: 1; stroke-width: 1.3; }
 .chip-k { font-size: 11.5px; fill: var(--ink-2); }
@@ -219,7 +261,7 @@ svg text { fill: var(--ink); }
 .chip-v.was { fill: var(--muted); font-weight: 400; text-decoration: line-through; }
 .chip-v.now { fill: var(--accent-text); }
 .chip-arrow { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); }
-.chip-r { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+.chip-r { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
 
 .node:hover > .card-bg, .node:hover > .child-bg { stroke: var(--c); stroke-width: 1.5; }
 .card-bg:focus, .child-bg:focus { outline: none; }
@@ -254,14 +296,14 @@ ul.links { list-style: none; margin: 0; padding: 0; font-size: 13px; display: gr
 .policy-v { font-family: var(--mono); font-size: 12.5px; }
 
 .result { margin-top: 28px; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 12px; margin-bottom: 20px; }
 .tile { padding: 14px 16px; }
 .tile .label { font-size: 12.5px; color: var(--ink-2); }
 .tile .value { margin-top: 6px; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tile .meta { margin-top: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .tile .meta.good { color: var(--good-text); font-weight: 600; }
 .tile .meta.bad { color: var(--bad-text); font-weight: 600; }
-.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 20px; align-items: start; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(460px, 100%), 1fr)); gap: 20px; align-items: start; }
 .result > .two { align-items: stretch; }
 
 .table-wrap { overflow-x: auto; padding: 8px 0 6px; }
@@ -340,7 +382,7 @@ svg.trace, svg.timeline { display: block; width: 100%; height: auto; font-family
 
 .result > details.card, .result > .two { margin-top: 20px; }
 .formula { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; margin: 0 0 6px; font-size: 13px; }
-.formula .term { font-family: var(--mono); font-size: 12.5px; padding: 1px 8px; border-radius: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); white-space: nowrap; }
+.formula .term { font-family: var(--mono); font-size: 12.5px; padding: 1px 8px; border-radius: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); white-space: nowrap; max-width: 100%; overflow-wrap: anywhere; }
 .objective .table-wrap { margin: 0 -20px; }
 table.terms .bar-h { min-width: 216px; }
 table.terms td.bar-cell { width: 216px; padding-top: 4px; padding-bottom: 4px; }
@@ -355,7 +397,7 @@ details > summary { cursor: pointer; }
 details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 details.gates { margin-top: 12px; font-size: 13px; }
 details.gates > summary { padding: 4px 0; }
-.gate-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 20px; }
+.gate-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 4px 20px; }
 .gate-list li { display: flex; gap: 10px; align-items: baseline; }
 .gate-list li .kpi-name { flex: 1; }
 .gate-list .bad { color: var(--bad-text); font-weight: 600; }
@@ -369,8 +411,8 @@ details.all-kpis[open] > summary { padding-bottom: 0; }
 .role.gate { color: var(--ink-2); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ring); }
 
 .picks { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 10px; }
-.picks label { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
-.picks select { font: inherit; font-size: 12.5px; font-family: var(--mono); color: var(--ink); background: var(--surface-2); border: 0; box-shadow: inset 0 0 0 1px var(--ring); border-radius: 6px; padding: 4px 8px; max-width: 100%; }
+.picks label { display: inline-flex; flex-wrap: wrap; align-items: center; max-width: 100%; min-width: 0; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.picks select { font: inherit; font-size: 12.5px; font-family: var(--mono); color: var(--ink); background: var(--surface-2); border: 0; box-shadow: inset 0 0 0 1px var(--ring); border-radius: 6px; padding: 4px 8px; max-width: 100%; min-width: 0; }
 .picks select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 figure.pair, figure.sens-fig { margin: 0; }
 figure.pair > figcaption { font-size: 12.5px; margin-bottom: 6px; }
@@ -406,7 +448,7 @@ svg.heatmap, svg.sens, svg.scatter { display: block; width: 100%; height: auto; 
 .swatch.cell-none { background: transparent; border: 1px dashed var(--axis); }
 .swatch.round { border-radius: 50%; }
 
-.sens-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px 20px; }
+.sens-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 14px 20px; }
 .sens-fig figcaption { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; margin-bottom: 2px; }
 .sens-fig figcaption .mono { overflow-wrap: break-word; min-width: 0; }
 .sens-fig figcaption .muted { white-space: nowrap; }
@@ -432,14 +474,18 @@ svg.heatmap, svg.sens, svg.scatter { display: block; width: 100%; height: auto; 
 
 table.variants thead th.kpi-col { white-space: normal; min-width: 64px; max-width: 104px; vertical-align: bottom; line-height: 1.25; }
 table.data thead th { vertical-align: bottom; }
+
+@media (max-width: 640px) {
+  .formula .term { white-space: normal; }
+}
 </style>
 </head>
 <body>
 <header class="top"><div class="title"><div class="eyebrow">Architecture</div><h1>planner-executor</h1><p class="summary">One planner agent writes a plan for every task and posts it to a queue; executor agents, woken by each post, take the plans in order. With a plan before the first change, resolved rose from 50.2% to 65.0% while the planner used under 2% of the executor&#39;s tokens (2610.29870); a plan preceded every first change in 23 of 23 runs (2610.35992). The simulator gives the planner the profile role `planner` (one turn per task) and the executors the role `executor`, whose pass rate after a failed step is set so that the share of correct tasks rises by the ratio of 2610.29870: the gain of a plan is an input of the run, not a result of it. A post that finds every executor busy is offered again when a run ends. The simulator does not model a wrong plan, an executor that departs from its plan, plans that depend on each other, nor a planner that learns from failed runs.</p><ul class="facts"><li>9 parts</li><li>8 links</li><li>3 marked places</li></ul></div><div class="segmented" role="group" aria-label="Theme"><button type="button" data-theme-choice="system" aria-pressed="true">System</button><button type="button" data-theme-choice="light" aria-pressed="false">Light</button><button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button></div></header>
 <main>
 <section class="top-grid" aria-label="Architecture">
-<div class="card graph-card"><div class="card-head"><h2>Parts and links</h2><span class="hint">Select a part for its properties</span></div><div class="card-body"><ul class="legend" aria-label="Legend"><li><span class="swatch f-principal"></span>principal</li><li><span class="swatch f-agent"></span>agent, harness</li><li><span class="swatch f-collab"></span>channel, question</li><li><span class="swatch f-intel"></span>gateway, model</li><li><span class="swatch f-place"></span>workspace, sandbox, runtime</li><li><span class="swatch f-resource"></span>pool, resource</li><li><span class="swatch f-other"></span>other block</li><li><span class="swatch per-sample"></span>one per owner, drawn inside it</li><li><span class="swatch chip-sample"></span>marked place [search range]</li></ul><div class="graph-wrap" style="--graph-w:741px"><svg class="graph" viewBox="0 0 741 917" width="741" height="917" role="group" aria-labelledby="graph-title graph-desc"><title id="graph-title">Architecture planner-executor</title><desc id="graph-desc">9 parts in rows by block layer, 8 links as arrows labelled by what they carry. The list of links follows the graph as text.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead"/></marker><marker id="arrow-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead hot"/></marker></defs><g class="edges"><path class="edge" d="M338 76C338 86 296 86 296 96L296 116C296 141 234 141 234 166" data-from="owner" data-to="planner"><title>owner → planner: prompt</title></path><path class="edge" d="M221 267C221 292.5 181 292.5 181 318L181 338C181 347.5 123 347.5 123 357" data-from="planner" data-to="plans"><title>planner → plans: message</title></path><path class="edge" d="M533 775C533 765.5 530 765.5 530 756L530 740C530 730 525 730 525 720L525 628C525 618 536 618 536 608L536 588C536 578 545 578 545 568L545 493C545 483 371 483 371 473L371 453C371 443 400 443 400 433L400 358C400 348 425 348 425 338L425 318C425 308.5 429 308.5 429 299" data-from="on_plan" data-to="executor"><title>on_plan → executor: trigger</title></path><path class="edge" d="M455 135C455 125.5 406 125.5 406 116L406 96C406 86.5 364 86.5 364 77" data-from="executor" data-to="owner"><title>executor → owner: question</title></path><path class="edge" d="M247 267C247 292.5 248 292.5 248 318L248 338C248 348 257 348 257 358L257 433C257 443 202 443 202 453L202 473C202 482.5 132 482.5 132 492" data-from="planner" data-to="gateway"><title>planner → gateway: model_call</title></path><path class="edge" d="M455 298C455 308 457 308 457 318L457 338C457 348 447 348 447 358L447 433C447 443 434 443 434 453L434 473C434 482.5 158 482.5 158 492" data-from="executor" data-to="gateway"><title>executor → gateway: model_call</title></path><path class="edge" d="M481 298C481 308 494 308 494 318L494 338C494 348 529 348 529 358L529 433C529 443 561 443 561 453L561 473C561 483 590 483 590 493L590 568C590 578 616 578 616 588L616 608C616 617.5 639 617.5 639 627" data-from="executor" data-to="builds"><title>executor → builds: claim</title></path><path class="edge" d="M230 530.5L346 530.5" data-from="gateway" data-to="model"><title>gateway → model: model_call</title></path></g><g class="labels"><g class="pill"><rect x="248.9" y="520.5" width="78.1" height="20" rx="10" data-box="248.9 520.5 78.1 20"/><text x="288" y="534.5" text-anchor="middle">model_call</text></g><g class="pill"><rect x="267.3" y="96" width="57.3" height="20" rx="10" data-box="267.3 96 57.3 20"/><text x="296" y="110" text-anchor="middle">prompt</text></g><g class="pill"><rect x="146.9" y="318" width="68.1" height="20" rx="10" data-box="146.9 318 68.1 20"/><text x="181" y="332" text-anchor="middle">message</text></g><g class="pill"><rect x="508.4" y="588" width="55.3" height="20" rx="10" data-box="508.4 588 55.3 20"/><text x="536" y="602" text-anchor="middle">trigger</text></g><g class="pill"><rect x="373" y="96" width="66.1" height="20" rx="10" data-box="373 96 66.1 20"/><text x="406" y="110" text-anchor="middle">question</text></g><g class="pill"><rect x="162.9" y="453" width="78.1" height="20" rx="10" data-box="162.9 453 78.1 20"/><text x="202" y="467" text-anchor="middle">model_call</text></g><g class="pill"><rect x="394.9" y="453" width="78.1" height="20" rx="10" data-box="394.9 453 78.1 20"/><text x="434" y="467" text-anchor="middle">model_call</text></g><g class="pill"><rect x="536.8" y="453" width="48.4" height="20" rx="10" data-box="536.8 453 48.4 20"/><text x="561" y="467" text-anchor="middle">claim</text></g></g><g class="nodes"><g class="node f-principal" data-part="owner"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="owner, principal · human" x="267" y="24" width="168" height="52" rx="10" data-box="267 24 168 52"/><rect class="icon-bg" x="279" y="36" width="30" height="30" rx="7"/><path class="icon" transform="translate(287 44) scale(1)" d="M7 6.6a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM2.4 12.6c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2"/><text class="name" x="319" y="48">owner</text><text class="sub" x="319" y="63">principal · human</text></g><g class="node f-agent" data-part="planner"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="planner, agent · planner, count 1, 1 marked places" x="150" y="167" width="168" height="100" rx="10" data-box="150 167 168 100"/><rect class="icon-bg" x="162" y="179" width="30" height="30" rx="7"/><path class="icon" transform="translate(170 187) scale(1)" d="M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01"/><text class="name" x="202" y="191">planner</text><text class="sub" x="202" y="206">agent · planner</text><g class="badge"><rect x="280.4" y="178" width="25.6" height="18" rx="9"/><text x="293.2" y="191" text-anchor="middle">×1</text></g><text class="prop" x="162" y="231"><tspan class="prop-k">harness</tspan> coding</text><g class="chip" data-place="parts.planner.count" data-value="1"><title>count 1, range 1…2</title><rect x="162" y="238" width="103" height="20" rx="10"/><text class="chip-k" x="171" y="252">count</text><text class="chip-v" x="209.3" y="252">1</text><text class="chip-r" x="223.4" y="252">[1…2]</text></g></g><g class="node f-collab" data-part="plans"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="plans, channel · agent_message" x="18.5" y="358" width="209" height="75" rx="10" data-box="18.5 358 209 75"/><rect class="icon-bg" x="30.5" y="370" width="30" height="30" rx="7"/><path class="icon" transform="translate(38.5 378) scale(1)" d="M2 2.5h10v7H6.5L3.5 12V9.5H2z"/><text class="name" x="70.5" y="382">plans</text><text class="sub" x="70.5" y="397">channel · agent_message</text><text class="prop" x="30.5" y="422"><tspan class="prop-k">distribution</tspan> queue</text></g><g class="node f-other" data-part="on_plan"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="on_plan, trigger · on_message, 1 marked places" x="440.5" y="776" width="185" height="117" rx="10" data-box="440.5 776 185 117"/><rect class="icon-bg" x="452.5" y="788" width="30" height="30" rx="7"/><path class="icon" transform="translate(460.5 796) scale(1)" d="M7 12A5 5 0 1 0 7 2a5 5 0 0 0 0 10z"/><text class="name" x="492.5" y="800">on_plan</text><text class="sub" x="492.5" y="815">trigger · on_message</text><text class="prop" x="452.5" y="840"><tspan class="prop-k">channel</tspan> plans</text><text class="prop" x="452.5" y="857"><tspan class="prop-k">policy</tspan> parallel</text><g class="chip" data-place="parts.on_plan.max_parallel" data-value="8"><title>max_parallel 8, range 4…12</title><rect x="452.5" y="864" width="149.6" height="20" rx="10"/><text class="chip-k" x="461.5" y="878">max_parallel</text><text class="chip-v" x="539.9" y="878">8</text><text class="chip-r" x="554" y="878">[4…12]</text></g></g><g class="node f-agent" data-part="executor"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="executor, agent · executor, count 8, 1 marked places" x="358.5" y="136" width="193" height="162" rx="10" data-box="358.5 136 193 162"/><rect class="icon-bg" x="370.5" y="148" width="30" height="30" rx="7"/><path class="icon" transform="translate(378.5 156) scale(1)" d="M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01"/><text class="name" x="410.5" y="160">executor</text><text class="sub" x="410.5" y="175">agent · executor</text><g class="badge"><rect x="513.9" y="147" width="25.6" height="18" rx="9"/><text x="526.7" y="160" text-anchor="middle">×8</text></g><text class="prop" x="370.5" y="200"><tspan class="prop-k">harness</tspan> coding</text><g class="chip" data-place="parts.executor.count" data-value="8"><title>count 8, range 4…12</title><rect x="370.5" y="207" width="109.5" height="20" rx="10"/><text class="chip-k" x="379.5" y="221">count</text><text class="chip-v" x="417.8" y="221">8</text><text class="chip-r" x="431.9" y="221">[4…12]</text></g><text class="per-head" x="370.5" y="242">per executor</text><g class="node child f-place" data-part="tree"><rect class="child-bg" tabindex="0" role="button" aria-pressed="false" aria-label="tree, workspace · exclusive, one per executor" x="370.5" y="248" width="169" height="38" rx="8"/><rect class="icon-bg" x="378.5" y="257" width="20" height="20" rx="4.7"/><path class="icon" transform="translate(383.8 262.3) scale(0.67)" d="M1.5 3.5h4l1.5 1.5h5.5v6.5h-11z"/><text class="name xs" x="406.5" y="264">tree</text><text class="sub xs" x="406.5" y="278">workspace · exclusive</text></g></g><g class="node f-intel" data-part="gateway"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="gateway, gateway" x="61" y="493" width="168" height="75" rx="10" data-box="61 493 168 75"/><rect class="icon-bg" x="73" y="505" width="30" height="30" rx="7"/><path class="icon" transform="translate(81 513) scale(1)" d="M2 2.5v9M5 7h7M9 4l3 3-3 3"/><text class="name" x="113" y="517">gateway</text><text class="sub" x="113" y="532">gateway</text><text class="prop" x="73" y="557"><tspan class="prop-k">rate limit per minute</tspan> 120</text></g><g class="node f-intel" data-part="model"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="model, model · frontier" x="347" y="504.5" width="168" height="52" rx="10" data-box="347 504.5 168 52"/><rect class="icon-bg" x="359" y="516.5" width="30" height="30" rx="7"/><path class="icon" transform="translate(367 524.5) scale(1)" d="M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5"/><text class="name" x="399" y="528.5">model</text><text class="sub" x="399" y="543.5">model · frontier</text></g><g class="node f-resource" data-part="builds"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="builds, pool · build_slots" x="555" y="628" width="168" height="92" rx="10" data-box="555 628 168 92"/><rect class="icon-bg" x="567" y="640" width="30" height="30" rx="7"/><path class="icon" transform="translate(575 648) scale(1)" d="M2 2.5h10v2.5H2zM2 6.25h10v2.5H2zM2 10h10v2H2z"/><text class="name" x="607" y="652">builds</text><text class="sub" x="607" y="667">pool · build_slots</text><text class="prop" x="567" y="692"><tspan class="prop-k">capacity</tspan> 16</text><text class="prop" x="567" y="709"><tspan class="prop-k">job limit</tspan> 10m</text></g></g></svg></div><ul class="sr-only" aria-label="Links"><li>owner sends prompt to planner</li><li>planner sends message to plans</li><li>on_plan sends trigger to executor</li><li>executor sends question to owner</li><li>planner sends model_call to gateway</li><li>executor sends model_call to gateway</li><li>gateway sends model_call to model</li><li>executor sends claim to builds</li></ul></div></div>
-<aside class="side"><div class="card details"><div class="card-head"><h2>Part</h2><span class="hint" id="pin-hint">hover or select</span></div><div class="card-body" aria-live="polite"><section class="detail" data-detail=""><p class="muted">Point at a part, or move to it with Tab and press Enter, to see its properties, its links.</p><dl class="kv"><dt>blocks</dt><dd>agent, channel, gateway, model, pool, principal, trigger, workspace</dd></dl></section><section class="detail" data-detail="builds" hidden><div class="detail-head"><span class="swatch f-resource"></span><h3>builds</h3></div><p class="muted">pool · build_slots</p><dl class="kv"><dt>block</dt><dd>pool</dd><dt>kind</dt><dd>build_slots</dd><dt>capacity</dt><dd>16</dd><dt>job limit</dt><dd>10m</dd></dl><h4>Links</h4><ul class="links"><li>executor <span class="muted">→</span> builds <span class="carries">claim</span></li></ul></section><section class="detail" data-detail="executor" hidden><div class="detail-head"><span class="swatch f-agent"></span><h3>executor</h3></div><p class="muted">agent · executor</p><dl class="kv"><dt>block</dt><dd>agent</dd><dt>count</dt><dd>8</dd><dt>harness</dt><dd>coding</dd><dt>role</dt><dd>executor</dd></dl><h4>Marked places</h4><div class="chips"><span class="chip" data-place="parts.executor.count" data-value="8"><span class="chip-k">count</span> <span class="chip-v">8</span> <span class="chip-r">[4…12]</span></span></div><h4>Links</h4><ul class="links"><li>on_plan <span class="muted">→</span> executor <span class="carries">trigger</span></li><li>executor <span class="muted">→</span> owner <span class="carries">question</span></li><li>executor <span class="muted">→</span> gateway <span class="carries">model_call</span></li><li>executor <span class="muted">→</span> builds <span class="carries">claim</span></li></ul></section><section class="detail" data-detail="gateway" hidden><div class="detail-head"><span class="swatch f-intel"></span><h3>gateway</h3></div><p class="muted">gateway</p><dl class="kv"><dt>block</dt><dd>gateway</dd><dt>rate limit per minute</dt><dd>120</dd></dl><h4>Links</h4><ul class="links"><li>planner <span class="muted">→</span> gateway <span class="carries">model_call</span></li><li>executor <span class="muted">→</span> gateway <span class="carries">model_call</span></li><li>gateway <span class="muted">→</span> model <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="model" hidden><div class="detail-head"><span class="swatch f-intel"></span><h3>model</h3></div><p class="muted">model · frontier</p><dl class="kv"><dt>block</dt><dd>model</dd><dt>route</dt><dd>frontier</dd></dl><h4>Links</h4><ul class="links"><li>gateway <span class="muted">→</span> model <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="on_plan" hidden><div class="detail-head"><span class="swatch f-other"></span><h3>on_plan</h3></div><p class="muted">trigger · on_message</p><dl class="kv"><dt>block</dt><dd>trigger</dd><dt>kind</dt><dd>on_message</dd><dt>channel</dt><dd>plans</dd><dt>policy</dt><dd>parallel</dd></dl><h4>Marked places</h4><div class="chips"><span class="chip" data-place="parts.on_plan.max_parallel" data-value="8"><span class="chip-k">max_parallel</span> <span class="chip-v">8</span> <span class="chip-r">[4…12]</span></span></div><h4>Links</h4><ul class="links"><li>on_plan <span class="muted">→</span> executor <span class="carries">trigger</span></li></ul></section><section class="detail" data-detail="owner" hidden><div class="detail-head"><span class="swatch f-principal"></span><h3>owner</h3></div><p class="muted">principal · human</p><dl class="kv"><dt>block</dt><dd>principal</dd><dt>kind</dt><dd>human</dd></dl><h4>Links</h4><ul class="links"><li>owner <span class="muted">→</span> planner <span class="carries">prompt</span></li><li>executor <span class="muted">→</span> owner <span class="carries">question</span></li></ul></section><section class="detail" data-detail="planner" hidden><div class="detail-head"><span class="swatch f-agent"></span><h3>planner</h3></div><p class="muted">agent · planner</p><dl class="kv"><dt>block</dt><dd>agent</dd><dt>count</dt><dd>1</dd><dt>harness</dt><dd>coding</dd><dt>role</dt><dd>planner</dd></dl><h4>Marked places</h4><div class="chips"><span class="chip" data-place="parts.planner.count" data-value="1"><span class="chip-k">count</span> <span class="chip-v">1</span> <span class="chip-r">[1…2]</span></span></div><h4>Links</h4><ul class="links"><li>owner <span class="muted">→</span> planner <span class="carries">prompt</span></li><li>planner <span class="muted">→</span> plans <span class="carries">message</span></li><li>planner <span class="muted">→</span> gateway <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="plans" hidden><div class="detail-head"><span class="swatch f-collab"></span><h3>plans</h3></div><p class="muted">channel · agent_message</p><dl class="kv"><dt>block</dt><dd>channel</dd><dt>kind</dt><dd>agent_message</dd><dt>distribution</dt><dd>queue</dd></dl><h4>Links</h4><ul class="links"><li>planner <span class="muted">→</span> plans <span class="carries">message</span></li></ul></section><section class="detail" data-detail="tree" hidden><div class="detail-head"><span class="swatch f-place"></span><h3>tree</h3></div><p class="muted">workspace · exclusive</p><dl class="kv"><dt>block</dt><dd>workspace</dd><dt>one per</dt><dd>executor</dd><dt>sharing</dt><dd>exclusive</dd></dl></section></div></div><div class="card policies"><div class="card-head"><h2>Policies</h2></div><div class="card-body"><ul class="policy-list"><li><span class="policy-name">question default after</span><span class="policy-v">15m</span></li></ul></div></div></aside>
+<div class="card graph-card"><div class="card-head"><h2>Parts and links</h2><span class="hint">Select a part for its properties</span></div><div class="card-body"><ul class="legend" aria-label="Legend"><li><span class="swatch f-principal"></span>principal</li><li><span class="swatch f-agent"></span>agent, harness</li><li><span class="swatch f-collab"></span>channel, question</li><li><span class="swatch f-intel"></span>gateway, model</li><li><span class="swatch f-place"></span>workspace, sandbox, runtime</li><li><span class="swatch f-resource"></span>pool, resource</li><li><span class="swatch f-other"></span>other block</li><li><span class="swatch per-sample"></span>one per owner, drawn inside it</li><li><span class="swatch chip-sample"></span>marked place [search range]</li></ul><div class="graph-tools" hidden role="toolbar" aria-label="Zoom"><button type="button" data-zoom="out" aria-label="Zoom out">−</button><output class="zoom-level" aria-live="polite">100 %</output><button type="button" data-zoom="in" aria-label="Zoom in">+</button><button type="button" data-zoom="fit" aria-label="Fit to width">Fit</button><button type="button" data-zoom="actual" aria-label="Actual size">Actual size</button><span class="hint">drag, scroll or use the arrow keys to move around</span></div><div class="graph-view" style="--graph-w:702px"><svg class="graph" viewBox="0 0 702 927" width="702" height="927" role="group" aria-labelledby="graph-title graph-desc"><title id="graph-title">Architecture planner-executor</title><desc id="graph-desc">9 parts in rows by block layer, 8 links as arrows labelled by what they carry. The tables of parts and links beside the graph list every part and every link as text.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead"/></marker><marker id="arrow-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead hot"/></marker></defs><g class="edges"><path class="edge" d="M297 76C297 86 254 86 254 96L254 116C254 126 200 126 200 136L200 166" data-from="owner" data-to="planner"><title>owner → planner: prompt</title></path><path class="edge" d="M187 267L187 298C187 313 161 313 161 328L161 348C161 357.5 123 357.5 123 367" data-from="planner" data-to="plans"><title>planner → plans: message</title></path><path class="edge" d="M486 785L486 766L486 750L486 730L486 638C486 628 508 628 508 618L508 598C508 588 529 588 529 578L529 503C529 493 491 493 491 483L491 463C491 453 463 453 463 443L463 368C463 358 435 358 435 348L435 318C435 308.5 420 308.5 420 299" data-from="on_plan" data-to="executor"><title>on_plan → executor: trigger</title></path><path class="edge" d="M420 135C420 125.5 365 125.5 365 116L365 96C365 86.5 323 86.5 323 77" data-from="executor" data-to="owner"><title>executor → owner: question</title></path><path class="edge" d="M213 267L213 298L213 323L283 323L283 348L283 368L283 443C283 458 193 458 193 473C193 487.5 129 487.5 129 502" data-from="planner" data-to="gateway"><title>planner → gateway: model_call</title></path><path class="edge" d="M394 298L394 323L283 323L283 348L283 368L283 443C283 458 193 458 193 473C193 487.5 129 487.5 129 502" data-from="executor" data-to="gateway"><title>executor → gateway: model_call</title></path><path class="edge" d="M446 298C446 308 503 308 503 318L503 348L503 368L503 443C503 453 539 453 539 463L539 483C539 493 561 493 561 503L561 578L561 598L561 618C561 627.5 600 627.5 600 637" data-from="executor" data-to="builds"><title>executor → builds: claim</title></path><path class="edge" d="M214 540.5L330 540.5" data-from="gateway" data-to="model"><title>gateway → model: model_call</title></path></g><g class="labels"><g class="pill"><rect x="232.9" y="530.5" width="78.1" height="20" rx="10" data-box="232.9 530.5 78.1 20"/><text x="272" y="544.5" text-anchor="middle">model_call</text></g><g class="pill"><rect x="153.9" y="463" width="78.1" height="20" rx="10" data-box="153.9 463 78.1 20"/><text x="193" y="477" text-anchor="middle">model_call</text></g><g class="pill"><rect x="225.3" y="96" width="57.3" height="20" rx="10" data-box="225.3 96 57.3 20"/><text x="254" y="110" text-anchor="middle">prompt</text></g><g class="pill"><rect x="126.9" y="328" width="68.1" height="20" rx="10" data-box="126.9 328 68.1 20"/><text x="161" y="342" text-anchor="middle">message</text></g><g class="pill"><rect x="480.4" y="598" width="55.3" height="20" rx="10" data-box="480.4 598 55.3 20"/><text x="508" y="612" text-anchor="middle">trigger</text></g><g class="pill"><rect x="332" y="96" width="66.1" height="20" rx="10" data-box="332 96 66.1 20"/><text x="365" y="110" text-anchor="middle">question</text></g><g class="pill"><rect x="514.8" y="463" width="48.4" height="20" rx="10" data-box="514.8 463 48.4 20"/><text x="539" y="477" text-anchor="middle">claim</text></g></g><g class="nodes"><g class="node f-principal" data-part="owner"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="owner, principal · human" x="226" y="24" width="168" height="52" rx="10" data-box="226 24 168 52"/><rect class="icon-bg" x="238" y="36" width="30" height="30" rx="7"/><path class="icon" transform="translate(246 44) scale(1)" d="M7 6.6a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM2.4 12.6c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2"/><text class="name" x="278" y="48">owner</text><text class="sub" x="278" y="63">principal · human</text></g><g class="node f-agent" data-part="planner"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="planner, agent · planner, count 1, 1 marked places" x="116" y="167" width="168" height="100" rx="10" data-box="116 167 168 100"/><rect class="icon-bg" x="128" y="179" width="30" height="30" rx="7"/><path class="icon" transform="translate(136 187) scale(1)" d="M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01"/><text class="name" x="168" y="191">planner</text><text class="sub" x="168" y="206">agent · planner</text><g class="badge"><rect x="246.4" y="178" width="25.6" height="18" rx="9"/><text x="259.2" y="191" text-anchor="middle">×1</text></g><text class="prop" x="128" y="231"><tspan class="prop-k">harness</tspan> coding</text><g class="chip" data-place="parts.planner.count" data-value="1"><title>count 1, range 1…2</title><rect x="128" y="238" width="104.5" height="20" rx="10"/><text class="chip-k" x="137" y="252">count</text><text class="chip-v" x="175.3" y="252">1</text><text class="chip-r" x="189.4" y="252">[1…2]</text></g></g><g class="node f-collab" data-part="plans"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="plans, channel · agent_message" x="18.5" y="368" width="209" height="75" rx="10" data-box="18.5 368 209 75"/><rect class="icon-bg" x="30.5" y="380" width="30" height="30" rx="7"/><path class="icon" transform="translate(38.5 388) scale(1)" d="M2 2.5h10v7H6.5L3.5 12V9.5H2z"/><text class="name" x="70.5" y="392">plans</text><text class="sub" x="70.5" y="407">channel · agent_message</text><text class="prop" x="30.5" y="432"><tspan class="prop-k">distribution</tspan> queue</text></g><g class="node f-other" data-part="on_plan"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="on_plan, trigger · on_message, 1 marked places" x="393.5" y="786" width="185" height="117" rx="10" data-box="393.5 786 185 117"/><rect class="icon-bg" x="405.5" y="798" width="30" height="30" rx="7"/><path class="icon" transform="translate(413.5 806) scale(1)" d="M7 12A5 5 0 1 0 7 2a5 5 0 0 0 0 10z"/><text class="name" x="445.5" y="810">on_plan</text><text class="sub" x="445.5" y="825">trigger · on_message</text><text class="prop" x="405.5" y="850"><tspan class="prop-k">channel</tspan> plans</text><text class="prop" x="405.5" y="867"><tspan class="prop-k">policy</tspan> parallel</text><g class="chip" data-place="parts.on_plan.max_parallel" data-value="8"><title>max_parallel 8, range 4…12</title><rect x="405.5" y="874" width="151.5" height="20" rx="10"/><text class="chip-k" x="414.5" y="888">max_parallel</text><text class="chip-v" x="492.9" y="888">8</text><text class="chip-r" x="507" y="888">[4…12]</text></g></g><g class="node f-agent" data-part="executor"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="executor, agent · executor, count 8, 1 marked places" x="323.5" y="136" width="193" height="162" rx="10" data-box="323.5 136 193 162"/><rect class="icon-bg" x="335.5" y="148" width="30" height="30" rx="7"/><path class="icon" transform="translate(343.5 156) scale(1)" d="M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01"/><text class="name" x="375.5" y="160">executor</text><text class="sub" x="375.5" y="175">agent · executor</text><g class="badge"><rect x="478.9" y="147" width="25.6" height="18" rx="9"/><text x="491.7" y="160" text-anchor="middle">×8</text></g><text class="prop" x="335.5" y="200"><tspan class="prop-k">harness</tspan> coding</text><g class="chip" data-place="parts.executor.count" data-value="8"><title>count 8, range 4…12</title><rect x="335.5" y="207" width="111.3" height="20" rx="10"/><text class="chip-k" x="344.5" y="221">count</text><text class="chip-v" x="382.8" y="221">8</text><text class="chip-r" x="396.9" y="221">[4…12]</text></g><text class="per-head" x="335.5" y="242">per executor</text><g class="node child f-place" data-part="tree"><rect class="child-bg" tabindex="0" role="button" aria-pressed="false" aria-label="tree, workspace · exclusive, one per executor" x="335.5" y="248" width="169" height="38" rx="8"/><rect class="icon-bg" x="343.5" y="257" width="20" height="20" rx="4.7"/><path class="icon" transform="translate(348.8 262.3) scale(0.67)" d="M1.5 3.5h4l1.5 1.5h5.5v6.5h-11z"/><text class="name xs" x="371.5" y="264">tree</text><text class="sub xs" x="371.5" y="278">workspace · exclusive</text></g></g><g class="node f-intel" data-part="gateway"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="gateway, gateway" x="45" y="503" width="168" height="75" rx="10" data-box="45 503 168 75"/><rect class="icon-bg" x="57" y="515" width="30" height="30" rx="7"/><path class="icon" transform="translate(65 523) scale(1)" d="M2 2.5v9M5 7h7M9 4l3 3-3 3"/><text class="name" x="97" y="527">gateway</text><text class="sub" x="97" y="542">gateway</text><text class="prop" x="57" y="567"><tspan class="prop-k">rate limit per minute</tspan> 120</text></g><g class="node f-intel" data-part="model"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="model, model · frontier" x="331" y="514.5" width="168" height="52" rx="10" data-box="331 514.5 168 52"/><rect class="icon-bg" x="343" y="526.5" width="30" height="30" rx="7"/><path class="icon" transform="translate(351 534.5) scale(1)" d="M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5"/><text class="name" x="383" y="538.5">model</text><text class="sub" x="383" y="553.5">model · frontier</text></g><g class="node f-resource" data-part="builds"><rect class="card-bg" tabindex="0" role="button" aria-pressed="false" aria-label="builds, pool · build_slots" x="516" y="638" width="168" height="92" rx="10" data-box="516 638 168 92"/><rect class="icon-bg" x="528" y="650" width="30" height="30" rx="7"/><path class="icon" transform="translate(536 658) scale(1)" d="M2 2.5h10v2.5H2zM2 6.25h10v2.5H2zM2 10h10v2H2z"/><text class="name" x="568" y="662">builds</text><text class="sub" x="568" y="677">pool · build_slots</text><text class="prop" x="528" y="702"><tspan class="prop-k">capacity</tspan> 16</text><text class="prop" x="528" y="719"><tspan class="prop-k">job limit</tspan> 10m</text></g></g></svg></div></div></div>
+<aside class="side"><div class="card parts-card"><div class="card-head"><h2>Parts</h2><span class="hint">9 parts · select one</span></div><div class="table-wrap scroll-y"><table class="data mini parts"><thead><tr><th scope="col">Part</th><th scope="col">Block</th><th scope="col" class="r">Links</th></tr></thead><tbody><tr data-part="owner"><th scope="row"><button type="button" class="pick" data-pick="owner" aria-pressed="false"><span class="swatch f-principal"></span>owner</button></th><td>principal · human</td><td class="r">2</td></tr><tr data-part="executor"><th scope="row"><button type="button" class="pick" data-pick="executor" aria-pressed="false"><span class="swatch f-agent"></span>executor</button></th><td>agent · executor</td><td class="r">4</td></tr><tr data-part="planner"><th scope="row"><button type="button" class="pick" data-pick="planner" aria-pressed="false"><span class="swatch f-agent"></span>planner</button></th><td>agent · planner</td><td class="r">3</td></tr><tr data-part="plans"><th scope="row"><button type="button" class="pick" data-pick="plans" aria-pressed="false"><span class="swatch f-collab"></span>plans</button></th><td>channel · agent_message</td><td class="r">1</td></tr><tr data-part="gateway"><th scope="row"><button type="button" class="pick" data-pick="gateway" aria-pressed="false"><span class="swatch f-intel"></span>gateway</button></th><td>gateway</td><td class="r">3</td></tr><tr data-part="model"><th scope="row"><button type="button" class="pick" data-pick="model" aria-pressed="false"><span class="swatch f-intel"></span>model</button></th><td>model · frontier</td><td class="r">1</td></tr><tr data-part="builds"><th scope="row"><button type="button" class="pick" data-pick="builds" aria-pressed="false"><span class="swatch f-resource"></span>builds</button></th><td>pool · build_slots</td><td class="r">1</td></tr><tr data-part="tree"><th scope="row"><button type="button" class="pick" data-pick="tree" aria-pressed="false"><span class="swatch f-place"></span>tree</button></th><td>workspace · exclusive</td><td class="r">0</td></tr><tr data-part="on_plan"><th scope="row"><button type="button" class="pick" data-pick="on_plan" aria-pressed="false"><span class="swatch f-other"></span>on_plan</button></th><td>trigger · on_message</td><td class="r">1</td></tr></tbody></table></div></div><div class="card details"><div class="card-head"><h2>Part</h2><span class="hint" id="pin-hint">hover or select</span></div><div class="card-body" aria-live="polite"><section class="detail" data-detail=""><p class="muted">Point at a part, or move to it with Tab and press Enter, to see its properties, its links.</p><dl class="kv"><dt>blocks</dt><dd>agent, channel, gateway, model, pool, principal, trigger, workspace</dd></dl></section><section class="detail" data-detail="builds" hidden><div class="detail-head"><span class="swatch f-resource"></span><h3>builds</h3></div><p class="muted">pool · build_slots</p><dl class="kv"><dt>block</dt><dd>pool</dd><dt>kind</dt><dd>build_slots</dd><dt>capacity</dt><dd>16</dd><dt>job limit</dt><dd>10m</dd></dl><h4>Links</h4><ul class="links"><li>executor <span class="muted">→</span> builds <span class="carries">claim</span></li></ul></section><section class="detail" data-detail="executor" hidden><div class="detail-head"><span class="swatch f-agent"></span><h3>executor</h3></div><p class="muted">agent · executor</p><dl class="kv"><dt>block</dt><dd>agent</dd><dt>count</dt><dd>8</dd><dt>harness</dt><dd>coding</dd><dt>role</dt><dd>executor</dd></dl><h4>Marked places</h4><div class="chips"><span class="chip" data-place="parts.executor.count" data-value="8"><span class="chip-k">count</span> <span class="chip-v">8</span> <span class="chip-r">[4…12]</span></span></div><h4>Links</h4><ul class="links"><li>on_plan <span class="muted">→</span> executor <span class="carries">trigger</span></li><li>executor <span class="muted">→</span> owner <span class="carries">question</span></li><li>executor <span class="muted">→</span> gateway <span class="carries">model_call</span></li><li>executor <span class="muted">→</span> builds <span class="carries">claim</span></li></ul></section><section class="detail" data-detail="gateway" hidden><div class="detail-head"><span class="swatch f-intel"></span><h3>gateway</h3></div><p class="muted">gateway</p><dl class="kv"><dt>block</dt><dd>gateway</dd><dt>rate limit per minute</dt><dd>120</dd></dl><h4>Links</h4><ul class="links"><li>planner <span class="muted">→</span> gateway <span class="carries">model_call</span></li><li>executor <span class="muted">→</span> gateway <span class="carries">model_call</span></li><li>gateway <span class="muted">→</span> model <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="model" hidden><div class="detail-head"><span class="swatch f-intel"></span><h3>model</h3></div><p class="muted">model · frontier</p><dl class="kv"><dt>block</dt><dd>model</dd><dt>route</dt><dd>frontier</dd></dl><h4>Links</h4><ul class="links"><li>gateway <span class="muted">→</span> model <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="on_plan" hidden><div class="detail-head"><span class="swatch f-other"></span><h3>on_plan</h3></div><p class="muted">trigger · on_message</p><dl class="kv"><dt>block</dt><dd>trigger</dd><dt>kind</dt><dd>on_message</dd><dt>channel</dt><dd>plans</dd><dt>policy</dt><dd>parallel</dd></dl><h4>Marked places</h4><div class="chips"><span class="chip" data-place="parts.on_plan.max_parallel" data-value="8"><span class="chip-k">max_parallel</span> <span class="chip-v">8</span> <span class="chip-r">[4…12]</span></span></div><h4>Links</h4><ul class="links"><li>on_plan <span class="muted">→</span> executor <span class="carries">trigger</span></li></ul></section><section class="detail" data-detail="owner" hidden><div class="detail-head"><span class="swatch f-principal"></span><h3>owner</h3></div><p class="muted">principal · human</p><dl class="kv"><dt>block</dt><dd>principal</dd><dt>kind</dt><dd>human</dd></dl><h4>Links</h4><ul class="links"><li>owner <span class="muted">→</span> planner <span class="carries">prompt</span></li><li>executor <span class="muted">→</span> owner <span class="carries">question</span></li></ul></section><section class="detail" data-detail="planner" hidden><div class="detail-head"><span class="swatch f-agent"></span><h3>planner</h3></div><p class="muted">agent · planner</p><dl class="kv"><dt>block</dt><dd>agent</dd><dt>count</dt><dd>1</dd><dt>harness</dt><dd>coding</dd><dt>role</dt><dd>planner</dd></dl><h4>Marked places</h4><div class="chips"><span class="chip" data-place="parts.planner.count" data-value="1"><span class="chip-k">count</span> <span class="chip-v">1</span> <span class="chip-r">[1…2]</span></span></div><h4>Links</h4><ul class="links"><li>owner <span class="muted">→</span> planner <span class="carries">prompt</span></li><li>planner <span class="muted">→</span> plans <span class="carries">message</span></li><li>planner <span class="muted">→</span> gateway <span class="carries">model_call</span></li></ul></section><section class="detail" data-detail="plans" hidden><div class="detail-head"><span class="swatch f-collab"></span><h3>plans</h3></div><p class="muted">channel · agent_message</p><dl class="kv"><dt>block</dt><dd>channel</dd><dt>kind</dt><dd>agent_message</dd><dt>distribution</dt><dd>queue</dd></dl><h4>Links</h4><ul class="links"><li>planner <span class="muted">→</span> plans <span class="carries">message</span></li></ul></section><section class="detail" data-detail="tree" hidden><div class="detail-head"><span class="swatch f-place"></span><h3>tree</h3></div><p class="muted">workspace · exclusive</p><dl class="kv"><dt>block</dt><dd>workspace</dd><dt>one per</dt><dd>executor</dd><dt>sharing</dt><dd>exclusive</dd></dl></section></div></div><div class="card links-card"><div class="card-head"><h2>Links</h2><span class="hint" data-link-count>8 links</span></div><div class="card-body filter-row"><label>Part <select data-link-filter><option value="">all parts</option><option>builds</option><option>executor</option><option>gateway</option><option>model</option><option>on_plan</option><option>owner</option><option>planner</option><option>plans</option><option>tree</option></select></label></div><div class="table-wrap scroll-y"><table class="data mini links-table"><thead><tr><th scope="col">From</th><th scope="col">Carries</th><th scope="col">To</th></tr></thead><tbody><tr data-from="owner" data-to="planner"><td>owner</td><td><span class="carries">prompt</span></td><td>planner</td></tr><tr data-from="planner" data-to="plans"><td>planner</td><td><span class="carries">message</span></td><td>plans</td></tr><tr data-from="on_plan" data-to="executor"><td>on_plan</td><td><span class="carries">trigger</span></td><td>executor</td></tr><tr data-from="executor" data-to="owner"><td>executor</td><td><span class="carries">question</span></td><td>owner</td></tr><tr data-from="planner" data-to="gateway"><td>planner</td><td><span class="carries">model_call</span></td><td>gateway</td></tr><tr data-from="executor" data-to="gateway"><td>executor</td><td><span class="carries">model_call</span></td><td>gateway</td></tr><tr data-from="gateway" data-to="model"><td>gateway</td><td><span class="carries">model_call</span></td><td>model</td></tr><tr data-from="executor" data-to="builds"><td>executor</td><td><span class="carries">claim</span></td><td>builds</td></tr></tbody></table></div></div><div class="card policies"><div class="card-head"><h2>Policies</h2></div><div class="card-body"><ul class="policy-list"><li><span class="policy-name">question default after</span><span class="policy-v">15m</span></li></ul></div></div></aside>
 </section>
 </main>
 <footer>agenticspec-architecture/1 · rendered by agenticspec, self-contained, no network</footer>
@@ -467,6 +513,7 @@ table.data thead th { vertical-align: bottom; }
   var edges = document.querySelectorAll("svg.graph .edge");
   var details = document.querySelectorAll(".detail[data-detail]");
   var hint = document.getElementById("pin-hint");
+  var picks = document.querySelectorAll("button.pick[data-pick]");
   var pinned = "";
 
   function show(part) {
@@ -491,6 +538,9 @@ table.data thead th { vertical-align: bottom; }
       var button = n.querySelector(":scope > [role=button]");
       if (button) button.setAttribute("aria-pressed", String(n.getAttribute("data-part") === pinned));
     });
+    picks.forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-pick") === pinned));
+    });
     if (hint) hint.textContent = pinned ? "selected · Esc clears" : "hover or select";
     show(pinned);
   }
@@ -510,13 +560,128 @@ table.data thead th { vertical-align: bottom; }
     if (ev.key === "Escape" && pinned) pin(pinned);
   });
 
-  // A table wider than its card scrolls sideways: while it does, its box is a focusable region
+  // The graph at its natural size. Wider than its card, it pans by drag, wheel and arrow keys
+  // (the view is a focusable scroll region), and the zoom tools show: out, in, fit, actual size.
+  var view = document.querySelector(".graph-view");
+  var tools = document.querySelector(".graph-tools");
+  var level = tools && tools.querySelector(".zoom-level");
+  var natural = svg && svg.viewBox && svg.viewBox.baseVal;
+  var zoom = 1;
+  function fitZoom() {
+    return natural && natural.width ? Math.min(1, (view.clientWidth - 2) / natural.width) : 1;
+  }
+  function measureView() {
+    if (!view || !natural) return;
+    var wide = natural.width > view.clientWidth + 1;
+    if (tools) tools.hidden = !wide && zoom === 1;
+    var scrolls = view.scrollWidth > view.clientWidth + 1 || view.scrollHeight > view.clientHeight + 1;
+    view.classList.toggle("pannable", scrolls);
+    if (scrolls) {
+      view.setAttribute("tabindex", "0");
+      view.setAttribute("role", "region");
+      view.setAttribute("aria-label", "Graph: drag, scroll or use the arrow keys to move around");
+    } else {
+      view.removeAttribute("tabindex");
+      view.removeAttribute("role");
+      view.removeAttribute("aria-label");
+    }
+  }
+  function setZoom(z) {
+    if (!view || !natural) return;
+    var lo = Math.min(fitZoom(), 0.25);
+    z = Math.max(lo, Math.min(2, z));
+    var cx = (view.scrollLeft + view.clientWidth / 2) / zoom;
+    var cy = (view.scrollTop + view.clientHeight / 2) / zoom;
+    zoom = z;
+    svg.style.width = natural.width * z + "px";
+    svg.style.height = natural.height * z + "px";
+    view.scrollLeft = cx * z - view.clientWidth / 2;
+    view.scrollTop = cy * z - view.clientHeight / 2;
+    if (level) level.textContent = Math.round(z * 100) + " %";
+    measureView();
+  }
+  if (tools) {
+    tools.querySelectorAll("button[data-zoom]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var what = b.getAttribute("data-zoom");
+        if (what === "in") setZoom(zoom * 1.25);
+        else if (what === "out") setZoom(zoom / 1.25);
+        else if (what === "fit") setZoom(fitZoom());
+        else setZoom(1);
+      });
+    });
+  }
+  if (view) {
+    measureView();
+    if (typeof ResizeObserver !== "undefined") new ResizeObserver(measureView).observe(view);
+    var drag = null;
+    var moved = false;
+    view.addEventListener("pointerdown", function (ev) {
+      if (ev.pointerType !== "mouse" || ev.button !== 0 || !view.classList.contains("pannable")) return;
+      drag = {x: ev.clientX, y: ev.clientY, left: view.scrollLeft, top: view.scrollTop};
+      moved = false;
+    });
+    view.addEventListener("pointermove", function (ev) {
+      if (!drag) return;
+      var dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 5) return;
+      if (!moved) {
+        moved = true;
+        view.classList.add("dragging");
+        view.setPointerCapture(ev.pointerId);
+      }
+      view.scrollLeft = drag.left - dx;
+      view.scrollTop = drag.top - dy;
+    });
+    function stop() {
+      drag = null;
+      view.classList.remove("dragging");
+    }
+    view.addEventListener("pointerup", stop);
+    view.addEventListener("pointercancel", stop);
+    // A drag ends without selecting the part it started on.
+    view.addEventListener("click", function (ev) {
+      if (moved) { ev.stopPropagation(); moved = false; }
+    }, true);
+  }
+  function reveal(part) {
+    var node = svg && svg.querySelector('.node[data-part="' + CSS.escape(part) + '"]');
+    if (!node || !view) return;
+    var v = view.getBoundingClientRect(), r = node.getBoundingClientRect();
+    if (r.left < v.left || r.right > v.right) view.scrollLeft += r.left - v.left - (v.width - r.width) / 2;
+    if (r.top < v.top || r.bottom > v.bottom) view.scrollTop += r.top - v.top - (v.height - r.height) / 2;
+  }
+  picks.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var part = b.getAttribute("data-pick");
+      pin(part);
+      if (pinned) reveal(part);
+    });
+  });
+
+  // The links table, filtered by the part a link starts at, ends at or passes over.
+  var filter = document.querySelector("select[data-link-filter]");
+  if (filter) {
+    var rows = document.querySelectorAll(".links-table tbody tr");
+    var count = document.querySelector("[data-link-count]");
+    filter.addEventListener("change", function () {
+      var part = filter.value, shown = 0;
+      rows.forEach(function (r) {
+        var on = !part || r.getAttribute("data-from") === part || r.getAttribute("data-to") === part || r.getAttribute("data-over") === part;
+        r.hidden = !on;
+        if (on) shown++;
+      });
+      if (count) count.textContent = part ? shown + " of " + rows.length + " links" : rows.length + " links";
+    });
+  }
+
+  // A table wider (or, in a scrolling box, taller) than its box scrolls: while it does, its box is a focusable region
   // named for its card, so a keyboard can reach it and scroll it.
   document.querySelectorAll(".table-wrap").forEach(function (w) {
     var head = w.parentElement && w.parentElement.querySelector("h2");
     var label = head ? head.textContent : "Table";
     function measure() {
-      if (w.scrollWidth > w.clientWidth + 1) {
+      if (w.scrollWidth > w.clientWidth + 1 || w.scrollHeight > w.clientHeight + 1) {
         w.setAttribute("tabindex", "0");
         w.setAttribute("role", "region");
         w.setAttribute("aria-label", label);

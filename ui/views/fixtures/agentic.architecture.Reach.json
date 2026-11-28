@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.Reach",
+  "rows": [
+    {"link_id": "00000000-0000-4000-8000-44bdfca50000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "from_part_id": "00000000-0000-4000-8000-7784d89c0000", "from_name": "from name 1", "to_part_id": "00000000-0000-4000-8000-7784d89c0000", "to_name": "to name 1", "carries": "Prompt", "over_part_id": "00000000-0000-4000-8000-7784d89c0000", "from_kind": "Principal", "to_kind": "Principal"},
+    {"link_id": "00000000-0000-4000-8000-44bdfca50001", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "from_part_id": "00000000-0000-4000-8000-7784d89c0001", "to_part_id": "00000000-0000-4000-8000-7784d89c0001", "carries": "Order", "from_kind": "Agent", "to_kind": "Agent"},
+    {"link_id": "00000000-0000-4000-8000-44bdfca50002", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "from_part_id": "00000000-0000-4000-8000-7784d89c0002", "from_name": "from name 3", "to_part_id": "00000000-0000-4000-8000-7784d89c0002", "to_name": "to name 3", "carries": "Question", "over_part_id": "00000000-0000-4000-8000-7784d89c0002", "from_kind": "Harness", "to_kind": "Harness"}
+  ]
+}

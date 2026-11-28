@@ -1,0 +1,8 @@
+{
+  "channel": "knowledge",
+  "events": [
+    {"at": "1s", "event": "agentic.knowledge.KnowledgePublished", "payload": {"knowledge_id": "00000000-0000-4000-8000-92b695b40000", "kind": "Instruction", "name": "name 1", "scope": "Organization", "repository": "repository 1", "content": {"class":"class 1","digest":"digest 1","length":1}}},
+    {"at": "2s", "event": "agentic.knowledge.KnowledgeRevised", "payload": {"knowledge_id": "00000000-0000-4000-8000-92b695b40000", "content": {"class":"class 1","digest":"digest 1","length":1}}},
+    {"at": "3s", "event": "agentic.knowledge.KnowledgeWithdrawn", "payload": {"knowledge_id": "00000000-0000-4000-8000-92b695b40000"}}
+  ]
+}

@@ -28,3 +28,14 @@ border: [operator]
 policies:
   question_default_after: { value: 15m, vary: [5m, 15m, 60m] }
   operator_answers_alone: { value: false, vary: [false, true] }
+
+view:
+  home: overview
+  order:
+    parts: [owner, operator, worker]
+  labels:
+    parts:
+      worker: coding agents
+      builds: build slots
+  groups:
+    - { name: people, label: People, parts: [owner] }

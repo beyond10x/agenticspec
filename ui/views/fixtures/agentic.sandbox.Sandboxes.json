@@ -1,0 +1,8 @@
+{
+  "view": "agentic.sandbox.Sandboxes",
+  "rows": [
+    {"sandbox_id": "00000000-0000-4000-8000-df1af3610000", "isolation": "None", "writable_paths": ["writable paths 1"], "egress": [{"host":"host 1","port":1}], "secret_grants": ["secret grants 1"], "state": "Active"},
+    {"sandbox_id": "00000000-0000-4000-8000-df1af3610001", "isolation": "Process", "writable_paths": ["writable paths 2"], "egress": [{"host":"host 2","port":2}], "secret_grants": ["secret grants 2"], "state": "Retired"},
+    {"sandbox_id": "00000000-0000-4000-8000-df1af3610002", "isolation": "Container", "writable_paths": ["writable paths 3"], "egress": [{"host":"host 3","port":3}], "secret_grants": ["secret grants 3"], "state": "Active"}
+  ]
+}

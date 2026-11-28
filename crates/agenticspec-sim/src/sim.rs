@@ -16,9 +16,11 @@ use serde_json::Value;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BinaryHeap, VecDeque};
 
+mod record;
 mod script;
 mod swarm;
 
+pub use record::{PortUse, RECORDED};
 pub use script::{Arrival, RunOutcome, Script, Stamp, TaskRecord, TaskScript};
 use swarm::{Coordination, Distribution, Input, Output, Schedule, TrigAcc, Trigger};
 
@@ -251,8 +253,9 @@ pub struct Model {
     triggers: Vec<Trigger>,
     /// The triggers that fire on an event of the simulation.
     on_event: Vec<usize>,
-    /// The shared channel arrivals are posted to, when a principal posts to one.
-    intake: Option<usize>,
+    /// The shared channel arrivals are posted to, when a principal posts to one, and that
+    /// principal part.
+    intake: Option<(usize, String)>,
     /// The worker kind whose scope partition routes the arrivals.
     partition: Option<usize>,
     /// Tasks that arrive at once, `(at, tasks)`.
@@ -764,6 +767,8 @@ pub struct RunOut {
     pub timeline: Vec<Stamp>,
     /// Each task of a scripted run, by its number; empty otherwise.
     pub tasks: Vec<TaskRecord>,
+    /// The port uses of a recorded run, in the order they were made; empty otherwise.
+    pub uses: Vec<PortUse>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -836,6 +841,8 @@ struct Outcome {
     channel: Option<usize>,
     /// The reply of the script the question took.
     reply: Option<usize>,
+    /// The question's number.
+    question: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -865,6 +872,25 @@ struct Inst {
     begin: Option<usize>,
     /// Tasks routed to the scope it owns.
     own: VecDeque<usize>,
+    /// The number of its current build's claim.
+    claim: usize,
+    /// The number of the firing whose run it works.
+    firing: usize,
+}
+
+/// The next number of each simulated entity that has no index of its own.
+#[derive(Debug, Default)]
+struct Ids {
+    question: usize,
+    claim: usize,
+    firing: usize,
+    post: usize,
+    deliverable: usize,
+}
+
+fn next(counter: &mut usize) -> usize {
+    *counter += 1;
+    *counter - 1
 }
 
 struct Task {
@@ -888,6 +914,10 @@ struct Task {
     arrival: Option<usize>,
     /// The run fixture of the script its first run took.
     fixture: Option<usize>,
+    /// The copy of the worker kind that last reported it done.
+    by: usize,
+    /// The number of the deliverable last submitted for it.
+    deliverable: usize,
 }
 
 #[derive(Default, Clone)]
@@ -1016,6 +1046,7 @@ struct Sim<'a> {
     defaulted: f64,
     record: bool,
     timeline: Vec<Stamp>,
+    ids: Ids,
     /// The draws of corpus entries.
     corpus: Rng,
     /// Run fixtures not yet taken: by worker kind, and for any kind.
@@ -1025,6 +1056,7 @@ struct Sim<'a> {
     replies_left: Vec<VecDeque<usize>>,
     /// Build times of the script taken so far.
     builds_taken: usize,
+    uses: Vec<PortUse>,
 }
 
 /// The part of `[a, b)` inside the horizon `[0, h)`.
@@ -1061,12 +1093,29 @@ impl<'a> Sim<'a> {
     }
 
     /// Records an event of the simulation, and fires the `on_event` triggers that wait for it
-    /// once the current event is handled.
-    fn rec(&mut self, t: f64, part: &str, kind: &'static str) {
-        self.rec_task(t, part, kind, None);
+    /// once the current event is handled. `subject` and `copy` are kept for the event log only
+    /// (`crate::event_log`).
+    fn rec(
+        &mut self,
+        t: f64,
+        part: &str,
+        kind: &'static str,
+        subject: Option<usize>,
+        copy: Option<usize>,
+    ) {
+        self.rec_task(t, part, kind, None, subject, copy);
     }
 
-    fn rec_task(&mut self, t: f64, part: &str, kind: &'static str, task: Option<usize>) {
+    /// [`Sim::rec`] of an event about `task`, the task a scripted run records it for.
+    fn rec_task(
+        &mut self,
+        t: f64,
+        part: &str,
+        kind: &'static str,
+        task: Option<usize>,
+        subject: Option<usize>,
+        copy: Option<usize>,
+    ) {
         if self.record && t < self.m.horizon {
             self.timeline.push(Stamp {
                 t,
@@ -1074,6 +1123,8 @@ impl<'a> Sim<'a> {
                 kind,
                 task,
                 reply: None,
+                subject,
+                copy,
             });
         }
         let m = self.m;
@@ -1085,6 +1136,7 @@ impl<'a> Sim<'a> {
     }
 
     /// An answered or defaulted question of instance `i`, with the reply of the script it took.
+    #[allow(clippy::too_many_arguments)]
     fn rec_reply(
         &mut self,
         t: f64,
@@ -1092,10 +1144,12 @@ impl<'a> Sim<'a> {
         kind: &'static str,
         i: usize,
         reply: Option<usize>,
+        subject: Option<usize>,
+        copy: Option<usize>,
     ) {
         let task = self.insts[i].task;
         let before = self.timeline.len();
-        self.rec_task(t, part, kind, task);
+        self.rec_task(t, part, kind, task, subject, copy);
         if self.timeline.len() > before
             && let Some(s) = self.timeline.last_mut()
         {
@@ -1357,7 +1411,14 @@ impl<'a> Sim<'a> {
         self.kinds[kind].started += 1.0;
         self.insts[i].steps = steps;
         self.insts[i].at = 0;
-        self.rec_task(now, &w.exec.part, "task_started", Some(id));
+        self.rec_task(
+            now,
+            &w.exec.part,
+            "task_started",
+            Some(id),
+            None,
+            Some(self.insts[i].copy),
+        );
         self.advance(i, now);
     }
 
@@ -1385,7 +1446,14 @@ impl<'a> Sim<'a> {
         self.count_step(kind, Some(before), pass);
         self.insts[i].steps = vec![Step::Rework; n];
         self.insts[i].at = 0;
-        self.rec_task(now, &w.exec.part, "task_reworked", Some(id));
+        self.rec_task(
+            now,
+            &w.exec.part,
+            "task_reworked",
+            Some(id),
+            None,
+            Some(self.insts[i].copy),
+        );
         self.advance(i, now);
     }
 
@@ -1418,7 +1486,14 @@ impl<'a> Sim<'a> {
                 {
                     self.gateways[g].limited_seconds += waited;
                     self.gateways[g].limited_calls += 1.0;
-                    self.rec_task(now, &m.gateways[g].part, "rate_limited", self.insts[i].task);
+                    self.rec_task(
+                        now,
+                        &m.gateways[g].part,
+                        "rate_limited",
+                        self.insts[i].task,
+                        None,
+                        None,
+                    );
                 }
                 let rng = self.rng(i);
                 let dur = e.turn_seconds.sample(rng).max(0.0);
@@ -1465,6 +1540,8 @@ impl<'a> Sim<'a> {
                         self.gateways[g].calls += 1.0;
                     }
                     if let Some(r) = route {
+                        let copy = self.insts[i].copy;
+                        self.model_call(&e.part, copy, (r.model, r.gateway), start, start + dur);
                         let ma = &mut self.models[r.model];
                         ma.calls += 1.0;
                         ma.cost += cost;
@@ -1481,17 +1558,21 @@ impl<'a> Sim<'a> {
                 };
                 match m.workers[kind].pool {
                     Some(p) => {
+                        self.insts[i].claim = next(&mut self.ids.claim);
                         let cap = level_at(m.pools[p].capacity, &m.pools[p].drops, now);
                         if (self.pools[p].running as f64) < cap && self.pools[p].queue.is_empty() {
                             self.pools[p].waits.push(0.0);
-                            self.start_build(p, i, now);
+                            self.start_build(p, i, now, now);
                         } else {
                             self.pools[p].queue.push_back((i, now));
+                            let claim = Some(self.insts[i].claim);
                             self.rec_task(
                                 now,
                                 &m.pools[p].part,
                                 "build_queued",
                                 self.insts[i].task,
+                                claim,
+                                None,
                             );
                         }
                     }
@@ -1522,8 +1603,16 @@ impl<'a> Sim<'a> {
         };
         if claims {
             task.kind = kind;
+            task.by = self.insts[i].copy;
         } else {
-            self.rec_task(now, &w.exec.part, "task_failed", Some(id));
+            self.rec_task(
+                now,
+                &w.exec.part,
+                "task_failed",
+                Some(id),
+                None,
+                Some(self.insts[i].copy),
+            );
             return self.start_rework(i, id, now);
         }
         if w.partition && !self.merge(kind, id, now) {
@@ -1534,7 +1623,16 @@ impl<'a> Sim<'a> {
         self.end_run(i, Some(id), now);
         match w.review {
             Some(r) => {
-                self.rec_task(now, &w.exec.part, "task_claimed", Some(id));
+                let d = next(&mut self.ids.deliverable);
+                self.tasks[id].deliverable = d;
+                self.rec_task(
+                    now,
+                    &w.exec.part,
+                    "task_claimed",
+                    Some(id),
+                    Some(d),
+                    Some(self.insts[i].copy),
+                );
                 self.reviewers[r].queue.push_back((id, now));
                 self.dispatch_reviews(r, now);
             }
@@ -1550,10 +1648,22 @@ impl<'a> Sim<'a> {
             Output::Ship => self.ship(id, now),
             Output::Hand(k) => {
                 self.handed[k].push_back(id);
-                self.rec_task(now, &self.m.workers[k].exec.part, "task_handed", Some(id));
+                self.rec_task(
+                    now,
+                    &self.m.workers[k].exec.part,
+                    "task_handed",
+                    Some(id),
+                    None,
+                    None,
+                );
                 self.assign(now);
             }
-            Output::Post(c) => self.post(c, id, now),
+            Output::Post(c) => {
+                let task = &self.tasks[id];
+                let m = self.m;
+                let by = (m.workers[task.kind].exec.part.as_str(), task.by);
+                self.post(c, id, now, Some(by))
+            }
         }
     }
 
@@ -1567,6 +1677,8 @@ impl<'a> Sim<'a> {
                 &self.m.workers[kind].exec.part,
                 "duplicate_dropped",
                 Some(id),
+                Some(id),
+                None,
             );
             return;
         }
@@ -1579,7 +1691,7 @@ impl<'a> Sim<'a> {
             k.false_shipped += 1.0;
         }
         let part = &self.m.workers[kind].exec.part;
-        self.rec_task(now, part, "task_done", Some(id));
+        self.rec_task(now, part, "task_done", Some(id), Some(id), None);
     }
 
     fn dispatch_reviews(&mut self, r: usize, now: f64) {
@@ -1597,7 +1709,14 @@ impl<'a> Sim<'a> {
             self.insts[i].task = Some(id);
             self.insts[i].steps = vec![Step::Review; n];
             self.insts[i].at = 0;
-            self.rec_task(now, &m.reviewers[r].exec.part, "review_started", Some(id));
+            self.rec_task(
+                now,
+                &m.reviewers[r].exec.part,
+                "review_started",
+                Some(id),
+                None,
+                Some(self.insts[i].copy),
+            );
             self.advance(i, now);
         }
     }
@@ -1622,7 +1741,14 @@ impl<'a> Sim<'a> {
             self.release(id, now);
         } else {
             self.reviewers[r].rejected += 1.0;
-            self.rec_task(now, &m.reviewers[r].exec.part, "task_rejected", Some(id));
+            self.rec_task(
+                now,
+                &m.reviewers[r].exec.part,
+                "task_rejected",
+                Some(id),
+                Some(self.tasks[id].deliverable),
+                Some(self.insts[i].copy),
+            );
             let kind = self.tasks[id].kind;
             self.returned[kind].push_back(id);
         }
@@ -1632,7 +1758,8 @@ impl<'a> Sim<'a> {
         }
     }
 
-    fn start_build(&mut self, p: usize, i: usize, now: f64) {
+    /// Starts the build of instance `i` in pool `p`, which it asked for at `requested`.
+    fn start_build(&mut self, p: usize, i: usize, requested: f64, now: f64) {
         let m = self.m;
         let h = m.horizon;
         let Who::Worker(kind) = self.insts[i].who else {
@@ -1647,7 +1774,24 @@ impl<'a> Sim<'a> {
         pa.jobs += 1.0;
         pa.busy += span(now, now + run, h);
         self.kinds[kind].busy += span(now, now + run, h);
-        self.rec_task(now, &m.pools[p].part, "build_started", self.insts[i].task);
+        let copy = self.insts[i].copy;
+        let claim = PortUse::new(
+            "resource.claim",
+            &m.workers[kind].exec.part,
+            copy,
+            requested,
+            now + run,
+        );
+        self.port_use(claim.to(&m.pools[p].part));
+        let claim = Some(self.insts[i].claim);
+        self.rec_task(
+            now,
+            &m.pools[p].part,
+            "build_started",
+            self.insts[i].task,
+            claim,
+            None,
+        );
         self.at(now + run, Ev::BuildDone(i));
     }
 
@@ -1665,7 +1809,7 @@ impl<'a> Sim<'a> {
             if let Who::Worker(kind) = self.insts[j].who {
                 self.kinds[kind].slot_wait += span(queued, now, m.horizon);
             }
-            self.start_build(p, j, now);
+            self.start_build(p, j, queued, now);
         }
     }
 
@@ -1681,7 +1825,15 @@ impl<'a> Sim<'a> {
             return self.advance(i, now);
         };
         self.kinds[kind].asked += 1.0;
-        self.rec_task(now, &w.exec.part, "question_asked", self.insts[i].task);
+        let question = next(&mut self.ids.question);
+        self.rec_task(
+            now,
+            &w.exec.part,
+            "question_asked",
+            self.insts[i].task,
+            Some(question),
+            Some(self.insts[i].copy),
+        );
         let task = self.insts[i].task.expect("an asking instance holds a task");
         let scripted = self.tasks[task]
             .script
@@ -1717,7 +1869,14 @@ impl<'a> Sim<'a> {
                                 self.channels[c] += 1.0;
                             }
                         }
-                        self.rec_task(triage, &dl.part, "question_forwarded", self.insts[i].task);
+                        self.rec_task(
+                            triage,
+                            &dl.part,
+                            "question_forwarded",
+                            self.insts[i].task,
+                            None,
+                            None,
+                        );
                         channel = dl.channel;
                         let pr = &m.principals[p];
                         let avail = pr.available_from(triage);
@@ -1735,6 +1894,7 @@ impl<'a> Sim<'a> {
             }
         };
         let resolve = answer_at.min(deadline);
+        self.record_question(i, target, answerer, forwarded_at, channel, now, resolve);
         let k = &mut self.kinds[kind];
         match forwarded_at {
             Some(f) => {
@@ -1748,6 +1908,7 @@ impl<'a> Sim<'a> {
             answerer,
             channel,
             reply,
+            question,
         });
         self.at(resolve, Ev::StepDone(i));
     }
@@ -1761,12 +1922,15 @@ impl<'a> Sim<'a> {
                     unreachable!("only workers ask")
                 };
                 let role = &m.workers[kind].exec.role;
+                let copy = Some(self.insts[i].copy);
                 self.rec_reply(
                     now,
                     &m.workers[kind].exec.part,
                     "question_defaulted",
                     i,
                     o.reply,
+                    Some(o.question),
+                    copy,
                 );
                 // A default rests on an assumption; a wrong one costs a share of the task again.
                 if self.rng(i).chance(role.default_wrong) {
@@ -1783,8 +1947,17 @@ impl<'a> Sim<'a> {
                         self.principals[p].answered += 1.0;
                         if let Some(c) = o.channel {
                             self.channels[c] += 1.0;
+                            self.record_answer(i, p, c, now);
                         }
-                        self.rec_reply(now, &m.principals[p].part, "question_answered", i, o.reply);
+                        self.rec_reply(
+                            now,
+                            &m.principals[p].part,
+                            "question_answered",
+                            i,
+                            o.reply,
+                            Some(o.question),
+                            None,
+                        );
                     }
                     Answerer::Delegate(d) => {
                         self.delegates[d].answered += 1.0;
@@ -1793,6 +1966,8 @@ impl<'a> Sim<'a> {
                             &m.delegates[d].part,
                             "question_answered",
                             self.insts[i].task,
+                            Some(o.question),
+                            None,
                         );
                     }
                 }
@@ -1843,6 +2018,8 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
                 hold: false,
                 begin: None,
                 own: VecDeque::new(),
+                claim: 0,
+                firing: 0,
             });
         }
     }
@@ -1883,11 +2060,13 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
         defaulted: 0.0,
         record,
         timeline: Vec::new(),
+        ids: Ids::default(),
         corpus: Rng::stream(seed, CORPUS),
         runs_left: vec![VecDeque::new(); m.workers.len()],
         runs_any: VecDeque::new(),
         replies_left: vec![VecDeque::new(); m.principals.len()],
         builds_taken: 0,
+        uses: Vec::new(),
     };
     if let Some(sc) = &m.script {
         for (f, (kind, _)) in sc.runs.iter().enumerate() {
@@ -1918,21 +2097,21 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
     }
     for (p, pool) in m.pools.iter().enumerate() {
         for &(from, until, _) in &pool.drops {
-            s.rec(from, &pool.part, "capacity_dropped");
-            s.rec(until, &pool.part, "capacity_restored");
+            s.rec(from, &pool.part, "capacity_dropped", None, None);
+            s.rec(until, &pool.part, "capacity_restored", None, None);
             s.at(until, Ev::PoolCheck(p));
         }
     }
     for g in &m.gateways {
         for &(from, until, _) in &g.drops {
-            s.rec(from, &g.part, "capacity_dropped");
-            s.rec(until, &g.part, "capacity_restored");
+            s.rec(from, &g.part, "capacity_dropped", None, None);
+            s.rec(until, &g.part, "capacity_restored", None, None);
         }
     }
     for p in &m.principals {
         for &(from, until) in &p.away {
-            s.rec(from, &p.part, "principal_away");
-            s.rec(until, &p.part, "principal_back");
+            s.rec(from, &p.part, "principal_away", None, None);
+            s.rec(until, &p.part, "principal_back", None, None);
         }
     }
 
@@ -1981,9 +2160,23 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
                 s.pools[p].running -= 1;
                 if s.insts[i].killed {
                     s.pools[p].killed += 1.0;
-                    s.rec_task(t, &m.pools[p].part, "build_killed", s.insts[i].task);
+                    s.rec_task(
+                        t,
+                        &m.pools[p].part,
+                        "build_killed",
+                        s.insts[i].task,
+                        Some(s.insts[i].claim),
+                        None,
+                    );
                 } else {
-                    s.rec_task(t, &m.pools[p].part, "build_done", s.insts[i].task);
+                    s.rec_task(
+                        t,
+                        &m.pools[p].part,
+                        "build_done",
+                        s.insts[i].task,
+                        Some(s.insts[i].claim),
+                        None,
+                    );
                 }
                 s.dispatch(p, t);
                 s.step_done(i, t);
@@ -2017,7 +2210,7 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
             .waiting
             .iter()
             .chain(a.queued.iter())
-            .map(|(fired, _)| h - fired)
+            .map(|(fired, _, _)| h - fired)
             .collect();
         a.waits.extend(left);
     }
@@ -2301,6 +2494,7 @@ fn finish(s: Sim<'_>) -> RunOut {
         per_part,
         timeline,
         tasks,
+        uses: s.uses,
     }
 }
 

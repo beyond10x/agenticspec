@@ -562,7 +562,9 @@ mod long {
     }
 }
 
+mod architecture;
 mod fixes;
+mod lift;
 
 mod legacy_dir {
     use agenticspec_records::store::adopt_legacy_dir;

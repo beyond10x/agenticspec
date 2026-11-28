@@ -1,0 +1,183 @@
+# The deployment unit of the building blocks. One component owns every block and serves its views
+# over HTTP, so an `ess-ui/1` document over this system (`ui/views/blocks.ui.yaml`) reads them
+# from outside the process, and accepts the commands an operator UI derived from an architecture sends
+# as actions (`agenticspec ui derive`).
+#
+# The cross-block causation of the building blocks: a command one block causes in another when an
+# event of the first is published. A command a binding causes is behaviour of the specification;
+# `agenticspec sim ports` reads these bindings to tell such a command from an entry, which the
+# world issues (docs/contract.md).
+#
+# One component owns every block: the bindings cross blocks, not deployment units. A binding
+# points down the layers, or stays inside one layer without a cycle: the block of the event holds
+# the binding, as a higher block holds the identifier of a lower one (scripts/check-layers.sh
+# counts each binding as a dependency of the event's domain on the command's domain).
+#
+# Every causation that was considered, and why it is a binding, a gap of ESS or not implied by the
+# blocks, is listed in the epic of the architecture contract; the gaps and their reproductions are
+# in design/ess-repro/.
+
+components:
+  - component: blocks
+    summary: >-
+      Every building block; the bindings below cross blocks inside it. Reached by network: it
+      accepts each entry command an ingress may export (an intent, an administration command or
+      the answer of a principal) that an actor may issue, and serves the views of every block.
+    reached_by: network
+    accepts:
+      commands:
+        - agentic.agent.RetireAgent
+        - agentic.agent.RetireRevision
+        - agentic.architecture.RetireArchitecture
+        - agentic.authority.ApproveDecision
+        - agentic.authority.DecideRequest
+        - agentic.authority.DenyRequest
+        - agentic.authority.OpenBudget
+        - agentic.authority.RejectDecision
+        - agentic.authority.RevokeGrant
+        - agentic.channel.CloseChannel
+        - agentic.channel.CloseSharedChannel
+        - agentic.channel.PostMessage
+        - agentic.channel.SendMessage
+        - agentic.channel.Subscribe
+        - agentic.delegation.RevokeDelegation
+        - agentic.deployment.InstallRevision
+        - agentic.deployment.ObserveUnit
+        - agentic.deployment.QueueRun
+        - agentic.deployment.RecordUnit
+        - agentic.deployment.RequestDeployment
+        - agentic.deployment.StopDeployment
+        - agentic.gateway.AdmitCall
+        - agentic.gateway.AttachUpstream
+        - agentic.gateway.DetachUpstream
+        - agentic.gateway.DrainGateway
+        - agentic.gateway.StopGateway
+        - agentic.harness.RetireHarness
+        - agentic.knowledge.ReviseKnowledge
+        - agentic.knowledge.WithdrawKnowledge
+        - agentic.kpi.RetireKpi
+        - agentic.model.OpenEndpoint
+        - agentic.model.RetireModel
+        - agentic.model.RetireRoute
+        - agentic.principal.RetirePrincipal
+        - agentic.process.WithdrawProcess
+        - agentic.question.Answer
+        - agentic.question.Ask
+        - agentic.resource.RequestClaim
+        - agentic.runtime.StartInstance
+        - agentic.sandbox.DefineSandbox
+        - agentic.sandbox.RetireSandbox
+        - agentic.store.CreateStore
+        - agentic.store.GetRecord
+        - agentic.store.PutRecord
+        - agentic.store.QueryStore
+        - agentic.store.ReviseRecord
+        - agentic.tool.WithdrawTool
+        - agentic.trigger.CreateSchedule
+        - agentic.trigger.DisableSchedule
+        - agentic.trigger.DisableTrigger
+        - agentic.trigger.EnableSchedule
+        - agentic.trigger.EnableTrigger
+        - agentic.trigger.FireTrigger
+        - agentic.trigger.PassScheduleChecks
+        - agentic.work.AcceptDeliverable
+        - agentic.work.CreateTask
+        - agentic.work.OfferAssignment
+        - agentic.work.RejectDeliverable
+        - agentic.workspace.Propose
+        - agentic.workspace.RequestLease
+        - agentic.work.StartRun
+        - agentic.work.SubmitDeliverable
+    owns:
+      domains:
+        - agentic.shared
+        - agentic.principal
+        - agentic.delegation
+        - agentic.model
+        - agentic.gateway
+        - agentic.tool
+        - agentic.knowledge
+        - agentic.store
+        - agentic.agent
+        - agentic.harness
+        - agentic.work
+        - agentic.process
+        - agentic.authority
+        - agentic.channel
+        - agentic.question
+        - agentic.trigger
+        - agentic.workspace
+        - agentic.sandbox
+        - agentic.runtime
+        - agentic.resource
+        - agentic.architecture
+        - agentic.deployment
+        - agentic.kpi
+        - agentic.experiment
+
+bindings:
+  # The gateway makes the inference for the caller (actor agentic.model.Caller): an admitted call
+  # starts it on the call's route. A refused call starts nothing. The gateway starts it once; a
+  # refusal of StartInference (unknown or retired route) leaves the admitted call without an
+  # inference, which CompleteCall reports.
+  - id: start-inference-on-admitted-call
+    summary: An admitted gateway call starts its inference on the call's route.
+    when:
+      event: agentic.gateway.CallDecided
+      where: [event.admission == Admitted]
+    invoke:
+      command: agentic.model.StartInference
+    mapping:
+      inference_id: event.inference_id
+      route_id: event.route_id
+      request: event.request
+    delivery: at_most_once
+    on_failure: drop
+
+  # The authority records the decision on a request (a permission mode, a classifier, a hook, a
+  # rule, a delegate or a human); when the request is a harness tool call, that decision decides
+  # the call. An ApprovalRequired verdict decides nothing yet: the approval or rejection does.
+  - id: decide-tool-call-on-decision
+    summary: A final decision on a tool call's request allows or denies the call.
+    when:
+      event: agentic.authority.DecisionRecorded
+      where: [defined(event.tool_call_id), event.verdict != ApprovalRequired]
+    invoke:
+      command: agentic.harness.DecideToolCall
+    mapping:
+      tool_call_id: event.tool_call_id
+      verdict: event.verdict
+      decider: event.decider
+      attribution: event.attribution
+    delivery: at_most_once
+    on_failure: drop
+
+  - id: allow-tool-call-on-approval
+    summary: An approved decision on a tool call's request allows the call.
+    when:
+      event: agentic.authority.ApprovalGranted
+      where: [defined(event.tool_call_id)]
+    invoke:
+      command: agentic.harness.DecideToolCall
+    mapping:
+      tool_call_id: event.tool_call_id
+      verdict: Allow
+      decider: event.approver
+      attribution: Known
+    delivery: at_most_once
+    on_failure: drop
+
+  - id: deny-tool-call-on-rejection
+    summary: A rejected decision on a tool call's request denies the call.
+    when:
+      event: agentic.authority.ApprovalRejected
+      where: [defined(event.tool_call_id)]
+    invoke:
+      command: agentic.harness.DecideToolCall
+    mapping:
+      tool_call_id: event.tool_call_id
+      verdict: Deny
+      decider: event.rejecter
+      attribution: Known
+    delivery: at_most_once
+    on_failure: drop

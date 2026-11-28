@@ -1,0 +1,11 @@
+{
+  "rows": [
+    {
+      "architecture": "large-37",
+      "place": "policies.question_default_after",
+      "search": "",
+      "value": "15m"
+    }
+  ],
+  "view": "agentic.architecture.Settings"
+}

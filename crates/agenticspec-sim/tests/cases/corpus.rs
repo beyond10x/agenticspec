@@ -57,7 +57,7 @@ fn an_inline_entry_runs_its_one_input_on_the_architecture_of_the_corpus() {
         format!(
             "format: agenticspec-corpus/1\ncorpus: inline\narchitecture: {}\nprofile: {}\nseed: 2\nhorizon: 1h\nentries:\n  - {{ id: s-1, kind: control, input_digest: {}, expected: refused }}\n  - {{ id: s-2, kind: order, input_digest: {}, expected: refused }}\n",
             doc_ref(&repo_root().join("architectures/workstation.yaml")),
-            doc_ref(&repo_root().join("profiles/coding.yaml")),
+            doc_ref(&repo_root().join("fields/coding/profiles/coding.yaml")),
             sha256_hex(b"run the release"),
             sha256_hex(b"ship it"),
         ),

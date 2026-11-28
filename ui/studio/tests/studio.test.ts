@@ -1,0 +1,152 @@
+// Unit tests of the studio's host code: the patch tokens, the graph card's facts, the hook after
+// OpenDraft, the graph slot's selection, the one event stream per draft the generated client
+// keeps, and the panels of the draft view.
+import { describe, expect, it, vi } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { nextTick, reactive } from 'vue';
+import { tokens } from '../src/slots/patch';
+import { asGraph, facts, linksOf, type GraphRow } from '../src/slots/graph';
+import { hooks } from '../src/hooks';
+import DraftGraph from '../src/slots/DraftGraph.vue';
+import { createClient } from '../src/generated/client';
+import DraftPanels from '../src/slots/DraftPanels.vue';
+
+const graph: GraphRow = {
+  draft_id: 'd1',
+  revision: 2,
+  name: 'workstation',
+  summary: '',
+  svg: '<svg class="graph" width="200" height="100"><g class="edge" data-from="a" data-to="b"></g><g class="node f-agent" data-part="a"><rect class="card-bg" role="button" tabindex="0" aria-pressed="false"></rect></g><g class="node" data-part="b"><rect class="card-bg" role="button" tabindex="0" aria-pressed="false"></rect></g></svg>',
+  width: 200,
+  height: 100,
+  parts: [
+    { id: 'a', block: 'agent', family: 'agent', count: '12', acts_for: 'b', properties: [['harness', 'coding']] },
+    { id: 'b', block: 'principal', family: 'principal', border: true },
+  ],
+  links: [{ from: 'a', to: 'b', carries: 'question' }],
+};
+
+describe('patch tokens', () => {
+  it('marks verbs, variables, strings, numbers and comments and loses no character', () => {
+    const text = 'set(P, count, 3) :- part{id: P, block: "agent"}.\n% fewer\nfrobnicate(P).';
+    const t = tokens(text);
+    expect(t.map((x) => x.text).join('')).toBe(text);
+    const kinds = (k: string) => t.filter((x) => x.kind === k).map((x) => x.text);
+    expect(kinds('verb')).toEqual(['set']);
+    expect(kinds('keyword')).toEqual(['part', 'frobnicate']);
+    expect(kinds('var')).toEqual(['P', 'P', 'P']);
+    expect(kinds('string')).toEqual(['"agent"']);
+    expect(kinds('number')).toEqual(['3']);
+    expect(kinds('comment')).toEqual(['% fewer']);
+  });
+
+  it('keeps an unclosed string and odd characters', () => {
+    const text = 'add(part{id: "x ~ @';
+    expect(tokens(text).map((x) => x.text).join('')).toBe(text);
+  });
+});
+
+describe('graph', () => {
+  it('reads a row only when it is a graph', () => {
+    expect(asGraph(graph)).toBe(graph);
+    expect(asGraph({ svg: 1 })).toBeNull();
+    expect(asGraph(null)).toBeNull();
+  });
+
+  it('a part card shows its facts and links', () => {
+    expect(facts(graph.parts[0])).toEqual([
+      ['block', 'agent'],
+      ['count', '12'],
+      ['acts for', 'b'],
+      ['harness', 'coding'],
+    ]);
+    expect(facts(graph.parts[1])).toContainEqual(['border', 'a human reaches it']);
+    expect(linksOf(graph, 'b')).toHaveLength(1);
+  });
+
+  it('clicking a part selects it, shows its card and lights its links', async () => {
+    const read = reactive({ state: 'ready', rows: [graph], row: graph, error: '', reload: () => {} });
+    const w = mount(DraftGraph, { props: { read: read as never }, attachTo: document.body });
+    await nextTick();
+    await nextTick();
+    const a = w.get('[data-part="a"] rect');
+    await a.trigger('click');
+    expect(a.attributes('aria-pressed')).toBe('true');
+    const card = w.get('[data-selected-part]');
+    expect(card.attributes('data-part')).toBe('a');
+    expect(card.text()).toContain('harness');
+    expect(w.get('.edge').classes()).toContain('hot');
+    await a.trigger('keydown', { key: 'Escape' });
+    expect(w.find('[data-selected-part]').exists()).toBe(false);
+    w.unmount();
+  });
+});
+
+describe('hooks', () => {
+  it('an opened draft is shown by its page', () => {
+    const navigate = vi.fn();
+    hooks['studio.draft.OpenDraft']?.({ draft_id: 'd1' }, { navigate, toast: vi.fn() });
+    expect(navigate).toHaveBeenCalledWith('draft', { draft_id: 'd1' });
+  });
+});
+
+describe('event channel', () => {
+  it('every read of one draft shares one stream, closed when the last read stops', () => {
+    const opened: FakeSource[] = [];
+    class FakeSource {
+      url: string;
+      closed = false;
+      onmessage: ((e: MessageEvent<string>) => void) | null = null;
+      handlers = new Map<string, (e: MessageEvent<string>) => void>();
+      constructor(url: string) {
+        this.url = url;
+        opened.push(this);
+      }
+      addEventListener(name: string, h: (e: MessageEvent<string>) => void) {
+        this.handlers.set(name, h);
+      }
+      close() {
+        this.closed = true;
+      }
+    }
+    vi.stubGlobal('EventSource', FakeSource);
+    const client = createClient();
+    const seen: string[] = [];
+    const stopA = client.subscribe('draft_events', { draft_id: 'd1' }, (e) => seen.push(`a:${e}`));
+    const stopB = client.subscribe('draft_events', { draft_id: 'd1' }, (e) => seen.push(`b:${e}`));
+    const stopC = client.subscribe('draft_events', { draft_id: 'd2' }, (e) => seen.push(`c:${e}`));
+    expect(opened.map((s) => s.url)).toEqual([
+      '/api/channels/draft_events?draft_id=d1',
+      '/api/channels/draft_events?draft_id=d2',
+    ]);
+    const revised = { type: 'studio.draft.DraftRevised', data: '{"number":2}' } as MessageEvent<string>;
+    opened[0].handlers.get('studio.draft.DraftRevised')!(revised);
+    expect(seen).toEqual(['a:studio.draft.DraftRevised', 'b:studio.draft.DraftRevised']);
+    stopA();
+    expect(opened[0].closed).toBe(false);
+    stopB();
+    expect(opened[0].closed).toBe(true);
+    stopC();
+    expect(opened[1].closed).toBe(true);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('the panels of the draft view', () => {
+  it('come from ui/views: no panel file is written under ui/studio', () => {
+    const files = Object.keys(import.meta.glob('../src/**/*.vue'));
+    expect(files.filter((f) => /\/widgets\/|\/Agentic[A-Z]/.test(f))).toEqual([]);
+  });
+
+  it('draw the panels of the block of the chosen part from the fixtures', async () => {
+    const read = reactive({ state: 'ready', rows: [graph], row: graph, error: '', reload: vi.fn() });
+    const w = mount(DraftPanels, { props: { read } as never, attachTo: document.body });
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 0));
+    await nextTick();
+    expect(w.find('[data-slot="draft-panels"]').attributes('data-part')).toBe('a');
+    expect(w.find('.island').attributes('data-block')).toBe('agent');
+    expect(w.find('.island [data-panel="rows"]').exists()).toBe(true);
+    w.unmount();
+  });
+});

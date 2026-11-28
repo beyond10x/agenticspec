@@ -1,0 +1,8 @@
+{
+  "view": "agentic.trigger.Schedules",
+  "rows": [
+    {"schedule_id": "00000000-0000-4000-8000-501c99cb0000", "expression": "expression 1", "timezone": "timezone 1", "next_fire_at": "2026-11-20T09:03:00Z", "checks_passed_at": "2026-11-20T09:04:00Z", "state": {"name":"Disabled","summary":"Its checks passed; it does not tick."}},
+    {"schedule_id": "00000000-0000-4000-8000-501c99cb0001", "expression": "expression 2", "timezone": "timezone 2", "next_fire_at": "2026-11-20T10:03:00Z", "state": {"name":"Enabled","summary":"It ticks at next_fire_at."}},
+    {"schedule_id": "00000000-0000-4000-8000-501c99cb0002", "expression": "expression 3", "timezone": "timezone 3", "next_fire_at": "2026-11-20T11:03:00Z", "checks_passed_at": "2026-11-20T11:04:00Z", "state": {"name":"Unchecked","summary":"Its restriction checks have not passed; it cannot be enabled."}}
+  ]
+}

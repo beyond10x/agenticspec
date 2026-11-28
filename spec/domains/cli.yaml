@@ -5,7 +5,7 @@ summary: >-
   ess-cli/2 binding in `spec/cli.yaml`. It declares no entity. The KPI report is typed here, so
   every figure the report carries is a declared field.
 
-# ess-cli projects String, Boolean, Integer, enums, newtypes and structs, Optional, List and Json
+# ess-cli projects String, Boolean, Integer, enums, newtypes and structs, Optional, List, Map and Json
 # in results only. A ratio is an Integer in permille; a time is RFC 3339 text.
 
 types:
@@ -495,15 +495,110 @@ types:
       - name: architecture
         type: String
         summary: An `agenticspec-architecture/1` file.
+      - name: ports
+        type: Optional<String>
+        summary: The ports file (`agenticspec-ports/1`) a document with `ingress:` is checked against; `blocks/ports.json` by default.
+      - name: kpis
+        type: Optional<String>
+        summary: The KPI catalogue (`agenticspec-kpis/1`) a document with `ingress:` is checked against; `kpis/catalogue.yaml` by default.
+      - name: json
+        type: Boolean
+        summary: >-
+          Print the `agenticspec-check/1` document on standard output, also when the check
+          refuses the architecture.
 
   - name: agenticspec.cli.SimCheckResult
     kind: struct
     naming:
-      summary: The architecture the check accepted, with its counts of parts and links.
+      summary: >-
+        The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs
+        of the architecture as a whole and the architectures it nests. With `--json`, the
+        `agenticspec-check/1` document, which carries `format`, `valid`, `violations` and `counts`
+        too; a refused architecture prints the document of the check alone before its refusal.
     fields:
       - {name: architecture, type: String}
       - {name: parts, type: Integer}
       - {name: links, type: Integer}
+      - name: kpis
+        type: Json
+        summary: >-
+          The KPIs of the architecture as a whole, read from the document alone, by id: an object
+          of numbers, the KPIs `block: architecture` of the KPI catalogue that are not gates
+          (`agents_total`, `capacity_ratio`, ...). A marked place counts at its value as built.
+      - name: single_points
+        type: List<String>
+        summary: The parts whose removal leaves some agent with no model_call path to a model, the parts `kpis.single_points` counts.
+      - name: nested
+        type: List<agenticspec.cli.SimNested>
+        summary: Every nested architecture, resolved recursively, outermost first; empty when it nests none.
+      - {name: ingresses, type: Integer}
+      - name: format
+        type: Optional<String>
+        summary: "`agenticspec-check/1`."
+      - name: valid
+        type: Optional<Boolean>
+        summary: No violation of a gate rule.
+      - name: violations
+        type: Optional<List<agenticspec.cli.SimCheckViolation>>
+        summary: Every violation, sorted by rule, subject, part, link and message.
+      - name: counts
+        type: Optional<Map<String, Integer>>
+        summary: The count of violations of every rule of the check, 0 included.
+
+  - name: agenticspec.cli.SimCheckViolation
+    kind: struct
+    naming:
+      summary: One violation of a rule of the architecture check.
+    fields:
+      - {name: rule, type: String}
+      - name: gate
+        type: Boolean
+        summary: The rule refuses the architecture; false for a rule that only warns.
+      - name: subject
+        type: String
+        summary: The part, or the link as `<from>-><to>:<carries>`.
+      - name: part
+        type: String
+        summary: The part the violation names; for a link, the end at fault.
+      - name: link
+        type: Optional<Integer>
+        summary: The index of the link in `links`, counted from 0, when the subject is a link.
+      - {name: message, type: String}
+
+  - name: agenticspec.cli.SimNested
+    kind: struct
+    naming:
+      summary: One nested architecture a check resolved.
+    fields:
+      - name: part
+        type: String
+        summary: The part that refers to it, dotted from the outermost document (`console`, `console.vault`).
+      - {name: architecture, type: String}
+      - name: reference
+        type: String
+        summary: The `ref` of the part, relative to the document that writes it.
+      - name: digest
+        type: String
+        summary: "`sha256:<hex>`, the pin the referring document writes, which the check found equal."
+      - {name: parts, type: Integer}
+      - {name: links, type: Integer}
+
+  - name: agenticspec.cli.SimDigestInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: An `agenticspec-architecture/1` file.
+
+  - name: agenticspec.cli.SimDigestResult
+    kind: struct
+    naming:
+      summary: >-
+        The digest a referring document pins the architecture with: `sha256:` and the SHA-256 of
+        the canonical JSON (keys sorted, no whitespace) of its parts, links and border.
+    fields:
+      - {name: architecture, type: String}
+      - {name: digest, type: String}
 
   - name: agenticspec.cli.SimRunInput
     kind: struct
@@ -517,6 +612,11 @@ types:
       - name: threads
         type: Optional<Integer>
         summary: Threads of the search; the available parallelism, at most 8, by default.
+      - name: events
+        type: Boolean
+        summary: >-
+          Also write `events.jsonl`: the run the result's timeline samples, every moment that is
+          a block event written as that event with its part and subject key, one per line.
 
   - name: agenticspec.cli.SimRunResult
     kind: struct
@@ -532,6 +632,9 @@ types:
       - name: best_written
         type: Boolean
         summary: "`best.yaml`, the best variant as an architecture document, was written."
+      - name: events
+        type: Optional<Integer>
+        summary: The events written to `events.jsonl`; absent without `--events`.
 
   - name: agenticspec.cli.SimRenderInput
     kind: struct
@@ -652,3 +755,486 @@ types:
       - {name: held, type: Integer}
       - {name: failed, type: Integer}
       - {name: rows, type: List<agenticspec.cli.SimCorpusRow>}
+  - name: agenticspec.cli.UiPanelsInput
+    kind: struct
+    fields:
+      - name: root
+        type: Optional<String>
+        summary: The repository root that holds `blocks/` and `ui/views/`; the current directory by default.
+      - name: check
+        type: Boolean
+        summary: Compare a fresh generation with the files instead of writing them.
+
+  - name: agenticspec.cli.UiPanelsResult
+    kind: struct
+    naming:
+      summary: >-
+        The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`,
+        a gallery page per block, a fixture per view and a script per channel under
+        `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`.
+    fields:
+      - {name: out, type: String}
+      - {name: panels, type: Integer}
+      - {name: files, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The files were written; false with `--check`, where they were found current.
+
+  - name: agenticspec.cli.UiDeriveInput
+    kind: struct
+    fields:
+      - name: path
+        type: String
+        summary: An architecture document (`agenticspec-architecture/1`); the documents its nested parts reference are read too.
+      - name: contract
+        type: Optional<String>
+        summary: The contract of the architecture (`agenticspec-contract/1`); without it the domains of a part come from the architecture alone and no action is derived.
+      - name: ports
+        type: Optional<String>
+        summary: The port catalogue (`agenticspec-ports/1`); `blocks/ports.json` when it exists.
+      - name: out
+        type: String
+        summary: The document to write, `<dir>/<name>.ui.yaml`; its digest, fixtures and layout are written beside it.
+      - name: root
+        type: Optional<String>
+        summary: The repository root that holds `blocks/` and `ui/views/`; the current directory by default.
+      - name: check
+        type: Boolean
+        summary: Compare a fresh derivation with the files instead of writing them.
+
+  - name: agenticspec.cli.UiDeriveResult
+    kind: struct
+    naming:
+      summary: >-
+        The operator UI of an architecture: one `ess-ui/1` document (an overview per level, a page
+        per part, a channel per level, the actions of the contract) with `<name>.sources.sha256`,
+        `<name>.fixtures/` and `<name>.layout.json` beside it.
+    fields:
+      - {name: out, type: String}
+      - {name: pages, type: Integer}
+      - {name: actions, type: Integer}
+      - {name: channels, type: Integer}
+      - {name: files, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The files were written; false with `--check`, where they were found current.
+
+  - name: agenticspec.cli.SimPortsInput
+    kind: struct
+    fields:
+      - name: blocks
+        type: Optional<String>
+        summary: The directory of the building blocks, an ESS system; `blocks` by default.
+      - name: out
+        type: Optional<String>
+        summary: The ports file to write (`agenticspec-ports/1`); printed when absent.
+      - name: check
+        type: Optional<String>
+        summary: A ports file whose digest is compared with the sources in the blocks directory, without deriving.
+      - name: expect
+        type: Optional<String>
+        summary: An expected list (`agenticspec-ports-expected/1`); one line per difference from the derived ports.
+
+  - name: agenticspec.cli.SimPortsResult
+    kind: struct
+    naming:
+      summary: The derived ports, the digest of their sources, and the differences from an expected list.
+    fields:
+      - {name: ports, type: Integer}
+      - {name: sources_sha256, type: String}
+      - name: written
+        type: Boolean
+        summary: The ports file was written.
+      - name: file
+        type: Optional<String>
+        summary: The ports file as written, when no `--out` was given.
+      - name: differences
+        type: List<String>
+        summary: With `--expect`, one line per difference; the command exits 1 when there is one.
+
+  - name: agenticspec.cli.SimContractInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document whose contract is derived.
+      - name: ports
+        type: Optional<String>
+        summary: The ports file (`agenticspec-ports/1`); `blocks/ports.json` by default.
+      - name: out
+        type: Optional<String>
+        summary: The contract file to write (`agenticspec-contract/1`), printed when absent; with `--suite`, the cut suite to write.
+      - name: check
+        type: Optional<String>
+        summary: A contract file checked against the document and the ports, without deriving.
+      - name: suite
+        type: Optional<String>
+        summary: A conformance suite of the building blocks (`ess-conformance/<N>`), cut to the scenarios about a command of a port of the contract; `--out` names the cut suite.
+      - name: trace
+        type: Optional<String>
+        summary: A trace (`agenticspec-trace/1`) on which every routing invariant of the contract is checked.
+      - name: kpis
+        type: Optional<String>
+        summary: The KPI catalogue (`agenticspec-kpis/1`) the metrics of an interface are resolved against; `kpis/catalogue.yaml` by default.
+
+  - name: agenticspec.cli.SimContractResult
+    kind: struct
+    naming:
+      summary: The contract of an architecture, its counts, whether it was written, the suite cut to it and the checks of its routing invariants.
+    fields:
+      - {name: architecture, type: String}
+      - {name: ports, type: Integer}
+      - {name: invariants, type: Integer}
+      - {name: ingresses, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The contract file, or with `--suite` the cut suite, was written.
+      - name: contract
+        type: Optional<String>
+        summary: The contract as written, when none of `--out`, `--check`, `--suite` and `--trace` was given.
+      - name: suite_scenarios
+        type: Optional<Integer>
+        summary: With `--suite`, the scenarios of the whole suite.
+      - name: kept_scenarios
+        type: Optional<Integer>
+        summary: With `--suite`, the scenarios kept, those about a command of a port of the contract.
+      - name: checks
+        type: List<agenticspec.cli.SimInvariantCheck>
+        summary: With `--trace`, the check of each routing invariant, in the contract's order; empty otherwise.
+
+  - name: agenticspec.cli.InvariantStatus
+    kind: enum
+    variants: [held, violated, not_checked]
+
+  - name: agenticspec.cli.SimInvariantCheck
+    kind: struct
+    naming:
+      summary: >-
+        The check of one routing invariant on a trace. An invariant whose predicate names a port the
+        trace does not record is not checked, never held.
+    fields:
+      - {name: link, type: String}
+      - {name: predicate, type: String}
+      - {name: status, type: agenticspec.cli.InvariantStatus}
+      - name: uses
+        type: Integer
+        summary: The uses of the predicate's ports the check read.
+      - name: event
+        type: Optional<Integer>
+        summary: The index of the event of the first violation.
+      - name: detail
+        type: Optional<String>
+        summary: What was violated, or why the invariant was not checked.
+
+  - name: agenticspec.cli.SimTraceInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document to simulate, at the values it is built with.
+      - name: profile
+        type: String
+        summary: The behaviour profile (`agenticspec-profile/1`).
+      - name: seed
+        type: Optional<Integer>
+        summary: The seed of the run; 1 by default.
+      - name: horizon
+        type: Optional<String>
+        summary: The simulated time, as a duration (`24h`); one day by default.
+      - name: out
+        type: Optional<String>
+        summary: The trace file to write (`agenticspec-trace/1`); printed when absent.
+
+  - name: agenticspec.cli.SimTraceResult
+    kind: struct
+    naming:
+      summary: The trace of one simulated run, its counts, and whether it was written.
+    fields:
+      - {name: architecture, type: String}
+      - {name: seed, type: Integer}
+      - name: uses
+        type: Integer
+        summary: The port uses the run recorded.
+      - name: events
+        type: Integer
+        summary: The events of the trace, a begin per use and an end per use that ended.
+      - name: written
+        type: Boolean
+        summary: The trace file was written.
+      - name: trace
+        type: Optional<String>
+        summary: The trace as written, when no `--out` was given.
+
+  - name: agenticspec.cli.UiGenerateInput
+    kind: struct
+    fields:
+      - name: path
+        type: String
+        summary: An `ess-ui/1` document, such as `studio/studio.ui.yaml`.
+      - name: out
+        type: String
+        summary: The directory the app is written into; what was in it before is replaced.
+
+  - name: agenticspec.cli.UiGenerateResult
+    kind: struct
+    fields:
+      - {name: out, type: String}
+      - name: files
+        type: List<String>
+        summary: The files written, by their path below `out`.
+  - name: agenticspec.cli.UiConformInput
+    kind: struct
+    fields:
+      - name: source
+        type: Optional<String>
+        summary: >-
+          The root of a runtime's adapter, `http://host:port`, with the scopes below `/scopes/`;
+          the fixture source of `ui/views/source/` when absent. The bearer token is read from
+          `AGENTICSPEC_UI_TOKEN`, else from the plan.
+      - name: plan
+        type: Optional<String>
+        summary: A conformance plan (`agenticspec-runtime-conformance/1`); `ui/views/source/plan.json` below the root by default.
+      - name: root
+        type: Optional<String>
+        summary: The repository root that holds `ui/views/`; the current directory by default.
+
+  - name: agenticspec.cli.UiConformCheck
+    kind: struct
+    fields:
+      - {name: name, type: String}
+      - name: status
+        type: String
+        summary: passed, failed or skipped.
+      - {name: detail, type: String}
+
+  - name: agenticspec.cli.UiConformResult
+    kind: struct
+    naming:
+      summary: >-
+        The checks of the runtime interface (`ui/runtime.openapi.yaml`) against one source: scoped
+        reads (R1), the placement views (R3), resuming a channel from a cursor (R2), command
+        answers and refusals (R4), the action set (R5) and requests without credentials.
+    fields:
+      - {name: source, type: String}
+      - {name: passed, type: Integer}
+      - {name: failed, type: Integer}
+      - {name: skipped, type: Integer}
+      - {name: checks, type: List<agenticspec.cli.UiConformCheck>}
+
+  - name: agenticspec.cli.BlocksLiftInput
+    kind: struct
+    fields:
+      - name: transcript
+        type: String
+        summary: The main transcript file of one Claude Code session, `<session>.jsonl`; its sub-agents are read from `<session>/subagents/`.
+
+  - name: agenticspec.cli.EntityRows
+    kind: struct
+    fields:
+      - {name: entity, type: String}
+      - {name: rows, type: Integer}
+
+  - name: agenticspec.cli.BlocksLiftResult
+    kind: struct
+    naming:
+      summary: >-
+        The rows of one session, in the form of a scenario's `given`, each checked against the
+        building blocks, with the count per entity and the entities the session cannot show.
+    fields:
+      - {name: session_id, type: String}
+      - name: given
+        type: Json
+        summary: "`{ rows: [...] }`: each row `{ entity, id, state, fields, not_recorded, evidence }`."
+      - {name: entities, type: List<agenticspec.cli.EntityRows>}
+      - name: not_observable
+        type: List<String>
+        summary: Block entities no record of the session holds; the lift writes no row of them.
+
+  - name: agenticspec.cli.BlocksScenarioInput
+    kind: struct
+    fields:
+      - name: transcript
+        type: String
+        summary: The main transcript file of one Claude Code session.
+      - name: architecture
+        type: String
+        summary: The architecture file the scenario is written against.
+      - name: profile
+        type: String
+        summary: The behaviour profile file the scenario names.
+      - name: map
+        type: String
+        summary: >-
+          The parts the session plays, as `key=part` pairs separated by commas: `main` (required,
+          a border part), `sub`, `human` (the part the main part acts for by default), `delegate`
+          (the human's part by default) and `peer`.
+      - name: out
+        type: String
+        summary: The scenario file to write; its references are relative to it.
+      - name: name
+        type: Optional<String>
+        summary: The scenario's name; the file name without `.scenario.yaml` by default.
+
+  - name: agenticspec.cli.BlocksScenarioResult
+    kind: struct
+    naming:
+      summary: >-
+        The draft scenario written and checked against its architecture and profile, with the
+        inputs no turn followed and the inputs whose author plays no part.
+    fields:
+      - {name: out, type: String}
+      - {name: scenario, type: String}
+      - {name: inputs, type: Integer}
+      - {name: expectations, type: Integer}
+      - name: unjoined
+        type: List<String>
+        summary: Inputs no turn received, as `when.<n> (<node>)`; in the scenario with no expectation.
+      - name: unmapped
+        type: List<String>
+        summary: Inputs whose author plays no part, as `<node> (<author>)`; left out of the scenario.
+
+  - name: agenticspec.cli.PackingDefaultInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document to pack.
+      - name: strategy
+        type: Optional<String>
+        summary: The strategy to resolve, `single`, `by_kind`, `by_part` or `groups`; `single` by default.
+
+  - name: agenticspec.cli.PackingDefaultResult
+    kind: struct
+    naming:
+      summary: The resolved packing of an architecture under a strategy.
+    fields:
+      - {name: architecture, type: String}
+      - {name: strategy, type: String}
+      - name: units
+        type: Integer
+        summary: The units of the packing, the core among them.
+      - name: packing
+        type: String
+        summary: The `packing:` section in its resolved form, every unit listed.
+
+  - name: agenticspec.cli.DeployBundleInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document to deploy.
+      - name: binding
+        type: String
+        summary: The binding (`agenticspec-binding/1`) with its packing; its `refines:` chain is resolved.
+      - name: out
+        type: Optional<String>
+        summary: The bundle file to write (`agenticspec-deployment/1`); printed when absent.
+      - name: ports
+        type: Optional<String>
+        summary: The ports file (`agenticspec-ports/1`); `blocks/ports.json` by default.
+      - name: accepts
+        type: Optional<String>
+        summary: The copy of cloudspec's accepted unit kinds and roles; `bundles/cloudspec-accepts.yaml` by default.
+      - name: kpis
+        type: Optional<String>
+        summary: The KPI catalogue (`agenticspec-kpis/1`) the metrics of the default `metrics` ingress are resolved against; `kpis/catalogue.yaml` by default.
+
+  - name: agenticspec.cli.DeployBundleResult
+    kind: struct
+    naming:
+      summary: The bundle of an admitted architecture, its digest and its units.
+    fields:
+      - {name: architecture, type: String}
+      - {name: binding, type: String}
+      - name: digest
+        type: String
+        summary: The bundle digest, `sha256:` and the SHA-256 of the canonical JSON of the bundle without its `digest`.
+      - {name: units, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The bundle file was written.
+      - name: out
+        type: Optional<String>
+      - name: bundle
+        type: Optional<String>
+        summary: The bundle as written, when no `--out` was given.
+
+  - name: agenticspec.cli.DeployCheckInput
+    kind: struct
+    fields:
+      - name: bundle
+        type: String
+        summary: A written deployment bundle (`agenticspec-deployment/1`) to admit again.
+      - name: accepts
+        type: Optional<String>
+        summary: The copy of cloudspec's accepted unit kinds and roles; `bundles/cloudspec-accepts.yaml` by default.
+
+  - name: agenticspec.cli.DeployCheckResult
+    kind: struct
+    naming:
+      summary: A written bundle admitted again from what it carries, its digest and its units.
+    fields:
+      - {name: architecture, type: String}
+      - {name: binding, type: String}
+      - name: digest
+        type: String
+        summary: The bundle digest, checked against the other members.
+      - {name: units, type: Integer}
+
+  - name: agenticspec.cli.IngressDefaultInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document whose default ingresses are printed.
+
+  - name: agenticspec.cli.IngressDefaultResult
+    kind: struct
+    naming:
+      summary: The default ingresses an architecture has, as the `ingress:` section to paste into it and change.
+    fields:
+      - {name: architecture, type: String}
+      - name: defaults
+        type: List<String>
+        summary: The names of the default ingresses in effect, those the document neither declares nor sets to `none`.
+      - name: ingress
+        type: String
+        summary: The `ingress:` section of those defaults; pasted unchanged, the document has the same contract.
+
+  - name: agenticspec.cli.IngressProjectInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document whose exports are projected.
+      - name: out
+        type: Optional<String>
+        summary: The directory the projections are written to.
+      - name: check
+        type: Optional<String>
+        summary: A directory of written projections compared with a fresh projection, writing nothing.
+      - name: blocks
+        type: Optional<String>
+        summary: The directory of the building blocks, an ESS system; `blocks` by default.
+      - name: ports
+        type: Optional<String>
+        summary: The ports file (`agenticspec-ports/1`); `blocks/ports.json` by default.
+      - name: kpis
+        type: Optional<String>
+        summary: The KPI catalogue (`agenticspec-kpis/1`); `kpis/catalogue.yaml` by default.
+
+  - name: agenticspec.cli.IngressProjectResult
+    kind: struct
+    naming:
+      summary: The projections of the http exports of an architecture, and whether they were written.
+    fields:
+      - {name: architecture, type: String}
+      - name: exports
+        type: Integer
+        summary: The http exports projected, one per ingress that has one.
+      - name: files
+        type: List<String>
+        summary: The projection files, `<ingress>.http.yaml` and `<ingress>.openapi.yaml` per http export.
+      - name: written
+        type: Boolean
+        summary: The files were written; false with `--check`, where they were found current.

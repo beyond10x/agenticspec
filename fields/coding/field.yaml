@@ -6,3 +6,8 @@ summary: >-
 packs: [source-control, tracking, files, shell]
 architectures:
   - architectures/auto-merger.yaml
+profiles:
+  - profiles/coding.yaml
+kpis: kpis.yaml
+rows: rows.yaml
+words: words.txt

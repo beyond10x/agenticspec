@@ -3,8 +3,10 @@
 /website/build/
 /website/node_modules/
 /website/.docusaurus/
+/ui/node_modules/
 /ui/app/node_modules/
 /ui/app/test-results/
 /ui/app/playwright-report/
 agenticspec-dashboard.html
 /.engineering/drafts/
+/crates/agenticstudio/e2e/node_modules/

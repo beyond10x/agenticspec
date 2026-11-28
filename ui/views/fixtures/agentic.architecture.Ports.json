@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.Ports",
+  "rows": [
+    {"port_id": "00000000-0000-4000-8000-04ab06340000", "name": "name 1", "block": "block 1", "kind": "Outbound", "intent_event": "intent event 1", "waiting_state": "waiting state 1", "reports": ["reports 1"], "protocol": "protocol 1"},
+    {"port_id": "00000000-0000-4000-8000-04ab06340001", "name": "name 2", "block": "block 2", "kind": "Clock", "reports": ["reports 2"], "protocol": "protocol 2"},
+    {"port_id": "00000000-0000-4000-8000-04ab06340002", "name": "name 3", "block": "block 3", "kind": "Principal", "intent_event": "intent event 3", "waiting_state": "waiting state 3", "reports": ["reports 3"], "protocol": "protocol 3"}
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "view": "agentic.gateway.Gateways",
+  "rows": [
+    {"gateway_id": "00000000-0000-4000-8000-9121f2990000", "name": "name 1", "state": "Draining"},
+    {"gateway_id": "00000000-0000-4000-8000-9121f2990001", "name": "name 2", "state": "Serving"},
+    {"gateway_id": "00000000-0000-4000-8000-9121f2990002", "name": "name 3", "state": "Stopped"}
+  ]
+}

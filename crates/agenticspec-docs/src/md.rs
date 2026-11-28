@@ -100,8 +100,8 @@ pub fn type_ref(t: &Value) -> String {
     }
 }
 
-/// A predicate of the specification, compactly: strings as written, `not`, `all`, `any` and
-/// `exists` spelled out.
+/// A predicate of the specification, compactly: strings as written, `not`, `all`, `any`,
+/// `exists` and `state` spelled out.
 pub fn predicate(p: &Value) -> String {
     match p {
         Value::String(s) => s.clone(),
@@ -153,6 +153,13 @@ pub fn predicate(p: &Value) -> String {
             }
             if let Some(h) = o.get("holds") {
                 return predicate(&h["predicate"]);
+            }
+            // `{ state: { any_of: [..] } }`: the instance is in one of the named states.
+            if o.len() == 1
+                && let Some(Value::Array(xs)) = o.get("state").and_then(|s| s.get("any_of"))
+            {
+                let names: Vec<&str> = xs.iter().filter_map(Value::as_str).collect();
+                return format!("state in {}", names.join(", "));
             }
             // `{ field: { op: operand } }`
             if o.len() == 1

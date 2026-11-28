@@ -138,7 +138,12 @@ fn walk(v: &Value, path: &str, all: bool, out: &mut Vec<Marked>) -> Result<(), S
     }
     match v {
         Value::Object(o) => {
+            // A nested architecture is searched by its own experiment, not by this one.
+            let nested = o.get("block").and_then(Value::as_str) == Some(crate::nest::BLOCK);
             for (k, x) in o {
+                if nested && k == crate::nest::INNER {
+                    continue;
+                }
                 walk(x, &join(path, k), all, out)?;
             }
         }

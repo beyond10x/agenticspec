@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "studio.draft.Draft.State": {
+      "enum": [
+        "Archived",
+        "Open"
+      ],
+      "title": "State",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "studio.draft.Draft.State"
+    },
+    "studio.draft.Drafts.row": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture": {
+          "$ref": "#/$defs/studio.shared.ArchitectureRef"
+        },
+        "draft_id": {
+          "$ref": "#/$defs/studio.shared.DraftId"
+        },
+        "name": {
+          "$ref": "#/$defs/studio.shared.Name"
+        },
+        "opened_at_revision": {
+          "$ref": "#/$defs/studio.shared.RevisionRef"
+        },
+        "source": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/studio.draft.Draft.State"
+        }
+      },
+      "required": [
+        "draft_id",
+        "name",
+        "architecture",
+        "state"
+      ],
+      "title": "Drafts row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "studio.draft.Drafts"
+    },
+    "studio.shared.ArchitectureRef": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "ArchitectureRef",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.ArchitectureRef"
+    },
+    "studio.shared.DraftId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "DraftId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.DraftId"
+    },
+    "studio.shared.Name": {
+      "title": "Name",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.Name"
+    },
+    "studio.shared.RevisionRef": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "RevisionRef",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "studio.shared.RevisionRef"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-ess-provenance": {
+    "contract_digest": "slice-sha256/2:d829d0803cc327706a03bcb269470ef73214d69b8cae4490a115119071f7ff4e",
+    "source_digest": "0d65903506fab22b8d85227ed597e4202371f99af3fe6e408fec0b83901d58b3",
+    "specification_version": "v1",
+    "system": "studio"
+  }
+}

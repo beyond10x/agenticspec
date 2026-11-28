@@ -1,0 +1,28 @@
+{
+  "channel": "deployment",
+  "events": [
+    {"at": "1s", "event": "agentic.deployment.DeploymentBundled", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000", "bundle_digest": "bundle digest 1"}},
+    {"at": "2s", "event": "agentic.deployment.DeploymentDegraded", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000", "reason": "reason 1"}},
+    {"at": "3s", "event": "agentic.deployment.DeploymentFailed", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000", "reason": "reason 1"}},
+    {"at": "4s", "event": "agentic.deployment.DeploymentRefused", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000", "refusal": "CoverageRefused", "findings": [{"detail":"detail 1","name":"name 1"}]}},
+    {"at": "5s", "event": "agentic.deployment.DeploymentRequested", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "target": "target 1", "scope": "scope 1"}},
+    {"at": "6s", "event": "agentic.deployment.DeploymentRunning", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000"}},
+    {"at": "7s", "event": "agentic.deployment.DeploymentStopped", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000"}},
+    {"at": "8s", "event": "agentic.deployment.DeploymentTranslated", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000", "translation_digest": "translation digest 1"}},
+    {"at": "9s", "event": "agentic.deployment.DrainStarted", "payload": {"installation_id": "00000000-0000-4000-8000-7128a6e00000"}},
+    {"at": "10s", "event": "agentic.deployment.InstallationDrained", "payload": {"installation_id": "00000000-0000-4000-8000-7128a6e00000"}},
+    {"at": "11s", "event": "agentic.deployment.InstallationRolledBack", "payload": {"installation_id": "00000000-0000-4000-8000-7128a6e00000", "reactivated": "00000000-0000-4000-8000-7128a6e00000"}},
+    {"at": "12s", "event": "agentic.deployment.RealizingStarted", "payload": {"deployment_id": "00000000-0000-4000-8000-0b4df8530000"}},
+    {"at": "13s", "event": "agentic.deployment.RevisionInstalled", "payload": {"installation_id": "00000000-0000-4000-8000-7128a6e00000", "runtime_id": "00000000-0000-4000-8000-303c84bb0000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "binding": "binding 1", "replaces": "00000000-0000-4000-8000-7128a6e00000"}},
+    {"at": "14s", "event": "agentic.deployment.RunCancelled", "payload": {"run_id": "00000000-0000-4000-8000-4300c32a0000", "reason": "Requested"}},
+    {"at": "15s", "event": "agentic.deployment.RunDone", "payload": {"run_id": "00000000-0000-4000-8000-4300c32a0000"}},
+    {"at": "16s", "event": "agentic.deployment.RunFailed", "payload": {"run_id": "00000000-0000-4000-8000-4300c32a0000", "failure": "failure 1"}},
+    {"at": "17s", "event": "agentic.deployment.RunQueued", "payload": {"run_id": "00000000-0000-4000-8000-4300c32a0000", "installation_id": "00000000-0000-4000-8000-7128a6e00000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "binding": "binding 1", "subject_key": "subject key 1", "task_id": "00000000-0000-4000-8000-7b7975d50000"}},
+    {"at": "18s", "event": "agentic.deployment.RunResumed", "payload": {"run_id": "00000000-0000-4000-8000-4300c32a0000"}},
+    {"at": "19s", "event": "agentic.deployment.RunStarted", "payload": {"run_id": "00000000-0000-4000-8000-4300c32a0000"}},
+    {"at": "20s", "event": "agentic.deployment.RunWaiting", "payload": {"run_id": "00000000-0000-4000-8000-4300c32a0000", "reason": "Approval"}},
+    {"at": "21s", "event": "agentic.deployment.UnitMapped", "payload": {"unit_id": "00000000-0000-4000-8000-9b5920e10000", "target_object": "target object 1"}},
+    {"at": "22s", "event": "agentic.deployment.UnitObserved", "payload": {"unit_id": "00000000-0000-4000-8000-9b5920e10000", "ready": 1, "last_failure": "last failure 1"}},
+    {"at": "23s", "event": "agentic.deployment.UnitRecorded", "payload": {"unit_id": "00000000-0000-4000-8000-9b5920e10000", "deployment_id": "00000000-0000-4000-8000-0b4df8530000", "name": "name 1", "kind": "Core"}}
+  ]
+}

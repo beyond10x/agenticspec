@@ -14,7 +14,12 @@ use serde_json::{Value, json};
 
 const VERSION_LINE: &str = concat!("agenticspec ", env!("CARGO_PKG_VERSION"), "\n");
 
-struct Commands;
+/// The handler. `stdout` is what a command prints before the generated adapter's own output: the
+/// document of `sim check --json` when the check refuses the architecture.
+#[derive(Default)]
+struct Commands {
+    stdout: String,
+}
 
 fn refusal(code: &str, detail: String) -> HandlerReply {
     HandlerReply::Error {
@@ -92,6 +97,30 @@ fn window(input: &Value) -> (PathBuf, i64, i64) {
 impl Handler for Commands {
     fn call(&mut self, inv: &Invocation<'_>) -> HandlerReply {
         match inv.callable {
+            "ui_generate" => {
+                let s = |k: &str| inv.input.get(k).and_then(Value::as_str).unwrap_or("");
+                let (path, out) = (s("path"), s("out"));
+                let text = match std::fs::read_to_string(path) {
+                    Ok(t) => t,
+                    Err(e) => return refusal("document_unreadable", format!("{path}: {e}")),
+                };
+                let files = match agenticspec_ui::generate(&text) {
+                    Ok(f) => f,
+                    Err(refusals) => {
+                        let lines: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+                        return refusal(
+                            "document_refused",
+                            format!("{path}:\n{}", lines.join("\n")),
+                        );
+                    }
+                };
+                if let Err(e) = agenticspec_ui::write(&files, std::path::Path::new(out)) {
+                    return refusal("out_unwritable", format!("{out}: {e}"));
+                }
+                HandlerReply::Success(
+                    json!({"out": out, "files": files.keys().collect::<Vec<_>>()}),
+                )
+            }
             "lift" => {
                 let path = PathBuf::from(
                     inv.input
@@ -394,7 +423,44 @@ impl Handler for Commands {
                 agenticspec::serve::run(listener, shared, syncer);
                 HandlerReply::Success(json!({ "url": url }))
             }
-            "sim_check" => sim_reply(sim::check(&path_of(&inv.input, "architecture"))),
+            "sim_check" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (ports, kpis) = (path("ports"), path("kpis"));
+                let architecture = path_of(&inv.input, "architecture");
+                let options = sim::CheckOptions {
+                    architecture: &architecture,
+                    ports: ports.as_deref(),
+                    kpis: kpis.as_deref(),
+                };
+                if !inv
+                    .input
+                    .get("json")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false)
+                {
+                    return sim_reply(sim::check_with(&options));
+                }
+                match sim::check_json(&options) {
+                    Ok(sim::Checked {
+                        document,
+                        refusal: None,
+                    }) => HandlerReply::Success(document),
+                    Ok(sim::Checked {
+                        document,
+                        refusal: Some(r),
+                    }) => {
+                        self.stdout = format!("{document}\n");
+                        refusal(r.code, r.detail)
+                    }
+                    Err(r) => refusal(r.code, r.detail),
+                }
+            }
+            "sim_digest" => sim_reply(sim::digest(&path_of(&inv.input, "architecture"))),
             "sim_run" => {
                 let threads = inv
                     .input
@@ -406,6 +472,10 @@ impl Handler for Commands {
                     &path_of(&inv.input, "experiment"),
                     &path_of(&inv.input, "out"),
                     threads,
+                    inv.input
+                        .get("events")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(false),
                     &mut err,
                 ))
             }
@@ -439,6 +509,10 @@ impl Handler for Commands {
                     &mut err,
                 ))
             }
+            "blocks_lift" => {
+                draft_reply(agenticspec::draft::lift(&path_of(&inv.input, "transcript")))
+            }
+            "blocks_scenario" => draft_reply(agenticspec::draft::draft(&inv.input)),
             "sim_ladder" => sim_reply(sim::ladder(
                 &path_of(&inv.input, "ladder"),
                 &path_of(&inv.input, "out"),
@@ -447,14 +521,264 @@ impl Handler for Commands {
                     .and_then(Value::as_bool)
                     .unwrap_or(false),
             )),
+            "ui_panels" => {
+                let root = inv.input.get("root").and_then(Value::as_str).unwrap_or(".");
+                let check = inv
+                    .input
+                    .get("check")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                match agenticspec_views::run(std::path::Path::new(root), check) {
+                    Ok(result) => HandlerReply::Success(result),
+                    Err(r) => refusal(r.code, r.detail),
+                }
+            }
+            "sim_ports" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (blocks, out, check, expect) =
+                    (path("blocks"), path("out"), path("check"), path("expect"));
+                let mut err = std::io::stderr().lock();
+                sim_reply(sim::ports(
+                    &sim::PortsOptions {
+                        blocks: blocks.as_deref(),
+                        out: out.as_deref(),
+                        check: check.as_deref(),
+                        expect: expect.as_deref(),
+                    },
+                    &mut err,
+                ))
+            }
+            "sim_contract" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (ports, out, check, kpis) =
+                    (path("ports"), path("out"), path("check"), path("kpis"));
+                let (suite, trace) = (path("suite"), path("trace"));
+                let mut err = std::io::stderr().lock();
+                sim_reply(sim::contract(
+                    &sim::ContractOptions {
+                        architecture: &path_of(&inv.input, "architecture"),
+                        ports: ports.as_deref(),
+                        out: out.as_deref(),
+                        check: check.as_deref(),
+                        suite: suite.as_deref(),
+                        trace: trace.as_deref(),
+                        kpis: kpis.as_deref(),
+                    },
+                    &mut err,
+                ))
+            }
+            "sim_trace" => {
+                let out = inv
+                    .input
+                    .get("out")
+                    .and_then(Value::as_str)
+                    .map(PathBuf::from);
+                sim_reply(sim::trace(&sim::TraceOptions {
+                    architecture: &path_of(&inv.input, "architecture"),
+                    profile: &path_of(&inv.input, "profile"),
+                    seed: inv
+                        .input
+                        .get("seed")
+                        .and_then(Value::as_i64)
+                        .and_then(|s| u64::try_from(s).ok()),
+                    horizon: inv.input.get("horizon").and_then(Value::as_str),
+                    out: out.as_deref(),
+                }))
+            }
+            "ui_conform" => ui_conform(&inv.input),
+            "packing_default" => sim_reply(sim::packing_default(
+                &path_of(&inv.input, "architecture"),
+                inv.input.get("strategy").and_then(Value::as_str),
+            )),
+            "deploy_bundle" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (out, ports, accepts, kpis) =
+                    (path("out"), path("ports"), path("accepts"), path("kpis"));
+                sim_reply(sim::deploy_bundle(&sim::BundleOptions {
+                    architecture: &path_of(&inv.input, "architecture"),
+                    binding: &path_of(&inv.input, "binding"),
+                    out: out.as_deref(),
+                    ports: ports.as_deref(),
+                    accepts: accepts.as_deref(),
+                    kpis: kpis.as_deref(),
+                }))
+            }
+            "ingress_default" => {
+                sim_reply(sim::ingress_default(&path_of(&inv.input, "architecture")))
+            }
+            "ingress_project" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (out, check, blocks, ports, kpis) = (
+                    path("out"),
+                    path("check"),
+                    path("blocks"),
+                    path("ports"),
+                    path("kpis"),
+                );
+                sim_reply(sim::ingress_project(&sim::ProjectOptions {
+                    architecture: &path_of(&inv.input, "architecture"),
+                    out: out.as_deref(),
+                    check: check.as_deref(),
+                    blocks: blocks.as_deref(),
+                    ports: ports.as_deref(),
+                    kpis: kpis.as_deref(),
+                }))
+            }
+            "ui_derive" => ui_derive(&inv.input),
+            "deploy_check" => {
+                let accepts = inv
+                    .input
+                    .get("accepts")
+                    .and_then(Value::as_str)
+                    .map(PathBuf::from);
+                sim_reply(sim::deploy_check(
+                    &path_of(&inv.input, "bundle"),
+                    accepts.as_deref(),
+                ))
+            }
             _ => HandlerReply::Unavailable,
         }
     }
 }
 
+/// `agenticspec ui conform`: the conformance suite of the runtime interface against `--source`,
+/// or against the fixture source started here when there is none.
+fn ui_conform(input: &Value) -> HandlerReply {
+    use agenticspec_ui::{conform, source};
+    let s = |k: &str| input.get(k).and_then(Value::as_str);
+    let root = std::path::Path::new(s("root").unwrap_or("."));
+    let plan_path = s("plan")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| root.join(source::PLAN_FILE));
+    let plan = match std::fs::read_to_string(&plan_path)
+        .map_err(|e| e.to_string())
+        .and_then(|t| conform::Plan::parse(&t))
+    {
+        Ok(p) => p,
+        Err(e) => return refusal("plan_unreadable", format!("{}: {e}", plan_path.display())),
+    };
+    let token = std::env::var("AGENTICSPEC_UI_TOKEN")
+        .ok()
+        .filter(|t| !t.is_empty())
+        .or_else(|| plan.token.clone());
+    let fixture;
+    let url = match s("source") {
+        Some(u) => u.trim_end_matches('/').to_string(),
+        None => {
+            let started = source::Data::load(root)
+                .map_err(|e| e.to_string())
+                .and_then(|d| {
+                    source::FixtureSource::start(d, source::Faults::default())
+                        .map_err(|e| e.to_string())
+                });
+            fixture = match started {
+                Ok(f) => f,
+                Err(e) => return refusal("source_unavailable", e),
+            };
+            fixture.url().to_string()
+        }
+    };
+    let report = conform::run(&url, &plan, token.as_deref(), conform::Options::default());
+    let failed = report.failed();
+    if !failed.is_empty() {
+        let lines: Vec<String> = failed.iter().map(ToString::to_string).collect();
+        return refusal(
+            "conformance_failed",
+            format!(
+                "{url}: {} of {} checks failed\n{}",
+                failed.len(),
+                report.checks.len(),
+                lines.join("\n")
+            ),
+        );
+    }
+    HandlerReply::Success(report.to_json())
+}
+
+/// `agenticspec ui derive`: derive, then write the files or with `--check` compare them.
+fn ui_derive(input: &Value) -> HandlerReply {
+    use agenticspec_ui::derive::{Failure, Inputs, differences, write};
+    let opt = |k: &str| input.get(k).and_then(Value::as_str).map(PathBuf::from);
+    let root = opt("root").unwrap_or_else(|| PathBuf::from("."));
+    let inputs = Inputs {
+        architecture: path_of(input, "path"),
+        contract: opt("contract"),
+        ports: opt("ports"),
+        out: path_of(input, "out"),
+        root,
+    };
+    let check = input.get("check").and_then(Value::as_bool).unwrap_or(false);
+    let d = match agenticspec_ui::derive_ui(&inputs) {
+        Ok(d) => d,
+        Err(Failure::Unreadable(e)) => return refusal("document_unreadable", e),
+        Err(Failure::Refused(rs)) => {
+            let lines: Vec<String> = rs.iter().map(ToString::to_string).collect();
+            return refusal(
+                "document_refused",
+                format!("{}:\n{}", inputs.architecture.display(), lines.join("\n")),
+            );
+        }
+    };
+    let answer = |written: bool| {
+        json!({
+            "out": inputs.out.to_string_lossy(),
+            "pages": d.pages,
+            "actions": d.actions,
+            "channels": d.channels,
+            "files": d.files.len(),
+            "written": written,
+        })
+    };
+    if check {
+        let diff = differences(&d);
+        if diff.is_empty() {
+            return HandlerReply::Success(answer(false));
+        }
+        return refusal(
+            "derived_stale",
+            format!(
+                "{}. A derived file is never edited: derive it again",
+                diff.join("; ")
+            ),
+        );
+    }
+    if let Err(e) = write(&d) {
+        return refusal("out_unwritable", format!("{}: {e}", inputs.out.display()));
+    }
+    HandlerReply::Success(answer(true))
+}
+
 /// A path field of the input; the parser has made every required one present.
 fn path_of(input: &Value, field: &str) -> PathBuf {
     PathBuf::from(input.get(field).and_then(Value::as_str).unwrap_or(""))
+}
+
+/// The reply of an `agenticspec blocks` command.
+fn draft_reply(outcome: Result<Value, agenticspec::draft::Refused>) -> HandlerReply {
+    match outcome {
+        Ok(result) => HandlerReply::Success(result),
+        Err((code, detail)) => refusal(code, detail),
+    }
 }
 
 /// The reply of an `agenticspec sim` command.
@@ -489,8 +813,10 @@ fn main() {
     if args.len() == 2 && args[1] == "--version" {
         std::process::exit(emit(VERSION_LINE, "", 0));
     }
-    let output = cli_contract::run(args, &mut cli_contract::OsSources, &mut Commands, None);
-    std::process::exit(emit(&output.stdout, &output.stderr, output.exit_code));
+    let mut commands = Commands::default();
+    let output = cli_contract::run(args, &mut cli_contract::OsSources, &mut commands, None);
+    let stdout = commands.stdout + &output.stdout;
+    std::process::exit(emit(&stdout, &output.stderr, output.exit_code));
 }
 
 fn emit(stdout: &str, stderr: &str, exit_code: i32) -> i32 {

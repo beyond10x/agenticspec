@@ -18,6 +18,70 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `blocks lift`
+
+Lift one Claude Code session into rows of the building blocks, each naming the node it came from
+
+Callable: `blocks_lift`. Input: `agenticspec.cli.BlocksLiftInput`. Result: `agenticspec.cli.BlocksLiftResult`.
+
+Error `rows_invalid`: `agenticspec.cli.Refusal`.
+
+Error `transcript_unreadable`: `agenticspec.cli.Refusal`.
+
+### `blocks scenario`
+
+Write a draft scenario of a session's outside inputs and the block events of the turns they started
+
+Callable: `blocks_scenario`. Input: `agenticspec.cli.BlocksScenarioInput`. Result: `agenticspec.cli.BlocksScenarioResult`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `map_invalid`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `scenario_refused`: `agenticspec.cli.Refusal`.
+
+Error `transcript_unreadable`: `agenticspec.cli.Refusal`.
+
+### `deploy bundle`
+
+Admit an architecture with its binding and packing and write its deployment bundle (agenticspec-deployment/1); a refusal writes nothing and names every finding
+
+Callable: `deploy_bundle`. Input: `agenticspec.cli.DeployBundleInput`. Result: `agenticspec.cli.DeployBundleResult`.
+
+Error `accepts_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `binding_invalid`: `agenticspec.cli.Refusal`.
+
+Error `contract_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `kpis_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `not_admitted`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
+### `deploy check`
+
+Admit a written deployment bundle again from what it carries, for a reader that did not write it; refuses a digest that does not hold, an undeclared secret or egress, a secret value and every other finding of admission
+
+Callable: `deploy_check`. Input: `agenticspec.cli.DeployCheckInput`. Result: `agenticspec.cli.DeployCheckResult`.
+
+Error `accepts_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `bundle_invalid`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `not_admitted`: `agenticspec.cli.Refusal`.
+
 ### `export`
 
 Export a procedure as a canon protocol and loom bindings
@@ -27,6 +91,40 @@ Callable: `export`. Input: `agenticspec.cli.ExportInput`. Result: `agenticspec.c
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 Error `procedure_invalid`: `agenticspec.cli.Refusal`.
+
+### `ingress default`
+
+Print the default ingresses an architecture has, as the ingress section to paste into it and change
+
+Callable: `ingress_default`. Input: `agenticspec.cli.IngressDefaultInput`. Result: `agenticspec.cli.IngressDefaultResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+### `ingress project`
+
+Write the ess-http/1 protocol binding and the OpenAPI document of each http export of an architecture, or compare them with --check
+
+Callable: `ingress_project`. Input: `agenticspec.cli.IngressProjectInput`. Result: `agenticspec.cli.IngressProjectResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `contract_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `kpis_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `projection_refused`: `agenticspec.cli.Refusal`.
+
+Error `projections_stale`: `agenticspec.cli.Refusal`.
 
 ### `kpi`
 
@@ -55,6 +153,18 @@ Callable: `mine`. Input: `agenticspec.cli.MineInput`. Result: `agenticspec.cli.M
 Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
+
+### `packing default`
+
+Print the resolved packing section of a binding (agenticspec-binding/1) for an architecture, single by default, to paste and change
+
+Callable: `packing_default`. Input: `agenticspec.cli.PackingDefaultInput`. Result: `agenticspec.cli.PackingDefaultResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `packing_refused`: `agenticspec.cli.Refusal`.
 
 ### `procedure`
 
@@ -104,6 +214,34 @@ Error `architecture_refused`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+Error `kpis_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
+### `sim contract`
+
+Derive and check the contract of an architecture (agenticspec-contract/1), check a written contract with --check, cut the blocks' conformance suite to its ports with --suite, or check its routing invariants on a trace with --trace
+
+Callable: `sim_contract`. Input: `agenticspec.cli.SimContractInput`. Result: `agenticspec.cli.SimContractResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `contract_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `invariant_violated`: `agenticspec.cli.Refusal`.
+
+Error `kpis_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `suite_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `trace_unreadable`: `agenticspec.cli.Refusal`.
+
 ### `sim corpus`
 
 Run every entry of a task corpus on the simulator and print the predicted class beside the expected one
@@ -120,6 +258,14 @@ Error `scenario_invalid`: `agenticspec.cli.Refusal`.
 
 Error `scenario_refused`: `agenticspec.cli.Refusal`.
 
+### `sim digest`
+
+Print the digest a document pins a nested architecture with (sha256 of its canonical parts, links and border)
+
+Callable: `sim_digest`. Input: `agenticspec.cli.SimDigestInput`. Result: `agenticspec.cli.SimDigestResult`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
 ### `sim ladder`
 
 Check the agentic ladder and write the data file of its page, or compare it with --check
@@ -134,6 +280,24 @@ Error `ladder_stale`: `agenticspec.cli.Refusal`.
 
 Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
+### `sim ports`
+
+Derive the ports of the building blocks into blocks/ports.json, check its digest with --check, or list how they differ from an expected list with --expect
+
+Callable: `sim_ports`. Input: `agenticspec.cli.SimPortsInput`. Result: `agenticspec.cli.SimPortsResult`.
+
+Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `ports_differ`: `agenticspec.cli.Refusal`.
+
+Error `ports_refused`: `agenticspec.cli.Refusal`.
+
+Error `ports_stale`: `agenticspec.cli.Refusal`.
+
 ### `sim render`
 
 Write the page of an architecture, with the result of a run when given
@@ -146,7 +310,7 @@ Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 ### `sim run`
 
-Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml
+Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml, with --events also events.jsonl
 
 Callable: `sim_run`. Input: `agenticspec.cli.SimRunInput`. Result: `agenticspec.cli.SimRunResult`.
 
@@ -172,6 +336,20 @@ Error `scenario_invalid`: `agenticspec.cli.Refusal`.
 
 Error `scenario_refused`: `agenticspec.cli.Refusal`.
 
+### `sim trace`
+
+Simulate an architecture once at its built values and write the port uses of the run as a trace (agenticspec-trace/1)
+
+Callable: `sim_trace`. Input: `agenticspec.cli.SimTraceInput`. Result: `agenticspec.cli.SimTraceResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `simulation_refused`: `agenticspec.cli.Refusal`.
+
 ### `sync`
 
 Lift the new and changed sessions of a window into the local store
@@ -182,20 +360,85 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `ui conform`
+
+Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)
+
+Callable: `ui_conform`. Input: `agenticspec.cli.UiConformInput`. Result: `agenticspec.cli.UiConformResult`.
+
+Error `conformance_failed`: `agenticspec.cli.Refusal`.
+
+Error `plan_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `source_unavailable`: `agenticspec.cli.Refusal`.
+
+### `ui derive`
+
+Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check
+
+Callable: `ui_derive`. Input: `agenticspec.cli.UiDeriveInput`. Result: `agenticspec.cli.UiDeriveResult`.
+
+Error `derived_stale`: `agenticspec.cli.Refusal`.
+
+Error `document_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+### `ui generate`
+
+Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+
+Callable: `ui_generate`. Input: `agenticspec.cli.UiGenerateInput`. Result: `agenticspec.cli.UiGenerateResult`.
+
+Error `document_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+### `ui panels`
+
+Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check
+
+Callable: `ui_panels`. Input: `agenticspec.cli.UiPanelsInput`. Result: `agenticspec.cli.UiPanelsResult`.
+
+Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `panels_stale`: `agenticspec.cli.Refusal`.
+
 ## Runtime obligations
 
 - handler:analyze: implement the owner-qualified callable and its declared result/error contract
+- handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract
+- handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract
+- handler:deploy_bundle: implement the owner-qualified callable and its declared result/error contract
+- handler:deploy_check: implement the owner-qualified callable and its declared result/error contract
 - handler:export: implement the owner-qualified callable and its declared result/error contract
+- handler:ingress_default: implement the owner-qualified callable and its declared result/error contract
+- handler:ingress_project: implement the owner-qualified callable and its declared result/error contract
 - handler:kpi: implement the owner-qualified callable and its declared result/error contract
 - handler:lift: implement the owner-qualified callable and its declared result/error contract
 - handler:mine: implement the owner-qualified callable and its declared result/error contract
+- handler:packing_default: implement the owner-qualified callable and its declared result/error contract
 - handler:procedure: implement the owner-qualified callable and its declared result/error contract
 - handler:query: implement the owner-qualified callable and its declared result/error contract
 - handler:serve: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_check: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_contract: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_corpus: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_digest: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_ports: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_render: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_trace: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_conform: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_derive: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_generate: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_panels: implement the owner-qualified callable and its declared result/error contract

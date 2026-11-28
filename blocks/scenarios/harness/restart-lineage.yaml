@@ -1,0 +1,139 @@
+# Restarts of a session, walked by hand (M42): synthesis cannot reach a session that restarts a
+# session which was itself a restart. Session 1 ends; session 2 restarts it and names it as its
+# lineage. Session 2 cannot restart again, and a session cannot restart one that is still open.
+# Session 2 ends; session 3 restarts it and keeps the lineage of session 1, so history and KPIs
+# group the three by session 1.
+type: ess-scenario/7
+domain: agentic.harness
+scenario: restart-lineage
+summary: A restarted session records the session it replaces and keeps the lineage of the first one; a second restart and a restart of an open session are refused.
+
+timeline:
+  # a principal, an agent revision, a harness and a permission mode
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-0000000007a1, kind: Agent, name: coder, at: 2026-11-27T09:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.agent.DefineAgent
+    input: {agent_id: 00000000-0000-4000-8000-0000000007a2, principal_id: 00000000-0000-4000-8000-0000000007a1, name: coder, at: 2026-11-27T09:00:01Z}
+    outcome: defined
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.agent.PublishRevision
+    input:
+      agent_revision_id: 00000000-0000-4000-8000-0000000007a3
+      agent_id: 00000000-0000-4000-8000-0000000007a2
+      number: 1
+      role: coder
+      instructions: {digest: sha256-instructions, length: 400, class: prompt}
+      models: [{use: Primary, target: {kind: Model, value: 00000000-0000-4000-8000-0000000007a4}}]
+      tools: []
+      knowledge: []
+      budget: {}
+      at: 2026-11-27T09:00:02Z
+    outcome: published
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.harness.RegisterHarness
+    input: {harness_id: 00000000-0000-4000-8000-0000000007b1, kind: Vendor, name: coding, context_window: 200000, max_depth: 2, at: 2026-11-27T09:00:03Z}
+    outcome: registered
+
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.harness.RegisterPermissionMode
+    input: {permission_mode_id: 00000000-0000-4000-8000-0000000007c1, name: ask, summary: Asks before every action., at: 2026-11-27T09:00:04Z}
+    outcome: registered
+
+  # session 1 opens and ends
+  - at: 2026-11-27T10:00:00Z
+    command: agentic.harness.OpenSession
+    input:
+      harness_session_id: 00000000-0000-4000-8000-0000000007d1
+      harness_id: 00000000-0000-4000-8000-0000000007b1
+      agent_revision_id: 00000000-0000-4000-8000-0000000007a3
+      principal_id: 00000000-0000-4000-8000-0000000007a1
+      permission_mode: 00000000-0000-4000-8000-0000000007c1
+      context_window: 100000
+      max_depth: 1
+      at: 2026-11-27T10:00:00Z
+    outcome: opened
+
+  # session 2 opens while session 1 is open: no restart of an open session
+  - at: 2026-11-27T10:30:00Z
+    command: agentic.harness.OpenSession
+    input:
+      harness_session_id: 00000000-0000-4000-8000-0000000007d2
+      harness_id: 00000000-0000-4000-8000-0000000007b1
+      agent_revision_id: 00000000-0000-4000-8000-0000000007a3
+      principal_id: 00000000-0000-4000-8000-0000000007a1
+      permission_mode: 00000000-0000-4000-8000-0000000007c1
+      context_window: 100000
+      max_depth: 1
+      at: 2026-11-27T10:30:00Z
+    outcome: opened
+  - at: 2026-11-27T10:30:01Z
+    command: agentic.harness.RecordRestart
+    input: {harness_session_id: 00000000-0000-4000-8000-0000000007d2, replaces: 00000000-0000-4000-8000-0000000007d1}
+    outcome: replaced-still-open
+    error:
+      name: agentic.harness.ReplacedSessionOpen
+    no_events: [agentic.harness.SessionRestarted]
+
+  # session 1 ends; session 2 restarts it and starts the lineage
+  - at: 2026-11-27T11:00:00Z
+    command: agentic.harness.EndSession
+    input: {harness_session_id: 00000000-0000-4000-8000-0000000007d1, at: 2026-11-27T11:00:00Z}
+    outcome: ended
+  - at: 2026-11-27T11:00:01Z
+    command: agentic.harness.RecordRestart
+    input: {harness_session_id: 00000000-0000-4000-8000-0000000007d2, replaces: 00000000-0000-4000-8000-0000000007d1}
+    outcome: restarted
+    events:
+      - event: agentic.harness.SessionRestarted
+        payload: {harness_session_id: 00000000-0000-4000-8000-0000000007d2, replaces: 00000000-0000-4000-8000-0000000007d1, lineage: 00000000-0000-4000-8000-0000000007d1}
+
+  # session 2 restarts once
+  - at: 2026-11-27T11:00:02Z
+    command: agentic.harness.RecordRestart
+    input: {harness_session_id: 00000000-0000-4000-8000-0000000007d2, replaces: 00000000-0000-4000-8000-0000000007d1}
+    outcome: already-restarts
+    error:
+      name: agentic.harness.AlreadyRestarts
+    no_events: [agentic.harness.SessionRestarted]
+
+  # session 2 ends; session 3 restarts it and keeps the lineage of session 1
+  - at: 2026-11-27T12:00:00Z
+    command: agentic.harness.EndSession
+    input: {harness_session_id: 00000000-0000-4000-8000-0000000007d2, at: 2026-11-27T12:00:00Z}
+    outcome: ended
+  - at: 2026-11-27T12:00:01Z
+    command: agentic.harness.OpenSession
+    input:
+      harness_session_id: 00000000-0000-4000-8000-0000000007d3
+      harness_id: 00000000-0000-4000-8000-0000000007b1
+      agent_revision_id: 00000000-0000-4000-8000-0000000007a3
+      principal_id: 00000000-0000-4000-8000-0000000007a1
+      permission_mode: 00000000-0000-4000-8000-0000000007c1
+      context_window: 100000
+      max_depth: 1
+      at: 2026-11-27T12:00:01Z
+    outcome: opened
+  - at: 2026-11-27T12:00:02Z
+    command: agentic.harness.RecordRestart
+    input: {harness_session_id: 00000000-0000-4000-8000-0000000007d3, replaces: 00000000-0000-4000-8000-0000000007d2}
+    outcome: restarted-in-lineage
+    events:
+      - event: agentic.harness.SessionRestarted
+        payload: {harness_session_id: 00000000-0000-4000-8000-0000000007d3, replaces: 00000000-0000-4000-8000-0000000007d2, lineage: 00000000-0000-4000-8000-0000000007d1}
+
+assert:
+  - view: agentic.harness.HarnessSessions
+    contains:
+      harness_session_id: 00000000-0000-4000-8000-0000000007d3
+      replaces: 00000000-0000-4000-8000-0000000007d2
+      lineage: 00000000-0000-4000-8000-0000000007d1
+      state: Open
+  - view: agentic.harness.HarnessSessions
+    contains:
+      harness_session_id: 00000000-0000-4000-8000-0000000007d2
+      replaces: 00000000-0000-4000-8000-0000000007d1
+      lineage: 00000000-0000-4000-8000-0000000007d1
+      state: Ended

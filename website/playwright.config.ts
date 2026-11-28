@@ -48,7 +48,7 @@ export default defineConfig({
     stderr: 'pipe',
   },
   projects: [
-    {name: 'gates', testMatch: /(gates|keyboard|pages|findings)\.spec\.ts/},
+    {name: 'gates', testMatch: /(gates|keyboard|pages|findings|graph)\.spec\.ts/},
     {name: 'ratchet', testMatch: /ratchet\.spec\.ts/, dependencies: ['gates']},
     {name: 'measure', testMatch: /measure\.spec\.ts/},
     {name: 'report', testMatch: /report\.spec\.ts/, dependencies: ['measure']},

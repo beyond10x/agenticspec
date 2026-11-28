@@ -11,8 +11,10 @@ use crate::events::{self, REFUSAL};
 use crate::marked::resolve;
 use crate::profile::Profile;
 use crate::reader::{DocRef, Reader, sha256_hex};
+use crate::rows::{Row, blocks, check_row, read_row};
 use crate::search::kind as kpi_kind;
 use crate::sim::{Arrival, Model, RUN_KPIS, RunOut, RunOutcome, Script, TaskScript, simulate};
+use crate::unavailable::{self, Mode, PartThen, Plan, Unavailable};
 use serde_json::{Map, Value, json};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -114,6 +116,8 @@ pub struct GivenQuestion {
 pub struct Given {
     pub tasks: Vec<GivenTask>,
     pub questions: Vec<GivenQuestion>,
+    /// Rows of block entities, checked against the blocks; the simulator does not read them.
+    pub rows: Vec<Row>,
 }
 
 pub const OUTCOMES: &[(&str, RunOutcome)] = &[
@@ -190,6 +194,8 @@ pub struct Then {
     pub order: Order,
     pub events: Vec<Expect>,
     pub kpis: Vec<Bound>,
+    /// What each named part shows while something is unavailable.
+    pub parts: Vec<PartThen>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -201,6 +207,7 @@ pub struct Scenario {
     pub seed: u64,
     pub horizon: f64,
     pub given: Given,
+    pub unavailable: Vec<Unavailable>,
     pub when: Vec<Input>,
     pub fixtures: Fixtures,
     pub then: Then,
@@ -215,6 +222,7 @@ const TOP: &[&str] = &[
     "seed",
     "horizon",
     "given",
+    "unavailable",
     "when",
     "fixtures",
     "then",
@@ -245,6 +253,7 @@ pub fn parse(doc: &Value) -> Result<Scenario, Vec<String>> {
         r.err("horizon", "must be longer than 0s");
     }
     let given = read_given(&mut r, m.get("given"));
+    let unavailable = unavailable::read_unavailable(&mut r, m.get("unavailable"));
     let mut when = Vec::new();
     for (i, v) in r.list(m, "when", "").iter().enumerate() {
         if let Some(input) = read_input(&mut r, v, &format!("when.{i}")) {
@@ -262,6 +271,7 @@ pub fn parse(doc: &Value) -> Result<Scenario, Vec<String>> {
             seed,
             horizon,
             given,
+            unavailable,
             when,
             fixtures,
             then,
@@ -275,7 +285,7 @@ fn read_given(r: &mut Reader, v: Option<&Value>) -> Given {
     let Some(v) = v.filter(|v| !v.is_null()) else {
         return g;
     };
-    let Some(m) = r.obj(v, "given", &["tasks", "questions"], &[]) else {
+    let Some(m) = r.obj(v, "given", &["tasks", "questions", "rows"], &[]) else {
         return g;
     };
     for (i, t) in r.list(m, "tasks", "given").iter().enumerate() {
@@ -323,6 +333,11 @@ fn read_given(r: &mut Reader, v: Option<&Value>) -> Given {
                 options,
                 default,
             });
+        }
+    }
+    for (i, row) in r.list(m, "rows", "given").iter().enumerate() {
+        if let Some(row) = read_row(r, row, &format!("given.rows.{i}")) {
+            g.rows.push(row);
         }
     }
     g
@@ -463,13 +478,15 @@ fn read_then(r: &mut Reader, v: Option<&Value>) -> Then {
         order: Order::Sequence,
         events: Vec::new(),
         kpis: Vec::new(),
+        parts: Vec::new(),
     };
     let Some(v) = v.filter(|v| !v.is_null()) else {
         return t;
     };
-    let Some(m) = r.obj(v, "then", &["order", "events", "kpis"], &[]) else {
+    let Some(m) = r.obj(v, "then", &["order", "events", "kpis", "parts"], &[]) else {
         return t;
     };
+    t.parts = unavailable::read_parts(r, m.get("parts"));
     t.order = r
         .one_of(
             m,
@@ -500,8 +517,10 @@ fn read_then(r: &mut Reader, v: Option<&Value>) -> Then {
         let rule = r.text(o, "rule", &p);
         if let Some(rl) = &rule
             && !events::RULES.iter().any(|(n, _, _)| n == rl)
+            && rl != unavailable::RULE
         {
-            let names: Vec<&str> = events::RULES.iter().map(|(n, _, _)| *n).collect();
+            let mut names: Vec<&str> = events::RULES.iter().map(|(n, _, _)| *n).collect();
+            names.push(unavailable::RULE);
             r.err(
                 &format!("{p}.rule"),
                 format!("`{rl}` is no rule; expected one of {}", names.join(", ")),
@@ -713,6 +732,17 @@ pub fn check(l: &Loaded) -> Vec<String> {
             ));
         }
     }
+    let mut rows = BTreeSet::new();
+    for (i, row) in s.given.rows.iter().enumerate() {
+        let p = format!("given.rows.{i}");
+        if !rows.insert((row.entity.as_str(), row.id.as_str())) {
+            out.push(format!(
+                "{p}.id: {} `{}` is given twice",
+                row.entity, row.id
+            ));
+        }
+        out.extend(check_row(blocks(), row, &p));
+    }
     for (i, m) in s.fixtures.model.iter().enumerate() {
         if let Some(p) = &m.part
             && block(a, p) != Some("agent")
@@ -743,6 +773,12 @@ pub fn check(l: &Loaded) -> Vec<String> {
             }
         }
     }
+    out.extend(unavailable::check(
+        a,
+        s.horizon,
+        &s.unavailable,
+        &s.then.parts,
+    ));
     out
 }
 
@@ -904,12 +940,18 @@ pub struct Ran {
     pub bounds: Vec<(Status, f64)>,
     pub predicted: Class,
     pub run: RunOut,
+    /// How the run made each `unavailable` entry unavailable.
+    pub plan: Plan,
+    /// The verdict of each observable of `then.parts`, in the order of
+    /// [`unavailable::observables`].
+    pub observed: Vec<Verdict>,
 }
 
 impl Ran {
     pub fn count(&self, s: Status) -> usize {
         self.verdicts.iter().filter(|v| v.status == s).count()
             + self.bounds.iter().filter(|(b, _)| *b == s).count()
+            + self.observed.iter().filter(|v| v.status == s).count()
     }
 }
 
@@ -958,9 +1000,22 @@ pub fn run(l: &Loaded) -> Result<Ran, Refusal> {
         });
         origins.push(Origin::GivenQuestion(q));
     }
+    let mut plan = unavailable::plan(
+        &arch,
+        s.horizon,
+        &s.unavailable,
+        &s.then.parts,
+        !s.given.tasks.is_empty() || !s.given.questions.is_empty(),
+    );
     for (i, input) in s.when.iter().enumerate() {
         t += input.after;
-        let decided = admit(&arch, input);
+        let decided = admit(&arch, input).and_then(|over| {
+            if plan.refuses(&input.at, &input.author, over.as_deref(), t) {
+                Err(unavailable::RULE)
+            } else {
+                Ok(over)
+            }
+        });
         admissions.push(Admission {
             t,
             rule: decided.as_ref().err().copied(),
@@ -1002,13 +1057,26 @@ pub fn run(l: &Loaded) -> Result<Ran, Refusal> {
             .map(|r| (r.part.clone(), r.after))
             .collect(),
     };
-    let model = Model::build(&arch, &l.profile, s.horizon, &[], &[])
+    let model = Model::build(&arch, &l.profile, s.horizon, &plan.faults, &[])
         .and_then(|m| m.with_script(script))
         .map_err(invalid)?;
     let run = simulate(&model, s.seed, true);
     let trace = trace(&arch, s, &admissions, &origins, &run);
-    let verdicts = evaluate(&s.then, &trace);
-    let bounds = s
+    // An entry that refuses inputs holds only while the simulation leaves its part quiet.
+    for (mode, &(from, until)) in plan.modes.iter_mut().zip(&plan.windows) {
+        let broken = trace.iter().find(|e| {
+            !e.sim.starts_with("input_")
+                && mode.broken_by(from, until, e.t, &e.part, e.channel.as_deref())
+        });
+        if let Some(e) = broken {
+            *mode = Mode::NotModeled(format!(
+                "the simulator records {} by `{}` at {}s while it is unavailable",
+                e.name, e.part, e.t
+            ));
+        }
+    }
+    let mut verdicts = evaluate(&s.then, &trace);
+    let mut bounds: Vec<(Status, f64)> = s
         .then
         .kpis
         .iter()
@@ -1016,6 +1084,27 @@ pub fn run(l: &Loaded) -> Result<Ran, Refusal> {
             let v = run.kpis.get(&b.kpi).copied().unwrap_or(0.0);
             let ok = b.min.is_none_or(|x| v >= x) && b.max.is_none_or(|x| v <= x);
             (if ok { Status::Held } else { Status::Failed }, v)
+        })
+        .collect();
+    // A run that cannot make an entry unavailable checks nothing of what it expects.
+    if let Some(why) = &unmodeled(&plan) {
+        for v in &mut verdicts {
+            *v = Verdict {
+                status: Status::NotChecked,
+                matched: None,
+                reason: Some(why.clone()),
+            };
+        }
+        for b in &mut bounds {
+            b.0 = Status::NotChecked;
+        }
+    }
+    let observed = unavailable::observables(&s.then.parts)
+        .iter()
+        .map(|(_, what, _)| Verdict {
+            status: Status::NotChecked,
+            matched: None,
+            reason: Some(unavailable::not_checked_reason(what).to_string()),
         })
         .collect();
     let predicted = predict(&admissions, &trace, &run);
@@ -1026,6 +1115,19 @@ pub fn run(l: &Loaded) -> Result<Ran, Refusal> {
         bounds,
         predicted,
         run,
+        plan,
+        observed,
+    })
+}
+
+/// Why the run checks none of its expected events and bounds: the first entry the simulator
+/// does not model.
+fn unmodeled(plan: &Plan) -> Option<String> {
+    plan.modes.iter().enumerate().find_map(|(i, m)| match m {
+        Mode::NotModeled(why) => Some(format!(
+            "the simulator does not model unavailable.{i}: {why}"
+        )),
+        _ => None,
     })
 }
 
@@ -1295,7 +1397,34 @@ pub fn result_json(l: &Loaded, ran: &Ran) -> Value {
         .iter()
         .zip(&ran.bounds)
         .map(|(b, (st, v))| {
-            json!({"kpi": b.kpi, "min": b.min, "max": b.max, "value": v, "status": st.name()})
+            let mut row =
+                json!({"kpi": b.kpi, "min": b.min, "max": b.max, "value": v, "status": st.name()});
+            if *st == Status::NotChecked {
+                row["reason"] = json!(unmodeled(&ran.plan));
+            }
+            row
+        })
+        .collect();
+    let unavailable: Vec<Value> = s
+        .unavailable
+        .iter()
+        .zip(ran.plan.modes.iter().zip(&ran.plan.windows))
+        .enumerate()
+        .map(|(i, (u, (mode, window)))| unavailable::entry_json(i, u, mode, *window))
+        .collect();
+    let observables: Vec<Value> = unavailable::observables(&s.then.parts)
+        .into_iter()
+        .zip(&ran.observed)
+        .map(|((part, what, written), v)| {
+            let mut m = Map::new();
+            m.insert("part".into(), json!(part));
+            m.insert("observable".into(), json!(what));
+            m.insert("expect".into(), written);
+            m.insert("status".into(), json!(v.status.name()));
+            if let Some(r) = &v.reason {
+                m.insert("reason".into(), json!(r));
+            }
+            Value::Object(m)
         })
         .collect();
     let inputs: Vec<Value> = s
@@ -1339,6 +1468,8 @@ pub fn result_json(l: &Loaded, ran: &Ran) -> Value {
         },
         "expectations": expectations,
         "kpi_bounds": bounds,
+        "unavailable": unavailable,
+        "observables": observables,
         "inputs": inputs,
         "trace": ran.trace.iter().map(Traced::json).collect::<Vec<_>>(),
         "kpis": kpis,

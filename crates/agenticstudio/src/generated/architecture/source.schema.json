@@ -1,0 +1,203 @@
+{
+  "$defs": {
+    "agentic.architecture.Digest": {
+      "description": "Digest of the canonical form of an architecture's parts, links and border.",
+      "title": "Digest",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "agentic.architecture.Digest"
+    },
+    "agentic.architecture.PatchApplication.State": {
+      "enum": [
+        "Applied",
+        "Refused",
+        "Requested"
+      ],
+      "title": "State",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "agentic.architecture.PatchApplication.State"
+    },
+    "agentic.architecture.PatchApplications.row": {
+      "additionalProperties": false,
+      "properties": {
+        "application_id": {
+          "$ref": "#/$defs/agentic.shared.PatchApplicationId"
+        },
+        "architecture_id": {
+          "$ref": "#/$defs/agentic.shared.ArchitectureId"
+        },
+        "changed_rows": {
+          "type": "integer"
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "patch_id": {
+          "$ref": "#/$defs/agentic.shared.PatchId"
+        },
+        "revision_id": {
+          "$ref": "#/$defs/agentic.shared.ArchitectureRevisionId"
+        },
+        "rule_index": {
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/$defs/agentic.architecture.PatchApplication.State"
+        }
+      },
+      "required": [
+        "application_id",
+        "architecture_id",
+        "patch_id",
+        "dry_run",
+        "state"
+      ],
+      "title": "PatchApplications row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "agentic.architecture.PatchApplications"
+    },
+    "agentic.architecture.PatchRule": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "verb": {
+          "$ref": "#/$defs/agentic.architecture.PatchVerb"
+        }
+      },
+      "required": [
+        "verb",
+        "text"
+      ],
+      "title": "PatchRule",
+      "type": "object",
+      "x-ess-kind": "struct",
+      "x-ess-name": "agentic.architecture.PatchRule"
+    },
+    "agentic.architecture.PatchVerb": {
+      "enum": [
+        "Set",
+        "Add",
+        "Remove",
+        "Connect",
+        "Replicate",
+        "Wrap",
+        "Prepend",
+        "Append",
+        "Mark",
+        "Unmark"
+      ],
+      "title": "PatchVerb",
+      "type": "string",
+      "x-ess-kind": "enum",
+      "x-ess-name": "agentic.architecture.PatchVerb"
+    },
+    "agentic.architecture.Patches.row": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/agentic.architecture.Digest"
+        },
+        "name": {
+          "$ref": "#/$defs/agentic.shared.Name"
+        },
+        "patch_id": {
+          "$ref": "#/$defs/agentic.shared.PatchId"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/agentic.architecture.PatchRule"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "patch_id",
+        "rules",
+        "digest"
+      ],
+      "title": "Patches row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "agentic.architecture.Patches"
+    },
+    "agentic.architecture.Revisions.row": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture_id": {
+          "$ref": "#/$defs/agentic.shared.ArchitectureId"
+        },
+        "digest": {
+          "$ref": "#/$defs/agentic.architecture.Digest"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "revision_id": {
+          "$ref": "#/$defs/agentic.shared.ArchitectureRevisionId"
+        }
+      },
+      "required": [
+        "revision_id",
+        "architecture_id",
+        "number",
+        "digest"
+      ],
+      "title": "Revisions row",
+      "type": "object",
+      "x-ess-kind": "view-row",
+      "x-ess-name": "agentic.architecture.Revisions"
+    },
+    "agentic.shared.ArchitectureId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "ArchitectureId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "agentic.shared.ArchitectureId"
+    },
+    "agentic.shared.ArchitectureRevisionId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "ArchitectureRevisionId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "agentic.shared.ArchitectureRevisionId"
+    },
+    "agentic.shared.Name": {
+      "title": "Name",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "agentic.shared.Name"
+    },
+    "agentic.shared.PatchApplicationId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "PatchApplicationId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "agentic.shared.PatchApplicationId"
+    },
+    "agentic.shared.PatchId": {
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "title": "PatchId",
+      "type": "string",
+      "x-ess-kind": "newtype",
+      "x-ess-name": "agentic.shared.PatchId"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-ess-provenance": {
+    "contract_digest": "slice-sha256/2:829435c2e0ebb3a961096950052bcad1f6d57b7a2b474113e3fce041d103a22e",
+    "source_digest": "fe73327ca63f6c7a34b08bf8fe59d68fb6c895294ffb569d0e4956008c169f92",
+    "specification_version": "v1",
+    "system": "agentic"
+  }
+}

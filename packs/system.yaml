@@ -16,6 +16,7 @@ domains:
   - agentic.gateway
   - agentic.tool
   - agentic.knowledge
+  - agentic.store
   - agentic.agent
   - agentic.harness
   - agentic.work
@@ -29,6 +30,7 @@ domains:
   - agentic.runtime
   - agentic.resource
   - agentic.architecture
+  - agentic.deployment
   - agentic.kpi
   - agentic.experiment
   - agentic.scm.forge

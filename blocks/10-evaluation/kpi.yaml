@@ -149,6 +149,19 @@ entities:
       states: [Recorded]
       terminal: [Recorded]
 
+actors:
+  - name: agentic.kpi.Viewer
+    naming:
+      display: KPI viewer
+      summary: >-
+        Whoever looks at the KPIs, their directions per work mode and their measurements, such as
+        an operator's view of a running system. It reads the views of this block and issues none
+        of its commands.
+    may:
+      - agentic.kpi.Kpis
+      - agentic.kpi.Directions
+      - agentic.kpi.Measurements
+
 errors:
   - name: agentic.kpi.NoSuchKpi
     summary: No KPI has this id, and nothing changed.

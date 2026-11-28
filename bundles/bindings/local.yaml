@@ -1,0 +1,6 @@
+format: agenticspec-binding/1
+binding: local
+summary: >-
+  The local test: every part in the core unit, principals and hosted model routes outside. The
+  base of each local-<architecture>.yaml, which declares where its parts reach. Fits any
+  architecture whose sandboxes ask for no more than a container.

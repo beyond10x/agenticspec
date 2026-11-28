@@ -1,0 +1,8 @@
+{
+  "view": "agentic.delegation.Delegations",
+  "rows": [
+    {"delegation_id": "00000000-0000-4000-8000-e045564d0000", "delegator": "00000000-0000-4000-8000-322d9f1c0000", "delegate": "00000000-0000-4000-8000-322d9f1c0000", "action": "AnswerQuestions", "root": "00000000-0000-4000-8000-322d9f1c0000", "parent_delegation_id": "00000000-0000-4000-8000-e045564d0000", "granted_at": "2026-11-20T09:06:00Z", "expires_at": "2026-11-20T09:07:00Z", "last_acted_at": "2026-11-20T09:08:00Z", "excludes": ["excludes 1"], "state": "Active"},
+    {"delegation_id": "00000000-0000-4000-8000-e045564d0001", "delegator": "00000000-0000-4000-8000-322d9f1c0001", "delegate": "00000000-0000-4000-8000-322d9f1c0001", "action": "Approve", "root": "00000000-0000-4000-8000-322d9f1c0001", "granted_at": "2026-11-20T10:06:00Z", "excludes": ["excludes 2"], "state": "Expired"},
+    {"delegation_id": "00000000-0000-4000-8000-e045564d0002", "delegator": "00000000-0000-4000-8000-322d9f1c0002", "delegate": "00000000-0000-4000-8000-322d9f1c0002", "action": "Merge", "root": "00000000-0000-4000-8000-322d9f1c0002", "parent_delegation_id": "00000000-0000-4000-8000-e045564d0002", "granted_at": "2026-11-20T11:06:00Z", "expires_at": "2026-11-20T11:07:00Z", "last_acted_at": "2026-11-20T11:08:00Z", "excludes": ["excludes 3"], "state": "Revoked"}
+  ]
+}

@@ -1,0 +1,24 @@
+[package]
+name = "agenticspec-ui"
+description = "The UI generator of agenticspec: an architecture to its ess-ui/1 composition, and an ess-ui/1 document to Vue 3 single-file components and TypeScript over the components of ui/kit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+test = false
+doctest = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json.workspace = true
+serde_yaml_ng.workspace = true
+serde_path_to_error = "0.1"
+sha2.workspace = true
+agenticspec-render.workspace = true
+agenticspec-views.workspace = true
+
+[dev-dependencies]
+regex.workspace = true

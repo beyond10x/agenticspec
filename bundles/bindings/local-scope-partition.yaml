@@ -1,0 +1,7 @@
+format: agenticspec-binding/1
+binding: local
+architecture: scope-partition
+refines: local.yaml
+parts:
+  team: {egress: [owner]}
+  gateway: {egress: [model]}

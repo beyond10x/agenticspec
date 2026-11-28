@@ -1,0 +1,126 @@
+# An artifact is a record of an artifact store: addressed by the digest of its content, never
+# revised, with its provenance. Synthesis arranges no record (ESS-SYNTH-004) and finds no store row
+# for the address guard (ESS-SYNTH-003), so this scenario walks the path by hand: a put under
+# another key than the digest is refused, a put at the digest is confirmed, the same content again
+# is refused, a revision of the artifact is refused, and a new version that derives from it is
+# stored beside it.
+type: ess-scenario/7
+domain: agentic.store
+scenario: artifact-immutable
+summary: An artifact is stored at its digest and never revised; a new version is a new artifact that derives from it.
+
+arrange:
+  - instance: store
+    entity: agentic.store.Store
+  - instance: v1
+    entity: agentic.store.Record
+  - instance: v2
+    entity: agentic.store.Record
+
+timeline:
+  - at: 2026-11-28T10:00:00Z
+    command: agentic.store.CreateStore
+    actor: agentic.store.StoreOwner
+    input: {name: artifacts, kind: Artifact, scope: Architecture, retention: Forever}
+    outcome: created
+    capture: {instance: store, event: agentic.store.StoreCreated, field: store_id}
+
+  - at: 2026-11-28T10:00:01Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: change-1
+      content: {digest: sha256-change-1, length: 400, class: change}
+      recorded_by: 00000000-0000-4000-8000-0000000000c1
+      derived_from: []
+      at: 2026-11-28T10:00:01Z
+    outcome: artifact-not-at-digest
+    error:
+      name: agentic.store.ArtifactNotAtDigest
+    no_events: [agentic.store.PutRequested]
+
+  - at: 2026-11-28T10:00:02Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: sha256-change-1
+      content: {digest: sha256-change-1, length: 400, class: change}
+      recorded_by: 00000000-0000-4000-8000-0000000000c1
+      derived_from: []
+      at: 2026-11-28T10:00:02Z
+    outcome: requested
+    capture: {instance: v1, event: agentic.store.PutRequested, field: record_id}
+
+  - at: 2026-11-28T10:00:03Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: v1}, at: 2026-11-28T10:00:03Z}
+    outcome: confirmed
+    events:
+      - event: agentic.store.RecordPut
+        payload: {record_id: {$instance: v1}, key: sha256-change-1, revision: 1}
+
+  - at: 2026-11-28T10:00:04Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: sha256-change-1
+      content: {digest: sha256-change-1, length: 400, class: change}
+      recorded_by: 00000000-0000-4000-8000-0000000000c2
+      derived_from: []
+      at: 2026-11-28T10:00:04Z
+    outcome: key-taken
+    error:
+      name: agentic.store.KeyTaken
+    no_events: [agentic.store.PutRequested]
+
+  - at: 2026-11-28T10:00:05Z
+    command: agentic.store.ReviseRecord
+    actor: agentic.store.Writer
+    input:
+      supersedes: {$instance: v1}
+      revision: 2
+      content: {digest: sha256-change-2, length: 420, class: change}
+      recorded_by: 00000000-0000-4000-8000-0000000000c1
+      derived_from: []
+      at: 2026-11-28T10:00:05Z
+    outcome: artifact-revised
+    error:
+      name: agentic.store.ArtifactImmutable
+    no_events: [agentic.store.RevisionRequested]
+
+  - at: 2026-11-28T10:00:06Z
+    command: agentic.store.PutRecord
+    actor: agentic.store.Writer
+    input:
+      store_id: {$instance: store}
+      key: sha256-change-2
+      content: {digest: sha256-change-2, length: 420, class: change}
+      recorded_by: 00000000-0000-4000-8000-0000000000c1
+      derived_from: [{$instance: v1}]
+      at: 2026-11-28T10:00:06Z
+    outcome: requested
+    capture: {instance: v2, event: agentic.store.PutRequested, field: record_id}
+
+  - at: 2026-11-28T10:00:07Z
+    command: agentic.store.ConfirmPut
+    actor: agentic.store.StoreService
+    input: {record_id: {$instance: v2}, at: 2026-11-28T10:00:07Z}
+    outcome: confirmed
+    events:
+      - event: agentic.store.RecordPut
+        payload: {record_id: {$instance: v2}, key: sha256-change-2, revision: 1}
+
+assert:
+  - view: agentic.store.Artifacts
+    contains:
+      record_id: {$instance: v1}
+      state: Present
+  - view: agentic.store.Artifacts
+    contains:
+      record_id: {$instance: v2}
+      recorded_by: 00000000-0000-4000-8000-0000000000c1
+      state: Present

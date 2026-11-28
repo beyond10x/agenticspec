@@ -80,6 +80,10 @@ Each line: the block, what it is from first principles, and where the concept ex
   spawn, message, plan, other), and whether its effect leaves the sandbox.
 - `knowledge`: what an agent is given before it acts. Instructions, skills, memory, context
   files. Concepts an agent applies are declared here.
+- `store`: data a part writes and another part reads, in a store of one of five kinds (record,
+  artifact, key-value, semantic, graph) with a scope and a retention. Records hold digests, never
+  bytes; an artifact is an immutable record addressed by its digest, with provenance; gets and
+  queries are recorded. Design: `design/events-and-storage.md`.
 
 ### 4 agent
 
@@ -132,6 +136,10 @@ Each line: the block, what it is from first principles, and where the concept ex
 - `architecture`: the composed setup. Parts (instances of blocks), links (who may call or
   message whom), a border (what a human reaches), revisions. No link, no reach. From weft's
   formation, component, link and border.
+- `deployment`: an architecture revision installed on a runtime, and the runs started under it.
+  An installation drains (takes no new runs, lets started ones end) and rolls back to the one it
+  replaced. A run is queued, running, waiting, done, failed or cancelled, and keeps the revision
+  and binding it was queued under. A run's identity is the caller's idempotency key.
 
 ### 10 evaluation
 
@@ -285,21 +293,30 @@ KPI, the count of its refusals:
 | rule | refused when |
 |---|---|
 | `unknown_link_parts` | a link's `from`, `to` or `over` names no part |
+| `unknown_blocks` | a part's `block` is not a variant of `agentic.architecture.PartKind` (the check reads the list from the block) |
+| `unknown_carries` | a link's `carries` is not a variant of `agentic.architecture.Carries` |
 | `per_without_part`, `acts_for_without_part`, `egress_without_part` | the field names no part |
 | `agent_without_model_path` | an agent reaches no `model` part over `model_call` links (through a gateway or not) |
 | `question_without_answerer` | a `question` link ends at a part that is not a principal or an agent |
 | `review_without_reviewer` | a `review` link ends at a part that is not an agent with `role: reviewer` |
 | `border_without_part` | `border` names no part |
 | `trigger_source_not_trigger` | a `trigger` link starts at a part that is not a trigger or a schedule |
-| `trigger_target_not_agent` | a `trigger` link ends at a part that is not an agent |
-| `trigger_without_source` | the trigger's kind is missing or unknown; or an `on_schedule` trigger names no schedule part; or an `on_message` trigger names no topic, queue or board channel; or an `on_event` trigger names no `event_name` |
+| `trigger_target_not_agent` | a `trigger` link ends at a part that is neither an agent nor a runtime |
+| `trigger_without_source` | the trigger's kind is missing or unknown; or an `on_schedule` trigger names no schedule part; or an `on_message` trigger names no topic, queue or board channel; or an `on_event` trigger names no `event_name`, or a `source` that is no part |
 | `invalid_concurrency` | `policy` is not `skip`, `queue` or `parallel`; or `max_parallel` is not a whole number of at least 1; or it is above 1 under `skip` or `queue` |
 | `invalid_schedule` | a schedule part has no positive `every` |
 | `swarm_needs_agent` | `coordination` or `start_stagger` is on a part that is not an agent; or the coordination is unknown; or the stagger is not a duration |
-| `unreachable_parts` | no link, `per`, `acts_for`, `egress` or `border` names the part, and it has no `per`; a trigger's `schedule` and `channel` count as names |
+| `unreachable_parts` | no link, `per`, `acts_for`, `egress` or `border` names the part, and it has no `per`; a trigger's `schedule`, `channel` and `source` count as names |
 
 The trigger, schedule and swarm rules read the `value` of a marked place, so a document with
 markers is checked as built.
+
+A part of block `architecture` nests another document (`ref`, `digest`); the check resolves it
+first (rules `nested_*`, not gate KPIs: a result is only computed for a document that resolves)
+and then applies the rules above to the flattened document, where the nested parts are named
+`<part>.<inner part>`. The digest is the one `agentic.architecture.Digest` describes: the
+canonical form of the parts, links and border. The format: `docs/architectures/index.md`,
+"Nesting an architecture".
 
 ## Simulation
 
@@ -332,7 +349,7 @@ experiment.
 format: agenticspec-experiment/1
 experiment: workstation-tuning
 architecture: ../architectures/workstation.yaml
-profile: ../profiles/coding.yaml
+profile: ../fields/coding/profiles/coding.yaml
 horizon: 24h
 seeds: 8
 seed: 1
@@ -368,7 +385,7 @@ search:
 - A weight or a gate naming an unknown KPI is refused.
 - `capacity_drop` lowers a pool's capacity or a gateway's rate to `to` in its window.
 
-Format `agenticspec-profile/1` (`profiles/coding.yaml`):
+Format `agenticspec-profile/1` (`fields/coding/profiles/coding.yaml`):
 
 - `roles.<harness>`: `task_turns`, `turn_seconds`, `tokens_per_turn` by class, `builds_per_task`,
   `build_seconds`, `questions_per_task`, `question_needs_owner` (a share).
@@ -391,7 +408,7 @@ Format `agenticspec-profile/1` (`profiles/coding.yaml`):
   - `claim_window_seconds`: how long a claim stays unseen by the other readers (default 0);
   - `mesh_read_calls`: model calls to read one mesh message (default 1);
   - `scope_overlap`: the chance that a task touches one given other scope (default 0).
-- Roles `planner`, `executor` and `orchestrator` in `profiles/coding.yaml`. The planner takes one
+- Roles `planner`, `executor` and `orchestrator` in `fields/coding/profiles/coding.yaml`. The planner takes one
   turn per task (2610.29870: under 2% of the executor's tokens). The executor has a higher pass rate
   after a failed step (0.212), so that its share of correct tasks rises by the ratio 65.0/50.2 of
   2610.29870. The orchestrator spends 3 calls per task, an estimate.
@@ -594,7 +611,7 @@ Commands and output:
 - Search modes: `exhaustive` (every combination, refused above a limit) and `fit` (hill climbing
   over neighbour points with random restarts within a budget).
 - A variant is feasible only when every gate KPI is 0. Fitness is the weighted sum of KPIs.
-- Example files: `architectures/workstation.yaml`, `profiles/coding.yaml`,
+- Example files: `architectures/workstation.yaml`, `fields/coding/profiles/coding.yaml`,
   `experiments/workstation-tuning.yaml`.
 
 ### Rendering
@@ -709,7 +726,7 @@ the block it belongs to and the events it reads. A correctness KPI is a gate by 
 - `blocks/`: a second ESS system holding the blocks, one directory per layer.
 - `blocks/protocols/`, `blocks/surfaces/`: the channel protocols and the runtime API.
 - `architectures/`: architecture documents, each checked by the gate.
-- `experiments/`, `profiles/`: experiment files and fitted behaviour profiles.
+- `experiments/`: experiment files; fitted behaviour profiles are a field's, `fields/<field>/profiles/`.
 - `crates/agenticspec-sim`: the simulator and the search, a library and a binary.
 
 Two systems, because the tool's generated crates are synthesized from its system. weft's 23

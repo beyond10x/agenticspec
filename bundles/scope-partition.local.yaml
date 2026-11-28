@@ -1,0 +1,485 @@
+format: agenticspec-deployment/1
+generator: agenticspec 0.4.1
+architecture:
+  document:
+    architecture: scope-partition
+    format: agenticspec-architecture/1
+    links:
+    - carries: prompt
+      from: owner
+      to: team
+    - carries: question
+      from: team
+      to: owner
+    - carries: model_call
+      from: team
+      to: gateway
+    - carries: model_call
+      from: gateway
+      to: model
+    - carries: claim
+      from: team
+      to: builds
+    parts:
+      builds:
+        block: pool
+        capacity:
+          value: 8
+          vary:
+          - 4
+          - 8
+          - 16
+        job_limit: 10m
+        kind: build_slots
+      gateway:
+        block: gateway
+        rate_limit_per_minute: 120
+      model:
+        block: model
+        route: frontier
+      owner:
+        block: principal
+        kind: human
+      team:
+        block: agent
+        coordination:
+          value: mesh
+          vary:
+          - mesh
+          - none
+        count:
+          value: 4
+          vary:
+          - 4
+          - 8
+          - 12
+          - 16
+        harness: coding
+        partition: scope
+      tree:
+        block: workspace
+        per: team
+        sharing: exclusive
+    policies:
+      question_default_after: 15m
+    summary: 'An upfront scope partition with a merge order: each copy of `team` owns one scope, every task goes to the owner of its scope, and merges land in the order the tasks finish. In 2610.07261 this integrated cleanly in 9 of 9 runs, against 4 of 9 when the agents reacted to each other and 1 of 9 without coordination; a vague change notice was no better than none. The simulator draws a task''s scope and lets it touch each other scope with the profile''s `scope_overlap`, so more scopes mean more tasks that cross one. A merge conflicts when another merge touched one of its scopes after its work started. Under `coordination: mesh` every copy tells the others which task it takes (one model call per reader) and a conflict costs a round of rework; under `none` the conflicting merge ships broken. The simulator does not model how the partition is cut or what cutting it costs, scopes whose load differs, conflicts inside one scope, nor a copy that helps another scope when its own is empty.'
+  name: scope-partition
+  revision: sha256:e08ca40d14042738ecba6e297ed8c6f5c198c7c51deca12ec6dbe062841af426
+  sha256: sha256:39c335debbd256f23afd3fc1a0398b7c728ee8a687156b5ba9ba9cfbd703d8ab
+nested: {}
+contract:
+  digest: sha256:8b07826c2f498c6fe875587dfa79d5f06485bd1ecdd433f369b0e15d45823a62
+  document:
+    architecture: scope-partition
+    border: []
+    format: agenticspec-contract/1
+    ingress:
+    - audience: control.monitor
+      authenticated: false
+      exports:
+      - metrics_scrape
+      name: metrics
+      operations:
+      - kind: metric
+        name: cache_bust_count
+      - kind: metric
+        name: cache_hit_share
+      - kind: metric
+        name: context_size_p90_tokens
+      - kind: metric
+        name: cost_usd
+      - kind: metric
+        name: human_prompt_share
+      - kind: metric
+        name: owner_wait_share
+      - kind: metric
+        name: priced_message_share
+      - kind: metric
+        name: sub_agents_started
+      - kind: metric
+        name: subagent_cost_share
+    - audience: control.operator
+      authenticated: true
+      exports:
+      - http
+      - event_stream
+      - ui
+      - tool
+      name: operator
+      operations:
+      - kind: command
+        name: agentic.gateway.DetachUpstream
+      - kind: command
+        name: agentic.gateway.DrainGateway
+      - kind: command
+        name: agentic.gateway.StopGateway
+      - kind: command
+        name: agentic.question.Answer
+      - kind: view
+        name: agentic.agent.AgentRevisions
+      - kind: view
+        name: agentic.agent.Agents
+      - kind: view
+        name: agentic.gateway.Calls
+      - kind: view
+        name: agentic.gateway.Gateways
+      - kind: view
+        name: agentic.gateway.Upstreams
+      - kind: view
+        name: agentic.harness.HarnessSessions
+      - kind: view
+        name: agentic.harness.Harnesses
+      - kind: view
+        name: agentic.harness.PermissionModes
+      - kind: view
+        name: agentic.harness.ToolCalls
+      - kind: view
+        name: agentic.harness.Turns
+      - kind: view
+        name: agentic.model.Endpoints
+      - kind: view
+        name: agentic.model.Inferences
+      - kind: view
+        name: agentic.model.Models
+      - kind: view
+        name: agentic.model.Routes
+      - kind: view
+        name: agentic.principal.Principals
+      - kind: view
+        name: agentic.question.OpenQuestions
+      - kind: view
+        name: agentic.question.Questions
+      - kind: view
+        name: agentic.resource.Claims
+      - kind: view
+        name: agentic.resource.Pools
+      - kind: view
+        name: agentic.resource.Queue
+      - kind: view
+        name: agentic.workspace.Leases
+      - kind: view
+        name: agentic.workspace.Proposals
+      - kind: view
+        name: agentic.workspace.Workspaces
+      - kind: feed
+        name: agentic.agent.AgentDefined
+      - kind: feed
+        name: agentic.agent.AgentRetired
+      - kind: feed
+        name: agentic.agent.AgentRevisionPublished
+      - kind: feed
+        name: agentic.agent.AgentRevisionRetired
+      - kind: feed
+        name: agentic.agent.AgentRevisionUsed
+      - kind: feed
+        name: agentic.gateway.CallCompleted
+      - kind: feed
+        name: agentic.gateway.CallDecided
+      - kind: feed
+        name: agentic.gateway.GatewayDrained
+      - kind: feed
+        name: agentic.gateway.GatewayOpened
+      - kind: feed
+        name: agentic.gateway.GatewayStopped
+      - kind: feed
+        name: agentic.gateway.UpstreamAttached
+      - kind: feed
+        name: agentic.gateway.UpstreamDetached
+      - kind: feed
+        name: agentic.gateway.UpstreamRestored
+      - kind: feed
+        name: agentic.gateway.UpstreamSaturated
+      - kind: feed
+        name: agentic.harness.ContextCompacted
+      - kind: feed
+        name: agentic.harness.HarnessRegistered
+      - kind: feed
+        name: agentic.harness.HarnessRetired
+      - kind: feed
+        name: agentic.harness.PermissionModeRegistered
+      - kind: feed
+        name: agentic.harness.PermissionModeRetired
+      - kind: feed
+        name: agentic.harness.SessionEnded
+      - kind: feed
+        name: agentic.harness.SessionOpened
+      - kind: feed
+        name: agentic.harness.SessionRestarted
+      - kind: feed
+        name: agentic.harness.SubAgentSpawned
+      - kind: feed
+        name: agentic.harness.ToolCallCompleted
+      - kind: feed
+        name: agentic.harness.ToolCallDecided
+      - kind: feed
+        name: agentic.harness.ToolCallRequested
+      - kind: feed
+        name: agentic.harness.ToolResultNotRead
+      - kind: feed
+        name: agentic.harness.TurnRecorded
+      - kind: feed
+        name: agentic.model.EndpointClosed
+      - kind: feed
+        name: agentic.model.EndpointOpened
+      - kind: feed
+        name: agentic.model.InferenceFinished
+      - kind: feed
+        name: agentic.model.InferenceStarted
+      - kind: feed
+        name: agentic.model.ModelDeclared
+      - kind: feed
+        name: agentic.model.ModelRetired
+      - kind: feed
+        name: agentic.model.ProviderRegistered
+      - kind: feed
+        name: agentic.model.RouteDefined
+      - kind: feed
+        name: agentic.model.RouteRetired
+      - kind: feed
+        name: agentic.principal.PrincipalRegistered
+      - kind: feed
+        name: agentic.principal.PrincipalRetired
+      - kind: feed
+        name: agentic.question.AnswerNotRead
+      - kind: feed
+        name: agentic.question.DefaultTaken
+      - kind: feed
+        name: agentic.question.QuestionAnswered
+      - kind: feed
+        name: agentic.question.QuestionAsked
+      - kind: feed
+        name: agentic.question.QuestionWithdrawn
+      - kind: feed
+        name: agentic.resource.ClaimExpired
+      - kind: feed
+        name: agentic.resource.ClaimGranted
+      - kind: feed
+        name: agentic.resource.ClaimKilled
+      - kind: feed
+        name: agentic.resource.ClaimQueued
+      - kind: feed
+        name: agentic.resource.ClaimReleased
+      - kind: feed
+        name: agentic.resource.ClaimWithdrawn
+      - kind: feed
+        name: agentic.resource.PoolCreated
+      - kind: feed
+        name: agentic.workspace.ChangeProposed
+      - kind: feed
+        name: agentic.workspace.LeaseExpired
+      - kind: feed
+        name: agentic.workspace.LeaseGranted
+      - kind: feed
+        name: agentic.workspace.LeaseReleased
+      - kind: feed
+        name: agentic.workspace.LeaseRequested
+      - kind: feed
+        name: agentic.workspace.PathWritten
+      - kind: feed
+        name: agentic.workspace.ProposalMerged
+      - kind: feed
+        name: agentic.workspace.ProposalRejected
+      - kind: feed
+        name: agentic.workspace.ProposalSuperseded
+      - kind: feed
+        name: agentic.workspace.WorkspaceCreated
+    invariants:
+    - link: team -> owner carries question
+      port: question.question
+      predicate: every question.question@team to owner
+    - link: team -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@team inside gateway.call@gateway
+      within: gateway.call
+    - link: gateway -> model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@gateway to model
+    - link: team -> builds carries claim
+      port: resource.claim
+      predicate: every resource.claim@team to builds
+    ports:
+    - instances: 1
+      part: builds
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings:
+        capacity: 8
+        job_limit: 10m
+        kind: build_slots
+    - instances: 1
+      part: gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 120
+    - instances: 1
+      part: model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: owner
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings:
+        kind: human
+    - instances: 4
+      part: team
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 4
+      part: team
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 4
+      part: team
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 4
+      part: team
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings: {}
+    - instances: 4
+      part: tree
+      port: workspace.lease
+      protocol: RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)
+      settings:
+        sharing: exclusive
+    - instances: 4
+      part: tree
+      port: workspace.proposal
+      protocol: Propose (MergeProposal | RejectProposal | SupersedeProposal)
+      settings:
+        sharing: exclusive
+    ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
+binding:
+  digest: sha256:58f174c66671de404bd4c31d5cbb8e3356732d5d26524254b8fc2d1ecc1729b9
+  document:
+    architecture: scope-partition
+    binding: local
+    format: agenticspec-binding/1
+    parts:
+      gateway:
+        egress:
+        - model
+      team:
+        egress:
+        - owner
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. The base of each local-<architecture>.yaml, which declares where its parts reach. Fits any architecture whose sandboxes ask for no more than a container.'
+  name: local
+packing:
+  digest: sha256:11127d85e5bcbf06f7cba9d3d21549daba7851c49b49f47d95ccf5b695e523c7
+  document:
+    external:
+    - model
+    - owner
+    units:
+    - kind: core
+      name: core
+      parts:
+      - builds
+      - gateway
+      - team
+      - tree
+      replicas: 1
+  strategy: single
+units:
+- checks:
+    alive:
+      kind: http
+      path: /alive
+    ready:
+      kind: http
+      path: /ready
+  claims:
+    accelerators: 0
+    cpu_millis: 500
+    memory_mib: 512
+    volumes:
+    - access: read_write_once
+      name: tree
+      per_instance: true
+  code:
+    role: core-runtime
+  egress:
+  - carries: model_call
+    external: true
+    from: gateway
+    link: gateway -> model carries model_call
+    to: model
+  - carries: question
+    external: true
+    from: team
+    link: team -> owner carries question
+    to: owner
+  isolation: none
+  kind: core
+  name: core
+  parts:
+  - builds
+  - gateway
+  - team
+  - tree
+  ports:
+  - instances: 1
+    part: builds
+    port: resource.claim
+    settings:
+      capacity: 8
+      job_limit: 10m
+      kind: build_slots
+  - instances: 1
+    part: gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 120
+  - instances: 4
+    part: team
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 4
+    part: team
+    port: model.inference
+    settings: {}
+  - instances: 4
+    part: team
+    port: question.question
+    settings: {}
+  - instances: 4
+    part: team
+    port: resource.claim
+    settings: {}
+  - instances: 4
+    part: tree
+    port: workspace.lease
+    settings:
+      sharing: exclusive
+  - instances: 4
+    part: tree
+    port: workspace.proposal
+    settings:
+      sharing: exclusive
+  replicas: 1
+  roles:
+  - core-runtime
+  - model-route:frontier
+  secrets: []
+  source:
+    parts:
+    - builds
+    - gateway
+    - team
+    - tree
+    unit: core
+ingress: []
+requirements: []
+agents: {}
+runtimes: {}
+digest: sha256:74fc85c7f96c739d737b494dcc537346bb903abf13e001944a9ccfacd9360a32

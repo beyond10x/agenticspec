@@ -55,7 +55,7 @@ fn every_domain_has_a_page_linked_from_the_layer_map() {
     let g = generated_with_fixture();
     let index = &g.files["docs/blocks/index.md"];
     let ds = domains();
-    assert_eq!(ds.len(), 22, "the blocks system has 22 domains");
+    assert_eq!(ds.len(), 24, "the blocks system has 24 domains");
     for domain in &ds {
         let block = domain.strip_prefix("agentic.").expect("agentic prefix");
         let page = g
@@ -175,6 +175,7 @@ fn every_architecture_has_a_page_and_a_rendered_html() {
             "{name}: the page has its contents list"
         );
     }
+    a_nested_architecture_links_to_the_page_of_the_one_it_nests(&g);
 }
 
 /// Every domain the root ess-inputs.yaml adds to the core is a block of a pack, with a page under
@@ -238,6 +239,95 @@ fn every_pack_block_and_field_architecture_has_a_linked_page() {
         g.files
             .contains_key("website/static/fields/coding/auto-merger.html")
     );
+}
+
+/// The page of an architecture, its catalog entry and the catalog index show the KPIs of the
+/// architecture as a whole with the numbers `agenticspec sim check` reports.
+#[test]
+fn the_architecture_as_a_whole_shows_what_check_reports() {
+    let g = generated_with_fixture();
+    let checked =
+        agenticspec_sim::cli::check(&root().join("architectures/workstation.yaml")).unwrap();
+    let page = &g.files["docs/architectures/workstation.md"];
+    let entry = &g.files["docs/catalog/workstation.md"];
+    let index = &g.files["docs/catalog/index.md"];
+    for text in [page, entry] {
+        assert!(text.contains("\n## The architecture as a whole\n"));
+    }
+    for m in agenticspec_sim::whole::ARCHITECTURE_KPIS {
+        let v = checked["kpis"][m.id].as_f64().expect("a number");
+        let shown = if v.fract() == 0.0 {
+            format!("{}", v as i64)
+        } else {
+            format!("{v}")
+        };
+        let row = format!("| `{}` | {shown}", m.id);
+        assert!(page.contains(&row), "the page shows {row}");
+        assert!(entry.contains(&row), "the catalog entry shows {row}");
+        assert!(
+            index.contains(&format!("\"id\":\"{}\"", m.id)),
+            "the index has {}",
+            m.id
+        );
+    }
+    assert!(page.contains("| `single_points` | 2 (`gateway`, `model`) |"));
+    assert!(page.contains("[KPI catalogue](../kpis-catalogue.md)"));
+    assert!(
+        g.files["docs/fields/coding/auto-merger.md"]
+            .contains("[KPI catalogue](../../kpis-catalogue.md)"),
+        "a page of a field links the catalogue two levels up"
+    );
+    assert!(index.contains("<ArchitectureKpis data={"));
+    assert!(
+        index.contains("\"name\":\"solo\""),
+        "an unsearched architecture is in the table"
+    );
+}
+
+/// The catalog groups its entries by the field their experiment names, the field's page lists its
+/// profile, its KPIs under the core block each reads and its rows of core catalogs, and the core
+/// KPI catalogue holds none of the field's KPIs.
+#[test]
+fn the_catalog_groups_by_field_and_the_field_page_holds_its_data() {
+    let g = generate(&root(), None).expect("the pages generate");
+    let index = &g.files["docs/catalog/index.md"];
+    let coding = index.find("\n## Coding\n").expect("a Coding group");
+    for (_, name) in experiments() {
+        let card = index
+            .find(&format!("\"to\":\"/docs/catalog/{name}\""))
+            .unwrap_or_else(|| panic!("{name} has a card"));
+        assert!(card > coding, "{name} is under Coding");
+    }
+    let field = &g.files["docs/fields/coding/index.md"];
+    assert!(field.contains("fields/coding/profiles/coding.yaml"));
+    assert!(field.contains("### [workspace](../../blocks/8-place/workspace.md)"));
+    assert!(field.contains("`merge_conflicts`"));
+    assert!(field.contains("`accept-edits`"));
+    let core = &g.files["docs/kpis-catalogue.md"];
+    for id in [
+        "merge_conflicts",
+        "false_completions_shipped",
+        "revert_rate",
+    ] {
+        assert!(!core.contains(&format!("`{id}`")), "{id} is not a core KPI");
+    }
+}
+
+/// An experiment that names no field, or a field that does not exist, is refused.
+#[test]
+fn an_experiment_without_a_field_is_refused() {
+    let tmp = copy_inputs("docs-no-field");
+    let exp = tmp.join("experiments/shared-board-tuning.yaml");
+    let text = std::fs::read_to_string(&exp)
+        .unwrap()
+        .replace("field: coding\n", "field: nowhere\n");
+    std::fs::write(&exp, text).unwrap();
+    let err = generate(&tmp, Some(fixture())).expect_err("an unknown field is refused");
+    assert!(
+        err.contains("experiments/shared-board-tuning.yaml"),
+        "{err}"
+    );
+    assert!(err.contains("needs `field`"), "{err}");
 }
 
 /// SUF-002: on an architecture with an experiment, the search result (the marked places with their
@@ -351,7 +441,6 @@ fn copy_inputs(name: &str) -> PathBuf {
         "blocks",
         "architectures",
         "experiments",
-        "profiles",
         "kpis",
         "crates/agenticspec-sim/src",
         "packs",
@@ -404,6 +493,19 @@ fn a_result_whose_sources_changed_is_refused() {
     );
 }
 
+/// The contract module of the simulator (`crates/agenticspec-sim/src/contract/`) changes no
+/// simulation result, so a change there leaves every committed result current.
+#[test]
+fn a_change_of_the_contract_module_keeps_every_result_current() {
+    let tmp = copy_inputs("docs-contract-change");
+    let file = tmp.join("crates/agenticspec-sim/src/contract/ports.rs");
+    let mut text = std::fs::read_to_string(&file).unwrap();
+    text.push_str("\n// changed\n");
+    std::fs::write(&file, text).unwrap();
+    generate(&tmp, Some(fixture()))
+        .expect("a change of the contract module is no change of a result");
+}
+
 #[test]
 fn check_fails_after_a_generated_file_is_edited_or_added() {
     let tmp = copy_inputs("docs-check");
@@ -422,6 +524,10 @@ fn check_fails_after_a_generated_file_is_edited_or_added() {
     std::fs::write(&page, body).unwrap();
     let html = tmp.join("website/static/architectures/workstation.html");
     std::fs::remove_file(&html).unwrap();
+    let contract = tmp.join("website/static/architectures/workstation.contract.yaml");
+    let mut yaml = std::fs::read_to_string(&contract).unwrap();
+    yaml.push_str("# edited by hand\n");
+    std::fs::write(&contract, yaml).unwrap();
     let stray = tmp.join(OWNED_DIRS[0]).join("stray.md");
     std::fs::write(&stray, "not generated\n").unwrap();
     let (code, text) = run(&tmp, &["--check"]);
@@ -432,6 +538,7 @@ fn check_fails_after_a_generated_file_is_edited_or_added() {
     for named in [
         "changed: docs/blocks/7-collaboration/question.md",
         "missing: website/static/architectures/workstation.html",
+        "changed: website/static/architectures/workstation.contract.yaml",
         "not generated: docs/blocks/stray.md",
     ] {
         assert!(text.contains(named), "{named} in {text}");
@@ -571,4 +678,173 @@ fn a_catalog_result_is_the_bytes_of_a_fresh_run() {
         std::fs::read_to_string(root().join("website/static/catalog/shared-board/result.json"))
             .unwrap();
     assert!(committed == fresh, "run `task catalog:generate`");
+}
+
+/// The contract of a document as `agenticspec sim contract` derives it, from the committed ports.
+fn contract_of(path: &Path) -> agenticspec_sim::contract::derive::Contract {
+    let ports =
+        agenticspec_sim::contract::ports::PortsFile::load(&root().join("blocks/ports.json"))
+            .expect("blocks/ports.json");
+    let doc =
+        agenticspec_sim::nest::flatten(&agenticspec_sim::nest::load(path).expect("the document"));
+    let mut contract = agenticspec_sim::contract::derive::derive(&doc, &ports).expect("a contract");
+    let kpis = agenticspec_sim::contract::ingress::Kpis::load(&root().join("kpis/catalogue.yaml"))
+        .expect("kpis/catalogue.yaml");
+    let (resolved, refusals) =
+        agenticspec_sim::contract::ingress::resolve(&doc, &contract, &ports, &kpis);
+    assert!(refusals.is_empty(), "{refusals:?}");
+    contract.ingress = resolved;
+    contract
+}
+
+/// The part of a page from its "Contract" section to the next section.
+fn contract_section<'a>(page: &'a str, what: &str) -> &'a str {
+    let at = page
+        .find("\n## Contract\n")
+        .unwrap_or_else(|| panic!("{what} has a Contract section"));
+    let rest = &page[at + 1..];
+    let end = rest[3..].find("\n## ").map_or(rest.len(), |e| e + 4);
+    &rest[..end]
+}
+
+/// Every architecture page and every catalog entry shows the contract of its document: one row
+/// per port with its protocol, the border and the contract file, which is the derived contract.
+#[test]
+fn every_architecture_page_and_catalog_entry_shows_its_contract() {
+    let g = generated_with_fixture();
+    let mut pages = 0;
+    for entry in std::fs::read_dir(root().join("architectures")).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().is_none_or(|e| e != "yaml") {
+            continue;
+        }
+        let name = path.file_stem().unwrap().to_string_lossy().into_owned();
+        let contract = contract_of(&path);
+        let file = format!("website/static/architectures/{name}.contract.yaml");
+        assert_eq!(g.files[&file], contract.text(), "{file}");
+        for (page_path, link) in [
+            (
+                format!("docs/architectures/{name}.md"),
+                format!("pathname:///architectures/{name}.contract.yaml"),
+            ),
+            (
+                format!("docs/catalog/{name}.md"),
+                format!("{name}.contract.yaml"),
+            ),
+        ] {
+            let Some(page) = g.files.get(&page_path) else {
+                continue;
+            };
+            pages += 1;
+            let section = contract_section(page, &page_path);
+            let rows = section.lines().filter(|l| l.starts_with("| `")).count();
+            assert_eq!(rows, contract.ports.len(), "{page_path}: one row per port");
+            for p in &contract.ports {
+                let protocol = format!("`{}`", p.protocol.replace('|', "\\|"));
+                let row = section
+                    .lines()
+                    .find(|l| {
+                        let cells: Vec<&str> = l.split(" | ").collect();
+                        l.starts_with(&format!("| `{}` |", p.port))
+                            && cells.get(4) == Some(&format!("`{}`", p.part).as_str())
+                    })
+                    .unwrap_or_else(|| panic!("{page_path}: a row for {}@{}", p.port, p.part));
+                assert!(row.contains(&protocol), "{page_path}: {row}");
+                assert!(
+                    row.ends_with(&format!("| {} |", p.instances)),
+                    "{page_path}: {row}"
+                );
+            }
+            let border: Vec<String> = contract.border.iter().map(|b| format!("**{b}**")).collect();
+            let border = if border.is_empty() {
+                "none".to_owned()
+            } else {
+                border.join(", ")
+            };
+            assert!(
+                section.contains(&format!("Border: {border}.")),
+                "{page_path}: the border"
+            );
+            assert!(section.contains(&link), "{page_path}: the contract file");
+        }
+        if g.files.contains_key(&format!("docs/catalog/{name}.md")) {
+            let entry_file = format!("website/static/catalog/{name}/{name}.contract.yaml");
+            assert_eq!(g.files[&entry_file], contract.text(), "{entry_file}");
+            assert!(
+                g.files[&format!("docs/catalog/{name}.md")]
+                    .contains(&format!("\"file\":\"{name}.contract.yaml\"")),
+                "{name}: the downloads list the contract"
+            );
+        }
+    }
+    assert_eq!(pages, 19, "13 architecture pages and 6 catalog entries");
+    let contracts = g
+        .files
+        .keys()
+        .filter(|k| k.ends_with(".contract.yaml"))
+        .count();
+    assert_eq!(
+        contracts, 20,
+        "13 architectures, 6 catalog entries and 1 field architecture"
+    );
+    let wi = contract_section(
+        &g.files["docs/architectures/workstation-ingress.md"],
+        "workstation-ingress",
+    );
+    assert!(
+        wi.contains("| **operator** | `admin` | yes | `http`, `event_stream`, `ui`, `tool` | 3 |"),
+        "{wi}"
+    );
+    let ws = contract_section(&g.files["docs/architectures/workstation.md"], "workstation");
+    assert!(
+        ws.contains("| `workspace.lease` | `Outbound` | `workspace` |"),
+        "{ws}"
+    );
+    assert!(
+        ws.contains("| `tree` | `sharing: exclusive` | 12 |"),
+        "{ws}"
+    );
+    for absent in ["runtime.instance", "trigger.firing", "channel.post"] {
+        assert!(!ws.contains(absent), "{absent}");
+    }
+}
+
+/// A nested architecture: its page links to the page of the architecture it nests, and the index
+/// explains the format. Called from the test of the architecture pages, so the pages are generated
+/// once for both.
+fn a_nested_architecture_links_to_the_page_of_the_one_it_nests(g: &Generated) {
+    let page = &g.files["docs/architectures/team-with-console.md"];
+    assert!(page.contains("## Nested architectures\n"), "{page}");
+    assert!(page.contains("[console](console.md)"), "{page}");
+    assert!(
+        page.contains("accepted"),
+        "the nested pair passes the check"
+    );
+    let index = &g.files["docs/architectures/index.md"];
+    assert!(index.contains("## Nesting an architecture\n"), "{index}");
+    assert!(index.contains("agenticspec sim digest"), "{index}");
+    let html = &g.files["website/static/architectures/team-with-console.html"];
+    assert!(
+        html.contains("data-port=\"console."),
+        "the graph draws the ports"
+    );
+}
+
+/// The `view:` key is presentation only: a catalog result's digest reads the architecture without it,
+/// so a label edit leaves the committed result current.
+#[test]
+fn a_view_key_edit_leaves_the_digest_of_a_catalog_result_as_it_was() {
+    let text = std::fs::read_to_string(root().join("architectures/workstation.yaml")).unwrap();
+    let at = text
+        .find("\nview:")
+        .expect("workstation.yaml has a view key");
+    let bare = format!("{}\n", text[..at].trim_end_matches('\n'));
+    assert_eq!(agenticspec_docs::without_view(&text), bare);
+    let edited = text.replace("worker: coding agents", "worker: agents that code");
+    assert_ne!(edited, text);
+    assert_eq!(agenticspec_docs::without_view(&edited), bare);
+    let commented = format!("{bare}\n# How the UI looks.\nview:\n  home: overview\n");
+    assert_eq!(agenticspec_docs::without_view(&commented), bare);
+    let middle = "a: 1\nview:\n  home: overview\n\nb: 2\n";
+    assert_eq!(agenticspec_docs::without_view(middle), "a: 1\nb: 2\n");
 }

@@ -1,0 +1,8 @@
+{
+  "view": "agentic.deployment.InstallationsOfRuntime",
+  "rows": [
+    {"installation_id": "00000000-0000-4000-8000-7128a6e00000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "replaces": "00000000-0000-4000-8000-7128a6e00000", "installed_at": "2026-11-20T09:03:00Z", "state": {"name":"Active","summary":"Takes new runs."}},
+    {"installation_id": "00000000-0000-4000-8000-7128a6e00001", "revision_id": "00000000-0000-4000-8000-8dac41280001", "installed_at": "2026-11-20T10:03:00Z", "state": {"name":"Drained","summary":"Draining ended with no run left that has not ended."}},
+    {"installation_id": "00000000-0000-4000-8000-7128a6e00002", "revision_id": "00000000-0000-4000-8000-8dac41280002", "replaces": "00000000-0000-4000-8000-7128a6e00002", "installed_at": "2026-11-20T11:03:00Z", "state": {"name":"Draining","summary":"Takes no new run; the runs it holds go on until they end."}}
+  ]
+}

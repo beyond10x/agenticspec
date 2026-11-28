@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A plain page</title>
+    <link rel="stylesheet" href="/elements/agentic-views.css" />
+    <script type="module" src="/elements/agentic-views.js"></script>
+    <style>
+      .brand {
+        --kit-accent: rgb(200, 30, 120);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>A plain page</h1>
+      <p id="last">no event yet</p>
+      <div class="brand">
+        <agentic-overview source="/fixtures" architecture="workstation"></agentic-overview>
+        <agentic-part-panel source="/fixtures" architecture="workstation" part="operator"></agentic-part-panel>
+      </div>
+    </main>
+    <script>
+      for (const name of ['agentic-navigate', 'agentic-command']) {
+        document.addEventListener(name, (e) => {
+          document.getElementById('last').textContent = name + ' ' + JSON.stringify(e.detail);
+        });
+      }
+    </script>
+  </body>
+</html>

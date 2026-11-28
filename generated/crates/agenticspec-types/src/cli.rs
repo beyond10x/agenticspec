@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
+// contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -52,6 +52,64 @@ pub struct AutonomyFigures {
     pub prompts: Vec<PromptFigures>,
     /// `decisions` — `List<agenticspec.cli.DecisionFigures>`.
     pub decisions: Vec<DecisionFigures>,
+}
+
+/// BlocksLiftInput — `agenticspec.cli.BlocksLiftInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlocksLiftInput {
+    /// `transcript` — `String`.
+    pub transcript: String,
+}
+
+/// BlocksLiftResult — `agenticspec.cli.BlocksLiftResult`.
+///
+/// The rows of one session, in the form of a scenario's `given`, each checked against the building blocks, with the count per entity and the entities the session cannot show.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlocksLiftResult {
+    /// `session_id` — `String`.
+    pub session_id: String,
+    /// `given` — `Json`.
+    pub given: crate::json::Value,
+    /// `entities` — `List<agenticspec.cli.EntityRows>`.
+    pub entities: Vec<EntityRows>,
+    /// `not_observable` — `List<String>`.
+    pub not_observable: Vec<String>,
+}
+
+/// BlocksScenarioInput — `agenticspec.cli.BlocksScenarioInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlocksScenarioInput {
+    /// `transcript` — `String`.
+    pub transcript: String,
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `profile` — `String`.
+    pub profile: String,
+    /// `map` — `String`.
+    pub map: String,
+    /// `out` — `String`.
+    pub out: String,
+    /// `name` — `Optional<String>`.
+    pub name: Option<String>,
+}
+
+/// BlocksScenarioResult — `agenticspec.cli.BlocksScenarioResult`.
+///
+/// The draft scenario written and checked against its architecture and profile, with the inputs no turn followed and the inputs whose author plays no part.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlocksScenarioResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `scenario` — `String`.
+    pub scenario: String,
+    /// `inputs` — `Integer`.
+    pub inputs: i64,
+    /// `expectations` — `Integer`.
+    pub expectations: i64,
+    /// `unjoined` — `List<String>`.
+    pub unjoined: Vec<String>,
+    /// `unmapped` — `List<String>`.
+    pub unmapped: Vec<String>,
 }
 
 /// BustCause — `agenticspec.cli.BustCause`: one of a closed set of names.
@@ -182,6 +240,77 @@ pub struct DecisionFigures {
     pub count: i64,
 }
 
+/// DeployBundleInput — `agenticspec.cli.DeployBundleInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeployBundleInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `binding` — `String`.
+    pub binding: String,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `accepts` — `Optional<String>`.
+    pub accepts: Option<String>,
+    /// `kpis` — `Optional<String>`.
+    pub kpis: Option<String>,
+}
+
+/// DeployBundleResult — `agenticspec.cli.DeployBundleResult`.
+///
+/// The bundle of an admitted architecture, its digest and its units.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeployBundleResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `binding` — `String`.
+    pub binding: String,
+    /// `digest` — `String`.
+    pub digest: String,
+    /// `units` — `Integer`.
+    pub units: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `bundle` — `Optional<String>`.
+    pub bundle: Option<String>,
+}
+
+/// DeployCheckInput — `agenticspec.cli.DeployCheckInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeployCheckInput {
+    /// `bundle` — `String`.
+    pub bundle: String,
+    /// `accepts` — `Optional<String>`.
+    pub accepts: Option<String>,
+}
+
+/// DeployCheckResult — `agenticspec.cli.DeployCheckResult`.
+///
+/// A written bundle admitted again from what it carries, its digest and its units.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeployCheckResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `binding` — `String`.
+    pub binding: String,
+    /// `digest` — `String`.
+    pub digest: String,
+    /// `units` — `Integer`.
+    pub units: i64,
+}
+
+/// EntityRows — `agenticspec.cli.EntityRows`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EntityRows {
+    /// `entity` — `String`.
+    pub entity: String,
+    /// `rows` — `Integer`.
+    pub rows: i64,
+}
+
 /// ExportInput — `agenticspec.cli.ExportInput`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExportInput {
@@ -219,6 +348,69 @@ pub struct ExposureFigures {
     pub count: i64,
     /// `sessions` — `Integer`.
     pub sessions: i64,
+}
+
+/// IngressDefaultInput — `agenticspec.cli.IngressDefaultInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IngressDefaultInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+}
+
+/// IngressDefaultResult — `agenticspec.cli.IngressDefaultResult`.
+///
+/// The default ingresses an architecture has, as the `ingress:` section to paste into it and change.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IngressDefaultResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `defaults` — `List<String>`.
+    pub defaults: Vec<String>,
+    /// `ingress` — `String`.
+    pub ingress: String,
+}
+
+/// IngressProjectInput — `agenticspec.cli.IngressProjectInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IngressProjectInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `check` — `Optional<String>`.
+    pub check: Option<String>,
+    /// `blocks` — `Optional<String>`.
+    pub blocks: Option<String>,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `kpis` — `Optional<String>`.
+    pub kpis: Option<String>,
+}
+
+/// IngressProjectResult — `agenticspec.cli.IngressProjectResult`.
+///
+/// The projections of the http exports of an architecture, and whether they were written.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IngressProjectResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `exports` — `Integer`.
+    pub exports: i64,
+    /// `files` — `List<String>`.
+    pub files: Vec<String>,
+    /// `written` — `Boolean`.
+    pub written: bool,
+}
+
+/// InvariantStatus — `agenticspec.cli.InvariantStatus`: one of a closed set of names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InvariantStatus {
+    /// `held`.
+    Held,
+    /// `violated`.
+    Violated,
+    /// `not_checked`.
+    NotChecked,
 }
 
 /// KpiInput — `agenticspec.cli.KpiInput`.
@@ -376,6 +568,30 @@ pub struct ModelFigures {
     pub context_max: i64,
     /// `cost_microdollars` — `Integer`.
     pub cost_microdollars: i64,
+}
+
+/// PackingDefaultInput — `agenticspec.cli.PackingDefaultInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PackingDefaultInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `strategy` — `Optional<String>`.
+    pub strategy: Option<String>,
+}
+
+/// PackingDefaultResult — `agenticspec.cli.PackingDefaultResult`.
+///
+/// The resolved packing of an architecture under a strategy.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PackingDefaultResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `strategy` — `String`.
+    pub strategy: String,
+    /// `units` — `Integer`.
+    pub units: i64,
+    /// `packing` — `String`.
+    pub packing: String,
 }
 
 /// Pattern — `agenticspec.cli.Pattern`.
@@ -609,11 +825,17 @@ pub struct SessionSummary {
 pub struct SimCheckInput {
     /// `architecture` — `String`.
     pub architecture: String,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `kpis` — `Optional<String>`.
+    pub kpis: Option<String>,
+    /// `json` — `Boolean`.
+    pub json: bool,
 }
 
 /// SimCheckResult — `agenticspec.cli.SimCheckResult`.
 ///
-/// The architecture the check accepted, with its counts of parts and links.
+/// The architecture the check accepted, with its counts of parts, links and ingresses, the KPIs of the architecture as a whole and the architectures it nests. With `--json`, the `agenticspec-check/1` document, which carries `format`, `valid`, `violations` and `counts` too; a refused architecture prints the document of the check alone before its refusal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCheckResult {
     /// `architecture` — `String`.
@@ -622,6 +844,85 @@ pub struct SimCheckResult {
     pub parts: i64,
     /// `links` — `Integer`.
     pub links: i64,
+    /// `kpis` — `Json`.
+    pub kpis: crate::json::Value,
+    /// `single_points` — `List<String>`.
+    pub single_points: Vec<String>,
+    /// `nested` — `List<agenticspec.cli.SimNested>`.
+    pub nested: Vec<SimNested>,
+    /// `ingresses` — `Integer`.
+    pub ingresses: i64,
+    /// `format` — `Optional<String>`.
+    pub format: Option<String>,
+    /// `valid` — `Optional<Boolean>`.
+    pub valid: Option<bool>,
+    /// `violations` — `Optional<List<agenticspec.cli.SimCheckViolation>>`.
+    pub violations: Option<Vec<SimCheckViolation>>,
+    /// `counts` — `Optional<Map<String, Integer>>`.
+    pub counts: Option<std::collections::BTreeMap<String, i64>>,
+}
+
+/// SimCheckViolation — `agenticspec.cli.SimCheckViolation`.
+///
+/// One violation of a rule of the architecture check.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimCheckViolation {
+    /// `rule` — `String`.
+    pub rule: String,
+    /// `gate` — `Boolean`.
+    pub gate: bool,
+    /// `subject` — `String`.
+    pub subject: String,
+    /// `part` — `String`.
+    pub part: String,
+    /// `link` — `Optional<Integer>`.
+    pub link: Option<i64>,
+    /// `message` — `String`.
+    pub message: String,
+}
+
+/// SimContractInput — `agenticspec.cli.SimContractInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimContractInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `check` — `Optional<String>`.
+    pub check: Option<String>,
+    /// `suite` — `Optional<String>`.
+    pub suite: Option<String>,
+    /// `trace` — `Optional<String>`.
+    pub trace: Option<String>,
+    /// `kpis` — `Optional<String>`.
+    pub kpis: Option<String>,
+}
+
+/// SimContractResult — `agenticspec.cli.SimContractResult`.
+///
+/// The contract of an architecture, its counts, whether it was written, the suite cut to it and the checks of its routing invariants.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimContractResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `ports` — `Integer`.
+    pub ports: i64,
+    /// `invariants` — `Integer`.
+    pub invariants: i64,
+    /// `ingresses` — `Integer`.
+    pub ingresses: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
+    /// `contract` — `Optional<String>`.
+    pub contract: Option<String>,
+    /// `suite_scenarios` — `Optional<Integer>`.
+    pub suite_scenarios: Option<i64>,
+    /// `kept_scenarios` — `Optional<Integer>`.
+    pub kept_scenarios: Option<i64>,
+    /// `checks` — `List<agenticspec.cli.SimInvariantCheck>`.
+    pub checks: Vec<SimInvariantCheck>,
 }
 
 /// SimCorpusInput — `agenticspec.cli.SimCorpusInput`.
@@ -673,6 +974,43 @@ pub struct SimCorpusRow {
     pub verdict: String,
 }
 
+/// SimDigestInput — `agenticspec.cli.SimDigestInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimDigestInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+}
+
+/// SimDigestResult — `agenticspec.cli.SimDigestResult`.
+///
+/// The digest a referring document pins the architecture with: `sha256:` and the SHA-256 of the canonical JSON (keys sorted, no whitespace) of its parts, links and border.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimDigestResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `digest` — `String`.
+    pub digest: String,
+}
+
+/// SimInvariantCheck — `agenticspec.cli.SimInvariantCheck`.
+///
+/// The check of one routing invariant on a trace. An invariant whose predicate names a port the trace does not record is not checked, never held.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimInvariantCheck {
+    /// `link` — `String`.
+    pub link: String,
+    /// `predicate` — `String`.
+    pub predicate: String,
+    /// `status` — `agenticspec.cli.InvariantStatus`.
+    pub status: InvariantStatus,
+    /// `uses` — `Integer`.
+    pub uses: i64,
+    /// `event` — `Optional<Integer>`.
+    pub event: Option<i64>,
+    /// `detail` — `Optional<String>`.
+    pub detail: Option<String>,
+}
+
 /// SimLadderInput — `agenticspec.cli.SimLadderInput`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimLadderInput {
@@ -693,6 +1031,55 @@ pub struct SimLadderResult {
     pub rungs: i64,
     /// `written` — `Boolean`.
     pub written: bool,
+}
+
+/// SimNested — `agenticspec.cli.SimNested`.
+///
+/// One nested architecture a check resolved.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimNested {
+    /// `part` — `String`.
+    pub part: String,
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `reference` — `String`.
+    pub reference: String,
+    /// `digest` — `String`.
+    pub digest: String,
+    /// `parts` — `Integer`.
+    pub parts: i64,
+    /// `links` — `Integer`.
+    pub links: i64,
+}
+
+/// SimPortsInput — `agenticspec.cli.SimPortsInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimPortsInput {
+    /// `blocks` — `Optional<String>`.
+    pub blocks: Option<String>,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `check` — `Optional<String>`.
+    pub check: Option<String>,
+    /// `expect` — `Optional<String>`.
+    pub expect: Option<String>,
+}
+
+/// SimPortsResult — `agenticspec.cli.SimPortsResult`.
+///
+/// The derived ports, the digest of their sources, and the differences from an expected list.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimPortsResult {
+    /// `ports` — `Integer`.
+    pub ports: i64,
+    /// `sources_sha256` — `String`.
+    pub sources_sha256: String,
+    /// `written` — `Boolean`.
+    pub written: bool,
+    /// `file` — `Optional<String>`.
+    pub file: Option<String>,
+    /// `differences` — `List<String>`.
+    pub differences: Vec<String>,
 }
 
 /// SimRenderInput — `agenticspec.cli.SimRenderInput`.
@@ -722,6 +1109,8 @@ pub struct SimRunInput {
     pub out: String,
     /// `threads` — `Optional<Integer>`.
     pub threads: Option<i64>,
+    /// `events` — `Boolean`.
+    pub events: bool,
 }
 
 /// SimRunResult — `agenticspec.cli.SimRunResult`.
@@ -739,6 +1128,8 @@ pub struct SimRunResult {
     pub threads: i64,
     /// `best_written` — `Boolean`.
     pub best_written: bool,
+    /// `events` — `Optional<Integer>`.
+    pub events: Option<i64>,
 }
 
 /// SimScenarioInput — `agenticspec.cli.SimScenarioInput`.
@@ -777,6 +1168,40 @@ pub struct SimScenarioResult {
     pub failed: Option<i64>,
     /// `not_checked` — `Optional<Integer>`.
     pub not_checked: Option<i64>,
+}
+
+/// SimTraceInput — `agenticspec.cli.SimTraceInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimTraceInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `profile` — `String`.
+    pub profile: String,
+    /// `seed` — `Optional<Integer>`.
+    pub seed: Option<i64>,
+    /// `horizon` — `Optional<String>`.
+    pub horizon: Option<String>,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+}
+
+/// SimTraceResult — `agenticspec.cli.SimTraceResult`.
+///
+/// The trace of one simulated run, its counts, and whether it was written.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimTraceResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `seed` — `Integer`.
+    pub seed: i64,
+    /// `uses` — `Integer`.
+    pub uses: i64,
+    /// `events` — `Integer`.
+    pub events: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
+    /// `trace` — `Optional<String>`.
+    pub trace: Option<String>,
 }
 
 /// StepKind — `agenticspec.cli.StepKind`: one of a closed set of names.
@@ -848,4 +1273,121 @@ pub struct ToolFigures {
     pub refused: i64,
     /// `failed` — `Integer`.
     pub failed: i64,
+}
+
+/// UiConformCheck — `agenticspec.cli.UiConformCheck`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiConformCheck {
+    /// `name` — `String`.
+    pub name: String,
+    /// `status` — `String`.
+    pub status: String,
+    /// `detail` — `String`.
+    pub detail: String,
+}
+
+/// UiConformInput — `agenticspec.cli.UiConformInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiConformInput {
+    /// `source` — `Optional<String>`.
+    pub source: Option<String>,
+    /// `plan` — `Optional<String>`.
+    pub plan: Option<String>,
+    /// `root` — `Optional<String>`.
+    pub root: Option<String>,
+}
+
+/// UiConformResult — `agenticspec.cli.UiConformResult`.
+///
+/// The checks of the runtime interface (`ui/runtime.openapi.yaml`) against one source: scoped reads (R1), the placement views (R3), resuming a channel from a cursor (R2), command answers and refusals (R4), the action set (R5) and requests without credentials.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiConformResult {
+    /// `source` — `String`.
+    pub source: String,
+    /// `passed` — `Integer`.
+    pub passed: i64,
+    /// `failed` — `Integer`.
+    pub failed: i64,
+    /// `skipped` — `Integer`.
+    pub skipped: i64,
+    /// `checks` — `List<agenticspec.cli.UiConformCheck>`.
+    pub checks: Vec<UiConformCheck>,
+}
+
+/// UiDeriveInput — `agenticspec.cli.UiDeriveInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiDeriveInput {
+    /// `path` — `String`.
+    pub path: String,
+    /// `contract` — `Optional<String>`.
+    pub contract: Option<String>,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `out` — `String`.
+    pub out: String,
+    /// `root` — `Optional<String>`.
+    pub root: Option<String>,
+    /// `check` — `Boolean`.
+    pub check: bool,
+}
+
+/// UiDeriveResult — `agenticspec.cli.UiDeriveResult`.
+///
+/// The operator UI of an architecture: one `ess-ui/1` document (an overview per level, a page per part, a channel per level, the actions of the contract) with `<name>.sources.sha256`, `<name>.fixtures/` and `<name>.layout.json` beside it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiDeriveResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `pages` — `Integer`.
+    pub pages: i64,
+    /// `actions` — `Integer`.
+    pub actions: i64,
+    /// `channels` — `Integer`.
+    pub channels: i64,
+    /// `files` — `Integer`.
+    pub files: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
+}
+
+/// UiGenerateInput — `agenticspec.cli.UiGenerateInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiGenerateInput {
+    /// `path` — `String`.
+    pub path: String,
+    /// `out` — `String`.
+    pub out: String,
+}
+
+/// UiGenerateResult — `agenticspec.cli.UiGenerateResult`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiGenerateResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `files` — `List<String>`.
+    pub files: Vec<String>,
+}
+
+/// UiPanelsInput — `agenticspec.cli.UiPanelsInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiPanelsInput {
+    /// `root` — `Optional<String>`.
+    pub root: Option<String>,
+    /// `check` — `Boolean`.
+    pub check: bool,
+}
+
+/// UiPanelsResult — `agenticspec.cli.UiPanelsResult`.
+///
+/// The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`, a gallery page per block, a fixture per view and a script per channel under `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiPanelsResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `panels` — `Integer`.
+    pub panels: i64,
+    /// `files` — `Integer`.
+    pub files: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
 }

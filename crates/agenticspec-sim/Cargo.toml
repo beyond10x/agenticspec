@@ -13,4 +13,5 @@ serde_json.workspace = true
 serde_yaml_ng.workspace = true
 sha2.workspace = true
 rayon.workspace = true
+regex.workspace = true
 agenticspec-render.workspace = true

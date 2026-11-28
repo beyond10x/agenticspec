@@ -1,0 +1,8 @@
+{
+  "view": "agentic.kpi.Kpis",
+  "rows": [
+    {"kpi_id": "00000000-0000-4000-8000-67cf74a30000", "name": "name 1", "unit": "unit 1", "block": "Principal", "reads": ["reads 1"], "kind": "Count", "percentile": 1, "gate": true, "state": "Active"},
+    {"kpi_id": "00000000-0000-4000-8000-67cf74a30001", "name": "name 2", "unit": "unit 2", "block": "Delegation", "reads": ["reads 2"], "kind": "Sum", "gate": false, "state": "Retired"},
+    {"kpi_id": "00000000-0000-4000-8000-67cf74a30002", "name": "name 3", "unit": "unit 3", "block": "Model", "reads": ["reads 3"], "kind": "Ratio", "percentile": 3, "gate": true, "state": "Active"}
+  ]
+}

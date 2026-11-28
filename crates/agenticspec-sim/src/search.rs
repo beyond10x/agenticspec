@@ -7,6 +7,7 @@ use crate::marked::{Marked, collect, resolve};
 use crate::profile::Profile;
 use crate::rng::Rng;
 use crate::sim::{Fault, Model, RUN_KPIS, RunOut, parse_bursts, parse_faults, simulate};
+use crate::whole::{measure, measure_of};
 use rayon::prelude::*;
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, HashMap};
@@ -22,7 +23,9 @@ pub fn kind(name: &str) -> &'static str {
         || name == "firing_failure_share"
     {
         "Correctness"
-    } else if name == "task_completion" {
+    } else if name == "task_completion"
+        || measure_of(name).is_some_and(|m| m.kind == "completeness")
+    {
         "Completeness"
     } else {
         "Quality"
@@ -43,7 +46,8 @@ pub struct Search {
 pub struct Experiment {
     /// The experiment document as written.
     pub doc: Value,
-    /// The architecture document as written, markers included.
+    /// The architecture document as written, markers included; a nested architecture resolved
+    /// beside its part (`crate::nest::load`).
     pub architecture: Value,
     pub profile: Value,
     pub horizon: f64,
@@ -58,7 +62,7 @@ pub struct Experiment {
 }
 
 fn known_kpi(name: &str) -> bool {
-    RUN_KPIS.contains(&name) || GATE_KPIS.contains(&name)
+    RUN_KPIS.contains(&name) || GATE_KPIS.contains(&name) || measure_of(name).is_some()
 }
 
 impl Experiment {
@@ -72,7 +76,7 @@ impl Experiment {
                 .map(|p| dir.join(p))
                 .ok_or_else(|| format!("{}: needs `{key}`", path.display()))
         };
-        let architecture = load_yaml(&file("architecture")?)?;
+        let architecture = crate::nest::load(&file("architecture")?).map_err(|e| e.to_string())?;
         let profile_path = file("profile")?;
         let profile = load_yaml(&profile_path)?;
         Self::from_docs_in(
@@ -103,6 +107,11 @@ impl Experiment {
             {
                 return Err(format!("format `{f}`, expected {want}"));
             }
+        }
+        if let Some(part) = crate::nest::unresolved(&architecture) {
+            return Err(format!(
+                "part `{part}`: a nested architecture is resolved from its file; load the experiment from its path"
+            ));
         }
         let mut profile_parsed = Profile::parse(&profile)?;
         if let Some(dir) = profile_dir {
@@ -196,8 +205,10 @@ impl Experiment {
             .collect()
     }
 
+    /// The variant at `params`, flattened (its nested architectures as parts of its own), and its
+    /// model.
     fn model(&self, params: &Map<String, Value>) -> Result<(Value, Model), String> {
-        let arch = resolve(&self.architecture, params)?;
+        let arch = crate::nest::flatten(&resolve(&self.architecture, params)?);
         let model = Model::build(
             &arch,
             &self.profile_parsed,
@@ -210,6 +221,17 @@ impl Experiment {
 
     fn run_seed(&self, s: u64) -> u64 {
         Rng::stream(self.seed, s).next_u64()
+    }
+
+    /// The baseline at the experiment's first seed, recorded in full, without a search.
+    pub fn baseline_shown(&self) -> Result<Shown, String> {
+        let (architecture, model) = self.model(&self.params(&self.baseline_point()))?;
+        let seed = self.run_seed(0);
+        Ok(Shown {
+            architecture,
+            seed,
+            run: simulate(&model, seed, true),
+        })
     }
 }
 
@@ -277,6 +299,9 @@ fn evaluate(e: &Experiment, points: &[Vec<usize>]) -> Result<Vec<Eval>, String> 
         let (mut kpis, per_part) = mean(chunk);
         for (g, n) in gate_counts(&arch) {
             kpis.insert(g.to_string(), n);
+        }
+        for (k, n) in measure(&arch) {
+            kpis.insert(k.to_string(), n);
         }
         let feasible = e
             .search
@@ -448,8 +473,24 @@ fn summary(ev: &Eval) -> Value {
     })
 }
 
+/// The run a result's timeline samples: the best variant, or the baseline when none is
+/// feasible, at the experiment's first seed, recorded in full.
+#[derive(Debug, Clone)]
+pub struct Shown {
+    /// The variant's resolved architecture.
+    pub architecture: Value,
+    /// The seed the run was simulated with.
+    pub seed: u64,
+    pub run: RunOut,
+}
+
 /// Runs the experiment's search on `threads` threads and returns the result document.
 pub fn run(e: &Experiment, threads: usize) -> Result<Value, String> {
+    run_shown(e, threads).map(|(result, _)| result)
+}
+
+/// [`run`], and the run its timeline samples.
+pub fn run_shown(e: &Experiment, threads: usize) -> Result<(Value, Shown), String> {
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads.max(1))
         .build()
@@ -457,7 +498,7 @@ pub fn run(e: &Experiment, threads: usize) -> Result<Value, String> {
     pool.install(|| run_inside(e))
 }
 
-fn run_inside(e: &Experiment) -> Result<Value, String> {
+fn run_inside(e: &Experiment) -> Result<(Value, Shown), String> {
     let mut book = Book {
         e,
         evals: Vec::new(),
@@ -490,8 +531,9 @@ fn run_inside(e: &Experiment) -> Result<Value, String> {
         })
         .collect();
     let shown = &book.evals[best.unwrap_or(baseline_id)];
-    let (_, model) = e.model(&shown.params)?;
-    let run = simulate(&model, e.run_seed(0), true);
+    let (shown_arch, model) = e.model(&shown.params)?;
+    let seed = e.run_seed(0);
+    let run = simulate(&model, seed, true);
     let timeline: Vec<Value> = sample(&run.timeline, TIMELINE_LIMIT)
         .into_iter()
         .map(|s| json!({"t_seconds": s.t, "part": s.part, "kind": s.kind}))
@@ -501,7 +543,7 @@ fn run_inside(e: &Experiment) -> Result<Value, String> {
         .iter()
         .map(|m| json!({"path": m.path, "value": m.value, "range": m.range}))
         .collect();
-    Ok(json!({
+    let result = json!({
         "format": "agenticspec-sim-result/1",
         "experiment": e.doc,
         "architecture": e.architecture,
@@ -512,7 +554,13 @@ fn run_inside(e: &Experiment) -> Result<Value, String> {
         "variants": variants,
         "trace": trace,
         "timeline": timeline,
-    }))
+    });
+    let shown = Shown {
+        architecture: shown_arch,
+        seed,
+        run,
+    };
+    Ok((result, shown))
 }
 
 /// At most `limit` items, evenly spaced, in order.

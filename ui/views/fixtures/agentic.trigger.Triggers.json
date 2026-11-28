@@ -1,0 +1,8 @@
+{
+  "view": "agentic.trigger.Triggers",
+  "rows": [
+    {"trigger_id": "00000000-0000-4000-8000-85d720f50000", "kind": "OnEvent", "subscription_id": "00000000-0000-4000-8000-f489e8720000", "schedule_id": "00000000-0000-4000-8000-501c99cb0000", "event_name": "event name 1", "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0000", "task_template": "task template 1", "policy": "Skip", "max_parallel": 1, "running": 1, "condition": "condition 1", "process_id": "00000000-0000-4000-8000-e3cac2430000", "intake": "intake 1", "start_mode": "Auto", "subject_policy": "Another", "state": "Disabled"},
+    {"trigger_id": "00000000-0000-4000-8000-85d720f50001", "kind": "OnMessage", "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0001", "policy": "Queue", "max_parallel": 2, "running": 2, "state": "Enabled"},
+    {"trigger_id": "00000000-0000-4000-8000-85d720f50002", "kind": "OnSchedule", "subscription_id": "00000000-0000-4000-8000-f489e8720002", "schedule_id": "00000000-0000-4000-8000-501c99cb0002", "event_name": "event name 3", "agent_revision_id": "00000000-0000-4000-8000-125c3a0c0002", "task_template": "task template 3", "policy": "Parallel", "max_parallel": 3, "running": 3, "condition": "condition 3", "process_id": "00000000-0000-4000-8000-e3cac2430002", "intake": "intake 3", "start_mode": "Auto", "subject_policy": "Queue", "state": "Disabled"}
+  ]
+}

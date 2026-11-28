@@ -21,6 +21,59 @@ mdx:
 
 <span className="as-tag as-tag--accepted">accepted</span> 12 parts and 12 links; the structural check refuses nothing.
 
+## The architecture as a whole
+
+Read from the document alone, before any simulation: its size, autonomy, exposure, weak points and fixed limits. `agenticspec sim check` reports the same numbers; a marked place counts at its value as built. The KPIs are in the [KPI catalogue](../../kpis-catalogue.md) under the block `architecture`.
+
+| KPI | value | what it counts |
+|---|---|---|
+| `agents_total` | 1 | Agent copies: the sum of count over the agent parts. |
+| `principals_total` | 3 | Principal parts. |
+| `human_touchpoints` | 1 | Links that end at a principal and carry a question or a proposal. |
+| `autonomy_depth` | 0 | Links in the longest chain of order and question links from agent to agent. |
+| `model_call_paths` | 1 | Distinct paths of model_call links from an agent part to a model part. |
+| `ungated_model_calls` | 0 | Paths of model_call links from an agent to a model that pass no gateway part. |
+| `single_points` | 2 (`gateway`, `model`) | Parts whose removal leaves some agent with no model_call path to a model. |
+| `border_parts` | 1 | Parts named in the border, the parts that take input from outside. |
+| `egress_targets` | 0 | Distinct parts named in the egress of the sandbox parts. |
+| `shared_workspaces` | 0 | Workspace parts whose sharing is not exclusive. |
+| `capacity_ratio` | 0 | Agent copies that claim a pool divided by its capacity, the largest over the pools. |
+
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../../contract.md). The contract file: [auto-merger.contract.yaml](pathname:///fields/coding/auto-merger.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 30` | 1 |
+| `authority.decision` | `Principal` | `authority` | `(DecideRequest \| DenyRequest) (ApproveDecision \| RejectDecision)` | `merge_grant` | `kind: grant` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `merger` | `acts_for: owner`, `harness: coding`, `role: merger` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `merger` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `merger` | none | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: small` | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart (RecordEnd \| RecordReplaced) \| SkipFiring)` | `on_checks` | `event_name: agentic.scm.change.ChecksRecorded`, `kind: on_event`, `max_parallel: 1`, `policy: queue` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `on_checks -> merger carries trigger`: `every trigger.firing@on_checks to merger`
+- `merge_grant -> merger carries grant`: `every authority.decision@merge_grant to merger`
+- `merger -> owner carries question`: `every question.question@merger to owner`
+- `merger -> gateway carries model_call`: `every model.inference@merger inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+
+Border: **merger**.
+
+Ingresses: who reaches the architecture from outside, what each audience may use, and over which protocols.
+
+| ingress | audience | authenticated | exports | commands | views | feeds | metrics |
+|---|---|---|---|---|---|---|---|
+| **metrics** | `control.monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 11 |
+| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 10 | 26 | 67 | 0 |
+
+- **metrics**: `cache_bust_count`, `cache_hit_share`, `context_size_p90_tokens`, `cost_usd`, `decider_recorded_share`, `human_decided_share`, `human_prompt_share`, `owner_wait_share`, `priced_message_share`, `sub_agents_started`, `subagent_cost_share`
+- **operator**: `agentic.authority.RevokeGrant`, `agentic.gateway.DetachUpstream`, `agentic.gateway.DrainGateway`, `agentic.gateway.StopGateway`, `agentic.question.Answer`, `agentic.trigger.DisableSchedule`, `agentic.trigger.DisableTrigger`, `agentic.trigger.EnableSchedule`, `agentic.trigger.EnableTrigger`, `agentic.trigger.PassScheduleChecks`
+
 ## Parts
 
 | part | block | settings |

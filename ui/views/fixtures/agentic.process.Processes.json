@@ -1,0 +1,8 @@
+{
+  "view": "agentic.process.Processes",
+  "rows": [
+    {"process_id": "00000000-0000-4000-8000-e3cac2430000", "name": "name 1", "version": 1, "source_digest": "source digest 1", "state": "Published"},
+    {"process_id": "00000000-0000-4000-8000-e3cac2430001", "name": "name 2", "version": 2, "source_digest": "source digest 2", "state": "Withdrawn"},
+    {"process_id": "00000000-0000-4000-8000-e3cac2430002", "name": "name 3", "version": 3, "source_digest": "source digest 3", "state": "Published"}
+  ]
+}

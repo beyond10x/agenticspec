@@ -1,0 +1,22 @@
+{
+  "format": "agenticspec-trace/1",
+  "architecture": "workstation",
+  "source": {"written_by": "hand"},
+  "records": ["channel.message", "gateway.call", "model.inference", "question.question", "resource.claim"],
+  "events": [
+    {"index": 0, "time": 0, "part": "gateway", "instance": 0, "port": "gateway.call", "phase": "begin", "to": "model"},
+    {"index": 1, "time": 0, "part": "worker", "instance": 0, "port": "model.inference", "phase": "begin", "within": 0, "to": "model"},
+    {"index": 2, "time": 5, "part": "worker", "instance": 0, "port": "model.inference", "phase": "end", "begin": 1},
+    {"index": 3, "time": 5, "part": "gateway", "instance": 0, "port": "gateway.call", "phase": "end", "begin": 0},
+    {"index": 4, "time": 6, "part": "worker", "instance": 1, "port": "resource.claim", "phase": "begin", "to": "builds"},
+    {"index": 5, "time": 60, "part": "worker", "instance": 1, "port": "resource.claim", "phase": "end", "begin": 4},
+    {"index": 6, "time": 70, "part": "worker", "instance": 2, "port": "question.question", "phase": "begin", "to": "operator"},
+    {"index": 7, "time": 80, "part": "operator", "instance": 0, "port": "question.question", "phase": "begin", "within": 6, "to": "owner", "over": "mail"},
+    {"index": 8, "time": 80, "part": "operator", "instance": 0, "port": "channel.message", "phase": "begin", "within": 7, "to": "owner", "over": "chat"},
+    {"index": 9, "time": 80, "part": "operator", "instance": 0, "port": "channel.message", "phase": "end", "begin": 8},
+    {"index": 10, "time": 200, "part": "owner", "instance": 0, "port": "channel.message", "phase": "begin", "to": "operator", "over": "chat"},
+    {"index": 11, "time": 200, "part": "owner", "instance": 0, "port": "channel.message", "phase": "end", "begin": 10},
+    {"index": 12, "time": 200, "part": "operator", "instance": 0, "port": "question.question", "phase": "end", "begin": 7},
+    {"index": 13, "time": 200, "part": "worker", "instance": 2, "port": "question.question", "phase": "end", "begin": 6}
+  ]
+}

@@ -27,20 +27,37 @@ types:
   # resource block's pool (the example's `builds: {block: resource, kind: pool}`).
   # Trigger and Schedule (agentic.trigger) are parts: what wakes an agent part is part of the
   # setup, and a link carrying Trigger says which agent part it wakes.
-  # UNMAPPED: whether delegation, work, process, authority, question, knowledge and the other
-  # resource kinds (queue, rate limit, cache) are parts of an architecture or only of a run. The
-  # design's example uses none of them. Taken: Knowledge is a part (an agent is given it); the
-  # others are not.
+  # Knowledge is a part (an agent is given it). Authority (a grant, a budget, a policy), Work (a
+  # spec, a body of evidence), Experiment (a comparison of runs) and Kpi (a measure the owner
+  # reads) are parts too: the ladder's architectures place them, and links say who reads them.
+  # Question (a standing question and its answers), Process (a defined sequence of steps) and
+  # Delegation (a principal's grant to act for it) are parts when a setup models them as places
+  # that agents and principals write to and read from.
+  # Architecture: the part is another architecture document, referred to by `ref` (a path
+  # relative to the referring document) and `digest` (`sha256:<hex>` of that file's bytes), both
+  # kept as settings; its border is its interface, and a link addresses a border part as
+  # `<part>.<border part>`.
+  # UNMAPPED: whether the other resource kinds (queue, rate limit, cache) are parts of an
+  # architecture or only of a run. No architecture places them. Taken: they are not parts.
+  # The command line's structural check reads this list and Carries from this file, so a block
+  # or a carries value that is not declared here is refused there.
   - name: agentic.architecture.PartKind
     kind: enum
-    variants: [Principal, Agent, Harness, Model, Gateway, Tool, Knowledge, Channel, Workspace, Sandbox, Runtime, Pool, Trigger, Schedule]
+    variants: [Principal, Agent, Harness, Model, Gateway, Tool, Knowledge, Channel, Workspace, Sandbox, Runtime, Pool, Trigger, Schedule, Authority, Work, Experiment, Kpi, Question, Process, Delegation, Architecture]
 
   # What a link carries. The example writes `carries: question`, `order`, `claim`; a link with no
   # `carries:` (`worker -> gateway`) is a model call, and `owner -> operator over chat` a prompt.
-  # Trigger: a trigger or schedule part wakes an agent part.
+  # Trigger: a trigger or schedule part wakes an agent or runtime part. Review: a task reported done goes to
+  # a reviewer agent. Handoff: one agent hands its result to the next. Call: an agent runs a tool.
+  # Context: knowledge or a contract is given to an agent. Grant: an authority part permits an
+  # agent. Proposal: an agent proposes a change to its owner. Spec: a written task goes to work
+  # or to an agent. Checkout: a workspace is checked out for a run. Result: a run reports to an
+  # experiment. Report: an experiment, evidence or a KPI reports to a person. Record: an agent or
+  # a team records evidence. Read: a part reads work, a question or a record it is given access
+  # to. Run: an agent hands a run to a runtime part, which executes its steps.
   - name: agentic.architecture.Carries
     kind: enum
-    variants: [Prompt, Order, Question, Answer, ModelCall, ToolCall, Claim, Message, Trigger]
+    variants: [Prompt, Order, Question, Answer, ModelCall, ToolCall, Claim, Message, Trigger, Review, Handoff, Call, Context, Grant, Proposal, Spec, Checkout, Result, Report, Record, Read, Run]
 
   # How the copies of an agent part (a swarm) coordinate: Orchestrator, one copy or another part
   # hands out the work; Board, the copies read and write a typed board without an orchestrator
@@ -82,6 +99,16 @@ types:
       - {name: verb, type: agentic.architecture.PatchVerb}
       - {name: text, type: String}
 
+  # Placements (M45). The qualified name of the entity a placement names: the entity a part
+  # stands for (`agentic.harness.HarnessSession`, `agentic.workspace.Workspace`, ...). A lower
+  # block's entity is named by text, since this block cannot list the entities of every block
+  # below it as a closed type.
+  - name: agentic.architecture.EntityName
+    kind: newtype
+    of: String
+    naming:
+      summary: The qualified name of an entity of a building block, such as agentic.harness.HarnessSession.
+
   # The ports and the contract. Source: design/architecture-runtime.md § "The boundary: ports"
   # and § "The contract of one architecture". A port is a leaf of the blocks with effects outside
   # them, the part a runtime must implement; everything else is behaviour or computation that the
@@ -93,7 +120,7 @@ types:
 
   # The full name of a command of this system (`agentic.model.StartInference`).
   # ESS limit (0.99.2): a field cannot reference a command, so the name is text. The derivation
-  # writes only names `ess specify compile` lists.
+  # writes only names the compiled blocks declare.
   - name: agentic.architecture.CommandName
     kind: newtype
     of: String
@@ -140,13 +167,22 @@ types:
   # One port one part of the revision uses: the settings of the part that narrow it, and how
   # many instances of the port run (the part's count, times the count of the part it is `per`, as
   # far as that chain goes).
-  # UNMAPPED: which part uses which port. Architecture documents name a block per part (`agent`,
-  # `pool`, `schedule`), not a domain (`harness`, `resource`, `trigger`), and some ports are used
-  # through a link (`principal.answer` by a principal part a link carrying questions reaches).
-  # Documents also name parts PartKind has no variant for (`authority`, `work`, `experiment`,
-  # `kpi`) and carry values Carries has none for (`call`, `checkout`, `context`, `grant`, ...).
-  # UNMAPPED: which settings narrow which port. The design names examples only (`harness`,
-  # `route`, `isolation`, `egress`, `capacity`). Both are open for story contract-derivation.
+  # Which part uses which port, taken (`agenticspec sim contract`, docs/contract.md): a fixed
+  # table from a part's block to the ports it uses by being there (agent: harness.session; model:
+  # model.inference; gateway: gateway.call; pool: resource.claim; a direct channel:
+  # channel.message, a topic, queue or board: channel.post and channel.subscription; workspace:
+  # workspace.lease and workspace.proposal; sandbox: sandbox.sandbox; schedule: trigger.schedule,
+  # and trigger.firing unless a trigger part fires on it; trigger: trigger.firing; authority:
+  # authority.decision, or authority.budget for a budget; runtime: runtime.instance). Principal,
+  # tool, knowledge, work, experiment and kpi parts use none by being there. A link adds the port
+  # its carried value travels in to its `from` part (an agent's model_call: model.inference; a
+  # question: question.question; a call to a tool: harness.tool-call; a claim: resource.claim; a
+  # message, or any value sent to a channel part or over one: the channel's sending port), and a
+  # principal a question reaches uses question.question too.
+  # Which settings narrow which port, taken: per block and port a fixed list of setting names
+  # copied from the using part (agent: harness, role, acts_for; model: route; gateway:
+  # rate_limit_per_minute; pool: kind, capacity, job_limit; channel: kind, distribution; sandbox:
+  # isolation, egress; workspace: kind, sharing; ...); a setting not in the list is not copied.
   - name: agentic.architecture.ContractPort
     kind: struct
     fields:
@@ -157,11 +193,15 @@ types:
 
   # What one link of the revision promises about a run's trace: `worker -> gateway carries
   # model_call` means every `model.infer` of `worker` happens inside a `gateway.call` of
-  # `gateway`. `predicate` is the predicate as the contract writes it.
-  # UNMAPPED: the design states the invariant of a link carrying ModelCall only. The invariant of
-  # every other Carries (Question, Order, Claim, Prompt over a channel, ...) and the predicate
-  # language are open for story contract-derivation; `within_port_id` is absent where a link
-  # restricts the counterparty and nests in no port.
+  # `gateway`. `predicate` is the predicate as the contract writes it, in the predicate language
+  # of docs/contract.md.
+  # Taken for every carried value: a link whose value travels in a port of its `from` part (see
+  # ContractPort) has one invariant on that port. A model_call from an agent to a gateway nests:
+  # `every model.inference@<from> inside gateway.call@<to>`. Every other such link restricts the
+  # counterparty: `every <port>@<from> to <to>`, with `over <channel>` when the link names one;
+  # `within_port_id` is then absent. A link whose value travels in no port (an order, a review, a
+  # result, a handoff, a report, a spec, a context, a record, a prompt not over a channel) has no
+  # invariant.
   - name: agentic.architecture.RoutingInvariant
     kind: struct
     fields:
@@ -169,6 +209,41 @@ types:
       - {name: port_id, type: agentic.shared.PortId}
       - {name: within_port_id, type: Optional<agentic.shared.PortId>}
       - {name: predicate, type: String}
+
+  # The ingress: how an architecture exposes interfaces to the outside. Source: design/ingress.md
+  # (I1, I7, I8). An ingress names its audience (a principal part), one interface (what the
+  # audience may use) and one or more exports (over which protocol). Its interface is resolved
+  # by the contract derivation into operations, each a command, a view, a feed (an event) or a
+  # metric (a KPI of the catalogue).
+  - name: agentic.architecture.OperationKind
+    kind: enum
+    variants: [Command, View, Feed, Metric]
+
+  # The protocols an export may name (design/ingress.md I7); a field adds no protocol.
+  - name: agentic.architecture.ExportProtocol
+    kind: enum
+    variants: [Http, EventStream, Cli, Tool, Agent, MetricsScrape, Ui]
+
+  # One operation of a resolved interface: its kind and the full name of the command, view or
+  # event, or the KPI's id. ESS limit (0.99.2): a field cannot reference a command, view or
+  # event, so the name is text; the derivation writes only names the compiled blocks declare and
+  # ids of kpis/catalogue.yaml.
+  - name: agentic.architecture.ContractOperation
+    kind: struct
+    fields:
+      - {name: kind, type: agentic.architecture.OperationKind}
+      - {name: name, type: String}
+
+  # One ingress of a contract: the audience, whether callers authenticate, the protocols of its
+  # exports and the operations its interface resolves to. Derived, never authored.
+  - name: agentic.architecture.ContractIngress
+    kind: struct
+    fields:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+      - {name: authenticated, type: Boolean}
+      - {name: protocols, type: List<agentic.architecture.ExportProtocol>}
+      - {name: operations, type: List<agentic.architecture.ContractOperation>}
 
 entities:
   # UNMAPPED: the brief names the lifecycle "Draft -> Committed revisions, Retired". An outcome
@@ -191,6 +266,7 @@ entities:
       - {name: links, kind: owns, target: agentic.architecture.Link, cardinality: many, via: architecture_id}
       - {name: revisions, kind: owns, target: agentic.architecture.ArchitectureRevision, cardinality: many, via: architecture_id}
       - {name: patch_applications, kind: owns, target: agentic.architecture.PatchApplication, cardinality: many, via: architecture_id}
+      - {name: ingresses, kind: owns, target: agentic.architecture.Ingress, cardinality: many, via: architecture_id}
       # UNMAPPED: whether an architecture owns its revisions' contracts (a contract is derived, so
       # deleting the architecture could drop them) or a contract only references its revision.
       # Taken: references, from the contract.
@@ -350,6 +426,61 @@ entities:
         - {name: apply, from: [Requested], to: Applied}
         - {name: refuse, from: [Requested], to: Refused}
 
+  # Placements (M45). Where an entity of a lower block sits: on which part of one revision of an
+  # architecture, and on which copy of it. A lower block cannot name a part: a block names only
+  # its own layer or a lower one, and parts are layer 9. So the edge is turned around and this
+  # block records the placement. The runtime records one through PlaceEntity when it creates an
+  # entity for a part (a harness session for an agent part, a workspace for a workspace part).
+  # Immutable once recorded.
+  #
+  # The part path is the part's name, copied from the part when the placement is recorded. A
+  # nested architecture (story architecture-references, `team.lead`) is lowered to these commands
+  # flat, its parts named by their path, so `team.lead` is the name of one part here.
+  # UNMAPPED: a nested part as a part of its own (a part kind that is an architecture) does not
+  # exist in this block yet. Taken: the flat lowering above, until story
+  # architecture-references gives the block one.
+  #
+  # The instance is the 1-based copy of a part that runs several (`count` above 1, or `per`
+  # another part), absent for a placement on the part as a whole.
+  #
+  # The scope rule (O3 A). A row of a block view is in scope of a part, or of one copy of it, when
+  #   1. the row's own identity is the entity id of a placement to that part (and copy), or
+  #   2. an id field of the row's view, one hop away, is: a turn of agentic.harness.Turns is in
+  #      scope of `team.lead` when its `harness_session_id` names a harness session placed to
+  #      `team.lead`.
+  # A row that matches neither is out of scope. A placement of the same entity to another part
+  # puts the row in that part's scope too. No second hop is followed: a row reached only through a
+  # chain of two references (a step of a run of a harness session) is in scope only when the
+  # runtime places the middle entity as well. A read scoped to an architecture and no part keeps
+  # every row with a placement in that architecture. The runtime answers a scoped read with the
+  # rows of this rule; this block records the placements the rule reads, and the Placements view
+  # serves them.
+  - name: agentic.architecture.Placement
+    naming:
+      summary: >-
+        Where one entity of a lower block sits in an architecture: the revision, the part's path,
+        the copy of the part, and the entity's name and id. A row of a block view is in scope of
+        a part when its own id, or an id field of its view one hop away, is placed to that part.
+    identity:
+      name: placement_id
+      type: agentic.shared.PlacementId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: part_path, type: agentic.shared.Name}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: agentic.architecture.EntityName}
+      - {name: entity_id, type: Uuid}
+    relations:
+      - {name: architecture, kind: references, target: agentic.architecture.Architecture, cardinality: one, via: architecture_id}
+      - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
+      - {name: part, kind: references, target: agentic.architecture.Part, cardinality: one, via: part_id}
+    lifecycle:
+      initial: Recorded
+      states: [Recorded]
+      terminal: [Recorded]
+
   # A port of a block, derived from this system (`model.infer`: the exit event InferenceStarted
   # leaves an inference Started, which only the entry command FinishInference leaves). A runtime
   # implements ports; everything else of a block it gets from the specification. Immutable: a
@@ -397,6 +528,8 @@ entities:
       - {name: ports, type: List<agentic.architecture.ContractPort>}
       - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
       - {name: border, type: List<agentic.shared.PartId>}
+      # The ingresses of the revision, each interface resolved; empty when it declares none.
+      - {name: ingress, type: List<agentic.architecture.ContractIngress>}
     relations:
       - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
       - {name: border_parts, kind: references, target: agentic.architecture.Part, cardinality: many, via: border}
@@ -404,6 +537,132 @@ entities:
       initial: Recorded
       states: [Recorded]
       terminal: [Recorded]
+
+  # An ingress of an architecture (design/ingress.md I1, I3, I6): for whom it is reachable from
+  # outside. `audience_part_id` is a principal part of the same architecture; `interface` holds
+  # the interface's selection rules as written (`scope`, `commands`, `views`, `feeds`,
+  # `metrics`), as a patch rule keeps its text: the contract derivation reads them. Callers
+  # authenticate unless `authenticated` is false, which the document's check admits only for an
+  # interface without commands. Immutable once added, like a part.
+  - name: agentic.architecture.Ingress
+    naming:
+      summary: For whom an architecture is reachable from outside, what that audience may use, and whether callers authenticate.
+    identity:
+      name: ingress_id
+      type: agentic.shared.IngressId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+      - {name: authenticated, type: Boolean}
+      - {name: interface, type: String}
+    relations:
+      - {name: audience, kind: references, target: agentic.architecture.Part, cardinality: one, via: audience_part_id}
+      - {name: exports, kind: owns, target: agentic.architecture.Export, cardinality: many, via: ingress_id}
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+
+  # One export of an ingress: the protocol its interface is served over (design/ingress.md I7).
+  # Its projection (an OpenAPI document, a stream list, a tool list, a metric list) is generated,
+  # never authored; its address, server and authenticator are the runtime binding's.
+  - name: agentic.architecture.Export
+    naming:
+      summary: The protocol an ingress's interface is served over.
+    identity:
+      name: export_id
+      type: agentic.shared.ExportId
+    fields:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: protocol, type: agentic.architecture.ExportProtocol}
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+
+# The Viewer reads the views of this block. The Deployer and the Principal are two roles that
+# cross every block, read by the contract of an architecture. `agenticspec sim ports` reads
+# their `may:` lists to tell the commands of a port from configuration (docs/contract.md): ESS
+# 0.99.2 gives an actor no kind, so the two roles the derivation needs are named here, once, for
+# all blocks.
+actors:
+  - name: agentic.architecture.Viewer
+    naming:
+      display: Architecture viewer
+      summary: >-
+        Whoever looks at architectures, their parts, links, revisions and patches, such as an
+        operator's view of a running system. It reads the views of this block and issues none of
+        its commands.
+    may:
+      - agentic.architecture.Architectures
+      - agentic.architecture.Parts
+      - agentic.architecture.Reach
+      - agentic.architecture.Revisions
+      - agentic.architecture.Patches
+      - agentic.architecture.PatchApplications
+      - agentic.architecture.Ports
+      - agentic.architecture.Contracts
+  - name: agentic.architecture.Deployer
+    naming:
+      display: Deployer
+      summary: >-
+        Whoever sets a system up from its architecture document, switches what it set up on and
+        off, and takes it down: retires principals, agents, models, routes, harnesses, tools,
+        knowledge, processes, KPIs, sandboxes and architectures, drains and stops gateways,
+        closes channels, revokes grants and delegations, enables and disables triggers and
+        schedules, revises knowledge and places workloads. What the deployer issues is configuration; nothing outside the system waits
+        on it. UNMAPPED: the deployer also issues the commands that set these up
+        (RegisterPrincipal, DefineAgent, DefineKpi, OpenChannel, ...); listing them here made
+        the synthesis of the conformance suite about 30 s slower (a caller witness per command),
+        and the derivation of ports reads only the commands that move a state on.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+      - {name: party_kind, type: agentic.channel.PartyKind}
+    may:
+      - agentic.principal.RetirePrincipal
+      - agentic.delegation.RevokeDelegation
+      - agentic.model.RetireModel
+      - agentic.model.RetireRoute
+      - agentic.gateway.DrainGateway
+      - agentic.gateway.StopGateway
+      - agentic.gateway.DetachUpstream
+      - agentic.tool.WithdrawTool
+      - agentic.knowledge.ReviseKnowledge
+      - agentic.knowledge.WithdrawKnowledge
+      - agentic.agent.RetireAgent
+      - agentic.agent.RetireRevision
+      - agentic.harness.RetireHarness
+      - agentic.process.WithdrawProcess
+      - agentic.authority.RevokeGrant
+      - agentic.channel.CloseChannel
+      - agentic.channel.CloseSharedChannel
+      - agentic.trigger.PassScheduleChecks
+      - agentic.trigger.EnableSchedule
+      - agentic.trigger.DisableSchedule
+      - agentic.trigger.EnableTrigger
+      - agentic.trigger.DisableTrigger
+      - agentic.sandbox.RetireSandbox
+      - agentic.runtime.DefineWorkload
+      - agentic.kpi.RetireKpi
+      - agentic.architecture.RetireArchitecture
+      - agentic.deployment.StopDeployment
+
+  - name: agentic.architecture.Principal
+    naming:
+      display: Principal
+      summary: >-
+        A principal acting in a running system: a person, or an agent acting for one under a
+        delegation, who answers a question, approves or rejects a pending decision, or accepts or
+        rejects a deliverable. What it issues ends a wait on a principal.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+    may:
+      - agentic.question.Answer
+      - agentic.authority.ApproveDecision
+      - agentic.authority.RejectDecision
+      - agentic.work.AcceptDeliverable
+      - agentic.work.RejectDeliverable
 
 errors:
   - name: agentic.architecture.NoSuchArchitecture
@@ -464,6 +723,28 @@ errors:
     summary: A contract names at least one port, and nothing was recorded.
   - name: agentic.architecture.ContractExists
     summary: The revision already has a contract, and nothing was recorded.
+  - name: agentic.architecture.IngressNameTaken
+    summary: The architecture already has an ingress of this name, and nothing was added.
+  - name: agentic.architecture.AudienceNotPrincipal
+    summary: The audience of an ingress is a principal part, and the part named is not one; nothing was added.
+  - name: agentic.architecture.NoSuchIngress
+    summary: No ingress has this id, and nothing was added.
+  - name: agentic.architecture.ExportExists
+    summary: The ingress already exports over this protocol, and nothing was added.
+
+  # Placements (M45).
+  - name: agentic.architecture.ForeignRevision
+    summary: The revision belongs to another architecture, and nothing was placed.
+  - name: agentic.architecture.PartNotInRevision
+    summary: The part belongs to another architecture than the revision, so it is not in that revision; nothing was placed.
+  - name: agentic.architecture.InvalidInstance
+    summary: A copy of a part is counted from 1, and nothing was placed.
+  - name: agentic.architecture.InstanceWithoutCopies
+    summary: The part runs one copy and is per no other part, so a placement names no copy of it; nothing was placed.
+  - name: agentic.architecture.InstanceOutOfRange
+    summary: The part runs fewer copies than the copy named, and nothing was placed.
+  - name: agentic.architecture.PlacementExists
+    summary: The entity is already placed to this part of this revision, and nothing was placed.
 
 events:
   - name: agentic.architecture.ArchitectureCreated
@@ -544,6 +825,29 @@ events:
       - {name: contract_id, type: agentic.shared.ContractId}
       - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
       - {name: digest, type: agentic.architecture.Digest}
+  - name: agentic.architecture.IngressAdded
+    fields:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+  - name: agentic.architecture.ExportAdded
+    fields:
+      - {name: export_id, type: agentic.shared.ExportId}
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: protocol, type: agentic.architecture.ExportProtocol}
+
+  # Placements (M45).
+  - name: agentic.architecture.EntityPlaced
+    fields:
+      - {name: placement_id, type: agentic.shared.PlacementId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: part_path, type: agentic.shared.Name}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: agentic.architecture.EntityName}
+      - {name: entity_id, type: Uuid}
 
 commands:
   - name: agentic.architecture.CreateArchitecture
@@ -1056,7 +1360,7 @@ commands:
   # true}`, error DryRunCommits) beside `no-such-revision` validates, and synthesis arranges the
   # `no-such-revision` scenario on a dry-run application, where the held-state refusal answers
   # first by the precedence rule; the interpreted target answers `dry-run-commits` and the
-  # scenario fails. Until synthesis honours the earlier branch, the applier keeps that rule.
+  # scenario fails. Until synthesis honours the earlier outcome, the applier keeps that rule.
   - name: agentic.architecture.RecordPatchApplied
     naming:
       display: Record an applied patch
@@ -1146,6 +1450,101 @@ commands:
         wrong_state: true
         error: agentic.architecture.PatchApplicationSettled
 
+  # Placements (M45). The runtime records where an entity it created for a part sits: the part of
+  # a committed revision, and the copy of the part when it runs several. An entity sits on one
+  # copy of a part once per revision; the same entity may sit on another part as well (a gateway
+  # two agent parts share). A retired architecture's revisions still run, so retirement refuses no
+  # placement.
+  # UNMAPPED: a part declared after the revision was committed is not in that revision, and no
+  # row says when a part was declared (parts carry no revision). Taken: a part is in a revision
+  # when it belongs to the revision's architecture; the runtime places entities only for the parts
+  # of the revision it admitted.
+  # UNMAPPED: the copies of a part that is `per` another part number the copies of that part,
+  # which a chain of `per` can multiply. Taken: the range is checked for a part with a count and
+  # no `per` only.
+  - name: agentic.architecture.PlaceEntity
+    naming:
+      display: Place an entity on a part
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: agentic.architecture.EntityName}
+      - {name: entity_id, type: Uuid}
+    outcomes:
+      - name: invalid-instance
+        when:
+          all: [defined(instance), instance < 1]
+        error: agentic.architecture.InvalidInstance
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: no-such-revision
+        when_related: {via: input.revision_id, exists: false}
+        error: agentic.architecture.NoSuchRevision
+      - name: no-such-part
+        when_related: {via: input.part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: foreign-revision
+        when_related: {via: input.revision_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignRevision
+      - name: part-not-in-revision
+        when_related: {via: input.part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.PartNotInRevision
+      - name: instance-without-copies
+        when_related:
+          via: input.part_id
+          predicate:
+            all:
+              - defined(input.instance)
+              - count == 1
+              - not defined(per_part_id)
+        error: agentic.architecture.InstanceWithoutCopies
+      - name: instance-out-of-range
+        when_related:
+          via: input.part_id
+          predicate:
+            all:
+              - defined(input.instance)
+              - count > 1
+              - not defined(per_part_id)
+              - input.instance > count
+        error: agentic.architecture.InstanceOutOfRange
+      - name: exists
+        when_related:
+          entity: agentic.architecture.Placement
+          where:
+            all:
+              - revision_id == input.revision_id
+              - part_id == input.part_id
+              - entity_name == input.entity_name
+              - entity_id == input.entity_id
+          exists: true
+        error: agentic.architecture.PlacementExists
+      - name: placed
+        creates: agentic.architecture.Placement
+        instance: placement_id
+        sets:
+          architecture_id: input.architecture_id
+          revision_id: input.revision_id
+          part_id: input.part_id
+          part_path: {related: {via: input.part_id, field: name}}
+          instance: input.instance
+          entity_name: input.entity_name
+          entity_id: input.entity_id
+        emits: [agentic.architecture.EntityPlaced]
+        payload:
+          agentic.architecture.EntityPlaced:
+            placement_id: {generated: true}
+            architecture_id: input.architecture_id
+            revision_id: input.revision_id
+            part_id: input.part_id
+            part_path: {related: {via: input.part_id, field: name}}
+            instance: input.instance
+            entity_name: input.entity_name
+            entity_id: input.entity_id
+
   # Record one port the derivation found in the blocks.
   - name: agentic.architecture.DeclarePort
     naming:
@@ -1193,6 +1592,7 @@ commands:
       - {name: ports, type: List<agentic.architecture.ContractPort>}
       - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
       - {name: border, type: List<agentic.shared.PartId>}
+      - {name: ingress, type: List<agentic.architecture.ContractIngress>}
     outcomes:
       - name: empty
         when: ports.count == 0
@@ -1215,12 +1615,103 @@ commands:
           ports: input.ports
           invariants: input.invariants
           border: input.border
+          ingress: input.ingress
         emits: [agentic.architecture.ContractRecorded]
         payload:
           agentic.architecture.ContractRecorded:
             contract_id: {generated: true}
             revision_id: input.revision_id
             digest: {generated: true}
+
+  # Declare an ingress of an architecture: its name, its audience (a principal part of the same
+  # architecture), whether callers authenticate, and its interface's rules as written. The
+  # document's check (`agenticspec sim check`) holds the rules an ingress's interface and exports
+  # must keep together; this command keeps the rules of its own rows.
+  - name: agentic.architecture.AddIngress
+    naming:
+      display: Add an ingress
+    input:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+      - {name: authenticated, type: Boolean}
+      - {name: interface, type: String}
+    outcomes:
+      - name: no-such-architecture
+        when_related: {via: input.architecture_id, exists: false}
+        error: agentic.architecture.NoSuchArchitecture
+      - name: no-such-audience
+        when_related: {via: input.audience_part_id, exists: false}
+        error: agentic.architecture.NoSuchPart
+      - name: retired
+        when_related: {via: input.architecture_id, predicate: state == Retired}
+        error: agentic.architecture.RetiredArchitecture
+      - name: foreign-audience
+        when_related: {via: input.audience_part_id, predicate: architecture_id != input.architecture_id}
+        error: agentic.architecture.ForeignPart
+      - name: audience-not-principal
+        when_related: {via: input.audience_part_id, predicate: kind != Principal}
+        error: agentic.architecture.AudienceNotPrincipal
+      - name: name-taken
+        when_related:
+          entity: agentic.architecture.Ingress
+          where:
+            all:
+              - architecture_id == input.architecture_id
+              - name == input.name
+          exists: true
+        error: agentic.architecture.IngressNameTaken
+      - name: added
+        creates: agentic.architecture.Ingress
+        instance: ingress_id
+        sets:
+          architecture_id: input.architecture_id
+          name: input.name
+          audience_part_id: input.audience_part_id
+          authenticated: input.authenticated
+          interface: input.interface
+        emits: [agentic.architecture.IngressAdded]
+        payload:
+          agentic.architecture.IngressAdded:
+            ingress_id: input.ingress_id
+            architecture_id: input.architecture_id
+            name: input.name
+            audience_part_id: input.audience_part_id
+
+  # Export an ingress over one protocol; each protocol at most once per ingress.
+  - name: agentic.architecture.AddExport
+    naming:
+      display: Export an ingress over a protocol
+    input:
+      - {name: export_id, type: agentic.shared.ExportId}
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: protocol, type: agentic.architecture.ExportProtocol}
+    outcomes:
+      - name: no-such-ingress
+        when_related: {via: input.ingress_id, exists: false}
+        error: agentic.architecture.NoSuchIngress
+      - name: exists
+        when_related:
+          entity: agentic.architecture.Export
+          where:
+            all:
+              - ingress_id == input.ingress_id
+              - protocol == input.protocol
+          exists: true
+        error: agentic.architecture.ExportExists
+      - name: added
+        creates: agentic.architecture.Export
+        instance: export_id
+        sets:
+          ingress_id: input.ingress_id
+          protocol: input.protocol
+        emits: [agentic.architecture.ExportAdded]
+        payload:
+          agentic.architecture.ExportAdded:
+            export_id: input.export_id
+            ingress_id: input.ingress_id
+            protocol: input.protocol
 
 views:
   # Who may call whom: one row per link. No row, no reach.
@@ -1306,6 +1797,33 @@ views:
       - {name: error, type: Optional<String>}
       - {name: state, type: agentic.architecture.PatchApplication.State}
 
+  # Placements (M45). The placements of one architecture, narrowed to one part path, one copy and
+  # one entity name when the read names them. The runtime reads it to answer a read scoped to a
+  # part under the scope rule written at the entity Placement.
+  - name: agentic.architecture.Placements
+    source: agentic.architecture.Placement
+    consistency: read_your_writes
+    params:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: part_path, type: Optional<agentic.shared.Name>}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: Optional<agentic.architecture.EntityName>}
+    filter:
+      all:
+        - architecture_id == param.architecture_id
+        - any: [not defined(param.part_path), part_path == param.part_path]
+        - any: [not defined(param.instance), instance == param.instance]
+        - any: [not defined(param.entity_name), entity_name == param.entity_name]
+    fields:
+      - {name: placement_id, type: agentic.shared.PlacementId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: agentic.shared.ArchitectureRevisionId}
+      - {name: part_id, type: agentic.shared.PartId}
+      - {name: part_path, type: agentic.shared.Name}
+      - {name: instance, type: Optional<Integer>}
+      - {name: entity_name, type: agentic.architecture.EntityName}
+      - {name: entity_id, type: Uuid}
+
   # The marked ports of the blocks: what a runtime may have to implement.
   - name: agentic.architecture.Ports
     source: agentic.architecture.Port
@@ -1334,3 +1852,22 @@ views:
       - {name: ports, type: List<agentic.architecture.ContractPort>}
       - {name: invariants, type: List<agentic.architecture.RoutingInvariant>}
       - {name: border, type: List<agentic.shared.PartId>}
+      - {name: ingress, type: List<agentic.architecture.ContractIngress>}
+
+  # The ingresses of one architecture: who reaches it from outside, and under which rules.
+  - name: agentic.architecture.Ingresses
+    source: agentic.architecture.Ingress
+    consistency: read_your_writes
+    params:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+    filter: architecture_id == param.architecture_id
+    fields:
+      - {name: ingress_id, type: agentic.shared.IngressId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: audience_part_id, type: agentic.shared.PartId}
+      - name: audience_name
+        type: Optional<agentic.shared.Name>
+        field: {related: {via: audience_part_id, field: name}}
+      - {name: authenticated, type: Boolean}
+      - {name: interface, type: String}

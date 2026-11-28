@@ -1,0 +1,128 @@
+format: agenticspec-contract/1
+architecture: parallel-unaware
+ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
+ports:
+  - port: harness.session
+    part: a
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding}
+  - port: model.inference
+    part: a
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: a
+    protocol: "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {}
+  - port: harness.session
+    part: b
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding}
+  - port: model.inference
+    part: b
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: b
+    protocol: "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+invariants:
+  - link: "a -> owner carries question"
+    port: question.question
+    predicate: "every question.question@a to owner"
+  - link: "b -> owner carries question"
+    port: question.question
+    predicate: "every question.question@b to owner"
+  - link: "a -> model carries model_call"
+    port: model.inference
+    predicate: "every model.inference@a to model"
+  - link: "b -> model carries model_call"
+    port: model.inference
+    predicate: "every model.inference@b to model"
+border: []
+ingress:
+  - name: metrics
+    audience: control.monitor
+    authenticated: false
+    exports: [metrics_scrape]
+    operations:
+      - {kind: metric, name: cache_bust_count}
+      - {kind: metric, name: cache_hit_share}
+      - {kind: metric, name: context_size_p90_tokens}
+      - {kind: metric, name: cost_usd}
+      - {kind: metric, name: human_prompt_share}
+      - {kind: metric, name: owner_wait_share}
+      - {kind: metric, name: priced_message_share}
+      - {kind: metric, name: sub_agents_started}
+      - {kind: metric, name: subagent_cost_share}
+  - name: operator
+    audience: control.operator
+    authenticated: true
+    exports: [http, event_stream, ui, tool]
+    operations:
+      - {kind: command, name: agentic.question.Answer}
+      - {kind: view, name: agentic.agent.AgentRevisions}
+      - {kind: view, name: agentic.agent.Agents}
+      - {kind: view, name: agentic.harness.HarnessSessions}
+      - {kind: view, name: agentic.harness.Harnesses}
+      - {kind: view, name: agentic.harness.PermissionModes}
+      - {kind: view, name: agentic.harness.ToolCalls}
+      - {kind: view, name: agentic.harness.Turns}
+      - {kind: view, name: agentic.model.Endpoints}
+      - {kind: view, name: agentic.model.Inferences}
+      - {kind: view, name: agentic.model.Models}
+      - {kind: view, name: agentic.model.Routes}
+      - {kind: view, name: agentic.principal.Principals}
+      - {kind: view, name: agentic.question.OpenQuestions}
+      - {kind: view, name: agentic.question.Questions}
+      - {kind: feed, name: agentic.agent.AgentDefined}
+      - {kind: feed, name: agentic.agent.AgentRetired}
+      - {kind: feed, name: agentic.agent.AgentRevisionPublished}
+      - {kind: feed, name: agentic.agent.AgentRevisionRetired}
+      - {kind: feed, name: agentic.agent.AgentRevisionUsed}
+      - {kind: feed, name: agentic.harness.ContextCompacted}
+      - {kind: feed, name: agentic.harness.HarnessRegistered}
+      - {kind: feed, name: agentic.harness.HarnessRetired}
+      - {kind: feed, name: agentic.harness.PermissionModeRegistered}
+      - {kind: feed, name: agentic.harness.PermissionModeRetired}
+      - {kind: feed, name: agentic.harness.SessionEnded}
+      - {kind: feed, name: agentic.harness.SessionOpened}
+      - {kind: feed, name: agentic.harness.SessionRestarted}
+      - {kind: feed, name: agentic.harness.SubAgentSpawned}
+      - {kind: feed, name: agentic.harness.ToolCallCompleted}
+      - {kind: feed, name: agentic.harness.ToolCallDecided}
+      - {kind: feed, name: agentic.harness.ToolCallRequested}
+      - {kind: feed, name: agentic.harness.ToolResultNotRead}
+      - {kind: feed, name: agentic.harness.TurnRecorded}
+      - {kind: feed, name: agentic.model.EndpointClosed}
+      - {kind: feed, name: agentic.model.EndpointOpened}
+      - {kind: feed, name: agentic.model.InferenceFinished}
+      - {kind: feed, name: agentic.model.InferenceStarted}
+      - {kind: feed, name: agentic.model.ModelDeclared}
+      - {kind: feed, name: agentic.model.ModelRetired}
+      - {kind: feed, name: agentic.model.ProviderRegistered}
+      - {kind: feed, name: agentic.model.RouteDefined}
+      - {kind: feed, name: agentic.model.RouteRetired}
+      - {kind: feed, name: agentic.principal.PrincipalRegistered}
+      - {kind: feed, name: agentic.principal.PrincipalRetired}
+      - {kind: feed, name: agentic.question.AnswerNotRead}
+      - {kind: feed, name: agentic.question.DefaultTaken}
+      - {kind: feed, name: agentic.question.QuestionAnswered}
+      - {kind: feed, name: agentic.question.QuestionAsked}
+      - {kind: feed, name: agentic.question.QuestionWithdrawn}

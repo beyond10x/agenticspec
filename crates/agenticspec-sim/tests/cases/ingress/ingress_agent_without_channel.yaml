@@ -1,0 +1,31 @@
+format: agenticspec-architecture/1
+architecture: ingress-small
+summary: "Refused: an agent export, and the owner's message reaches the operator over no channel part."
+
+parts:
+  owner:    { block: principal, kind: human }
+  admin:    { block: principal, kind: human }
+  operator: { block: agent, harness: coding, acts_for: owner }
+  gateway:  { block: gateway }
+  model:    { block: model }
+  chat:     { block: channel }
+
+links:
+  - { from: owner,    to: operator, carries: prompt, over: chat }
+  - { from: operator, to: owner,    carries: question, over: chat }
+  - { from: operator, to: gateway,  carries: model_call }
+  - { from: gateway,  to: model,    carries: model_call }
+  - { from: owner,    to: operator, carries: message }
+
+border: [operator]
+
+ingress:
+  user:
+    audience: owner
+    interface: { commands: [principal], views: true }
+    exports: [{ protocol: http }, { protocol: agent }]
+  ops:
+    audience: admin
+    authenticated: false
+    interface: { scope: all, metrics: [cost_usd] }
+    exports: [{ protocol: metrics_scrape }]

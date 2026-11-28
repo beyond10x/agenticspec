@@ -1,0 +1,15 @@
+format: agenticspec-architecture/1
+architecture: parent
+summary: A lead agent and two copies of a nested team, for the tests of agenticspec ui derive.
+
+parts:
+  owner: { block: principal, kind: human }
+  lead:  { block: agent, harness: coding, acts_for: owner }
+  team:  { block: architecture, ref: team.yaml, count: 2 }
+  chat:  { block: channel, kind: operator }
+
+links:
+  - { from: owner, to: lead, carries: prompt, over: chat }
+  - { from: lead,  to: team, carries: order }
+
+border: [lead]

@@ -80,6 +80,14 @@ callables:
     errors:
       document_unreadable: agenticspec.cli.Refusal
       architecture_refused: agenticspec.cli.Refusal
+      ports_unreadable: agenticspec.cli.Refusal
+      kpis_unreadable: agenticspec.cli.Refusal
+  sim_digest:
+    target: {kind: local, owner: agenticspec.cli, action: sim_digest}
+    input: agenticspec.cli.SimDigestInput
+    result: agenticspec.cli.SimDigestResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
   sim_run:
     target: {kind: local, owner: agenticspec.cli, action: sim_run}
     input: agenticspec.cli.SimRunInput
@@ -124,6 +132,142 @@ callables:
       scenario_invalid: agenticspec.cli.Refusal
       scenario_refused: agenticspec.cli.Refusal
       corpus_failed: agenticspec.cli.Refusal
+  ui_panels:
+    target: {kind: local, owner: agenticspec.cli, action: ui_panels}
+    input: agenticspec.cli.UiPanelsInput
+    result: agenticspec.cli.UiPanelsResult
+    errors:
+      blocks_unreadable: agenticspec.cli.Refusal
+      panels_stale: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  sim_ports:
+    target: {kind: local, owner: agenticspec.cli, action: sim_ports}
+    input: agenticspec.cli.SimPortsInput
+    result: agenticspec.cli.SimPortsResult
+    errors:
+      blocks_unreadable: agenticspec.cli.Refusal
+      document_unreadable: agenticspec.cli.Refusal
+      ports_refused: agenticspec.cli.Refusal
+      ports_stale: agenticspec.cli.Refusal
+      ports_differ: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  sim_contract:
+    target: {kind: local, owner: agenticspec.cli, action: sim_contract}
+    input: agenticspec.cli.SimContractInput
+    result: agenticspec.cli.SimContractResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      ports_unreadable: agenticspec.cli.Refusal
+      kpis_unreadable: agenticspec.cli.Refusal
+      contract_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+      suite_unreadable: agenticspec.cli.Refusal
+      trace_unreadable: agenticspec.cli.Refusal
+      invariant_violated: agenticspec.cli.Refusal
+  sim_trace:
+    target: {kind: local, owner: agenticspec.cli, action: sim_trace}
+    input: agenticspec.cli.SimTraceInput
+    result: agenticspec.cli.SimTraceResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      simulation_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  ui_generate:
+    target: {kind: local, owner: agenticspec.cli, action: ui_generate}
+    input: agenticspec.cli.UiGenerateInput
+    result: agenticspec.cli.UiGenerateResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  ui_conform:
+    target: {kind: local, owner: agenticspec.cli, action: ui_conform}
+    input: agenticspec.cli.UiConformInput
+    result: agenticspec.cli.UiConformResult
+    errors:
+      plan_unreadable: agenticspec.cli.Refusal
+      source_unavailable: agenticspec.cli.Refusal
+      conformance_failed: agenticspec.cli.Refusal
+  blocks_lift:
+    target: {kind: local, owner: agenticspec.cli, action: blocks_lift}
+    input: agenticspec.cli.BlocksLiftInput
+    result: agenticspec.cli.BlocksLiftResult
+    errors:
+      transcript_unreadable: agenticspec.cli.Refusal
+      rows_invalid: agenticspec.cli.Refusal
+  blocks_scenario:
+    target: {kind: local, owner: agenticspec.cli, action: blocks_scenario}
+    input: agenticspec.cli.BlocksScenarioInput
+    result: agenticspec.cli.BlocksScenarioResult
+    errors:
+      transcript_unreadable: agenticspec.cli.Refusal
+      document_unreadable: agenticspec.cli.Refusal
+      map_invalid: agenticspec.cli.Refusal
+      scenario_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  packing_default:
+    target: {kind: local, owner: agenticspec.cli, action: packing_default}
+    input: agenticspec.cli.PackingDefaultInput
+    result: agenticspec.cli.PackingDefaultResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      packing_refused: agenticspec.cli.Refusal
+  deploy_bundle:
+    target: {kind: local, owner: agenticspec.cli, action: deploy_bundle}
+    input: agenticspec.cli.DeployBundleInput
+    result: agenticspec.cli.DeployBundleResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      ports_unreadable: agenticspec.cli.Refusal
+      kpis_unreadable: agenticspec.cli.Refusal
+      contract_refused: agenticspec.cli.Refusal
+      binding_invalid: agenticspec.cli.Refusal
+      accepts_unreadable: agenticspec.cli.Refusal
+      not_admitted: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  ingress_default:
+    target: {kind: local, owner: agenticspec.cli, action: ingress_default}
+    input: agenticspec.cli.IngressDefaultInput
+    result: agenticspec.cli.IngressDefaultResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+  ingress_project:
+    target: {kind: local, owner: agenticspec.cli, action: ingress_project}
+    input: agenticspec.cli.IngressProjectInput
+    result: agenticspec.cli.IngressProjectResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      ports_unreadable: agenticspec.cli.Refusal
+      kpis_unreadable: agenticspec.cli.Refusal
+      contract_refused: agenticspec.cli.Refusal
+      blocks_unreadable: agenticspec.cli.Refusal
+      projection_refused: agenticspec.cli.Refusal
+      projections_stale: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  ui_derive:
+    target: {kind: local, owner: agenticspec.cli, action: ui_derive}
+    input: agenticspec.cli.UiDeriveInput
+    result: agenticspec.cli.UiDeriveResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
+      derived_stale: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  deploy_check:
+    target: {kind: local, owner: agenticspec.cli, action: deploy_check}
+    input: agenticspec.cli.DeployCheckInput
+    result: agenticspec.cli.DeployCheckResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      accepts_unreadable: agenticspec.cli.Refusal
+      bundle_invalid: agenticspec.cli.Refusal
+      not_admitted: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -195,13 +339,22 @@ commands:
     about: Check an architecture document against the building blocks and name each refusal
     arguments:
       - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: kpis, source: {kind: option, long: kpis}}
+      - {field: json, source: {kind: flag, long: json}}
+  - path: [sim, digest]
+    callable: sim_digest
+    about: Print the digest a document pins a nested architecture with (sha256 of its canonical parts, links and border)
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
   - path: [sim, run]
     callable: sim_run
-    about: Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml
+    about: Simulate an experiment, search its marked places, and write result.json, index.html and best.yaml, with --events also events.jsonl
     arguments:
       - {field: experiment, source: {kind: positional, index: 1}}
       - {field: out, source: {kind: option, long: out}}
       - {field: threads, source: {kind: option, long: threads}}
+      - {field: events, source: {kind: flag, long: events}}
   - path: [sim, render]
     callable: sim_render
     about: Write the page of an architecture, with the result of a run when given
@@ -229,3 +382,112 @@ commands:
     arguments:
       - {field: action, source: {kind: positional, index: 1}}
       - {field: corpus, source: {kind: positional, index: 2}}
+  - path: [ui, panels]
+    callable: ui_panels
+    about: Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check
+    arguments:
+      - {field: root, source: {kind: option, long: root}}
+      - {field: check, source: {kind: flag, long: check}}
+  - path: [sim, ports]
+    callable: sim_ports
+    about: Derive the ports of the building blocks into blocks/ports.json, check its digest with --check, or list how they differ from an expected list with --expect
+    arguments:
+      - {field: blocks, source: {kind: option, long: blocks}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: check, source: {kind: option, long: check}}
+      - {field: expect, source: {kind: option, long: expect}}
+  - path: [sim, contract]
+    callable: sim_contract
+    about: Derive and check the contract of an architecture (agenticspec-contract/1), check a written contract with --check, cut the blocks' conformance suite to its ports with --suite, or check its routing invariants on a trace with --trace
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: kpis, source: {kind: option, long: kpis}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: check, source: {kind: option, long: check}}
+      - {field: suite, source: {kind: option, long: suite}}
+      - {field: trace, source: {kind: option, long: trace}}
+  - path: [sim, trace]
+    callable: sim_trace
+    about: Simulate an architecture once at its built values and write the port uses of the run as a trace (agenticspec-trace/1)
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: profile, source: {kind: option, long: profile}}
+      - {field: seed, source: {kind: option, long: seed}}
+      - {field: horizon, source: {kind: option, long: horizon}}
+      - {field: out, source: {kind: option, long: out}}
+  - path: [ui, generate]
+    callable: ui_generate
+    about: Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+    arguments:
+      - {field: path, source: {kind: option, long: path}}
+      - {field: out, source: {kind: option, long: out}}
+  - path: [ui, conform]
+    callable: ui_conform
+    about: Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)
+    arguments:
+      - {field: source, source: {kind: option, long: source}}
+      - {field: plan, source: {kind: option, long: plan}}
+      - {field: root, source: {kind: option, long: root}}
+  - path: [blocks, lift]
+    callable: blocks_lift
+    about: Lift one Claude Code session into rows of the building blocks, each naming the node it came from
+    arguments:
+      - {field: transcript, source: {kind: positional, index: 1}}
+  - path: [blocks, scenario]
+    callable: blocks_scenario
+    about: Write a draft scenario of a session's outside inputs and the block events of the turns they started
+    arguments:
+      - {field: transcript, source: {kind: positional, index: 1}}
+      - {field: architecture, source: {kind: option, long: architecture}}
+      - {field: profile, source: {kind: option, long: profile}}
+      - {field: map, source: {kind: option, long: map}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: name, source: {kind: option, long: name}}
+  - path: [packing, default]
+    callable: packing_default
+    about: Print the resolved packing section of a binding (agenticspec-binding/1) for an architecture, single by default, to paste and change
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: strategy, source: {kind: option, long: strategy}}
+  - path: [deploy, bundle]
+    callable: deploy_bundle
+    about: Admit an architecture with its binding and packing and write its deployment bundle (agenticspec-deployment/1); a refusal writes nothing and names every finding
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: binding, source: {kind: option, long: binding}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: accepts, source: {kind: option, long: accepts}}
+      - {field: kpis, source: {kind: option, long: kpis}}
+  - path: [ingress, default]
+    callable: ingress_default
+    about: Print the default ingresses an architecture has, as the ingress section to paste into it and change
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+  - path: [ingress, project]
+    callable: ingress_project
+    about: Write the ess-http/1 protocol binding and the OpenAPI document of each http export of an architecture, or compare them with --check
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: check, source: {kind: option, long: check}}
+      - {field: blocks, source: {kind: option, long: blocks}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: kpis, source: {kind: option, long: kpis}}
+  - path: [ui, derive]
+    callable: ui_derive
+    about: Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check
+    arguments:
+      - {field: path, source: {kind: option, long: path}}
+      - {field: contract, source: {kind: option, long: contract}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: root, source: {kind: option, long: root}}
+      - {field: check, source: {kind: flag, long: check}}
+  - path: [deploy, check]
+    callable: deploy_check
+    about: Admit a written deployment bundle again from what it carries, for a reader that did not write it; refuses a digest that does not hold, an undeclared secret or egress, a secret value and every other finding of admission
+    arguments:
+      - {field: bundle, source: {kind: positional, index: 1}}
+      - {field: accepts, source: {kind: option, long: accepts}}

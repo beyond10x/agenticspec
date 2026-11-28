@@ -1,0 +1,537 @@
+//! The packing of an architecture: which parts share a unit, one thing a target starts and
+//! watches. The `packing:` section of a binding names a strategy (`single`, the default when the
+//! section is absent, `by_kind`, `by_part` or `groups`) with per-part overrides, or lists the
+//! units themselves (`units:`, the resolved form [`Packing::text`] prints). [`resolve`] turns
+//! either into the units; admission (`crate::deploy::admit`) then checks them.
+
+use crate::check::value;
+use crate::contract::derive::{flow, scalar};
+use serde_json::{Map, Value, json};
+use std::collections::{BTreeMap, BTreeSet};
+
+/// The strategies of the `packing:` section; the first is the default.
+pub const STRATEGIES: &[&str] = &["single", "by_kind", "by_part", "groups"];
+
+/// The kinds of unit. `external` parts are not started and are listed beside the units.
+pub const UNIT_KINDS: &[&str] = &[
+    "core",
+    "agent",
+    "service",
+    "job",
+    "scheduled",
+    "store",
+    "model",
+];
+
+/// One unit: its name, kind, the parts it holds by path, and how many copies run.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Unit {
+    pub name: String,
+    pub kind: String,
+    pub parts: Vec<String>,
+    /// The copies that run; `None` for a `job` or `scheduled` unit, which runs on demand.
+    pub replicas: Option<u64>,
+}
+
+/// A resolved packing: the units, then the parts no target starts.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Packing {
+    /// The strategy it was resolved from, `units` when the section listed the units.
+    pub strategy: String,
+    pub units: Vec<Unit>,
+    pub external: Vec<String>,
+}
+
+fn text(v: &Value) -> &str {
+    v.as_str().unwrap_or("")
+}
+
+/// The built value of a part's `count`, at least 0, 1 when absent.
+pub fn count(part: &Value) -> u64 {
+    value(&part["count"])
+        .as_f64()
+        .map_or(1, |c| c.max(0.0) as u64)
+}
+
+/// Whether part `name` is woken by a clock: a `trigger` link into it from a schedule part or
+/// from a trigger part of kind `on_schedule`.
+pub fn woken_by_schedule(arch: &Value, name: &str) -> bool {
+    arch["links"].as_array().into_iter().flatten().any(|l| {
+        text(&l["to"]) == name
+            && text(&l["carries"]) == "trigger"
+            && is_clock(arch, text(&l["from"]))
+    })
+}
+
+/// A schedule part, or a trigger part of kind `on_schedule`.
+pub fn is_clock(arch: &Value, name: &str) -> bool {
+    let p = &arch["parts"][name];
+    match text(&p["block"]) {
+        "schedule" => true,
+        "trigger" => value(&p["kind"]).as_str() == Some("on_schedule"),
+        _ => false,
+    }
+}
+
+/// The part a `per` chain ends at: the part itself when it names no `per`.
+fn owner<'a>(parts: &'a Map<String, Value>, name: &'a str) -> &'a str {
+    let mut seen = BTreeSet::new();
+    let mut at = name;
+    while let Some(next) = parts.get(at).and_then(|p| p["per"].as_str()) {
+        if !seen.insert(at) || !parts.contains_key(next) {
+            break;
+        }
+        at = next;
+    }
+    at
+}
+
+/// Where a part goes before any strategy: outside, into the core, or a unit of its own kind.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Place {
+    External,
+    Core,
+    Own(&'static str),
+}
+
+/// The per-part overrides of the section, `parts: { <name>: { external, schedule } }`.
+struct Overrides<'a>(&'a Value);
+
+impl Overrides<'_> {
+    fn external(&self, name: &str) -> Option<bool> {
+        self.0[name]["external"].as_bool()
+    }
+    fn job(&self, name: &str) -> bool {
+        self.0[name]["schedule"] == "job"
+    }
+}
+
+fn place(arch: &Value, name: &str, part: &Value, o: &Overrides) -> Place {
+    if o.external(name) == Some(true) {
+        return Place::External;
+    }
+    match text(&part["block"]) {
+        "principal" => Place::External,
+        "model" if o.external(name) == Some(false) => Place::Own("model"),
+        "model" => Place::External,
+        "agent" if o.job(name) => {
+            if woken_by_schedule(arch, name) {
+                Place::Own("scheduled")
+            } else {
+                Place::Own("job")
+            }
+        }
+        "agent" => Place::Own("agent"),
+        "gateway" | "pool" | "tool" | "runtime" => Place::Own("service"),
+        "workspace" if part["per"].is_null() => Place::Own("store"),
+        _ => Place::Core,
+    }
+}
+
+/// Whether a unit of this kind runs as copies (`replicas`) rather than on demand.
+fn replicated(kind: &str) -> bool {
+    !matches!(kind, "job" | "scheduled")
+}
+
+/// Resolve the `packing:` section of a binding (`Null` when absent) for one architecture
+/// document. Refused, with every problem of the section's form, when it names an unknown key,
+/// strategy, kind or part, or two units of one name. A part placed twice or nowhere is not a
+/// problem of the form: admission names it.
+pub fn resolve(arch: &Value, section: &Value) -> Result<Packing, Vec<String>> {
+    let empty = Map::new();
+    let parts = arch["parts"].as_object().unwrap_or(&empty);
+    let mut problems = Vec::new();
+    let section = match section {
+        Value::Null => &Value::Object(Map::new()),
+        Value::Object(_) => section,
+        _ => return Err(vec!["packing: is a mapping".into()]),
+    };
+    for k in section.as_object().into_iter().flatten().map(|(k, _)| k) {
+        if !["strategy", "groups", "parts", "units", "external"].contains(&k.as_str()) {
+            problems.push(format!("packing: unknown key `{k}`"));
+        }
+    }
+    let known = |name: &str, at: &str, problems: &mut Vec<String>| {
+        if !parts.contains_key(name) {
+            problems.push(format!(
+                "packing: {at}: `{name}` is not a part of the document"
+            ));
+        }
+    };
+    if !section["units"].is_null() {
+        for k in ["strategy", "groups", "parts"] {
+            if !section[k].is_null() {
+                problems.push(format!(
+                    "packing: `{k}:` and `units:` do not go together (`units:` lists every unit)"
+                ));
+            }
+        }
+        let units = explicit(section, &known, &mut problems);
+        let external: Vec<String> = names(&section["external"]);
+        for e in &external {
+            known(e, "external", &mut problems);
+        }
+        check_names(&units, &mut problems);
+        if !problems.is_empty() {
+            return Err(problems);
+        }
+        return Ok(Packing {
+            strategy: "units".into(),
+            units,
+            external,
+        });
+    }
+    if !section["external"].is_null() {
+        problems.push(
+            "packing: `external:` goes with `units:` (with a strategy, mark a part `external: true` under `parts:`)"
+                .into(),
+        );
+    }
+    let strategy = match &section["strategy"] {
+        Value::Null => STRATEGIES[0],
+        Value::String(s) if STRATEGIES.contains(&s.as_str()) => STRATEGIES
+            .iter()
+            .find(|x| **x == s)
+            .copied()
+            .unwrap_or("single"),
+        other => {
+            problems.push(format!(
+                "packing: strategy `{}` is not one of {}",
+                text(other),
+                STRATEGIES.join(", ")
+            ));
+            "single"
+        }
+    };
+    let overrides = &section["parts"];
+    if let Some(o) = overrides.as_object() {
+        for (name, entry) in o {
+            known(name, "parts", &mut problems);
+            for (k, v) in entry.as_object().into_iter().flatten() {
+                let ok = match k.as_str() {
+                    "external" => v.is_boolean(),
+                    "schedule" => v == "job",
+                    _ => false,
+                };
+                if !ok {
+                    problems.push(format!(
+                        "packing: parts: {name}: `{k}` is not `external: true|false` or `schedule: job`"
+                    ));
+                }
+            }
+            if entry["schedule"] == "job" && parts.get(name).is_some_and(|p| p["block"] != "agent")
+            {
+                problems.push(format!(
+                    "packing: parts: {name}: `schedule: job` is for an agent part"
+                ));
+            }
+        }
+    } else if !overrides.is_null() {
+        problems.push("packing: `parts:` is a mapping".into());
+    }
+    let groups: Vec<(String, Vec<String>)> = match &section["groups"] {
+        Value::Null => Vec::new(),
+        Value::Object(g) => g.iter().map(|(k, v)| (k.clone(), names(v))).collect(),
+        _ => {
+            problems.push("packing: `groups:` is a mapping from a unit name to its parts".into());
+            Vec::new()
+        }
+    };
+    if strategy != "groups" && !groups.is_empty() {
+        problems.push("packing: `groups:` goes with `strategy: groups`".into());
+    }
+    for (g, list) in &groups {
+        for p in list {
+            known(p, &format!("groups: {g}"), &mut problems);
+        }
+    }
+    if !problems.is_empty() {
+        return Err(problems);
+    }
+    let o = Overrides(overrides);
+    let units = by_strategy(arch, parts, strategy, &groups, &o);
+    let mut external: Vec<String> = parts
+        .iter()
+        .filter(|(name, part)| {
+            let root = owner(parts, name);
+            place(arch, root, &parts[root], &o) == Place::External
+                || place(arch, name, part, &o) == Place::External
+        })
+        .map(|(n, _)| n.clone())
+        .collect();
+    external.sort();
+    check_names(&units, &mut problems);
+    if !problems.is_empty() {
+        return Err(problems);
+    }
+    Ok(Packing {
+        strategy: strategy.into(),
+        units,
+        external,
+    })
+}
+
+fn names(v: &Value) -> Vec<String> {
+    v.as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|x| x.as_str().map(str::to_owned))
+        .collect()
+}
+
+fn check_names(units: &[Unit], problems: &mut Vec<String>) {
+    let mut seen = BTreeSet::new();
+    for u in units {
+        if !seen.insert(u.name.as_str()) {
+            problems.push(format!("packing: two units are named `{}`", u.name));
+        }
+    }
+}
+
+/// The units listed under `units:`.
+fn explicit(
+    section: &Value,
+    known: &dyn Fn(&str, &str, &mut Vec<String>),
+    problems: &mut Vec<String>,
+) -> Vec<Unit> {
+    let Some(list) = section["units"].as_array() else {
+        problems.push("packing: `units:` is a list".into());
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for (i, u) in list.iter().enumerate() {
+        let Some(m) = u.as_object() else {
+            problems.push(format!("packing: units[{i}] is a mapping"));
+            continue;
+        };
+        for k in m.keys() {
+            if !["name", "kind", "parts", "replicas"].contains(&k.as_str()) {
+                problems.push(format!("packing: units[{i}]: unknown key `{k}`"));
+            }
+        }
+        let name = text(&u["name"]).to_owned();
+        if name.is_empty() {
+            problems.push(format!("packing: units[{i}] needs a `name:`"));
+        }
+        let kind = text(&u["kind"]).to_owned();
+        if !UNIT_KINDS.contains(&kind.as_str()) {
+            problems.push(format!(
+                "packing: unit `{name}`: kind `{kind}` is not one of {}",
+                UNIT_KINDS.join(", ")
+            ));
+        }
+        let parts = names(&u["parts"]);
+        for p in &parts {
+            known(p, &format!("unit {name}"), problems);
+        }
+        let replicas = match &u["replicas"] {
+            Value::Null => replicated(&kind).then_some(1),
+            v => match v.as_u64() {
+                Some(n) if n > 0 && replicated(&kind) => Some(n),
+                Some(_) if !replicated(&kind) => {
+                    problems.push(format!(
+                        "packing: unit `{name}`: a {kind} unit runs on demand and has no replicas"
+                    ));
+                    None
+                }
+                _ => {
+                    problems.push(format!(
+                        "packing: unit `{name}`: replicas is a whole number above 0"
+                    ));
+                    None
+                }
+            },
+        };
+        out.push(Unit {
+            name,
+            kind,
+            parts,
+            replicas,
+        });
+    }
+    out
+}
+
+/// The units of a strategy. The core comes first and always exists; the other units follow in
+/// name order, each with its parts in name order.
+fn by_strategy(
+    arch: &Value,
+    parts: &Map<String, Value>,
+    strategy: &str,
+    groups: &[(String, Vec<String>)],
+    o: &Overrides,
+) -> Vec<Unit> {
+    let mut units: BTreeMap<String, (String, Vec<String>)> = BTreeMap::new();
+    let mut core: Vec<String> = Vec::new();
+    let listed: BTreeMap<&str, Vec<&str>> = {
+        let mut m: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+        for (g, list) in groups {
+            for p in list {
+                m.entry(p.as_str()).or_default().push(g.as_str());
+            }
+        }
+        m
+    };
+    let mut put = |unit: &str, kind: &str, part: &str, core: &mut Vec<String>| {
+        if unit == "core" && kind == "core" {
+            core.push(part.to_owned());
+        } else {
+            let e = units
+                .entry(unit.to_owned())
+                .or_insert_with(|| (kind.to_owned(), Vec::new()));
+            e.1.push(part.to_owned());
+        }
+    };
+    for (name, part) in parts {
+        let mut placed = false;
+        if strategy == "groups"
+            && let Some(gs) = listed.get(name.as_str())
+        {
+            for g in gs {
+                put(g, "", name, &mut core);
+            }
+            placed = true;
+        }
+        let root = owner(parts, name);
+        let rp = place(arch, root, &parts[root], o);
+        let own = place(arch, name, part, o);
+        // A part listed in a group and outside too is in both: admission names it packed twice.
+        if placed || own == Place::External || rp == Place::External {
+            continue;
+        }
+        // An unlisted `per` part follows the part its chain ends at.
+        let (target, kind) = if root != name {
+            if strategy == "groups"
+                && let Some(gs) = listed.get(root)
+            {
+                for g in gs {
+                    put(g, "", name, &mut core);
+                }
+                continue;
+            }
+            (root, rp)
+        } else {
+            (name.as_str(), own)
+        };
+        match kind {
+            Place::External => {}
+            Place::Core => put("core", "core", name, &mut core),
+            Place::Own(k) => {
+                let unit = match (strategy, k) {
+                    (_, "job" | "scheduled") => target.to_owned(),
+                    ("single" | "groups", _) => "core".to_owned(),
+                    ("by_kind", _) => text(&parts[target]["block"]).to_owned(),
+                    _ => target.to_owned(),
+                };
+                if unit == "core" {
+                    put("core", "core", name, &mut core);
+                } else {
+                    put(&unit, k, name, &mut core);
+                }
+            }
+        }
+    }
+    let mut out = vec![Unit {
+        name: "core".into(),
+        kind: "core".into(),
+        parts: sorted(core),
+        replicas: Some(1),
+    }];
+    for (name, (kind, list)) in units {
+        let list = sorted(list);
+        let kind = if kind.is_empty() {
+            group_kind(arch, parts, &list, o)
+        } else {
+            kind
+        };
+        let roots: Vec<&String> = list.iter().filter(|p| parts[*p]["per"].is_null()).collect();
+        let replicas = replicated(&kind).then(|| match roots.as_slice() {
+            [one] => count(&parts[*one]).max(1),
+            _ => 1,
+        });
+        out.push(Unit {
+            name,
+            kind,
+            parts: list,
+            replicas,
+        });
+    }
+    out
+}
+
+fn sorted(mut v: Vec<String>) -> Vec<String> {
+    v.sort();
+    v
+}
+
+/// The kind of a named group: the kind of its one `job` or `scheduled` agent, else `agent` when
+/// it holds an agent, `model` when it holds a served model, `store` when it holds only stores,
+/// `service` otherwise.
+fn group_kind(arch: &Value, parts: &Map<String, Value>, list: &[String], o: &Overrides) -> String {
+    let places: Vec<Place> = list
+        .iter()
+        .filter(|p| parts[*p]["per"].is_null())
+        .map(|p| place(arch, p, &parts[p], o))
+        .collect();
+    let has = |k: &'static str| places.contains(&Place::Own(k));
+    let kind = if places.len() == 1 && (has("job") || has("scheduled")) {
+        if has("job") { "job" } else { "scheduled" }
+    } else if has("agent") || has("job") || has("scheduled") {
+        "agent"
+    } else if has("model") {
+        "model"
+    } else if !places.is_empty() && places.iter().all(|p| *p == Place::Own("store")) {
+        "store"
+    } else {
+        "service"
+    };
+    kind.into()
+}
+
+impl Packing {
+    /// The packing as data: `units` (name, kind, parts, replicas when it runs as copies) and
+    /// `external`. Its digest is the packing digest of a bundle.
+    pub fn to_value(&self) -> Value {
+        let units: Vec<Value> = self
+            .units
+            .iter()
+            .map(|u| {
+                let mut m = json!({ "name": u.name, "kind": u.kind, "parts": u.parts });
+                if let Some(r) = u.replicas {
+                    m["replicas"] = json!(r);
+                }
+                m
+            })
+            .collect();
+        json!({ "units": units, "external": self.external })
+    }
+
+    /// The `packing:` section in its resolved form, to paste into a binding and change: the
+    /// same bytes for the same packing.
+    pub fn text(&self) -> String {
+        let list = |v: &[String]| flow(&json!(v));
+        let mut s = String::from("packing:\n  units:\n");
+        for u in &self.units {
+            s.push_str(&format!("    - name: {}\n", scalar(&u.name)));
+            s.push_str(&format!("      kind: {}\n", scalar(&u.kind)));
+            s.push_str(&format!("      parts: {}\n", list(&u.parts)));
+            if let Some(r) = u.replicas {
+                s.push_str(&format!("      replicas: {r}\n"));
+            }
+        }
+        s.push_str(&format!("  external: {}\n", list(&self.external)));
+        s
+    }
+
+    /// The unit that holds a part, when exactly one does.
+    pub fn unit_of(&self, part: &str) -> Option<&Unit> {
+        let mut found = self
+            .units
+            .iter()
+            .filter(|u| u.parts.iter().any(|p| p == part));
+        match (found.next(), found.next()) {
+            (Some(u), None) if !self.external.iter().any(|e| e == part) => Some(u),
+            _ => None,
+        }
+    }
+}

@@ -1,0 +1,7 @@
+format: agenticspec-rows/1
+field: coding
+rows:
+  - command: agentic.harness.RegisterPermissionMode
+    input:
+      name: accept-edits
+      summary: Takes edits of files in the session's workspace without asking and asks for every other action.

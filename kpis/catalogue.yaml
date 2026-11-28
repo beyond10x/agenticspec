@@ -268,18 +268,6 @@ kpis:
     status: planned
     source: research/2610.30571
 
-  - id: docs_changed_with_code_share
-    block: knowledge
-    kind: completeness
-    unit: share
-    summary: Share of merged code changes that also change the documentation they affect.
-    how: ProposalMerged events whose proposal writes source paths and also writes a documentation path or revises an entry, divided by merged proposals that write source paths.
-    direction: higher
-    gate: false
-    reads: [agentic.workspace.ProposalMerged, agentic.workspace.PathWritten, agentic.knowledge.KnowledgeRevised]
-    status: planned
-    source: research/2610.27381
-
   - id: sub_agents_started
     block: agent
     kind: quality
@@ -437,18 +425,6 @@ kpis:
     status: simulated
     source: research/2610.04375
 
-  - id: false_completions_shipped
-    block: work
-    kind: correctness
-    unit: count
-    summary: Tasks reported done, incorrect, and accepted.
-    how: Tasks claimed done minus tasks correct, restricted to deliverables that were accepted and merged. Must be 0.
-    direction: lower
-    gate: true
-    reads: [agentic.work.DeliverableSubmitted, agentic.work.DeliverableAccepted, agentic.work.TaskCompleted]
-    status: simulated
-    source: research/2610.04375
-
   - id: rework_turns
     block: work
     kind: quality
@@ -484,18 +460,6 @@ kpis:
     gate: false
     reads: [agentic.work.TaskCreated, agentic.work.RunStarted]
     status: simulated
-    source: design
-
-  - id: task_to_merge_seconds
-    block: work
-    kind: quality
-    unit: seconds
-    summary: Time from task start to merge of its change.
-    how: Seconds between TaskCreated and the ProposalMerged of the task's deliverable, median and 90th percentile.
-    direction: lower
-    gate: false
-    reads: [agentic.work.TaskCreated, agentic.workspace.ProposalMerged]
-    status: planned
     source: design
 
   - id: forbidden_path_writes
@@ -753,18 +717,6 @@ kpis:
     status: planned
     source: design
 
-  - id: proposals_merged_share
-    block: workspace
-    kind: completeness
-    unit: share
-    summary: Proposals merged of proposals made.
-    how: ProposalMerged events divided by ChangeProposed events. Superseded and rejected proposals stay in the divisor.
-    direction: higher
-    gate: false
-    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged, agentic.workspace.ProposalRejected, agentic.workspace.ProposalSuperseded]
-    status: planned
-    source: design
-
   - id: writes_without_lease
     block: workspace
     kind: correctness
@@ -776,30 +728,6 @@ kpis:
     reads: [agentic.workspace.PathWritten, agentic.workspace.LeaseGranted, agentic.workspace.LeaseReleased, agentic.workspace.LeaseExpired]
     status: planned
     source: research/2609.00252
-
-  - id: revert_rate
-    block: workspace
-    kind: correctness
-    unit: share
-    summary: Share of merged proposals that a later proposal reverts.
-    how: ProposalMerged events whose changes are undone by a later merged proposal, divided by ProposalMerged events, per author kind (agent, human). A rate, so not a gate.
-    direction: lower
-    gate: false
-    reads: [agentic.workspace.ProposalMerged, agentic.workspace.ChangeProposed]
-    status: planned
-    source: research/2609.17598
-
-  - id: open_to_merge_seconds
-    block: workspace
-    kind: quality
-    unit: seconds
-    summary: Time from a proposal to its merge.
-    how: Seconds between ChangeProposed and ProposalMerged of one proposal, median and 90th percentile.
-    direction: lower
-    gate: false
-    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged]
-    status: planned
-    source: research/2610.28683
 
   - id: secrets_left_session
     block: sandbox
@@ -1178,24 +1106,12 @@ kpis:
     kind: correctness
     unit: share
     summary: Share of failed runs that reported done.
-    how: Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. The shipped count is false_completions_shipped; this rate is not a gate.
+    how: Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. This rate is not a gate.
     direction: lower
     gate: false
     reads: [agentic.work.RunEnded, agentic.work.DeliverableSubmitted]
     status: planned
     source: research/2610.04375
-
-  - id: vacuous_check_share
-    block: verification
-    kind: correctness
-    unit: share
-    summary: Share of checks that pass on a change that touches nothing relevant.
-    how: Run each accepted check against a commit that does not touch what the check covers; checks that pass divided by checks run. A check needs a negative case.
-    direction: lower
-    gate: false
-    reads: [agentic.work.DeliverableAccepted]
-    status: planned
-    source: research/2611.13709
 
   - id: critic_false_accept_share
     block: verification
@@ -1454,7 +1370,7 @@ kpis:
     kind: correctness
     unit: count
     summary: Tasks finished a second time from the same origin, so a second run did work already done.
-    how: Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate, like false_completions_shipped.
+    how: Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate.
     direction: lower
     gate: false
     reads: [agentic.trigger.FiringStarted, agentic.work.DeliverableAccepted]
@@ -1497,14 +1413,293 @@ kpis:
     status: simulated
     source: design
 
-  - id: merge_conflicts
-    block: workspace
+  - id: agents_total
+    block: architecture
+    kind: completeness
+    unit: count
+    summary: "Agent copies: the sum of count over the agent parts."
+    how: The sum of count over the parts with block agent, 1 for a part without count; a marked count at its value as built. Read from the architecture document by agenticspec sim check, before any simulation.
+    direction: higher
+    gate: false
+    reads: [agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: principals_total
+    block: architecture
+    kind: completeness
+    unit: count
+    summary: Principal parts.
+    how: Parts with block principal in the architecture document, read by agenticspec sim check.
+    direction: lower
+    modes: { autonomous: lower, pairing: higher, review: higher }
+    gate: false
+    reads: [agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: human_touchpoints
+    block: architecture
     kind: quality
     unit: count
-    summary: Merges that touched a scope another merge changed since the work started.
-    how: ProposalMerged events whose scope another merge touched after the proposal's work began. The simulator counts them per partitioned part; under a mesh the conflict costs a round of rework, without one the merge lands broken.
+    summary: Links that end at a principal and carry a question or a proposal.
+    how: Links whose to is a principal part and whose carries is question or proposal, the two kinds the architectures use to ask a human to decide. A prompt from a principal is not counted. Read by agenticspec sim check.
+    direction: lower
+    modes: { autonomous: lower, pairing: ignore, review: ignore }
+    gate: false
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: autonomy_depth
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Links in the longest chain of order and question links from agent to agent.
+    how: The longest path without a repeated part over links that carry order or question and join two agent parts, counted in links; no principal is on such a chain. 0 when no agent passes work or a question to another. Read by agenticspec sim check.
+    direction: lower
+    modes: { autonomous: ignore, pairing: lower, review: lower }
+    gate: false
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: model_call_paths
+    block: architecture
+    kind: completeness
+    unit: count
+    summary: Distinct paths of model_call links from an agent part to a model part.
+    how: Paths without a repeated part over model_call links that start at an agent part and end at the first model part they reach, summed over the agent parts. More than one per agent is a fallback. Read by agenticspec sim check.
+    direction: higher
+    gate: false
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: ungated_model_calls
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Paths of model_call links from an agent to a model that pass no gateway part.
+    how: Of the paths model_call_paths counts, those with no gateway part between the agent and the model. Such a call has no rate limit, budget or record of a gateway. Read by agenticspec sim check.
     direction: lower
     gate: false
-    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged]
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
     status: simulated
+    source: design
+
+  - id: single_points
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Parts whose removal leaves some agent with no model_call path to a model.
+    how: The cut vertices of the model_call graph between agents and models. A part counts when some other agent part that reaches a model reaches none once the part is removed; a lone gateway or a lone model counts. agenticspec sim check names them.
+    direction: lower
+    gate: false
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: border_parts
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Parts named in the border, the parts that take input from outside.
+    how: Distinct names in the border of the architecture document that are parts. Fewer is a smaller surface. Read by agenticspec sim check.
+    direction: lower
+    gate: false
+    reads: [agentic.architecture.PartBordered]
+    status: simulated
+    source: design
+
+  - id: egress_targets
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Distinct parts named in the egress of the sandbox parts.
+    how: The union of the egress lists of every part with block sandbox, counting the names that are parts once. Fewer is a smaller exposure. Read by agenticspec sim check.
+    direction: lower
+    gate: false
+    reads: [agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: shared_workspaces
+    block: architecture
+    kind: quality
+    unit: count
+    summary: Workspace parts whose sharing is not exclusive.
+    how: Parts with block workspace whose sharing is anything but exclusive, a workspace without sharing included. Read by agenticspec sim check.
+    direction: lower
+    gate: false
+    reads: [agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: capacity_ratio
+    block: architecture
+    kind: quality
+    unit: ratio
+    summary: Agent copies that claim a pool divided by its capacity, the largest over the pools.
+    how: For each pool part with a capacity, the copies of the agent parts with a claim link to it divided by the capacity; the largest of these, 0 without a pool. A marked count or capacity at its value as built, as the simulator reads it. Above 1, copies wait for the pool. Read by agenticspec sim check.
+    direction: lower
+    gate: false
+    reads: [agentic.architecture.LinkAdded, agentic.architecture.PartAdded]
+    status: simulated
+    source: design
+
+  - id: run_failure_share
+    block: deployment
+    kind: quality
+    unit: share
+    summary: Share of architecture runs that failed.
+    how: RunFailed events divided by RunQueued events, per installation and per architecture revision, so a revision that fails more than the one it replaced shows before a rollback.
+    direction: lower
+    gate: false
+    reads: [agentic.deployment.RunQueued, agentic.deployment.RunFailed]
+    status: planned
+    source: design
+
+  - id: run_queue_wait_p50_seconds
+    block: deployment
+    kind: quality
+    unit: seconds
+    summary: Median time an architecture run waits queued before it starts.
+    how: Seconds between RunQueued and RunStarted of one run, median per installation.
+    direction: lower
+    gate: false
+    reads: [agentic.deployment.RunQueued, agentic.deployment.RunStarted]
+    status: planned
+    source: design
+
+  - id: rollback_share
+    block: deployment
+    kind: quality
+    unit: share
+    summary: Share of installations that were rolled back.
+    how: InstallationRolledBack events divided by RevisionInstalled events that replaced an installation, per runtime.
+    direction: lower
+    gate: false
+    reads: [agentic.deployment.RevisionInstalled, agentic.deployment.InstallationRolledBack]
+    status: planned
+    source: design
+
+  - id: drain_p90_seconds
+    block: deployment
+    kind: quality
+    unit: seconds
+    summary: 90th percentile of the time an installation takes to drain.
+    how: Seconds between DrainStarted and InstallationDrained of one installation, 90th percentile per runtime. Long drains hold an old revision running beside the new one.
+    direction: lower
+    gate: false
+    reads: [agentic.deployment.DrainStarted, agentic.deployment.InstallationDrained]
+    status: planned
+    source: design
+
+  - id: session_restart_share
+    block: harness
+    kind: quality
+    unit: share
+    summary: Share of opened sessions that restart an ended one.
+    how: SessionRestarted events divided by SessionOpened events, per principal. Time and tokens of a lineage are summed over its sessions, grouped by the lineage each restart names.
+    direction: lower
+    gate: false
+    reads: [agentic.harness.SessionOpened, agentic.harness.SessionRestarted]
+    status: planned
+    source: design
+
+  - id: tool_results_not_read
+    block: harness
+    kind: quality
+    unit: count
+    summary: Tool calls whose result could not be read.
+    how: ToolResultNotRead events per session and per tool. Each is recorded as could not read, never as an empty result.
+    direction: lower
+    gate: false
+    reads: [agentic.harness.ToolResultNotRead]
+    status: planned
+    source: design
+
+  - id: answers_not_read_share
+    block: question
+    kind: quality
+    unit: share
+    summary: Share of questions whose answer could not be read.
+    how: AnswerNotRead events divided by QuestionAsked events, per addressee. A reply that could not be read ends the question; its default is never taken in its place.
+    direction: lower
+    gate: false
+    reads: [agentic.question.QuestionAsked, agentic.question.AnswerNotRead]
+    status: planned
+    source: design
+
+  - id: firings_replaced_share
+    block: trigger
+    kind: quality
+    unit: share
+    summary: Share of started firings that a newer firing for the same subject replaced.
+    how: FiringReplaced events divided by FiringStarted events, per trigger with the Replace subject policy. High means work is started and thrown away.
+    direction: lower
+    gate: false
+    reads: [agentic.trigger.FiringStarted, agentic.trigger.FiringReplaced]
+    status: planned
+    source: design
+
+  - id: store_put_failure_share
+    block: store
+    kind: quality
+    unit: share
+    summary: Share of puts into a store that the store service failed.
+    how: PutFailed events divided by PutRequested events, per store. A failed put stores nothing and leaves the record it would supersede present.
+    direction: lower
+    gate: false
+    reads: [agentic.store.PutRequested, agentic.store.PutFailed]
+    status: planned
+    source: design
+
+  - id: store_read_seconds
+    block: store
+    kind: quality
+    unit: seconds
+    summary: Median time from a get or query of a store to its answer.
+    how: Seconds from ReadRequested to RecordReturned and from QueryRequested to QueryAnswered, median per store. Failed reads are counted apart.
+    direction: lower
+    gate: false
+    reads: [agentic.store.ReadRequested, agentic.store.RecordReturned, agentic.store.QueryRequested, agentic.store.QueryAnswered]
+    status: planned
+    source: design
+
+  - id: records_never_read
+    block: store
+    kind: quality
+    unit: share
+    summary: Share of records that ended without being read once.
+    how: Records put that expired, were deleted or were superseded with no RecordReturned naming them, divided by records that ended. A store written and never read costs writes for nothing.
+    direction: lower
+    gate: false
+    reads: [agentic.store.RecordPut, agentic.store.RecordReturned, agentic.store.RecordExpired, agentic.store.RecordDeleted, agentic.store.RecordSuperseded]
+    status: planned
+    source: design
+
+  - id: deleted_without_approval
+    block: store
+    kind: correctness
+    unit: count
+    summary: Records deleted before their expiry without a principal's approval.
+    how: RecordDeleted events of a record that had not expired, with no ApprovalGranted for that deletion before it. Deleting data cannot be undone. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.store.RecordDeleted, agentic.authority.ApprovalGranted]
+    status: planned
+    source: design
+
+  - id: evidence_unresolved
+    block: work
+    kind: correctness
+    unit: count
+    summary: Accepted deliverables whose evidence names a record that is not present, or only records its submitter recorded.
+    how: DeliverableAccepted events whose deliverable lists an evidence record with no RecordPut before the acceptance, one that ended before it, or whose every evidence record the submitting agent recorded itself. Must be 0.
+    direction: lower
+    gate: true
+    reads: [agentic.work.DeliverableSubmitted, agentic.work.DeliverableAccepted, agentic.store.RecordPut]
+    status: planned
     source: design

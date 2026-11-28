@@ -141,6 +141,17 @@ entities:
           from: [Published]
           to: Retired
 
+actors:
+  - name: agentic.agent.Viewer
+    naming:
+      display: Agent viewer
+      summary: >-
+        Whoever looks at the agents and their revisions, such as an operator's view of a running
+        system. It reads the views of this block and issues none of its commands.
+    may:
+      - agentic.agent.Agents
+      - agentic.agent.AgentRevisions
+
 errors:
   - name: agentic.agent.UnknownPrincipal
     summary: No principal of this identity is registered.

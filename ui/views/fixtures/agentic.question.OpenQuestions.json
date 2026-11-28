@@ -1,0 +1,8 @@
+{
+  "view": "agentic.question.OpenQuestions",
+  "rows": [
+    {"question_id": "00000000-0000-4000-8000-d74009500000", "asked_by": "00000000-0000-4000-8000-761908b00000", "kind": "Choice", "default_option": "default option 1", "deadline": "2026-11-20T09:04:00Z"},
+    {"question_id": "00000000-0000-4000-8000-d74009500001", "asked_by": "00000000-0000-4000-8000-761908b00001", "kind": "Approval", "default_option": "default option 2", "deadline": "2026-11-20T10:04:00Z"},
+    {"question_id": "00000000-0000-4000-8000-d74009500002", "asked_by": "00000000-0000-4000-8000-761908b00002", "kind": "Choice", "default_option": "default option 3", "deadline": "2026-11-20T11:04:00Z"}
+  ]
+}

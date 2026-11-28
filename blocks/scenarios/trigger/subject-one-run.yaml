@@ -1,0 +1,187 @@
+# A trigger's subject policy, walked by hand (M35, M32): synthesis cannot reach a started firing,
+# because that takes a recorded start. An OnEvent trigger that allows two runs at once and answers a
+# subject with one run at a time (Replace) refuses a firing without a subject key, refuses a repeat
+# of a firing it recorded, and refuses to start a second firing for a subject whose firing runs.
+# A firing for another subject starts. The dispatcher ends the running firing as Replaced and
+# starts the waiting one. A trigger without a subject policy (Another) starts both.
+type: ess-scenario/7
+domain: agentic.trigger
+scenario: subject-one-run
+summary: Under a subject policy other than Another, a second firing for a subject does not start while the first runs; a repeated firing identity records nothing.
+
+arrange:
+  - instance: one
+    entity: agentic.trigger.Trigger
+  - instance: many
+    entity: agentic.trigger.Trigger
+
+timeline:
+  # the agent revision the triggers wake
+  - at: 2026-11-27T09:00:00Z
+    command: agentic.principal.RegisterPrincipal
+    input: {principal_id: 00000000-0000-4000-8000-0000000005a1, kind: Agent, name: reviewer, at: 2026-11-27T09:00:00Z}
+    outcome: registered
+  - at: 2026-11-27T09:00:01Z
+    command: agentic.agent.DefineAgent
+    input: {agent_id: 00000000-0000-4000-8000-0000000005a2, principal_id: 00000000-0000-4000-8000-0000000005a1, name: reviewer, at: 2026-11-27T09:00:01Z}
+    outcome: defined
+  - at: 2026-11-27T09:00:02Z
+    command: agentic.agent.PublishRevision
+    input:
+      agent_revision_id: 00000000-0000-4000-8000-0000000005a3
+      agent_id: 00000000-0000-4000-8000-0000000005a2
+      number: 1
+      role: reviewer
+      instructions: {digest: sha256-instructions, length: 400, class: prompt}
+      models: [{use: Primary, target: {kind: Model, value: 00000000-0000-4000-8000-0000000005a4}}]
+      tools: []
+      knowledge: []
+      budget: {}
+      at: 2026-11-27T09:00:02Z
+    outcome: published
+
+  # two OnEvent triggers, two runs at once each: one replaces per subject, one starts another
+  - at: 2026-11-27T09:00:03Z
+    command: agentic.trigger.CreateTrigger
+    input:
+      kind: OnEvent
+      event_name: agentic.work.TaskSubmitted
+      agent_revision_id: 00000000-0000-4000-8000-0000000005a3
+      policy: Parallel
+      max_parallel: 2
+      subject_policy: Replace
+    outcome: created
+    capture: {instance: one, event: agentic.trigger.TriggerCreated, field: trigger_id}
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.trigger.EnableTrigger
+    input: {trigger_id: {$instance: one}}
+    outcome: enabled
+  - at: 2026-11-27T09:00:05Z
+    command: agentic.trigger.CreateTrigger
+    input:
+      kind: OnEvent
+      event_name: agentic.work.TaskSubmitted
+      agent_revision_id: 00000000-0000-4000-8000-0000000005a3
+      policy: Parallel
+      max_parallel: 2
+    outcome: created
+    capture: {instance: many, event: agentic.trigger.TriggerCreated, field: trigger_id}
+  - at: 2026-11-27T09:00:06Z
+    command: agentic.trigger.EnableTrigger
+    input: {trigger_id: {$instance: many}}
+    outcome: enabled
+
+  # a firing without a subject key is refused under Replace
+  - at: 2026-11-27T10:00:00Z
+    command: agentic.trigger.FireTrigger
+    input: {firing_id: 00000000-0000-4000-8000-0000000005f0, trigger_id: {$instance: one}}
+    outcome: subject-key-missing
+    error:
+      name: agentic.trigger.SubjectKeyMissing
+    no_events: [agentic.trigger.TriggerFired]
+
+  # the first firing for task-1 starts
+  - at: 2026-11-27T10:00:01Z
+    command: agentic.trigger.FireTrigger
+    input: {firing_id: 00000000-0000-4000-8000-0000000005f1, trigger_id: {$instance: one}, subject_key: task-1}
+    outcome: fired
+  - at: 2026-11-27T10:00:02Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: one}, firing_id: 00000000-0000-4000-8000-0000000005f1, run_id: 00000000-0000-4000-8000-0000000005b1}
+    outcome: started
+
+  # the same firing again: refused, nothing recorded
+  - at: 2026-11-27T10:00:03Z
+    command: agentic.trigger.FireTrigger
+    input: {firing_id: 00000000-0000-4000-8000-0000000005f1, trigger_id: {$instance: one}, subject_key: task-1}
+    outcome: repeated
+    error:
+      name: agentic.trigger.FiringExists
+      fields: {firing_id: 00000000-0000-4000-8000-0000000005f1}
+    no_events: [agentic.trigger.TriggerFired]
+
+  # a started firing does not start again
+  - at: 2026-11-27T10:00:04Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: one}, firing_id: 00000000-0000-4000-8000-0000000005f1, run_id: 00000000-0000-4000-8000-0000000005b9}
+    outcome: firing-not-waiting
+    error:
+      name: agentic.trigger.FiringNotWaiting
+    no_events: [agentic.trigger.FiringStarted]
+
+  # a second firing for task-1 is recorded, and does not start while the first runs
+  - at: 2026-11-27T10:05:00Z
+    command: agentic.trigger.FireTrigger
+    input: {firing_id: 00000000-0000-4000-8000-0000000005f2, trigger_id: {$instance: one}, subject_key: task-1}
+    outcome: fired
+  - at: 2026-11-27T10:05:01Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: one}, firing_id: 00000000-0000-4000-8000-0000000005f2, run_id: 00000000-0000-4000-8000-0000000005b2}
+    outcome: subject-running
+    error:
+      name: agentic.trigger.SubjectRunning
+    no_events: [agentic.trigger.FiringStarted]
+
+  # a firing for task-2 starts beside it
+  - at: 2026-11-27T10:06:00Z
+    command: agentic.trigger.FireTrigger
+    input: {firing_id: 00000000-0000-4000-8000-0000000005f3, trigger_id: {$instance: one}, subject_key: task-2}
+    outcome: fired
+  - at: 2026-11-27T10:06:01Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: one}, firing_id: 00000000-0000-4000-8000-0000000005f3, run_id: 00000000-0000-4000-8000-0000000005b3}
+    outcome: started
+
+  # Replace: the dispatcher ends the running firing of task-1 and starts the waiting one
+  - at: 2026-11-27T10:07:00Z
+    command: agentic.trigger.RecordReplaced
+    input: {trigger_id: {$instance: one}, firing_id: 00000000-0000-4000-8000-0000000005f1}
+    outcome: replaced
+    events:
+      - event: agentic.trigger.FiringReplaced
+        payload: {firing_id: 00000000-0000-4000-8000-0000000005f1}
+  - at: 2026-11-27T10:07:01Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: one}, firing_id: 00000000-0000-4000-8000-0000000005f2, run_id: 00000000-0000-4000-8000-0000000005b2}
+    outcome: started
+
+  # Another: two firings for the same subject both start
+  - at: 2026-11-27T11:00:00Z
+    command: agentic.trigger.FireTrigger
+    input: {firing_id: 00000000-0000-4000-8000-0000000005e1, trigger_id: {$instance: many}, subject_key: task-1}
+    outcome: fired
+  - at: 2026-11-27T11:00:01Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: many}, firing_id: 00000000-0000-4000-8000-0000000005e1, run_id: 00000000-0000-4000-8000-0000000005c1}
+    outcome: started
+  - at: 2026-11-27T11:00:02Z
+    command: agentic.trigger.FireTrigger
+    input: {firing_id: 00000000-0000-4000-8000-0000000005e2, trigger_id: {$instance: many}, subject_key: task-1}
+    outcome: fired
+  - at: 2026-11-27T11:00:03Z
+    command: agentic.trigger.RecordStart
+    input: {trigger_id: {$instance: many}, firing_id: 00000000-0000-4000-8000-0000000005e2, run_id: 00000000-0000-4000-8000-0000000005c2}
+    outcome: started
+
+assert:
+  - view: agentic.trigger.RecentFirings
+    params:
+      trigger_id: {$instance: one}
+    contains:
+      firing_id: 00000000-0000-4000-8000-0000000005f1
+      state: Replaced
+  - view: agentic.trigger.RecentFirings
+    params:
+      trigger_id: {$instance: one}
+    contains:
+      firing_id: 00000000-0000-4000-8000-0000000005f2
+      state: Started
+      run_id: 00000000-0000-4000-8000-0000000005b2
+  - view: agentic.trigger.Triggers
+    contains:
+      trigger_id: {$instance: one}
+      running: 2
+  - view: agentic.trigger.Triggers
+    contains:
+      trigger_id: {$instance: many}
+      running: 2
