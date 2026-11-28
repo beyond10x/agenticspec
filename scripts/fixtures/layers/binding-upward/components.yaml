@@ -1,0 +1,17 @@
+components:
+  - component: fixture
+    summary: Both blocks.
+    owns:
+      domains: [fixture.low, fixture.high]
+
+bindings:
+  - id: record-on-ping
+    summary: An event of layer 2 invokes a command of layer 7, which the layering refuses.
+    when:
+      event: fixture.low.Pinged
+    invoke:
+      command: fixture.high.Record
+    mapping:
+      label: event.label
+    delivery: at_most_once
+    on_failure: drop

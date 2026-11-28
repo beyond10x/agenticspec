@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
     'docs/privacy',
     'docs/library',
     'docs/scenarios',
+    'docs/contract',
     {
       type: 'category',
       label: 'Building blocks',

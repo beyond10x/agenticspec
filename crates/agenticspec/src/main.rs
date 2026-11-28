@@ -447,6 +447,41 @@ impl Handler for Commands {
                     .and_then(Value::as_bool)
                     .unwrap_or(false),
             )),
+            "sim_ports" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (blocks, out, check, expect) =
+                    (path("blocks"), path("out"), path("check"), path("expect"));
+                let mut err = std::io::stderr().lock();
+                sim_reply(sim::ports(
+                    &sim::PortsOptions {
+                        blocks: blocks.as_deref(),
+                        out: out.as_deref(),
+                        check: check.as_deref(),
+                        expect: expect.as_deref(),
+                    },
+                    &mut err,
+                ))
+            }
+            "sim_contract" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (ports, out, check) = (path("ports"), path("out"), path("check"));
+                sim_reply(sim::contract(&sim::ContractOptions {
+                    architecture: &path_of(&inv.input, "architecture"),
+                    ports: ports.as_deref(),
+                    out: out.as_deref(),
+                    check: check.as_deref(),
+                }))
+            }
             _ => HandlerReply::Unavailable,
         }
     }

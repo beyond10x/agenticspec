@@ -101,6 +101,12 @@ pub fn generate(root: &Path, core_catalogue: &Catalogue) -> Result<Option<Output
         for a in &archs {
             files.insert(format!("docs/{}.md", a.slug), arch::page(a, &all));
             files.insert(format!("website/static/{}.html", a.slug), arch::html(a));
+            if let Ok(shown) = &a.contract {
+                files.insert(
+                    format!("website/static/{}.contract.yaml", a.slug),
+                    shown.contract.text(),
+                );
+            }
             items.push(json!(format!("docs/{}", a.slug)));
         }
         sidebar_fields.push(json!({

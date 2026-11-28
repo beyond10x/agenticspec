@@ -394,6 +394,8 @@ Lifecycle: one state, `Declared`; a recorded Port does not change.
 
 **Retire an architecture.**
 
+Called by: Deployer.
+
 | field | type |
 |---|---|
 | `architecture_id` | `ArchitectureId` |

@@ -7,6 +7,7 @@ tasks:
       - task: check:spec
       - task: check:blocks
       - task: check:fields
+      - task: check:ports
       - task: check:ui
       - task: check:app
       - task: check:generated
@@ -53,6 +54,26 @@ tasks:
     desc: Slow lane. Synthesize the conformance suite of the whole system afresh, compare it byte for byte with the cached suite of the same digest, and run it.
     cmds:
       - scripts/check-blocks-conform.sh --path . --slow
+
+  ports:generate:
+    desc: Derive the ports of the building blocks (bindings and lifecycles of blocks/, compiled by ess) into the committed blocks/ports.json, with the digest of its sources.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec sim ports --blocks blocks --out blocks/ports.json
+
+  check:ports:
+    desc: Fail when blocks/ports.json was derived from other sources than blocks/ (its digest only, no ess call); names task ports:generate.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec sim ports --blocks blocks --check blocks/ports.json
+
+  slow:ports:
+    desc: Slow lane. Derive the ports afresh and compare them byte for byte with blocks/ports.json.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - mkdir -p target/ports
+      - target/debug/agenticspec sim ports --blocks blocks --out target/ports/ports.json
+      - cmp blocks/ports.json target/ports/ports.json
 
   check:kpis:
     desc: Check kpis/catalogue.yaml and every packs/<pack>/kpis.yaml against their format, their blocks and the events they may read.

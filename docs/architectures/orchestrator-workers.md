@@ -68,6 +68,35 @@ A marked place carries `vary`: the value as built and the values a search may tr
 
 <span className="as-tag as-tag--accepted">accepted</span> 7 parts and 7 links; the structural check refuses nothing.
 
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [orchestrator-workers.contract.yaml](pathname:///architectures/orchestrator-workers.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 16`, `job_limit: 10m`, `kind: build_slots` | 1 |
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `orchestrator` | `harness: coding`, `role: orchestrator` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `orchestrator` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 8 |
+| `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 8 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `workers` | `harness: coding` | 8 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `workers` | none | 8 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `workers` | none | 8 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `workers` | none | 8 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `workers -> owner carries question`: `every question.question@workers to owner`
+- `orchestrator -> gateway carries model_call`: `every model.inference@orchestrator inside gateway.call@gateway`
+- `workers -> gateway carries model_call`: `every model.inference@workers inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+- `workers -> builds carries claim`: `every resource.claim@workers to builds`
+
+Border: none.
+
 ## Parts
 
 | part | block | settings |

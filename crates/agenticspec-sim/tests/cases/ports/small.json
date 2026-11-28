@@ -1,0 +1,110 @@
+{
+  "system": "small",
+  "actors": {
+    "agentic.architecture.Deployer": { "may": ["small.registry.Retire"] },
+    "agentic.architecture.Principal": { "may": ["small.ask.Answer"] }
+  },
+  "bindings": {
+    "start-job-on-request": { "event": "small.job.Requested", "command": "small.job.Start" }
+  },
+  "events": {
+    "small.job.Requested": {},
+    "small.job.Started": {},
+    "small.job.Finished": {},
+    "small.ask.Asked": {},
+    "small.ask.Answered": {},
+    "small.registry.Registered": {},
+    "small.registry.Retired": {}
+  },
+  "entities": {
+    "small.job.Job": {
+      "identity": { "type_ref": { "kind": "declared", "name": "small.job.JobId" } },
+      "lifecycle": { "states": ["Done", "Started"], "initial": "Started", "terminal": ["Done"] }
+    },
+    "small.job.Step": {
+      "identity": { "type_ref": { "kind": "declared", "name": "small.job.StepId" } },
+      "lifecycle": { "states": ["Recorded"], "initial": "Recorded", "terminal": ["Recorded"] }
+    },
+    "small.ask.Question": {
+      "identity": { "type_ref": { "kind": "declared", "name": "small.ask.QuestionId" } },
+      "lifecycle": { "states": ["Answered", "Open"], "initial": "Open", "terminal": ["Answered"] }
+    },
+    "small.registry.Entry": {
+      "identity": { "type_ref": { "kind": "declared", "name": "small.registry.EntryId" } },
+      "lifecycle": { "states": ["Active", "Retired"], "initial": "Active", "terminal": ["Retired"] }
+    }
+  },
+  "commands": {
+    "small.job.Request": {
+      "input": [],
+      "outcomes": [
+        { "name": "requested", "condition": { "kind": "otherwise" }, "subject": null,
+          "emits": ["small.job.Requested"], "error": null }
+      ]
+    },
+    "small.job.Start": {
+      "input": [{ "name": "job_id", "type_ref": { "kind": "declared", "name": "small.job.JobId" } }],
+      "outcomes": [
+        { "name": "started", "condition": { "kind": "otherwise" },
+          "subject": { "entity": "small.job.Job", "effect": "creates" },
+          "emits": ["small.job.Started"], "error": null }
+      ]
+    },
+    "small.job.Finish": {
+      "input": [{ "name": "job_id", "type_ref": { "kind": "declared", "name": "small.job.JobId" } }],
+      "outcomes": [
+        { "name": "unknown", "condition": { "kind": "unknown_instance" }, "subject": null,
+          "emits": [], "error": "small.job.UnknownJob" },
+        { "name": "finished", "condition": { "kind": "otherwise" },
+          "subject": { "entity": "small.job.Job", "effect": "moves",
+                       "transition": { "name": "finish", "from": ["Started"], "to": "Done" } },
+          "emits": ["small.job.Finished"], "error": null }
+      ]
+    },
+    "small.job.RecordStep": {
+      "input": [{ "name": "job_id", "type_ref": { "kind": "declared", "name": "small.job.JobId" } }],
+      "outcomes": [
+        { "name": "done", "condition": { "kind": "related", "entity": "small.job.Job",
+                                         "test": { "holds": { "predicate": "state == Done" } } },
+          "subject": null, "emits": [], "error": "small.job.JobDone" },
+        { "name": "recorded", "condition": { "kind": "otherwise" },
+          "subject": { "entity": "small.job.Step", "effect": "creates" },
+          "emits": [], "error": null }
+      ]
+    },
+    "small.ask.Ask": {
+      "input": [],
+      "outcomes": [
+        { "name": "asked", "condition": { "kind": "otherwise" },
+          "subject": { "entity": "small.ask.Question", "effect": "creates" },
+          "emits": ["small.ask.Asked"], "error": null }
+      ]
+    },
+    "small.ask.Answer": {
+      "input": [],
+      "outcomes": [
+        { "name": "answered", "condition": { "kind": "otherwise" },
+          "subject": { "entity": "small.ask.Question", "effect": "moves",
+                       "transition": { "name": "answer", "from": ["Open"], "to": "Answered" } },
+          "emits": ["small.ask.Answered"], "error": null }
+      ]
+    },
+    "small.registry.Register": {
+      "input": [],
+      "outcomes": [
+        { "name": "registered", "condition": { "kind": "otherwise" },
+          "subject": { "entity": "small.registry.Entry", "effect": "creates" },
+          "emits": ["small.registry.Registered"], "error": null }
+      ]
+    },
+    "small.registry.Retire": {
+      "input": [],
+      "outcomes": [
+        { "name": "retired", "condition": { "kind": "otherwise" },
+          "subject": { "entity": "small.registry.Entry", "effect": "moves",
+                       "transition": { "name": "retire", "from": ["Active"], "to": "Retired" } },
+          "emits": ["small.registry.Retired"], "error": null }
+      ]
+    }
+  }
+}

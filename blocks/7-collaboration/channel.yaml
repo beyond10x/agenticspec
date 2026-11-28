@@ -224,10 +224,11 @@ entities:
         target: agentic.harness.ToolCall
         cardinality: one
         via: sent_by_call
+    # Delivered is terminal and still has a way out: a delivered message may never be read.
     lifecycle:
       initial: Sent
       states: [Sent, Delivered, Read, Lost]
-      terminal: [Read, Lost]
+      terminal: [Delivered, Read, Lost]
       transitions:
         - name: deliver
           from: [Sent]
@@ -357,10 +358,11 @@ entities:
         target: agentic.delegation.Delegation
         cardinality: one
         via: delegation_id
+    # Posted is terminal and still has a way out: only a queue post is taken.
     lifecycle:
       initial: Posted
       states: [Posted, Taken]
-      terminal: [Taken]
+      terminal: [Posted, Taken]
       transitions:
         - name: take
           from: [Posted]

@@ -40,6 +40,8 @@ pub struct Entry {
     pub result: Value,
     /// The best variant as an architecture document, when a variant passed the gates.
     pub best: Option<String>,
+    /// The contract of the architecture as written, or why it has none.
+    pub contract: Result<crate::contract::Shown, String>,
 }
 
 /// An architecture without an experiment.
@@ -108,6 +110,7 @@ pub fn load(root: &Path) -> Result<Catalog, String> {
         let best = yaml_of_result(&result, Some(&s.arch_text))
             .map_err(|err| format!("{}: {err}", s.exp_file))?;
         searched.insert(stem(&s.arch_path));
+        let contract = crate::contract::derive(root, &parse_yaml(&s.arch_text)?);
         entries.push(Entry {
             doc: e.architecture.clone(),
             exp_name: s.edoc["experiment"]
@@ -118,6 +121,7 @@ pub fn load(root: &Path) -> Result<Catalog, String> {
             weights: e.search.weights.clone(),
             result,
             best,
+            contract,
             name: s.name,
             arch_text: s.arch_text,
             exp_file: s.exp_file,
@@ -300,6 +304,12 @@ pub fn files(e: &Entry) -> Result<BTreeMap<String, String>, String> {
         agenticspec_render::page(&e.result["architecture"], Some(&e.result)),
     );
     out.insert(format!("{dir}/{}.yaml", e.name), e.arch_text.clone());
+    if let Ok(shown) = &e.contract {
+        out.insert(
+            format!("{dir}/{}.contract.yaml", e.name),
+            shown.contract.text(),
+        );
+    }
     if let Some(best) = &e.best {
         out.insert(format!("{dir}/{}.best.yaml", e.name), best.clone());
     }
@@ -463,10 +473,21 @@ pub fn page(e: &Entry) -> String {
         ))
     );
 
+    let file = format!("{}.contract.yaml", e.name);
+    let target = format!("pathname:///catalog/{}/{file}", e.name);
+    s.push_str(&crate::contract::section(
+        &e.contract,
+        Some((&file, &target)),
+        "../",
+    ));
+
     s.push_str("## Download\n\n");
     let mut list = vec![
         json!({"file": format!("{}.yaml", e.name), "label": "Architecture as written", "about": "the parts, links and policies, with the marked places at their values as written"}),
     ];
+    if e.contract.is_ok() {
+        list.push(json!({"file": format!("{}.contract.yaml", e.name), "label": "Contract", "about": "the ports a runtime implements to run the architecture as written, with their protocols, settings, instances and routing invariants"}));
+    }
     if e.best.is_some() {
         list.push(json!({"file": format!("{}.best.yaml", e.name), "label": "Optimized architecture", "about": "every marked place at the value of the best variant; its vary ranges are kept, so it can be searched again"}));
     }

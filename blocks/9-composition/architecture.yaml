@@ -140,13 +140,22 @@ types:
   # One port one part of the revision uses: the settings of the part that narrow it, and how
   # many instances of the port run (the part's count, times the count of the part it is `per`, as
   # far as that chain goes).
-  # UNMAPPED: which part uses which port. Architecture documents name a block per part (`agent`,
-  # `pool`, `schedule`), not a domain (`harness`, `resource`, `trigger`), and some ports are used
-  # through a link (`principal.answer` by a principal part a link carrying questions reaches).
-  # Documents also name parts PartKind has no variant for (`authority`, `work`, `experiment`,
-  # `kpi`) and carry values Carries has none for (`call`, `checkout`, `context`, `grant`, ...).
-  # UNMAPPED: which settings narrow which port. The design names examples only (`harness`,
-  # `route`, `isolation`, `egress`, `capacity`). Both are open for story contract-derivation.
+  # Which part uses which port, taken (`agenticspec sim contract`, docs/contract.md): a fixed
+  # table from a part's block to the ports it uses by being there (agent: harness.session; model:
+  # model.inference; gateway: gateway.call; pool: resource.claim; a direct channel:
+  # channel.message, a topic, queue or board: channel.post and channel.subscription; workspace:
+  # workspace.lease and workspace.proposal; sandbox: sandbox.sandbox; schedule: trigger.schedule,
+  # and trigger.firing unless a trigger part fires on it; trigger: trigger.firing; authority:
+  # authority.decision, or authority.budget for a budget; runtime: runtime.instance). Principal,
+  # tool, knowledge, work, experiment and kpi parts use none by being there. A link adds the port
+  # its carried value travels in to its `from` part (an agent's model_call: model.inference; a
+  # question: question.question; a call to a tool: harness.tool-call; a claim: resource.claim; a
+  # message, or any value sent to a channel part or over one: the channel's sending port), and a
+  # principal a question reaches uses question.question too.
+  # Which settings narrow which port, taken: per block and port a fixed list of setting names
+  # copied from the using part (agent: harness, role, acts_for; model: route; gateway:
+  # rate_limit_per_minute; pool: kind, capacity, job_limit; channel: kind, distribution; sandbox:
+  # isolation, egress; workspace: kind, sharing; ...); a setting not in the list is not copied.
   - name: agentic.architecture.ContractPort
     kind: struct
     fields:
@@ -157,11 +166,15 @@ types:
 
   # What one link of the revision promises about a run's trace: `worker -> gateway carries
   # model_call` means every `model.infer` of `worker` happens inside a `gateway.call` of
-  # `gateway`. `predicate` is the predicate as the contract writes it.
-  # UNMAPPED: the design states the invariant of a link carrying ModelCall only. The invariant of
-  # every other Carries (Question, Order, Claim, Prompt over a channel, ...) and the predicate
-  # language are open for story contract-derivation; `within_port_id` is absent where a link
-  # restricts the counterparty and nests in no port.
+  # `gateway`. `predicate` is the predicate as the contract writes it, in the predicate language
+  # of docs/contract.md.
+  # Taken for every carried value: a link whose value travels in a port of its `from` part (see
+  # ContractPort) has one invariant on that port. A model_call from an agent to a gateway nests:
+  # `every model.inference@<from> inside gateway.call@<to>`. Every other such link restricts the
+  # counterparty: `every <port>@<from> to <to>`, with `over <channel>` when the link names one;
+  # `within_port_id` is then absent. A link whose value travels in no port (an order, a review, a
+  # result, a handoff, a report, a spec, a context, a record, a prompt not over a channel) has no
+  # invariant.
   - name: agentic.architecture.RoutingInvariant
     kind: struct
     fields:
@@ -404,6 +417,71 @@ entities:
       initial: Recorded
       states: [Recorded]
       terminal: [Recorded]
+
+# Two roles that cross every block, read by the contract of an architecture. `agenticspec sim
+# ports` reads their `may:` lists to tell the commands of a port from configuration
+# (docs/contract.md): ESS 0.99.2 gives an actor no kind, so the two roles the derivation needs
+# are named here, once, for all blocks.
+actors:
+  - name: agentic.architecture.Deployer
+    naming:
+      display: Deployer
+      summary: >-
+        Whoever sets a system up from its architecture document, switches what it set up on and
+        off, and takes it down: retires principals, agents, models, routes, harnesses, tools,
+        knowledge, processes, KPIs, sandboxes and architectures, drains and stops gateways,
+        closes channels, revokes grants and delegations, enables and disables triggers and
+        schedules, revises knowledge and places workloads. What the deployer issues is configuration; nothing outside the system waits
+        on it. UNMAPPED: the deployer also issues the commands that set these up
+        (RegisterPrincipal, DefineAgent, DefineKpi, OpenChannel, ...); listing them here made
+        the synthesis of the conformance suite about 30 s slower (a caller witness per command),
+        and the derivation of ports reads only the commands that move a state on.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+      - {name: party_kind, type: agentic.channel.PartyKind}
+    may:
+      - agentic.principal.RetirePrincipal
+      - agentic.delegation.RevokeDelegation
+      - agentic.model.RetireModel
+      - agentic.model.RetireRoute
+      - agentic.gateway.DrainGateway
+      - agentic.gateway.StopGateway
+      - agentic.gateway.DetachUpstream
+      - agentic.tool.WithdrawTool
+      - agentic.knowledge.ReviseKnowledge
+      - agentic.knowledge.WithdrawKnowledge
+      - agentic.agent.RetireAgent
+      - agentic.agent.RetireRevision
+      - agentic.harness.RetireHarness
+      - agentic.process.WithdrawProcess
+      - agentic.authority.RevokeGrant
+      - agentic.channel.CloseChannel
+      - agentic.channel.CloseSharedChannel
+      - agentic.trigger.PassScheduleChecks
+      - agentic.trigger.EnableSchedule
+      - agentic.trigger.DisableSchedule
+      - agentic.trigger.EnableTrigger
+      - agentic.trigger.DisableTrigger
+      - agentic.sandbox.RetireSandbox
+      - agentic.runtime.DefineWorkload
+      - agentic.kpi.RetireKpi
+      - agentic.architecture.RetireArchitecture
+
+  - name: agentic.architecture.Principal
+    naming:
+      display: Principal
+      summary: >-
+        A principal acting in a running system: a person, or an agent acting for one under a
+        delegation, who answers a question, approves or rejects a pending decision, or accepts or
+        rejects a deliverable. What it issues ends a wait on a principal.
+    attributes:
+      - {name: party, type: agentic.channel.PartyId}
+    may:
+      - agentic.question.Answer
+      - agentic.authority.ApproveDecision
+      - agentic.authority.RejectDecision
+      - agentic.work.AcceptDeliverable
+      - agentic.work.RejectDeliverable
 
 errors:
   - name: agentic.architecture.NoSuchArchitecture

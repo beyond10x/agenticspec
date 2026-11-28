@@ -76,6 +76,38 @@ A marked place carries `vary`: the value as built and the values a search may tr
 
 <span className="as-tag as-tag--accepted">accepted</span> 8 parts and 6 links; the structural check refuses nothing.
 
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [shared-board.contract.yaml](pathname:///architectures/shared-board.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `channel.post` | `Outbound` | `channel` | `PostMessage TakePost?` | `board` | `distribution: board`, `kind: agent_message` | 1 |
+| `channel.subscription` | `Outbound` | `channel` | `Subscribe Beat* EndSubscription` | `board` | `distribution: board`, `kind: agent_message` | 1 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 16`, `job_limit: 10m`, `kind: build_slots` | 1 |
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `on_entry` | `channel: board`, `kind: on_message`, `max_parallel: 16`, `policy: parallel` | 1 |
+| `channel.post` | `Outbound` | `channel` | `PostMessage TakePost?` | `owner` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `team` | `harness: coding` | 8 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `team` | none | 8 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `team` | none | 8 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `team` | none | 8 |
+| `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 8 |
+| `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 8 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `owner -> board carries message`: `every channel.post@owner to board`
+- `on_entry -> team carries trigger`: `every trigger.firing@on_entry to team`
+- `team -> owner carries question`: `every question.question@team to owner`
+- `team -> gateway carries model_call`: `every model.inference@team inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+- `team -> builds carries claim`: `every resource.claim@team to builds`
+
+Border: none.
+
 ## Parts
 
 | part | block | settings |

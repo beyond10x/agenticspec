@@ -18,9 +18,9 @@ The one place model calls pass. A gateway holds upstreams, each an endpoint of `
 
 ## Depends on
 
-- [model](model.md) · layer 2 · 13 references
+- [model](model.md) · layer 2 · 14 references
 - [principal](../1-principals/principal.md) · layer 1 · 4 references
-- [shared](../0-foundation/shared.md) · layer 0 · 9 references
+- [shared](../0-foundation/shared.md) · layer 0 · 10 references
 
 ## Used by
 
@@ -102,6 +102,7 @@ Called by: Gateway.
 | `route_id` | `RouteId` |
 | `upstream_id` | `UpstreamId` |
 | `budget_left` | `Money` |
+| `request` | `Content` |
 
 | outcome | when | result |
 |---|---|---|
@@ -245,7 +246,7 @@ Called by: Gateway operator.
 | event | fields | emitted by |
 |---|---|---|
 | `CallCompleted` | `inference_id` InferenceId, `outcome` InferenceOutcome, `usage` Usage | `CompleteCall` |
-| `CallDecided` | `inference_id` InferenceId, `gateway_id` GatewayId, `caller` PrincipalId, `route_id` RouteId, `admission` Admission, `upstream_id` UpstreamId | `AdmitCall` |
+| `CallDecided` | `inference_id` InferenceId, `gateway_id` GatewayId, `caller` PrincipalId, `route_id` RouteId, `admission` Admission, `upstream_id` UpstreamId, `request` Content | `AdmitCall` |
 | `GatewayDrained` | `gateway_id` GatewayId | `DrainGateway` |
 | `GatewayOpened` | `gateway_id` GatewayId, `name` Name | `OpenGateway` |
 | `GatewayStopped` | `gateway_id` GatewayId | `StopGateway` |

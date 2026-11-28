@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
+// contract digest 4cdf91d6beab0a3f64fdfeb4f68bb06b57cef23c8a1dfd1f9ef30d9d3a6110fb
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -624,6 +624,36 @@ pub struct SimCheckResult {
     pub links: i64,
 }
 
+/// SimContractInput — `agenticspec.cli.SimContractInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimContractInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `check` — `Optional<String>`.
+    pub check: Option<String>,
+}
+
+/// SimContractResult — `agenticspec.cli.SimContractResult`.
+///
+/// The contract of an architecture, its counts, and whether it was written.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimContractResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `ports` — `Integer`.
+    pub ports: i64,
+    /// `invariants` — `Integer`.
+    pub invariants: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
+    /// `contract` — `Optional<String>`.
+    pub contract: Option<String>,
+}
+
 /// SimCorpusInput — `agenticspec.cli.SimCorpusInput`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCorpusInput {
@@ -693,6 +723,36 @@ pub struct SimLadderResult {
     pub rungs: i64,
     /// `written` — `Boolean`.
     pub written: bool,
+}
+
+/// SimPortsInput — `agenticspec.cli.SimPortsInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimPortsInput {
+    /// `blocks` — `Optional<String>`.
+    pub blocks: Option<String>,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `check` — `Optional<String>`.
+    pub check: Option<String>,
+    /// `expect` — `Optional<String>`.
+    pub expect: Option<String>,
+}
+
+/// SimPortsResult — `agenticspec.cli.SimPortsResult`.
+///
+/// The derived ports, the digest of their sources, and the differences from an expected list.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimPortsResult {
+    /// `ports` — `Integer`.
+    pub ports: i64,
+    /// `sources_sha256` — `String`.
+    pub sources_sha256: String,
+    /// `written` — `Boolean`.
+    pub written: bool,
+    /// `file` — `Optional<String>`.
+    pub file: Option<String>,
+    /// `differences` — `List<String>`.
+    pub differences: Vec<String>,
 }
 
 /// SimRenderInput — `agenticspec.cli.SimRenderInput`.

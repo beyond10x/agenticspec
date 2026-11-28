@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "d443979db969a54a74d4b97061cfca3f1cce485d844a9695f1da836582ef8734",
-    "contract_digest": "59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368"
+    "source_digest": "9b461ea3f4f42c80960f103be0b3db749c7c160bb9542541a2293908a53962a8",
+    "contract_digest": "4cdf91d6beab0a3f64fdfeb4f68bb06b57cef23c8a1dfd1f9ef30d9d3a6110fb"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -305,6 +305,20 @@
     },
     {
       "kind": "domain_type",
+      "source": "agenticspec.cli.SimContractInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimContractResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
       "source": "agenticspec.cli.SimCorpusInput",
       "disposition": {
         "disposition": "generated"
@@ -334,6 +348,20 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.SimLadderResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimPortsInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimPortsResult",
       "disposition": {
         "disposition": "generated"
       }

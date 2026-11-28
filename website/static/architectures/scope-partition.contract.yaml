@@ -1,0 +1,69 @@
+format: agenticspec-contract/1
+architecture: scope-partition
+ports_digest: 24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229
+ports:
+  - port: resource.claim
+    part: builds
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 1
+    settings: {capacity: 8, job_limit: 10m, kind: build_slots}
+  - port: gateway.call
+    part: gateway
+    protocol: "AdmitCall CompleteCall"
+    instances: 1
+    settings: {rate_limit_per_minute: 120}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+  - port: harness.session
+    part: team
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 4
+    settings: {harness: coding}
+  - port: model.inference
+    part: team
+    protocol: "StartInference FinishInference"
+    instances: 4
+    settings: {}
+  - port: question.question
+    part: team
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 4
+    settings: {}
+  - port: resource.claim
+    part: team
+    protocol: "RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)"
+    instances: 4
+    settings: {}
+  - port: workspace.lease
+    part: tree
+    protocol: "RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)"
+    instances: 4
+    settings: {sharing: exclusive}
+  - port: workspace.proposal
+    part: tree
+    protocol: "Propose (MergeProposal | RejectProposal | SupersedeProposal)"
+    instances: 4
+    settings: {sharing: exclusive}
+invariants:
+  - link: "team -> owner carries question"
+    port: question.question
+    predicate: "every question.question@team to owner"
+  - link: "team -> gateway carries model_call"
+    port: model.inference
+    within: gateway.call
+    predicate: "every model.inference@team inside gateway.call@gateway"
+  - link: "gateway -> model carries model_call"
+    port: gateway.call
+    predicate: "every gateway.call@gateway to model"
+  - link: "team -> builds carries claim"
+    port: resource.claim
+    predicate: "every resource.claim@team to builds"
+border: []

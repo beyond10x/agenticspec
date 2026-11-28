@@ -1,0 +1,58 @@
+format: agenticspec-contract/1
+architecture: parallel-unaware
+ports_digest: 24a47fe5a8d1c991cec8d150441fab62bc12e7b3e1ebb8359080acc2cb516229
+ports:
+  - port: harness.session
+    part: a
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding}
+  - port: model.inference
+    part: a
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: a
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {}
+  - port: harness.session
+    part: b
+    protocol: "(OpenSession | SpawnSubAgent) (CompactContext | RecordTurn)* EndSession"
+    instances: 1
+    settings: {harness: coding}
+  - port: model.inference
+    part: b
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {}
+  - port: question.question
+    part: b
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {}
+  - port: model.inference
+    part: model
+    protocol: "StartInference FinishInference"
+    instances: 1
+    settings: {route: frontier}
+  - port: question.question
+    part: owner
+    protocol: "Ask (Answer | TakeDefault | Withdraw)"
+    instances: 1
+    settings: {kind: human}
+invariants:
+  - link: "a -> owner carries question"
+    port: question.question
+    predicate: "every question.question@a to owner"
+  - link: "b -> owner carries question"
+    port: question.question
+    predicate: "every question.question@b to owner"
+  - link: "a -> model carries model_call"
+    port: model.inference
+    predicate: "every model.inference@a to model"
+  - link: "b -> model carries model_call"
+    port: model.inference
+    predicate: "every model.inference@b to model"
+border: []

@@ -73,6 +73,32 @@ A marked place carries `vary`: the value as built and the values a search may tr
 
 <span className="as-tag as-tag--accepted">accepted</span> 6 parts and 5 links; the structural check refuses nothing.
 
+## Contract
+
+The ports a runtime implements to run this architecture: each port's protocol, the part that uses it with the settings that narrow it, and how many instances run. Derived from the document and the ports of the building blocks; [how](../contract.md). The contract file: [scope-partition.contract.yaml](pathname:///architectures/scope-partition.contract.yaml).
+
+| port | kind | block | protocol | part | settings | instances |
+|---|---|---|---|---|---|---|
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 8`, `job_limit: 10m`, `kind: build_slots` | 1 |
+| `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `team` | `harness: coding` | 4 |
+| `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `team` | none | 4 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `team` | none | 4 |
+| `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `team` | none | 4 |
+| `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 4 |
+| `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 4 |
+
+Routing invariants, one per link whose value travels in a port:
+
+- `team -> owner carries question`: `every question.question@team to owner`
+- `team -> gateway carries model_call`: `every model.inference@team inside gateway.call@gateway`
+- `gateway -> model carries model_call`: `every gateway.call@gateway to model`
+- `team -> builds carries claim`: `every resource.claim@team to builds`
+
+Border: none.
+
 ## Parts
 
 | part | block | settings |
