@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest f4b1e7573a55fe33c2448a14f80acf8d3bd697688f0e85033b08c189708dc01c
+// contract digest 7eeabc12c431db22ea63eab395d4dc8a00e49643faa26a3fe51eca35b1619067
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -912,6 +912,24 @@ pub struct ToolFigures {
     pub refused: i64,
     /// `failed` — `Integer`.
     pub failed: i64,
+}
+
+/// UiGenerateInput — `agenticspec.cli.UiGenerateInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiGenerateInput {
+    /// `path` — `String`.
+    pub path: String,
+    /// `out` — `String`.
+    pub out: String,
+}
+
+/// UiGenerateResult — `agenticspec.cli.UiGenerateResult`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiGenerateResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `files` — `List<String>`.
+    pub files: Vec<String>,
 }
 
 /// UiPanelsInput — `agenticspec.cli.UiPanelsInput`.

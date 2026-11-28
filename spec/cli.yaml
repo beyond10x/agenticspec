@@ -131,6 +131,7 @@ callables:
     errors:
       blocks_unreadable: agenticspec.cli.Refusal
       panels_stale: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
   sim_ports:
     target: {kind: local, owner: agenticspec.cli, action: sim_ports}
     input: agenticspec.cli.SimPortsInput
@@ -151,6 +152,14 @@ callables:
       architecture_refused: agenticspec.cli.Refusal
       ports_unreadable: agenticspec.cli.Refusal
       contract_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  ui_generate:
+    target: {kind: local, owner: agenticspec.cli, action: ui_generate}
+    input: agenticspec.cli.UiGenerateInput
+    result: agenticspec.cli.UiGenerateResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
@@ -279,3 +288,9 @@ commands:
       - {field: ports, source: {kind: option, long: ports}}
       - {field: out, source: {kind: option, long: out}}
       - {field: check, source: {kind: option, long: check}}
+  - path: [ui, generate]
+    callable: ui_generate
+    about: Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+    arguments:
+      - {field: path, source: {kind: option, long: path}}
+      - {field: out, source: {kind: option, long: out}}

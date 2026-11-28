@@ -23,6 +23,7 @@ const sidebars: SidebarsConfig = {
     'docs/library',
     'docs/scenarios',
     'docs/contract',
+    'docs/studio',
     {
       type: 'category',
       label: 'Building blocks',

@@ -19,6 +19,7 @@ agenticspec-cli-contract.workspace = true
 agenticspec-records.workspace = true
 agenticspec-sim.workspace = true
 agenticspec-views.workspace = true
+agenticspec-ui.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 regex.workspace = true

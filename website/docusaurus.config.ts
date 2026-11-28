@@ -81,6 +81,11 @@ const pages: Record<string, Page> = {
     sidebar_label: 'Contract',
     lede: 'The ports a runtime implements, derived from the building blocks, and the contract of each architecture.',
   },
+  'docs/studio.md': {
+    slug: '/studio',
+    title: 'agenticstudio',
+    lede: 'Open an architecture as a draft, change it with patches, and see its graph and its check.',
+  },
 };
 
 const config: Config = {

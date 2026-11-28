@@ -1,0 +1,13 @@
+[package]
+name = "agenticspec-patch"
+description = "The patch language of agenticspec architectures (agenticspec-patch/1): selectors in sq over the facts of an architecture, the transforms set and add, applied atomically and checked"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+agenticspec-records.workspace = true
+agenticspec-sim.workspace = true
+serde_json.workspace = true
+sha2.workspace = true

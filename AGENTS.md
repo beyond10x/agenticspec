@@ -185,10 +185,14 @@ change.
 | `agenticspec-sim` | `scenario.rs`, `corpus.rs`, `events.rs`, `reader.rs`, `sim/script.rs` | `agenticspec sim scenario check\|run` and `sim corpus run` (`docs/scenarios.md`): scenarios (`agenticspec-scenario/1`) and task corpora (`agenticspec-corpus/1`), read by a typed reader that refuses an unknown key by its path. A run drives the simulator with a `Script` (arrivals, run outcomes, build times, replies) on the scenario's seed, and `events::TABLE` is the one map from the simulator's event kinds to block events and marks the eight an `on_event` trigger waits for; a test holds it against every kind the sources record and every event `blocks/` declares. `scenario.rs` does not change an experiment's result and is left out of the catalog digest (`events.rs` is in it, for the trigger rows); a profile draws its tasks from a corpus with `load.corpus` |
 | `agenticspec-sim` | `contract/ports.rs`, `contract/protocol.rs` | `agenticspec sim ports`: the ports of the building blocks from their compiled ESS system, their protocols (regular expressions over command names), `blocks/ports.json` and its digest |
 | `agenticspec-sim` | `contract/derive.rs`, `contract/predicate.rs` | `agenticspec sim contract`: the contract of an architecture document (`agenticspec-contract/1`), its check, and the predicate language of routing invariants |
-| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
 | `agenticspec-docs` | `lib.rs`, `main.rs`, `packs.rs` | the generated docs pages of the blocks, architectures and KPI catalogue, and of the packs and fields (`packs.rs`, from the root `ess-inputs.yaml`) (`task docs:generate`, `--check`) |
 | `agenticspec-views` | `lib.rs`, `panels.rs`, `values.rs` | the library of `agenticspec ui panels`: from the compiled `blocks/`, one `ess-ui/1` widget per view (`panels.rs`, naming no block, view or command), the synthetic fixture rows and script payloads (`values.rs`), the digest of the inputs and `--check` (`lib.rs`) |
 | `agenticspec-docs` | `contract.rs` | the "Contract" section of an architecture page and a catalog entry |
+| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result; `graph(architecture)`: the graph alone (SVG, size, parts with their properties, links) for agenticstudio to draw inline |
+| `agenticspec-records` | `sq/architecture.rs` | the fact base of an architecture (`part`, `setting`, `link`, `marker`), compiled apart from the session relations |
+| `agenticspec-patch` | `lib.rs`, `facts.rs`, `text.rs`, `diff.rs` | `agenticspec-patch/1`: the facts of an architecture document, the verbs `set` and `add`, atomic application checked by `agenticspec-sim`'s check, refusals by rule position and error name (`ErrorName`, each listed in `docs/studio.md`) |
+| `agenticspec-ui` | `doc.rs`, `check.rs`, `emit.rs`, `runtime.ts` | `agenticspec ui generate --path --out`: an `ess-ui/1` document to Vue pages, a hash router, a typed client and a runtime over `ui/kit` components and host slots only, byte for byte the same each run. A construct it cannot draw is refused by its node path; the look is never generated. Golden tests in `tests/cases/` (`UPDATE_GOLDEN=1` rewrites them) |
+| `agenticstudio` | `studio.rs`, `routes.rs`, `app.rs`, `http.rs`, `main.rs` | `agenticstudio serve`: drafts, revisions, patches and applications in memory; the views and commands of `studio/studio.ui.yaml` (`/api/views`, `/api/commands`, `app.rs`), the older `/api` routes, and the built app of `ui/studio` from `--www`. Its types are `src/generated/` (`ess generate types` from `studio/` and the architecture block, held by `task check:generated`), included as modules; its browser test is `e2e/` (`task check:studio`) |
 
 Beside the crates, `ui/` holds:
 
@@ -204,6 +208,18 @@ Beside the crates, `ui/` holds:
   block panels as an `ess-ui/1` document over `blocks/` (one widget per view, named as the view,
   and a gallery page per block), `fixtures/` (three rows per view, a script per block channel)
   and `blocks.sources.sha256`, the digest of the inputs. `task check:ui` holds them.
+- `kit/`, the design system: the tokens (`kit/src/tokens.css`, from the docs site's product theme,
+  light and dark), the base styles and the `Kit*` components every generated page draws with; no
+  colour, size or font is written outside the tokens. Its gallery (`kit/gallery/`) shows every
+  component in both themes; `task check:ui-kit` (`scripts/check-ui-kit.sh`) runs its types, vitest,
+  the gallery build and its browser test.
+- `studio/`, the agenticstudio app: `src/generated/` is written by `agenticspec ui generate` from
+  `studio/studio.ui.yaml` (`task ui:generate`, held by `task check:generated`), never edited;
+  `src/slots/` holds the host slots (`DraftGraph`, `PatchEditor`) and `src/hooks.ts` the command
+  hooks. `task studio:build` builds it into `target/studio/www`; `task check:studio`
+  (`scripts/check-studio.sh`) checks the document, its types and vitest, and runs
+  `crates/agenticstudio/e2e`.
+- `package.json`, one npm package for `kit/` and `studio/`; `app/` keeps its own.
 
 `task ui:build` builds the app into `target/ui/www`. Outside `task check:app`, vitest runs as
 `slot --local npx vitest run --maxWorkers=2` from `ui/app`.
@@ -245,6 +261,8 @@ Beside the crates, `ui/` holds:
 | `scripts/check-generated.sh` | one line per generated directory, the drift check and the regeneration |
 | `scripts/ui-build.sh` | `task ui:build` |
 | `scripts/check-app.sh` | `task check:app`: types, vitest, the build, and the Playwright gates and ratchet of `ux/` |
+| `scripts/check-ui-kit.sh`, `scripts/check-studio.sh` | `task check:ui-kit` and `task check:studio` (`ui/kit`, `ui/studio`, `crates/agenticstudio/e2e`); `SCREENS=1` writes screenshots into `target/screens` |
+| `studio/studio.ui.yaml` | the studio app as an `ess-ui/1` document over the `studio` model (`studio/components.yaml` serves it); its `unmapped` entries name what the document cannot say yet |
 | `ux/` | the ui-iteration-loop: adapter, scenarios, `baseline.json`, `round.sh`, rounds and findings |
 | `scripts/change-class.sh`, `change-class.test.sh` | the change classifier of `pages.yml` (planning, docs-site, code) and its cases, run by `task check:scripts`. `design/` and `research/` are planning; `website/` and `docs/` are the site. A new site source goes into its path list with a case |
 | `scenarios/` | example scenarios and one corpus per architecture (`<architecture>/*.scenario.yaml`, `*.corpus.yaml`), run by `task check:scenarios` (in the gate); each names the files it reads with their sha256, so a change of the architecture or the profile updates the digests there |

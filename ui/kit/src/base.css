@@ -1,0 +1,65 @@
+/* The base of every page drawn with ui/kit: box sizing, the font, the canvas and focus rings. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--kit-canvas);
+  color: var(--kit-text);
+  font-family: var(--kit-font);
+  font-size: var(--kit-text-md);
+  line-height: var(--kit-leading);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  height: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--kit-heading);
+  letter-spacing: var(--kit-tracking-title);
+  line-height: var(--kit-leading-tight);
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--kit-mono);
+}
+
+:focus-visible {
+  outline: 2px solid var(--kit-focus);
+  outline-offset: 2px;
+}
+
+.kit-sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

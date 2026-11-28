@@ -216,6 +216,18 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `ui generate`
+
+Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+
+Callable: `ui_generate`. Input: `agenticspec.cli.UiGenerateInput`. Result: `agenticspec.cli.UiGenerateResult`.
+
+Error `document_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
 ### `ui panels`
 
 Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check
@@ -223,6 +235,8 @@ Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, fr
 Callable: `ui_panels`. Input: `agenticspec.cli.UiPanelsInput`. Result: `agenticspec.cli.UiPanelsResult`.
 
 Error `blocks_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
 
 Error `panels_stale`: `agenticspec.cli.Refusal`.
 
@@ -245,4 +259,5 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_generate: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_panels: implement the owner-qualified callable and its declared result/error contract

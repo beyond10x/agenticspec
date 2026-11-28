@@ -1,0 +1,98 @@
+# A note pad: a filter bar with a choice and a command in the header, a form whose text field is a
+# host slot, a toggle and a result, a host section, a collapsed list with a search, two columns,
+# a theme choice and a channel.
+format: ess-ui/1
+app: pad
+title: Pad
+model: pad
+placement_profile: fat
+
+label_maps:
+  kept: {"true": kept, "false": dropped}
+
+shells:
+  app:
+    regions:
+      main: {kind: page_outlet}
+      notify: {kind: notifications}
+    state:
+      theme: {type: {enum: [light, dark]}, class: preference, store: local_storage}
+
+themes:
+  light: {}
+  dark: {}
+theme: {default: light, chosen_by: shell.theme}
+
+channels:
+  notes:
+    carries: {events: [pad.NoteWritten]}
+    direction: server_to_client
+    delivery: every_event
+    resume: refetch
+
+navigation:
+  home: pad
+  sections:
+    - {name: pad, label: Pad, pages: [pad]}
+
+page_kinds:
+  pad_page:
+    purpose: a page with the book choice in its header
+    state:
+      book: {type: string, class: page_state, store: url}
+    header: {filters: bar}
+    sections:
+      - name: bar
+        component: filter_bar
+        binds: [state.book]
+        choices:
+          - {name: book, component: choice, binds: state.book, reads: {placeholder: pad.Books, fixture: books.json, key: book_id}, value: book_id, label: title, placeholder: Choose a book}
+        actions:
+          - {name: start, does: pad.StartBook, bind: {book_id: state.book}, label: Start}
+
+pages:
+  pad:
+    kind: pad_page
+    title: Pad
+    state:
+      search: {type: string, class: page_state, store: memory}
+    layout:
+      columns:
+        - {name: main, sections: [drawing], width: wide}
+        - {name: side, sections: [write, notes], width: narrow}
+    sections:
+      - name: drawing
+        host: Sketch
+        reason: draws the notes as a sketch
+        stands_in_for: chart
+        reads: {placeholder: pad.Sketch, fixture: sketch.json, params: {book_id: state.book}}
+      - name: write
+        title: Write
+        component: form
+        does: pad.WriteNote
+        fields:
+          - {field: text, label: Note, host: NoteEditor, reason: edits the note with its markup, stands_in_for: rich_text}
+          - {field: keep, as: toggle, label: Keep}
+        submit: {label: Write}
+        result:
+          name: outcome
+          component: record
+          fields:
+            - {field: kept, as: badge, labels: kept, label: Kept}
+            - {field: lines, as: list, label: Lines}
+      - name: notes
+        title: Notes
+        collapsed: true
+        component: collection
+        style: list
+        reads:
+          placeholder: pad.Notes
+          fixture: notes.json
+          key: note_id
+          params: {book_id: state.book}
+          filter: row.text contains state.search
+        live: {channel: notes, effect: refetch}
+        columns:
+          - {field: text, label: Note}
+        states:
+          empty: {message: No note matches.}

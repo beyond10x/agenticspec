@@ -2047,6 +2047,79 @@
         }
       }
     },
+    "ui_generate": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_generate"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiGenerateInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "out": {
+              "kind": "string"
+            },
+            "path": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiGenerateResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "files": {
+              "kind": "list",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "ui_panels": {
       "target": {
         "kind": "local",
@@ -2092,6 +2165,17 @@
       },
       "errors": {
         "blocks_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -2662,6 +2746,31 @@
     {
       "path": [
         "ui",
+        "generate"
+      ],
+      "aliases": [],
+      "callable": "ui_generate",
+      "about": "Generate the Vue app of an ess-ui/1 document over the components of ui/kit",
+      "arguments": [
+        {
+          "field": "path",
+          "source": {
+            "kind": "option",
+            "long": "path"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ui",
         "panels"
       ],
       "aliases": [],
@@ -2703,6 +2812,7 @@
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_generate: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract"
   ]
 }

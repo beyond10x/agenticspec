@@ -19,6 +19,46 @@ use std::fmt::Write as _;
 const CSS: &str = include_str!("../assets/page.css");
 const JS: &str = include_str!("../assets/page.js");
 
+/// The graph of an architecture for a host that draws it inline (agenticstudio): its SVG alone,
+/// without the page around it, its size in px, and the parts and links it shows, each part with
+/// its properties. The SVG carries the classes of the page's stylesheet; the host styles them.
+pub fn graph(architecture: &Value) -> Value {
+    let arch = Architecture::read(architecture);
+    let g = graph::render(&arch, None);
+    let parts: Vec<Value> = arch
+        .parts
+        .iter()
+        .map(|p| {
+            serde_json::json!({
+                "id": p.name,
+                "block": p.block,
+                "family": family(&p.block).0,
+                "kind": p.kind,
+                "count": p.count,
+                "per": p.per,
+                "acts_for": p.acts_for,
+                "border": arch.border.contains(&p.name),
+                "subtitle": subtitle(p),
+                "properties": p.props.iter().map(|(k, v)| [k.replace('_', " "), v.clone()]).collect::<Vec<_>>(),
+            })
+        })
+        .collect();
+    let links: Vec<Value> = arch
+        .links
+        .iter()
+        .map(|l| serde_json::json!({"from": l.from, "to": l.to, "carries": l.carries, "over": l.over}))
+        .collect();
+    serde_json::json!({
+        "name": arch.name,
+        "summary": arch.summary,
+        "svg": g.svg,
+        "width": g.width,
+        "height": g.height,
+        "parts": parts,
+        "links": links,
+    })
+}
+
 /// The page for this architecture document and optional simulation result.
 pub fn page(architecture: &Value, result: Option<&Value>) -> String {
     let arch = Architecture::read(architecture);

@@ -562,6 +562,7 @@ mod long {
     }
 }
 
+mod architecture;
 mod fixes;
 
 mod legacy_dir {

@@ -92,6 +92,30 @@ fn window(input: &Value) -> (PathBuf, i64, i64) {
 impl Handler for Commands {
     fn call(&mut self, inv: &Invocation<'_>) -> HandlerReply {
         match inv.callable {
+            "ui_generate" => {
+                let s = |k: &str| inv.input.get(k).and_then(Value::as_str).unwrap_or("");
+                let (path, out) = (s("path"), s("out"));
+                let text = match std::fs::read_to_string(path) {
+                    Ok(t) => t,
+                    Err(e) => return refusal("document_unreadable", format!("{path}: {e}")),
+                };
+                let files = match agenticspec_ui::generate(&text) {
+                    Ok(f) => f,
+                    Err(refusals) => {
+                        let lines: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+                        return refusal(
+                            "document_refused",
+                            format!("{path}:\n{}", lines.join("\n")),
+                        );
+                    }
+                };
+                if let Err(e) = agenticspec_ui::write(&files, std::path::Path::new(out)) {
+                    return refusal("out_unwritable", format!("{out}: {e}"));
+                }
+                HandlerReply::Success(
+                    json!({"out": out, "files": files.keys().collect::<Vec<_>>()}),
+                )
+            }
             "lift" => {
                 let path = PathBuf::from(
                     inv.input
