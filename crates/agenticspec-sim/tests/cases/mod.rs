@@ -25,4 +25,5 @@ mod sim;
 mod suite;
 mod swarm;
 mod trace;
+mod unavailable;
 mod whole;

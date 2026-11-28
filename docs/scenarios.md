@@ -36,7 +36,7 @@ A refused command exits 1 and prints `<code>: <detail>` to standard error:
 |---|---|
 | `document_unreadable` | a file cannot be read or is not YAML |
 | `scenario_invalid` | the scenario is not a valid `agenticspec-scenario/1` document; every problem is named by its path, such as `when.0.atx: unknown key` |
-| `scenario_refused` | the scenario does not fit its architecture: a digest does not match, an input is not at a border part, an author or a fixture names no part, or the architecture itself is refused |
+| `scenario_refused` | the scenario does not fit its architecture: a digest does not match, an input is not at a border part, an author or a fixture names no part, an `unavailable` entry or a part of `then.parts` names no part or no dependency, a view, command or error is not declared by a block, or the architecture itself is refused |
 | `out_missing` | `scenario run` without `--out` |
 | `out_unwritable` | `scenario-result.json` cannot be written |
 | `expectation_failed` | an expected event or a KPI bound failed; `scenario-result.json` is written first |
@@ -89,7 +89,8 @@ then:
 | `given` | no | rows that exist when the run starts |
 | `when` | yes | the inputs, in order |
 | `fixtures` | no | stand-ins for the parts outside the architecture |
-| `then` | no | the expected events and KPI bounds |
+| `unavailable` | no | the parts and dependencies that are unavailable, and from when ([below](#unavailable-parts-and-dependencies)) |
+| `then` | no | the expected events, KPI bounds and what each part shows |
 
 Every key that is not in these tables is refused with its path. Durations are written `90s`,
 `15m`, `2h` or `1d`.
@@ -117,6 +118,7 @@ The run admits an input or refuses it by a rule:
 | `control_without_proof` | a control input carries no proof | none: no block refuses a message without proof |
 | `claim_conflict` | a copy claims a board entry another copy claimed first | `agentic.channel.PostAlreadyTaken` |
 | `corpus_refused` | a corpus entry a profile drew was refused, so it makes no task | none |
+| `part_unavailable` | the part, the author or the channel of the input is unavailable at its time, or the part is cut from the author or the channel ([below](#unavailable-parts-and-dependencies)) | none: no block declares one |
 
 An admitted prompt (`send`), order (`send`, `dispatch`) or control input (`run`, `retry`,
 `dispatch`) makes a task, named after the input: `when.0` for the first. Other admitted inputs are
@@ -256,6 +258,101 @@ An expectation of an event the simulator does not record is `not_checked`, not f
 that records it can check the same scenario. `kpis` bounds any KPI of a simulator run with `min`,
 `max` or both, inclusive.
 
+## Unavailable parts and dependencies
+
+A scenario can make a part unavailable, or only one dependency of a part: a store, a model route,
+an upstream it reaches over a link. `then.parts` then says what each remaining part shows. The
+same scenario runs on the simulator now and on a runtime later.
+
+```yaml
+unavailable:
+  - { part: chat, from: 30m }
+  - { part: worker, dependency: builds, from: 0s }
+
+then:
+  parts:
+    operator:
+      views:
+        - { view: agentic.channel.ChannelMessages, shows: error, error: agentic.channel.ChannelIsClosed }
+      rest: answers
+    worker:
+      commands:
+        - { command: agentic.resource.RequestClaim, shows: refused }
+```
+
+| key | required | what |
+|---|---|---|
+| `part` | yes | the part that is unavailable; with `dependency`, the part that loses it |
+| `dependency` | no | a part that `part` depends on: one its links go to or over, one in its `egress`, one that exists once `per` copy of it, or one any of those reach over their links. Only `part` loses it; the other parts still reach it |
+| `from` | yes | when it becomes unavailable; `0s` is at the start, before the part listens |
+| `for` | no | how long it stays unavailable; to the end of the run by default |
+
+`then.parts` maps a part to what it shows. A part that is unavailable itself shows nothing and is
+refused there.
+
+| key | what |
+|---|---|
+| `views` | a list of `{ view, shows, error }`. `view` is the block name of a view; `shows` is `answer` (no error, rows or none), `empty` (no rows, no error) or `error`; `error`, only with `shows: error`, is the block name of the error the view answers with, any error when left out |
+| `commands` | a list of `{ command, shows, error }`. `command` is the block name of a command; `shows` is `accepted` or `refused`; `error`, only with `shows: refused`, is the block name of the error it is refused with, any error when left out |
+| `exits` | the status, 1 to 255, the part's process exits with before it listens. Only for a part with a dependency unavailable from `0s`, and with no views, commands or `rest` |
+| `rest` | `answers`: every view and command of the part that is not named answers as it does with nothing unavailable |
+
+`check` refuses, each by its path and name: a part or a dependency that is not in the
+architecture, a dependency the part does not reach, a part named as its own dependency, a `from`
+at or after the horizon, a view or a command that no block declares, an error that no block
+declares, and a view or command of a block that is neither the part's own nor one of a part it
+depends on. An agent part also shows the views and takes the commands of the blocks it works in:
+`agentic.harness`, `agentic.work` and `agentic.question`. A pack block covers every domain under
+it (`scm` covers `agentic.scm.change` and the others).
+
+The four kinds of outcome, each with an example in
+[`scenarios/workstation/`](https://github.com/beyond10x/agenticspec/tree/main/scenarios/workstation):
+
+| outcome | how it is written | example |
+|---|---|---|
+| an error inside one view while the rest answers | `views: [{ view, shows: error, error }]` and `rest: answers` | `chat-closed-view-error` |
+| an empty view with no error | `views: [{ view, shows: empty }]` | `model-route-down-empty-view` |
+| the process exits with a status before it listens | `unavailable` with `from: 0s` and `exits: <status>` | `operator-exits-without-gateway` |
+| a dependency only one command reaches: that command is refused, nothing else is missed | `commands: [{ command, shows: refused }]` and `rest: answers` | `build-pool-cut-claim-refused` |
+
+### On the simulator
+
+The simulator makes an entry unavailable where it can model it, and `scenario-result.json` says
+how in `unavailable[].simulated`:
+
+| `simulated` | when | what the run does |
+|---|---|---|
+| `fault` | a pool or a gateway, or a principal; a pool, gateway or principal only `part` reaches; a gateway's only model | the pool or gateway falls to no capacity, the principal is away, for the window |
+| `inputs_refused` | a channel; a border part, also one that exits at the start, when the scenario has no given rows; a border part cut from a channel | the inputs that reach the part, come from it or come over the channel in the window are refused by the rule `part_unavailable` |
+| `not_modeled` | anything else, or an `inputs_refused` entry while the simulation still records an event of the part or over the channel in the window | none of the expected events and bounds is checked: each is `not_checked` with the reason |
+
+The simulator serves no views, decides no commands of a part and starts no processes, so each
+observable of `then.parts` is `not_checked` on it, with the reason. The expected events and KPI
+bounds say what the simulator can see of the same outage: an input refused, a claim never
+granted, a task that does not complete while another one does.
+
+### On a runtime
+
+A conformance run of a runtime reads the same scenario and writes the same result document, with
+the observables checked:
+
+1. It starts the system with every entry that has `from: 0s` in force: the part is stopped, or
+   the link from the part to its dependency is cut (the store, the model route, the upstream does
+   not answer the part). The other entries come into force at `from` and end after `for`.
+2. A part with `exits` must exit with that status and must not listen: no port of it accepts a
+   connection. Its status is `held` or `failed`.
+3. It sends the inputs of `when` at their times. An input the runtime refuses because a part or
+   a link is unavailable counts as a refusal by `part_unavailable`.
+4. While the entries are in force it queries each named view of each part of `then.parts` and
+   compares: `answer` holds when the view answers with no error; `empty` when it answers with no
+   rows and no error; `error` when it answers with an error, the named one when `error` is given.
+5. It sends each named command with an input the scenario would accept with nothing
+   unavailable: `refused` holds when the command is refused, with the named error when given;
+   `accepted` when it is not refused.
+6. For `rest: answers` it queries every other view of the part's blocks: each must answer with no
+   error. A command of the part that is not named must not be refused because of the entry.
+7. It checks the expected events and KPI bounds on the events it records, as the simulator does.
+
 ## The result
 
 `scenario-result.json` (format `agenticspec-scenario-result/1`):
@@ -281,13 +378,17 @@ that records it can check the same scenario. `kpis` bounds any KPI of a simulato
 
 | field | what |
 |---|---|
-| `verdict` | `held` when no expectation and no bound failed |
+| `verdict` | `held` when no expectation, no bound and no observable failed |
 | `predicted` | the outcome class of the run (below) |
 | `expectations` | each expected event with `status` `held`, `failed` or `not_checked`, the index of the trace event it matched, and the reason when it did not hold |
 | `kpi_bounds` | each bound with the measured value and its status |
 | `inputs` | each input, when it arrived, and whether it was accepted or refused by which rule |
 | `trace` | every event of the run in block terms, in time order: the block event, its name, the part, the task, and `sim`, the simulator's own event it comes from |
 | `kpis` | every KPI of the run |
+| `unavailable` | each `unavailable` entry, its window (`from_seconds`, `until_seconds`) and how the simulator made it unavailable: `simulated` is `fault`, `inputs_refused` or `not_modeled` with the reason |
+| `observables` | each observable of `then.parts`: the part, `observable` (`view`, `command`, `exits` or `rest`), the expectation as written, its status and the reason when it was not checked |
+
+`counts` adds up the expected events, the bounds and the observables.
 
 ## Outcome classes
 

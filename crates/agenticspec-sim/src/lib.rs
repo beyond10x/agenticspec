@@ -20,6 +20,7 @@ pub mod rows;
 pub mod scenario;
 pub mod search;
 pub mod sim;
+pub mod unavailable;
 pub mod whole;
 
 pub use search::{Experiment, Shown, run, run_shown};

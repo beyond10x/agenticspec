@@ -1,0 +1,35 @@
+format: agenticspec-scenario/1
+scenario: model-route-down-empty-view
+summary: >-
+  The gateway's only model is unavailable to it from the start. The owner's prompt makes a task,
+  but no model call gets through the gateway, so no task completes. The gateway's view of its
+  calls is empty and shows no error, and its other views answer.
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
+profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
+seed: 1
+horizon: 2h
+
+unavailable:
+  - { part: gateway, dependency: model, from: 0s }
+
+when:
+  - { at: operator, kind: prompt, author: owner, text: "Make the failing build pass." }
+
+fixtures:
+  model:
+    - { for: worker, outcome: correct, turns: 4 }
+
+then:
+  order: sequence
+  events:
+    - { event: task_created, part: operator, task: when.0 }
+    - { event: run_started, part: worker, task: when.0 }
+    - { event: call_decided, part: gateway, task: when.0 }
+    - { event: task_completed, absent: true }
+  kpis:
+    tasks_done: { max: 0 }
+  parts:
+    gateway:
+      views:
+        - { view: agentic.gateway.Calls, shows: empty }
+      rest: answers

@@ -1,0 +1,33 @@
+format: agenticspec-scenario/1
+scenario: chat-closed-view-error
+summary: >-
+  The chat between the owner and the operator is unavailable from 30 minutes in. A prompt before
+  that makes a task as usual; a prompt after it is refused and makes no task. The operator's view
+  of the chat's messages answers with an error, and every other view of the operator answers.
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
+profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
+seed: 1
+horizon: 2h
+
+unavailable:
+  - { part: chat, from: 30m }
+
+when:
+  - { at: operator, kind: prompt, author: owner, text: "Make the failing build pass." }
+  - { at: operator, kind: prompt, author: owner, after: 40m, text: "Rename the config key the release script reads." }
+
+fixtures:
+  model:
+    - { for: worker, outcome: correct, turns: 4 }
+
+then:
+  order: sequence
+  events:
+    - { event: task_created, part: operator, task: when.0 }
+    - { event: refusal, part: operator, author: owner, rule: part_unavailable }
+    - { event: task_created, task: when.1, absent: true }
+  parts:
+    operator:
+      views:
+        - { view: agentic.channel.ChannelMessages, shows: error, error: agentic.channel.ChannelIsClosed }
+      rest: answers
