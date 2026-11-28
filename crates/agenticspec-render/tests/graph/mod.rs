@@ -288,7 +288,7 @@ fn the_page_lists_every_part_and_every_link_in_tables() {
         html.contains("class=\"graph-tools\" hidden"),
         "the zoom tools wait for the script"
     );
-    for label in ["Zoom out", "Zoom in", "Fit to width", "Actual size"] {
+    for label in ["Zoom out", "Zoom in", "Fit the whole graph", "Actual size"] {
         assert!(
             html.contains(&format!("aria-label=\"{label}\"")),
             "{label} button"

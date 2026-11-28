@@ -67,20 +67,33 @@
     if (ev.key === "Escape" && pinned) pin(pinned);
   });
 
-  // The graph at its natural size. Wider than its card, it pans by drag, wheel and arrow keys
-  // (the view is a focusable scroll region), and the zoom tools show: out, in, fit, actual size.
+  // The graph opens whole: larger than its view (wider than the card or taller than the view's
+  // highest), it opens at Fit; else at its natural size. It pans by drag, wheel and arrow keys
+  // while it overflows (the view is then a focusable scroll region), and the zoom tools show:
+  // out, in, fit, actual size. Until a zoom tool is used, a resized view fits again.
   var view = document.querySelector(".graph-view");
   var tools = document.querySelector(".graph-tools");
   var level = tools && tools.querySelector(".zoom-level");
   var natural = svg && svg.viewBox && svg.viewBox.baseVal;
   var zoom = 1;
+  var initial = view ? view.getAttribute("data-initial") : null;
+  // The room of the view: its width with any scroll bar, and its highest height.
+  function room() {
+    var h = parseFloat(getComputedStyle(view).maxHeight);
+    return {w: view.offsetWidth - 2, h: (isFinite(h) ? h : Infinity) - 2};
+  }
+  function larger() {
+    var r = room();
+    return r.w > 0 && (natural.width > r.w || natural.height > r.h);
+  }
   function fitZoom() {
-    return natural && natural.width ? Math.min(1, (view.clientWidth - 2) / natural.width) : 1;
+    var r = room();
+    if (!natural || !natural.width || !natural.height || r.w <= 0 || r.h <= 0) return 1;
+    return Math.min(1, r.w / natural.width, r.h / natural.height);
   }
   function measureView() {
     if (!view || !natural) return;
-    var wide = natural.width > view.clientWidth + 1;
-    if (tools) tools.hidden = !wide && zoom === 1;
+    if (tools) tools.hidden = !larger() && zoom === 1;
     var scrolls = view.scrollWidth > view.clientWidth + 1 || view.scrollHeight > view.clientHeight + 1;
     view.classList.toggle("pannable", scrolls);
     if (scrolls) {
@@ -111,6 +124,7 @@
     tools.querySelectorAll("button[data-zoom]").forEach(function (b) {
       b.addEventListener("click", function () {
         var what = b.getAttribute("data-zoom");
+        initial = null;
         if (what === "in") setZoom(zoom * 1.25);
         else if (what === "out") setZoom(zoom / 1.25);
         else if (what === "fit") setZoom(fitZoom());
@@ -118,9 +132,14 @@
       });
     });
   }
+  function opening() {
+    if (initial === "fit" && natural && larger()) setZoom(fitZoom());
+    else if (initial === "fit" && zoom !== 1) setZoom(1);
+    else measureView();
+  }
   if (view) {
-    measureView();
-    if (typeof ResizeObserver !== "undefined") new ResizeObserver(measureView).observe(view);
+    opening();
+    if (typeof ResizeObserver !== "undefined") new ResizeObserver(opening).observe(view);
     var drag = null;
     var moved = false;
     view.addEventListener("pointerdown", function (ev) {
