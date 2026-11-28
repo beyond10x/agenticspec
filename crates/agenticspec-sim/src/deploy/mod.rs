@@ -2,7 +2,8 @@
 //! section (`binding`, `packing`), the admission of a packing into a plan of units or a list of
 //! named refusals (`admit`), the secrets and egress a unit is granted, by name (`grants`), and
 //! the deployment bundle (`agenticspec-deployment/1`) a translator reads (`bundle`), checked
-//! again when read back (`bundle::check`); the UIs a binding asks for as units of their own (`ui`);
+//! again when read back (`bundle::check`); the environment and arguments a binding gives a unit
+//! (`config`); the UIs a binding asks for as units of their own (`ui`);
 //! the fixture bundles of `bundles/` (`fixtures`). The
 //! formats are on `docs/deployment.md`.
 //!
@@ -11,6 +12,7 @@
 pub mod admit;
 pub mod binding;
 pub mod bundle;
+pub mod config;
 pub mod fixtures;
 pub mod grants;
 pub mod packing;

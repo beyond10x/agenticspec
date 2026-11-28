@@ -31,10 +31,11 @@ const KEYS: &[&str] = &[
     "packing",
 ];
 
-/// The keys of one part's entry under `parts:`.
+/// The keys of one part's entry under `parts:`. `env` and `args`, the configuration of its unit,
+/// are checked by admission ([`super::config`], `unit_config_invalid`).
 const PART_KEYS: &[&str] = &[
     "agent", "digest", "state", "inside", "secrets", "egress", "size", "volumes", "network",
-    "image",
+    "image", "env", "args",
 ];
 
 /// The keys of a runtime pinned under `runtimes:`, and of an image a part or a listed unit
@@ -216,6 +217,9 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                 }
                 if k == "image" {
                     image_problems(&format!("parts: {name}: image"), v, local, &mut out);
+                    continue;
+                }
+                if super::config::KEYS.contains(&k.as_str()) {
                     continue;
                 }
                 let ok = match k.as_str() {

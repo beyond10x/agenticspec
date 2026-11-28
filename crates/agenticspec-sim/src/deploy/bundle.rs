@@ -7,6 +7,7 @@
 
 use super::admit::{Accepts, Finding, Plan, PlannedUnit, admit, sort};
 use super::binding::{self as binding_form, Binding, UnitImage};
+use super::config;
 use super::grants;
 use super::packing::{self, Packing, clock_link, schedule_of, schedule_part};
 use super::ui;
@@ -304,6 +305,7 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
     };
     let docs = agent_documents(inputs, inputs.packing, &mut findings);
     findings.extend(served(inputs.arch, &inputs.binding.doc, inputs.packing));
+    findings.extend(config::findings(&inputs.binding.doc, inputs.packing));
     findings.extend(grants::check(
         inputs.arch,
         &inputs.binding.doc,
@@ -988,7 +990,8 @@ pub enum Refused {
 /// architecture under its binding and packing ([`admit`]), its agent documents against the parts that need them and the digests the
 /// binding pins, the bytes each agent document carries ([`CHECK_REFUSALS`]), the cron rule of
 /// each scheduled unit ([`packing::schedule_of`]), the runtime image of each core and service
-/// unit ([`unit_runtimes`]), and the secrets and
+/// unit ([`unit_runtimes`]), the configuration of each unit ([`config::findings`],
+/// [`config::check_units`]), and the secrets and
 /// egress of the binding and of each unit
 /// ([`grants::check`], [`grants::check_units`]), and its UI units ([`ui::check`]).
 pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
@@ -1107,6 +1110,8 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     findings.extend(served(arch, binding, &packing));
     findings.extend(unit_runtimes(bundle, arch, binding, &packing));
     findings.extend(unit_volumes(bundle));
+    findings.extend(config::findings(binding, &packing));
+    findings.extend(config::check_units(bundle, &packing));
     findings.extend(grants::check(arch, binding, &packing));
     findings.extend(grants::check_units(bundle));
     findings.extend(addresses(arch));
@@ -1324,6 +1329,11 @@ fn unit(
     });
     if let Some(r) = u.replicas {
         v["replicas"] = json!(r);
+    }
+    // Admission refused a configuration of the wrong form or in conflict, so `Err` does not
+    // reach here; none is left out, and a bundle without one keeps its bytes.
+    if let Ok(Some(c)) = config::resolve(binding, u) {
+        v["config"] = c;
     }
     if let Some(s) = shape {
         v["shape"] = json!(s);

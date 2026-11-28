@@ -133,6 +133,8 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image of its own, of its parts or, for the core unit only, `runtimes.core`; names the unit and its runtime parts; K19 |
 | `unit_runtime_mismatch` | a core or service unit's `code.runtime` names an image that is not in the bundle's `runtimes`, or differs from the image the carried binding resolves for that unit (`binding::unit_image`; none gives the role `core-runtime`); names the unit, the image found and the image expected. At bundle time, two images of one key (one digest, two names) leave the second uncarried; in a written bundle (`deploy check`), also a unit or `runtimes` entry changed after writing. A unit refused `unit_image_conflict`, `unit_image_missing` or `image_unpinned` is left to that refusal; K19 |
 | `volume_mount_missing` | a volume a unit claims that no part of the unit mounts (`parts.<p>.volumes[].mount`, matched by name), or mounts at a relative path; there is no default path |
+| `unit_config_conflict` | two sources of one unit (its `packing.units` entry, its parts) give one environment variable two different values, or two parts of one unit both give `args`; K20 |
+| `unit_config_invalid` | a unit's `env` or `args` of the wrong form (a name that is not `[A-Z_][A-Z0-9_]*`, a value that is neither a scalar nor `{secret: <name>}`, `args` not a list of strings, on a part in no unit); in a written bundle, also a `config` of the wrong form or not the one the carried binding resolves; K20 |
 | `ui_upstream_unknown` | a UI unit (K17) reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have; in a written bundle, a UI unit's `upstream.unit` that is no other unit of the bundle |
 | `nested_document_missing` | in a written bundle (`deploy check`) only: a part of block `architecture`, at any depth, pins a digest the bundle's `nested` carries no document of |
 | `nested_document_mismatch` | in a written bundle (`deploy check`) only: a carried nested document whose `content_base64` is not its `sha256`, does not parse to its `document`, or whose canonical digest is not its key |
@@ -185,6 +187,7 @@ Each entry of `units`:
 | `schedule` | for `scheduled`: the cron rule the binding gives (K18) |
 | `clock` | for `scheduled`: the trigger and schedule that wake it, its `policy` and `max_parallel` as the overlap rule |
 | `upstream` | for a UI unit (K17): `{unit, port, path}`, the unit whose adapter the page reads and the `api_base` of its `config.json` |
+| `config` | the non-secret configuration the binding gives the unit (K20): `env`, variable names sorted, each value text or `{secret: <name>}`, and `args`; absent when it gives none |
 | `secrets` | every secret by name; never a value |
 | `egress` | every destination by name: another unit's link with transport and protocol, or an `external` dependency. Each entry carries `name`, the string the target resolves: an external part's reach name (or its address, when the reach is one), the target unit's name for a crossing, the declared name for a named destination; and `address` when the binding resolves one (a named destination's `address`, a CIDR block or `<host>:<port>` or `{namespace, labels}`; an external part's reach address). A named destination the binding does not resolve carries `unresolved: true`. Nothing undeclared is granted (`weft:docs/domain-sketch.md:364-365`) |
 | `roles` | the abstract roles the unit needs (below) |
@@ -458,6 +461,31 @@ stays `/1`.
   it and with the references `runtimes` carry (`unit_runtime_mismatch`, naming the unit, the image
   found and the image expected). `deploy bundle` refuses the same on the bundle it built: an image
   that shares a key with another under a different name is not carried.
+
+## K20 Configuration of a unit
+
+A unit needs non-secret values its program reads, such as the Host names a server allows (R87). A
+binding could give none: a part and a runtime took no key for it. The bundle stays `/1`; a bundle
+without configuration keeps its bytes.
+
+- **Binding.** `parts.<p>.env: {NAME: value}` and `parts.<p>.args: [string]`, and the same `env`
+  and `args` on a unit `packing.units` lists. `NAME` is `[A-Z_][A-Z0-9_]*`; a value is text, a
+  number or a boolean taken as its text, or `{secret: <name>}`.
+- **Secrets.** `{secret: <name>}` is a reference through the secrets of the unit
+  (`deploy/grants.rs`): the name is a secret name (`secret_value`) that a part of the unit
+  declares (`secret_undeclared`). The bundle carries the reference, never a value.
+- **Bundle.** Per unit `config: {env, args}`, merged in one order: the unit's entry, then its
+  parts by name. `env` keys sorted; `args` the unit's, then those of the one part that gives any.
+  Each member is left out when empty, and `config` when both are.
+- **Refusals.** `unit_config_conflict`: two sources of one unit give one variable two different
+  values, or two parts of one unit both give `args`. `unit_config_invalid`: a name that is no
+  variable name, a value of another kind (a list, a mapping other than `{secret}`, null), an `env`
+  that is no mapping, `args` that are not a list of strings, `env` or `args` on a part in no unit.
+  A finding names the unit, the source and the variable, never a value.
+- **Check.** `deploy check` reads each unit's `config` back: one of the wrong form, or one that is
+  not what the carried binding resolves for its unit (none for a unit the packing does not have),
+  is `unit_config_invalid`; a `{secret}` in it is checked like the unit's other secrets
+  (`deploy/config.rs`).
 
 ## Risks
 

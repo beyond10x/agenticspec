@@ -514,7 +514,7 @@ contract:
       settings: {}
     ports_digest: b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1
 binding:
-  digest: sha256:cc1743e20119c5738aaf8528a78d66c26ce26394d3b0ebe9cb4f93f80a816407
+  digest: sha256:60262f82a7224f467a6b7c470ce13662691942fc39e2e15bd26687777a76da51
   document:
     architecture: workstation
     binding: split
@@ -564,9 +564,17 @@ binding:
           image: registry.example/agenticspec-core
         state: service
       gateway:
+        args:
+        - --log-format
+        - json
         egress:
         - secret: model-api-key
           to: model
+        env:
+          ALLOWED_HOSTS: gateway.agents.svc,localhost
+          MODEL_CREDENTIAL:
+            secret: model-api-key
+          PORT: 8081
         image:
           digest: sha256:0000000000000000000000000000000000000000000000000000000000000001
           image: registry.example/agenticspec-core
@@ -601,7 +609,7 @@ binding:
       core:
         digest: sha256:0000000000000000000000000000000000000000000000000000000000000001
         image: registry.example/agenticspec-core
-    summary: 'The workstation with one unit per part: the operator and the coding agents run as agents of their own, the gateway and the build pool as services that keep their state in one place and run the core runtime image, named for each. The control plane serves its ingresses on two ports, the coding agents are isolated on the network and mount their trees, and the hosted model is reached at an address.'
+    summary: 'The workstation with one unit per part: the operator and the coding agents run as agents of their own, the gateway and the build pool as services that keep their state in one place and run the core runtime image, named for each; the gateway is told the Host names it allows and reads its model key by reference. The control plane serves its ingresses on two ports, the coding agents are isolated on the network and mount their trees, and the hosted model is reached at an address.'
     target:
       images: registry
       isolation: container
@@ -740,6 +748,15 @@ units:
     volumes: []
   code:
     runtime: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
+  config:
+    args:
+    - --log-format
+    - json
+    env:
+      ALLOWED_HOSTS: gateway.agents.svc,localhost
+      MODEL_CREDENTIAL:
+        secret: model-api-key
+      PORT: '8081'
   egress:
   - address: models.example:443
     carries: model_call
@@ -1020,4 +1037,4 @@ runtimes:
   sha256:0000000000000000000000000000000000000000000000000000000000000001:
     image: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
     name: core
-digest: sha256:dffe1b0bec4d84c98717b2341a9223ac34dd747b425bf4e329e2f51212b9055f
+digest: sha256:00f36e3aa04fd7b69543aa5231b14b256e1558fb60c575ad1c598665b6978b36

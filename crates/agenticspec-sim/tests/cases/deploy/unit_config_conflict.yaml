@@ -1,0 +1,10 @@
+format: agenticspec-binding/1
+binding: unit-config-conflict
+architecture: workstation
+refines: egress/workstation.yaml
+summary: >-
+  Every part in the core unit, and its parts builds and gateway give the variable LOG_LEVEL two
+  different values.
+parts:
+  builds: {env: {LOG_LEVEL: debug}}
+  gateway: {env: {LOG_LEVEL: info}}
