@@ -318,3 +318,17 @@ Called by: Keeper.
 |---|---|---|---|---|
 | `lease_wait_seconds`<br/>Time a run waited for a workspace lease.<br/><small>How: Seconds between LeaseRequested and LeaseGranted, median and 90th percentile.</small> | seconds | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `workspace`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  | every port | What kind of workspace the part provides. |
+| `sharing` | enum `Sharing`: `exclusive`, `shared_read_only`, `shared_read_write` |  |  | every port | Whether more than one holder may use one workspace. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

@@ -1,0 +1,154 @@
+format: agenticspec-settings/1
+summary: >-
+  The settings a part of an architecture document may carry, per block, each with its type. A
+  setting is every key of a part except `block`. `agenticspec sim check` refuses a setting its
+  block does not declare (setting_unknown) and a value outside its type (setting_invalid); the
+  contract copies the settings marked `narrows` into the ports they narrow; the block pages list
+  them. Types: number and integer (with `unit`, `min`, `max`), boolean, enum (the variants of a
+  block's own enum named by `enum`, in snake case, or the words of `values`), duration (`90s`,
+  `15m`, `24h`, `1d`, or a number of seconds; `min` and `max` in seconds), string, part (the name
+  of another part; `list: true` takes a list of names) and shares (a map from the name of a part
+  to a number of at least 0). `default` is the value a part takes without the setting; `narrows`
+  names the contract ports it narrows, `all` every port the part uses.
+
+every_part:
+  - {name: count, type: integer, min: 0, default: 1, summary: "How many copies of the part run."}
+  - {name: per, type: part, summary: "One copy of the part for each copy of the named part."}
+
+blocks:
+  - kind: principal
+    domain: agentic.principal
+    settings:
+      - {name: kind, type: enum, enum: agentic.shared.PrincipalKind, default: human, narrows: [question.question], summary: "What kind of principal answers; picks its entry of the behaviour profile."}
+
+  - kind: agent
+    domain: agentic.agent
+    settings:
+      - {name: harness, type: string, narrows: [harness.session, harness.tool-call], summary: "The kind of harness the agent runs in, a row a field registers."}
+      - {name: role, type: string, narrows: [harness.session], summary: "The role of the behaviour profile the agent plays; without one, the profile's default role."}
+      - {name: acts_for, type: part, narrows: [harness.session], summary: "The principal the agent acts for."}
+      - {name: coordination, type: enum, enum: agentic.architecture.Coordination, default: none, summary: "How the copies of the agent coordinate."}
+      - {name: start_stagger, type: duration, min: 0, default: 0s, summary: "The time between the starts of two copies."}
+      - {name: partition, type: enum, values: [scope], summary: "`scope`: each copy works on its own part of the scope, so copies do not collide."}
+      - {name: strictness, type: string, default: balanced, summary: "The entry of the profile's review strictness a reviewer agent judges with."}
+      - {name: false_accept, type: number, unit: share, min: 0, max: 1, summary: "The share of wrong results a reviewer agent accepts; with false_reject, replaces the strictness entry."}
+      - {name: false_reject, type: number, unit: share, min: 0, max: 1, summary: "The share of right results a reviewer agent sends back."}
+      - {name: method, type: string, summary: "The label of the method the agent follows, when an experiment compares methods."}
+      - {name: model_share, type: shares, summary: "The share of the agent's model calls each model part it reaches gets; without it, equal shares."}
+
+  - kind: harness
+    domain: agentic.harness
+    settings:
+      - {name: kind, type: string, narrows: all, summary: "The kind of harness, a row a field registers."}
+
+  - kind: model
+    domain: agentic.model
+    settings:
+      - {name: route, type: string, narrows: [model.inference], summary: "The route of the model, priced by the behaviour profile."}
+
+  - kind: gateway
+    domain: agentic.gateway
+    settings:
+      - {name: rate_limit_per_minute, type: number, unit: calls per minute, min: 0, narrows: [gateway.call], summary: "The model calls the gateway admits per minute; without it, no limit."}
+
+  - kind: tool
+    domain: agentic.tool
+    settings:
+      - {name: kind, type: string, summary: "What the tool is."}
+      - {name: category, type: enum, enum: agentic.shared.ToolCategory, summary: "The category of the tool's calls, the one an authority decides on."}
+
+  - kind: knowledge
+    domain: agentic.knowledge
+    settings:
+      - {name: kind, type: string, summary: "What the knowledge is."}
+
+  - kind: channel
+    domain: agentic.channel
+    settings:
+      - {name: kind, type: enum, enum: agentic.channel.ChannelKind, narrows: all, summary: "What the channel carries."}
+      - {name: distribution, type: enum, enum: agentic.channel.Distribution, default: direct, narrows: all, summary: "Who receives a message; on a topic, queue or board a trigger can listen."}
+
+  - kind: workspace
+    domain: agentic.workspace
+    settings:
+      - {name: kind, type: string, narrows: all, summary: "What kind of workspace the part provides."}
+      - {name: sharing, type: enum, enum: agentic.shared.Sharing, narrows: all, summary: "Whether more than one holder may use one workspace."}
+
+  - kind: sandbox
+    domain: agentic.sandbox
+    settings:
+      - {name: isolation, type: enum, enum: agentic.shared.IsolationLevel, narrows: all, summary: "How the sandbox isolates what runs in it."}
+      - {name: egress, type: part, list: true, narrows: all, summary: "The parts the sandbox may reach."}
+
+  - kind: runtime
+    domain: agentic.runtime
+    settings:
+      - {name: kind, type: string, narrows: all, summary: "What kind of runtime the part is."}
+      - {name: role, type: string, summary: "The role of the behaviour profile the runtime's runs play."}
+
+  - kind: pool
+    domain: agentic.resource
+    settings:
+      - {name: kind, type: enum, enum: agentic.resource.PoolKind, narrows: [resource.claim], summary: "What the pool hands out."}
+      - {name: capacity, type: integer, unit: slots, min: 0, narrows: [resource.claim], summary: "How many claims the pool holds at once; without it, no limit."}
+      - {name: job_limit, type: duration, min: 0, narrows: [resource.claim], summary: "How long one claim may hold a slot; without it, no limit."}
+
+  - kind: trigger
+    domain: agentic.trigger
+    settings:
+      - {name: kind, type: enum, enum: agentic.trigger.TriggerKind, narrows: [trigger.firing], summary: "What the trigger fires on."}
+      - {name: schedule, type: part, narrows: [trigger.firing], summary: "The schedule part an on_schedule trigger fires on."}
+      - {name: channel, type: part, narrows: [trigger.firing], summary: "The channel part an on_message trigger listens on."}
+      - {name: event_name, type: string, narrows: [trigger.firing], summary: "The full name of the event an on_event trigger fires on."}
+      - {name: source, type: part, narrows: [trigger.firing], summary: "The part whose events fire an on_event trigger."}
+      - {name: policy, type: enum, enum: agentic.trigger.ConcurrencyPolicy, default: skip, narrows: [trigger.firing], summary: "What a firing does while a run it started is still going."}
+      - {name: max_parallel, type: integer, default: 1, narrows: [trigger.firing], summary: "How many runs may go at once under the parallel policy."}
+      - {name: takes, type: enum, values: [all], summary: "`all`: one run takes every waiting task, not one."}
+      - {name: task_template, type: string, summary: "The template of the task each firing starts."}
+
+  - kind: schedule
+    domain: agentic.trigger
+    settings:
+      - {name: every, type: duration, narrows: [trigger.firing, trigger.schedule], summary: "The time between two firings."}
+      - {name: next_fire_at, type: duration, min: 0, default: 0s, narrows: [trigger.schedule], summary: "When the schedule first fires, from the start of the run."}
+
+  - kind: authority
+    domain: agentic.authority
+    settings:
+      - {name: kind, type: string, narrows: all, summary: "What the authority is; a budget uses the budget port."}
+      - {name: action_class, type: enum, enum: agentic.shared.ToolCategory, summary: "The category of actions a grant permits."}
+      - {name: scope, type: string, summary: "What a grant covers."}
+      - {name: expires_after, type: duration, min: 0, summary: "How long a grant holds after it is issued."}
+
+  - kind: work
+    domain: agentic.work
+    settings:
+      - {name: kind, type: string, summary: "What the work is."}
+
+  - kind: experiment
+    domain: agentic.experiment
+    settings:
+      - {name: kind, type: string, summary: "What the experiment compares."}
+
+  - kind: kpi
+    domain: agentic.kpi
+    settings:
+      - {name: kind, type: string, summary: "What the KPI measures."}
+
+  - kind: question
+    domain: agentic.question
+    settings: []
+
+  - kind: process
+    domain: agentic.process
+    settings: []
+
+  - kind: delegation
+    domain: agentic.delegation
+    settings: []
+
+  - kind: architecture
+    domain: agentic.architecture
+    settings:
+      - {name: ref, type: string, summary: "The path of the nested architecture document, relative to this one."}
+      - {name: digest, type: string, summary: "The digest of the nested document's bytes, `sha256:<hex>`."}

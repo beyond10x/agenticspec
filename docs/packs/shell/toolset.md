@@ -183,3 +183,15 @@ Called by: Shell tool.
 | `command_timeout_share`<br/>Share of started commands that ran into their time limit.<br/><small>How: CommandEnded events with end TimedOut divided by CommandStarted events.</small> | share | lower | – | planned<br/><small>source: design</small> |
 | `command_failure_share`<br/>Share of commands that exited with a code other than 0.<br/><small>How: CommandEnded events with end Exited and an exit code other than 0, divided by CommandEnded events with end Exited.</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `shell.toolset`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

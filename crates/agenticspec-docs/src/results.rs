@@ -1,7 +1,8 @@
 //! The committed results of the catalog's experiments: `website/static/catalog/<entry>/result.json`
 //! and beside it `sources.sha256`, the SHA-256 of every source the result depends on (the
 //! experiment, its architecture and profile, the simulator's source files, the part kinds and
-//! carries values the check reads from the architecture block, the versions of the simulator's
+//! carries values the check reads from the architecture block, the names and types of the part
+//! settings (`blocks/settings.yaml`), the versions of the simulator's
 //! dependencies in `Cargo.lock`, and `rust-toolchain.toml`).
 //!
 //! `task catalog:generate` runs every experiment at its own budget and seeds and writes both files;
@@ -257,6 +258,11 @@ pub fn digest(root: &Path, s: &Source) -> Result<String, String> {
     add(
         kinds.as_bytes(),
         "blocks/9-composition/architecture.yaml (PartKind, Carries)".into(),
+    );
+    // The settings refusals are gate KPIs too: they depend on each setting's name and type.
+    add(
+        agenticspec_sim::settings::table().canonical().as_bytes(),
+        "blocks/settings.yaml (names and types)".into(),
     );
     let lock = read(&root.join("Cargo.lock"))?;
     let versions = locked_versions(&lock);

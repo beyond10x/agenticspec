@@ -70,8 +70,12 @@ types:
   # A part's block-specific settings: the example's `harness: coding`, `slots: 16`,
   # `sharing: exclusive`, `egress: [gateway]`, `upstreams: [provider]`; an experiment's mutation
   # names a part and one of these (`{part: builds, field: slots}`).
-  # UNMAPPED: the typed settings of each block. The block domains (layers 1-8) own them; this
-  # domain keeps them as named text until a block's own type is referenced here.
+  # Taken: the settings a part of each block may carry are declared in blocks/settings.yaml
+  # (agenticspec-settings/1), one table, each with its type (number or integer with unit and
+  # range, boolean, enum, duration, string, the name of another part), its default and the ports
+  # it narrows; an enum is a block's own where the block declares one (a pool's kind is
+  # agentic.resource.PoolKind). The check refuses a setting the table does not declare for the
+  # part's block and a value outside its type. This domain keeps a setting as named text.
   - name: agentic.architecture.Setting
     kind: struct
     fields:
@@ -179,10 +183,10 @@ types:
   # question: question.question; a call to a tool: harness.tool-call; a claim: resource.claim; a
   # message, or any value sent to a channel part or over one: the channel's sending port), and a
   # principal a question reaches uses question.question too.
-  # Which settings narrow which port, taken: per block and port a fixed list of setting names
+  # Which settings narrow which port, taken: those blocks/settings.yaml marks as narrowing it,
   # copied from the using part (agent: harness, role, acts_for; model: route; gateway:
   # rate_limit_per_minute; pool: kind, capacity, job_limit; channel: kind, distribution; sandbox:
-  # isolation, egress; workspace: kind, sharing; ...); a setting not in the list is not copied.
+  # isolation, egress; workspace: kind, sharing; ...); any other setting is not copied.
   - name: agentic.architecture.ContractPort
     kind: struct
     fields:

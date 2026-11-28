@@ -154,3 +154,17 @@ Called by: Tool catalogue.
 | `tool_duration_p90_seconds`<br/>90th percentile of the time a tool call took.<br/><small>How: Seconds between ToolCallRequested and ToolCallCompleted of the same call, 90th percentile per tool.</small> | seconds | lower | – | planned<br/><small>source: design</small> |
 | `error_recovery_share`<br/>Share of tool errors after which the agent's next call succeeded.<br/><small>How: Failed tool calls whose next call by the same agent, within 3 calls, succeeded, divided by failed tool calls. Compare errors that state the next step with errors that do not.</small> | share | higher | – | planned<br/><small>source: research/2609.35381</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `tool`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  |  | What the tool is. |
+| `category` | enum `ToolCategory`: `read`, `search`, `edit`, `execute`, `network`, `spawn`, `message`, `plan`, `other` |  |  |  | The category of the tool's calls, the one an authority decides on. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

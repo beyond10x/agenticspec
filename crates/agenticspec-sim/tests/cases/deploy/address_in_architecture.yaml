@@ -3,5 +3,6 @@ binding: address-in-architecture
 architecture: workstation
 refines: egress/workstation.yaml
 summary: >-
-  The workstation whose gateway names its address in the architecture
-  (address_in_architecture.architecture.yaml); an address is the binding's.
+  The workstation whose policies name an upstream address in the architecture
+  (address_in_architecture.architecture.yaml); an address is the binding's. An address on a
+  part is refused earlier, by the check, as a setting its block does not declare.

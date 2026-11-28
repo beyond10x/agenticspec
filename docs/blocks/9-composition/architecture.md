@@ -722,3 +722,17 @@ Called by: Deployer.
 | `shared_workspaces`<br/>Workspace parts whose sharing is not exclusive.<br/><small>How: Parts with block workspace whose sharing is anything but exclusive, a workspace without sharing included. Read by agenticspec sim check.</small> | count | lower | – | simulated<br/><small>source: design</small> |
 | `capacity_ratio`<br/>Agent copies that claim a pool divided by its capacity, the largest over the pools.<br/><small>How: For each pool part with a capacity, the copies of the agent parts with a claim link to it divided by the capacity; the largest of these, 0 without a pool. A marked count or capacity at its value as built, as the simulator reads it. Above 1, copies wait for the pool. Read by agenticspec sim check.</small> | ratio | lower | – | simulated<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `architecture`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `ref` | string |  |  |  | The path of the nested architecture document, relative to this one. |
+| `digest` | string |  |  |  | The digest of the nested document's bytes, `sha256:<hex>`. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

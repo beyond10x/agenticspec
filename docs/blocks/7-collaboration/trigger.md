@@ -430,3 +430,33 @@ Called by: Dispatcher.
 | `firings_empty`<br/>Runs a firing started that found nothing to take, looked once and ended.<br/><small>How: FiringStarted events whose run took no post and no task before FiringEnded. The simulator counts a started firing with no item on its source; the run still costs one model call.</small> | count | lower | – | simulated<br/><small>source: design</small> |
 | `firings_replaced_share`<br/>Share of started firings that a newer firing for the same subject replaced.<br/><small>How: FiringReplaced events divided by FiringStarted events, per trigger with the Replace subject policy. High means work is started and thrown away.</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `trigger`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | enum `TriggerKind`: `on_event`, `on_message`, `on_schedule` |  |  | `trigger.firing` | What the trigger fires on. |
+| `schedule` | part |  |  | `trigger.firing` | The schedule part an on_schedule trigger fires on. |
+| `channel` | part |  |  | `trigger.firing` | The channel part an on_message trigger listens on. |
+| `event_name` | string |  |  | `trigger.firing` | The full name of the event an on_event trigger fires on. |
+| `source` | part |  |  | `trigger.firing` | The part whose events fire an on_event trigger. |
+| `policy` | enum `ConcurrencyPolicy`: `skip`, `queue`, `parallel` |  | `skip` | `trigger.firing` | What a firing does while a run it started is still going. |
+| `max_parallel` | integer |  | `1` | `trigger.firing` | How many runs may go at once under the parallel policy. |
+| `takes` | enum: `all` |  |  |  | `all`: one run takes every waiting task, not one. |
+| `task_template` | string |  |  |  | The template of the task each firing starts. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+
+A part `schedule`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `every` | duration |  |  | `trigger.firing`, `trigger.schedule` | The time between two firings. |
+| `next_fire_at` | duration of at least 0s |  | `0s` | `trigger.schedule` | When the schedule first fires, from the start of the run. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

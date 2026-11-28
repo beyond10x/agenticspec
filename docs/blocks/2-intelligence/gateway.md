@@ -286,3 +286,16 @@ Called by: Gateway operator.
 | `rate_limited_seconds`<br/>Time requests waited because an upstream was saturated.<br/><small>How: Sum over upstreams of the seconds between UpstreamSaturated and the next UpstreamRestored, weighted by the calls held back in that interval.</small> | seconds | lower | – | simulated<br/><small>source: design</small> |
 | `call_denied_share`<br/>Share of model calls the gateway refused at admission.<br/><small>How: CallDecided events with a refusal divided by all CallDecided events, by reason (budget, route, rate).</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `gateway`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `rate_limit_per_minute` | number of at least 0 | calls per minute |  | `gateway.call` | The model calls the gateway admits per minute; without it, no limit. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

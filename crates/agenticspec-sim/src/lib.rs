@@ -20,6 +20,7 @@ pub mod rng;
 pub mod rows;
 pub mod scenario;
 pub mod search;
+pub mod settings;
 pub mod sim;
 pub mod unavailable;
 pub mod whole;

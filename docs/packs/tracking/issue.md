@@ -295,3 +295,15 @@ Called by: Reporter.
 | `issue_close_seconds`<br/>Seconds from an issue being opened to it being closed as resolved.<br/><small>How: Median of IssueClosed time minus IssueOpened time over issues closed with resolution Resolved; declined issues are counted apart.</small> | seconds | lower | – | planned<br/><small>source: design</small> |
 | `issue_reopen_share`<br/>Share of closed issues that were opened again.<br/><small>How: Issues with an IssueReopened after an IssueClosed, divided by issues with an IssueClosed. A reopened issue was closed before its work was done.</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `tracking.issue`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+
