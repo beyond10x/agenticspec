@@ -167,6 +167,7 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         }
     };
     let docs = agent_documents(inputs, inputs.packing, &mut findings);
+    findings.extend(served(inputs.arch, &inputs.binding.doc, inputs.packing));
     findings.extend(grants::check(
         inputs.arch,
         &inputs.binding.doc,
@@ -198,15 +199,33 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         );
     }
     let mut runtimes = Map::new();
+    let local = binding_form::images(binding) == "local";
     for (name, r) in binding["runtimes"].as_object().into_iter().flatten() {
-        let image = binding_form::image_reference(binding, name).unwrap_or_default();
-        runtimes.insert(
-            text(&r["digest"]).to_owned(),
-            json!({ "name": name, "image": image }),
-        );
+        if local {
+            // What the binding gave: the image, and its tag, its digest (config id) or both;
+            // keyed by the digest, else by `<image>:<tag>`.
+            let mut entry = json!({ "name": name, "image": text(&r["image"]) });
+            for k in ["tag", "digest"] {
+                if let Some(x) = r[k].as_str() {
+                    entry[k] = json!(x);
+                }
+            }
+            let key = match r["digest"].as_str() {
+                Some(d) => d.to_owned(),
+                None => format!("{}:{}", text(&r["image"]), text(&r["tag"])),
+            };
+            runtimes.insert(key, entry);
+        } else {
+            let image = binding_form::image_reference(binding, name).unwrap_or_default();
+            runtimes.insert(
+                text(&r["digest"]).to_owned(),
+                json!({ "name": name, "image": image }),
+            );
+        }
     }
-    let packing = inputs.packing.to_value();
+    let packing = inputs.packing.to_value(inputs.arch);
     let contract = inputs.contract.to_value();
+    let ingress = ingress(&contract["ingress"], binding, inputs.packing);
     let mut bundle = json!({
         "format": FORMAT,
         "generator": format!("agenticspec {}", env!("CARGO_PKG_VERSION")),
@@ -229,7 +248,7 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
             "document": packing,
         },
         "units": units,
-        "ingress": [],
+        "ingress": ingress,
         "requirements": inputs.arch.get("requirements").cloned().unwrap_or(json!([])),
         "agents": agents,
         "runtimes": runtimes,
@@ -264,6 +283,150 @@ pub fn recompute(bundle: &Value) -> String {
         m.remove("digest");
     }
     digest(&v)
+}
+
+/// The part that serves an export the binding names no part for: the control plane, whose
+/// adapter in the core unit serves every ingress. It is the reserved path no part of a document
+/// may take, under which the implied audiences `control.operator` and `control.monitor` sit.
+pub const CONTROL: &str = "control";
+
+/// The ingress of a bundle: one entry per export of each ingress of the contract
+/// (`contract_ingress`, the contract's `ingress` as data), in the contract's order: the
+/// ingress, its protocol, audience and whether callers authenticate; the unit and part that
+/// serve it (the binding's `part`, else [`CONTROL`] in the core unit); its `bind` (the
+/// binding's, else [`binding_form::DEFAULT_BIND`]); its `port` and `address` when the binding
+/// gives them.
+pub fn ingress(contract_ingress: &Value, binding: &Value, packing: &Packing) -> Vec<Value> {
+    let core = packing
+        .units
+        .iter()
+        .find(|u| u.kind == "core")
+        .map_or("core", |u| u.name.as_str());
+    let mut out = Vec::new();
+    for i in contract_ingress.as_array().into_iter().flatten() {
+        let name = text(&i["name"]);
+        for protocol in i["exports"].as_array().into_iter().flatten() {
+            let protocol = text(protocol);
+            let e = &binding["ingress"][name]["exports"][protocol];
+            let (unit, part) = match e["part"].as_str() {
+                Some(p) => (packing.unit_of(p).map_or(core, |u| u.name.as_str()), p),
+                None => (core, CONTROL),
+            };
+            let mut entry = json!({
+                "ingress": name,
+                "protocol": protocol,
+                "audience": i["audience"],
+                "authenticated": i["authenticated"],
+                "unit": unit,
+                "part": part,
+                "bind": e["bind"].as_str().unwrap_or(binding_form::DEFAULT_BIND),
+            });
+            if let Some(p) = e["port"].as_u64() {
+                entry["port"] = json!(p);
+            }
+            if let Some(a) = e["address"].as_str() {
+                entry["address"] = json!(a);
+            }
+            out.push(entry);
+        }
+    }
+    out
+}
+
+/// The mount the binding gives a volume of a unit: `parts.<p>.volumes[].mount` of the first part
+/// `p` of the unit, in name order, that names the volume.
+fn mount_of<'a>(binding: &'a Value, parts: &[String], volume: &str) -> Option<&'a Value> {
+    parts.iter().find_map(|p| {
+        binding["parts"][p]["volumes"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|v| v["name"] == volume)
+            .map(|v| &v["mount"])
+    })
+}
+
+/// An absolute path: it starts with `/`.
+fn absolute(v: &Value) -> bool {
+    v.as_str().is_some_and(|m| m.starts_with('/'))
+}
+
+/// The findings of what the target is asked to serve, from the architecture, the binding and
+/// the packing: `network_isolation_unmet`, a part marked `network: isolated` on a target that
+/// enforces no network policy; `image_unpinned`, a runtime from the target's local store with
+/// neither tag nor digest; `volume_mount_missing`, a volume of a unit no part of it mounts at an
+/// absolute path. A finding names the part, runtime or volume, never a value.
+pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> {
+    let mut out = Vec::new();
+    if binding["target"]["network_policy"] == "not_enforced" {
+        for (p, entry) in binding["parts"].as_object().into_iter().flatten() {
+            if entry["network"] == "isolated" && packing.unit_of(p).is_some() {
+                out.push(Finding {
+                    refusal: "network_isolation_unmet",
+                    detail: format!(
+                        "part {p} is marked `network: isolated`, and the target does not enforce a network policy"
+                    ),
+                });
+            }
+        }
+    }
+    if binding_form::images(binding) == "local" {
+        for (name, r) in binding["runtimes"].as_object().into_iter().flatten() {
+            if r["tag"].is_null() && r["digest"].is_null() {
+                out.push(Finding {
+                    refusal: "image_unpinned",
+                    detail: format!(
+                        "runtimes: {name}: an image of the target's local store is pinned by its tag, its digest or both, and names neither"
+                    ),
+                });
+            }
+        }
+    }
+    for u in &packing.units {
+        for v in u
+            .parts
+            .iter()
+            .filter(|p| arch["parts"][*p]["block"] == "workspace")
+        {
+            let detail = match mount_of(binding, &u.parts, v) {
+                Some(m) if absolute(m) => continue,
+                Some(_) => format!(
+                    "unit {}: volume {v}: its mount is not an absolute path",
+                    u.name
+                ),
+                None => format!(
+                    "unit {}: volume {v} has no mount (a part of the unit names it under `volumes:` with `mount:`, an absolute path)",
+                    u.name
+                ),
+            };
+            out.push(Finding {
+                refusal: "volume_mount_missing",
+                detail,
+            });
+        }
+    }
+    out
+}
+
+/// The `volume_mount_missing` findings of the units of a written bundle: a volume claim without
+/// a `mount`, or one that is not an absolute path.
+fn unit_volumes(bundle: &Value) -> Vec<Finding> {
+    let mut out = Vec::new();
+    for u in bundle["units"].as_array().into_iter().flatten() {
+        for v in u["claims"]["volumes"].as_array().into_iter().flatten() {
+            if !absolute(&v["mount"]) {
+                out.push(Finding {
+                    refusal: "volume_mount_missing",
+                    detail: format!(
+                        "unit {}: volume {} carries no absolute `mount`",
+                        text(&u["name"]),
+                        text(&v["name"])
+                    ),
+                });
+            }
+        }
+    }
+    out
 }
 
 /// The keys that hold where something is reached. An address is the binding's (per export, and
@@ -362,6 +525,14 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
             None
         }
     };
+    if let Some(p) = &packing {
+        let contract_ingress = &bundle["contract"]["document"]["ingress"];
+        problems.extend(
+            binding_form::served_problems(binding, contract_ingress, p)
+                .into_iter()
+                .map(|x| format!("binding: {x}")),
+        );
+    }
     let Some(packing) = packing.filter(|_| problems.is_empty()) else {
         return Err(Refused::Invalid(problems));
     };
@@ -410,6 +581,8 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
             });
         }
     }
+    findings.extend(served(arch, binding, &packing));
+    findings.extend(unit_volumes(bundle));
     findings.extend(grants::check(arch, binding, &packing));
     findings.extend(grants::check_units(bundle));
     findings.extend(addresses(arch));
@@ -443,6 +616,9 @@ fn volumes(inputs: &Inputs, parts: &[String]) -> Vec<Value> {
         });
         if let Some(size) = inputs.binding.doc["parts"][p]["size"].as_str() {
             v["size"] = json!(size);
+        }
+        if let Some(m) = mount_of(&inputs.binding.doc, parts, p).and_then(Value::as_str) {
+            v["mount"] = json!(m);
         }
         out.push(v);
     }
@@ -503,7 +679,7 @@ fn unit(
         .max_by_key(|l| super::binding::isolation_rank(l))
         .unwrap_or("none");
 
-    let checks = match u.kind.as_str() {
+    let mut checks = match u.kind.as_str() {
         "agent" | "job" | "scheduled" => json!({
             "startup": { "kind": "role", "role": "agent-runtime", "step": "check" },
         }),
@@ -514,6 +690,11 @@ fn unit(
         "model" => json!({ "ready": { "kind": "role", "role": "model-server", "step": "ready" } }),
         _ => json!({}),
     };
+    for (k, c) in binding["checks"][&u.name].as_object().into_iter().flatten() {
+        if let (Some(port), Some(check)) = (c["port"].as_u64(), checks.get_mut(k)) {
+            check["port"] = json!(port);
+        }
+    }
 
     let secrets: BTreeSet<String> = u
         .parts
@@ -522,7 +703,9 @@ fn unit(
         .collect();
 
     // Every link that leaves the unit, then every named destination its parts declare; each
-    // with the secret its declaration names.
+    // with the secret its declaration names and `name`, what the target resolves: an external
+    // part's reach (its name, or its address), the unit a crossing goes to, a named
+    // destination's own name.
     let mut egress = Vec::new();
     let secret_of = |from: &str, to: &str| {
         grants::declared_egress(binding, from)
@@ -536,12 +719,20 @@ fn unit(
             continue;
         }
         let name = link_name(l);
-        let mut e = json!({ "link": name, "from": from, "to": to, "carries": text(&l["carries"]) });
+        let mut e = json!({ "link": name, "from": from, "to": to, "carries": text(&l["carries"]), "name": to });
         if plan.external.iter().any(|x| x == to) {
             e["external"] = json!(true);
+            let reach = inputs.packing.reach_of(to);
+            if let Some(a) = reach["address"].as_str() {
+                e["name"] = json!(a);
+                e["address"] = json!(a);
+            } else if let Some(n) = reach["name"].as_str() {
+                e["name"] = json!(n);
+            }
         } else if let Some(c) = plan.crossings.iter().find(|c| c.link == name) {
             e["unit"] = json!(c.to_unit);
             e["transport"] = json!(c.transport);
+            e["name"] = json!(c.to_unit);
         }
         if let Some(s) = secret_of(from, to) {
             e["secret"] = json!(s);
@@ -553,9 +744,13 @@ fn unit(
             if parts.get(&d.to).is_some() {
                 continue;
             }
-            let mut e = json!({ "from": p, "to": d.to, "named": true });
+            let mut e = json!({ "from": p, "to": d.to, "named": true, "name": d.to });
             if let Some(s) = d.secret {
                 e["secret"] = json!(s);
+            }
+            match d.address {
+                Some(a) => e["address"] = a,
+                None => e["unresolved"] = json!(true),
             }
             egress.push(e);
         }

@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: volume-mount-missing
+architecture: workstation
+summary: The coding agents' tree is claimed as a volume, and no part of its unit says where it is mounted.
+parts:
+  operator: {egress: [gateway, owner, worker]}
+  worker: {egress: [builds, gateway, operator]}
+  gateway: {egress: [model]}

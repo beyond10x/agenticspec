@@ -510,7 +510,7 @@ contract:
       settings: {}
     ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 binding:
-  digest: sha256:76c5ef545149e21216384c7411ead6e5a1601333fab70ccee0b763c4b96f7542
+  digest: sha256:e9e04895dbdf2456965da5ba32e434b57a6ee596c5a947f2d8a453b984fdca7d
   document:
     architecture: author-reviewer
     binding: local
@@ -522,14 +522,24 @@ binding:
       operator:
         egress:
         - owner
+      worker:
+        volumes:
+        - mount: /workspace
+          name: tree
     summary: 'The local test: every part in the core unit, principals and hosted model routes outside. The base of each local-<architecture>.yaml, which declares where its parts reach. Fits any architecture whose sandboxes ask for no more than a container.'
   name: local
 packing:
-  digest: sha256:8c3a8db16afbab9957192ec44281d27c8533fc70b862b29385a36ec84c1818f5
+  digest: sha256:e26ce5b813e1e4bd06a0c1e6c76010cfd68d6cdabf25ed072a63ef30ec4e8517
   document:
     external:
-    - model
-    - owner
+    - kind: model
+      part: model
+      reach:
+        name: model
+    - kind: principal
+      part: owner
+      reach:
+        name: owner
     units:
     - kind: core
       name: core
@@ -558,6 +568,7 @@ units:
     memory_mib: 512
     volumes:
     - access: read_write_once
+      mount: /workspace
       name: tree
       per_instance: true
   code:
@@ -567,11 +578,13 @@ units:
     external: true
     from: gateway
     link: gateway -> model carries model_call
+    name: model
     to: model
   - carries: question
     external: true
     from: operator
     link: operator -> owner carries question over chat
+    name: owner
     to: owner
   isolation: process
   kind: core
@@ -682,8 +695,43 @@ units:
     - tree
     - worker
     unit: core
-ingress: []
+ingress:
+- audience: control.monitor
+  authenticated: false
+  bind: loopback
+  ingress: metrics
+  part: control
+  protocol: metrics_scrape
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: http
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: event_stream
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: ui
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: tool
+  unit: core
 requirements: []
 agents: {}
 runtimes: {}
-digest: sha256:3d8b89ef5b4f90573aabdf7c2267ded0b1e562e84149112832b07ab274331c80
+digest: sha256:d4d9ca48ca707a52a9e2794fb441a149dfeb720edaf1898a2ec51e140f38d4bd

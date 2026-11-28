@@ -1,8 +1,9 @@
 //! The packing of an architecture: which parts share a unit, one thing a target starts and
 //! watches. The `packing:` section of a binding names a strategy (`single`, the default when the
 //! section is absent, `by_kind`, `by_part` or `groups`) with per-part overrides, or lists the
-//! units themselves (`units:`, the resolved form [`Packing::text`] prints). [`resolve`] turns
-//! either into the units; admission (`crate::deploy::admit`) then checks them.
+//! units themselves (`units:`, the resolved form [`Packing::text`] prints). Any part may be
+//! external, with the `reach` the target finds it by. [`resolve`] turns either into the units;
+//! admission (`crate::deploy::admit`) then checks them.
 
 use crate::check::value;
 use crate::contract::derive::{flow, scalar};
@@ -40,6 +41,9 @@ pub struct Packing {
     pub strategy: String,
     pub units: Vec<Unit>,
     pub external: Vec<String>,
+    /// Where the target reaches an external part, per part whose binding names it: `{address}` or
+    /// `{name}`. A part without one is reached by its own name.
+    pub reach: BTreeMap<String, Value>,
 }
 
 fn text(v: &Value) -> &str {
@@ -167,9 +171,20 @@ pub fn resolve(arch: &Value, section: &Value) -> Result<Packing, Vec<String>> {
             }
         }
         let units = explicit(section, &known, &mut problems);
-        let external: Vec<String> = names(&section["external"]);
-        for e in &external {
-            known(e, "external", &mut problems);
+        let mut external = Vec::new();
+        let mut reach = BTreeMap::new();
+        match &section["external"] {
+            Value::Null => {}
+            Value::Array(list) => {
+                for (i, e) in list.iter().enumerate() {
+                    let Some(part) = external_entry(e, i, parts, &mut reach, &mut problems) else {
+                        continue;
+                    };
+                    known(&part, "external", &mut problems);
+                    external.push(part);
+                }
+            }
+            _ => problems.push("packing: `external:` is a list".into()),
         }
         check_names(&units, &mut problems);
         if !problems.is_empty() {
@@ -179,6 +194,7 @@ pub fn resolve(arch: &Value, section: &Value) -> Result<Packing, Vec<String>> {
             strategy: "units".into(),
             units,
             external,
+            reach,
         });
     }
     if !section["external"].is_null() {
@@ -204,10 +220,20 @@ pub fn resolve(arch: &Value, section: &Value) -> Result<Packing, Vec<String>> {
         }
     };
     let overrides = &section["parts"];
+    let mut reach = BTreeMap::new();
     if let Some(o) = overrides.as_object() {
         for (name, entry) in o {
             known(name, "parts", &mut problems);
             for (k, v) in entry.as_object().into_iter().flatten() {
+                if k == "reach" {
+                    match reach_problem(v) {
+                        Some(p) => problems.push(format!("packing: parts: {name}: {p}")),
+                        None => {
+                            reach.insert(name.clone(), v.clone());
+                        }
+                    }
+                    continue;
+                }
                 let ok = match k.as_str() {
                     "external" => v.is_boolean(),
                     "schedule" => v == "job",
@@ -215,7 +241,7 @@ pub fn resolve(arch: &Value, section: &Value) -> Result<Packing, Vec<String>> {
                 };
                 if !ok {
                     problems.push(format!(
-                        "packing: parts: {name}: `{k}` is not `external: true|false` or `schedule: job`"
+                        "packing: parts: {name}: `{k}` is not `external: true|false`, `schedule: job` or `reach: {{address|name}}`"
                     ));
                 }
             }
@@ -260,6 +286,13 @@ pub fn resolve(arch: &Value, section: &Value) -> Result<Packing, Vec<String>> {
         .map(|(n, _)| n.clone())
         .collect();
     external.sort();
+    for name in reach.keys() {
+        if !external.contains(name) {
+            problems.push(format!(
+                "packing: parts: {name}: `reach` is for an external part, and {name} is in a unit"
+            ));
+        }
+    }
     check_names(&units, &mut problems);
     if !problems.is_empty() {
         return Err(problems);
@@ -268,7 +301,73 @@ pub fn resolve(arch: &Value, section: &Value) -> Result<Packing, Vec<String>> {
         strategy: strategy.into(),
         units,
         external,
+        reach,
     })
+}
+
+/// Why a `reach` is of the wrong form, or `None`: `{address: <text>}` or `{name: <text>}`, one
+/// of the two.
+fn reach_problem(v: &Value) -> Option<String> {
+    let ok = v.as_object().is_some_and(|m| {
+        m.len() == 1
+            && m.iter().all(|(k, x)| {
+                matches!(k.as_str(), "address" | "name")
+                    && x.as_str().is_some_and(super::binding::is_text)
+            })
+    });
+    (!ok).then(|| "`reach` is {address: <text>} or {name: <text>}".to_owned())
+}
+
+/// One entry of `external:` under `units:`: a part's name, or `{part, reach}` (the resolved
+/// form also writes the part's `kind`, its block, which must then be the part's). The part, or
+/// `None` with the problem pushed.
+fn external_entry(
+    e: &Value,
+    i: usize,
+    parts: &Map<String, Value>,
+    reach: &mut BTreeMap<String, Value>,
+    problems: &mut Vec<String>,
+) -> Option<String> {
+    match e {
+        Value::String(p) => Some(p.clone()),
+        Value::Object(m) => {
+            let Some(part) = m.get("part").and_then(Value::as_str) else {
+                problems.push(format!(
+                    "packing: external[{i}] is a part's name or {{part, reach}}"
+                ));
+                return None;
+            };
+            for (k, x) in m {
+                match k.as_str() {
+                    "part" => {}
+                    "reach" => match reach_problem(x) {
+                        Some(p) => problems.push(format!("packing: external: {part}: {p}")),
+                        None => {
+                            reach.insert(part.to_owned(), x.clone());
+                        }
+                    },
+                    "kind" => {
+                        if parts.get(part).is_some_and(|p| &p["block"] != x) {
+                            problems.push(format!(
+                                "packing: external: {part}: kind is the part's block, `{}`",
+                                text(&parts[part]["block"])
+                            ));
+                        }
+                    }
+                    other => {
+                        problems.push(format!("packing: external: {part}: unknown key `{other}`"))
+                    }
+                }
+            }
+            Some(part.to_owned())
+        }
+        _ => {
+            problems.push(format!(
+                "packing: external[{i}] is a part's name or {{part, reach}}"
+            ));
+            None
+        }
+    }
 }
 
 fn names(v: &Value) -> Vec<String> {
@@ -489,9 +588,18 @@ fn group_kind(arch: &Value, parts: &Map<String, Value>, list: &[String], o: &Ove
 }
 
 impl Packing {
+    /// Where the target reaches an external part: the binding's `reach`, else `{name: <part>}`.
+    pub fn reach_of(&self, part: &str) -> Value {
+        self.reach
+            .get(part)
+            .cloned()
+            .unwrap_or_else(|| json!({ "name": part }))
+    }
+
     /// The packing as data: `units` (name, kind, parts, replicas when it runs as copies) and
-    /// `external`. Its digest is the packing digest of a bundle.
-    pub fn to_value(&self) -> Value {
+    /// `external`, each `{part, kind, reach}` with the part's block as its kind. Its digest is
+    /// the packing digest of a bundle.
+    pub fn to_value(&self, arch: &Value) -> Value {
         let units: Vec<Value> = self
             .units
             .iter()
@@ -503,7 +611,18 @@ impl Packing {
                 m
             })
             .collect();
-        json!({ "units": units, "external": self.external })
+        let external: Vec<Value> = self
+            .external
+            .iter()
+            .map(|p| {
+                json!({
+                    "part": p,
+                    "kind": text(&arch["parts"][p]["block"]),
+                    "reach": self.reach_of(p),
+                })
+            })
+            .collect();
+        json!({ "units": units, "external": external })
     }
 
     /// The `packing:` section in its resolved form, to paste into a binding and change: the
@@ -519,7 +638,15 @@ impl Packing {
                 s.push_str(&format!("      replicas: {r}\n"));
             }
         }
-        s.push_str(&format!("  external: {}\n", list(&self.external)));
+        let external: Vec<Value> = self
+            .external
+            .iter()
+            .map(|p| match self.reach.get(p) {
+                Some(r) => json!({ "part": p, "reach": r }),
+                None => json!(p),
+            })
+            .collect();
+        s.push_str(&format!("  external: {}\n", flow(&json!(external))));
         s
     }
 

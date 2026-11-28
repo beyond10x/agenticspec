@@ -478,7 +478,7 @@ contract:
       settings: {}
     ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 binding:
-  digest: sha256:b0783b4c538e1303f0f57fcef5f9d44b20969c884e41aca4d5d72951c175effe
+  digest: sha256:84fa64bcd5ee352193623a098ff0f8125d29aabd35c74940921cd88dbfca3a3a
   document:
     architecture: scheduled-loops
     binding: jobs
@@ -506,18 +506,30 @@ binding:
       triager:
         egress:
         - owner
-    summary: The scheduled loops with the nightly sweep as a scheduled unit that a clock starts and that ends when its run ends; everything else in the core unit.
+    runtimes:
+      core:
+        image: agenticspec-core
+        tag: dev
+    summary: The scheduled loops with the nightly sweep as a scheduled unit that a clock starts and that ends when its run ends; everything else in the core unit. The core runtime is an image of the target's local store, pinned by its tag.
+    target:
+      images: local
     transports:
       claim: http
       model_call: http
       question: a2a
   name: jobs
 packing:
-  digest: sha256:87de1dfef6a4ccebd14582479be9d9d57123fc2460817a7bf415ba19e8e721b5
+  digest: sha256:4b832ccbc5892042e62906edb1ec42f5a4815c02c0dae3144e5a120eb0eda610
   document:
     external:
-    - model
-    - owner
+    - kind: model
+      part: model
+      reach:
+        name: model
+    - kind: principal
+      part: owner
+      reach:
+        name: owner
     units:
     - kind: core
       name: core
@@ -549,16 +561,18 @@ units:
     memory_mib: 512
     volumes: []
   code:
-    role: core-runtime
+    runtime: agenticspec-core:dev
   egress:
   - carries: model_call
     external: true
     from: gateway
     link: gateway -> model carries model_call
+    name: model
     to: model
   - carries: trigger
     from: sweep
     link: sweep -> sweeper carries trigger
+    name: sweeper
     to: sweeper
     transport: schedule
     unit: sweeper
@@ -566,6 +580,7 @@ units:
     external: true
     from: triager
     link: triager -> owner carries question
+    name: owner
     to: owner
   isolation: none
   kind: core
@@ -637,7 +652,6 @@ units:
     settings: {}
   replicas: 1
   roles:
-  - core-runtime
   - model-route:frontier
   secrets: []
   source:
@@ -669,12 +683,14 @@ units:
   - carries: claim
     from: sweeper
     link: sweeper -> builds carries claim
+    name: core
     to: builds
     transport: http
     unit: core
   - carries: model_call
     from: sweeper
     link: sweeper -> gateway carries model_call
+    name: core
     to: gateway
     transport: http
     unit: core
@@ -682,6 +698,7 @@ units:
     external: true
     from: sweeper
     link: sweeper -> owner carries question
+    name: owner
     to: owner
   isolation: none
   kind: scheduled
@@ -720,7 +737,42 @@ units:
     parts:
     - sweeper
     unit: sweeper
-ingress: []
+ingress:
+- audience: control.monitor
+  authenticated: false
+  bind: loopback
+  ingress: metrics
+  part: control
+  protocol: metrics_scrape
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: http
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: event_stream
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: ui
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: tool
+  unit: core
 requirements: []
 agents:
   sha256:dfb59051942244abdc7970effb4a67dd774bb643d7f61fe142802244ac8798b8:
@@ -736,5 +788,9 @@ agents:
           role: agent
     parts:
     - sweeper
-runtimes: {}
-digest: sha256:941def402824200d60b431d22b2a58845d437708c4101e9792da67dd0a78072c
+runtimes:
+  agenticspec-core:dev:
+    image: agenticspec-core
+    name: core
+    tag: dev
+digest: sha256:dc0a2249734c7e87b548ca35f02fc591c9b8ebfd5ca8781b43fbab226e3db033

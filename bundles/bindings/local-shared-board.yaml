@@ -3,5 +3,5 @@ binding: local
 architecture: shared-board
 refines: local.yaml
 parts:
-  team: {egress: [owner]}
+  team: {egress: [owner], volumes: [{name: tree, mount: /workspace}]}
   gateway: {egress: [model]}
