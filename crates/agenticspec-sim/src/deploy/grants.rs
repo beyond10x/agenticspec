@@ -2,7 +2,8 @@
 //! (`parts.<part>.secrets`, `parts.<part>.egress`). Nothing undeclared is granted: a link that
 //! leaves its unit needs its destination declared by the part it starts at, and a secret an
 //! egress entry or a unit names needs a part of that unit that declares it. A secret is only
-//! ever a name; anything that looks like its value is refused (`secret_value`).
+//! ever a name; anything that looks like its value is refused (`secret_value`). A unit's
+//! configuration ([`super::config`]) refers to a secret as `{secret: <name>}`, under the same rules.
 //!
 //! The rule of a name ([`is_name`]): `^[a-z][a-z0-9-]*$`, at most 63 characters, no word between
 //! hyphens longer than 20 characters (a key or a token is one long run; a name is words). A key
@@ -10,6 +11,7 @@
 //! finding names where it is, never the text it found.
 
 use super::admit::Finding;
+use super::config;
 use super::packing::Packing;
 use crate::contract::derive::link_name;
 use serde_json::{Map, Value};
@@ -131,7 +133,8 @@ fn secret_name(v: &Value, at: &str, out: &mut Vec<Finding>) {
 }
 
 /// The `secret_value` findings of a binding: a secret that is no name, a `secrets:` that is no
-/// list, a key of [`VALUE_KEYS`] where the binding holds fields.
+/// list, a key of [`VALUE_KEYS`] where the binding holds fields, an `env:` value `{secret: <s>}` of
+/// a part or a listed unit whose `<s>` is no name.
 pub fn values(binding: &Value) -> Vec<Finding> {
     let mut out = Vec::new();
     let Some(top) = binding.as_object() else {
@@ -181,8 +184,45 @@ pub fn values(binding: &Value) -> Vec<Finding> {
                 }
             }
         }
+        if let Some(env) = m.get("env") {
+            env_secrets(env, &format!("parts: {part}"), &mut out);
+        }
+    }
+    for u in binding["packing"]["units"].as_array().into_iter().flatten() {
+        let at = format!("packing: unit {}", text(&u["name"]));
+        env_secrets(&u["env"], &at, &mut out);
     }
     out
+}
+
+/// The `secret_value` findings of an `env:` at `at` (a part's or a listed unit's): a value
+/// `{secret: <s>}` whose `<s>` is no secret name, a key of [`VALUE_KEYS`] in a value that is a
+/// mapping.
+fn env_secrets(env: &Value, at: &str, out: &mut Vec<Finding>) {
+    for (k, v) in env.as_object().into_iter().flatten() {
+        let Some(m) = v.as_object() else { continue };
+        let at = format!("{at}: env: {k}");
+        value_keys(m, &at, out);
+        if let Some(s) = m.get(config::SECRET) {
+            secret_name(s, &format!("{at}: secret"), out);
+        }
+    }
+}
+
+/// The secret names the `env:` of `entry` refers to (`{secret: <s>}`), those that are names, by
+/// variable.
+fn env_refs(entry: &Value) -> Vec<(&str, &str)> {
+    entry["env"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter_map(|(k, v)| {
+            config::secret_ref(v)
+                .and_then(Value::as_str)
+                .filter(|s| is_name(s))
+                .map(|s| (k.as_str(), s))
+        })
+        .collect()
 }
 
 /// A copy of a binding without what [`values`] refuses, for the check of its form: the keys of
@@ -243,8 +283,9 @@ pub fn without_values(binding: &Value) -> Value {
 
 /// Every finding of secrets and egress for an architecture packed under a binding:
 /// `secret_value` ([`values`]); `secret_undeclared`, an egress entry's secret that no part of
-/// its unit declares; `egress_undeclared`, a link from a part of a unit to an external part or a
-/// part of another unit whose destination that part does not declare.
+/// its unit declares, or that an `env:` value of the unit refers to; `egress_undeclared`, a link
+/// from a part of a unit to an external part or a part of another unit whose destination that
+/// part does not declare.
 pub fn check(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> {
     let mut out = values(binding);
     for u in &packing.units {
@@ -263,6 +304,19 @@ pub fn check(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> {
                         format!(
                             "part {p}: its egress to {} uses secret {s}, and no part of unit {} declares it",
                             e.to, u.name
+                        ),
+                    ));
+                }
+            }
+        }
+        for (at, _, entry) in config::sources(binding, u) {
+            for (k, s) in env_refs(entry) {
+                if !held.contains(s) {
+                    out.push(finding(
+                        "secret_undeclared",
+                        format!(
+                            "{at}: env {k} refers to secret {s}, and no part of unit {} declares it",
+                            u.name
                         ),
                     ));
                 }
@@ -299,8 +353,8 @@ pub fn check(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> {
 /// The findings of secrets and egress in the units of a written bundle, against the binding it
 /// carries: a key of [`VALUE_KEYS`] in a unit or an egress entry, a unit's secret or an egress
 /// entry's secret that is no name (`secret_value`) or that no part of the unit declares
-/// (`secret_undeclared`), an egress entry from a part outside the unit or to a destination its
-/// part does not declare (`egress_undeclared`).
+/// (`secret_undeclared`), the same of a secret its `config.env` refers to, an egress entry from a
+/// part outside the unit or to a destination its part does not declare (`egress_undeclared`).
 pub fn check_units(bundle: &Value) -> Vec<Finding> {
     let binding = &bundle["binding"]["document"];
     let mut out = Vec::new();
@@ -341,6 +395,18 @@ pub fn check_units(bundle: &Value) -> Vec<Finding> {
                 "secret_value",
                 format!("unit {name}: secrets is not a list of secret names"),
             )),
+        }
+        for (k, v) in u["config"]["env"].as_object().into_iter().flatten() {
+            if let Some(m) = v.as_object() {
+                value_keys(m, &format!("unit {name}: config: env: {k}"), &mut out);
+            }
+            if let Some(s) = config::secret_ref(v) {
+                secret(
+                    s,
+                    format!("unit {name}: config: env: {k}: secret"),
+                    &mut out,
+                );
+            }
         }
         for (i, e) in u["egress"].as_array().into_iter().flatten().enumerate() {
             let at = format!("unit {name}: egress[{i}]");

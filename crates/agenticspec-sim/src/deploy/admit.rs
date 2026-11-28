@@ -32,6 +32,8 @@ pub const REFUSALS: &[&str] = &[
     "unit_image_missing",
     "unit_runtime_mismatch",
     "volume_mount_missing",
+    "unit_config_conflict",
+    "unit_config_invalid",
     "secret_value",
     "secret_undeclared",
     "egress_undeclared",

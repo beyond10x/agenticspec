@@ -5,7 +5,8 @@ refines: local.yaml
 summary: >-
   The workstation with one unit per part: the operator and the coding agents run as agents of
   their own, the gateway and the build pool as services that keep their state in one place and
-  run the core runtime image, named for each. The
+  run the core runtime image, named for each; the gateway is told the Host names it allows and
+  reads its model key by reference. The
   control plane serves its ingresses on two ports, the coding agents are isolated on the network
   and mount their trees, and the hosted model is reached at an address.
 target:
@@ -27,6 +28,11 @@ parts:
     secrets: [model-api-key]
     egress: [{to: model, secret: model-api-key}]
     image: {image: registry.example/agenticspec-core, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000001"}
+    env:
+      ALLOWED_HOSTS: "gateway.agents.svc,localhost"
+      MODEL_CREDENTIAL: {secret: model-api-key}
+      PORT: 8081
+    args: [--log-format, json]
   builds:
     state: service
     image: {image: registry.example/agenticspec-core, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000001"}

@@ -26,7 +26,7 @@ but `format` and `binding` is optional.
 | `architecture` | the name of the architecture it is for; any architecture when absent |
 | `refines` | a base binding file, relative to this one. The base's keys are read first and this file's keys go over them, mapping by mapping |
 | `target` | what the target gives each unit: `isolation`, one of `none`, `process`, `container`, `user_kernel`, `micro_vm` (`container` when absent); `images`, where it takes runtime images from, `registry` (the default) or `local` (its own image store); `network_policy`, `enforced` or `not_enforced` (unknown when absent) |
-| `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists), `image` (the runtime image of its core or service unit, below) |
+| `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists), `image` (the runtime image of its core or service unit, below), `env` and `args` (configuration of its unit, see [configuration of a unit](#configuration-of-a-unit)) |
 | `transports` | per carried value (`model_call`, `order`, `question`, `claim`, ...), the transport a link that crosses units uses |
 | `runtimes` | runtime images: `core` for the core unit, `agent-runtime` for the agent units (the role it plays; without it the target binds the role, and the older name `agent` is refused). Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both. A core or service unit may run an image of its own, in the same form: `image` of the unit as `packing.units` lists it, else `parts.<part>.image` of its parts, which must all name the same one (`unit_image_conflict`), else, for the core unit only, `runtimes.core`. A service unit with none names the role `core-runtime`; a core or service unit that holds a runtime part (block `runtime`) and has none is refused (`unit_image_missing`) |
 | `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui`, the control-plane UI's `control-plane-ui` |
@@ -78,6 +78,40 @@ Admission refuses as `secret_value`:
   the binding, in `target`, a part's entry, an egress entry, a runtime or a claim.
 
 A finding says where the value is, never what it is.
+
+## Configuration of a unit
+
+A binding can give a unit non-secret configuration: environment variables (`env`) and arguments
+(`args`), on a part under `parts:` or on a unit that `packing.units` lists. An environment
+variable's name is `[A-Z_][A-Z0-9_]*`. Its value is text; a number or a boolean is taken as its
+text (`8080`, `false`). A value written `{secret: <name>}` refers to a secret: the name follows the
+rules of a secret name, a part of the same unit must declare it in `secrets`, and the bundle
+carries the reference, never a value. `args` is a list of strings.
+
+```yaml
+parts:
+  gateway:
+    secrets: [model-api-key]
+    env:
+      ALLOWED_HOSTS: "gateway.agents.svc,localhost"
+      MODEL_CREDENTIAL: {secret: model-api-key}
+    args: [--log-format, json]
+```
+
+The bundle carries each unit's configuration as `config: {env, args}`, merged from the unit's entry
+under `packing.units` first and then from its parts in name order. `env` keys are sorted. `args`
+are the unit's, then the args of the one part that gives any. An empty `env` or `args` is left
+out, and a unit with neither carries no `config`. Admission refuses:
+
+- as `unit_config_conflict`: two sources of one unit that give one variable two different values,
+  and two parts of one unit that both give `args`;
+- as `unit_config_invalid`: a name that is not an environment variable name, a value that is
+  neither text, a number, a boolean nor `{secret: <name>}`, an `env` that is not a mapping, `args`
+  that are not a list of strings, and `env` or `args` on a part that is in no unit;
+- as `secret_undeclared`, a `{secret: <name>}` that no part of the unit declares; as
+  `secret_value`, one whose name is not a secret name.
+
+A finding names the unit, the part and the variable, never a value.
 
 ## Packing
 
@@ -139,7 +173,7 @@ packing:
 ```
 
 In the resolved form, `units:` lists every unit (`name`, `kind`, `parts`, `replicas` for a unit
-that runs as copies, `schedule` for a scheduled unit with a cron rule, `image` for a core or service unit that runs an image of its own) and `external:` the parts outside, each a part's name or `{part: <name>, reach:
+that runs as copies, `schedule` for a scheduled unit with a cron rule, `image` for a core or service unit that runs an image of its own, `env` and `args` for its [configuration](#configuration-of-a-unit)) and `external:` the parts outside, each a part's name or `{part: <name>, reach:
 {...}}`; `strategy`, `groups` and `parts` do not go with it. A section of the wrong form (an unknown key, strategy, kind or part, two units of one
 name) is refused with every problem as `binding_invalid`.
 
@@ -170,6 +204,8 @@ order of the table, and writes nothing.
 | `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image: neither its own, its parts', nor, for the core unit, `runtimes.core`. The finding names the unit and its runtime parts |
 | `unit_runtime_mismatch` | a core or service unit's `code.runtime` names an image the bundle's `runtimes` do not carry, or is not the image the binding resolves for the unit (none for a unit that names the role `core-runtime`). At bundle time this is two images under one digest with different names: the bundle carries one entry per digest, so give them one name. The finding names the unit, the image found and the image expected |
 | `volume_mount_missing` | a unit claims a workspace's volume and no part of the unit mounts it, or mounts it at a path that is not absolute; there is no default path |
+| `unit_config_conflict` | two sources of one unit (its entry under `packing.units`, its parts) give one environment variable two different values, or two parts of one unit both give `args` (see [configuration of a unit](#configuration-of-a-unit)) |
+| `unit_config_invalid` | an `env` or `args` of the wrong form: a name that is not `[A-Z_][A-Z0-9_]*`, a value that is neither text, a number, a boolean nor `{secret: <name>}`, `args` that are not a list of strings, `env` or `args` on a part in no unit; in a written bundle, also a unit's `config` of the wrong form or not the one its binding resolves |
 | `secret_value` | something that looks like a secret's value stands where a secret name belongs (see [secrets and egress](#secrets-and-egress)) |
 | `secret_undeclared` | an egress entry, or in a written bundle a unit, names a secret that no part of its unit declares |
 | `egress_undeclared` | a link leaves its unit, for an external part or a part of another unit, and the part it starts at does not declare that destination in its `egress` |
@@ -225,6 +261,7 @@ Each unit:
 | `schedule` | a scheduled unit's cron rule: the one the binding gives (`packing.parts.<part>.schedule`), else the one that states its schedule's `every` exactly ([Packing](#packing)); absent when it has neither |
 | `clock` | a scheduled unit's clock in the architecture: the trigger and schedule that wake it, `every`, `next_fire_at`, and the trigger's `policy` and `max_parallel` as the rule for overlapping runs |
 | `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (`/api/`) |
+| `config` | the configuration the binding gives the unit, when it gives any: `env`, its environment variables with their keys sorted, each value text or `{secret: <name>}`, and `args`, a list of strings; merged from the unit's entry under `packing.units`, then its parts by name (see [configuration of a unit](#configuration-of-a-unit)) |
 | `secrets` | the secret names its parts declare, never a value |
 | `egress` | every destination its parts declare, each with the part it starts at (`from`), the secret it authenticates with, when declared (`secret`), and `name`, what the target resolves: a link to another unit, with its transport, named by that unit; a link to an external part (`external: true`), named by its reach (its name, or its address, which is then also `address`); or a destination outside the architecture (`named: true`, no link), named by its own name, with the `address` the binding gives it, else `unresolved: true`. Nothing that is not listed is granted |
 | `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime` (a core or service unit without an image), `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls, `operator-ui` for the operator UI's unit, `control-plane-ui` for the control-plane UI's unit |
@@ -257,6 +294,8 @@ its key and which parse to its `document` (`agent_document_mismatch`), and check
 secret or an egress entry's secret that no part of the unit declares, an egress entry whose part
 does not declare its destination, and a secret value, each by its name. It also refuses what the
 target cannot be asked to serve: a volume without an absolute mount (in the binding or in a unit),
+a unit's `config` of the wrong form or not the configuration its binding resolves
+(`unit_config_invalid`; a `{secret: <name>}` in it is checked like any secret of the unit),
 a local runtime image with neither tag nor digest, a core or service unit whose parts name different images or that holds a runtime part without an image (`unit_image_conflict`, `unit_image_missing`), a core or service unit whose `code.runtime` is not the image its binding resolves or is not carried in `runtimes` (`unit_runtime_mismatch`), a part isolated on the network of a target
 that enforces no network policy, and a scheduled unit whose `schedule` is not the rule of its
 binding or of its schedule's `every` (`schedule_not_cron`). Of a UI unit it hashes the archive the bundle carries and refuses
