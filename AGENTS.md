@@ -367,6 +367,7 @@ Beside the crates, `ui/` holds:
 | `.github/workflows/b10x-docs-site.yml` | publishes that artifact to GitHub Pages through `beyond10x/website`'s `project-site.yml`, pinned by commit, for bot-authored pushes to `main` |
 | `.github/workflows/shared-gates.yml` | the organization's shared source gates (`beyond10x/gates`, pinned by commit) |
 | `.github/workflows/release.yml` | `Release`, with `contents: read`. On a tag `<major>.<minor>.<patch>`: `release-check.sh` and `task check`, then one archive per target of `release-package.sh targets`, each built and its `agenticspec --version` checked on a native runner (Linux gnu on `ubuntu-22.04` and `ubuntu-22.04-arm`, musl on `ubuntu-22.04` and `ubuntu-24.04-arm`, static and run in Alpine, both macOS targets on `macos-latest`, the x86_64 one run under Rosetta 2, Windows on `windows-latest`), then `SHA256SUMS` and `notes.md` as the artifact `agenticspec-<version>-release`. On a pull request from `release/<version>` to `main`: `release-check.sh` on the workspace version, which the branch must name, and the same archives and artifact without the gate (the gate of `pages.yml` runs there), so the release pull request proves every target builds before the tag. It creates no release and reads no token (§ "Release"). Its job `Gate` installs the tools of the job `gate` of `pages.yml` at the same versions and digests; `release.test.sh` fails when they differ, or when the matrix is not the targets of `release-package.sh` on their runners |
+| `.config/nextest.toml` | the limits of `task test`: the profile `forge` (GitHub Actions) ends a test at 60 s and the run at 120 s, the profile `default` (everywhere else) at 30 s and 75 s (§ "The test step equals the forge") |
 | `.cargo/config.toml` | links the C runtime of `x86_64-pc-windows-msvc` statically, so the Windows binary needs no Visual C++ runtime. It sets nothing for any other target |
 | `scripts/release-check.sh`, `release-package.sh`, `release-paths.sh`, `release-verify.sh`, `release.test.sh` | the scripts of a release: a release binary names no path of the machine that built it (`release-paths.sh`, run by each packaging job after the build maps the runner's home, cargo home and checkout with `--remap-path-prefix`); the tag, the workspace version and the changelog section agree; targets, archives (`.tar.gz`, a `.zip` for Windows; GNU tar or bsdtar, zip or 7z), `SHA256SUMS` and notes; a published release is what § "Release" makes. `release.test.sh` holds their cases |
 
@@ -401,6 +402,28 @@ Beside the crates, `ui/` holds:
   code or fixtures; a fixture uses a neutral name such as `operator`.
 - `shellspec` (the sibling repository) will lift the input of an `Execute` tool call into its
   sub-commands.
+
+## The test step equals the forge
+
+The forge runs `task test` on a runner with 4 threads. On a machine that runs many more threads, a
+cost that every test process pays once hides in the wall time: the local step took 51 s while the
+forge stopped at its 120 s limit after 450 of 660 tests (PR #44; the settings table parsed every
+block file in each process, fixed in 529ad0b). The forge also ran that setup 2 to 16 times slower
+than the build pool did (`a_set_on_a_link_by_its_index` 7.8 s against 0.49 s), while the current
+tree runs at about the same speed on both (731 tests: 184 s of summed test time on the forge, 194 s
+in the pool).
+
+- `task test` runs nextest with `--test-threads 4`, the forge's count, on every machine. It is a
+  flag because a flag wins over `NEXTEST_TEST_THREADS`, which a build pool sets to the width of
+  the job (one pool's run of the old tree took 25.6 s on about 30 threads), and that variable wins
+  over `.config/nextest.toml`.
+- `task test` takes the profile `forge` (60 s a test, 120 s the run) when `GITHUB_ACTIONS` is
+  `true`, and the profile `default` (30 s a test, 75 s the run) everywhere else: below the
+  80.8 s the old tree took in the pool at 4 threads, with room for a busy pool.
+- Measured in the build pool at 4 threads: the tree of 529ad0b with its fix reverted took 80.8 s,
+  and a 60 s limit stopped it after 479 of 731 tests; the tree after it takes 36 to 51 s.
+- A run of the default profile over 75 s is a defect of the test budget, like a forge run over
+  120 s: do not raise the limit or the thread count, find the cost that grew.
 
 ## Commits
 
