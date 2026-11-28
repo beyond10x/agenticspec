@@ -1,0 +1,164 @@
+/*
+ * The tokens of ui/kit: the only place a colour, a size, a font, a radius, a shadow or a motion is
+ * written. The base values are the documentation site's (the docs-system product theme and the
+ * catalog cards), so the studio and the docs read as one product. Components read these variables;
+ * generated code never names one.
+ *
+ * Light is the default; `data-theme="dark"` on any element (the shell sets it on <html>) turns
+ * everything below it dark.
+ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --kit-canvas: #f6f8f5;
+  --kit-surface: #ffffff;
+  --kit-surface-muted: #eef3f0;
+  --kit-surface-raised: #ffffff;
+  --kit-heading: #0f1b1c;
+  --kit-text: #1d2a2b;
+  --kit-muted: #4f625d;
+  --kit-line: #7f918b;
+  --kit-hairline: #d6dfda;
+  --kit-code-border: #cdd8d2;
+  --kit-code-bg: #f3f7f4;
+  --kit-inline-code: #e6eee9;
+
+  --kit-accent: #17684a;
+  --kit-accent-strong: #0f553b;
+  --kit-accent-soft: #e2efe8;
+  --kit-on-accent: #ffffff;
+  --kit-focus: #8a5300;
+
+  --kit-info: #1f5f86;
+  --kit-info-soft: #e3eef5;
+  --kit-success: #17684a;
+  --kit-success-soft: #e2efe8;
+  --kit-warning: #8a5300;
+  --kit-warning-soft: #f6ecdc;
+  --kit-danger: #a1392b;
+  --kit-danger-soft: #f7e6e3;
+  --kit-neutral: #4f625d;
+  --kit-neutral-soft: #eef3f0;
+
+  --kit-shadow-sm: 0 1px 2px rgb(15 27 28 / 6%);
+  --kit-shadow-md: 0 4px 14px rgb(15 27 28 / 8%), 0 1px 3px rgb(15 27 28 / 6%);
+  --kit-shadow-lg: 0 12px 32px rgb(15 27 28 / 14%), 0 2px 6px rgb(15 27 28 / 8%);
+
+  --kit-series-1: #2a78d6;
+  --kit-series-2: #eb6834;
+  --kit-series-3: #1baf7a;
+  --kit-series-4: #eda100;
+  --kit-series-5: #e87ba4;
+  --kit-series-6: #008300;
+  --kit-series-7: #6250d6;
+  --kit-series-8: #e34948;
+
+  --kit-code-verb: #17684a;
+  --kit-code-keyword: #8a5300;
+  --kit-code-string: #1f5f86;
+  --kit-code-number: #a1392b;
+  --kit-code-var: #6250d6;
+  --kit-code-comment: #4f625d;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --kit-canvas: #101a1b;
+  --kit-surface: #172324;
+  --kit-surface-muted: #13201f;
+  --kit-surface-raised: #1d2b2c;
+  --kit-heading: #f1f6f3;
+  --kit-text: #e7eeea;
+  --kit-muted: #a8b8b3;
+  --kit-line: #5d7470;
+  --kit-hairline: #314244;
+  --kit-code-border: #314244;
+  --kit-code-bg: #13201f;
+  --kit-inline-code: #22312f;
+
+  --kit-accent: #b6e5ce;
+  --kit-accent-strong: #d3f2e3;
+  --kit-accent-soft: #1f3a31;
+  --kit-on-accent: #10241c;
+  --kit-focus: #efd09a;
+
+  --kit-info: #b9d9ee;
+  --kit-info-soft: #1d3140;
+  --kit-success: #b6e5ce;
+  --kit-success-soft: #1f3a31;
+  --kit-warning: #efd09a;
+  --kit-warning-soft: #3a2f1b;
+  --kit-danger: #eeb1a8;
+  --kit-danger-soft: #42231f;
+  --kit-neutral: #a8b8b3;
+  --kit-neutral-soft: #22312f;
+
+  --kit-shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+  --kit-shadow-md: 0 4px 14px rgb(0 0 0 / 35%), 0 1px 3px rgb(0 0 0 / 30%);
+  --kit-shadow-lg: 0 12px 32px rgb(0 0 0 / 45%), 0 2px 6px rgb(0 0 0 / 35%);
+
+  --kit-series-1: #3987e5;
+  --kit-series-2: #d95926;
+  --kit-series-3: #199e70;
+  --kit-series-4: #c98500;
+  --kit-series-5: #d55181;
+  --kit-series-6: #008300;
+  --kit-series-7: #9085e9;
+  --kit-series-8: #e66767;
+
+  --kit-code-verb: #b6e5ce;
+  --kit-code-keyword: #efd09a;
+  --kit-code-string: #b9d9ee;
+  --kit-code-number: #eeb1a8;
+  --kit-code-var: #c4bdf5;
+  --kit-code-comment: #a8b8b3;
+}
+
+:root {
+  --kit-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --kit-mono: 'Fira Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --kit-text-xs: 0.75rem;
+  --kit-text-sm: 0.84rem;
+  --kit-text-md: 0.94rem;
+  --kit-text-lg: 1.06rem;
+  --kit-text-xl: 1.32rem;
+  --kit-text-2xl: 1.75rem;
+  --kit-leading: 1.55;
+  --kit-leading-tight: 1.25;
+  --kit-weight-medium: 560;
+  --kit-weight-strong: 650;
+  --kit-weight-title: 750;
+  --kit-tracking-title: -0.03em;
+
+  --kit-space-1: 0.35rem;
+  --kit-space-2: 0.65rem;
+  --kit-space-3: 0.9rem;
+  --kit-space-4: 1.25rem;
+  --kit-space-5: 1.75rem;
+  --kit-space-6: 2.5rem;
+
+  --kit-radius-sm: 0.35rem;
+  --kit-radius-md: 0.55rem;
+  --kit-radius-lg: 0.85rem;
+  --kit-radius-card: 12px;
+  --kit-radius-pill: 999px;
+
+  --kit-control-height: 2.25rem;
+  --kit-control-height-sm: 1.85rem;
+  --kit-header-height: 3.5rem;
+  --kit-side-width: 23rem;
+
+  --kit-motion: 160ms ease;
+  --kit-motion-slow: 240ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --kit-motion: 0ms linear;
+    --kit-motion-slow: 0ms linear;
+  }
+}

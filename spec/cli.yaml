@@ -124,6 +124,14 @@ callables:
       scenario_invalid: agenticspec.cli.Refusal
       scenario_refused: agenticspec.cli.Refusal
       corpus_failed: agenticspec.cli.Refusal
+  ui_generate:
+    target: {kind: local, owner: agenticspec.cli, action: ui_generate}
+    input: agenticspec.cli.UiGenerateInput
+    result: agenticspec.cli.UiGenerateResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -229,3 +237,9 @@ commands:
     arguments:
       - {field: action, source: {kind: positional, index: 1}}
       - {field: corpus, source: {kind: positional, index: 2}}
+  - path: [ui, generate]
+    callable: ui_generate
+    about: Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+    arguments:
+      - {field: path, source: {kind: option, long: path}}
+      - {field: out, source: {kind: option, long: out}}

@@ -102,14 +102,19 @@ pub struct Program {
     pub checks: Vec<CompiledCheck>,
 }
 
-fn base_cols(name: &str) -> Option<(&'static str, &'static [&'static str])> {
-    SCHEMA
+/// The relations a fact base holds and their columns: the session relations ([`SCHEMA`]) or those
+/// of an architecture (`super::architecture::SCHEMA`).
+pub type Schema = &'static [(&'static str, &'static [&'static str])];
+
+fn base_cols(schema: Schema, name: &str) -> Option<(&'static str, &'static [&'static str])> {
+    schema
         .iter()
         .find(|(n, _)| *n == name)
         .map(|(n, c)| (*n, *c))
 }
 
 struct Scoper<'a> {
+    schema: Schema,
     slots: HashMap<String, usize>,
     derived: &'a HashMap<String, (usize, usize)>,
     names: &'a BTreeMap<String, Vec<String>>,
@@ -149,7 +154,7 @@ impl Scoper<'_> {
                 self.term(&a.positional[1]),
             ));
         }
-        if let Some((name, cols)) = base_cols(&a.rel) {
+        if let Some((name, cols)) = base_cols(self.schema, &a.rel) {
             let mut pats = Vec::new();
             if a.record {
                 for (f, p) in &a.named {
@@ -447,12 +452,18 @@ fn plan(
     Ok(out)
 }
 
+/// Compiles a module over the session relations.
 pub fn compile(m: &Module) -> Result<Program, String> {
+    compile_in(m, SCHEMA)
+}
+
+/// Compiles a module over the relations of `schema`; an atom of any other relation is refused.
+pub fn compile_in(m: &Module, schema: Schema) -> Result<Program, String> {
     // Derived relations: one per rule head.
     let mut derived_ix: HashMap<String, (usize, usize)> = HashMap::new();
     let mut derived: Vec<Derived> = Vec::new();
     for r in &m.rules {
-        if base_cols(&r.head).is_some() || r.head == "before" || r.head == "seq" {
+        if base_cols(schema, &r.head).is_some() || r.head == "before" || r.head == "seq" {
             return Err(format!(
                 "`{}` is a relation of the fact base; a rule cannot define it",
                 r.head
@@ -479,6 +490,7 @@ pub fn compile(m: &Module) -> Result<Program, String> {
     }
     let clause = |head: &[Term], body: &[Lit]| -> Result<Clause, String> {
         let mut sc = Scoper {
+            schema,
             slots: HashMap::new(),
             derived: &derived_ix,
             names: &m.names,

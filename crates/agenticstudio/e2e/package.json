@@ -1,0 +1,13 @@
+{
+  "name": "agenticstudio-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "description": "The browser test of the studio app agenticstudio serves (ui/studio), run by task check:studio.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
+    "@playwright/test": "1.65.1"
+  }
+}

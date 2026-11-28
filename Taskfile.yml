@@ -9,6 +9,8 @@ tasks:
       - task: check:fields
       - task: check:ui
       - task: check:app
+      - task: check:ui-kit
+      - task: check:studio
       - task: check:generated
       - task: check:docs
       - task: check:ladder
@@ -165,6 +167,26 @@ tasks:
     desc: Types, unit tests and a build of the app in ui/app, then its layout, accessibility, keyboard and screen-only-user gates on the fixtures and the ratchet against ux/baseline.json. The lines are in scripts/check-app.sh.
     cmds:
       - sh scripts/check-app.sh
+
+  check:ui-kit:
+    desc: Types, unit tests and a build of the gallery of the design system in ui/kit, then its axe-core, overflow and select-keyboard gates in a browser (SCREENS=1 writes target/screens). The lines are in scripts/check-ui-kit.sh.
+    cmds:
+      - sh scripts/check-ui-kit.sh
+
+  check:studio:
+    desc: The studio app - studio/studio.ui.yaml against the studio model, the types, unit tests and build of ui/studio, then the browser test of crates/agenticstudio/e2e (axe-core, overflow, the first slice, the 09-factory layout) against one agenticstudio serve. Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-studio.sh.
+    cmds:
+      - sh scripts/check-studio.sh
+
+  ui:generate:
+    desc: Generate the pages, router, client and runtime of the studio app (ui/studio/src/generated) from studio/studio.ui.yaml with agenticspec ui generate. task check:generated holds them.
+    cmds:
+      - cargo run --quiet --locked -p agenticspec -- ui generate --path studio/studio.ui.yaml --out ui/studio/src/generated
+
+  studio:build:
+    desc: Build the studio app of ui/studio into target/studio/www, which agenticstudio serve serves.
+    cmds:
+      - cd ui && ([ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund --loglevel=error) && npx vite build --config studio/vite.config.ts --logLevel warn
 
   ux:round:
     desc: Measure a round of the ui-iteration-loop into ux/rounds/R-nn (task ux:round -- R-nn). The lines are in ux/round.sh.

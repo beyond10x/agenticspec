@@ -30,6 +30,9 @@ lines() {
 generated|ess generate synthesize --path spec --target rust --out {out}
 crates/agenticspec-cli-contract|ess generate cli --path spec --binding spec/cli.yaml --out {out}
 ui/app/src/generated|ess generate types --path spec --target typescript --names short --declared-field-order --root agenticspec.view.SessionList.row --root agenticspec.view.SessionById.row --root agenticspec.view.SessionAgents.row --root agenticspec.view.SessionEvents.row --root agenticspec.view.SessionTurns.row --root agenticspec.view.AgentTurns.row --root agenticspec.view.SessionChecks.row --root agenticspec.view.SessionEventCounts.row --root agenticspec.view.SessionTimeline.row --root agenticspec.view.OverviewFigures.row --root agenticspec.view.SessionUpdated --root agenticspec.view.AgentUpdated --root agenticspec.view.EventAppended --root agenticspec.view.Document --root agenticspec.view.Update --out {out}
+crates/agenticstudio/src/generated/studio|ess generate types --path studio --target rust --package agenticstudio-studio-types --names short --declared-field-order --rust-box-only-recursion --root studio.draft.Drafts.row --out {out}
+crates/agenticstudio/src/generated/architecture|ess generate types --path blocks --target rust --package agenticstudio-architecture-types --names short --declared-field-order --rust-box-only-recursion --root agentic.architecture.Revisions.row --root agentic.architecture.Patches.row --root agentic.architecture.PatchApplications.row --out {out}
+ui/studio/src/generated|cargo run --quiet --locked -p agenticspec -- ui generate --path studio/studio.ui.yaml --out {out}
 LINES
 }
 

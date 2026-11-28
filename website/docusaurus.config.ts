@@ -75,6 +75,11 @@ const pages: Record<string, Page> = {
     title: 'Scenarios and task corpora',
     lede: 'Test an architecture with given inputs and scripted outside parts, and check the events it should record.',
   },
+  'docs/studio.md': {
+    slug: '/studio',
+    title: 'agenticstudio',
+    lede: 'Open an architecture as a draft, change it with patches, and see its graph and its check.',
+  },
 };
 
 const config: Config = {

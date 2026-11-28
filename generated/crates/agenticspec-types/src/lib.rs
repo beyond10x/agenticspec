@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
+// contract digest d9e4737ab51a3edd599c55c42bcc927804e20ba72238060de431753acc4d4ab1
 // do not edit: regenerate with `ess synthesize`
 
 //! Semantic types synthesised from the `agenticspec` specification, v1.

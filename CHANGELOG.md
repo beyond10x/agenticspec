@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `agenticspec ui generate --path <doc> --out <dir>` turns an `ess-ui/1` document into a Vue app (pages, router, typed client) over the design system `ui/kit`, refusing any construct it cannot draw by its node path. agenticstudio's page is now that app (`ui/studio`, from `studio/studio.ui.yaml`): the graph fills the page inline with pan, zoom and part selection, a side panel holds the patch, the draft and the parts, one theme switch covers it all, and every control looks like the docs site. `agenticstudio serve` takes `--www` and answers `/api/views` and `/api/commands`; `task studio:build` builds the app, `task check:ui-kit` and `task check:studio` gate both
+- agenticstudio, first slice: `agenticstudio serve --root <dir> --port <n>` opens an architecture of `architectures/` as a draft in the browser, applies a patch (`agenticspec-patch/1`: `set` and `add` over the facts `part`, `setting`, `link` and `marker`) as one revision or refuses it whole with the rule's position and error, and shows the graph, the parts and the check. Drafts are held in memory. `task check:studio` runs its browser test (`docs/studio.md`)
+
 ## [0.4.1] - 2026-11-28
 
 ### Fixed

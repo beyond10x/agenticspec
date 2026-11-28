@@ -1,0 +1,57 @@
+# A list of shelves and one shelf: a collection with a row action that opens a page with a path
+# parameter, and a record with a badge toned by a tone map.
+format: ess-ui/1
+app: shop
+title: Shelves
+model: shop
+placement_profile: fat
+
+tone_maps:
+  stock: {full: success, low: warning, empty: danger}
+
+shells:
+  app:
+    regions:
+      main: {kind: page_outlet}
+
+navigation:
+  home: shelves
+  sections:
+    - {name: shop, label: Shop, pages: [shelves]}
+  hidden: [shelf]
+
+page_kinds:
+  plain_page:
+    purpose: sections the page declares
+
+pages:
+  shelves:
+    kind: plain_page
+    title: Shelves
+    sections:
+      - name: list
+        title: All shelves
+        component: collection
+        reads: {view: shop.Shelves, key: shelf_id}
+        columns:
+          - {field: name, label: Shelf}
+          - {field: items, as: number, label: Items}
+          - {field: stock, as: badge, tone_by: stock, label: Stock}
+        row_actions:
+          - {name: open, navigate: {to: shelf, params: {shelf_id: row.shelf_id}}, label: Open}
+        states:
+          empty: {message: No shelf yet}
+
+  shelf:
+    kind: plain_page
+    title: Shelf
+    params: {shelf_id: ShelfId}
+    header:
+      title_from: {section: summary, field: name}
+    sections:
+      - name: summary
+        component: record
+        reads: {view: shop.ShelfById, params: {shelf_id: params.shelf_id}, key: shelf_id}
+        fields:
+          - {field: items, as: number, label: Items}
+          - {field: stock, as: badge, tone_by: stock, label: Stock}

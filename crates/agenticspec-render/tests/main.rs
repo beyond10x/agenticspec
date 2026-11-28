@@ -183,3 +183,27 @@ fn absent_and_partial_inputs_render() {
     assert!(!hostile.contains("</script><b>"));
     assert!(!hostile.contains(">a<b<"));
 }
+
+/// The graph alone, for a host that draws it inline: its SVG without the page around it, its size,
+/// and the parts and links it shows, each part with its properties.
+#[test]
+fn the_graph_alone_holds_the_svg_its_size_and_every_part_and_link() {
+    let arch = workstation();
+    let g = agenticspec_render::graph(&arch);
+    let svg = g["svg"].as_str().expect("svg");
+    assert!(svg.starts_with("<svg class=\"graph\""), "{}", &svg[..40]);
+    assert!(svg.ends_with("</svg>"));
+    assert!(!svg.contains("<html") && !svg.contains("data-theme-choice"));
+    assert!(g["width"].as_f64().unwrap() > 100.0 && g["height"].as_f64().unwrap() > 80.0);
+    let parts = g["parts"].as_array().expect("parts");
+    assert_eq!(parts.len(), 9);
+    let worker = parts.iter().find(|p| p["id"] == "worker").expect("worker");
+    assert_eq!(worker["block"], "agent");
+    assert_eq!(worker["count"], "12");
+    assert!(worker["properties"].is_array());
+    assert_eq!(
+        g["links"].as_array().unwrap().len(),
+        arch["links"].as_array().unwrap().len()
+    );
+    assert_eq!(g["name"], arch["architecture"]);
+}

@@ -1,0 +1,3 @@
+{"rows": [
+  {"draft_id": "00000000-0000-4000-8000-000000000001", "name": "workstation", "revision": 1, "digest": "8f14e45fceea167a5a36dedd4bea2543c4b5f0d6c2a9b1e3d7f6a0b5c4d3e2f1", "passed": true, "description": "One operator and twelve workers on one machine."}
+]}

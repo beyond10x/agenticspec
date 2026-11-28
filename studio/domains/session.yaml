@@ -292,3 +292,13 @@ views:
       - {name: answer, type: Optional<String>}
       - {name: failure, type: Optional<String>}
       - {name: state, type: studio.session.ToolCall.State}
+
+# Who works in the studio: opens drafts and calls the tools on them from the page.
+actors:
+  - name: studio.session.User
+    naming:
+      display: User
+      summary: Whoever designs an architecture in the studio, in the browser.
+    may:
+      - studio.draft.OpenDraft
+      - studio.session.CallTool

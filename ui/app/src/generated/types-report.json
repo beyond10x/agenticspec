@@ -1,12 +1,12 @@
 {
   "format": "ess-types-report/3",
-  "source_digest": "d443979db969a54a74d4b97061cfca3f1cce485d844a9695f1da836582ef8734",
+  "source_digest": "6110ba424161014da1e31aa1b045c834cd636bf7b5d20eda189a39fb4eb79312",
   "input": {
     "kind": "model",
     "system": "agenticspec",
     "specification_version": "v1",
-    "contract_digest": "slice-sha256/2:74df341ac7c7f6fa5fd1c41351b05c9a8a56971e77600f892f5a2040be4a6766",
-    "projection_digest": "00e5898c7e0dba41a150b86f8c81c19d24141d2b1ca841facdf9492866828320"
+    "contract_digest": "slice-sha256/2:889561037224791946f955a0bf5d98e839cbc8941307c8a83b0648d60432954c",
+    "projection_digest": "e5c9d6fce9c651ed9e17306b9a7f6043de2b8550fa36dd770eac537f6ab11251"
   },
   "generator_version": "0.99.2",
   "target": "typescript",
