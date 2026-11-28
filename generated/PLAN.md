@@ -1,13 +1,13 @@
 <!--
   generated from agenticspec v1
-  contract digest 686290621bdc328555b19ac1d9465350d893cf2287ec9899613b89617200bb31
+  contract digest 4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39
   do not edit: regenerate with `ess synthesize`
 -->
 # Synthesis plan — agenticspec v1
 
 Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synthesize`.
 
-217 capabilities: **214 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
+221 capabilities: **218 generated**, **3 obligations**, **0 refused**. An obligation is yours to implement against its contract; a refusal is a fact about this synthesis scope, not about the specification.
 
 ## Generated
 
@@ -31,6 +31,8 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.CorpusAction` |
 | domain type | `agenticspec.cli.Dashboard` |
 | domain type | `agenticspec.cli.DecisionFigures` |
+| domain type | `agenticspec.cli.DeployBundleInput` |
+| domain type | `agenticspec.cli.DeployBundleResult` |
 | domain type | `agenticspec.cli.EntityRows` |
 | domain type | `agenticspec.cli.ExportInput` |
 | domain type | `agenticspec.cli.ExportResult` |
@@ -45,6 +47,8 @@ Scope: `component-skeletons`, planned by `ess-synth`. Regenerate with `ess synth
 | domain type | `agenticspec.cli.MineInput` |
 | domain type | `agenticspec.cli.MineReport` |
 | domain type | `agenticspec.cli.ModelFigures` |
+| domain type | `agenticspec.cli.PackingDefaultInput` |
+| domain type | `agenticspec.cli.PackingDefaultResult` |
 | domain type | `agenticspec.cli.Pattern` |
 | domain type | `agenticspec.cli.Procedure` |
 | domain type | `agenticspec.cli.ProcedureInput` |

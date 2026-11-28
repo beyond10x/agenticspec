@@ -1,0 +1,419 @@
+format: agenticspec-deployment/1
+generator: agenticspec 0.4.1
+architecture:
+  document:
+    architecture: author-reviewer
+    border:
+    - operator
+    format: agenticspec-architecture/1
+    links:
+    - carries: prompt
+      from: owner
+      over: chat
+      to: operator
+    - carries: question
+      from: operator
+      over: chat
+      to: owner
+    - carries: question
+      from: worker
+      to: operator
+    - carries: order
+      from: operator
+      to: worker
+    - carries: review
+      from: worker
+      to: reviewer
+    - carries: model_call
+      from: operator
+      to: gateway
+    - carries: model_call
+      from: worker
+      to: gateway
+    - carries: model_call
+      from: reviewer
+      to: gateway
+    - carries: model_call
+      from: gateway
+      to: model
+    - carries: claim
+      from: worker
+      to: builds
+    parts:
+      box:
+        block: sandbox
+        egress:
+        - gateway
+        isolation: process
+        per: worker
+      builds:
+        block: pool
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+      chat:
+        block: channel
+        kind: operator
+      gateway:
+        block: gateway
+        rate_limit_per_minute: 120
+      model:
+        block: model
+        route: frontier
+      operator:
+        acts_for: owner
+        block: agent
+        harness: coding
+        role: operator
+      owner:
+        block: principal
+        kind: human
+      reviewer:
+        block: agent
+        harness: coding
+        role: reviewer
+        strictness:
+          value: balanced
+          vary:
+          - lenient
+          - balanced
+          - strict
+      tree:
+        block: workspace
+        per: worker
+        sharing: exclusive
+      worker:
+        block: agent
+        count:
+          value: 8
+          vary:
+            max: 20
+            min: 4
+            step: 2
+        harness: coding
+    policies:
+      operator_answers_alone: false
+      question_default_after: 15m
+    summary: Workers write; a reviewer agent checks every task a worker reports done and sends a rejected one back for rework. An author-reviewer loop cost $0.95-1.07 per file against $1.98-2.91 for a multi-agent workflow (2610.09995); required review sub-agents raised the defects reported from 49.9% to 69.6% (2609.20812). The simulator models the reviewer by its false-accept and false-reject rates (2611.02207) and the cost of its model calls; it does not model a reviewer that misses planted harm (2611.00689) apart from those rates, nor a reviewer that teaches a worker.
+  name: author-reviewer
+  revision: sha256:7a49c9e61bf603c65e67752234c51c456c638585f0ce2df24c35add9eb849326
+  sha256: sha256:0dca5833649c67fdb20b5e172b0884c955dbe5ed142cf0a508328b2d1f74b4e9
+nested: {}
+contract:
+  digest: sha256:75d85128a7176fe1a3135ea63ab820b29f345e11fbb035819233f836513debda
+  document:
+    architecture: author-reviewer
+    border:
+    - operator
+    format: agenticspec-contract/1
+    invariants:
+    - link: owner -> operator carries prompt over chat
+      port: channel.message
+      predicate: every channel.message@owner to operator over chat
+    - link: operator -> owner carries question over chat
+      port: question.question
+      predicate: every question.question@operator to owner over chat
+    - link: worker -> operator carries question
+      port: question.question
+      predicate: every question.question@worker to operator
+    - link: operator -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@operator inside gateway.call@gateway
+      within: gateway.call
+    - link: worker -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@worker inside gateway.call@gateway
+      within: gateway.call
+    - link: reviewer -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@reviewer inside gateway.call@gateway
+      within: gateway.call
+    - link: gateway -> model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@gateway to model
+    - link: worker -> builds carries claim
+      port: resource.claim
+      predicate: every resource.claim@worker to builds
+    ports:
+    - instances: 8
+      part: box
+      port: sandbox.sandbox
+      protocol: DefineSandbox (CheckEgress | CheckSecretRead | CheckWrite)*
+      settings:
+        egress:
+        - gateway
+        isolation: process
+    - instances: 1
+      part: builds
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings:
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+    - instances: 1
+      part: chat
+      port: channel.message
+      protocol: SendMessage (MarkDelivered MarkRead? | MarkLost)
+      settings:
+        kind: operator
+    - instances: 1
+      part: gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 120
+    - instances: 1
+      part: model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: operator
+      port: channel.message
+      protocol: SendMessage (MarkDelivered MarkRead? | MarkLost)
+      settings: {}
+    - instances: 1
+      part: operator
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        acts_for: owner
+        harness: coding
+        role: operator
+    - instances: 1
+      part: operator
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 1
+      part: operator
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 1
+      part: owner
+      port: channel.message
+      protocol: SendMessage (MarkDelivered MarkRead? | MarkLost)
+      settings: {}
+    - instances: 1
+      part: owner
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings:
+        kind: human
+    - instances: 1
+      part: reviewer
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+        role: reviewer
+    - instances: 1
+      part: reviewer
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 8
+      part: tree
+      port: workspace.lease
+      protocol: RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)
+      settings:
+        sharing: exclusive
+    - instances: 8
+      part: tree
+      port: workspace.proposal
+      protocol: Propose (MergeProposal | RejectProposal | SupersedeProposal)
+      settings:
+        sharing: exclusive
+    - instances: 8
+      part: worker
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 8
+      part: worker
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 8
+      part: worker
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 8
+      part: worker
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings: {}
+    ports_digest: 7c59c0fc94156bfca3afbfb280155db3a2b6bfd25ecc9cc90d3fbaf7802b2739
+binding:
+  digest: sha256:a9429a15b7babfd6f2559f8834477b17d5f2e7666909e90573c5e6f9f02a563e
+  document:
+    binding: local
+    format: agenticspec-binding/1
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. Fits any architecture whose sandboxes ask for no more than a container.'
+  name: local
+packing:
+  digest: sha256:8c3a8db16afbab9957192ec44281d27c8533fc70b862b29385a36ec84c1818f5
+  document:
+    external:
+    - model
+    - owner
+    units:
+    - kind: core
+      name: core
+      parts:
+      - box
+      - builds
+      - chat
+      - gateway
+      - operator
+      - reviewer
+      - tree
+      - worker
+      replicas: 1
+  strategy: single
+units:
+- checks:
+    alive:
+      kind: http
+      path: /alive
+    ready:
+      kind: http
+      path: /ready
+  claims:
+    accelerators: 0
+    cpu_millis: 500
+    memory_mib: 512
+    volumes:
+    - access: read_write_once
+      name: tree
+      per_instance: true
+  code:
+    role: core-runtime
+  egress:
+  - carries: model_call
+    external: true
+    link: gateway -> model carries model_call
+    to: model
+  - carries: question
+    external: true
+    link: operator -> owner carries question over chat
+    to: owner
+  isolation: process
+  kind: core
+  name: core
+  parts:
+  - box
+  - builds
+  - chat
+  - gateway
+  - operator
+  - reviewer
+  - tree
+  - worker
+  ports:
+  - instances: 8
+    part: box
+    port: sandbox.sandbox
+    settings:
+      egress:
+      - gateway
+      isolation: process
+  - instances: 1
+    part: builds
+    port: resource.claim
+    settings:
+      capacity: 16
+      job_limit: 10m
+      kind: build_slots
+  - instances: 1
+    part: chat
+    port: channel.message
+    settings:
+      kind: operator
+  - instances: 1
+    part: gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 120
+  - instances: 1
+    part: operator
+    port: channel.message
+    settings: {}
+  - instances: 1
+    part: operator
+    port: harness.session
+    settings:
+      acts_for: owner
+      harness: coding
+      role: operator
+  - instances: 1
+    part: operator
+    port: model.inference
+    settings: {}
+  - instances: 1
+    part: operator
+    port: question.question
+    settings: {}
+  - instances: 1
+    part: reviewer
+    port: harness.session
+    settings:
+      harness: coding
+      role: reviewer
+  - instances: 1
+    part: reviewer
+    port: model.inference
+    settings: {}
+  - instances: 8
+    part: tree
+    port: workspace.lease
+    settings:
+      sharing: exclusive
+  - instances: 8
+    part: tree
+    port: workspace.proposal
+    settings:
+      sharing: exclusive
+  - instances: 8
+    part: worker
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 8
+    part: worker
+    port: model.inference
+    settings: {}
+  - instances: 8
+    part: worker
+    port: question.question
+    settings: {}
+  - instances: 8
+    part: worker
+    port: resource.claim
+    settings: {}
+  replicas: 1
+  roles:
+  - core-runtime
+  - model-route:frontier
+  secrets: []
+  source:
+    parts:
+    - box
+    - builds
+    - chat
+    - gateway
+    - operator
+    - reviewer
+    - tree
+    - worker
+    unit: core
+ingress: []
+requirements: []
+agents: {}
+runtimes: {}
+digest: sha256:aa2db0bc61cb0a3839ab437a2c656dc8129c8e586c076f734b156d38af389848

@@ -1,0 +1,11 @@
+format: agenticspec-binding/1
+binding: agent-document-missing
+architecture: workstation
+summary: The coding agents run as an agent unit, and the binding names no agent document for them.
+parts:
+  operator: {agent: ../../../../../bundles/agents/operator.yaml}
+  gateway: {state: service}
+  builds: {state: service}
+transports: {question: a2a, order: a2a, model_call: http, claim: http}
+packing:
+  strategy: by_part

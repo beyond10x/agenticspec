@@ -495,7 +495,7 @@ pub fn check(contract: &Contract, doc: &Value, ports: &PortsFile) -> Vec<String>
 
 /// A string as YAML: plain when it is a simple word, else double-quoted (JSON's quoting, which
 /// YAML reads).
-fn scalar(s: &str) -> String {
+pub fn scalar(s: &str) -> String {
     let plain = s.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '_')
         && s.chars()
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '/'))
@@ -509,7 +509,7 @@ fn scalar(s: &str) -> String {
 }
 
 /// A value as flow YAML.
-fn flow(v: &Value) -> String {
+pub fn flow(v: &Value) -> String {
     match v {
         Value::String(s) => scalar(s),
         Value::Array(a) => format!("[{}]", a.iter().map(flow).collect::<Vec<_>>().join(", ")),
@@ -525,6 +525,16 @@ fn flow(v: &Value) -> String {
 }
 
 impl Contract {
+    /// The contract as data, read back from its text.
+    pub fn to_value(&self) -> Value {
+        crate::doc::parse_yaml(&self.text()).unwrap_or(Value::Null)
+    }
+
+    /// The contract digest: `sha256:` and the SHA-256 of the canonical JSON of the contract.
+    pub fn digest(&self) -> String {
+        crate::deploy::digest(&self.to_value())
+    }
+
     /// The contract as written: YAML in a fixed order, the same bytes for the same contract.
     pub fn text(&self) -> String {
         let mut s = String::new();

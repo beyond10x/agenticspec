@@ -27,14 +27,14 @@ The ports a runtime implements to run this architecture: each port's protocol, t
 
 | port | kind | block | protocol | part | settings | instances |
 |---|---|---|---|---|---|---|
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `a` | `harness: coding` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `a` | `harness: coding` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `a` | none | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `a` | none | 1 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `b` | `harness: coding` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `a` | none | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `b` | `harness: coding` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `b` | none | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `b` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `b` | none | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
 
 Routing invariants, one per link whose value travels in a port:
 

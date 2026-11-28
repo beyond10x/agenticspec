@@ -3,6 +3,12 @@
 //! `spec/domains/cli.yaml` declares (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of
 //! the error codes `spec/cli.yaml` binds to the command. The parser and the process adapter are
 //! the generated `agenticspec-cli-contract` of the `agenticspec` crate.
+//! The commands of `agenticspec sim` (check, digest, run, render, ladder, ports, contract and
+//! trace) and of the deploy side (`agenticspec packing default`, `agenticspec deploy bundle`).
+//! Each returns the result the command line prints, a JSON value of the shape
+//! `spec/domains/cli.yaml` declares (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of
+//! the error codes `spec/cli.yaml` binds to the command. The parser and the process adapter are
+//! the generated `agenticspec-cli-contract` of the `agenticspec` crate.
 
 use crate::check::{GATE_KPIS, Refusal as ArchRefusal, check as check_architecture};
 use crate::doc::load_yaml;
@@ -830,6 +836,126 @@ pub fn trace(o: &TraceOptions) -> Result<Value, Refusal> {
     match o.out {
         Some(out) => write(out, &text)?,
         None => answer["trace"] = json!(text),
+    }
+    Ok(answer)
+}
+
+/// `packing default <architecture> [--strategy <strategy>]`: the resolved `packing:` section of
+/// a binding under a strategy (`single` when absent), to paste into a binding and change.
+pub fn packing_default(path: &Path, strategy: Option<&str>) -> Result<Value, Refusal> {
+    use crate::deploy::packing;
+    let arch = load_yaml(path).map_err(|e| refused("document_unreadable", e))?;
+    let refusals = check_architecture(&arch);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    let section = match strategy {
+        Some(s) => json!({ "strategy": s }),
+        None => Value::Null,
+    };
+    let p =
+        packing::resolve(&arch, &section).map_err(|e| refused("packing_refused", e.join("; ")))?;
+    Ok(json!({
+        "architecture": arch["architecture"].as_str().unwrap_or("architecture"),
+        "strategy": p.strategy,
+        "units": p.units.len(),
+        "packing": p.text(),
+    }))
+}
+
+/// The options of `deploy bundle`.
+#[derive(Debug, Clone)]
+pub struct BundleOptions<'a> {
+    pub architecture: &'a Path,
+    pub binding: &'a Path,
+    pub out: Option<&'a Path>,
+    /// The ports file; `blocks/ports.json` when absent.
+    pub ports: Option<&'a Path>,
+    /// The copy of cloudspec's accepted list; `bundles/cloudspec-accepts.yaml` when absent.
+    pub accepts: Option<&'a Path>,
+}
+
+/// `deploy bundle <architecture> --binding <file> [--out <file>] [--ports <file>]
+/// [--accepts <file>]`: admit the architecture, its contract, the binding and its packing, and
+/// only then write the bundle (`agenticspec-deployment/1`), or print it when no `--out` is
+/// given. A refusal writes nothing and names every finding.
+pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
+    use crate::contract::derive as d;
+    use crate::contract::ports::PortsFile;
+    use crate::deploy::{admit::Accepts, binding, bundle, packing};
+    let unreadable = |e: String| refused("document_unreadable", e);
+    let bytes = std::fs::read(o.architecture)
+        .map_err(|e| unreadable(format!("{}: {e}", o.architecture.display())))?;
+    let arch = std::str::from_utf8(&bytes)
+        .map_err(|e| e.to_string())
+        .and_then(crate::doc::parse_yaml)
+        .map_err(|e| unreadable(format!("{}: {e}", o.architecture.display())))?;
+    let refusals = check_architecture(&arch);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
+    let ports = PortsFile::load(ports_path).map_err(|e| refused("ports_unreadable", e))?;
+    let contract =
+        d::derive(&arch, &ports).map_err(|r| refused("contract_refused", r.join("; ")))?;
+    let problems = d::check(&contract, &arch, &ports);
+    if !problems.is_empty() {
+        return Err(refused("contract_refused", problems.join("; ")));
+    }
+    let b = binding::load(o.binding).map_err(|e| refused("binding_invalid", e))?;
+    let mut problems = binding::problems(&b.doc, &arch);
+    let p = match packing::resolve(&arch, &b.doc["packing"]) {
+        Ok(p) => Some(p),
+        Err(e) => {
+            problems.extend(e);
+            None
+        }
+    };
+    if let (Some(p), Some(claims)) = (&p, b.doc["claims"].as_object()) {
+        for unit in claims.keys() {
+            if !p.units.iter().any(|u| &u.name == unit) {
+                problems.push(format!("claims: `{unit}` is not a unit of the packing"));
+            }
+        }
+    }
+    let Some(p) = p.filter(|_| problems.is_empty()) else {
+        return Err(refused(
+            "binding_invalid",
+            format!("{}: {}", o.binding.display(), problems.join("; ")),
+        ));
+    };
+    let accepts_path = o
+        .accepts
+        .unwrap_or(Path::new("bundles/cloudspec-accepts.yaml"));
+    let accepts = Accepts::load(accepts_path).map_err(|e| refused("accepts_unreadable", e))?;
+    let built = bundle::build(&bundle::Inputs {
+        arch_bytes: &bytes,
+        arch: &arch,
+        contract: &contract,
+        binding: &b,
+        packing: &p,
+        accepts: &accepts,
+    })
+    .map_err(|f| {
+        let lines: Vec<String> = f.iter().map(ToString::to_string).collect();
+        refused("not_admitted", lines.join("; "))
+    })?;
+    let mut answer = json!({
+        "architecture": arch["architecture"].as_str().unwrap_or("architecture"),
+        "binding": b.doc["binding"].as_str().unwrap_or(""),
+        "digest": built.digest,
+        "units": built.units,
+        "written": false,
+    });
+    match o.out {
+        Some(out) => {
+            write(out, &built.text)?;
+            answer["written"] = json!(true);
+            answer["out"] = json!(out.display().to_string());
+        }
+        None => answer["bundle"] = json!(built.text),
     }
     Ok(answer)
 }

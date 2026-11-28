@@ -25,6 +25,9 @@ _agenticspec() {
             agenticspec,completions)
                 cmd="agenticspec__subcmd__completions"
                 ;;
+            agenticspec,deploy)
+                cmd="agenticspec__subcmd__deploy"
+                ;;
             agenticspec,export)
                 cmd="agenticspec__subcmd__export"
                 ;;
@@ -39,6 +42,9 @@ _agenticspec() {
                 ;;
             agenticspec,mine)
                 cmd="agenticspec__subcmd__mine"
+                ;;
+            agenticspec,packing)
+                cmd="agenticspec__subcmd__packing"
                 ;;
             agenticspec,procedure)
                 cmd="agenticspec__subcmd__procedure"
@@ -76,6 +82,18 @@ _agenticspec() {
             agenticspec__subcmd__blocks__subcmd__help,scenario)
                 cmd="agenticspec__subcmd__blocks__subcmd__help__subcmd__scenario"
                 ;;
+            agenticspec__subcmd__deploy,bundle)
+                cmd="agenticspec__subcmd__deploy__subcmd__bundle"
+                ;;
+            agenticspec__subcmd__deploy,help)
+                cmd="agenticspec__subcmd__deploy__subcmd__help"
+                ;;
+            agenticspec__subcmd__deploy__subcmd__help,bundle)
+                cmd="agenticspec__subcmd__deploy__subcmd__help__subcmd__bundle"
+                ;;
+            agenticspec__subcmd__deploy__subcmd__help,help)
+                cmd="agenticspec__subcmd__deploy__subcmd__help__subcmd__help"
+                ;;
             agenticspec__subcmd__help,analyze)
                 cmd="agenticspec__subcmd__help__subcmd__analyze"
                 ;;
@@ -84,6 +102,9 @@ _agenticspec() {
                 ;;
             agenticspec__subcmd__help,completions)
                 cmd="agenticspec__subcmd__help__subcmd__completions"
+                ;;
+            agenticspec__subcmd__help,deploy)
+                cmd="agenticspec__subcmd__help__subcmd__deploy"
                 ;;
             agenticspec__subcmd__help,export)
                 cmd="agenticspec__subcmd__help__subcmd__export"
@@ -99,6 +120,9 @@ _agenticspec() {
                 ;;
             agenticspec__subcmd__help,mine)
                 cmd="agenticspec__subcmd__help__subcmd__mine"
+                ;;
+            agenticspec__subcmd__help,packing)
+                cmd="agenticspec__subcmd__help__subcmd__packing"
                 ;;
             agenticspec__subcmd__help,procedure)
                 cmd="agenticspec__subcmd__help__subcmd__procedure"
@@ -123,6 +147,12 @@ _agenticspec() {
                 ;;
             agenticspec__subcmd__help__subcmd__blocks,scenario)
                 cmd="agenticspec__subcmd__help__subcmd__blocks__subcmd__scenario"
+                ;;
+            agenticspec__subcmd__help__subcmd__deploy,bundle)
+                cmd="agenticspec__subcmd__help__subcmd__deploy__subcmd__bundle"
+                ;;
+            agenticspec__subcmd__help__subcmd__packing,default)
+                cmd="agenticspec__subcmd__help__subcmd__packing__subcmd__default"
                 ;;
             agenticspec__subcmd__help__subcmd__sim,check)
                 cmd="agenticspec__subcmd__help__subcmd__sim__subcmd__check"
@@ -162,6 +192,18 @@ _agenticspec() {
                 ;;
             agenticspec__subcmd__help__subcmd__ui,panels)
                 cmd="agenticspec__subcmd__help__subcmd__ui__subcmd__panels"
+                ;;
+            agenticspec__subcmd__packing,default)
+                cmd="agenticspec__subcmd__packing__subcmd__default"
+                ;;
+            agenticspec__subcmd__packing,help)
+                cmd="agenticspec__subcmd__packing__subcmd__help"
+                ;;
+            agenticspec__subcmd__packing__subcmd__help,default)
+                cmd="agenticspec__subcmd__packing__subcmd__help__subcmd__default"
+                ;;
+            agenticspec__subcmd__packing__subcmd__help,help)
+                cmd="agenticspec__subcmd__packing__subcmd__help__subcmd__help"
                 ;;
             agenticspec__subcmd__sim,check)
                 cmd="agenticspec__subcmd__sim__subcmd__check"
@@ -260,7 +302,7 @@ _agenticspec() {
 
     case "${cmd}" in
         agenticspec)
-            opts="-h --config --state-dir --output --help analyze blocks export kpi lift mine procedure query serve sim sync ui completions help"
+            opts="-h --config --state-dir --output --help analyze blocks deploy export kpi lift mine packing procedure query serve sim sync ui completions help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -503,6 +545,116 @@ _agenticspec() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
+        agenticspec__subcmd__deploy)
+            opts="-h --config --state-dir --output --help bundle help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__deploy__subcmd__bundle)
+            opts="-h --binding --out --ports --accepts --config --state-dir --output --help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --binding)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --out)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --ports)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --accepts)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__deploy__subcmd__help)
+            opts="bundle help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__deploy__subcmd__help__subcmd__bundle)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__deploy__subcmd__help__subcmd__help)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
         agenticspec__subcmd__export)
             opts="-h --out --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
@@ -534,7 +686,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__help)
-            opts="analyze blocks export kpi lift mine procedure query serve sim sync ui completions help"
+            opts="analyze blocks deploy export kpi lift mine packing procedure query serve sim sync ui completions help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -617,6 +769,34 @@ _agenticspec() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
+        agenticspec__subcmd__help__subcmd__deploy)
+            opts="bundle"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__deploy__subcmd__bundle)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
         agenticspec__subcmd__help__subcmd__export)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
@@ -676,6 +856,34 @@ _agenticspec() {
         agenticspec__subcmd__help__subcmd__mine)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__packing)
+            opts="default"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__packing__subcmd__default)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
@@ -1056,6 +1264,104 @@ _agenticspec() {
                     COMPREPLY=($(compgen -W "human json" -- "${cur}"))
                     return 0
                     ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__packing)
+            opts="-h --config --state-dir --output --help default help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__packing__subcmd__default)
+            opts="-h --strategy --config --state-dir --output --help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --strategy)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__packing__subcmd__help)
+            opts="default help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__packing__subcmd__help__subcmd__default)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__packing__subcmd__help__subcmd__help)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
                 *)
                     COMPREPLY=()
                     ;;

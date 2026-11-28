@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "3921b84ac260e232b45110ddcb75302eb4ecd70cec5f9bc8eb58d3a64a4b8a4b",
-    "contract_digest": "686290621bdc328555b19ac1d9465350d893cf2287ec9899613b89617200bb31"
+    "source_digest": "0c997ee56cb6b6e4a7c334869b5b0bccf1966a13eb7cedb2ecd8b07ae0270243",
+    "contract_digest": "4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -137,6 +137,20 @@
     },
     {
       "kind": "domain_type",
+      "source": "agenticspec.cli.DeployBundleInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.DeployBundleResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
       "source": "agenticspec.cli.EntityRows",
       "disposition": {
         "disposition": "generated"
@@ -229,6 +243,20 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.ModelFigures",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.PackingDefaultInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.PackingDefaultResult",
       "disposition": {
         "disposition": "generated"
       }

@@ -87,12 +87,12 @@ The ports a runtime implements to run this architecture: each port's protocol, t
 | `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 16`, `job_limit: 10m`, `kind: build_slots` | 1 |
 | `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
-| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `on_entry` | `channel: board`, `kind: on_message`, `max_parallel: 16`, `policy: parallel` | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart (RecordEnd \| RecordReplaced) \| SkipFiring)` | `on_entry` | `channel: board`, `kind: on_message`, `max_parallel: 16`, `policy: parallel` | 1 |
 | `channel.post` | `Outbound` | `channel` | `PostMessage TakePost?` | `owner` | none | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `team` | `harness: coding` | 8 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `team` | `harness: coding` | 8 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `team` | none | 8 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `team` | none | 8 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `team` | none | 8 |
 | `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `team` | none | 8 |
 | `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 8 |
 | `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 8 |

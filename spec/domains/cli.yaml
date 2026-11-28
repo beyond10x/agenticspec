@@ -1053,3 +1053,66 @@ types:
       - name: unmapped
         type: List<String>
         summary: Inputs whose author plays no part, as `<node> (<author>)`; left out of the scenario.
+
+  - name: agenticspec.cli.PackingDefaultInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document to pack.
+      - name: strategy
+        type: Optional<String>
+        summary: The strategy to resolve, `single`, `by_kind`, `by_part` or `groups`; `single` by default.
+
+  - name: agenticspec.cli.PackingDefaultResult
+    kind: struct
+    naming:
+      summary: The resolved packing of an architecture under a strategy.
+    fields:
+      - {name: architecture, type: String}
+      - {name: strategy, type: String}
+      - name: units
+        type: Integer
+        summary: The units of the packing, the core among them.
+      - name: packing
+        type: String
+        summary: The `packing:` section in its resolved form, every unit listed.
+
+  - name: agenticspec.cli.DeployBundleInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: The architecture document to deploy.
+      - name: binding
+        type: String
+        summary: The binding (`agenticspec-binding/1`) with its packing; its `refines:` chain is resolved.
+      - name: out
+        type: Optional<String>
+        summary: The bundle file to write (`agenticspec-deployment/1`); printed when absent.
+      - name: ports
+        type: Optional<String>
+        summary: The ports file (`agenticspec-ports/1`); `blocks/ports.json` by default.
+      - name: accepts
+        type: Optional<String>
+        summary: The copy of cloudspec's accepted unit kinds and roles; `bundles/cloudspec-accepts.yaml` by default.
+
+  - name: agenticspec.cli.DeployBundleResult
+    kind: struct
+    naming:
+      summary: The bundle of an admitted architecture, its digest and its units.
+    fields:
+      - {name: architecture, type: String}
+      - {name: binding, type: String}
+      - name: digest
+        type: String
+        summary: The bundle digest, `sha256:` and the SHA-256 of the canonical JSON of the bundle without its `digest`.
+      - {name: units, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The bundle file was written.
+      - name: out
+        type: Optional<String>
+      - name: bundle
+        type: Optional<String>
+        summary: The bundle as written, when no `--out` was given.

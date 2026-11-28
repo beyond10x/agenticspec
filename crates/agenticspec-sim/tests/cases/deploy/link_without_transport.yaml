@@ -1,0 +1,10 @@
+format: agenticspec-binding/1
+binding: link-without-transport
+architecture: workstation
+summary: One unit per part, and no transport for the links between them.
+parts:
+  gateway: {state: service}
+  operator: {agent: ../../../../../bundles/agents/operator.yaml}
+  worker: {agent: ../../../../../bundles/agents/coder.yaml}
+packing:
+  strategy: by_part

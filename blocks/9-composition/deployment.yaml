@@ -2,7 +2,8 @@
 # agentic.architecture (layer 9) because an installation names an architecture revision, which no
 # block below layer 9 may name. Source: design/architecture-runtime.md (the binding, the smallest
 # first runtime) and the run lifecycle, pinning, idempotency, install, drain and rollback a
-# consumer's review asked for (M29, M30, M32, M33).
+# consumer's review asked for (M29, M30, M32, M33); the deployment of a revision onto a target
+# through its bundle, its translation and its realization (docs/deployment.md).
 domain: agentic.deployment
 
 summary: >-
@@ -13,7 +14,15 @@ summary: >-
   An architecture run is one run of an installation for one subject: queued, running, waiting, and
   done, failed or cancelled. It keeps the revision and binding of the installation it was queued
   on, so a newer revision never changes a run already queued. The caller names a run's identity
-  once per intent; a repeat with the same identity starts nothing.
+  once per intent; a repeat with the same identity starts nothing. A deployment brings one
+  revision onto one scope of a target: agenticspec admits it with its contract, binding and
+  packing and writes its bundle (`agenticspec-deployment/1`), a translator turns the bundle into
+  its target's architecture, and the target realizes it and reports how its units run. It
+  records each step by digest and its target and scope by value, as ESS declares no relation
+  across systems. A request is refused before anything is recorded when the revision is not
+  released (an in-process run takes a draft), when admission names findings, or when the scope is
+  taken; a recorded deployment is refused later by its translator's coverage or by its target,
+  each by name with its findings.
 
 naming:
   wire: deployment
@@ -43,9 +52,27 @@ types:
         another run for its subject, or its installation was rolled back. Recorded as the caller
         states it; no guard checks it.
 
+  - name: agentic.deployment.UnitKind
+    kind: enum
+    variants: [Core, Agent, Service, Job, Scheduled, Store, Model]
+
+  - name: agentic.deployment.Refusal
+    kind: enum
+    variants: [CoverageRefused, TargetRefused]
+    naming:
+      summary: Why a recorded deployment was refused after its bundle was handed over.
+
+  - name: agentic.deployment.Finding
+    kind: struct
+    naming:
+      summary: One finding of a refusal, by the name of its rule, with what it is about.
+    fields:
+      - {name: name, type: String}
+      - {name: detail, type: String}
+
 entities:
-  # UNMAPPED: the binding format (agenticspec-binding/1) is not specified yet
-  # (design/architecture-runtime.md, "Three documents"). Its digest is a claim of the deployer; no
+  # UNMAPPED: the binding (agenticspec-binding/1, docs/deployment.md) is admitted by agenticspec
+  # before a bundle is written, outside the blocks. Its digest is a claim of the deployer; no
   # guard reads the binding or checks it against the revision's parts.
   - name: agentic.deployment.Installation
     naming:
@@ -141,18 +168,120 @@ entities:
         - {name: finish, from: [Running], to: Done, summary: "The runner reports it done (FinishRun)."}
         - {name: fail, from: [Queued, Running, Waiting], to: Failed, summary: "The runner reports it failed (FailRun)."}
         - {name: cancel, from: [Queued, Running, Waiting], to: Cancelled, summary: "A requester or the runner cancels it (CancelRun)."}
+  - name: agentic.deployment.Deployment
+    naming:
+      summary: One architecture revision on one target, from its request to its end.
+    identity:
+      name: deployment_id
+      type: agentic.shared.DeploymentId
+    fields:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - name: revision_id
+        type: Optional<agentic.shared.ArchitectureRevisionId>
+        summary: The released revision; absent only for an in-process run of a draft.
+      - name: in_process
+        type: Boolean
+        summary: The run is the in-process runtime of the local test, which needs no release.
+      - {name: target, type: agentic.shared.Name}
+      - {name: scope, type: agentic.shared.Name}
+      - {name: contract_digest, type: agentic.architecture.Digest}
+      - {name: binding_digest, type: agentic.architecture.Digest}
+      - {name: packing_digest, type: agentic.architecture.Digest}
+      - {name: bundle_digest, type: Optional<agentic.architecture.Digest>}
+      - {name: translation_digest, type: Optional<agentic.architecture.Digest>}
+      - name: promoted_from
+        type: Optional<agentic.shared.DeploymentId>
+        summary: The deployment of the same revision this one was promoted from.
+      - {name: refusal, type: Optional<agentic.deployment.Refusal>}
+      - {name: findings, type: List<agentic.deployment.Finding>}
+      - {name: reason, type: Optional<String>}
+    relations:
+      - {name: architecture, kind: references, target: agentic.architecture.Architecture, cardinality: one, via: architecture_id}
+      - {name: revision, kind: references, target: agentic.architecture.ArchitectureRevision, cardinality: one, via: revision_id}
+      - {name: promoted, kind: references, target: agentic.deployment.Deployment, cardinality: one, via: promoted_from}
+      - {name: units, kind: owns, target: agentic.deployment.DeploymentUnit, cardinality: many, via: deployment_id}
+    lifecycle:
+      initial: Requested
+      states:
+        - {name: Requested, summary: "Admitted; its bundle is being written."}
+        - {name: Refused, summary: "Its translator or its target refused it; nothing runs."}
+        - {name: Bundled, summary: "Its bundle is written and handed to a translator."}
+        - {name: Translated, summary: "Its target's architecture is written, every object covered."}
+        - {name: Realizing, summary: "Its target starts its units."}
+        - {name: Running, summary: "Every unit runs as desired."}
+        - {name: Degraded, summary: "A unit runs below its desired replicas or keeps failing."}
+        - {name: Stopped, summary: "Taken down by its deployer."}
+        - {name: Failed, summary: "Its target gave up on it."}
+      terminal: [Refused, Stopped, Failed]
+      transitions:
+        - {name: bundle, from: [Requested], to: Bundled}
+        - {name: translate, from: [Bundled], to: Translated}
+        - {name: refuse_coverage, from: [Bundled], to: Refused}
+        - {name: refuse_on_target, from: [Translated, Realizing], to: Refused}
+        - {name: realize, from: [Translated], to: Realizing}
+        - {name: run, from: [Realizing, Degraded], to: Running}
+        - {name: degrade, from: [Running], to: Degraded}
+        - {name: fail, from: [Realizing, Running, Degraded], to: Failed}
+        - {name: stop, from: [Requested, Bundled, Translated, Realizing, Running, Degraded], to: Stopped}
+
+  - name: agentic.deployment.DeploymentUnit
+    naming:
+      summary: One unit of a deployment, as its bundle names it and its target observes it.
+    identity:
+      name: unit_id
+      type: agentic.shared.DeploymentUnitId
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.deployment.UnitKind}
+      - name: parts
+        type: List<agentic.shared.Name>
+        summary: The part instances of the unit, by path.
+      - name: replicas
+        type: Optional<Integer>
+        summary: The desired copies; absent for a job or scheduled unit, which runs on demand.
+      - name: workload_id
+        type: Optional<agentic.shared.WorkloadId>
+        summary: The workload the unit runs as, once mapped.
+      - name: target_object
+        type: Optional<String>
+        summary: The object of the target's architecture the translator mapped the unit to, by value.
+      - {name: ready, type: Integer}
+      - {name: last_failure, type: Optional<String>}
+    relations:
+      - {name: workload, kind: references, target: agentic.runtime.Workload, cardinality: one, via: workload_id}
+    invariants:
+      - ready >= 0
+    lifecycle:
+      initial: Declared
+      states:
+        - {name: Declared, summary: "Named by the bundle."}
+        - {name: Mapped, summary: "Mapped to an object of the target's architecture."}
+      terminal: [Mapped]
+      transitions:
+        - {name: map, from: [Declared], to: Mapped}
+        - {name: observe, from: [Mapped], to: Mapped}
 
 actors:
   - name: agentic.deployment.Deployer
     naming:
       display: Deployer
-      summary: Who installs architecture revisions on a runtime, drains them and rolls them back.
+      summary: >-
+        Who installs architecture revisions on a runtime, drains them and rolls them back; and, on
+        the deploy side, agenticspec, which admits a revision, writes its bundle, records its
+        units and stops a deployment.
     may:
       - agentic.deployment.InstallRevision
       - agentic.deployment.DrainInstallation
       - agentic.deployment.RollBack
       - agentic.deployment.Installations
       - agentic.deployment.InstallationsOfRuntime
+      - agentic.deployment.RequestDeployment
+      - agentic.deployment.RecordBundle
+      - agentic.deployment.RecordUnit
+      - agentic.deployment.StopDeployment
+      - agentic.deployment.Deployments
+      - agentic.deployment.Units
 
   - name: agentic.deployment.Runner
     naming:
@@ -179,6 +308,28 @@ actors:
       - agentic.deployment.CancelRun
       - agentic.deployment.ArchitectureRuns
       - agentic.deployment.RunsOfSubject
+
+  - name: agentic.deployment.Translator
+    naming:
+      display: Translator
+      summary: What turns a bundle into its target's architecture and reports the coverage of each object.
+    may:
+      - agentic.deployment.RecordTranslation
+      - agentic.deployment.RefuseCoverage
+      - agentic.deployment.MapUnit
+
+  - name: agentic.deployment.Target
+    naming:
+      display: Target
+      summary: What realizes the translated architecture and reports how its units run.
+    may:
+      - agentic.deployment.StartRealizing
+      - agentic.deployment.RefuseOnTarget
+      - agentic.deployment.ReportDeploymentRunning
+      - agentic.deployment.ReportDeploymentDegraded
+      - agentic.deployment.ReportDeploymentFailed
+      - agentic.deployment.ObserveUnit
+      - agentic.deployment.Units
 
 errors:
   - name: agentic.deployment.UnknownRuntime
@@ -243,6 +394,46 @@ errors:
     summary: The run is not in a state this command acts from.
     fields:
       - {name: state, type: agentic.deployment.ArchitectureRun.State}
+
+  - name: agentic.deployment.NotReleased
+    summary: The revision is not released, and only the in-process runtime runs a draft.
+
+  - name: agentic.deployment.NotAdmitted
+    summary: Admission named findings; each is listed by the name of its rule.
+    fields:
+      - {name: findings, type: List<agentic.deployment.Finding>}
+
+  - name: agentic.deployment.ScopeTaken
+    summary: Another deployment that has not ended holds this scope of the target.
+    fields:
+      - {name: target, type: agentic.shared.Name}
+      - {name: scope, type: agentic.shared.Name}
+
+  - name: agentic.deployment.UnknownDeployment
+    summary: No deployment has this identity.
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+
+  - name: agentic.deployment.UnknownUnit
+    summary: No unit has this identity.
+    fields:
+      - {name: unit_id, type: agentic.shared.DeploymentUnitId}
+
+  - name: agentic.deployment.NotBundled
+    summary: Units are recorded only for a deployment whose bundle is written.
+
+  - name: agentic.deployment.NoFindings
+    summary: A refusal names at least one finding.
+
+  - name: agentic.deployment.DeploymentStateConflict
+    summary: The deployment is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.deployment.Deployment.State}
+
+  - name: agentic.deployment.UnitStateConflict
+    summary: The unit is not in a state this command acts from.
+    fields:
+      - {name: state, type: agentic.deployment.DeploymentUnit.State}
 
 commands:
   # One Active installation per runtime: a second is refused until the first drains. A new
@@ -634,6 +825,416 @@ commands:
         payload:
           agentic.deployment.RunStateConflict: {state: {subject: state}}
 
+  - name: agentic.deployment.RequestDeployment
+    naming:
+      wire: request-deployment
+      display: Request a deployment
+      summary: Record an admitted revision for one scope of one target, or refuse it with the findings of admission.
+    input:
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: Optional<agentic.shared.ArchitectureRevisionId>}
+      - {name: in_process, type: Boolean}
+      - {name: target, type: agentic.shared.Name}
+      - {name: scope, type: agentic.shared.Name}
+      - {name: contract_digest, type: agentic.architecture.Digest}
+      - {name: binding_digest, type: agentic.architecture.Digest}
+      - {name: packing_digest, type: agentic.architecture.Digest}
+      - {name: findings, type: List<agentic.deployment.Finding>}
+      - {name: promoted_from, type: Optional<agentic.shared.DeploymentId>}
+    outcomes:
+      - name: not-admitted
+        when: findings.count > 0
+        error: agentic.deployment.NotAdmitted
+        payload:
+          agentic.deployment.NotAdmitted: {findings: input.findings}
+      # Released is "names the revision admission read": the in-process runtime alone runs a
+      # draft, which has none.
+      - name: not-released
+        when: {all: [in_process == false, missing(revision_id)]}
+        error: agentic.deployment.NotReleased
+      - name: scope-taken
+        when_related:
+          entity: agentic.deployment.Deployment
+          where:
+            all:
+              - target == input.target
+              - scope == input.scope
+              - {not: {state: [Refused, Stopped, Failed]}}
+          exists: true
+        error: agentic.deployment.ScopeTaken
+        payload:
+          agentic.deployment.ScopeTaken: {target: input.target, scope: input.scope}
+      - name: requested
+        creates: agentic.deployment.Deployment
+        instance: deployment_id
+        sets:
+          architecture_id: input.architecture_id
+          revision_id: input.revision_id
+          in_process: input.in_process
+          target: input.target
+          scope: input.scope
+          contract_digest: input.contract_digest
+          binding_digest: input.binding_digest
+          packing_digest: input.packing_digest
+          promoted_from: input.promoted_from
+          findings: input.findings
+        emits: [agentic.deployment.DeploymentRequested]
+        payload:
+          agentic.deployment.DeploymentRequested:
+            deployment_id: {generated: true}
+            architecture_id: input.architecture_id
+            revision_id: input.revision_id
+            target: input.target
+            scope: input.scope
+
+  - name: agentic.deployment.RecordBundle
+    naming:
+      wire: record-bundle
+      display: Record the bundle
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: bundle_digest, type: agentic.architecture.Digest}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: bundled
+        moves: agentic.deployment.Deployment.bundle
+        instance: deployment_id
+        sets:
+          bundle_digest: input.bundle_digest
+        emits: [agentic.deployment.DeploymentBundled]
+        payload:
+          agentic.deployment.DeploymentBundled:
+            deployment_id: input.deployment_id
+            bundle_digest: input.bundle_digest
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.DeploymentStateConflict
+        payload:
+          agentic.deployment.DeploymentStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.RecordUnit
+    naming:
+      wire: record-unit
+      display: Record a unit
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.deployment.UnitKind}
+      - {name: parts, type: List<agentic.shared.Name>}
+      - {name: replicas, type: Optional<Integer>}
+    outcomes:
+      - name: unknown-deployment
+        when_related:
+          via: input.deployment_id
+          exists: false
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: not-bundled
+        when_related:
+          via: input.deployment_id
+          predicate: state != Bundled
+        error: agentic.deployment.NotBundled
+      - name: recorded
+        creates: agentic.deployment.DeploymentUnit
+        instance: unit_id
+        sets:
+          deployment_id: input.deployment_id
+          name: input.name
+          kind: input.kind
+          parts: input.parts
+          replicas: input.replicas
+          ready: 0
+        emits: [agentic.deployment.UnitRecorded]
+        payload:
+          agentic.deployment.UnitRecorded:
+            unit_id: {generated: true}
+            deployment_id: input.deployment_id
+            name: input.name
+            kind: input.kind
+
+  - name: agentic.deployment.RecordTranslation
+    naming:
+      wire: record-translation
+      display: Record the translation
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: translation_digest, type: agentic.architecture.Digest}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: translated
+        moves: agentic.deployment.Deployment.translate
+        instance: deployment_id
+        sets:
+          translation_digest: input.translation_digest
+        emits: [agentic.deployment.DeploymentTranslated]
+        payload:
+          agentic.deployment.DeploymentTranslated:
+            deployment_id: input.deployment_id
+            translation_digest: input.translation_digest
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.DeploymentStateConflict
+        payload:
+          agentic.deployment.DeploymentStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.RefuseCoverage
+    naming:
+      wire: refuse-coverage
+      display: Refuse on coverage
+      summary: The translator refused objects of the bundle; the deployment is refused as CoverageRefused.
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: findings, type: List<agentic.deployment.Finding>}
+    outcomes:
+      - name: no-findings
+        when: findings.count == 0
+        error: agentic.deployment.NoFindings
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: refused
+        moves: agentic.deployment.Deployment.refuse_coverage
+        instance: deployment_id
+        sets:
+          refusal: CoverageRefused
+          findings: input.findings
+        emits: [agentic.deployment.DeploymentRefused]
+        payload:
+          agentic.deployment.DeploymentRefused:
+            deployment_id: input.deployment_id
+            refusal: CoverageRefused
+            findings: input.findings
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.DeploymentStateConflict
+        payload:
+          agentic.deployment.DeploymentStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.MapUnit
+    naming:
+      wire: map-unit
+      display: Map a unit
+    input:
+      - {name: unit_id, type: agentic.shared.DeploymentUnitId}
+      - {name: target_object, type: String}
+      - {name: workload_id, type: Optional<agentic.shared.WorkloadId>}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownUnit
+        payload:
+          agentic.deployment.UnknownUnit: {unit_id: input.unit_id}
+      - name: mapped
+        moves: agentic.deployment.DeploymentUnit.map
+        instance: unit_id
+        sets:
+          target_object: input.target_object
+          workload_id: input.workload_id
+        emits: [agentic.deployment.UnitMapped]
+        payload:
+          agentic.deployment.UnitMapped:
+            unit_id: input.unit_id
+            target_object: input.target_object
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.UnitStateConflict
+        payload:
+          agentic.deployment.UnitStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.StartRealizing
+    naming:
+      wire: start-realizing
+      display: Start realizing
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: realizing
+        moves: agentic.deployment.Deployment.realize
+        instance: deployment_id
+        emits: [agentic.deployment.RealizingStarted]
+        payload:
+          agentic.deployment.RealizingStarted: {deployment_id: input.deployment_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.DeploymentStateConflict
+        payload:
+          agentic.deployment.DeploymentStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.RefuseOnTarget
+    naming:
+      wire: refuse-on-target
+      display: Refuse on the target
+      summary: The target named violations (quota, placement, policy); the deployment is refused as TargetRefused.
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: findings, type: List<agentic.deployment.Finding>}
+    outcomes:
+      - name: no-findings
+        when: findings.count == 0
+        error: agentic.deployment.NoFindings
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: refused
+        moves: agentic.deployment.Deployment.refuse_on_target
+        instance: deployment_id
+        sets:
+          refusal: TargetRefused
+          findings: input.findings
+        emits: [agentic.deployment.DeploymentRefused]
+        payload:
+          agentic.deployment.DeploymentRefused:
+            deployment_id: input.deployment_id
+            refusal: TargetRefused
+            findings: input.findings
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.DeploymentStateConflict
+        payload:
+          agentic.deployment.DeploymentStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.ReportDeploymentRunning
+    naming:
+      wire: report-deployment-running
+      display: Report the deployment running
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: running
+        moves: agentic.deployment.Deployment.run
+        instance: deployment_id
+        emits: [agentic.deployment.DeploymentRunning]
+        payload:
+          agentic.deployment.DeploymentRunning: {deployment_id: input.deployment_id}
+
+  - name: agentic.deployment.ReportDeploymentDegraded
+    naming:
+      wire: report-deployment-degraded
+      display: Report the deployment degraded
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: reason, type: String}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: degraded
+        moves: agentic.deployment.Deployment.degrade
+        instance: deployment_id
+        sets:
+          reason: input.reason
+        emits: [agentic.deployment.DeploymentDegraded]
+        payload:
+          agentic.deployment.DeploymentDegraded:
+            deployment_id: input.deployment_id
+            reason: input.reason
+
+  - name: agentic.deployment.ReportDeploymentFailed
+    naming:
+      wire: report-deployment-failed
+      display: Report the deployment failed
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: reason, type: String}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: failed
+        moves: agentic.deployment.Deployment.fail
+        instance: deployment_id
+        sets:
+          reason: input.reason
+        emits: [agentic.deployment.DeploymentFailed]
+        payload:
+          agentic.deployment.DeploymentFailed:
+            deployment_id: input.deployment_id
+            reason: input.reason
+
+  - name: agentic.deployment.ObserveUnit
+    naming:
+      wire: observe-unit
+      display: Observe a unit
+      summary: What the target last observed of a mapped unit, its ready replicas and its last failure.
+    input:
+      - {name: unit_id, type: agentic.shared.DeploymentUnitId}
+      - {name: ready, type: Integer}
+      - {name: last_failure, type: Optional<String>}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownUnit
+        payload:
+          agentic.deployment.UnknownUnit: {unit_id: input.unit_id}
+      - name: observed
+        moves: agentic.deployment.DeploymentUnit.observe
+        instance: unit_id
+        sets:
+          ready: input.ready
+          last_failure: input.last_failure
+        emits: [agentic.deployment.UnitObserved]
+        payload:
+          agentic.deployment.UnitObserved:
+            unit_id: input.unit_id
+            ready: input.ready
+            last_failure: input.last_failure
+      - name: not-mapped
+        wrong_state: true
+        error: agentic.deployment.UnitStateConflict
+        payload:
+          agentic.deployment.UnitStateConflict: {state: {subject: state}}
+
+  - name: agentic.deployment.StopDeployment
+    naming:
+      wire: stop-deployment
+      display: Stop a deployment
+    input:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+    outcomes:
+      - name: unknown
+        unknown_instance: true
+        error: agentic.deployment.UnknownDeployment
+        payload:
+          agentic.deployment.UnknownDeployment: {deployment_id: input.deployment_id}
+      - name: stopped
+        moves: agentic.deployment.Deployment.stop
+        instance: deployment_id
+        emits: [agentic.deployment.DeploymentStopped]
+        payload:
+          agentic.deployment.DeploymentStopped: {deployment_id: input.deployment_id}
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.deployment.DeploymentStateConflict
+        payload:
+          agentic.deployment.DeploymentStateConflict: {state: {subject: state}}
+
 events:
   - name: agentic.deployment.RevisionInstalled
     fields:
@@ -681,6 +1282,70 @@ events:
     fields:
       - {name: run_id, type: agentic.shared.ArchitectureRunId}
       - {name: reason, type: agentic.deployment.CancelReason}
+
+  - name: agentic.deployment.DeploymentRequested
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: Optional<agentic.shared.ArchitectureRevisionId>}
+      - {name: target, type: agentic.shared.Name}
+      - {name: scope, type: agentic.shared.Name}
+
+  - name: agentic.deployment.DeploymentBundled
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: bundle_digest, type: agentic.architecture.Digest}
+
+  - name: agentic.deployment.UnitRecorded
+    fields:
+      - {name: unit_id, type: agentic.shared.DeploymentUnitId}
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.deployment.UnitKind}
+
+  - name: agentic.deployment.DeploymentTranslated
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: translation_digest, type: agentic.architecture.Digest}
+
+  - name: agentic.deployment.DeploymentRefused
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: refusal, type: agentic.deployment.Refusal}
+      - {name: findings, type: List<agentic.deployment.Finding>}
+
+  - name: agentic.deployment.UnitMapped
+    fields:
+      - {name: unit_id, type: agentic.shared.DeploymentUnitId}
+      - {name: target_object, type: String}
+
+  - name: agentic.deployment.RealizingStarted
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+
+  - name: agentic.deployment.DeploymentRunning
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+
+  - name: agentic.deployment.DeploymentDegraded
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: reason, type: String}
+
+  - name: agentic.deployment.DeploymentFailed
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: reason, type: String}
+
+  - name: agentic.deployment.UnitObserved
+    fields:
+      - {name: unit_id, type: agentic.shared.DeploymentUnitId}
+      - {name: ready, type: Integer}
+      - {name: last_failure, type: Optional<String>}
+
+  - name: agentic.deployment.DeploymentStopped
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
 
 views:
   - name: agentic.deployment.Installations
@@ -763,3 +1428,50 @@ views:
     naming:
       wire: runs-of-subject
       display: Runs of a subject
+
+  - name: agentic.deployment.Deployments
+    source: agentic.deployment.Deployment
+    consistency: read_your_writes
+    fields:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: architecture_id, type: agentic.shared.ArchitectureId}
+      - {name: revision_id, type: Optional<agentic.shared.ArchitectureRevisionId>}
+      - {name: in_process, type: Boolean}
+      - {name: target, type: agentic.shared.Name}
+      - {name: scope, type: agentic.shared.Name}
+      - {name: contract_digest, type: agentic.architecture.Digest}
+      - {name: binding_digest, type: agentic.architecture.Digest}
+      - {name: packing_digest, type: agentic.architecture.Digest}
+      - {name: bundle_digest, type: Optional<agentic.architecture.Digest>}
+      - {name: translation_digest, type: Optional<agentic.architecture.Digest>}
+      - {name: promoted_from, type: Optional<agentic.shared.DeploymentId>}
+      - {name: refusal, type: Optional<agentic.deployment.Refusal>}
+      - {name: findings, type: List<agentic.deployment.Finding>}
+      - {name: reason, type: Optional<String>}
+      - {name: state, type: agentic.deployment.Deployment.State}
+    naming:
+      wire: deployments
+      display: Deployments
+
+  # The Units view of the operations page: desired and ready replicas, the last failure, parts.
+  - name: agentic.deployment.Units
+    source: agentic.deployment.DeploymentUnit
+    consistency: read_your_writes
+    params:
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+    filter: deployment_id == param.deployment_id
+    fields:
+      - {name: unit_id, type: agentic.shared.DeploymentUnitId}
+      - {name: deployment_id, type: agentic.shared.DeploymentId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: kind, type: agentic.deployment.UnitKind}
+      - {name: parts, type: List<agentic.shared.Name>}
+      - {name: replicas, type: Optional<Integer>}
+      - {name: ready, type: Integer}
+      - {name: last_failure, type: Optional<String>}
+      - {name: workload_id, type: Optional<agentic.shared.WorkloadId>}
+      - {name: target_object, type: Optional<String>}
+      - {name: state, type: agentic.deployment.DeploymentUnit.State}
+    naming:
+      wire: units
+      display: Units

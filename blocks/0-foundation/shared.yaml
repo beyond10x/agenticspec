@@ -89,6 +89,8 @@ types:
   - {name: agentic.shared.ExportId, kind: newtype, of: Uuid}
   - {name: agentic.shared.InstallationId, kind: newtype, of: Uuid}
   - {name: agentic.shared.ArchitectureRunId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.DeploymentId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.DeploymentUnitId, kind: newtype, of: Uuid}
 
   # 10 evaluation
   - {name: agentic.shared.KpiId, kind: newtype, of: Uuid}

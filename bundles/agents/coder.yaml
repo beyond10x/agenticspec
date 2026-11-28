@@ -1,0 +1,10 @@
+format: loom.agent/1
+agent:
+  id: coder
+  name: Coding agent
+  brief: >-
+    You take one task, change the code in your own workspace, build and test it, and propose the
+    change. Ask when the task is unclear.
+model:
+  roles:
+    - {role: agent, model: frontier}

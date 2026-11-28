@@ -1,0 +1,407 @@
+format: agenticspec-deployment/1
+generator: agenticspec 0.4.1
+architecture:
+  document:
+    architecture: scheduled-loops
+    format: agenticspec-architecture/1
+    links:
+    - carries: prompt
+      from: owner
+      to: triager
+    - carries: trigger
+      from: sweep
+      to: sweeper
+    - carries: trigger
+      from: triage
+      to: triager
+    - carries: question
+      from: triager
+      to: owner
+    - carries: question
+      from: sweeper
+      to: owner
+    - carries: model_call
+      from: sweeper
+      to: gateway
+    - carries: model_call
+      from: triager
+      to: gateway
+    - carries: model_call
+      from: gateway
+      to: model
+    - carries: claim
+      from: sweeper
+      to: builds
+    - carries: claim
+      from: triager
+      to: builds
+    parts:
+      builds:
+        block: pool
+        capacity: 8
+        job_limit: 10m
+        kind: build_slots
+      clock:
+        block: schedule
+        every:
+          value: 1h
+          vary:
+          - 15m
+          - 30m
+          - 1h
+          - 2h
+      gateway:
+        block: gateway
+        rate_limit_per_minute: 120
+      model:
+        block: model
+        route: frontier
+      nightly:
+        block: schedule
+        every: 24h
+        next_fire_at: 2h
+      owner:
+        block: principal
+        kind: human
+      sweep:
+        block: trigger
+        kind: on_schedule
+        max_parallel: 1
+        policy: skip
+        schedule: nightly
+        task_template: nightly-sweep
+      sweeper:
+        block: agent
+        harness: coding
+      triage:
+        block: trigger
+        kind: on_schedule
+        max_parallel:
+          value: 1
+          vary:
+          - 1
+          - 4
+          - 8
+        policy:
+          value: skip
+          vary:
+          - skip
+          - queue
+          - parallel
+        schedule: clock
+        takes: all
+      triager:
+        block: agent
+        count:
+          value: 2
+          vary:
+          - 2
+          - 4
+          - 8
+        harness: coding
+    policies:
+      question_default_after: 15m
+    summary: 'Agents woken by schedules instead of a person: a nightly sweep that makes a fresh task from its template every 24 h at 02:00, and a triage loop that wakes on its own clock and works through the backlog until it is empty. Scheduled agent loops went from 2.2 to about 35 merged pull requests per day (2610.36254). The simulator fires each schedule every `every` from `next_fire_at` and applies the trigger''s policy: skip drops a firing while a run is going, queue holds it until a run ends, parallel overlaps up to `max_parallel` runs and refuses the rest. A run that finds nothing to take costs one model call. Tasks wait in the backlog between two ticks. The simulator does not model cron expressions or time zones (only a fixed interval), the restriction checks a schedule passes before it is enabled, nor what a sweep finds: a sweep is one task of the coding role, and triage does the tasks rather than sorting them.'
+  name: scheduled-loops
+  revision: sha256:2429183512de7b92afda15a726a074b29b901941d9a00e0f68fe93df4678a3dc
+  sha256: sha256:2af94059ae00c1db726e3b40ce42186064d1120bda2b4e26694d29dc14ba76f4
+nested: {}
+contract:
+  digest: sha256:df334fb5214db92d2ce4b3a95e86122a4da223fc6460cf1131ec9f3aa36a67e2
+  document:
+    architecture: scheduled-loops
+    border: []
+    format: agenticspec-contract/1
+    invariants:
+    - link: sweep -> sweeper carries trigger
+      port: trigger.firing
+      predicate: every trigger.firing@sweep to sweeper
+    - link: triage -> triager carries trigger
+      port: trigger.firing
+      predicate: every trigger.firing@triage to triager
+    - link: triager -> owner carries question
+      port: question.question
+      predicate: every question.question@triager to owner
+    - link: sweeper -> owner carries question
+      port: question.question
+      predicate: every question.question@sweeper to owner
+    - link: sweeper -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@sweeper inside gateway.call@gateway
+      within: gateway.call
+    - link: triager -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@triager inside gateway.call@gateway
+      within: gateway.call
+    - link: gateway -> model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@gateway to model
+    - link: sweeper -> builds carries claim
+      port: resource.claim
+      predicate: every resource.claim@sweeper to builds
+    - link: triager -> builds carries claim
+      port: resource.claim
+      predicate: every resource.claim@triager to builds
+    ports:
+    - instances: 1
+      part: builds
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings:
+        capacity: 8
+        job_limit: 10m
+        kind: build_slots
+    - instances: 1
+      part: clock
+      port: trigger.schedule
+      protocol: CreateSchedule AdvanceSchedule*
+      settings:
+        every: 1h
+    - instances: 1
+      part: gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 120
+    - instances: 1
+      part: model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: nightly
+      port: trigger.schedule
+      protocol: CreateSchedule AdvanceSchedule*
+      settings:
+        every: 24h
+        next_fire_at: 2h
+    - instances: 1
+      part: owner
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings:
+        kind: human
+    - instances: 1
+      part: sweep
+      port: trigger.firing
+      protocol: FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)
+      settings:
+        kind: on_schedule
+        max_parallel: 1
+        policy: skip
+        schedule: nightly
+    - instances: 1
+      part: sweeper
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 1
+      part: sweeper
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 1
+      part: sweeper
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 1
+      part: sweeper
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings: {}
+    - instances: 1
+      part: triage
+      port: trigger.firing
+      protocol: FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)
+      settings:
+        kind: on_schedule
+        max_parallel: 1
+        policy: skip
+        schedule: clock
+    - instances: 2
+      part: triager
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 2
+      part: triager
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 2
+      part: triager
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 2
+      part: triager
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings: {}
+    ports_digest: 7c59c0fc94156bfca3afbfb280155db3a2b6bfd25ecc9cc90d3fbaf7802b2739
+binding:
+  digest: sha256:a9429a15b7babfd6f2559f8834477b17d5f2e7666909e90573c5e6f9f02a563e
+  document:
+    binding: local
+    format: agenticspec-binding/1
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. Fits any architecture whose sandboxes ask for no more than a container.'
+  name: local
+packing:
+  digest: sha256:0790b3671ad507b63820240ee9dcac81372bb34c0d22f611ca6eb3a25e8d5a5d
+  document:
+    external:
+    - model
+    - owner
+    units:
+    - kind: core
+      name: core
+      parts:
+      - builds
+      - clock
+      - gateway
+      - nightly
+      - sweep
+      - sweeper
+      - triage
+      - triager
+      replicas: 1
+  strategy: single
+units:
+- checks:
+    alive:
+      kind: http
+      path: /alive
+    ready:
+      kind: http
+      path: /ready
+  claims:
+    accelerators: 0
+    cpu_millis: 500
+    memory_mib: 512
+    volumes: []
+  code:
+    role: core-runtime
+  egress:
+  - carries: model_call
+    external: true
+    link: gateway -> model carries model_call
+    to: model
+  - carries: question
+    external: true
+    link: sweeper -> owner carries question
+    to: owner
+  - carries: question
+    external: true
+    link: triager -> owner carries question
+    to: owner
+  isolation: none
+  kind: core
+  name: core
+  parts:
+  - builds
+  - clock
+  - gateway
+  - nightly
+  - sweep
+  - sweeper
+  - triage
+  - triager
+  ports:
+  - instances: 1
+    part: builds
+    port: resource.claim
+    settings:
+      capacity: 8
+      job_limit: 10m
+      kind: build_slots
+  - instances: 1
+    part: clock
+    port: trigger.schedule
+    settings:
+      every: 1h
+  - instances: 1
+    part: gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 120
+  - instances: 1
+    part: nightly
+    port: trigger.schedule
+    settings:
+      every: 24h
+      next_fire_at: 2h
+  - instances: 1
+    part: sweep
+    port: trigger.firing
+    settings:
+      kind: on_schedule
+      max_parallel: 1
+      policy: skip
+      schedule: nightly
+  - instances: 1
+    part: sweeper
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 1
+    part: sweeper
+    port: model.inference
+    settings: {}
+  - instances: 1
+    part: sweeper
+    port: question.question
+    settings: {}
+  - instances: 1
+    part: sweeper
+    port: resource.claim
+    settings: {}
+  - instances: 1
+    part: triage
+    port: trigger.firing
+    settings:
+      kind: on_schedule
+      max_parallel: 1
+      policy: skip
+      schedule: clock
+  - instances: 2
+    part: triager
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 2
+    part: triager
+    port: model.inference
+    settings: {}
+  - instances: 2
+    part: triager
+    port: question.question
+    settings: {}
+  - instances: 2
+    part: triager
+    port: resource.claim
+    settings: {}
+  replicas: 1
+  roles:
+  - core-runtime
+  - model-route:frontier
+  secrets: []
+  source:
+    parts:
+    - builds
+    - clock
+    - gateway
+    - nightly
+    - sweep
+    - sweeper
+    - triage
+    - triager
+    unit: core
+ingress: []
+requirements: []
+agents: {}
+runtimes: {}
+digest: sha256:2a180edcb624b744cb9be5087436df0dec9abcfdf19cf077525f941c3fc9b015

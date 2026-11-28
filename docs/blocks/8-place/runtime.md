@@ -25,7 +25,7 @@ What runs a workload. A runtime says which kinds of workload it runs and the lea
 
 ## Used by
 
-- [deployment](../9-composition/deployment.md) · layer 9 · 8 references
+- [deployment](../9-composition/deployment.md) · layer 9 · 12 references
 
 ## Entities
 

@@ -1,0 +1,5 @@
+format: agenticspec-binding/1
+binding: local
+summary: >-
+  The local test: every part in the core unit, principals and hosted model routes outside. Fits
+  any architecture whose sandboxes ask for no more than a container.

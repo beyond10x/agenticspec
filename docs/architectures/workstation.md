@@ -53,16 +53,16 @@ The ports a runtime implements to run this architecture: each port's protocol, t
 | `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
 | `channel.message` | `Outbound` | `channel` | `SendMessage (MarkDelivered MarkRead? \| MarkLost)` | `operator` | none | 1 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `operator` | `acts_for: owner`, `harness: coding`, `role: operator` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `operator` | `acts_for: owner`, `harness: coding`, `role: operator` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `operator` | none | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `operator` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `operator` | none | 1 |
 | `channel.message` | `Outbound` | `channel` | `SendMessage (MarkDelivered MarkRead? \| MarkLost)` | `owner` | none | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
 | `workspace.lease` | `Outbound` | `workspace` | `RequestLease GrantLease RecordWrite* (ExpireLease \| ReleaseLease)` | `tree` | `sharing: exclusive` | 12 |
 | `workspace.proposal` | `Outbound` | `workspace` | `Propose (MergeProposal \| RejectProposal \| SupersedeProposal)` | `tree` | `sharing: exclusive` | 12 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `worker` | `harness: coding` | 12 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `worker` | `harness: coding` | 12 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `worker` | none | 12 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `worker` | none | 12 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `worker` | none | 12 |
 | `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `worker` | none | 12 |
 
 Routing invariants, one per link whose value travels in a port:

@@ -291,6 +291,170 @@
         }
       }
     },
+    "deploy_bundle": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "deploy_bundle"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.DeployBundleInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "accepts": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "architecture": {
+              "kind": "string"
+            },
+            "binding": {
+              "kind": "string"
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.DeployBundleResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "binding": {
+              "kind": "string"
+            },
+            "bundle": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "digest": {
+              "kind": "string"
+            },
+            "out": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "units": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "accepts_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "binding_invalid": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "contract_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "not_admitted": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "ports_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "export": {
       "target": {
         "kind": "local",
@@ -860,6 +1024,85 @@
           }
         },
         "store_unavailable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "packing_default": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "packing_default"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.PackingDefaultInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "strategy": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.PackingDefaultResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "packing": {
+              "kind": "string"
+            },
+            "strategy": {
+              "kind": "string"
+            },
+            "units": {
+              "kind": "integer"
+            }
+          }
+        }
+      },
+      "errors": {
+        "architecture_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "packing_refused": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -3012,6 +3255,52 @@
     },
     {
       "path": [
+        "deploy",
+        "bundle"
+      ],
+      "aliases": [],
+      "callable": "deploy_bundle",
+      "about": "Admit an architecture with its binding and packing and write its deployment bundle (agenticspec-deployment/1); a refusal writes nothing and names every finding",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "binding",
+          "source": {
+            "kind": "option",
+            "long": "binding"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "accepts",
+          "source": {
+            "kind": "option",
+            "long": "accepts"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
         "export"
       ],
       "aliases": [],
@@ -3123,6 +3412,31 @@
           "source": {
             "kind": "option",
             "long": "top"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "packing",
+        "default"
+      ],
+      "aliases": [],
+      "callable": "packing_default",
+      "about": "Print the resolved packing section of a binding (agenticspec-binding/1) for an architecture, single by default, to paste and change",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "strategy",
+          "source": {
+            "kind": "option",
+            "long": "strategy"
           }
         }
       ]
@@ -3721,10 +4035,12 @@
     "handler:analyze: implement the owner-qualified callable and its declared result/error contract",
     "handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract",
     "handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract",
+    "handler:deploy_bundle: implement the owner-qualified callable and its declared result/error contract",
     "handler:export: implement the owner-qualified callable and its declared result/error contract",
     "handler:kpi: implement the owner-qualified callable and its declared result/error contract",
     "handler:lift: implement the owner-qualified callable and its declared result/error contract",
     "handler:mine: implement the owner-qualified callable and its declared result/error contract",
+    "handler:packing_default: implement the owner-qualified callable and its declared result/error contract",
     "handler:procedure: implement the owner-qualified callable and its declared result/error contract",
     "handler:query: implement the owner-qualified callable and its declared result/error contract",
     "handler:serve: implement the owner-qualified callable and its declared result/error contract",

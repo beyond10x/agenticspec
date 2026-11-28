@@ -596,6 +596,26 @@ impl Handler for Commands {
                 }))
             }
             "ui_conform" => ui_conform(&inv.input),
+            "packing_default" => sim_reply(sim::packing_default(
+                &path_of(&inv.input, "architecture"),
+                inv.input.get("strategy").and_then(Value::as_str),
+            )),
+            "deploy_bundle" => {
+                let path = |field: &str| {
+                    inv.input
+                        .get(field)
+                        .and_then(Value::as_str)
+                        .map(PathBuf::from)
+                };
+                let (out, ports, accepts) = (path("out"), path("ports"), path("accepts"));
+                sim_reply(sim::deploy_bundle(&sim::BundleOptions {
+                    architecture: &path_of(&inv.input, "architecture"),
+                    binding: &path_of(&inv.input, "binding"),
+                    out: out.as_deref(),
+                    ports: ports.as_deref(),
+                    accepts: accepts.as_deref(),
+                }))
+            }
             _ => HandlerReply::Unavailable,
         }
     }

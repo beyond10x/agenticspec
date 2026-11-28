@@ -5,6 +5,7 @@ mod cli;
 mod common;
 mod contract;
 mod corpus;
+mod deploy;
 mod determinism;
 mod dynamics;
 mod event_log;

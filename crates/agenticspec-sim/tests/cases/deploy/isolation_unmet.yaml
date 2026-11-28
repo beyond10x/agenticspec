@@ -1,0 +1,5 @@
+format: agenticspec-binding/1
+binding: isolation-unmet
+architecture: workstation
+summary: The target gives a unit no isolation, and the coding agents' sandbox asks for a process of its own.
+target: {isolation: none}

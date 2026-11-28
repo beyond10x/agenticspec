@@ -24,6 +24,7 @@ const sidebars: SidebarsConfig = {
     'docs/scenarios',
     'docs/contract',
     'docs/studio',
+    'docs/deployment',
     {
       type: 'category',
       label: 'Building blocks',

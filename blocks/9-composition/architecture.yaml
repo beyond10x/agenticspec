@@ -646,6 +646,7 @@ actors:
       - agentic.runtime.DefineWorkload
       - agentic.kpi.RetireKpi
       - agentic.architecture.RetireArchitecture
+      - agentic.deployment.StopDeployment
 
   - name: agentic.architecture.Principal
     naming:

@@ -1,0 +1,394 @@
+format: agenticspec-deployment/1
+generator: agenticspec 0.4.1
+architecture:
+  document:
+    architecture: workstation
+    border:
+    - operator
+    format: agenticspec-architecture/1
+    links:
+    - carries: prompt
+      from: owner
+      over: chat
+      to: operator
+    - carries: question
+      from: operator
+      over: chat
+      to: owner
+    - carries: question
+      from: worker
+      to: operator
+    - carries: order
+      from: operator
+      to: worker
+    - carries: model_call
+      from: operator
+      to: gateway
+    - carries: model_call
+      from: worker
+      to: gateway
+    - carries: model_call
+      from: gateway
+      to: model
+    - carries: claim
+      from: worker
+      to: builds
+    parts:
+      box:
+        block: sandbox
+        egress:
+        - gateway
+        isolation: process
+        per: worker
+      builds:
+        block: pool
+        capacity:
+          value: 16
+          vary:
+          - 8
+          - 16
+          - 24
+          - 32
+        job_limit: 10m
+        kind: build_slots
+      chat:
+        block: channel
+        kind: operator
+      gateway:
+        block: gateway
+        rate_limit_per_minute:
+          value: 120
+          vary:
+          - 60
+          - 120
+          - 240
+      model:
+        block: model
+        route: frontier
+      operator:
+        acts_for: owner
+        block: agent
+        harness: coding
+        role: operator
+      owner:
+        block: principal
+        kind: human
+      tree:
+        block: workspace
+        per: worker
+        sharing: exclusive
+      worker:
+        block: agent
+        count:
+          value: 12
+          vary:
+            max: 24
+            min: 2
+            step: 2
+        harness: coding
+    policies:
+      operator_answers_alone:
+        value: false
+        vary:
+        - false
+        - true
+      question_default_after:
+        value: 15m
+        vary:
+        - 5m
+        - 15m
+        - 60m
+    summary: One workstation, one owner, an operator agent acting for the owner, coding agents, a shared build pool.
+  name: workstation
+  revision: sha256:1747ef6f93056c20a57ee5bdf8d6e719d74a6963f60d7f65ef6efaaba4d4ae2a
+  sha256: sha256:76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7
+nested: {}
+contract:
+  digest: sha256:4d16df833fac0e2fdb2bcc5257f74afad1d432b0e0aa100240bacd6195a05cc2
+  document:
+    architecture: workstation
+    border:
+    - operator
+    format: agenticspec-contract/1
+    invariants:
+    - link: owner -> operator carries prompt over chat
+      port: channel.message
+      predicate: every channel.message@owner to operator over chat
+    - link: operator -> owner carries question over chat
+      port: question.question
+      predicate: every question.question@operator to owner over chat
+    - link: worker -> operator carries question
+      port: question.question
+      predicate: every question.question@worker to operator
+    - link: operator -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@operator inside gateway.call@gateway
+      within: gateway.call
+    - link: worker -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@worker inside gateway.call@gateway
+      within: gateway.call
+    - link: gateway -> model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@gateway to model
+    - link: worker -> builds carries claim
+      port: resource.claim
+      predicate: every resource.claim@worker to builds
+    ports:
+    - instances: 12
+      part: box
+      port: sandbox.sandbox
+      protocol: DefineSandbox (CheckEgress | CheckSecretRead | CheckWrite)*
+      settings:
+        egress:
+        - gateway
+        isolation: process
+    - instances: 1
+      part: builds
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings:
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+    - instances: 1
+      part: chat
+      port: channel.message
+      protocol: SendMessage (MarkDelivered MarkRead? | MarkLost)
+      settings:
+        kind: operator
+    - instances: 1
+      part: gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 120
+    - instances: 1
+      part: model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: operator
+      port: channel.message
+      protocol: SendMessage (MarkDelivered MarkRead? | MarkLost)
+      settings: {}
+    - instances: 1
+      part: operator
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        acts_for: owner
+        harness: coding
+        role: operator
+    - instances: 1
+      part: operator
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 1
+      part: operator
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 1
+      part: owner
+      port: channel.message
+      protocol: SendMessage (MarkDelivered MarkRead? | MarkLost)
+      settings: {}
+    - instances: 1
+      part: owner
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings:
+        kind: human
+    - instances: 12
+      part: tree
+      port: workspace.lease
+      protocol: RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)
+      settings:
+        sharing: exclusive
+    - instances: 12
+      part: tree
+      port: workspace.proposal
+      protocol: Propose (MergeProposal | RejectProposal | SupersedeProposal)
+      settings:
+        sharing: exclusive
+    - instances: 12
+      part: worker
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 12
+      part: worker
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 12
+      part: worker
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 12
+      part: worker
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings: {}
+    ports_digest: 7c59c0fc94156bfca3afbfb280155db3a2b6bfd25ecc9cc90d3fbaf7802b2739
+binding:
+  digest: sha256:a9429a15b7babfd6f2559f8834477b17d5f2e7666909e90573c5e6f9f02a563e
+  document:
+    binding: local
+    format: agenticspec-binding/1
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. Fits any architecture whose sandboxes ask for no more than a container.'
+  name: local
+packing:
+  digest: sha256:9fa19e448a4c3e46cfcbad36faaa87e1ed71960d794469314ec6f0bf6c77130e
+  document:
+    external:
+    - model
+    - owner
+    units:
+    - kind: core
+      name: core
+      parts:
+      - box
+      - builds
+      - chat
+      - gateway
+      - operator
+      - tree
+      - worker
+      replicas: 1
+  strategy: single
+units:
+- checks:
+    alive:
+      kind: http
+      path: /alive
+    ready:
+      kind: http
+      path: /ready
+  claims:
+    accelerators: 0
+    cpu_millis: 500
+    memory_mib: 512
+    volumes:
+    - access: read_write_once
+      name: tree
+      per_instance: true
+  code:
+    role: core-runtime
+  egress:
+  - carries: model_call
+    external: true
+    link: gateway -> model carries model_call
+    to: model
+  - carries: question
+    external: true
+    link: operator -> owner carries question over chat
+    to: owner
+  isolation: process
+  kind: core
+  name: core
+  parts:
+  - box
+  - builds
+  - chat
+  - gateway
+  - operator
+  - tree
+  - worker
+  ports:
+  - instances: 12
+    part: box
+    port: sandbox.sandbox
+    settings:
+      egress:
+      - gateway
+      isolation: process
+  - instances: 1
+    part: builds
+    port: resource.claim
+    settings:
+      capacity: 16
+      job_limit: 10m
+      kind: build_slots
+  - instances: 1
+    part: chat
+    port: channel.message
+    settings:
+      kind: operator
+  - instances: 1
+    part: gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 120
+  - instances: 1
+    part: operator
+    port: channel.message
+    settings: {}
+  - instances: 1
+    part: operator
+    port: harness.session
+    settings:
+      acts_for: owner
+      harness: coding
+      role: operator
+  - instances: 1
+    part: operator
+    port: model.inference
+    settings: {}
+  - instances: 1
+    part: operator
+    port: question.question
+    settings: {}
+  - instances: 12
+    part: tree
+    port: workspace.lease
+    settings:
+      sharing: exclusive
+  - instances: 12
+    part: tree
+    port: workspace.proposal
+    settings:
+      sharing: exclusive
+  - instances: 12
+    part: worker
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 12
+    part: worker
+    port: model.inference
+    settings: {}
+  - instances: 12
+    part: worker
+    port: question.question
+    settings: {}
+  - instances: 12
+    part: worker
+    port: resource.claim
+    settings: {}
+  replicas: 1
+  roles:
+  - core-runtime
+  - model-route:frontier
+  secrets: []
+  source:
+    parts:
+    - box
+    - builds
+    - chat
+    - gateway
+    - operator
+    - tree
+    - worker
+    unit: core
+ingress: []
+requirements: []
+agents: {}
+runtimes: {}
+digest: sha256:cefdfc36c0246c576b557ee5ecc74a74dfd33de0bf76c30f6cc91f2d428479df

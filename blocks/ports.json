@@ -9,6 +9,7 @@
       "agentic.channel.CloseChannel",
       "agentic.channel.CloseSharedChannel",
       "agentic.delegation.RevokeDelegation",
+      "agentic.deployment.StopDeployment",
       "agentic.gateway.DetachUpstream",
       "agentic.gateway.DrainGateway",
       "agentic.gateway.StopGateway",
@@ -72,7 +73,11 @@
     "agentic.deployment.Deployer": [
       "agentic.deployment.DrainInstallation",
       "agentic.deployment.InstallRevision",
-      "agentic.deployment.RollBack"
+      "agentic.deployment.RecordBundle",
+      "agentic.deployment.RecordUnit",
+      "agentic.deployment.RequestDeployment",
+      "agentic.deployment.RollBack",
+      "agentic.deployment.StopDeployment"
     ],
     "agentic.deployment.Requester": [
       "agentic.deployment.CancelRun"
@@ -86,6 +91,19 @@
       "agentic.deployment.ResumeRun",
       "agentic.deployment.StartRun",
       "agentic.deployment.WaitRun"
+    ],
+    "agentic.deployment.Target": [
+      "agentic.deployment.ObserveUnit",
+      "agentic.deployment.RefuseOnTarget",
+      "agentic.deployment.ReportDeploymentDegraded",
+      "agentic.deployment.ReportDeploymentFailed",
+      "agentic.deployment.ReportDeploymentRunning",
+      "agentic.deployment.StartRealizing"
+    ],
+    "agentic.deployment.Translator": [
+      "agentic.deployment.MapUnit",
+      "agentic.deployment.RecordTranslation",
+      "agentic.deployment.RefuseCoverage"
     ],
     "agentic.experiment.Viewer": [],
     "agentic.gateway.GatewayOperator": [
@@ -431,17 +449,39 @@
         "agentic.deployment.FailRun": "report",
         "agentic.deployment.FinishRun": "report",
         "agentic.deployment.InstallRevision": "intent",
+        "agentic.deployment.MapUnit": "report",
+        "agentic.deployment.ObserveUnit": "administration",
         "agentic.deployment.QueueRun": "intent",
+        "agentic.deployment.RecordBundle": "report",
+        "agentic.deployment.RecordTranslation": "report",
+        "agentic.deployment.RecordUnit": "intent",
+        "agentic.deployment.RefuseCoverage": "report",
+        "agentic.deployment.RefuseOnTarget": "report",
+        "agentic.deployment.ReportDeploymentDegraded": "report",
+        "agentic.deployment.ReportDeploymentFailed": "report",
+        "agentic.deployment.ReportDeploymentRunning": "report",
         "agentic.deployment.ReportDrained": "report",
+        "agentic.deployment.RequestDeployment": "intent",
         "agentic.deployment.ResumeRun": "report",
         "agentic.deployment.RollBack": "report",
+        "agentic.deployment.StartRealizing": "report",
         "agentic.deployment.StartRun": "report",
+        "agentic.deployment.StopDeployment": "administration",
         "agentic.deployment.WaitRun": "report"
       },
       "events": [
+        "agentic.deployment.DeploymentBundled",
+        "agentic.deployment.DeploymentDegraded",
+        "agentic.deployment.DeploymentFailed",
+        "agentic.deployment.DeploymentRefused",
+        "agentic.deployment.DeploymentRequested",
+        "agentic.deployment.DeploymentRunning",
+        "agentic.deployment.DeploymentStopped",
+        "agentic.deployment.DeploymentTranslated",
         "agentic.deployment.DrainStarted",
         "agentic.deployment.InstallationDrained",
         "agentic.deployment.InstallationRolledBack",
+        "agentic.deployment.RealizingStarted",
         "agentic.deployment.RevisionInstalled",
         "agentic.deployment.RunCancelled",
         "agentic.deployment.RunDone",
@@ -449,14 +489,19 @@
         "agentic.deployment.RunQueued",
         "agentic.deployment.RunResumed",
         "agentic.deployment.RunStarted",
-        "agentic.deployment.RunWaiting"
+        "agentic.deployment.RunWaiting",
+        "agentic.deployment.UnitMapped",
+        "agentic.deployment.UnitObserved",
+        "agentic.deployment.UnitRecorded"
       ],
       "views": [
         "agentic.deployment.ArchitectureRuns",
+        "agentic.deployment.Deployments",
         "agentic.deployment.Installations",
         "agentic.deployment.InstallationsOfRuntime",
         "agentic.deployment.RunsOfInstallation",
-        "agentic.deployment.RunsOfSubject"
+        "agentic.deployment.RunsOfSubject",
+        "agentic.deployment.Units"
       ]
     },
     "agentic.experiment": {
@@ -1019,6 +1064,24 @@
     },
     {
       "block": "deployment",
+      "intent_event": "agentic.deployment.DeploymentRequested",
+      "kind": "Outbound",
+      "name": "deployment.deployment",
+      "protocol": "RequestDeployment (RecordBundle (RecordTranslation (RefuseOnTarget | StartRealizing (RefuseOnTarget | ReportDeploymentFailed | ReportDeploymentRunning (ReportDeploymentDegraded ReportDeploymentRunning)* (ReportDeploymentDegraded ReportDeploymentFailed? | ReportDeploymentFailed)?)?)? | RefuseCoverage)?)?",
+      "reports": [
+        "agentic.deployment.RecordBundle",
+        "agentic.deployment.RecordTranslation",
+        "agentic.deployment.RefuseCoverage",
+        "agentic.deployment.RefuseOnTarget",
+        "agentic.deployment.ReportDeploymentDegraded",
+        "agentic.deployment.ReportDeploymentFailed",
+        "agentic.deployment.ReportDeploymentRunning",
+        "agentic.deployment.StartRealizing"
+      ],
+      "waiting_state": "agentic.deployment.Deployment.Requested"
+    },
+    {
+      "block": "deployment",
       "intent_event": "agentic.deployment.RevisionInstalled",
       "kind": "Outbound",
       "name": "deployment.installation",
@@ -1029,6 +1092,17 @@
         "agentic.deployment.RollBack"
       ],
       "waiting_state": "agentic.deployment.Installation.Active"
+    },
+    {
+      "block": "deployment",
+      "intent_event": "agentic.deployment.UnitRecorded",
+      "kind": "Outbound",
+      "name": "deployment.unit",
+      "protocol": "RecordUnit MapUnit",
+      "reports": [
+        "agentic.deployment.MapUnit"
+      ],
+      "waiting_state": "agentic.deployment.DeploymentUnit.Declared"
     },
     {
       "block": "experiment",
@@ -1335,5 +1409,5 @@
       "waiting_state": "agentic.workspace.Proposal.Proposed"
     }
   ],
-  "sources_sha256": "8b6973dfc231fcbeedc6ca44fa106d325c12d1cb1b35dfef4aa584469fe2ffcf"
+  "sources_sha256": "7c59c0fc94156bfca3afbfb280155db3a2b6bfd25ecc9cc90d3fbaf7802b2739"
 }

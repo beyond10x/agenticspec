@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 686290621bdc328555b19ac1d9465350d893cf2287ec9899613b89617200bb31
+// contract digest 4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -240,6 +240,42 @@ pub struct DecisionFigures {
     pub count: i64,
 }
 
+/// DeployBundleInput — `agenticspec.cli.DeployBundleInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeployBundleInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `binding` — `String`.
+    pub binding: String,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `accepts` — `Optional<String>`.
+    pub accepts: Option<String>,
+}
+
+/// DeployBundleResult — `agenticspec.cli.DeployBundleResult`.
+///
+/// The bundle of an admitted architecture, its digest and its units.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeployBundleResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `binding` — `String`.
+    pub binding: String,
+    /// `digest` — `String`.
+    pub digest: String,
+    /// `units` — `Integer`.
+    pub units: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
+    /// `out` — `Optional<String>`.
+    pub out: Option<String>,
+    /// `bundle` — `Optional<String>`.
+    pub bundle: Option<String>,
+}
+
 /// EntityRows — `agenticspec.cli.EntityRows`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EntityRows {
@@ -454,6 +490,30 @@ pub struct ModelFigures {
     pub context_max: i64,
     /// `cost_microdollars` — `Integer`.
     pub cost_microdollars: i64,
+}
+
+/// PackingDefaultInput — `agenticspec.cli.PackingDefaultInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PackingDefaultInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `strategy` — `Optional<String>`.
+    pub strategy: Option<String>,
+}
+
+/// PackingDefaultResult — `agenticspec.cli.PackingDefaultResult`.
+///
+/// The resolved packing of an architecture under a strategy.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PackingDefaultResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `strategy` — `String`.
+    pub strategy: String,
+    /// `units` — `Integer`.
+    pub units: i64,
+    /// `packing` — `String`.
+    pub packing: String,
 }
 
 /// Pattern — `agenticspec.cli.Pattern`.

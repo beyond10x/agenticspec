@@ -28,16 +28,16 @@ The ports a runtime implements to run this architecture: each port's protocol, t
 | port | kind | block | protocol | part | settings | instances |
 |---|---|---|---|---|---|---|
 | `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `builds` | `capacity: 16`, `job_limit: 10m`, `kind: build_slots` | 1 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `executor` | `harness: coding`, `role: executor` | 8 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `executor` | `harness: coding`, `role: executor` | 8 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `executor` | none | 8 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `executor` | none | 8 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `executor` | none | 8 |
 | `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `executor` | none | 8 |
 | `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
-| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `on_plan` | `channel: plans`, `kind: on_message`, `max_parallel: 8`, `policy: parallel` | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart (RecordEnd \| RecordReplaced) \| SkipFiring)` | `on_plan` | `channel: plans`, `kind: on_message`, `max_parallel: 8`, `policy: parallel` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
 | `channel.post` | `Outbound` | `channel` | `PostMessage TakePost?` | `planner` | none | 1 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `planner` | `harness: coding`, `role: planner` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `planner` | `harness: coding`, `role: planner` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `planner` | none | 1 |
 | `channel.post` | `Outbound` | `channel` | `PostMessage TakePost?` | `plans` | `distribution: queue`, `kind: agent_message` | 1 |
 | `channel.subscription` | `Outbound` | `channel` | `Subscribe Beat* EndSubscription` | `plans` | `distribution: queue`, `kind: agent_message` | 1 |

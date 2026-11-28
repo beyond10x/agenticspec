@@ -86,6 +86,12 @@ const pages: Record<string, Page> = {
     title: 'agenticstudio',
     lede: 'Open an architecture as a draft, change it with patches, and see its graph and its check.',
   },
+  'docs/deployment.md': {
+    slug: '/deployment',
+    title: 'Deploying an architecture',
+    sidebar_label: 'Deployment',
+    lede: 'The binding and its packing, admission, and the deployment bundle a target translates.',
+  },
 };
 
 const config: Config = {

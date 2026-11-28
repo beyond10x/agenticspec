@@ -1,0 +1,190 @@
+# A deployment from its request to a degraded run. Admission's findings refuse a request and
+# record nothing; a request that names no revision is refused unless it is in process; a second
+# request for a scope a running deployment holds is refused. The admitted deployment is bundled,
+# its two units are recorded, it is translated, one unit is mapped to its target object, the
+# target realizes it and reports it running, observes the mapped unit with all its replicas
+# ready and then reports the deployment degraded. A unit not yet mapped takes no observation.
+type: ess-scenario/7
+domain: agentic.deployment
+scenario: deployment-runs-and-degrades
+summary: An admitted deployment is bundled, translated, realized, runs and degrades; refused requests record nothing.
+
+arrange:
+  - instance: d1
+    entity: agentic.deployment.Deployment
+  - instance: core
+    entity: agentic.deployment.DeploymentUnit
+  - instance: worker
+    entity: agentic.deployment.DeploymentUnit
+
+timeline:
+  - at: 2026-11-28T10:00:00Z
+    command: agentic.deployment.RequestDeployment
+    input:
+      architecture_id: 00000000-0000-4000-8000-000000000301
+      revision_id: 00000000-0000-4000-8000-000000000302
+      in_process: false
+      target: lab
+      scope: workstation
+      contract_digest: sha256:c0
+      binding_digest: sha256:b0
+      packing_digest: sha256:p0
+      findings: [{name: link_without_transport, detail: "link `worker -> builds carries claim` crosses units"}]
+    outcome: not-admitted
+    error:
+      name: agentic.deployment.NotAdmitted
+    no_events: [agentic.deployment.DeploymentRequested]
+
+  - at: 2026-11-28T10:00:01Z
+    command: agentic.deployment.RequestDeployment
+    input:
+      architecture_id: 00000000-0000-4000-8000-000000000301
+      in_process: false
+      target: lab
+      scope: workstation
+      contract_digest: sha256:c0
+      binding_digest: sha256:b0
+      packing_digest: sha256:p0
+      findings: []
+    outcome: not-released
+    error:
+      name: agentic.deployment.NotReleased
+    no_events: [agentic.deployment.DeploymentRequested]
+
+  - at: 2026-11-28T10:00:02Z
+    command: agentic.deployment.RequestDeployment
+    input:
+      architecture_id: 00000000-0000-4000-8000-000000000301
+      revision_id: 00000000-0000-4000-8000-000000000302
+      in_process: false
+      target: lab
+      scope: workstation
+      contract_digest: sha256:c0
+      binding_digest: sha256:b0
+      packing_digest: sha256:p0
+      findings: []
+    outcome: requested
+    capture: {instance: d1, event: agentic.deployment.DeploymentRequested, field: deployment_id}
+
+  - at: 2026-11-28T10:00:03Z
+    command: agentic.deployment.RequestDeployment
+    input:
+      architecture_id: 00000000-0000-4000-8000-000000000301
+      revision_id: 00000000-0000-4000-8000-000000000302
+      in_process: false
+      target: lab
+      scope: workstation
+      contract_digest: sha256:c0
+      binding_digest: sha256:b1
+      packing_digest: sha256:p1
+      findings: []
+    outcome: scope-taken
+    error:
+      name: agentic.deployment.ScopeTaken
+    no_events: [agentic.deployment.DeploymentRequested]
+
+  - at: 2026-11-28T10:00:04Z
+    command: agentic.deployment.RecordBundle
+    input: {deployment_id: {$instance: d1}, bundle_digest: sha256:d0}
+    outcome: bundled
+    events:
+      - event: agentic.deployment.DeploymentBundled
+        payload: {deployment_id: {$instance: d1}, bundle_digest: sha256:d0}
+
+  - at: 2026-11-28T10:00:05Z
+    command: agentic.deployment.RecordUnit
+    input:
+      deployment_id: {$instance: d1}
+      name: core
+      kind: Core
+      parts: [builds, chat, gateway]
+      replicas: 1
+    outcome: recorded
+    capture: {instance: core, event: agentic.deployment.UnitRecorded, field: unit_id}
+
+  - at: 2026-11-28T10:00:06Z
+    command: agentic.deployment.RecordUnit
+    input:
+      deployment_id: {$instance: d1}
+      name: worker
+      kind: Agent
+      parts: [box, tree, worker]
+      replicas: 12
+    outcome: recorded
+    capture: {instance: worker, event: agentic.deployment.UnitRecorded, field: unit_id}
+
+  - at: 2026-11-28T10:00:07Z
+    command: agentic.deployment.RecordTranslation
+    input: {deployment_id: {$instance: d1}, translation_digest: sha256:t0}
+    outcome: translated
+
+  - at: 2026-11-28T10:00:08Z
+    command: agentic.deployment.RecordUnit
+    input:
+      deployment_id: {$instance: d1}
+      name: late
+      kind: Service
+      parts: [late]
+    outcome: not-bundled
+    error:
+      name: agentic.deployment.NotBundled
+    no_events: [agentic.deployment.UnitRecorded]
+
+  - at: 2026-11-28T10:00:09Z
+    command: agentic.deployment.MapUnit
+    input: {unit_id: {$instance: worker}, target_object: workload/worker}
+    outcome: mapped
+
+  - at: 2026-11-28T10:00:10Z
+    command: agentic.deployment.StartRealizing
+    input: {deployment_id: {$instance: d1}}
+    outcome: realizing
+
+  - at: 2026-11-28T10:00:11Z
+    command: agentic.deployment.ObserveUnit
+    input: {unit_id: {$instance: core}, ready: 1}
+    outcome: not-mapped
+    error:
+      name: agentic.deployment.UnitStateConflict
+    no_events: [agentic.deployment.UnitObserved]
+
+  - at: 2026-11-28T10:00:12Z
+    command: agentic.deployment.ReportDeploymentRunning
+    input: {deployment_id: {$instance: d1}}
+    outcome: running
+
+  - at: 2026-11-28T10:00:13Z
+    command: agentic.deployment.ObserveUnit
+    input: {unit_id: {$instance: worker}, ready: 12}
+    outcome: observed
+    events:
+      - event: agentic.deployment.UnitObserved
+        payload: {unit_id: {$instance: worker}, ready: 12}
+
+  - at: 2026-11-28T10:00:14Z
+    command: agentic.deployment.ReportDeploymentDegraded
+    input: {deployment_id: {$instance: d1}, reason: worker below its desired replicas}
+    outcome: degraded
+
+assert:
+  - view: agentic.deployment.Units
+    params:
+      deployment_id: {$instance: d1}
+    counts:
+      at_least: 2
+      at_most: 2
+  - view: agentic.deployment.Units
+    params:
+      deployment_id: {$instance: d1}
+    contains:
+      unit_id: {$instance: worker}
+      replicas: 12
+      ready: 12
+      target_object: workload/worker
+      state: Mapped
+  - view: agentic.deployment.Deployments
+    contains:
+      deployment_id: {$instance: d1}
+      bundle_digest: sha256:d0
+      translation_digest: sha256:t0
+      state: Degraded

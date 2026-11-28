@@ -1,0 +1,310 @@
+format: agenticspec-deployment/1
+generator: agenticspec 0.4.1
+architecture:
+  document:
+    architecture: orchestrator-workers
+    format: agenticspec-architecture/1
+    links:
+    - carries: prompt
+      from: owner
+      to: orchestrator
+    - carries: order
+      from: orchestrator
+      to: workers
+    - carries: question
+      from: workers
+      to: owner
+    - carries: model_call
+      from: orchestrator
+      to: gateway
+    - carries: model_call
+      from: workers
+      to: gateway
+    - carries: model_call
+      from: gateway
+      to: model
+    - carries: claim
+      from: workers
+      to: builds
+    parts:
+      builds:
+        block: pool
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+      gateway:
+        block: gateway
+        rate_limit_per_minute:
+          value: 120
+          vary:
+          - 60
+          - 120
+          - 240
+      model:
+        block: model
+        route: frontier
+      orchestrator:
+        block: agent
+        count:
+          value: 1
+          vary:
+          - 1
+          - 2
+        harness: coding
+        role: orchestrator
+      owner:
+        block: principal
+        kind: human
+      tree:
+        block: workspace
+        per: workers
+        sharing: exclusive
+      workers:
+        block: agent
+        coordination: orchestrator
+        count:
+          value: 8
+          vary:
+          - 4
+          - 8
+          - 12
+          - 16
+        harness: coding
+        start_stagger:
+          value: 30s
+          vary:
+          - 0s
+          - 3s
+          - 30s
+    policies:
+      question_default_after: 15m
+    summary: 'An orchestrator agent takes every task, spends its model calls on handing it out, and dispatches it over an order link to a worker swarm whose copies start one after another. Task-specific sub-agents helped (+5.91, +4.46) and general stage sub-agents hurt (-0.70, -2.31) (2609.32459); sub-agent concurrency helped only on the largest tasks (2610.10263); an author-reviewer loop cost $0.95-1.07 per file against $1.98-2.91 for a multi-agent workflow (2610.09995). The simulator charges the orchestrator the profile role `orchestrator` for every task, counts those calls as coordination calls, and makes it a queue every task passes; the workers take the handed tasks in order. With an orchestrator handing out the work no two copies race for one task, so a start stagger here only holds copies back. The simulator does not model how the orchestrator splits a task, results that come back to it, nor any gain or loss in success from orchestration: workers keep the coding role''s pass rates.'
+  name: orchestrator-workers
+  revision: sha256:e53d96978910c7f0bc96c484cdeacf490e3dc69983e12123d6e24010c8ae57c2
+  sha256: sha256:434ee4ca406f0bde030ae8ad1f892115a912b87f1579e1a23884021017afb36f
+nested: {}
+contract:
+  digest: sha256:84664dc87ee2c7033a7b46e31115479af4ae6bea0dcfee709cbcc1d0205a0b8b
+  document:
+    architecture: orchestrator-workers
+    border: []
+    format: agenticspec-contract/1
+    invariants:
+    - link: workers -> owner carries question
+      port: question.question
+      predicate: every question.question@workers to owner
+    - link: orchestrator -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@orchestrator inside gateway.call@gateway
+      within: gateway.call
+    - link: workers -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@workers inside gateway.call@gateway
+      within: gateway.call
+    - link: gateway -> model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@gateway to model
+    - link: workers -> builds carries claim
+      port: resource.claim
+      predicate: every resource.claim@workers to builds
+    ports:
+    - instances: 1
+      part: builds
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings:
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+    - instances: 1
+      part: gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 120
+    - instances: 1
+      part: model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: orchestrator
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+        role: orchestrator
+    - instances: 1
+      part: orchestrator
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 1
+      part: owner
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings:
+        kind: human
+    - instances: 8
+      part: tree
+      port: workspace.lease
+      protocol: RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)
+      settings:
+        sharing: exclusive
+    - instances: 8
+      part: tree
+      port: workspace.proposal
+      protocol: Propose (MergeProposal | RejectProposal | SupersedeProposal)
+      settings:
+        sharing: exclusive
+    - instances: 8
+      part: workers
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 8
+      part: workers
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 8
+      part: workers
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 8
+      part: workers
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings: {}
+    ports_digest: 7c59c0fc94156bfca3afbfb280155db3a2b6bfd25ecc9cc90d3fbaf7802b2739
+binding:
+  digest: sha256:a9429a15b7babfd6f2559f8834477b17d5f2e7666909e90573c5e6f9f02a563e
+  document:
+    binding: local
+    format: agenticspec-binding/1
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. Fits any architecture whose sandboxes ask for no more than a container.'
+  name: local
+packing:
+  digest: sha256:0fee0865aa951c5666c5c3c8744f0b6c9b51ba9374d49e0d5c56a9fa1d66f127
+  document:
+    external:
+    - model
+    - owner
+    units:
+    - kind: core
+      name: core
+      parts:
+      - builds
+      - gateway
+      - orchestrator
+      - tree
+      - workers
+      replicas: 1
+  strategy: single
+units:
+- checks:
+    alive:
+      kind: http
+      path: /alive
+    ready:
+      kind: http
+      path: /ready
+  claims:
+    accelerators: 0
+    cpu_millis: 500
+    memory_mib: 512
+    volumes:
+    - access: read_write_once
+      name: tree
+      per_instance: true
+  code:
+    role: core-runtime
+  egress:
+  - carries: model_call
+    external: true
+    link: gateway -> model carries model_call
+    to: model
+  - carries: question
+    external: true
+    link: workers -> owner carries question
+    to: owner
+  isolation: none
+  kind: core
+  name: core
+  parts:
+  - builds
+  - gateway
+  - orchestrator
+  - tree
+  - workers
+  ports:
+  - instances: 1
+    part: builds
+    port: resource.claim
+    settings:
+      capacity: 16
+      job_limit: 10m
+      kind: build_slots
+  - instances: 1
+    part: gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 120
+  - instances: 1
+    part: orchestrator
+    port: harness.session
+    settings:
+      harness: coding
+      role: orchestrator
+  - instances: 1
+    part: orchestrator
+    port: model.inference
+    settings: {}
+  - instances: 8
+    part: tree
+    port: workspace.lease
+    settings:
+      sharing: exclusive
+  - instances: 8
+    part: tree
+    port: workspace.proposal
+    settings:
+      sharing: exclusive
+  - instances: 8
+    part: workers
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 8
+    part: workers
+    port: model.inference
+    settings: {}
+  - instances: 8
+    part: workers
+    port: question.question
+    settings: {}
+  - instances: 8
+    part: workers
+    port: resource.claim
+    settings: {}
+  replicas: 1
+  roles:
+  - core-runtime
+  - model-route:frontier
+  secrets: []
+  source:
+    parts:
+    - builds
+    - gateway
+    - orchestrator
+    - tree
+    - workers
+    unit: core
+ingress: []
+requirements: []
+agents: {}
+runtimes: {}
+digest: sha256:f674ec64bca704d1b9065cc678aaa31005f9eb890b21b5d992cf419b396bf3aa

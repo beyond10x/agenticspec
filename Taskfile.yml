@@ -8,6 +8,7 @@ tasks:
       - task: check:blocks
       - task: check:fields
       - task: check:ports
+      - task: check:bundles
       - task: check:ui
       - task: check:app
       - task: check:ui-kit
@@ -84,6 +85,24 @@ tasks:
     cmds:
       - cargo build --quiet --locked -p agenticspec
       - scripts/contract-conform.sh {{.CLI_ARGS}}
+
+  bundles:generate:
+    desc: Write the fixture bundles, bundles/<architecture>.<binding>.yaml (agenticspec deploy bundle of each catalog architecture under each binding of bundles/bindings/), and the digest of their sources, bundles/sources.sha256.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --bundles
+
+  check:bundles:
+    desc: Fail when a fixture bundle was written from other sources than the current ones (bundles/sources.sha256, digests only; builds no bundle); names task bundles:generate.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --bundles --check
+
+  slow:bundles:
+    desc: Slow lane. Build every fixture bundle afresh and compare it byte for byte with the committed one.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec-docs
+      - target/debug/agenticspec-docs --root . --bundles --slow
 
   check:kpis:
     desc: Check kpis/catalogue.yaml, every packs/<pack>/kpis.yaml and every fields/<field>/kpis.yaml against their format, their blocks and the events they may read.

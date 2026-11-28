@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: part-unpacked
+architecture: workstation
+summary: The units leave the build pool out.
+packing:
+  units:
+    - {name: core, kind: core, parts: [box, chat, gateway, operator, tree, worker]}
+  external: [model, owner]

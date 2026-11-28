@@ -44,6 +44,28 @@ Error `scenario_refused`: `agenticspec.cli.Refusal`.
 
 Error `transcript_unreadable`: `agenticspec.cli.Refusal`.
 
+### `deploy bundle`
+
+Admit an architecture with its binding and packing and write its deployment bundle (agenticspec-deployment/1); a refusal writes nothing and names every finding
+
+Callable: `deploy_bundle`. Input: `agenticspec.cli.DeployBundleInput`. Result: `agenticspec.cli.DeployBundleResult`.
+
+Error `accepts_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `binding_invalid`: `agenticspec.cli.Refusal`.
+
+Error `contract_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `not_admitted`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
+Error `ports_unreadable`: `agenticspec.cli.Refusal`.
+
 ### `export`
 
 Export a procedure as a canon protocol and loom bindings
@@ -81,6 +103,18 @@ Callable: `mine`. Input: `agenticspec.cli.MineInput`. Result: `agenticspec.cli.M
 Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
+
+### `packing default`
+
+Print the resolved packing section of a binding (agenticspec-binding/1) for an architecture, single by default, to paste and change
+
+Callable: `packing_default`. Input: `agenticspec.cli.PackingDefaultInput`. Result: `agenticspec.cli.PackingDefaultResult`.
+
+Error `architecture_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `packing_refused`: `agenticspec.cli.Refusal`.
 
 ### `procedure`
 
@@ -317,10 +351,12 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:analyze: implement the owner-qualified callable and its declared result/error contract
 - handler:blocks_lift: implement the owner-qualified callable and its declared result/error contract
 - handler:blocks_scenario: implement the owner-qualified callable and its declared result/error contract
+- handler:deploy_bundle: implement the owner-qualified callable and its declared result/error contract
 - handler:export: implement the owner-qualified callable and its declared result/error contract
 - handler:kpi: implement the owner-qualified callable and its declared result/error contract
 - handler:lift: implement the owner-qualified callable and its declared result/error contract
 - handler:mine: implement the owner-qualified callable and its declared result/error contract
+- handler:packing_default: implement the owner-qualified callable and its declared result/error contract
 - handler:procedure: implement the owner-qualified callable and its declared result/error contract
 - handler:query: implement the owner-qualified callable and its declared result/error contract
 - handler:serve: implement the owner-qualified callable and its declared result/error contract

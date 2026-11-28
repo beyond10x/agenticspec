@@ -1,0 +1,116 @@
+# The two refusals after a bundle is handed over. One deployment's translator refuses objects of
+# its bundle: it is refused as CoverageRefused with the translator's findings. Another is
+# translated and realizing when its target names a violation: it is refused as TargetRefused. A
+# refusal names at least one finding. A refused deployment frees its scope for a new request.
+type: ess-scenario/7
+domain: agentic.deployment
+scenario: deployment-refused-by-coverage-and-target
+summary: A translator refuses one bundle, a target another; each is refused by name with its findings and frees its scope.
+
+arrange:
+  - instance: d1
+    entity: agentic.deployment.Deployment
+  - instance: d2
+    entity: agentic.deployment.Deployment
+
+timeline:
+  - at: 2026-11-28T11:00:00Z
+    command: agentic.deployment.RequestDeployment
+    input:
+      architecture_id: 00000000-0000-4000-8000-000000000311
+      revision_id: 00000000-0000-4000-8000-000000000312
+      in_process: false
+      target: lab
+      scope: one
+      contract_digest: sha256:c1
+      binding_digest: sha256:b1
+      packing_digest: sha256:p1
+      findings: []
+    outcome: requested
+    capture: {instance: d1, event: agentic.deployment.DeploymentRequested, field: deployment_id}
+
+  - at: 2026-11-28T11:00:01Z
+    command: agentic.deployment.RecordBundle
+    input: {deployment_id: {$instance: d1}, bundle_digest: sha256:d1}
+    outcome: bundled
+
+  - at: 2026-11-28T11:00:02Z
+    command: agentic.deployment.RefuseCoverage
+    input: {deployment_id: {$instance: d1}, findings: []}
+    outcome: no-findings
+    error:
+      name: agentic.deployment.NoFindings
+    no_events: [agentic.deployment.DeploymentRefused]
+
+  - at: 2026-11-28T11:00:03Z
+    command: agentic.deployment.RefuseCoverage
+    input:
+      deployment_id: {$instance: d1}
+      findings: [{name: unit_refused, detail: "unit gateway: no construct for a service of this role"}]
+    outcome: refused
+    events:
+      - event: agentic.deployment.DeploymentRefused
+        payload: {deployment_id: {$instance: d1}, refusal: CoverageRefused}
+
+  - at: 2026-11-28T11:00:04Z
+    command: agentic.deployment.RequestDeployment
+    input:
+      architecture_id: 00000000-0000-4000-8000-000000000311
+      revision_id: 00000000-0000-4000-8000-000000000312
+      in_process: false
+      target: lab
+      scope: one
+      contract_digest: sha256:c1
+      binding_digest: sha256:b2
+      packing_digest: sha256:p2
+      findings: []
+    outcome: requested
+    capture: {instance: d2, event: agentic.deployment.DeploymentRequested, field: deployment_id}
+
+  - at: 2026-11-28T11:00:05Z
+    command: agentic.deployment.RecordBundle
+    input: {deployment_id: {$instance: d2}, bundle_digest: sha256:d2}
+    outcome: bundled
+
+  - at: 2026-11-28T11:00:06Z
+    command: agentic.deployment.RefuseOnTarget
+    input:
+      deployment_id: {$instance: d2}
+      findings: [{name: quota, detail: too early}]
+    outcome: wrong-state
+    error:
+      name: agentic.deployment.DeploymentStateConflict
+    no_events: [agentic.deployment.DeploymentRefused]
+
+  - at: 2026-11-28T11:00:07Z
+    command: agentic.deployment.RecordTranslation
+    input: {deployment_id: {$instance: d2}, translation_digest: sha256:t2}
+    outcome: translated
+
+  - at: 2026-11-28T11:00:08Z
+    command: agentic.deployment.StartRealizing
+    input: {deployment_id: {$instance: d2}}
+    outcome: realizing
+
+  - at: 2026-11-28T11:00:09Z
+    command: agentic.deployment.RefuseOnTarget
+    input:
+      deployment_id: {$instance: d2}
+      findings: [{name: quota, detail: "unit worker: 12 replicas of 2000 millicores exceed the scope's quota"}]
+    outcome: refused
+    events:
+      - event: agentic.deployment.DeploymentRefused
+        payload: {deployment_id: {$instance: d2}, refusal: TargetRefused}
+
+assert:
+  - view: agentic.deployment.Deployments
+    contains:
+      deployment_id: {$instance: d1}
+      refusal: CoverageRefused
+      state: Refused
+  - view: agentic.deployment.Deployments
+    contains:
+      deployment_id: {$instance: d2}
+      refusal: TargetRefused
+      translation_digest: sha256:t2
+      state: Refused

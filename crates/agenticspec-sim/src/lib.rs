@@ -6,6 +6,7 @@ pub mod check;
 pub mod cli;
 pub mod contract;
 pub mod corpus;
+pub mod deploy;
 pub mod doc;
 pub mod event_log;
 pub mod events;

@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 686290621bdc328555b19ac1d9465350d893cf2287ec9899613b89617200bb31
+// contract digest 4bc5ebbeb9199867a714ee1dd3bf55e77a95c6b8cfcbe86b0318b7db4174ac39
 // do not edit: regenerate with `ess synthesize`
 
 //! The HTTP surface of `agenticspec` v1, synthesised.

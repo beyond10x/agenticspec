@@ -74,16 +74,16 @@ The ports a runtime implements to run this architecture: each port's protocol, t
 | `gateway.call` | `Outbound` | `gateway` | `AdmitCall CompleteCall` | `gateway` | `rate_limit_per_minute: 120` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `model` | `route: frontier` | 1 |
 | `trigger.schedule` | `Outbound` | `trigger` | `CreateSchedule AdvanceSchedule*` | `nightly` | `every: 24h`, `next_fire_at: 2h` | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
-| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `sweep` | `kind: on_schedule`, `max_parallel: 1`, `policy: skip`, `schedule: nightly` | 1 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `sweeper` | `harness: coding` | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `owner` | `kind: human` | 1 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart (RecordEnd \| RecordReplaced) \| SkipFiring)` | `sweep` | `kind: on_schedule`, `max_parallel: 1`, `policy: skip`, `schedule: nightly` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `sweeper` | `harness: coding` | 1 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `sweeper` | none | 1 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `sweeper` | none | 1 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `sweeper` | none | 1 |
 | `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `sweeper` | none | 1 |
-| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart RecordEnd \| SkipFiring)` | `triage` | `kind: on_schedule`, `max_parallel: 1`, `policy: skip`, `schedule: clock` | 1 |
-| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordTurn)* EndSession` | `triager` | `harness: coding` | 2 |
+| `trigger.firing` | `Outbound` | `trigger` | `FireTrigger (RecordFailure \| RecordStart (RecordEnd \| RecordReplaced) \| SkipFiring)` | `triage` | `kind: on_schedule`, `max_parallel: 1`, `policy: skip`, `schedule: clock` | 1 |
+| `harness.session` | `Outbound` | `harness` | `(OpenSession \| SpawnSubAgent) (CompactContext \| RecordRestart \| RecordTurn)* EndSession` | `triager` | `harness: coding` | 2 |
 | `model.inference` | `Outbound` | `model` | `StartInference FinishInference` | `triager` | none | 2 |
-| `question.question` | `Principal` | `question` | `Ask (Answer \| TakeDefault \| Withdraw)` | `triager` | none | 2 |
+| `question.question` | `Principal` | `question` | `Ask (Answer \| RecordUnreadableAnswer \| TakeDefault \| Withdraw)` | `triager` | none | 2 |
 | `resource.claim` | `Outbound` | `resource` | `RequestClaim (GrantClaim (ExpireClaim \| KillClaim \| ReleaseClaim) \| WithdrawClaim)` | `triager` | none | 2 |
 
 Routing invariants, one per link whose value travels in a port:

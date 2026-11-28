@@ -207,6 +207,27 @@ callables:
       map_invalid: agenticspec.cli.Refusal
       scenario_refused: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+  packing_default:
+    target: {kind: local, owner: agenticspec.cli, action: packing_default}
+    input: agenticspec.cli.PackingDefaultInput
+    result: agenticspec.cli.PackingDefaultResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      packing_refused: agenticspec.cli.Refusal
+  deploy_bundle:
+    target: {kind: local, owner: agenticspec.cli, action: deploy_bundle}
+    input: agenticspec.cli.DeployBundleInput
+    result: agenticspec.cli.DeployBundleResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      ports_unreadable: agenticspec.cli.Refusal
+      contract_refused: agenticspec.cli.Refusal
+      binding_invalid: agenticspec.cli.Refusal
+      accepts_unreadable: agenticspec.cli.Refusal
+      not_admitted: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -383,3 +404,18 @@ commands:
       - {field: map, source: {kind: option, long: map}}
       - {field: out, source: {kind: option, long: out}}
       - {field: name, source: {kind: option, long: name}}
+  - path: [packing, default]
+    callable: packing_default
+    about: Print the resolved packing section of a binding (agenticspec-binding/1) for an architecture, single by default, to paste and change
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: strategy, source: {kind: option, long: strategy}}
+  - path: [deploy, bundle]
+    callable: deploy_bundle
+    about: Admit an architecture with its binding and packing and write its deployment bundle (agenticspec-deployment/1); a refusal writes nothing and names every finding
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: binding, source: {kind: option, long: binding}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: accepts, source: {kind: option, long: accepts}}

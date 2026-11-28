@@ -1,0 +1,10 @@
+format: agenticspec-binding/1
+binding: shared-state-split
+architecture: workstation
+summary: The operator and the coding agents run apart and both reach the gateway, whose rate limit stays in memory.
+transports: {question: a2a, order: a2a, model_call: http, claim: http}
+parts:
+  operator: {agent: ../../../../../bundles/agents/operator.yaml}
+  worker: {agent: ../../../../../bundles/agents/coder.yaml}
+packing:
+  strategy: by_part

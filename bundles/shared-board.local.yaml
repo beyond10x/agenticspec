@@ -1,0 +1,334 @@
+format: agenticspec-deployment/1
+generator: agenticspec 0.4.1
+architecture:
+  document:
+    architecture: shared-board
+    format: agenticspec-architecture/1
+    links:
+    - carries: message
+      from: owner
+      to: board
+    - carries: trigger
+      from: on_entry
+      to: team
+    - carries: question
+      from: team
+      to: owner
+    - carries: model_call
+      from: team
+      to: gateway
+    - carries: model_call
+      from: gateway
+      to: model
+    - carries: claim
+      from: team
+      to: builds
+    parts:
+      board:
+        block: channel
+        distribution: board
+        kind: agent_message
+      builds:
+        block: pool
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+      gateway:
+        block: gateway
+        rate_limit_per_minute: 120
+      model:
+        block: model
+        route: frontier
+      on_entry:
+        block: trigger
+        channel: board
+        kind: on_message
+        max_parallel: 16
+        policy: parallel
+      owner:
+        block: principal
+        kind: human
+      team:
+        block: agent
+        coordination: board
+        count:
+          value: 8
+          vary:
+          - 4
+          - 8
+          - 12
+          - 16
+        harness: coding
+        start_stagger:
+          value: 3s
+          vary:
+          - 0s
+          - 3s
+          - 30s
+      tree:
+        block: workspace
+        per: team
+        sharing: exclusive
+    policies:
+      question_default_after: 15m
+    summary: 'A team without an orchestrator on a shared board: the owner posts every task to the board, each post wakes the team, and every idle copy reads it and races to claim it. A team without an orchestrator on one repository resolved 19.31% at 1 agent and 28.78% at 128, with a typed board of length-limited entries (2609.26781); that study started one agent every 30 s, then every 3 s. The simulator charges each read of a post by an idle copy one model call and counts a claim conflict when a reader reads within `claim_window_seconds` of the copy that claims; a start stagger holds copies back so that a burst of posts is claimed one by one. A post that finds the team at its limit is offered again when a run ends. The simulator does not model the board''s entry kinds and length limits, entries other than tasks (facts, failures, patch summaries), a reader that is busy while it reads, nor any effect of the team''s size on how often a task succeeds.'
+  name: shared-board
+  revision: sha256:510a65381790e912fb59c69c778793347608400bca1eb88e1fdb2395e57aea49
+  sha256: sha256:b70807a8341d44d3cec3f862bdc46e7d57c610d6aa29f37f3199c2a0b167491b
+nested: {}
+contract:
+  digest: sha256:23403e988e2d5de086713b9c76014ca70b013070101d823dc1ada9480fea5f3e
+  document:
+    architecture: shared-board
+    border: []
+    format: agenticspec-contract/1
+    invariants:
+    - link: owner -> board carries message
+      port: channel.post
+      predicate: every channel.post@owner to board
+    - link: on_entry -> team carries trigger
+      port: trigger.firing
+      predicate: every trigger.firing@on_entry to team
+    - link: team -> owner carries question
+      port: question.question
+      predicate: every question.question@team to owner
+    - link: team -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@team inside gateway.call@gateway
+      within: gateway.call
+    - link: gateway -> model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@gateway to model
+    - link: team -> builds carries claim
+      port: resource.claim
+      predicate: every resource.claim@team to builds
+    ports:
+    - instances: 1
+      part: board
+      port: channel.post
+      protocol: PostMessage TakePost?
+      settings:
+        distribution: board
+        kind: agent_message
+    - instances: 1
+      part: board
+      port: channel.subscription
+      protocol: Subscribe Beat* EndSubscription
+      settings:
+        distribution: board
+        kind: agent_message
+    - instances: 1
+      part: builds
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings:
+        capacity: 16
+        job_limit: 10m
+        kind: build_slots
+    - instances: 1
+      part: gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 120
+    - instances: 1
+      part: model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: on_entry
+      port: trigger.firing
+      protocol: FireTrigger (RecordFailure | RecordStart (RecordEnd | RecordReplaced) | SkipFiring)
+      settings:
+        channel: board
+        kind: on_message
+        max_parallel: 16
+        policy: parallel
+    - instances: 1
+      part: owner
+      port: channel.post
+      protocol: PostMessage TakePost?
+      settings: {}
+    - instances: 1
+      part: owner
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings:
+        kind: human
+    - instances: 8
+      part: team
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 8
+      part: team
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 8
+      part: team
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 8
+      part: team
+      port: resource.claim
+      protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
+      settings: {}
+    - instances: 8
+      part: tree
+      port: workspace.lease
+      protocol: RequestLease GrantLease RecordWrite* (ExpireLease | ReleaseLease)
+      settings:
+        sharing: exclusive
+    - instances: 8
+      part: tree
+      port: workspace.proposal
+      protocol: Propose (MergeProposal | RejectProposal | SupersedeProposal)
+      settings:
+        sharing: exclusive
+    ports_digest: 7c59c0fc94156bfca3afbfb280155db3a2b6bfd25ecc9cc90d3fbaf7802b2739
+binding:
+  digest: sha256:a9429a15b7babfd6f2559f8834477b17d5f2e7666909e90573c5e6f9f02a563e
+  document:
+    binding: local
+    format: agenticspec-binding/1
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. Fits any architecture whose sandboxes ask for no more than a container.'
+  name: local
+packing:
+  digest: sha256:1d2e14e31d46ae30f6ba20b9084249263e54ee40c43bf4cc02450cf6290c1a9a
+  document:
+    external:
+    - model
+    - owner
+    units:
+    - kind: core
+      name: core
+      parts:
+      - board
+      - builds
+      - gateway
+      - on_entry
+      - team
+      - tree
+      replicas: 1
+  strategy: single
+units:
+- checks:
+    alive:
+      kind: http
+      path: /alive
+    ready:
+      kind: http
+      path: /ready
+  claims:
+    accelerators: 0
+    cpu_millis: 500
+    memory_mib: 512
+    volumes:
+    - access: read_write_once
+      name: tree
+      per_instance: true
+  code:
+    role: core-runtime
+  egress:
+  - carries: model_call
+    external: true
+    link: gateway -> model carries model_call
+    to: model
+  - carries: question
+    external: true
+    link: team -> owner carries question
+    to: owner
+  isolation: none
+  kind: core
+  name: core
+  parts:
+  - board
+  - builds
+  - gateway
+  - on_entry
+  - team
+  - tree
+  ports:
+  - instances: 1
+    part: board
+    port: channel.post
+    settings:
+      distribution: board
+      kind: agent_message
+  - instances: 1
+    part: board
+    port: channel.subscription
+    settings:
+      distribution: board
+      kind: agent_message
+  - instances: 1
+    part: builds
+    port: resource.claim
+    settings:
+      capacity: 16
+      job_limit: 10m
+      kind: build_slots
+  - instances: 1
+    part: gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 120
+  - instances: 1
+    part: on_entry
+    port: trigger.firing
+    settings:
+      channel: board
+      kind: on_message
+      max_parallel: 16
+      policy: parallel
+  - instances: 8
+    part: team
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 8
+    part: team
+    port: model.inference
+    settings: {}
+  - instances: 8
+    part: team
+    port: question.question
+    settings: {}
+  - instances: 8
+    part: team
+    port: resource.claim
+    settings: {}
+  - instances: 8
+    part: tree
+    port: workspace.lease
+    settings:
+      sharing: exclusive
+  - instances: 8
+    part: tree
+    port: workspace.proposal
+    settings:
+      sharing: exclusive
+  replicas: 1
+  roles:
+  - core-runtime
+  - model-route:frontier
+  secrets: []
+  source:
+    parts:
+    - board
+    - builds
+    - gateway
+    - on_entry
+    - team
+    - tree
+    unit: core
+ingress: []
+requirements: []
+agents: {}
+runtimes: {}
+digest: sha256:f41389d3d735228f900176440d33d7e68973f33d0d9cd22a1c7732eec6832c5b

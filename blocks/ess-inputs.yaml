@@ -43,6 +43,8 @@ scenarios:
   - scenarios/channel/queue-post-taken-once.yaml
   - scenarios/deployment/install-drain-roll-back.yaml
   - scenarios/deployment/install-refusals.yaml
+  - scenarios/deployment/deployment-runs-and-degrades.yaml
+  - scenarios/deployment/deployment-refused-by-coverage-and-target.yaml
   - scenarios/harness/restart-lineage.yaml
   - scenarios/resource/claim-withdrawn-from-queue.yaml
   - scenarios/trigger/schedule-queue-and-skip.yaml
