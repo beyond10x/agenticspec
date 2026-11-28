@@ -428,7 +428,7 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 
 ### `ui serve`
 
-Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action
+Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures
 
 Callable: `ui_serve`. Input: `agenticspec.cli.UiServeInput`. Result: `agenticspec.cli.UiServeResult`.
 

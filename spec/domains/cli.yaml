@@ -771,7 +771,10 @@ types:
       summary: >-
         The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`,
         a gallery page per block, a fixture per view and a script per channel under
-        `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`.
+        `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`;
+        beside them `ui/views/serve.fixtures.json`, the fixtures and scripted outcomes of
+        `agenticspec ui serve` in one file with the digest of its sources, which the binary
+        embeds.
     fields:
       - {name: out, type: String}
       - {name: panels, type: Integer}
@@ -868,6 +871,13 @@ types:
       - name: port
         type: Optional<Integer>
         summary: The local port; 7430 by default, 0 for one the system picks. The server listens on 127.0.0.1 only.
+      - name: fixtures
+        type: Optional<String>
+        summary: >-
+          A directory of fixtures to answer from instead of those built into the binary: one
+          `<view>.json` per view (`{view, rows}`), the channel scripts in `scripts/`
+          (`{channel, events}`) and the scripted outcomes in `outcomes.json`
+          (`agenticspec-command-outcomes/1`); the last two may be absent.
 
   - name: agenticspec.cli.UiServeResult
     kind: struct
@@ -1057,7 +1067,10 @@ types:
         summary: A conformance plan (`agenticspec-runtime-conformance/1`); `ui/views/source/plan.json` below the root by default.
       - name: root
         type: Optional<String>
-        summary: The repository root that holds `ui/views/`; the current directory by default.
+        summary: >-
+          The repository root that holds `ui/views/`; the current directory by default. With
+          `--architecture` and no `--source`, the server started here answers from the fixtures
+          below it when it is named, and from those built into the binary when it is not.
       - name: architecture
         type: Optional<String>
         summary: >-

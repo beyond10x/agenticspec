@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest badffce15a018ac8eabdda142520088510bba1f575c2b4393aa6b064f6d9d91f
+// contract digest 00fb71ae170fbec426a26c46270451dd7c59b5683dc2c912b0f53ea80bf7d891
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -1415,7 +1415,7 @@ pub struct UiPanelsInput {
 
 /// UiPanelsResult — `agenticspec.cli.UiPanelsResult`.
 ///
-/// The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`, a gallery page per block, a fixture per view and a script per channel under `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`.
+/// The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`, a gallery page per block, a fixture per view and a script per channel under `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`; beside them `ui/views/serve.fixtures.json`, the fixtures and scripted outcomes of `agenticspec ui serve` in one file with the digest of its sources, which the binary embeds.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UiPanelsResult {
     /// `out` — `String`.
@@ -1437,6 +1437,8 @@ pub struct UiServeInput {
     pub contract: Option<String>,
     /// `port` — `Optional<Integer>`.
     pub port: Option<i64>,
+    /// `fixtures` — `Optional<String>`.
+    pub fixtures: Option<String>,
 }
 
 /// UiServeResult — `agenticspec.cli.UiServeResult`.

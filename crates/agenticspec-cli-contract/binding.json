@@ -3755,6 +3755,12 @@
                 "kind": "string"
               }
             },
+            "fixtures": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
             "port": {
               "kind": "optional",
               "of": {
@@ -4929,7 +4935,7 @@
       ],
       "aliases": [],
       "callable": "ui_serve",
-      "about": "Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action",
+      "about": "Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures",
       "arguments": [
         {
           "field": "architecture",
@@ -4950,6 +4956,13 @@
           "source": {
             "kind": "option",
             "long": "port"
+          }
+        },
+        {
+          "field": "fixtures",
+          "source": {
+            "kind": "option",
+            "long": "fixtures"
           }
         }
       ]

@@ -145,3 +145,54 @@ fn a_server_with_one_fault_per_obligation_fails_the_check_that_names_it() {
     );
     assert!(report.count(Status::Passed) > 50, "{names:?}");
 }
+
+/// The fixtures built into the binary are the fixtures of the checkout, and the committed
+/// bundle is the one its sources give now.
+#[test]
+fn the_embedded_fixtures_are_the_fixtures_of_the_checkout() {
+    assert_eq!(Fixtures::embedded(), Fixtures::load(&root()).unwrap());
+    let held = std::fs::read_to_string(root().join(serve::BUNDLE_FILE)).unwrap();
+    assert_eq!(
+        held,
+        serve::BUNDLE,
+        "the binary is built from another bundle than the tree"
+    );
+    assert_eq!(held, serve::bundle(&root()).unwrap(), "run task ui:panels");
+    serve::write_bundle(&root(), true).unwrap();
+}
+
+/// A directory of `ui serve --fixtures`: the views, `scripts/` and `outcomes.json` read as the
+/// checkout's fixtures; scripts and outcomes may be absent; a directory with no view is refused.
+#[test]
+fn a_fixtures_directory_reads_views_scripts_and_outcomes() {
+    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("serve-fixtures");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("scripts")).unwrap();
+    let from = root().join(serve::FIXTURES);
+    for sub in ["", "scripts"] {
+        for e in std::fs::read_dir(from.join(sub)).unwrap() {
+            let p = e.unwrap().path();
+            if p.is_file() {
+                std::fs::copy(&p, dir.join(sub).join(p.file_name().unwrap())).unwrap();
+            }
+        }
+    }
+    std::fs::copy(
+        root().join(serve::OUTCOMES_FILE),
+        dir.join(serve::DIR_OUTCOMES),
+    )
+    .unwrap();
+    assert_eq!(Fixtures::from_dir(&dir).unwrap(), Fixtures::embedded());
+
+    std::fs::remove_dir_all(dir.join("scripts")).unwrap();
+    std::fs::remove_file(dir.join(serve::DIR_OUTCOMES)).unwrap();
+    let bare = Fixtures::from_dir(&dir).unwrap();
+    assert_ne!(bare, Fixtures::embedded());
+
+    let empty = dir.join("empty");
+    std::fs::create_dir_all(&empty).unwrap();
+    let err = Fixtures::from_dir(&empty).unwrap_err();
+    assert!(err.contains("holds no view fixture"), "{err}");
+    let err = Fixtures::from_dir(&dir.join("absent")).unwrap_err();
+    assert!(err.contains("absent"), "{err}");
+}

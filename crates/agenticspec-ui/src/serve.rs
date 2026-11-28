@@ -14,6 +14,11 @@
 //!   `ui/views/source/outcomes.json` scripts for it, `{"row": null}` when none does;
 //! - R5 allows every command of the plane at every scope.
 //!
+//! Those files are built into the binary as one compact file, [`BUNDLE_FILE`] (written by
+//! `agenticspec ui panels` with [`write_bundle`], held by `ui panels --check`), so a released
+//! binary serves with no checkout ([`Fixtures::embedded`]); `--fixtures <dir>` reads a consumer's
+//! own directory instead ([`Fixtures::from_dir`]).
+//!
 //! It listens on 127.0.0.1 only and answers only a request whose `Host` is `127.0.0.1` or
 //! `localhost`. Every request of the interface carries the token, as `Authorization: Bearer` or
 //! the session cookie, which the server sets when it serves the app's page.
@@ -51,7 +56,7 @@ pub const RECORD: &str = "/fixture/commands";
 /// The grant R5 names for every command it allows.
 pub const GRANT: &str = "fixture-allows-every-action";
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Outcome {
     command: String,
@@ -88,38 +93,236 @@ struct ScriptFile {
     events: Vec<ScriptEntry>,
 }
 
+/// The fixtures built into the binary, below the repository root: every view fixture, every
+/// channel script and the outcomes in one compact file (`agenticspec ui panels` writes it).
+pub const BUNDLE_FILE: &str = "ui/views/serve.fixtures.json";
+/// The format of [`BUNDLE_FILE`].
+pub const BUNDLE_FORMAT: &str = "agenticspec-serve-fixtures/1";
+/// The bytes of [`BUNDLE_FILE`] this binary was built with.
+pub const BUNDLE: &str = include_str!("../../../ui/views/serve.fixtures.json");
+/// The outcomes file in a directory named with `ui serve --fixtures`.
+pub const DIR_OUTCOMES: &str = "outcomes.json";
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct BundleFile {
+    format: String,
+    #[allow(dead_code)]
+    sources_sha256: String,
+    views: Vec<ViewFile>,
+    scripts: Vec<ScriptFile>,
+    outcomes: OutcomesFile,
+}
+
 /// What the server answers from: the panels' rows by view, the channel scripts in the order of
 /// their files, and the scripted outcomes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Fixtures {
     views: BTreeMap<String, Vec<Ordered>>,
-    scripts: Vec<(String, Vec<(String, Value)>)>,
+    scripts: Vec<Script>,
     outcomes: Vec<Outcome>,
 }
 
+/// The JSON files of the view fixtures and of the channel scripts below the repository root,
+/// each sorted, and the outcomes file: what [`bundle`] reads.
+fn sources(root: &Path) -> Result<Vec<(String, std::path::PathBuf)>, String> {
+    let named = |p: std::path::PathBuf| {
+        let rel = p
+            .strip_prefix(root)
+            .map_or_else(|_| p.display().to_string(), |r| r.display().to_string())
+            .replace('\\', "/");
+        (rel, p)
+    };
+    let mut out: Vec<_> = json_files(&root.join(FIXTURES))?
+        .into_iter()
+        .map(named)
+        .collect();
+    out.extend(
+        json_files(&root.join(FIXTURES).join("scripts"))?
+            .into_iter()
+            .map(named),
+    );
+    out.push((OUTCOMES_FILE.to_string(), root.join(OUTCOMES_FILE)));
+    Ok(out)
+}
+
+/// `text` without the whitespace between JSON tokens; strings are kept byte for byte.
+fn minify(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let (mut in_string, mut escaped) = (false, false);
+    for c in text.chars() {
+        if in_string {
+            out.push(c);
+            if escaped {
+                escaped = false;
+            } else if c == '\\' {
+                escaped = true;
+            } else if c == '"' {
+                in_string = false;
+            }
+        } else if c == '"' {
+            in_string = true;
+            out.push(c);
+        } else if !c.is_ascii_whitespace() {
+            out.push(c);
+        }
+    }
+    out
+}
+
+/// The text of [`BUNDLE_FILE`] from the fixtures below the repository root: each view fixture
+/// and each channel script as its file holds it, in the order of the files, and the outcomes,
+/// without whitespace between tokens, with the sha256 of the lines `<sha256>  <path>` of every
+/// file read.
+///
+/// # Errors
+///
+/// A file cannot be read, or the bundle does not read back as the fixtures of the files.
+pub fn bundle(root: &Path) -> Result<String, String> {
+    let files = sources(root)?;
+    let mut digest = String::new();
+    let (mut views, mut scripts, mut outcomes) = (Vec::new(), Vec::new(), String::new());
+    for (rel, path) in &files {
+        let bytes = std::fs::read(path).map_err(|e| format!("{rel}: {e}"))?;
+        digest.push_str(&format!("{}  {rel}\n", crate::operator::sha256(&bytes)));
+        let text = minify(&String::from_utf8_lossy(&bytes));
+        if rel == OUTCOMES_FILE {
+            outcomes = text;
+        } else if rel.starts_with(&format!("{FIXTURES}/scripts/")) {
+            scripts.push(text);
+        } else {
+            views.push(text);
+        }
+    }
+    let text = format!(
+        "{{\"format\":\"{BUNDLE_FORMAT}\",\"sources_sha256\":\"{}\",\"views\":[{}],\"scripts\":[{}],\"outcomes\":{outcomes}}}\n",
+        crate::operator::sha256(digest.as_bytes()),
+        views.join(","),
+        scripts.join(","),
+    );
+    if Fixtures::parse_bundle(&text)? != Fixtures::load(root)? {
+        return Err(format!(
+            "{BUNDLE_FILE}: does not read back as the fixtures it is written from"
+        ));
+    }
+    Ok(text)
+}
+
+/// Writes [`BUNDLE_FILE`] below the repository root, or with `check` compares it with a fresh
+/// bundle.
+///
+/// # Errors
+///
+/// A source cannot be read, the file cannot be written, or with `check` it differs (its sources
+/// changed since it was written, or it was edited).
+pub fn write_bundle(root: &Path, check: bool) -> Result<(), String> {
+    let fresh = bundle(root)?;
+    let path = root.join(BUNDLE_FILE);
+    if !check {
+        return std::fs::write(&path, &fresh).map_err(|e| format!("{BUNDLE_FILE}: {e}"));
+    }
+    let held = std::fs::read_to_string(&path).map_err(|e| format!("{BUNDLE_FILE}: {e}"))?;
+    if held == fresh {
+        return Ok(());
+    }
+    let digest = |t: &str| {
+        serde_json::from_str::<Value>(t)
+            .ok()
+            .and_then(|v| v["sources_sha256"].as_str().map(String::from))
+    };
+    let why = if digest(&held) == digest(&fresh) {
+        "differs from a fresh bundle of the same sources"
+    } else {
+        "was written from other sources than the current fixtures and outcomes"
+    };
+    Err(format!(
+        "{BUNDLE_FILE}: {why}. Generated files are never edited: run task ui:panels"
+    ))
+}
+
 impl Fixtures {
-    /// Reads the fixtures below the repository root `root`.
+    /// Reads the fixtures below the repository root `root`: the view fixtures and channel
+    /// scripts of [`FIXTURES`] and the outcomes of [`OUTCOMES_FILE`].
     ///
     /// # Errors
     ///
     /// A file cannot be read, is not the JSON it should be, or an outcome is not exactly one of
     /// `accepted` and `refused` (a refusal naming its `error`).
     pub fn load(root: &Path) -> Result<Fixtures, String> {
-        let mut views = BTreeMap::new();
-        for p in json_files(&root.join(FIXTURES))? {
-            let v: ViewFile = read_json(&p)?;
-            views.insert(v.view, v.rows);
-        }
-        let mut scripts = Vec::new();
-        for p in json_files(&root.join(FIXTURES).join("scripts"))? {
-            let s: ScriptFile = read_json(&p)?;
-            let events = s.events.into_iter().map(|e| (e.event, e.payload)).collect();
-            scripts.push((s.channel, events));
-        }
+        let dir = root.join(FIXTURES);
+        let views = read_views(&dir)?;
+        let scripts = read_scripts(&dir.join("scripts"))?;
         let file: OutcomesFile = read_json(&root.join(OUTCOMES_FILE))?;
+        Fixtures::assemble(views, scripts, file, OUTCOMES_FILE)
+    }
+
+    /// The fixtures built into this binary ([`BUNDLE`]).
+    ///
+    /// # Panics
+    ///
+    /// The built-in bundle does not read; a test holds it against the files it is written from.
+    pub fn embedded() -> Fixtures {
+        Fixtures::parse_bundle(BUNDLE).expect("the fixtures built into the binary")
+    }
+
+    /// The fixtures of a directory a consumer names with `ui serve --fixtures`: one
+    /// `<view>.json` per view (`{view, rows}`), the channel scripts in `scripts/`
+    /// (`{channel, events}`, optional) and the outcomes in `outcomes.json`
+    /// (`agenticspec-command-outcomes/1`, optional).
+    ///
+    /// # Errors
+    ///
+    /// The directory holds no view fixture, or a file cannot be read or is not the JSON it
+    /// should be.
+    pub fn from_dir(dir: &Path) -> Result<Fixtures, String> {
+        let views = read_views(dir)?;
+        if views.is_empty() {
+            return Err(format!(
+                "{}: holds no view fixture (<view>.json)",
+                dir.display()
+            ));
+        }
+        let scripts_dir = dir.join("scripts");
+        let scripts = if scripts_dir.is_dir() {
+            read_scripts(&scripts_dir)?
+        } else {
+            Vec::new()
+        };
+        let outcomes_path = dir.join(DIR_OUTCOMES);
+        let file = if outcomes_path.exists() {
+            read_json(&outcomes_path)?
+        } else {
+            OutcomesFile {
+                format: "agenticspec-command-outcomes/1".to_string(),
+                outcomes: Vec::new(),
+            }
+        };
+        Fixtures::assemble(views, scripts, file, &outcomes_path.display().to_string())
+    }
+
+    fn parse_bundle(text: &str) -> Result<Fixtures, String> {
+        let b: BundleFile =
+            serde_json::from_str(text).map_err(|e| format!("{BUNDLE_FILE}: {e}"))?;
+        if b.format != BUNDLE_FORMAT {
+            return Err(format!(
+                "{BUNDLE_FILE}: format {} is not {BUNDLE_FORMAT}",
+                b.format
+            ));
+        }
+        let views = b.views.into_iter().map(|v| (v.view, v.rows)).collect();
+        let scripts = b.scripts.into_iter().map(script).collect();
+        Fixtures::assemble(views, scripts, b.outcomes, BUNDLE_FILE)
+    }
+
+    fn assemble(
+        views: BTreeMap<String, Vec<Ordered>>,
+        scripts: Vec<Script>,
+        file: OutcomesFile,
+        shown: &str,
+    ) -> Result<Fixtures, String> {
         if file.format != "agenticspec-command-outcomes/1" {
             return Err(format!(
-                "{OUTCOMES_FILE}: format {} is not agenticspec-command-outcomes/1",
+                "{shown}: format {} is not agenticspec-command-outcomes/1",
                 file.format
             ));
         }
@@ -130,7 +333,7 @@ impl Fixtures {
                 .is_none_or(|r| r["error"].as_str().is_some());
             if o.accepted.is_some() == o.refused.is_some() || !refusal_named {
                 return Err(format!(
-                    "{OUTCOMES_FILE}: outcomes/{i} ({}) holds exactly one of accepted and refused, and a refusal names its error",
+                    "{shown}: outcomes/{i} ({}) holds exactly one of accepted and refused, and a refusal names its error",
                     o.command
                 ));
             }
@@ -141,6 +344,35 @@ impl Fixtures {
             outcomes: file.outcomes,
         })
     }
+}
+
+/// A channel script: its channel and its events, each an event name and its payload.
+type Script = (String, Vec<(String, Value)>);
+
+fn script(s: ScriptFile) -> Script {
+    let events = s.events.into_iter().map(|e| (e.event, e.payload)).collect();
+    (s.channel, events)
+}
+
+/// The view fixtures of `dir` by view: every `*.json` but [`DIR_OUTCOMES`].
+fn read_views(dir: &Path) -> Result<BTreeMap<String, Vec<Ordered>>, String> {
+    let mut views = BTreeMap::new();
+    for p in json_files(dir)? {
+        if p.file_name().is_some_and(|n| n == DIR_OUTCOMES) {
+            continue;
+        }
+        let v: ViewFile = read_json(&p)?;
+        views.insert(v.view, v.rows);
+    }
+    Ok(views)
+}
+
+/// The channel scripts of `dir`, in the order of their files.
+fn read_scripts(dir: &Path) -> Result<Vec<Script>, String> {
+    json_files(dir)?
+        .iter()
+        .map(|p| read_json::<ScriptFile>(p).map(script))
+        .collect()
 }
 
 /// One obligation the server breaks on purpose.

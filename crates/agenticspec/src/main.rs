@@ -528,8 +528,13 @@ impl Handler for Commands {
                     .get("check")
                     .and_then(Value::as_bool)
                     .unwrap_or(false);
-                match agenticspec_views::run(std::path::Path::new(root), check) {
-                    Ok(result) => HandlerReply::Success(result),
+                let root = std::path::Path::new(root);
+                match agenticspec_views::run(root, check) {
+                    Ok(result) => match agenticspec_ui::serve::write_bundle(root, check) {
+                        Ok(()) => HandlerReply::Success(result),
+                        Err(e) if check => refusal("panels_stale", e),
+                        Err(e) => refusal("out_unwritable", e),
+                    },
                     Err(r) => refusal(r.code, r.detail),
                 }
             }
@@ -724,7 +729,8 @@ fn ui_conform(input: &Value) -> HandlerReply {
 type OperatorFiles = Vec<(String, Vec<u8>)>;
 
 /// The files of the operator UI of `architecture` with `api_base`: from the contract at
-/// `contract`, or from the contract derived here from the architecture (`sim contract`).
+/// `contract`, or from the contract derived here from the architecture with the port and KPI
+/// catalogues built into the binary (`sim contract`), so no file of a checkout is read.
 fn operator_files(
     architecture: &std::path::Path,
     contract: Option<&str>,
@@ -748,20 +754,7 @@ fn operator_files(
             path.to_string(),
         ),
         None => {
-            let mut sink = std::io::sink();
-            let derived = sim::contract(
-                &sim::ContractOptions {
-                    architecture,
-                    ports: None,
-                    out: None,
-                    check: None,
-                    suite: None,
-                    trace: None,
-                    kpis: None,
-                },
-                &mut sink,
-            )
-            .map_err(|r| {
+            let text = sim::contract_built_in(architecture).map_err(|r| {
                 let code = if r.code == "document_unreadable" {
                     "document_unreadable"
                 } else {
@@ -769,9 +762,8 @@ fn operator_files(
                 };
                 refusal(code, format!("{}: {}", r.code, r.detail))
             })?;
-            let text = derived["contract"].as_str().unwrap_or("");
             (
-                operator::parse_contract(text).map_err(failed)?,
+                operator::parse_contract(&text).map_err(failed)?,
                 format!("the contract derived from {}", architecture.display()),
             )
         }
@@ -805,7 +797,8 @@ fn ui_token() -> Option<String> {
 }
 
 /// `agenticspec ui conform --architecture`: the checks of the default control plane of the
-/// architecture against `--source`, or against `ui serve` of it started here.
+/// architecture against `--source`, or against `ui serve` of it started here, on the fixtures
+/// built into the binary, or on those of `--root` when it is named.
 fn ui_conform_plane(input: &Value) -> HandlerReply {
     use agenticspec_ui::{conform, serve};
     let s = |k: &str| input.get(k).and_then(Value::as_str);
@@ -824,9 +817,12 @@ fn ui_conform_plane(input: &Value) -> HandlerReply {
     let url = match s("source") {
         Some(u) => u.trim_end_matches('/').to_string(),
         None => {
-            let root = std::path::Path::new(s("root").unwrap_or("."));
             let t = token.clone().unwrap_or_else(serve::random_token);
-            let started = serve::Fixtures::load(root).and_then(|f| {
+            let fixtures = match s("root") {
+                Some(root) => serve::Fixtures::load(std::path::Path::new(root)),
+                None => Ok(serve::Fixtures::embedded()),
+            };
+            let started = fixtures.and_then(|f| {
                 serve::Served::start(
                     plane.clone(),
                     files,
@@ -865,21 +861,20 @@ fn ui_conform_plane(input: &Value) -> HandlerReply {
 }
 
 /// `agenticspec ui serve`: the operator UI of an architecture and its default control plane on
-/// fixtures, on 127.0.0.1, until the process is stopped.
+/// fixtures (those built into the binary, or a directory with `--fixtures`), on 127.0.0.1, until
+/// the process is stopped.
 fn ui_serve(input: &Value) -> HandlerReply {
     use agenticspec_ui::serve;
     let (files, plane) = match plane_of(input) {
         Ok(x) => x,
         Err(r) => return r,
     };
-    let fixtures = match serve::Fixtures::load(std::path::Path::new(".")) {
-        Ok(f) => f,
-        Err(e) => {
-            return refusal(
-                "fixtures_unreadable",
-                format!("{e} (run ui serve in a checkout of this repository)"),
-            );
-        }
+    let fixtures = match input.get("fixtures").and_then(Value::as_str) {
+        None => serve::Fixtures::embedded(),
+        Some(dir) => match serve::Fixtures::from_dir(std::path::Path::new(dir)) {
+            Ok(f) => f,
+            Err(e) => return refusal("fixtures_unreadable", e),
+        },
     };
     let port = input
         .get("port")

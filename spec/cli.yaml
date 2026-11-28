@@ -517,11 +517,12 @@ commands:
       - {field: archive, source: {kind: flag, long: archive}}
   - path: [ui, serve]
     callable: ui_serve
-    about: Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action
+    about: Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures
     arguments:
       - {field: architecture, source: {kind: positional, index: 1}}
       - {field: contract, source: {kind: option, long: contract}}
       - {field: port, source: {kind: option, long: port}}
+      - {field: fixtures, source: {kind: option, long: fixtures}}
   - path: [deploy, check]
     callable: deploy_check
     about: Admit a written deployment bundle again from what it carries, for a reader that did not write it; refuses a digest that does not hold, an undeclared secret or egress, a secret value and every other finding of admission

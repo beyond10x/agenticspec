@@ -4,6 +4,7 @@
 
 use std::io::{BufRead, BufReader};
 use std::net::{SocketAddr, TcpStream, UdpSocket};
+use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
@@ -15,6 +16,24 @@ use super::repo;
 const TOKEN: &str = "ui-serve-test";
 const ARCH: &str = "architectures/workstation.yaml";
 
+/// An empty directory outside the checkout, the current directory of a released binary: `ui
+/// serve` and `ui conform` read no file of the repository but the architecture named.
+/// Removed again when the server of the test is dropped.
+fn outside() -> PathBuf {
+    let dir = outside_path();
+    std::fs::create_dir_all(&dir).unwrap();
+    assert!(
+        !dir.join("ui").exists() && !dir.join("blocks").exists(),
+        "{}",
+        dir.display()
+    );
+    dir
+}
+
+fn outside_path() -> PathBuf {
+    std::env::temp_dir().join(format!("agenticspec-ui-serve-{}", std::process::id()))
+}
+
 /// A running `agenticspec ui serve`; dropping it kills it.
 struct Server {
     child: Child,
@@ -25,15 +44,18 @@ impl Drop for Server {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
+        let _ = std::fs::remove_dir(outside_path());
     }
 }
 
 impl Server {
-    /// `ui serve` of the workstation on a port the system picks, the contract derived.
+    /// `ui serve` of the workstation on a port the system picks, the contract derived, started
+    /// outside the checkout with the architecture named by its path.
     fn start() -> Server {
         let mut child = Command::new(env!("CARGO_BIN_EXE_agenticspec"))
-            .current_dir(repo())
-            .args(["ui", "serve", ARCH, "--port", "0"])
+            .current_dir(outside())
+            .args(["ui", "serve", "--port", "0"])
+            .arg(repo().join(ARCH))
             .env("AGENTICSPEC_UI_TOKEN", TOKEN)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
@@ -166,7 +188,8 @@ fn operator(kind: &str) -> Vec<String> {
 /// `/ingress/operator/scopes/` answers the block fixture's rows and the server listens on
 /// 127.0.0.1 only; a reconnect from a cursor gets the scripted events after it; `DrainGateway`
 /// answers its scripted outcome and the record lists it once; R5 allows every command of the
-/// interface. Then `ui conform --architecture` passes against the same server.
+/// interface. The server runs outside the checkout on the fixtures built into the binary. Then
+/// `ui conform --architecture`, run outside the checkout too, passes against the same server.
 #[test]
 fn ui_serve_answers_the_default_control_plane_on_fixtures_and_passes_ui_conform() {
     let server = Server::start();
@@ -287,18 +310,12 @@ fn ui_serve_answers_the_default_control_plane_on_fixtures_and_passes_ui_conform(
         assert_eq!(a["allowed"], true, "{a}");
     }
 
-    // The conformance mode passes against the same server.
+    // The conformance mode passes against the same server, run outside the checkout too.
     let out = Command::new(env!("CARGO_BIN_EXE_agenticspec"))
-        .current_dir(repo())
-        .args([
-            "--output",
-            "json",
-            "ui",
-            "conform",
-            "--architecture",
-            ARCH,
-            "--source",
-        ])
+        .current_dir(outside())
+        .args(["--output", "json", "ui", "conform", "--architecture"])
+        .arg(repo().join(ARCH))
+        .arg("--source")
         .arg(&iface)
         .env("AGENTICSPEC_UI_TOKEN", TOKEN)
         .output()
@@ -340,4 +357,24 @@ fn ui_conform_architecture_refuses_a_source_that_does_not_answer() {
         "{text}"
     );
     assert!(text.contains("R2 resume level at workstation"), "{text}");
+}
+
+/// `--fixtures` names a directory to answer from; one with no view fixture is refused as
+/// `fixtures_unreadable` before a port is bound.
+#[test]
+fn ui_serve_refuses_a_fixtures_directory_with_no_view() {
+    let empty = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("ui-serve-no-fixtures");
+    std::fs::create_dir_all(&empty).unwrap();
+    let out = Command::new(env!("CARGO_BIN_EXE_agenticspec"))
+        .current_dir(repo())
+        .args(["ui", "serve", ARCH, "--port", "0", "--fixtures"])
+        .arg(&empty)
+        .env("AGENTICSPEC_UI_TOKEN", TOKEN)
+        .stdin(Stdio::null())
+        .output()
+        .unwrap();
+    assert!(!out.status.success());
+    let text = String::from_utf8_lossy(&out.stderr);
+    assert!(text.contains("fixtures_unreadable"), "{text}");
+    assert!(text.contains("holds no view fixture"), "{text}");
 }

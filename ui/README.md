@@ -117,6 +117,7 @@ ess ui run --tui --path ui/views/blocks.ui.yaml
 | `views/blocks.ui.yaml` | an `ess-ui/1` document over the system `agentic`: one widget per view, named as the view (`agentic.agent.Agents`), and a gallery page per block that places each of its widgets |
 | `views/fixtures/` | three synthetic rows per view, in the format above, and one script per block channel that plays each event once |
 | `views/blocks.sources.sha256` | the SHA-256 of every input: `ess --version`, `blocks/ess-inputs.yaml` and each file it lists, and the generator's sources |
+| `views/serve.fixtures.json` | what `agenticspec ui serve` answers from, built into the binary: every file of `views/fixtures/` and `views/source/outcomes.json` without whitespace between tokens (`agenticspec-serve-fixtures/1`), with `sources_sha256`, the SHA-256 of one `<sha256>  <path>` line per file read. `ui panels` writes it after the panels; `ui panels --check` fails when its sources changed or it differs from a fresh one, so a change of `views/source/outcomes.json` runs `task ui:panels` |
 
 A panel is a `collection` of its view's rows: one column per field, the first field as row key,
 an enum (the `state` among them) as a badge, a time as a timestamp. It takes a scope, `source`,
@@ -199,18 +200,29 @@ makes the command exit non-zero with `conformance_failed` and one line per faile
 
 ## Served on fixtures
 
-`agenticspec ui serve <architecture> [--contract <file>] [--port <n>]` serves the operator UI of an
-architecture over its default control plane on fixtures, with no runtime (port 7430 by default, 0
-for a free one; 127.0.0.1 only; run in a checkout of this repository, which holds the fixtures):
+`agenticspec ui serve <architecture> [--contract <file>] [--port <n>] [--fixtures <dir>]` serves
+the operator UI of an architecture over its default control plane on fixtures, with no runtime
+(port 7430 by default, 0 for a free one; 127.0.0.1 only). The fixtures are built into the binary
+(`views/serve.fixtures.json`) and the contract is derived with the ports and KPI catalogue built
+into it, so a released binary serves from any directory and reads no file but the architecture
+and its nested documents:
 
 ```console
 agenticspec ui serve architectures/workstation.yaml   # http://127.0.0.1:7430/
+agenticspec ui serve workstation.yaml --fixtures my-fixtures/
 ```
+
+`--fixtures <dir>` answers from a directory instead: one `<view>.json` per view
+(`{"view", "rows"}`), the channel scripts in `scripts/` (`{"channel", "events"}`) and the scripted
+outcomes in `outcomes.json` (`agenticspec-command-outcomes/1`); the last two may be absent. A
+directory that cannot be read, holds no view fixture or a file that is not that JSON is refused
+with `fixtures_unreadable`. `ui conform --architecture` without `--source` starts the server on
+the built-in fixtures, or on those below `--root` when it is named.
 
 | path | answers |
 |---|---|
 | `/` | the operator app `agenticspec ui build` writes for the architecture, its `config.json` with `api_base` `/ingress/operator`; the page sets the session cookie |
-| `/ingress/operator/scopes/{scope}/api/views/{view}` | R1: the rows of `views/fixtures/<view>.json` for each view of the plane, at every scope |
+| `/ingress/operator/scopes/{scope}/api/views/{view}` | R1: the rows of the fixture of each view of the plane (`views/fixtures/<view>.json`), at every scope |
 | `/ingress/operator/scopes/{scope}/api/channels/{channel}` | R2: a level's channel plays every script of `views/fixtures/scripts/` in turn, a block's channel its own, each event the operator ingress carries, the cursor its position; a reconnect with `Last-Event-ID` gets the events after it |
 | `/ingress/operator/scopes/{scope}/api/commands/{command}` | R4: records the command and answers the outcome `views/source/outcomes.json` scripts for it (per command, optionally per input, the accepted row or the refusal's row with 422), `{"row": null}` when none does |
 | `/ingress/operator/scopes/{scope}/api/actions` | R5: every command of the plane, allowed |
