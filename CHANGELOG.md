@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-28
+
+### Fixed
+
+- Release binaries name no path of the machine that built them: `--remap-path-prefix` maps the runner's home, cargo home and checkout to neutral prefixes on every target, and `scripts/release-paths.sh` fails the packaging job when such a path is left. 0.4.0 was tagged but not published, because its binaries carried the build runner's cargo registry path
+
 ### Added
 
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
