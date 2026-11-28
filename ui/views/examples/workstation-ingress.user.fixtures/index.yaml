@@ -3,6 +3,7 @@ views:
   agentic.architecture.Reach: reach.json
   agentic.agent.AgentRevisions: ../../fixtures/agentic.agent.AgentRevisions.json
   agentic.agent.Agents: ../../fixtures/agentic.agent.Agents.json
+  agentic.agent.RevisionUsages: ../../fixtures/agentic.agent.RevisionUsages.json
   agentic.channel.ChannelMessages: ../../fixtures/agentic.channel.ChannelMessages.json
   agentic.channel.ChannelPosts: ../../fixtures/agentic.channel.ChannelPosts.json
   agentic.channel.Channels: ../../fixtures/agentic.channel.Channels.json

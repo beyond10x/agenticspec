@@ -268,6 +268,7 @@ A part `runtime`:
 | `kind` | string |  |  | every port | What kind of runtime the part is. |
 | `role` | string |  |  |  | The role of the behaviour profile the runtime's runs play. |
 | `durable_state` | boolean |  | `false` |  | Whether the runtime keeps durable state of its own, records it writes and reads back after a restart; in a deployment bundle its unit claims an exclusive volume for it, `<part>-state`. |
+| `model_share` | shares |  |  |  | The share of the runtime's model calls each model part it reaches gets; without it, equal shares. |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
 

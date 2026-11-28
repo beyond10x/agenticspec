@@ -390,6 +390,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "operator",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
@@ -825,6 +835,16 @@
                   "row_actions": [],
                   "title": "Agent revisions",
                   "widget": "agentic.agent.AgentRevisions"
+                },
+                {
+                  "args": {
+                    "channel": "level"
+                  },
+                  "name": "agent_revision_usages",
+                  "part": "worker",
+                  "row_actions": [],
+                  "title": "Revision usages",
+                  "widget": "agentic.agent.RevisionUsages"
                 }
               ],
               "title": "Agent"
