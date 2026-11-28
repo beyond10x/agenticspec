@@ -17,6 +17,7 @@ use std::collections::{BTreeMap, BinaryHeap, VecDeque};
 
 mod swarm;
 
+pub use swarm::EVENTS;
 use swarm::{Coordination, Distribution, Input, Output, Schedule, TrigAcc, Trigger};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -145,7 +146,7 @@ impl Principal {
 #[derive(Debug, Clone)]
 struct Delegate {
     part: String,
-    answer: Option<Dist>,
+    answer: Dist,
     forward_to: Option<usize>,
     channel: Option<usize>,
 }
@@ -156,16 +157,46 @@ enum Target {
     Delegate(usize),
 }
 
-/// What every agent kind that makes model calls has: its instances, its behaviour and its path
-/// to a model.
+/// One model a part reaches over `model_call` links: the gateway on the way to it, the price of
+/// its route, and the running total of the shares up to it.
+#[derive(Debug, Clone)]
+struct Route {
+    model: usize,
+    gateway: Option<usize>,
+    price: [f64; 4],
+    upto: f64,
+}
+
+/// What every kind that works turns has (an agent, a reviewer, a runtime that executes runs):
+/// its instances, its behaviour and the models it calls.
 #[derive(Debug, Clone)]
 struct Exec {
     part: String,
     count: usize,
     role: Role,
-    gateway: Option<usize>,
-    model: Option<usize>,
-    price: [f64; 4],
+    task_turns: Dist,
+    turn_seconds: Dist,
+    /// The models it reaches with a share above 0; empty when its turns call no model.
+    routes: Vec<Route>,
+}
+
+impl Exec {
+    /// The model of one call: the only one, or one drawn by share. Draws from `rng` only when
+    /// there are several, so a part with one model sees the same stream as before.
+    fn route(&self, rng: &mut Rng) -> Option<&Route> {
+        match self.routes.len() {
+            0 => None,
+            1 => self.routes.first(),
+            _ => {
+                let total = self.routes.last().map_or(0.0, |r| r.upto);
+                let u = rng.unit() * total;
+                self.routes
+                    .iter()
+                    .find(|r| u < r.upto)
+                    .or(self.routes.last())
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -188,6 +219,8 @@ struct WorkerKind {
     orchestrates: bool,
     /// The triggers that wake it.
     triggers: Vec<usize>,
+    /// A runtime part that executes runs: its steps are its turns, and it is no agent alive.
+    runtime: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -214,6 +247,8 @@ pub struct Model {
     distribution: Vec<Distribution>,
     schedules: Vec<Schedule>,
     triggers: Vec<Trigger>,
+    /// The triggers that fire on an event of the simulation.
+    on_event: Vec<usize>,
     /// The shared channel arrivals are posted to, when a principal posts to one.
     intake: Option<usize>,
     /// The worker kind whose scope partition routes the arrivals.
@@ -373,25 +408,115 @@ impl Model {
                     && block(arch, l["to"].as_str().unwrap_or("")).is_some()
             })
         };
-        let exec = |name: &str, p: &Value| -> Result<Exec, String> {
-            let harness = p["harness"].as_str().unwrap_or("coding");
+        // The profile role of a part is named by its `role`; an agent without one is `coding`.
+        // `harness` names the kind of harness and picks no role.
+        let role_of = |name: &str, p: &Value| -> Result<(String, Role), String> {
+            let label = match crate::check::value(&p["role"]).as_str() {
+                Some(l) => l,
+                None if p["block"] == "agent" => "coding",
+                None => {
+                    return Err(format!(
+                        "part `{name}` executes runs and names no `role`, a role of the profile"
+                    ));
+                }
+            };
             let role = profile
                 .roles
-                .get(harness)
-                .ok_or_else(|| format!("profile has no role `{harness}` for part `{name}`"))?
+                .get(label)
+                .ok_or_else(|| format!("profile has no role `{label}` for part `{name}`"))?
                 .clone();
+            Ok((label.to_string(), role))
+        };
+        let routes = |name: &str, p: &Value| -> Result<Vec<Route>, String> {
             let path = reach(arch, name, "model_call");
-            let model = path.iter().find_map(|r| position(&models, r));
+            let reached: Vec<usize> = path.iter().filter_map(|r| position(&models, r)).collect();
+            let shares: Vec<f64> = match crate::check::value(&p["model_share"]) {
+                Value::Null => vec![1.0; reached.len()],
+                Value::Object(o) => {
+                    if let Some(k) = o
+                        .keys()
+                        .find(|k| !reached.iter().any(|m| &models[*m] == *k))
+                    {
+                        return Err(format!(
+                            "part `{name}`: model_share names `{k}`, not a model part it reaches over model_call"
+                        ));
+                    }
+                    reached
+                        .iter()
+                        .map(|m| match o.get(&models[*m]) {
+                            None => Ok(0.0),
+                            Some(v) => num(crate::check::value(v))
+                                .filter(|x| *x >= 0.0)
+                                .ok_or_else(|| {
+                                    format!(
+                                        "part `{name}`: model_share.{}: expected a number of at least 0",
+                                        models[*m]
+                                    )
+                                }),
+                        })
+                        .collect::<Result<_, _>>()?
+                }
+                _ => {
+                    return Err(format!(
+                        "part `{name}`: model_share maps the model parts it reaches to shares"
+                    ));
+                }
+            };
+            if !reached.is_empty() && shares.iter().sum::<f64>() <= 0.0 {
+                return Err(format!(
+                    "part `{name}`: model_share gives every model it reaches a share of 0"
+                ));
+            }
+            let mut out = Vec::new();
+            let mut upto = 0.0;
+            for (&m, share) in reached.iter().zip(shares) {
+                if share <= 0.0 {
+                    continue;
+                }
+                upto += share;
+                let route = part(&models[m])["route"]
+                    .as_str()
+                    .ok_or_else(|| format!("model part `{}` names no route", models[m]))?;
+                let price = profile.prices.get(route).copied().ok_or_else(|| {
+                    let priced: Vec<&str> = profile.prices.keys().map(String::as_str).collect();
+                    format!(
+                        "part `{}`: route `{route}` has no price in the profile (priced: {})",
+                        models[m],
+                        priced.join(", ")
+                    )
+                })?;
+                let gateway = path
+                    .iter()
+                    .filter_map(|r| position(&gateway_names, r))
+                    .find(|g| reach(arch, &gateway_names[*g], "model_call").contains(&models[m]));
+                out.push(Route {
+                    model: m,
+                    gateway,
+                    price,
+                    upto,
+                });
+            }
+            Ok(out)
+        };
+        let exec = |name: &str, p: &Value, works_tasks: bool| -> Result<Exec, String> {
+            let (label, role) = role_of(name, p)?;
+            let need = |d: &Option<Dist>, key: &str| {
+                d.clone()
+                    .ok_or_else(|| format!("part `{name}`: profile role `{label}` has no {key}"))
+            };
+            let turn_seconds = need(&role.turn_seconds, "turn_seconds")?;
+            let task_turns = if works_tasks {
+                need(&role.task_turns, "task_turns")?
+            } else {
+                Dist::Fixed(1.0)
+            };
             Ok(Exec {
                 part: name.to_string(),
                 count: count_of(p),
                 role,
-                gateway: path.iter().find_map(|r| position(&gateway_names, r)),
-                model,
-                price: model
-                    .and_then(|m| part(&models[m])["route"].as_str())
-                    .and_then(|route| profile.prices.get(route).copied())
-                    .unwrap_or([0.0; 4]),
+                task_turns,
+                turn_seconds,
+                routes: routes(name, p)?,
             })
         };
 
@@ -405,7 +530,7 @@ impl Model {
             alive.push((name.clone(), count_of(p), swarm::stagger_of(p)));
             if is_reviewer(arch, name) {
                 reviewers.push(ReviewerKind {
-                    exec: exec(name, p)?,
+                    exec: exec(name, p, false)?,
                     turns: profile.review.turns.clone(),
                     strictness: strictness_of(name, p, profile)?,
                     stagger: swarm::stagger_of(p),
@@ -414,10 +539,21 @@ impl Model {
             }
         }
 
+        // A runtime part executes runs when it is given them: a `run` or `order` link, or a
+        // trigger that wakes it.
+        let executes = |name: &str| {
+            links.iter().any(|l| {
+                l["to"] == name
+                    && matches!(l["carries"].as_str(), Some("run" | "order" | "trigger"))
+            })
+        };
         let mut delegates: Vec<Delegate> = Vec::new();
         let mut workers = Vec::new();
         for (name, p) in arch["parts"].as_object().into_iter().flatten() {
-            if p["block"] != "agent" || p.get("acts_for").is_some() || is_reviewer(arch, name) {
+            let runtime = p["block"] == "runtime";
+            let agent =
+                p["block"] == "agent" && p.get("acts_for").is_none() && !is_reviewer(arch, name);
+            if !(agent || runtime && executes(name)) {
                 continue;
             }
             let pool = links
@@ -440,9 +576,17 @@ impl Model {
                             let fwd = question_link(to).filter(|l| {
                                 block(arch, l["to"].as_str().unwrap_or("")) == Some("principal")
                             });
+                            // The agent a question link ends at answers it, with the answer
+                            // delay of its own role, whatever the part is called.
+                            let (label, role) = role_of(to, part(to))?;
+                            let answer = role.answer_seconds.ok_or_else(|| {
+                                format!(
+                                    "part `{to}` answers questions; profile role `{label}` has no answer_seconds"
+                                )
+                            })?;
                             delegates.push(Delegate {
                                 part: to.to_string(),
-                                answer: profile.agents.get(to).cloned(),
+                                answer,
                                 forward_to: fwd.and_then(|l| {
                                     position(&principal_names, l["to"].as_str().unwrap_or(""))
                                 }),
@@ -458,7 +602,7 @@ impl Model {
                 Some(_) => None,
             };
             workers.push(WorkerKind {
-                exec: exec(name, p)?,
+                exec: exec(name, p, true)?,
                 question,
                 pool,
                 review,
@@ -469,6 +613,7 @@ impl Model {
                 partition: swarm::partition_of(name, p)?,
                 orchestrates: false,
                 triggers: Vec::new(),
+                runtime,
             });
         }
         let distribution = channels
@@ -481,11 +626,12 @@ impl Model {
         let partition = workers
             .iter()
             .position(|w| w.partition && w.input == Input::Backlog);
-        for d in &delegates {
-            if d.answer.is_none() {
-                return Err(format!("profile has no agents.{}.answer_seconds", d.part));
-            }
-        }
+        let on_event = triggers
+            .iter()
+            .enumerate()
+            .filter(|(_, t)| matches!(t.source, swarm::Source::Event(_)))
+            .map(|(i, _)| i)
+            .collect();
         let asked = delegates
             .iter()
             .filter_map(|d| d.forward_to)
@@ -503,7 +649,13 @@ impl Model {
         }
         let per_hour = match profile.load {
             Load::Total(t) => t,
-            Load::PerWorker(w) => w * workers.iter().map(|k| k.exec.count as f64).sum::<f64>(),
+            Load::PerWorker(w) => {
+                w * workers
+                    .iter()
+                    .filter(|k| !k.runtime)
+                    .map(|k| k.exec.count as f64)
+                    .sum::<f64>()
+            }
         };
         let policies = &arch["policies"];
         Ok(Model {
@@ -519,6 +671,7 @@ impl Model {
             distribution,
             schedules,
             triggers,
+            on_event,
             intake,
             partition,
             bursts: bursts.to_vec(),
@@ -560,6 +713,8 @@ enum Ev {
     Begin(usize),
     /// An empty run ends.
     EmptyDone(usize),
+    /// An event a trigger waits for occurred.
+    Fire(usize),
 }
 
 struct Item {
@@ -665,6 +820,8 @@ struct KindAcc {
     false_shipped: f64,
     turns: f64,
     rework_turns: f64,
+    /// Turns that called a model.
+    model_calls: f64,
     cost: f64,
     asked: f64,
     wrong_assumptions: f64,
@@ -813,9 +970,17 @@ impl<'a> Sim<'a> {
         }
     }
 
+    /// Records an event of the simulation, and fires the `on_event` triggers that wait for it
+    /// once the current event is handled.
     fn rec(&mut self, t: f64, part: &str, kind: &'static str) {
         if self.record && t < self.m.horizon {
             self.timeline.push((t, part.to_string(), kind));
+        }
+        let m = self.m;
+        for &tr in &m.on_event {
+            if m.triggers[tr].fires_on(kind, part) {
+                self.at(t, Ev::Fire(tr));
+            }
         }
     }
 
@@ -948,7 +1113,7 @@ impl<'a> Sim<'a> {
         }
         task.work_started = now;
         let rng = &mut task.rng;
-        let turns = whole(&r.task_turns, rng, 1.0);
+        let turns = whole(&w.exec.task_turns, rng, 1.0);
         let builds = whole(&r.builds_per_task, rng, 0.0);
         let questions = if w.question.is_some() {
             whole(&r.questions_per_task, rng, 0.0)
@@ -1047,7 +1212,9 @@ impl<'a> Sim<'a> {
         match step {
             Step::Turn | Step::Rework | Step::Review => {
                 let e = self.exec(who);
-                let start = match e.gateway {
+                let route = e.route(self.rng(i));
+                let gateway = route.and_then(|r| r.gateway);
+                let start = match gateway {
                     Some(g) => self.admit(g, now),
                     None => now,
                 };
@@ -1057,19 +1224,21 @@ impl<'a> Sim<'a> {
                     0.0
                 };
                 if start > now
-                    && let Some(g) = e.gateway
+                    && let Some(g) = gateway
                 {
                     self.gateways[g].limited_seconds += waited;
                     self.gateways[g].limited_calls += 1.0;
                     self.rec(now, &m.gateways[g].part, "rate_limited");
                 }
                 let rng = self.rng(i);
-                let dur = e.role.turn_seconds.sample(rng).max(0.0);
+                let dur = e.turn_seconds.sample(rng).max(0.0);
                 let mut tokens = [0.0; 4];
                 for (c, d) in e.role.tokens_per_turn.iter().enumerate() {
                     tokens[c] = d.sample(rng).max(0.0).round();
                 }
-                let cost: f64 = tokens.iter().zip(&e.price).map(|(t, p)| t * p).sum();
+                let cost: f64 = route.map_or(0.0, |r| {
+                    tokens.iter().zip(&r.price).map(|(t, p)| t * p).sum()
+                });
                 let ran = start < h;
                 let busy = span(start, start + dur, h);
                 match who {
@@ -1080,6 +1249,9 @@ impl<'a> Sim<'a> {
                         if ran {
                             acc.turns += 1.0;
                             acc.cost += cost;
+                            if route.is_some() {
+                                acc.model_calls += 1.0;
+                            }
                             if step == Step::Rework {
                                 acc.rework_turns += 1.0;
                             }
@@ -1099,11 +1271,11 @@ impl<'a> Sim<'a> {
                     }
                 }
                 if ran {
-                    if let Some(g) = e.gateway {
+                    if let Some(g) = gateway {
                         self.gateways[g].calls += 1.0;
                     }
-                    if let Some(mi) = e.model {
-                        let ma = &mut self.models[mi];
+                    if let Some(r) = route {
+                        let ma = &mut self.models[r.model];
                         ma.calls += 1.0;
                         ma.cost += cost;
                         for (sum, t) in ma.tokens.iter_mut().zip(tokens) {
@@ -1327,10 +1499,7 @@ impl<'a> Sim<'a> {
             Target::Delegate(d) => {
                 self.delegates[d].received += 1.0;
                 let dl = &m.delegates[d];
-                let triage = now
-                    + dl.answer
-                        .as_ref()
-                        .map_or(0.0, |a| a.sample(self.rng(i)).max(0.0));
+                let triage = now + dl.answer.sample(self.rng(i)).max(0.0);
                 match dl.forward_to {
                     Some(p) if needs_owner && !m.answers_alone && triage < deadline => {
                         if triage < h {
@@ -1561,6 +1730,7 @@ pub fn simulate(m: &Model, seed: u64, record: bool) -> RunOut {
                 s.end_run(i, None, t);
                 s.assign(t);
             }
+            Ev::Fire(tr) => s.fire_on_event(tr, t),
             Ev::StepDone(i) => s.step_done(i, t),
             Ev::BuildDone(i) => {
                 let Who::Worker(kind) = s.insts[i].who else {
@@ -1658,6 +1828,11 @@ fn finish(s: Sim<'_>) -> RunOut {
         put(part, "slot_wait_share", ratio(k.slot_wait, time));
         put(part, "busy_share", ratio(k.busy, time));
         put(part, "rate_limited_seconds", k.rate_wait);
+        if w.runtime {
+            put(part, "run_steps", k.turns);
+            put(part, "model_calls", k.model_calls);
+            put(part, "person_steps", k.asked);
+        }
         if w.coordination != Coordination::None || w.partition || w.orchestrates {
             put(part, "claim_conflicts", k.claim_conflicts);
             put(part, "coordination_calls", k.coordination_calls);

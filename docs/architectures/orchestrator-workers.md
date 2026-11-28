@@ -75,7 +75,7 @@ A marked place carries `vary`: the value as built and the values a search may tr
 | `owner` | [principal](../blocks/1-principals/principal.md) | kind human |
 | `gateway` | [gateway](../blocks/2-intelligence/gateway.md) | rate_limit_per_minute 120 <span className="as-tag as-tag--marked">marked: 60, 120, 240</span> |
 | `model` | [model](../blocks/2-intelligence/model.md) | route frontier |
-| `orchestrator` | [agent](../blocks/4-agent/agent.md) | count 1 <span className="as-tag as-tag--marked">marked: 1, 2</span>; harness orchestrator |
+| `orchestrator` | [agent](../blocks/4-agent/agent.md) | count 1 <span className="as-tag as-tag--marked">marked: 1, 2</span>; harness coding; role orchestrator |
 | `workers` | [agent](../blocks/4-agent/agent.md) | coordination orchestrator; count 8 <span className="as-tag as-tag--marked">marked: 4, 8, 12, 16</span>; harness coding; start_stagger 30s <span className="as-tag as-tag--marked">marked: 0s, 3s, 30s</span> |
 | `builds` | `pool` | capacity 16; job_limit 10m; kind build_slots |
 | `tree` | [workspace](../blocks/8-place/workspace.md) | per workers; sharing exclusive |

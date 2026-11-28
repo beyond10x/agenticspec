@@ -28,8 +28,8 @@ mdx:
 | `owner` | [principal](../blocks/1-principals/principal.md) | kind human |
 | `gateway` | [gateway](../blocks/2-intelligence/gateway.md) | rate_limit_per_minute 120 |
 | `model` | [model](../blocks/2-intelligence/model.md) | route frontier |
-| `executor` | [agent](../blocks/4-agent/agent.md) | count 8 <span className="as-tag as-tag--marked">marked: 4, 8, 12</span>; harness executor |
-| `planner` | [agent](../blocks/4-agent/agent.md) | count 1 <span className="as-tag as-tag--marked">marked: 1, 2</span>; harness planner |
+| `executor` | [agent](../blocks/4-agent/agent.md) | count 8 <span className="as-tag as-tag--marked">marked: 4, 8, 12</span>; harness coding; role executor |
+| `planner` | [agent](../blocks/4-agent/agent.md) | count 1 <span className="as-tag as-tag--marked">marked: 1, 2</span>; harness coding; role planner |
 | `on_plan` | [trigger](../blocks/7-collaboration/trigger.md) | channel plans; kind on_message; max_parallel 8 <span className="as-tag as-tag--marked">marked: 4, 8, 12</span>; policy parallel |
 | `plans` | [channel](../blocks/7-collaboration/channel.md) | distribution queue; kind agent_message |
 | `builds` | `pool` | capacity 16; job_limit 10m; kind build_slots |

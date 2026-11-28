@@ -48,7 +48,7 @@ A marked place carries `vary`: the value as built and the values a search may tr
 | `owner` | [principal](../blocks/1-principals/principal.md) | kind human |
 | `gateway` | [gateway](../blocks/2-intelligence/gateway.md) | rate_limit_per_minute 120 <span className="as-tag as-tag--marked">marked: 60, 120, 240</span> |
 | `model` | [model](../blocks/2-intelligence/model.md) | route frontier |
-| `operator` | [agent](../blocks/4-agent/agent.md) | acts_for owner; harness coding |
+| `operator` | [agent](../blocks/4-agent/agent.md) | acts_for owner; harness coding; role operator |
 | `worker` | [agent](../blocks/4-agent/agent.md) | count 12 <span className="as-tag as-tag--marked">marked: 2 to 24 by 2</span>; harness coding |
 | `chat` | [channel](../blocks/7-collaboration/channel.md) | kind operator |
 | `box` | [sandbox](../blocks/8-place/sandbox.md) | egress gateway; isolation process; per worker |

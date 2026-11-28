@@ -62,9 +62,24 @@ pub(super) enum Policy {
 pub(super) enum Source {
     Schedule(usize),
     Channel(usize),
-    /// An event of another block, or a source the check refuses: it never fires here.
-    Event,
+    /// An event of the simulation, by its place in `EVENTS`.
+    Event(usize),
+    /// A source the check refuses: it never fires.
+    Never,
 }
+
+/// The events of other blocks the simulation emits, each with the moment of the run it is:
+/// `(event_name, kind of the timeline)`. An `on_event` trigger names one of them.
+pub const EVENTS: &[(&str, &str)] = &[
+    ("agentic.work.TaskCreated", "task_arrived"),
+    ("agentic.work.TaskCompleted", "task_done"),
+    ("agentic.work.DeliverableRejected", "task_rejected"),
+    ("agentic.question.QuestionAsked", "question_asked"),
+    ("agentic.question.QuestionAnswered", "question_answered"),
+    ("agentic.question.DefaultTaken", "question_defaulted"),
+    ("agentic.resource.ClaimKilled", "build_killed"),
+    ("agentic.trigger.FiringFailed", "firing_failed"),
+];
 
 #[derive(Debug, Clone)]
 pub(super) struct Schedule {
@@ -85,6 +100,20 @@ pub(super) struct Trigger {
     pub(super) takes_all: bool,
     /// The worker kinds it wakes.
     pub(super) wakes: Vec<usize>,
+    /// For an `on_event` trigger, the part whose events alone fire it (`source`).
+    pub(super) on: Option<String>,
+}
+
+impl Trigger {
+    /// Whether an event of timeline kind `kind` at part `part` fires this trigger.
+    pub(super) fn fires_on(&self, kind: &str, part: &str) -> bool {
+        match self.source {
+            Source::Event(e) => {
+                EVENTS[e].1 == kind && self.on.as_deref().is_none_or(|on| on == part)
+            }
+            _ => false,
+        }
+    }
 }
 
 /// A firing waiting for a free copy or for a run to end: when it fired, and the topic copy it
@@ -196,12 +225,25 @@ pub(super) fn wire(
             Some("on_schedule") => p["schedule"]
                 .as_str()
                 .and_then(|s| schedules.iter().position(|x| x.part == s))
-                .map_or(Source::Event, Source::Schedule),
+                .map_or(Source::Never, Source::Schedule),
             Some("on_message") => p["channel"]
                 .as_str()
                 .and_then(shared)
-                .map_or(Source::Event, Source::Channel),
-            _ => Source::Event,
+                .map_or(Source::Never, Source::Channel),
+            Some("on_event") => match p["event_name"].as_str().filter(|e| !e.is_empty()) {
+                None => Source::Never,
+                Some(e) => match EVENTS.iter().position(|(n, _)| *n == e) {
+                    Some(i) => Source::Event(i),
+                    None => {
+                        let known: Vec<&str> = EVENTS.iter().map(|(n, _)| *n).collect();
+                        return Err(format!(
+                            "part `{name}`: event_name `{e}` is not an event the simulation emits ({})",
+                            known.join(", ")
+                        ));
+                    }
+                },
+            },
+            _ => Source::Never,
         };
         let policy = match p["policy"].as_str() {
             Some("queue") => Policy::Queue,
@@ -220,6 +262,7 @@ pub(super) fn wire(
             template: !p["task_template"].is_null(),
             takes_all: p["takes"] == "all",
             wakes: Vec::new(),
+            on: p["source"].as_str().map(str::to_string),
         });
     }
     for l in links(arch).filter(|l| l["carries"] == "trigger") {
@@ -242,6 +285,7 @@ pub(super) fn wire(
                         template: false,
                         takes_all: false,
                         wakes: Vec::new(),
+                        on: None,
                     });
                     triggers.len() - 1
                 }
@@ -264,6 +308,7 @@ pub(super) fn wire(
         };
         let post = from_here("message").find_map(|l| l["to"].as_str().and_then(shared));
         let hand = from_here("order")
+            .chain(from_here("run"))
             .find_map(|l| l["to"].as_str().and_then(|to| position(&names, to)))
             .filter(|k2| *k2 != k);
         workers[k].output = match (post, hand) {
@@ -276,7 +321,7 @@ pub(super) fn wire(
         if let Output::Hand(k2) = workers[k].output {
             if workers[k2].input == Input::Woken {
                 return Err(format!(
-                    "part `{}` is woken by a trigger, so the order link from `{}` cannot hand it tasks",
+                    "part `{}` is woken by a trigger, so the order or run link from `{}` cannot hand it tasks",
                     names[k2], names[k]
                 ));
             }
@@ -498,17 +543,24 @@ impl Sim<'_> {
         }
     }
 
+    /// An event of the simulation fired trigger `tr`.
+    pub(super) fn fire_on_event(&mut self, tr: usize, now: f64) {
+        self.fire(tr, now, None);
+    }
+
+    /// What a run takes: a schedule's or an event's firing makes a task from its template or
+    /// takes the oldest of the backlog; a channel's takes the oldest untaken post.
     fn take_item(&mut self, tr: usize, now: f64) -> Option<usize> {
         let t = &self.m.triggers[tr];
         match t.source {
-            Source::Schedule(_) if t.template => {
+            Source::Schedule(_) | Source::Event(_) if t.template => {
                 let id = self.new_task(now, None);
                 self.rec(now, &t.part, "task_arrived");
                 Some(id)
             }
-            Source::Schedule(_) => self.backlog.pop_front(),
+            Source::Schedule(_) | Source::Event(_) => self.backlog.pop_front(),
             Source::Channel(c) => self.posts[c].pop_front(),
-            Source::Event => None,
+            Source::Never => None,
         }
     }
 
@@ -566,7 +618,7 @@ impl Sim<'_> {
         if t.takes_all && id.is_some() {
             let next = match t.source {
                 Source::Channel(c) => self.posts[c].pop_front(),
-                Source::Schedule(_) if !t.template => self.backlog.pop_front(),
+                Source::Schedule(_) | Source::Event(_) if !t.template => self.backlog.pop_front(),
                 _ => None,
             };
             if let Some(next) = next {
@@ -648,18 +700,25 @@ impl Sim<'_> {
     /// Returns its duration.
     fn side_call(&mut self, k: usize) -> f64 {
         let e = &self.m.workers[k].exec;
-        let dur = e.role.turn_seconds.sample(&mut self.coord).max(0.0);
+        let route = e.route(&mut self.coord);
+        let dur = e.turn_seconds.sample(&mut self.coord).max(0.0);
         let mut tokens = [0.0; 4];
         for (c, d) in e.role.tokens_per_turn.iter().enumerate() {
             tokens[c] = d.sample(&mut self.coord).max(0.0).round();
         }
-        let cost: f64 = tokens.iter().zip(&e.price).map(|(t, p)| t * p).sum();
+        let cost: f64 = route.map_or(0.0, |r| {
+            tokens.iter().zip(&r.price).map(|(t, p)| t * p).sum()
+        });
         self.kinds[k].cost += cost;
-        if let Some(g) = e.gateway {
+        let Some(r) = route else {
+            return dur;
+        };
+        self.kinds[k].model_calls += 1.0;
+        if let Some(g) = r.gateway {
             self.gateways[g].calls += 1.0;
         }
-        if let Some(mi) = e.model {
-            let ma = &mut self.models[mi];
+        {
+            let ma = &mut self.models[r.model];
             ma.calls += 1.0;
             ma.cost += cost;
             for (sum, t) in ma.tokens.iter_mut().zip(tokens) {
