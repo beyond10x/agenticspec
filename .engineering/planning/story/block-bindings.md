@@ -22,7 +22,7 @@ scope:
   path: scripts/fixtures/layers
 - confidence: cited
   path: website/src/generated
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:33:36Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-11-27T23:33:36Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"review_outcome":1}}}
@@ -38,10 +38,20 @@ Every candidate below ends in exactly one of three states, written as one line i
 `epic:architecture-contract` § "Cross-block causation": a binding, a gap, or dropped with a reason.
 Design: `epic:architecture-contract` § "Ports are derived, not authored".
 
+The same file also serves the view layer (`epic:view-layer`, S1 of `design/view-layer.md`):
+`blocks/components.yaml` declares a `reached_by: network` component that serves the 22 domains,
+owning them and accepting and publishing their commands and events. `ess ui check --model blocks`
+requires such a component for `view_in_model` and `command_in_model`; with 0 components, every read
+and command of an `ess-ui/1` document over `blocks` is an error (a probe document reported
+`coverage: 2 covered, 0 host-covered, 220 uncovered of 222 views and commands`).
+`story:block-panels` needs it for its check to reach 0 errors. This is an addition to this story's
+scope, not a new story.
+
 ## Scope
 
 - `blocks/components.yaml` (new): the components the bindings need (one owning all 22 domains,
-  unless a binding needs two) and the `bindings:`, each with `when.event`, `invoke.command`,
+  unless a binding needs two), the component that owns the 22 domains declared `reached_by:
+  network` (S1 of `design/view-layer.md`), and the `bindings:`, each with `when.event`, `invoke.command`,
   `mapping`, `delivery` and `on_failure` (ESS guide "Components and bindings").
 - `blocks/ess-inputs.yaml`, `blocks/system.yaml`: list the new file as ESS requires.
 - Block files whose events must carry a field a binding maps (inferred: `blocks/2-intelligence/`,
@@ -93,6 +103,8 @@ Design: `epic:architecture-contract` § "Ports are derived, not authored".
 - `docs/blocks/`, `website/src/generated/`: `story:contract-docs` (its page generation).
 - `epic:architecture-contract` § "What ESS lacks": `story:contract-conformance` may add an entry.
 - `CHANGELOG.md`: every story of this epic.
+- `blocks/components.yaml`: `story:block-panels` (`epic:view-layer`) reads the network component
+  and changes nothing in the file.
 
 ## Acceptance
 
@@ -111,6 +123,11 @@ Design: `epic:architecture-contract` § "Ports are derived, not authored".
 - Given a fixture under `scripts/fixtures/layers/` with a binding from an event of layer 2 to a
   command of layer 7, when `task check:layers` runs, the fixture is refused (exit 1) and the real
   blocks pass.
+- Given `blocks/` at this story's commit, when `ess specify compile --path blocks --format json`
+  runs, `.components` has a component with `reached_by: network` that owns all 22 domains, where
+  before `.components` was empty; and `ess ui check --model blocks` on a one-page probe document
+  with a read of `agentic.gateway.Calls` and a command of `agentic.question` reports no
+  `view_in_model` or `command_in_model` error.
 
 ## Not in this story
 

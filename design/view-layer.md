@@ -269,7 +269,7 @@ every action is shown and refusals come from R4.
 Channels need nothing new: `carries`, `resume: from_last_seen`, `scope: param` and
 `session.per` already exist.
 
-## Verdicts on M43-M47 and grouping
+## Verdicts on M43-M49 and grouping
 
 - **M43, no generator from an architecture to `ess-ui/1`: new stories** (S3 panels, S4
   derivation). They build on `story:ui-generator`, which turns `ess-ui/1` into Vue, and planned
@@ -299,6 +299,17 @@ Channels need nothing new: `carries`, `resume: from_last_seen`, `scope: param` a
   not yet a story). Today `Grant.action_class` is a `ToolCategory` (`Read` … `Other`), and the
   scope is text that the evaluator matches. Nothing maps a block command to an action class. R5
   is a query the evaluator answers, not an ESS view.
+- **M48, five domains declare no actor: covered by S3.** A consumer's probe found that
+  `agent`, `architecture`, `experiment`, `kpi` and `principal` declare no actor, so
+  `ess ui check --model blocks` refuses every section over their views (`section_readable`,
+  97 errors over two documents). S3's goal of 0 errors includes declaring those actors in the
+  blocks; S1's network component removes only the `view_in_model` errors.
+- **M49, no block says which command a link's `carries` stands for: covered by D6 and
+  `story:port-derivation`.** A carry is not mapped to a command directly: the contract maps a
+  link to the port its parts use, and `blocks/ports.json` names each port's intent command.
+  Machine carries (`model_call`, `tool_call`, `claim`) derive no action by rule, so a group of
+  (carry, target block) with no action is expected for them; any other group without one is a
+  gap of `story:contract-derivation`.
 - **Grouping beyond the nested architecture: agree that no new construct is needed** (D11).
   Derived grouping by kind and `per` covers the overview, and a level that is still too large is
   a sign to split it into a nested document.
