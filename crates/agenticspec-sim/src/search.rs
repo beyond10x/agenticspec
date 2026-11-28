@@ -46,7 +46,8 @@ pub struct Search {
 pub struct Experiment {
     /// The experiment document as written.
     pub doc: Value,
-    /// The architecture document as written, markers included.
+    /// The architecture document as written, markers included; a nested architecture resolved
+    /// beside its part (`crate::nest::load`).
     pub architecture: Value,
     pub profile: Value,
     pub horizon: f64,
@@ -75,7 +76,7 @@ impl Experiment {
                 .map(|p| dir.join(p))
                 .ok_or_else(|| format!("{}: needs `{key}`", path.display()))
         };
-        let architecture = load_yaml(&file("architecture")?)?;
+        let architecture = crate::nest::load(&file("architecture")?).map_err(|e| e.to_string())?;
         let profile_path = file("profile")?;
         let profile = load_yaml(&profile_path)?;
         Self::from_docs_in(
@@ -106,6 +107,11 @@ impl Experiment {
             {
                 return Err(format!("format `{f}`, expected {want}"));
             }
+        }
+        if let Some(part) = crate::nest::unresolved(&architecture) {
+            return Err(format!(
+                "part `{part}`: a nested architecture is resolved from its file; load the experiment from its path"
+            ));
         }
         let mut profile_parsed = Profile::parse(&profile)?;
         if let Some(dir) = profile_dir {
@@ -199,8 +205,10 @@ impl Experiment {
             .collect()
     }
 
+    /// The variant at `params`, flattened (its nested architectures as parts of its own), and its
+    /// model.
     fn model(&self, params: &Map<String, Value>) -> Result<(Value, Model), String> {
-        let arch = resolve(&self.architecture, params)?;
+        let arch = crate::nest::flatten(&resolve(&self.architecture, params)?);
         let model = Model::build(
             &arch,
             &self.profile_parsed,

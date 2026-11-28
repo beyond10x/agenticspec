@@ -12,7 +12,7 @@ mod result;
 
 use fmt::esc;
 use graph::{Chip, FAMILIES, family, subtitle};
-use model::{Architecture, Outcome};
+use model::{Architecture, Outcome, lands_on};
 use serde_json::Value;
 use std::fmt::Write as _;
 
@@ -265,6 +265,20 @@ fn details(h: &mut String, arch: &Architecture, o: Option<&Outcome>) {
         if arch.border.contains(&p.name) {
             rows.push(("border".into(), "a human reaches it".into()));
         }
+        if let Some(n) = &p.nested {
+            if let Some(name) = &n.name {
+                rows.push(("architecture".into(), name.clone()));
+            }
+            if let Some(c) = n.parts {
+                rows.push(("parts".into(), c.to_string()));
+            }
+            if let Some(d) = &n.digest {
+                rows.push(("digest".into(), d.clone()));
+            }
+            if !n.ports.is_empty() {
+                rows.push(("ports".into(), n.ports.join(", ")));
+            }
+        }
         rows.extend(
             p.props
                 .iter()
@@ -284,7 +298,11 @@ fn details(h: &mut String, arch: &Architecture, o: Option<&Outcome>) {
         let links: Vec<_> = arch
             .links
             .iter()
-            .filter(|l| l.from == p.name || l.to == p.name || l.over.as_deref() == Some(&p.name))
+            .filter(|l| {
+                lands_on(&l.from, &p.name)
+                    || lands_on(&l.to, &p.name)
+                    || l.over.as_deref() == Some(&p.name)
+            })
             .collect();
         if !links.is_empty() {
             h.push_str("<h4>Links</h4><ul class=\"links\">");

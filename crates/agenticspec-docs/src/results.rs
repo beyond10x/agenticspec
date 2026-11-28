@@ -1,7 +1,8 @@
 //! The committed results of the catalog's experiments: `website/static/catalog/<entry>/result.json`
 //! and beside it `sources.sha256`, the SHA-256 of every source the result depends on (the
-//! experiment, its architecture and profile, the simulator's source files, the versions of the
-//! simulator's dependencies in `Cargo.lock`, and `rust-toolchain.toml`).
+//! experiment, its architecture and profile, the simulator's source files, the part kinds and
+//! carries values the check reads from the architecture block, the versions of the simulator's
+//! dependencies in `Cargo.lock`, and `rust-toolchain.toml`).
 //!
 //! `task catalog:generate` runs every experiment at its own budget and seeds and writes both files;
 //! `task slow:catalog` runs them again and compares bytes. The docs generator never runs a full
@@ -196,6 +197,17 @@ pub fn digest(root: &Path, s: &Source) -> Result<String, String> {
         }
         add(&std::fs::read(&f).map_err(|e| format!("{rel}: {e}"))?, rel);
     }
+    // The check reads its part kinds and carries values from the architecture block; a result's
+    // gate KPIs depend on those lists, not on the rest of the block.
+    let kinds = format!(
+        "{}\n{}\n",
+        agenticspec_sim::check::part_kinds().join(","),
+        agenticspec_sim::check::carries().join(",")
+    );
+    add(
+        kinds.as_bytes(),
+        "blocks/9-composition/architecture.yaml (PartKind, Carries)".into(),
+    );
     let lock = read(&root.join("Cargo.lock"))?;
     let versions = locked_versions(&lock);
     add(

@@ -80,6 +80,12 @@ callables:
     errors:
       document_unreadable: agenticspec.cli.Refusal
       architecture_refused: agenticspec.cli.Refusal
+  sim_digest:
+    target: {kind: local, owner: agenticspec.cli, action: sim_digest}
+    input: agenticspec.cli.SimDigestInput
+    result: agenticspec.cli.SimDigestResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
   sim_run:
     target: {kind: local, owner: agenticspec.cli, action: sim_run}
     input: agenticspec.cli.SimRunInput
@@ -230,6 +236,11 @@ commands:
   - path: [sim, check]
     callable: sim_check
     about: Check an architecture document against the building blocks and name each refusal
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+  - path: [sim, digest]
+    callable: sim_digest
+    about: Print the digest a document pins a nested architecture with (sha256 of its canonical parts, links and border)
     arguments:
       - {field: architecture, source: {kind: positional, index: 1}}
   - path: [sim, run]

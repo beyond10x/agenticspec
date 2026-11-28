@@ -1,4 +1,4 @@
-//! The commands of `agenticspec sim`: check, run, render and ladder. Each returns the result
+//! The commands of `agenticspec sim`: check, digest, run, render and ladder. Each returns the result
 //! the command line prints, a JSON value of the shape `spec/domains/cli.yaml` declares
 //! (`agenticspec.cli.Sim*Result`), or a [`Refusal`] with one of the error codes `spec/cli.yaml`
 //! binds to the command. The parser and the process adapter are the generated
@@ -6,7 +6,7 @@
 
 use crate::check::check as check_architecture;
 use crate::doc::load_yaml;
-use crate::{Experiment, ladder as ladder_doc, run as run_experiment};
+use crate::{Experiment, ladder as ladder_doc, nest, run as run_experiment};
 use serde_json::{Value, json};
 use std::io::Write;
 use std::path::Path;
@@ -34,16 +34,26 @@ fn write(path: &Path, text: &str) -> Result<(), Refusal> {
     std::fs::write(path, text).map_err(|e| unwritable(format!("{}: {e}", path.display())))
 }
 
-/// `sim check <architecture>`: the architecture with its counts and the KPIs of the architecture as
-/// a whole (`whole.rs`), or every refusal of the check.
+/// The document at `path` with its nested architectures resolved, or the refusal of `sim check`.
+fn load_nested(path: &Path) -> Result<Value, Refusal> {
+    nest::load(path).map_err(|e| match e {
+        nest::Error::Unreadable(e) => refused("document_unreadable", e),
+        refusals @ nest::Error::Refused(_) => refused("architecture_refused", refusals.to_string()),
+    })
+}
+
+/// `sim check <architecture>`: the architecture with its counts, the KPIs of the architecture as
+/// a whole (`whole.rs`) and its nested architectures, or every refusal of the check. The
+/// references are resolved first; the check and the KPIs then read the document flattened.
 pub fn check(path: &Path) -> Result<Value, Refusal> {
-    let arch = load_yaml(path).map_err(|e| refused("document_unreadable", e))?;
-    let refusals = check_architecture(&arch);
+    let arch = load_nested(path)?;
+    let flat = nest::flatten(&arch);
+    let refusals = check_architecture(&flat);
     if !refusals.is_empty() {
         let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
         return Err(refused("architecture_refused", names.join("; ")));
     }
-    let kpis: serde_json::Map<String, Value> = crate::whole::measure(&arch)
+    let kpis: serde_json::Map<String, Value> = crate::whole::measure(&flat)
         .into_iter()
         .map(|(k, v)| (k.to_string(), crate::doc::number(v)))
         .collect();
@@ -52,8 +62,17 @@ pub fn check(path: &Path) -> Result<Value, Refusal> {
         "parts": arch["parts"].as_object().map_or(0, |p| p.len()),
         "links": arch["links"].as_array().map_or(0, |l| l.len()),
         "kpis": kpis,
-        "single_points": crate::whole::single_point_parts(&arch),
+        "single_points": crate::whole::single_point_parts(&flat),
+        "nested": nest::listed(&arch),
     }))
+}
+
+/// `sim digest <architecture>`: the digest a referring document pins it with.
+pub fn digest(path: &Path) -> Result<Value, Refusal> {
+    let unreadable = |e: String| refused("document_unreadable", format!("{}: {e}", path.display()));
+    let text = std::fs::read_to_string(path).map_err(|e| unreadable(e.to_string()))?;
+    let digest = nest::digest_text(&text).map_err(unreadable)?;
+    Ok(json!({ "architecture": path.display().to_string(), "digest": digest }))
 }
 
 /// KPIs of triggers and swarms, printed only when a run has them.
@@ -111,7 +130,7 @@ pub fn run(
         .unwrap_or_else(|| std::thread::available_parallelism().map_or(1, |n| n.get().min(8)));
     let started = Instant::now();
     let e = Experiment::load(path).map_err(invalid)?;
-    for r in check_architecture(&e.architecture) {
+    for r in check_architecture(&nest::flatten(&e.architecture)) {
         let _ = writeln!(log, "agenticspec sim: refused: {r}");
     }
     let result = run_experiment(&e, threads).map_err(invalid)?;
@@ -160,10 +179,15 @@ pub fn run(
     }))
 }
 
-/// `sim render <architecture> [--result result.json] --out <page.html>`.
+/// `sim render <architecture> [--result result.json] --out <page.html>`. A nested architecture is
+/// drawn as one box; a reference that does not resolve is drawn as written.
 pub fn render(path: &Path, result: Option<&Path>, out: &Path) -> Result<Value, Refusal> {
     let unreadable = |e: String| refused("document_unreadable", e);
-    let arch = load_yaml(path).map_err(unreadable)?;
+    let arch = match nest::load(path) {
+        Ok(a) => a,
+        Err(nest::Error::Unreadable(e)) => return Err(unreadable(e)),
+        Err(nest::Error::Refused(_)) => load_yaml(path).map_err(unreadable)?,
+    };
     let result: Option<Value> = match result {
         Some(p) => {
             let text = std::fs::read_to_string(p)

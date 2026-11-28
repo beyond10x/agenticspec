@@ -34,12 +34,13 @@ pub fn family(block: &str) -> (&'static str, usize) {
         "tool" | "knowledge" => ("capability", 4),
         "workspace" | "sandbox" | "runtime" => ("place", 5),
         "pool" | "resource" => ("resource", 5),
+        "architecture" => ("nested", 2),
         _ => ("other", 6),
     }
 }
 
 /// Names of the colour families, in legend order, with what they hold.
-pub const FAMILIES: [(&str, &str); 9] = [
+pub const FAMILIES: [(&str, &str); 10] = [
     ("principal", "principal"),
     ("agent", "agent, harness"),
     ("collab", "channel, question"),
@@ -48,6 +49,7 @@ pub const FAMILIES: [(&str, &str); 9] = [
     ("capability", "tool, knowledge"),
     ("place", "workspace, sandbox, runtime"),
     ("resource", "pool, resource"),
+    ("nested", "nested architecture"),
     ("other", "other block"),
 ];
 
@@ -74,6 +76,7 @@ pub fn icon(block: &str) -> &'static str {
         "pool" | "resource" => "M2 2.5h10v2.5H2zM2 6.25h10v2.5H2zM2 10h10v2H2z",
         "work" | "process" => "M2 3.8l1.4 1.4L6 2.6M2 9l1.4 1.4L6 7.8M8 4.2h4.5M8 9.4h4.5",
         "authority" => "M3.5 6.5h7v5.5h-7zM5 6.5V4.8a2 2 0 0 1 4 0v1.7",
+        "architecture" => "M1.5 2.5h11v9h-11zM4 5h6v4H4zM1.5 7H4M10 7h2.5",
         _ => "M7 12A5 5 0 1 0 7 2a5 5 0 0 0 0 10z",
     }
 }
@@ -255,6 +258,15 @@ impl Chip {
 
 /// The subtitle of a part: `pool · build_slots`.
 pub fn subtitle(p: &Part) -> String {
+    if let Some(n) = &p.nested {
+        return match (&n.name, n.parts, &n.reference) {
+            (Some(name), Some(c), _) => {
+                format!("{name} · {c} part{}", if c == 1 { "" } else { "s" })
+            }
+            (_, _, Some(r)) => r.clone(),
+            _ => p.block.clone(),
+        };
+    }
     match (&p.kind, sub_prop(p)) {
         (Some(k), _) => format!("{} · {}", p.block, k),
         (None, Some(v)) => format!("{} · {}", p.block, v),
@@ -299,6 +311,8 @@ struct Card {
     chips: Vec<Chip>,
     child_chips: Vec<Vec<Chip>>,
     props: Vec<(String, String)>,
+    /// The ports of a nested architecture: full address and the border part's own name.
+    ports: Vec<(String, String)>,
     border: bool,
     row: usize,
 }
@@ -313,7 +327,11 @@ fn child_sub(p: &Part) -> String {
 impl Card {
     fn new(arch: &Architecture, part: usize, children: Vec<usize>, o: Option<&Outcome>) -> Self {
         let p = &arch.parts[part];
-        let border = arch.border.contains(&p.name);
+        // A nested architecture is on the border when one of its ports is.
+        let border = arch.border.contains(&p.name)
+            || p.nested
+                .as_ref()
+                .is_some_and(|n| n.ports.iter().any(|a| arch.border.contains(a)));
         let mut props = Vec::new();
         if let Some(a) = &p.acts_for {
             props.push(("acts for".to_string(), a.clone()));
@@ -323,6 +341,18 @@ impl Card {
         for (k, v) in p.props.iter().filter(|(k, _)| Some(k.as_str()) != in_sub) {
             props.push((k.replace('_', " "), v.clone()));
         }
+        let ports: Vec<(String, String)> = p
+            .nested
+            .iter()
+            .flat_map(|n| n.ports.iter())
+            .map(|a| {
+                let own = a
+                    .strip_prefix(&p.name)
+                    .and_then(|r| r.strip_prefix('.'))
+                    .unwrap_or(a);
+                (a.clone(), own.to_string())
+            })
+            .collect();
         let chips: Vec<Chip> = p.places.iter().map(|pl| Chip::new(pl, o)).collect();
         let child_chips: Vec<Vec<Chip>> = children
             .iter()
@@ -341,6 +371,9 @@ impl Card {
         let mut inner = head;
         for (k, v) in &props {
             inner = inner.max(text_w(k, 11.5, false) + 6.0 + text_w(v, 11.5, false));
+        }
+        for (_, own) in &ports {
+            inner = inner.max(text_w(&format!("port {own}"), 11.5, false) + 8.0);
         }
         for c in &chips {
             inner = inner.max(c.width());
@@ -361,6 +394,7 @@ impl Card {
         let w = (inner + 2.0 * PAD).max(MIN_W).ceil();
         let mut h = HEAD;
         h += props.len() as f64 * PROP;
+        h += ports.len() as f64 * PROP;
         h += chips.len() as f64 * CHIP;
         if !children.is_empty() {
             h += CHILD_HEAD;
@@ -377,6 +411,7 @@ impl Card {
             chips,
             child_chips,
             props,
+            ports,
             border,
             row: family(&p.block).1,
         }
@@ -457,10 +492,26 @@ fn channel_card_size(p: &Part) -> (f64, f64) {
     ((w + 12.0).ceil(), 44.0)
 }
 
+/// The border part a link end addresses on a nested architecture, by its own name.
+fn port_of<'a>(arch: &Architecture, end: &'a str) -> Option<&'a str> {
+    let (head, own) = end.split_once('.')?;
+    arch.part(head)?
+        .nested
+        .as_ref()?
+        .ports
+        .iter()
+        .any(|p| p == end)
+        .then_some(own)
+}
+
 fn edge_label(arch: &Architecture, l: &crate::model::Link, on_channel: bool) -> String {
-    match (&l.over, on_channel) {
+    let base = match (&l.over, on_channel) {
         (Some(o), false) if arch.part(o).is_some() => format!("{} via {}", l.carries, o),
         _ => l.carries.clone(),
+    };
+    match port_of(arch, &l.to).or_else(|| port_of(arch, &l.from)) {
+        Some(port) => format!("{base} · {port}"),
+        None => base,
     }
 }
 
@@ -502,7 +553,15 @@ fn pava(target: &[f64], weight: &[f64]) -> Vec<f64> {
 
 pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
     let n = arch.parts.len();
-    let index = |name: &str| arch.parts.iter().position(|p| p.name == name);
+    // A link end `<part>.<border part>` lands on the box of the nested architecture `<part>`.
+    let index = |name: &str| {
+        arch.parts.iter().position(|p| p.name == name).or_else(|| {
+            let (head, _) = name.split_once('.')?;
+            arch.parts
+                .iter()
+                .position(|p| p.name == head && p.nested.is_some())
+        })
+    };
     let endpoints: Vec<&str> = arch
         .links
         .iter()
@@ -1245,6 +1304,9 @@ fn label_for(arch: &Architecture, p: &Part) -> String {
     if !p.places.is_empty() {
         s.push_str(&format!(", {} marked places", p.places.len()));
     }
+    if let Some(n) = p.nested.as_ref().filter(|n| !n.ports.is_empty()) {
+        s.push_str(&format!(", ports {}", n.ports.join(", ")));
+    }
     s
 }
 
@@ -1359,6 +1421,21 @@ fn draw_card(svg: &mut String, arch: &Architecture, card: &Card, x: f64, y: f64)
             px(cy + 12.0),
             esc(k),
             esc(v)
+        );
+        cy += PROP;
+    }
+    // The ports of a nested architecture sit on the left edge of its box, one row each.
+    for (address, own) in &card.ports {
+        let _ = write!(
+            svg,
+            "<g class=\"port\" data-port=\"{}\"><title>{}</title><rect class=\"port-mark\" x=\"{}\" y=\"{}\" width=\"10\" height=\"10\" rx=\"2\"/><text class=\"prop\" x=\"{}\" y=\"{}\"><tspan class=\"prop-k\">port</tspan> {}</text></g>",
+            esc(address),
+            esc(&format!("border part {address}")),
+            px(x - 5.0),
+            px(cy + 3.5),
+            px(x + PAD),
+            px(cy + 12.0),
+            esc(own)
         );
         cy += PROP;
     }

@@ -10,6 +10,7 @@ pub mod doc;
 pub mod events;
 pub mod ladder;
 pub mod marked;
+pub mod nest;
 pub mod profile;
 pub mod reader;
 pub mod rng;

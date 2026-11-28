@@ -188,3 +188,18 @@ fn corpus_run_prints_the_table_and_the_rows() {
     assert!(stderr.contains("predicted"), "{stderr}");
     assert!(stderr.contains("control-refused"), "{stderr}");
 }
+
+#[test]
+fn digest_prints_the_sha256_of_the_file_and_check_lists_the_nested_architecture() {
+    let console = repo().join("architectures/console.yaml");
+    let printed = result(&sim(&["digest".as_ref(), console.as_os_str()]));
+    let digest = printed["digest"].as_str().expect("digest");
+    assert!(
+        digest.starts_with("sha256:") && digest.len() == 7 + 64,
+        "{digest}"
+    );
+    let team = repo().join("architectures/team-with-console.yaml");
+    let accepted = result(&sim(&["check".as_ref(), team.as_os_str()]));
+    assert_eq!(accepted["nested"][0]["part"], "console");
+    assert_eq!(accepted["nested"][0]["digest"], digest);
+}

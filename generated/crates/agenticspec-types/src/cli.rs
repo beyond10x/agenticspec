@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 7eeabc12c431db22ea63eab395d4dc8a00e49643faa26a3fe51eca35b1619067
+// contract digest de45a1588278fcf1dc83bd81af5a6dba537efb8a99a7871009ea128ff0ed7e2f
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -613,7 +613,7 @@ pub struct SimCheckInput {
 
 /// SimCheckResult — `agenticspec.cli.SimCheckResult`.
 ///
-/// The architecture the check accepted, with its counts of parts and links and the KPIs of the architecture as a whole.
+/// The architecture the check accepted, with its counts of parts and links, the KPIs of the architecture as a whole and the architectures it nests.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCheckResult {
     /// `architecture` — `String`.
@@ -626,6 +626,8 @@ pub struct SimCheckResult {
     pub kpis: crate::json::Value,
     /// `single_points` — `List<String>`.
     pub single_points: Vec<String>,
+    /// `nested` — `List<agenticspec.cli.SimNested>`.
+    pub nested: Vec<SimNested>,
 }
 
 /// SimContractInput — `agenticspec.cli.SimContractInput`.
@@ -707,6 +709,24 @@ pub struct SimCorpusRow {
     pub verdict: String,
 }
 
+/// SimDigestInput — `agenticspec.cli.SimDigestInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimDigestInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+}
+
+/// SimDigestResult — `agenticspec.cli.SimDigestResult`.
+///
+/// The digest a referring document pins the architecture with: `sha256:` and the SHA-256 of the canonical JSON (keys sorted, no whitespace) of its parts, links and border.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimDigestResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `digest` — `String`.
+    pub digest: String,
+}
+
 /// SimLadderInput — `agenticspec.cli.SimLadderInput`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimLadderInput {
@@ -727,6 +747,25 @@ pub struct SimLadderResult {
     pub rungs: i64,
     /// `written` — `Boolean`.
     pub written: bool,
+}
+
+/// SimNested — `agenticspec.cli.SimNested`.
+///
+/// One nested architecture a check resolved.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimNested {
+    /// `part` — `String`.
+    pub part: String,
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `reference` — `String`.
+    pub reference: String,
+    /// `digest` — `String`.
+    pub digest: String,
+    /// `parts` — `Integer`.
+    pub parts: i64,
+    /// `links` — `Integer`.
+    pub links: i64,
 }
 
 /// SimPortsInput — `agenticspec.cli.SimPortsInput`.

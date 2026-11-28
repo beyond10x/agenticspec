@@ -44,6 +44,7 @@ roles:
     task_turns:           3
     turn_seconds:         { dist: lognormal, median: 12, p90: 60 }
     tokens_per_turn:      { input: 2000, cache_read: 20000, cache_write: 2000, output: 400 }
+    answer_seconds:       { dist: lognormal, median: 30, p90: 120 }
   reviewer:
     turn_seconds:         { dist: lognormal, median: 12, p90: 60 }
     tokens_per_turn:      { input: 2000, cache_read: 60000, cache_write: 4000, output: 600 }
@@ -96,6 +97,7 @@ sources:
   roles.executor: as roles.coding apart from step_pass_after_fail
   roles.orchestrator.task_turns: estimate of the calls an orchestrator spends handing out one task
   roles.orchestrator.tokens_per_turn: estimate, a smaller context than a coding turn
+  roles.orchestrator.answer_seconds: estimate, as roles.operator.answer_seconds; an orchestrator answers the agents it orders
   roles.reviewer: as roles.coding; the calls of one review are review.turns
   roles.operator.answer_seconds: estimate of how long an agent acting for the owner takes to answer or pass on a question
   coordination.board_read_seconds: estimate of how long an idle copy takes to read a new board entry

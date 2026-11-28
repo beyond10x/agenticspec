@@ -73,6 +73,7 @@ writes a page of an architecture:
 
 ```console
 agenticspec sim check <architecture.yaml>          # refusals, or the KPIs of the architecture as a whole
+agenticspec sim digest <architecture.yaml>          # the pin of a nested architecture
 agenticspec sim run <experiment.yaml> --out out/   # result.json, index.html, best.yaml
 agenticspec sim render <architecture.yaml> --out page.html
 ```
