@@ -397,12 +397,14 @@ UI of `bundles/bindings/operator-ui.yaml` is the worked example.
 
 ### Before a runtime: the UI on fixtures
 
-`agenticspec ui serve <architecture> [--contract <file>] [--port <n>]` serves the same operator
+`agenticspec ui serve <architecture> [--contract <file>] [--port <n>] [--sim <profile>]` serves the same operator
 app on 127.0.0.1 (port 7430 by default) over the architecture's default control plane, answered
 from the block fixtures built into the binary: rows from the panels' fixtures, the feed from the
 channel scripts, each command recorded and answered with a scripted outcome, every action allowed.
 It needs no checkout: a released binary serves from any directory, given the architecture's path.
-`--fixtures <dir>` answers from your own fixtures instead. Open the printed URL to see the operator
+`--fixtures <dir>` answers from your own fixtures instead. `--sim <profile>` answers a simulator run
+of the architecture instead: the views hold the state its events left, the feed replays its event
+log in order, and the Metrics page shows its KPIs. Open the printed URL to see the operator
 UI with no runtime; the runtime interface is below `/ingress/operator`. `ui/README.md` § "Served
 on fixtures" lists its paths and the layout of a fixtures directory.
 

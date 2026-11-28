@@ -36,6 +36,7 @@ const SIM_EXCLUDED: &[&str] = &[
     "scenario.rs",
     "rows.rs",
     "event_log.rs",
+    "replay.rs",
     "contract/",
     "deploy/",
     "unavailable.rs",

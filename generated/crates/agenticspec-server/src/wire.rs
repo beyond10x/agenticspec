@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b8f23e9b2c092077465347f0fbbae30dec676cfb4ee76e860761fa72b4bc5749
+// contract digest 6c15432f871ce0173f9a863e95955d78c0cf94618f96a031932e6b988262083b
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -5510,6 +5510,10 @@ pub fn encode_agenticspec_cli_ui_serve_input(value: &agenticspec_types::cli::UiS
         json::member(out, "fixtures");
         json::push_text(out, &*held0);
     }
+    if let Some(held0) = &value.sim {
+        json::member(out, "sim");
+        json::push_text(out, &*held0);
+    }
     out.push('}');
 }
 
@@ -5519,7 +5523,7 @@ pub fn encode_agenticspec_cli_ui_serve_input(value: &agenticspec_types::cli::UiS
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_ui_serve_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiServeInput, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "contract", "port", "fixtures"])?;
+    json::closed_at(value, at, &["architecture", "contract", "port", "fixtures", "sim"])?;
     Ok(agenticspec_types::cli::UiServeInput {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -5545,6 +5549,13 @@ pub fn decode_agenticspec_cli_ui_serve_input(value: &json::Value, at: &str) -> R
             Some(member3) => {
                 let at3 = json::nested(at, "fixtures");
                 Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        sim: match value.member("sim") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "sim");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
             }
         },
     })
