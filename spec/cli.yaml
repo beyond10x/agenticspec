@@ -124,6 +124,14 @@ callables:
       scenario_invalid: agenticspec.cli.Refusal
       scenario_refused: agenticspec.cli.Refusal
       corpus_failed: agenticspec.cli.Refusal
+  ui_panels:
+    target: {kind: local, owner: agenticspec.cli, action: ui_panels}
+    input: agenticspec.cli.UiPanelsInput
+    result: agenticspec.cli.UiPanelsResult
+    errors:
+      blocks_unreadable: agenticspec.cli.Refusal
+      panels_stale: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -229,3 +237,9 @@ commands:
     arguments:
       - {field: action, source: {kind: positional, index: 1}}
       - {field: corpus, source: {kind: positional, index: 2}}
+  - path: [ui, panels]
+    callable: ui_panels
+    about: Write the block panels, ui/views/blocks.ui.yaml with its fixtures and digest, from blocks/, or compare them with --check
+    arguments:
+      - {field: root, source: {kind: option, long: root}}
+      - {field: check, source: {kind: flag, long: check}}

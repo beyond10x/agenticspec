@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.Contracts",
+  "rows": [
+    {"contract_id": "00000000-0000-4000-8000-8a714f2c0000", "revision_id": "00000000-0000-4000-8000-8dac41280000", "digest": "digest 1", "ports": [{"instances":1,"part_id":"00000000-0000-4000-8000-7784d89c0000","port_id":"00000000-0000-4000-8000-04ab06340000","settings":[{"name":"name 1","value":"value 1"}]}], "invariants": [{"link_id":"00000000-0000-4000-8000-44bdfca50000","port_id":"00000000-0000-4000-8000-04ab06340000","predicate":"predicate 1","within_port_id":"00000000-0000-4000-8000-04ab06340000"}], "border": ["00000000-0000-4000-8000-7784d89c0000"]},
+    {"contract_id": "00000000-0000-4000-8000-8a714f2c0001", "revision_id": "00000000-0000-4000-8000-8dac41280000", "digest": "digest 2", "ports": [{"instances":2,"part_id":"00000000-0000-4000-8000-7784d89c0001","port_id":"00000000-0000-4000-8000-04ab06340001","settings":[{"name":"name 2","value":"value 2"}]}], "invariants": [{"link_id":"00000000-0000-4000-8000-44bdfca50001","port_id":"00000000-0000-4000-8000-04ab06340001","predicate":"predicate 2"}], "border": ["00000000-0000-4000-8000-7784d89c0001"]},
+    {"contract_id": "00000000-0000-4000-8000-8a714f2c0002", "revision_id": "00000000-0000-4000-8000-8dac41280000", "digest": "digest 3", "ports": [{"instances":3,"part_id":"00000000-0000-4000-8000-7784d89c0002","port_id":"00000000-0000-4000-8000-04ab06340002","settings":[{"name":"name 3","value":"value 3"}]}], "invariants": [{"link_id":"00000000-0000-4000-8000-44bdfca50002","port_id":"00000000-0000-4000-8000-04ab06340002","predicate":"predicate 3","within_port_id":"00000000-0000-4000-8000-04ab06340002"}], "border": ["00000000-0000-4000-8000-7784d89c0002"]}
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "view": "agentic.work.Runs",
+  "rows": [
+    {"run_id": "00000000-0000-4000-8000-1bc1b0c90000", "assignment_id": "00000000-0000-4000-8000-f9437b990000", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000", "started_at": "2026-11-20T09:03:00Z", "outcome": "Done", "ended_at": "2026-11-20T09:05:00Z", "route_id": "00000000-0000-4000-8000-176f59df0000", "state": "Ended"},
+    {"run_id": "00000000-0000-4000-8000-1bc1b0c90001", "assignment_id": "00000000-0000-4000-8000-f9437b990001", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0001", "started_at": "2026-11-20T10:03:00Z", "state": "Running"},
+    {"run_id": "00000000-0000-4000-8000-1bc1b0c90002", "assignment_id": "00000000-0000-4000-8000-f9437b990002", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0002", "started_at": "2026-11-20T11:03:00Z", "outcome": "Stopped", "ended_at": "2026-11-20T11:05:00Z", "route_id": "00000000-0000-4000-8000-176f59df0002", "state": "Suspended"}
+  ]
+}

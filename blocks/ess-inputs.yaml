@@ -24,6 +24,7 @@ specification:
   - 9-composition/architecture.yaml
   - 10-evaluation/kpi.yaml
   - 10-evaluation/experiment.yaml
+  - components.yaml
 scenarios:
   - scenarios/architecture/workstation-committed.yaml
   - scenarios/architecture/workstation-empty.yaml

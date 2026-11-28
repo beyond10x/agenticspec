@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 59e597b58980c6c77cb75597842c4792dbd0de90542b884826598d4097978368
+// contract digest 760e4b4d1705e92f9f188d1bdff14eb1dd90afcbc791191dbd2199163a406170
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -3169,6 +3169,86 @@ pub fn decode_agenticspec_cli_tool_figures(value: &json::Value, at: &str) -> Res
             let at3 = json::nested(at, "failed");
             let member3 = json::member_at(value, at, "failed")?;
             json::integer_at(member3, &at3, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiPanelsInput` as JSON.
+pub fn encode_agenticspec_cli_ui_panels_input(value: &agenticspec_types::cli::UiPanelsInput, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.root {
+        json::member(out, "root");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "check");
+    json::push_bool(out, value.check);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiPanelsInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_panels_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiPanelsInput, json::DecodeError> {
+    json::closed_at(value, at, &["root", "check"])?;
+    Ok(agenticspec_types::cli::UiPanelsInput {
+        root: match value.member("root") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "root");
+                Some(json::text_at(member0, &at0, "a string")?.to_owned())
+            }
+        },
+        check: {
+            let at1 = json::nested(at, "check");
+            let member1 = json::member_at(value, at, "check")?;
+            json::bool_at(member1, &at1, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiPanelsResult` as JSON.
+pub fn encode_agenticspec_cli_ui_panels_result(value: &agenticspec_types::cli::UiPanelsResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "panels");
+    json::push_integer(out, value.panels);
+    json::member(out, "files");
+    json::push_integer(out, value.files);
+    json::member(out, "written");
+    json::push_bool(out, value.written);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiPanelsResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_panels_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiPanelsResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "panels", "files", "written"])?;
+    Ok(agenticspec_types::cli::UiPanelsResult {
+        out: {
+            let at0 = json::nested(at, "out");
+            let member0 = json::member_at(value, at, "out")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        panels: {
+            let at1 = json::nested(at, "panels");
+            let member1 = json::member_at(value, at, "panels")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        files: {
+            let at2 = json::nested(at, "files");
+            let member2 = json::member_at(value, at, "files")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        written: {
+            let at3 = json::nested(at, "written");
+            let member3 = json::member_at(value, at, "written")?;
+            json::bool_at(member3, &at3, "a boolean")?
         },
     })
 }

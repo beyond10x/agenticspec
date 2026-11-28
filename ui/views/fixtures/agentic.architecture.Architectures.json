@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.Architectures",
+  "rows": [
+    {"architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "name 1", "state": {"name":"Draft","summary":"Takes parts, links, a border and commits."}},
+    {"architecture_id": "00000000-0000-4000-8000-463ec9280001", "name": "name 2", "state": {"name":"Retired","summary":"Takes no edit and no commit; its revisions stay."}},
+    {"architecture_id": "00000000-0000-4000-8000-463ec9280002", "name": "name 3", "state": {"name":"Draft","summary":"Takes parts, links, a border and commits."}}
+  ]
+}

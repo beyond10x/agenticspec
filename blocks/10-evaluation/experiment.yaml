@@ -137,6 +137,19 @@ entities:
       states: [Recorded]
       terminal: [Recorded]
 
+actors:
+  - name: agentic.experiment.Viewer
+    naming:
+      display: Experiment viewer
+      summary: >-
+        Whoever looks at experiments, their variants and the best variant of each, such as an
+        operator's view of a running system. It reads the views of this block and issues none of
+        its commands.
+    may:
+      - agentic.experiment.Experiments
+      - agentic.experiment.Variants
+      - agentic.experiment.BestVariant
+
 errors:
   - name: agentic.experiment.NoSuchExperiment
     summary: No experiment has this id, and nothing changed.

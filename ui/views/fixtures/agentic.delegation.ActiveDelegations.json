@@ -1,0 +1,8 @@
+{
+  "view": "agentic.delegation.ActiveDelegations",
+  "rows": [
+    {"delegation_id": "00000000-0000-4000-8000-e045564d0000", "delegate": "00000000-0000-4000-8000-322d9f1c0000", "root": "00000000-0000-4000-8000-322d9f1c0000", "action": "AnswerQuestions"},
+    {"delegation_id": "00000000-0000-4000-8000-e045564d0001", "delegate": "00000000-0000-4000-8000-322d9f1c0001", "root": "00000000-0000-4000-8000-322d9f1c0001", "action": "Approve"},
+    {"delegation_id": "00000000-0000-4000-8000-e045564d0002", "delegate": "00000000-0000-4000-8000-322d9f1c0002", "root": "00000000-0000-4000-8000-322d9f1c0002", "action": "Merge"}
+  ]
+}

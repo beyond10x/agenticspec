@@ -1,0 +1,8 @@
+{
+  "view": "agentic.agent.Agents",
+  "rows": [
+    {"agent_id": "00000000-0000-4000-8000-41b79aa10000", "principal_id": "00000000-0000-4000-8000-322d9f1c0000", "name": "name 1", "defined_at": "2026-11-20T09:03:00Z", "state": "Active"},
+    {"agent_id": "00000000-0000-4000-8000-41b79aa10001", "principal_id": "00000000-0000-4000-8000-322d9f1c0001", "name": "name 2", "defined_at": "2026-11-20T10:03:00Z", "state": "Retired"},
+    {"agent_id": "00000000-0000-4000-8000-41b79aa10002", "principal_id": "00000000-0000-4000-8000-322d9f1c0002", "name": "name 3", "defined_at": "2026-11-20T11:03:00Z", "state": "Active"}
+  ]
+}

@@ -1,0 +1,8 @@
+components:
+  - component: mini
+    summary: Every domain of the small system, its views served over HTTP.
+    owns:
+      domains:
+        - mini.shared
+        - mini.thing
+    reached_by: network

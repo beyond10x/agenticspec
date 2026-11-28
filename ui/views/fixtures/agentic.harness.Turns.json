@@ -1,0 +1,8 @@
+{
+  "view": "agentic.harness.Turns",
+  "rows": [
+    {"turn_id": "00000000-0000-4000-8000-391e34cb0000", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000", "inference_id": "00000000-0000-4000-8000-d56952c90000", "usage": {"cache_read_tokens":1,"cache_write_tokens":1,"input_tokens":1,"output_tokens":1}, "context_tokens": 1, "at": "2026-11-20T09:05:00Z"},
+    {"turn_id": "00000000-0000-4000-8000-391e34cb0001", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0001", "inference_id": "00000000-0000-4000-8000-d56952c90001", "usage": {"cache_read_tokens":2,"cache_write_tokens":2,"input_tokens":2,"output_tokens":2}, "context_tokens": 2, "at": "2026-11-20T10:05:00Z"},
+    {"turn_id": "00000000-0000-4000-8000-391e34cb0002", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0002", "inference_id": "00000000-0000-4000-8000-d56952c90002", "usage": {"cache_read_tokens":3,"cache_write_tokens":3,"input_tokens":3,"output_tokens":3}, "context_tokens": 3, "at": "2026-11-20T11:05:00Z"}
+  ]
+}

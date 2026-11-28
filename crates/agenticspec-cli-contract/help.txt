@@ -13,6 +13,7 @@ Commands:
   serve        Serve the UI and its views from the local store on 127.0.0.1, synced every 5 seconds
   sim          
   sync         Lift the new and changed sessions of a window into the local store
+  ui           
   completions  Emit shell completions
   help         Print this message or the help of the given subcommand(s)
 

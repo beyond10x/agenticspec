@@ -1,0 +1,8 @@
+{
+  "view": "agentic.resource.Pools",
+  "rows": [
+    {"pool_id": "00000000-0000-4000-8000-e7e96cf90000", "name": "name 1", "kind": "BuildSlots", "capacity": 1, "held": 1, "state": "Open"},
+    {"pool_id": "00000000-0000-4000-8000-e7e96cf90001", "name": "name 2", "kind": "RateLimit", "capacity": 2, "held": 2, "state": "Open"},
+    {"pool_id": "00000000-0000-4000-8000-e7e96cf90002", "name": "name 3", "kind": "Cache", "capacity": 3, "held": 3, "state": "Open"}
+  ]
+}

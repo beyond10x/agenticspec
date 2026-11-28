@@ -405,6 +405,24 @@ entities:
       states: [Recorded]
       terminal: [Recorded]
 
+actors:
+  - name: agentic.architecture.Viewer
+    naming:
+      display: Architecture viewer
+      summary: >-
+        Whoever looks at architectures, their parts, links, revisions and patches, such as an
+        operator's view of a running system. It reads the views of this block and issues none of
+        its commands.
+    may:
+      - agentic.architecture.Architectures
+      - agentic.architecture.Parts
+      - agentic.architecture.Reach
+      - agentic.architecture.Revisions
+      - agentic.architecture.Patches
+      - agentic.architecture.PatchApplications
+      - agentic.architecture.Ports
+      - agentic.architecture.Contracts
+
 errors:
   - name: agentic.architecture.NoSuchArchitecture
     summary: No architecture has this id, and nothing changed.

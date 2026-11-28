@@ -1,0 +1,8 @@
+{
+  "view": "agentic.knowledge.PublishedConcepts",
+  "rows": [
+    {"knowledge_id": "00000000-0000-4000-8000-92b695b40000", "name": "name 1", "scope": "Organization"},
+    {"knowledge_id": "00000000-0000-4000-8000-92b695b40001", "name": "name 2", "scope": "Repository"},
+    {"knowledge_id": "00000000-0000-4000-8000-92b695b40002", "name": "name 3", "scope": "Organization"}
+  ]
+}

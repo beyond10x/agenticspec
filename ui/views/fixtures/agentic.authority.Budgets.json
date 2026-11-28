@@ -1,0 +1,8 @@
+{
+  "view": "agentic.authority.Budgets",
+  "rows": [
+    {"budget_id": "00000000-0000-4000-8000-c10228030000", "owner_kind": "Principal", "owner_id": "00000000-0000-4000-8000-8b848a680000", "resource": "Tokens", "window": "Total", "limit": 1, "spent": 1, "state": "Exhausted"},
+    {"budget_id": "00000000-0000-4000-8000-c10228030001", "owner_kind": "AgentRevision", "owner_id": "00000000-0000-4000-8000-8b848a680001", "resource": "Money", "window": "Call", "limit": 2, "spent": 2, "state": "Open"},
+    {"budget_id": "00000000-0000-4000-8000-c10228030002", "owner_kind": "Run", "owner_id": "00000000-0000-4000-8000-8b848a680002", "resource": "WallTime", "window": "Day", "limit": 3, "spent": 3, "state": "Exhausted"}
+  ]
+}

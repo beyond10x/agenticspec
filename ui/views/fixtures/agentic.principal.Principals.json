@@ -1,0 +1,8 @@
+{
+  "view": "agentic.principal.Principals",
+  "rows": [
+    {"principal_id": "00000000-0000-4000-8000-322d9f1c0000", "kind": "Human", "name": "name 1", "registered_at": "2026-11-20T09:03:00Z", "state": "Active"},
+    {"principal_id": "00000000-0000-4000-8000-322d9f1c0001", "kind": "Organization", "name": "name 2", "registered_at": "2026-11-20T10:03:00Z", "state": "Retired"},
+    {"principal_id": "00000000-0000-4000-8000-322d9f1c0002", "kind": "Service", "name": "name 3", "registered_at": "2026-11-20T11:03:00Z", "state": "Active"}
+  ]
+}

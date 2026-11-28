@@ -156,10 +156,22 @@ tasks:
       - mkdir -p target/spec && ess verify conform synthesize --path spec --out target/spec/suite.json
 
   check:ui:
-    desc: Check the ess-ui document against the specification and run its headless tests on the fixtures.
+    desc: Check the ess-ui document against the specification and run its headless tests on the fixtures; then fail when the block panels (ui/views/) differ from a fresh generation from blocks/ or their digest no longer matches, and check them against blocks/ with no finding.
     cmds:
       - ess ui check --path ui/agenticspec.ui.yaml --model spec
       - ess ui test --path ui/agenticspec.ui.yaml ui/tests/session.yaml
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec ui panels --check
+      - |
+        out=$(ess ui check --path ui/views/blocks.ui.yaml --model blocks) || { echo "$out"; exit 1; }
+        echo "$out"
+        echo "$out" | grep -q ': 0 error(s), 0 warning(s)$' || { echo "check:ui: ui/views/blocks.ui.yaml has a warning"; exit 1; }
+
+  ui:panels:
+    desc: Write the block panels from blocks/ - ui/views/blocks.ui.yaml (one ess-ui/1 widget per view, a gallery page per block), its fixtures in ui/views/fixtures/ and the digest of its inputs, ui/views/blocks.sources.sha256. Never edited by hand.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec ui panels
 
   check:app:
     desc: Types, unit tests and a build of the app in ui/app, then its layout, accessibility, keyboard and screen-only-user gates on the fixtures and the ratchet against ux/baseline.json. The lines are in scripts/check-app.sh.
