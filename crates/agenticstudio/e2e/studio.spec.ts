@@ -106,6 +106,36 @@ test.describe('the first slice', () => {
   });
 });
 
+test.describe('live', () => {
+  test('two pages on one draft: an apply in the first and an agent call both show in the second without a reload', async ({ page, browser }) => {
+    await openDraft(page, 'workstation');
+    const id = page.url().split('/').pop()!;
+    const other = await (await browser.newContext()).newPage();
+    await other.goto(page.url());
+    await expect(summary(other, 'revision')).toHaveText('1');
+    await other.evaluate(() => ((window as unknown as { stamp: number }).stamp = 1));
+
+    await apply(page, SET);
+    await expect(result(page)).toContainText('Applied as revision 2');
+    await expect(summary(other, 'revision')).toHaveText('2', { timeout: 2_000 });
+
+    const api = (p: string, body: unknown) =>
+      other.request.post(`${process.env.STUDIO_URL}api/${p}`, { data: body }).then((r) => r.json());
+    const session = (await api('sessions', { draft_id: id })).session.session_id;
+    const call = await api(`sessions/${session}/calls`, {
+      tool: 'apply',
+      caller: 'Agent',
+      arguments: { patch: 'set(P, count, 5) :- part{id: P, block: "agent", count: 3}.' },
+    });
+    expect(call.call.answer.outcome).toBe('Applied');
+    await expect(summary(other, 'revision')).toHaveText('3', { timeout: 2_000 });
+    await expect(summary(page, 'revision')).toHaveText('3', { timeout: 2_000 });
+    await expect(other.locator('[data-graph-facts]')).toContainText('revision 3');
+    expect(await other.evaluate(() => (window as unknown as { stamp?: number }).stamp)).toBe(1);
+    await other.context().close();
+  });
+});
+
 test.describe('the largest public architecture', () => {
   test('on 09-factory at 1366x768 a part label reads at 11 px or more and the patch editor is in view', async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 768 });

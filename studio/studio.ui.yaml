@@ -15,7 +15,7 @@ fixtures: {dir: fixtures, index: fixtures/index.yaml}
 
 unmapped:
   - "UNMAPPED: opening the new draft after studio.draft.OpenDraft; ess-ui/1 has no navigate on a command's outcome, so the host's command hook (ui/studio/src/hooks.ts) opens the draft page"
-  - "UNMAPPED: studio.session.CallTool names a session, and the first slice has none; the patch form sends the draft page's draft_id and agenticstudio serve applies the patch to that draft"
+  - "UNMAPPED: studio.session.CallTool names a session, and the page has no form state that holds one; the patch form sends the draft page's draft_id, and agenticstudio serve makes the call in the draft's editor session (caller User), started on its first call"
 
 tone_maps:
   outcome: {Applied: success, DryRun: info, Refused: danger}
@@ -32,6 +32,17 @@ shells:
       notify: {kind: notifications}
     state:
       theme: {type: {enum: [light, dark]}, class: preference, store: local_storage, pinned: true}
+
+channels:
+  draft_events:
+    carries:
+      events: [studio.draft.DraftRevised, studio.session.ToolCallAnswered, studio.session.ToolCallFailed]
+    direction: server_to_client
+    delivery: every_event
+    resume: refetch
+    scope: param
+    session: {per: draft_id}
+    lifecycle: [connecting, live, reconnecting, stale, closed]
 
 themes:
   light: {}
@@ -90,6 +101,7 @@ pages:
     params: {draft_id: DraftId}
     header:
       title_from: {section: summary, field: name}
+      live: [draft_events]
     state:
       part_search: {type: string, class: page_state, store: memory}
     layout:
@@ -105,6 +117,7 @@ pages:
           draws an architecture graph
         stands_in_for: graph_editor
         reads: {placeholder: studio.DraftGraph, fixture: graph.json, params: {draft_id: params.draft_id}}
+        live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
 
       - name: patch
         title: Patch
@@ -132,6 +145,7 @@ pages:
         title: Draft
         component: record
         reads: {placeholder: studio.DraftSummary, fixture: summary.json, params: {draft_id: params.draft_id}, key: draft_id}
+        live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
         fields:
           - {field: revision, as: number, label: Revision}
           - {field: digest, label: Digest}
@@ -145,6 +159,7 @@ pages:
         component: collection
         style: list
         reads: {placeholder: studio.DraftRefusals, fixture: refusals.json, params: {draft_id: params.draft_id}, key: id}
+        live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
         columns:
           - {field: rule, label: Rule}
           - {field: part, label: Part}
@@ -163,6 +178,7 @@ pages:
           key: id
           paging: none
           filter: row.id contains state.part_search
+        live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
         columns:
           - {field: id, label: Part}
           - {field: block, label: Block}

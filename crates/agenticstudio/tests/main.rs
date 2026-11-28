@@ -79,6 +79,8 @@ fn apply(s: &Mutex<Studio>, id: &str, text: &str, dry_run: bool) -> (u16, Value)
     )
 }
 
+mod live;
+
 mod acceptance {
     use super::*;
 

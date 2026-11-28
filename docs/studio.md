@@ -2,7 +2,8 @@
 
 agenticstudio opens an architecture in your browser as a draft, changes it with patches and shows
 the result: the graph, the parts and the structural check. A patch that would break the
-architecture is refused as a whole and changes nothing.
+architecture is refused as a whole and changes nothing. An agent can work on the same draft through
+its MCP server, and every page open on a draft shows each change live.
 
 The page is the app of `ui/studio`, generated from the `ess-ui/1` document `studio/studio.ui.yaml`
 by `agenticspec ui generate` and drawn with the design system of `ui/kit`.
@@ -120,6 +121,85 @@ part of the patch language and not applied yet.
 | `LinkExists` | `add` names a link that exists |
 | `CheckRefused` | the result fails the structural check; the refusals are listed, and no rule is named |
 
+## Live updates
+
+Every page open on a draft shows each change at once, without a reload: a patch applied on
+another page, by a script or by an agent, and a change of the file the draft was opened from.
+
+The server reads the architecture file of every open draft again every half second. When you edit
+`architectures/<name>.yaml` in your editor and save it, the draft moves to its next revision with
+the file's content, and every open page shows it. A save that leaves the architecture as it was
+(a comment, a blank line) makes no revision; a file that is no architecture document, or is gone,
+is waited out until it is one again. Patches applied in the studio are not written back to the
+file.
+
+## Sessions and tool calls
+
+Each operation on a draft is a tool call of a session: `query`, `apply`, `check` or `simulate`,
+made by the user or an agent. The page makes its calls in the draft's own session, started on its
+first patch; an agent starts a session of its own. A session records every call, what it asked and
+how it was answered.
+
+| tool | arguments | answer |
+|---|---|---|
+| `query` | `{"selector": "part{id: P, block: \"agent\"}"}` | `columns`, and `rows`: one object per answer of the selector, keyed by its variables |
+| `apply` | `{"patch": "<rules>"}`, or a patch document as `patch`; `dry_run` beside the arguments | `outcome` (`Applied`, `DryRun` or `Refused`), `diff`, `check`, `refusal` with the rule's position and error, the `revision` it made |
+| `check` | none | `check`: `passed` and each refusal with its rule, part and message |
+| `simulate` | `{"budget": 4, "horizon": "24h", "profile": "profiles/coding.yaml"}`, each optional | the mean of each KPI over `budget` seeds (1 to 16), with its unit, which direction is better and what it measures, and the KPIs per part |
+
+Every answer has a `summary`: one or a few lines that say what happened, such as
+`Refused at rule 2: UnknownVerb — ...` or `owner_wait_share = 0.0317 — Share of agent time spent
+waiting on the human owner. (share, lower is better)`. An apply that a rule or the check refuses is
+answered, and the draft keeps its revision. A call that cannot be carried out (a selector that
+does not parse, a budget out of range) is `Failed` with the reason.
+
+```console
+curl -s -X POST localhost:7431/api/sessions -d '{"draft_id": "<draft>"}'
+curl -s -X POST localhost:7431/api/sessions/<session>/calls \
+  -d '{"tool": "apply", "caller": "Agent", "arguments": {"patch": "set(P, count, 3) :- part{id: P, block: \"agent\", count: 12}."}, "dry_run": true}'
+```
+
+A simulate runs the current revision at its marked values, without faults. It is a quick reading,
+not an experiment: `agenticspec sim run` searches the marked places.
+
+## Connect an agent
+
+`agenticstudio-mcp` is an MCP server over stdio that lets any agent harness drive a draft through
+the four tools. Each call is a tool call with caller `Agent` in a session of its own, and every
+page open on the draft shows each change live.
+
+Start the studio, open a draft on its page, then build the server and add it to your harness:
+
+```console
+cargo build --release -p agenticstudio-mcp
+claude mcp add agenticstudio -- "$PWD/target/release/agenticstudio-mcp" --studio http://127.0.0.1:7431
+```
+
+Any harness that reads an MCP configuration takes the same command:
+
+```json
+{
+  "mcpServers": {
+    "agenticstudio": {
+      "command": "/path/to/agenticspec/target/release/agenticstudio-mcp",
+      "args": ["--studio", "http://127.0.0.1:7431"]
+    }
+  }
+}
+```
+
+| flag | what |
+|---|---|
+| `--studio <url>` | the running studio; default `http://127.0.0.1:7431` |
+| `--draft <id>` | the draft of this id |
+| `--open <source>` | a new draft of `architectures/<name>.yaml`, opened at the first call |
+
+Without `--draft` or `--open`, the server works on the draft opened last of those still open. The
+session starts at the first call and closes when the harness ends the server. The tool
+descriptions carry the patch verbs and the relations of the selectors, so the agent needs no other
+instructions. Ask it, for example, to halve the workers, dry run first, and explain what the check
+says.
+
 ## Endpoints
 
 The app reads the views and sends the commands its document names; each answers JSON:
@@ -134,6 +214,9 @@ The app reads the views and sends the commands its document names; each answers 
 | `GET /api/views/studio.DraftGraph?draft_id=<id>` | the graph: its SVG, size, parts with their properties, and links |
 | `POST /api/commands/studio.draft.OpenDraft` | `{"source"}` opens a draft; answers `201` with `{"row": <draft>}` |
 | `POST /api/commands/studio.session.CallTool` | `{"draft_id", "arguments": "<rules>", "dry_run"}` applies a patch; answers `{"row": {"outcome": "Applied" or "DryRun", "message", "diff"}}`, or `422` with `{"row": {"outcome": "Refused", "rule", "error", "message"}}` |
+| `GET /api/views/studio.session.Sessions` | the sessions: `session_id`, `draft_id`, `state` |
+| `GET /api/views/studio.session.ToolCalls?session_id=<id>` | the calls of a session: `tool`, `caller`, `arguments`, `dry_run`, `answer`, `failure`, `state` (`Running`, `Answered`, `Failed`) |
+| `GET /api/channels/draft_events?draft_id=<id>` | the draft's event channel, as for `/api/drafts/<id>/events` |
 
 A script can also use these endpoints:
 
@@ -144,7 +227,15 @@ A script can also use these endpoints:
 | `GET /api/drafts` | the drafts |
 | `GET /api/drafts/<id>` | a draft: its document, its revision with number and digest, its parts, its check and its patch applications |
 | `GET /api/drafts/<id>/graph` | the graph page of its current revision (HTML) |
-| `POST /api/drafts/<id>/patches` | applies a patch: `{"text": "<rules>", "dry_run": false}`, or a patch document |
+| `POST /api/drafts/<id>/patches` | applies a patch: `{"text": "<rules>", "dry_run": false}`, or a patch document; a call in the draft's own session |
+| `GET /api/drafts/<id>/revisions` | its revisions, oldest first: `number`, `digest`, `cause` (`Opened`, `Patch`, `SourceChanged`) and the patch `application` that made it |
+| `GET /api/drafts/<id>/revisions/<n>` | revision `n`: its `document`, `graph` and `check` |
+| `GET /api/drafts/<id>/events` | the draft's event channel, as server-sent events: `studio.draft.DraftRevised` (`number`, `digest`, `cause`, `application`), `studio.session.ToolCallAnswered` and `studio.session.ToolCallFailed` (`call_id`, `session_id`, `tool`, `caller`, and the first line of the answer's `summary` or the `failure`) |
+| `POST /api/sessions` | starts a session on a draft: `{"draft_id"}` |
+| `GET /api/sessions` | the sessions |
+| `POST /api/sessions/<id>/calls` | a tool call: `{"tool", "caller": "User" or "Agent", "arguments", "dry_run"}`; answers `{"call": <the call, with its answer>}` |
+| `GET /api/sessions/<id>/calls` | the calls of the session |
+| `POST /api/sessions/<id>/close` | closes the session; a call in it is refused with `ClosedSession` |
 
 A patch document names its format and lists its rules:
 

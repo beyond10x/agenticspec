@@ -1,11 +1,14 @@
 # The one component of the studio: `agenticstudio serve`, which holds the drafts and answers the
-# studio's page (studio/studio.ui.yaml) over HTTP on 127.0.0.1. It opens drafts and carries out
-# the user's tool calls on them (in the first slice an apply, by patch).
+# studio's page (studio/studio.ui.yaml) over HTTP on 127.0.0.1. It opens drafts, starts the
+# sessions the page and the agent channel (`agenticstudio-mcp`) work in, carries out each tool
+# call of a session (query, apply, check, simulate) and answers or fails it, and publishes each
+# new revision and each answered call on the event channel of the draft.
 components:
   - component: studio-server
     summary: >-
-      Holds the drafts and their revisions in memory and serves the studio's page, its reads and
-      its commands over HTTP on 127.0.0.1 (`agenticstudio serve`).
+      Holds the drafts, their revisions and the sessions on them in memory and serves the
+      studio's page, its reads, its commands and the event channel of each draft over HTTP on
+      127.0.0.1 (`agenticstudio serve`).
     owns:
       domains:
         - studio.draft
@@ -14,9 +17,19 @@ components:
     accepts:
       commands:
         - studio.draft.OpenDraft
+        - studio.draft.ReviseDraft
+        - studio.session.StartSession
+        - studio.session.CloseSession
         - studio.session.CallTool
+        - studio.session.AnswerToolCall
+        - studio.session.FailToolCall
     publishes:
       events:
         - studio.draft.DraftOpened
+        - studio.draft.DraftRevised
+        - studio.session.SessionStarted
+        - studio.session.SessionClosed
         - studio.session.ToolCalled
+        - studio.session.ToolCallAnswered
+        - studio.session.ToolCallFailed
     reached_by: network

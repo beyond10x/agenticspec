@@ -1,16 +1,23 @@
 //! `agenticstudio serve --root <dir> --port <n> --www <dir>`: the studio over the architecture
 //! documents of `<dir>/architectures`, on 127.0.0.1 only, with the built app of `ui/studio` from
-//! the www directory. Port 0 takes a free port; the first line printed names the address.
+//! the www directory. Port 0 takes a free port; the first line printed names the address. The
+//! event channel of a draft is streamed on its connection; the source document of every open
+//! draft is read again every half second, and a change on disk becomes a new revision.
 
 use std::io::Write as _;
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use agenticstudio::http;
-use agenticstudio::routes::serve;
+use agenticstudio::live;
+use agenticstudio::routes::{events, lock, serve};
 use agenticstudio::studio::Studio;
+
+/// How often the source documents of the open drafts are read again.
+const WATCH: Duration = Duration::from_millis(500);
 
 const USAGE: &str = "usage: agenticstudio serve [--root <dir>] [--port <n>] [--www <dir>]
 
@@ -84,6 +91,15 @@ fn main() -> ExitCode {
             .unwrap_or_else(|| a.root.join("target/studio/www")),
     );
     let studio = Arc::new(Mutex::new(Studio::new(a.root)));
+    {
+        let studio = Arc::clone(&studio);
+        std::thread::spawn(move || {
+            loop {
+                std::thread::sleep(WATCH);
+                lock(&studio).reload_sources();
+            }
+        });
+    }
     for conn in listener.incoming() {
         let Ok(mut stream) = conn else { continue };
         let studio = Arc::clone(&studio);
@@ -91,9 +107,21 @@ fn main() -> ExitCode {
         std::thread::spawn(move || {
             let _ = stream.set_read_timeout(Some(http::READ_TIMEOUT));
             let _ = stream.set_write_timeout(Some(http::WRITE_TIMEOUT));
-            let response = match http::read(&stream) {
-                Ok(request) => serve(&studio, &www, &request),
-                Err(e) => http::Response::new(400, http::TEXT, format!("{e}\n")),
+            let request = match http::read(&stream) {
+                Ok(request) => request,
+                Err(e) => {
+                    let r = http::Response::new(400, http::TEXT, format!("{e}\n"));
+                    let _ = http::write(&mut stream, &r);
+                    return;
+                }
+            };
+            let response = match events(&studio, &request) {
+                Some(Ok((rx, hello))) => {
+                    let _ = live::stream(&mut stream, &hello, &rx, live::KEEPALIVE);
+                    return;
+                }
+                Some(Err(response)) => response,
+                None => serve(&studio, &www, &request),
             };
             let _ = http::write(&mut stream, &response);
         });
