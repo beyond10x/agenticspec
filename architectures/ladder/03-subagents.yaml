@@ -7,7 +7,7 @@ summary: >-
 
 parts:
   you:       { block: principal, kind: human }
-  session:   { block: agent, harness: coding, acts_for: you }
+  session:   { block: agent, harness: coding, role: operator, acts_for: you }
   subagents: { block: agent, harness: coding, count: 3 }
   model:     { block: model, route: frontier }
   repo:      { block: workspace, kind: checkout, sharing: exclusive, per: session }

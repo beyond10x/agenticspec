@@ -294,7 +294,7 @@ fn label(arch: &Value, name: &str, p: &Value) -> String {
         "agent" if check::is_reviewer(arch, name) => "reviewer agent".into(),
         "agent" if !p["acts_for"].is_null() => format!("acts for {}", text(p, "acts_for")),
         "agent" if !p["method"].is_null() => format!("method {}", text(p, "method").to_uppercase()),
-        "agent" if p["harness"] == "orchestrator" => "orchestrator".into(),
+        "agent" if p["role"] == "orchestrator" => "orchestrator".into(),
         "agent" => "agent".into(),
         "principal" => kind,
         "schedule" => format!("every {}", text(p, "every")),
@@ -437,17 +437,6 @@ fn simulate_rungs(sim: &Value, dir: &Path, rungs: &[Rung]) -> Result<Vec<Value>,
         .as_f64()
         .ok_or("simulation: needs `tasks_per_hour_per_worker`")?;
     profile["load"] = json!({ "tasks_per_hour_per_worker": rate });
-    let operator = profile["agents"]["operator"].clone();
-    for r in rungs {
-        for (name, p) in r.arch.as_ref().map(parts).unwrap_or_default() {
-            if p["block"] == "agent"
-                && !p["acts_for"].is_null()
-                && profile["agents"][&name].is_null()
-            {
-                profile["agents"][&name] = operator.clone();
-            }
-        }
-    }
     let profile = Profile::parse(&profile)?;
     let horizon = num(&sim["horizon"])
         .filter(|h| *h > 0.0)

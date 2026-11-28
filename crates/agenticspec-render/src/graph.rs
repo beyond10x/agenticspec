@@ -282,7 +282,14 @@ fn sub_key(p: &Part) -> Option<&'static str> {
         .find(|key| p.props.iter().any(|(k, _)| k == key))
 }
 
-const SUB_KEYS: [&str; 5] = ["harness", "sharing", "isolation", "route", "provider"];
+const SUB_KEYS: [&str; 6] = [
+    "role",
+    "harness",
+    "sharing",
+    "isolation",
+    "route",
+    "provider",
+];
 
 struct Card {
     part: usize,

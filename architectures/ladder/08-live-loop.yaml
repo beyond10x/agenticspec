@@ -10,12 +10,12 @@ summary: >-
 
 parts:
   you:         { block: principal, kind: human }
-  session:     { block: agent, harness: coding, acts_for: you }
+  session:     { block: agent, harness: coding, role: operator, acts_for: you }
   subagents:   { block: agent, harness: coding, count: 3 }
   sessions:    { block: agent, harness: coding, count: 4 }
   night:       { block: agent, harness: coding, count: 3 }
   run_a:       { block: agent, harness: coding, method: a }
-  run_b:       { block: agent, harness: executor, method: b }
+  run_b:       { block: agent, harness: coding, role: executor, method: b }
   swarm:       { block: agent, harness: coding, coordination: board, count: 8, start_stagger: 3s }
   verifier:    { block: agent, harness: coding, role: reviewer, strictness: strict, false_accept: 0.1, false_reject: 0.2, count: 2 }
   clock:       { block: schedule, every: 30m }

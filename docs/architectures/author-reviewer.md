@@ -80,7 +80,7 @@ A marked place carries `vary`: the value as built and the values a search may tr
 | `owner` | [principal](../blocks/1-principals/principal.md) | kind human |
 | `gateway` | [gateway](../blocks/2-intelligence/gateway.md) | rate_limit_per_minute 120 |
 | `model` | [model](../blocks/2-intelligence/model.md) | route frontier |
-| `operator` | [agent](../blocks/4-agent/agent.md) | acts_for owner; harness coding |
+| `operator` | [agent](../blocks/4-agent/agent.md) | acts_for owner; harness coding; role operator |
 | `reviewer` | [agent](../blocks/4-agent/agent.md) | harness coding; role reviewer; strictness balanced <span className="as-tag as-tag--marked">marked: lenient, balanced, strict</span> |
 | `worker` | [agent](../blocks/4-agent/agent.md) | count 8 <span className="as-tag as-tag--marked">marked: 4 to 20 by 2</span>; harness coding |
 | `chat` | [channel](../blocks/7-collaboration/channel.md) | kind operator |

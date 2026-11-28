@@ -10,7 +10,7 @@ summary: >-
 
 parts:
   owner:    { block: principal, kind: human }
-  operator: { block: agent, harness: coding, acts_for: owner }
+  operator: { block: agent, harness: coding, role: operator, acts_for: owner }
   worker:   { block: agent, harness: coding, count: { value: 8, vary: { min: 4, max: 20, step: 2 } } }
   reviewer: { block: agent, harness: coding, role: reviewer, strictness: { value: balanced, vary: [lenient, balanced, strict] } }
   gateway:  { block: gateway, rate_limit_per_minute: 120 }

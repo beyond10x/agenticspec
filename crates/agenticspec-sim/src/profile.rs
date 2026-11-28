@@ -81,10 +81,17 @@ impl Dist {
 /// Token classes, in the order of every `[f64; 4]` in this crate.
 pub const TOKEN_CLASSES: [&str; 4] = ["input", "cache_read", "cache_write", "output"];
 
+/// The behaviour of one role, named by a part's `role`. A part that works tasks needs
+/// `task_turns` and `turn_seconds`, a reviewer `turn_seconds`, an agent that answers questions
+/// `answer_seconds`; the simulation refuses a part whose role lacks what it uses.
 #[derive(Debug, Clone)]
 pub struct Role {
-    pub task_turns: Dist,
-    pub turn_seconds: Dist,
+    /// Turns of a task; for a runtime, the steps of a run.
+    pub task_turns: Option<Dist>,
+    /// Duration of one turn or step.
+    pub turn_seconds: Option<Dist>,
+    /// How long an agent of this role takes to answer or pass on a question.
+    pub answer_seconds: Option<Dist>,
     pub tokens_per_turn: [Dist; 4],
     pub builds_per_task: Dist,
     pub build_seconds: Dist,
@@ -174,8 +181,6 @@ pub struct Coordination {
 pub struct Profile {
     pub roles: BTreeMap<String, Role>,
     pub principals: BTreeMap<String, Principal>,
-    /// Answer delay of an agent part that answers questions, by part name.
-    pub agents: BTreeMap<String, Dist>,
     pub load: Load,
     /// Price per token of each class, by model route.
     pub prices: BTreeMap<String, [f64; 4]>,
@@ -216,6 +221,14 @@ fn dist_or(path: &str, v: &Value, default: Dist) -> Result<Dist, String> {
     }
 }
 
+fn optional(path: &str, v: &Value) -> Result<Option<Dist>, String> {
+    if v.is_null() {
+        Ok(None)
+    } else {
+        Dist::parse(path, v).map(Some)
+    }
+}
+
 impl Profile {
     pub fn parse(doc: &Value) -> Result<Profile, String> {
         if let Some(f) = doc["format"].as_str()
@@ -246,8 +259,9 @@ impl Profile {
             roles.insert(
                 name.clone(),
                 Role {
-                    task_turns: Dist::parse(&p("task_turns"), &r["task_turns"])?,
-                    turn_seconds: Dist::parse(&p("turn_seconds"), &r["turn_seconds"])?,
+                    task_turns: optional(&p("task_turns"), &r["task_turns"])?,
+                    turn_seconds: optional(&p("turn_seconds"), &r["turn_seconds"])?,
+                    answer_seconds: optional(&p("answer_seconds"), &r["answer_seconds"])?,
                     tokens_per_turn: tokens,
                     builds_per_task: dist_or(
                         &p("builds_per_task"),
@@ -322,14 +336,11 @@ impl Profile {
                 },
             );
         }
-        let mut agents = BTreeMap::new();
-        for (name, a) in map(doc, "agents") {
-            agents.insert(
-                name.clone(),
-                Dist::parse(
-                    &format!("agents.{name}.answer_seconds"),
-                    &a["answer_seconds"],
-                )?,
+        if !doc["agents"].is_null() {
+            return Err(
+                "profile: `agents` names answer delays by part name; give each on the role \
+                 of the part that answers instead, roles.<role>.answer_seconds"
+                    .into(),
             );
         }
         let mut prices = BTreeMap::new();
@@ -414,7 +425,6 @@ impl Profile {
         Ok(Profile {
             roles,
             principals,
-            agents,
             load,
             prices,
             agent_hour_usd,
