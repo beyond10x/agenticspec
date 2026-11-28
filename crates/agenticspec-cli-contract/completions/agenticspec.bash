@@ -52,6 +52,9 @@ _agenticspec() {
             agenticspec,sync)
                 cmd="agenticspec__subcmd__sync"
                 ;;
+            agenticspec,ui)
+                cmd="agenticspec__subcmd__ui"
+                ;;
             agenticspec__subcmd__help,analyze)
                 cmd="agenticspec__subcmd__help__subcmd__analyze"
                 ;;
@@ -88,6 +91,9 @@ _agenticspec() {
             agenticspec__subcmd__help,sync)
                 cmd="agenticspec__subcmd__help__subcmd__sync"
                 ;;
+            agenticspec__subcmd__help,ui)
+                cmd="agenticspec__subcmd__help__subcmd__ui"
+                ;;
             agenticspec__subcmd__help__subcmd__sim,check)
                 cmd="agenticspec__subcmd__help__subcmd__sim__subcmd__check"
                 ;;
@@ -99,6 +105,9 @@ _agenticspec() {
                 ;;
             agenticspec__subcmd__help__subcmd__sim,run)
                 cmd="agenticspec__subcmd__help__subcmd__sim__subcmd__run"
+                ;;
+            agenticspec__subcmd__help__subcmd__ui,generate)
+                cmd="agenticspec__subcmd__help__subcmd__ui__subcmd__generate"
                 ;;
             agenticspec__subcmd__sim,check)
                 cmd="agenticspec__subcmd__sim__subcmd__check"
@@ -130,6 +139,18 @@ _agenticspec() {
             agenticspec__subcmd__sim__subcmd__help,run)
                 cmd="agenticspec__subcmd__sim__subcmd__help__subcmd__run"
                 ;;
+            agenticspec__subcmd__ui,generate)
+                cmd="agenticspec__subcmd__ui__subcmd__generate"
+                ;;
+            agenticspec__subcmd__ui,help)
+                cmd="agenticspec__subcmd__ui__subcmd__help"
+                ;;
+            agenticspec__subcmd__ui__subcmd__help,generate)
+                cmd="agenticspec__subcmd__ui__subcmd__help__subcmd__generate"
+                ;;
+            agenticspec__subcmd__ui__subcmd__help,help)
+                cmd="agenticspec__subcmd__ui__subcmd__help__subcmd__help"
+                ;;
             *)
                 ;;
         esac
@@ -137,7 +158,7 @@ _agenticspec() {
 
     case "${cmd}" in
         agenticspec)
-            opts="-h --config --state-dir --output --help analyze export kpi lift mine procedure query serve sim sync completions help"
+            opts="-h --config --state-dir --output --help analyze export kpi lift mine procedure query serve sim sync ui completions help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -257,7 +278,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__help)
-            opts="analyze export kpi lift mine procedure query serve sim sync completions help"
+            opts="analyze export kpi lift mine procedure query serve sim sync ui completions help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -483,6 +504,34 @@ _agenticspec() {
         agenticspec__subcmd__help__subcmd__sync)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__ui)
+            opts="generate"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__ui__subcmd__generate)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
@@ -987,6 +1036,108 @@ _agenticspec() {
                     COMPREPLY=($(compgen -W "human json" -- "${cur}"))
                     return 0
                     ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ui)
+            opts="-h --config --state-dir --output --help generate help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ui__subcmd__generate)
+            opts="-h --path --out --config --state-dir --output --help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --path)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --out)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ui__subcmd__help)
+            opts="generate help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ui__subcmd__help__subcmd__generate)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ui__subcmd__help__subcmd__help)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
                 *)
                     COMPREPLY=()
                     ;;

@@ -155,3 +155,9 @@ Values you will match on:
 
 `bytes` and `digest` stand for content: its length and its SHA-256. The text itself is not stored,
 so a query never sees it.
+
+## Relations of an architecture
+
+The same language selects in an architecture document, over the relations `part`, `setting`,
+`link` and `marker`. agenticstudio uses them in the selectors of its patches; their fields are on
+the [agenticstudio](studio.md) page.

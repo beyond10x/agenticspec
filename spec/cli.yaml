@@ -102,6 +102,13 @@ callables:
       document_unreadable: agenticspec.cli.Refusal
       ladder_refused: agenticspec.cli.Refusal
       ladder_stale: agenticspec.cli.Refusal
+  ui_generate:
+    target: {kind: local, owner: agenticspec.cli, action: ui_generate}
+    input: agenticspec.cli.UiGenerateInput
+    result: agenticspec.cli.UiGenerateResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
@@ -195,3 +202,9 @@ commands:
       - {field: ladder, source: {kind: positional, index: 1}}
       - {field: out, source: {kind: option, long: out}}
       - {field: check, source: {kind: flag, long: check}}
+  - path: [ui, generate]
+    callable: ui_generate
+    about: Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+    arguments:
+      - {field: path, source: {kind: option, long: path}}
+      - {field: out, source: {kind: option, long: out}}

@@ -30,6 +30,14 @@ narrowed by it. A host that shows one session (the LLM gateway UI) opens an `emb
 `app/src/generated/` (`ess generate types`). `app/src/testing/fixtures.ts` answers its views from
 `fixtures/` for the unit tests and the browser tests of `app/e2e/` (`task check:app`).
 
+## The design system and the studio app
+
+`kit/` is the design system every generated page draws with: tokens taken from the docs site, a
+light and a dark theme, and the `Kit*` components; its gallery shows them all (`task check:ui-kit`).
+`studio/` is the agenticstudio app, generated from `../studio/studio.ui.yaml` by `agenticspec ui
+generate` into `studio/src/generated/` (`task ui:generate`), with its host slots in
+`studio/src/slots/`. Both share `package.json` here; `docs/studio.md` describes the app.
+
 ## Served from the local store
 
 ```console

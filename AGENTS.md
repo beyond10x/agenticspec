@@ -121,8 +121,12 @@ change.
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
 | `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
 | `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
-| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
+| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result; `graph(architecture)`: the graph alone (SVG, size, parts with their properties, links) for agenticstudio to draw inline |
 | `agenticspec-docs` | `lib.rs`, `main.rs` | the generated docs pages of the blocks, architectures and KPI catalogue (`task docs:generate`, `--check`) |
+| `agenticspec-records` | `sq/architecture.rs` | the fact base of an architecture (`part`, `setting`, `link`, `marker`), compiled apart from the session relations |
+| `agenticspec-patch` | `lib.rs`, `facts.rs`, `text.rs`, `diff.rs` | `agenticspec-patch/1`: the facts of an architecture document, the verbs `set` and `add`, atomic application checked by `agenticspec-sim`'s check, refusals by rule position and error name (`ErrorName`, each listed in `docs/studio.md`) |
+| `agenticspec-ui` | `doc.rs`, `check.rs`, `emit.rs`, `runtime.ts` | `agenticspec ui generate --path --out`: an `ess-ui/1` document to Vue pages, a hash router, a typed client and a runtime over `ui/kit` components and host slots only, byte for byte the same each run. A construct it cannot draw is refused by its node path; the look is never generated. Golden tests in `tests/cases/` (`UPDATE_GOLDEN=1` rewrites them) |
+| `agenticstudio` | `studio.rs`, `routes.rs`, `app.rs`, `http.rs`, `main.rs` | `agenticstudio serve`: drafts, revisions, patches and applications in memory; the views and commands of `studio/studio.ui.yaml` (`/api/views`, `/api/commands`, `app.rs`), the older `/api` routes, and the built app of `ui/studio` from `--www`. Its types are `src/generated/` (`ess generate types` from `studio/` and the architecture block, held by `task check:generated`), included as modules; its browser test is `e2e/` (`task check:studio`) |
 
 Beside the crates, `ui/` holds:
 
@@ -134,6 +138,18 @@ Beside the crates, `ui/` holds:
   the views page by page and the SSE channels (`app/src/client.ts`).
 - `app/src/testing/fixtures.ts`, which answers every view from `fixtures/` the way `serve`'s queries
   do. vitest uses it and so does Playwright (`app/e2e/harness.ts`), so no test starts a server.
+- `kit/`, the design system: the tokens (`kit/src/tokens.css`, from the docs site's product theme,
+  light and dark), the base styles and the `Kit*` components every generated page draws with; no
+  colour, size or font is written outside the tokens. Its gallery (`kit/gallery/`) shows every
+  component in both themes; `task check:ui-kit` (`scripts/check-ui-kit.sh`) runs its types, vitest,
+  the gallery build and its browser test.
+- `studio/`, the agenticstudio app: `src/generated/` is written by `agenticspec ui generate` from
+  `studio/studio.ui.yaml` (`task ui:generate`, held by `task check:generated`), never edited;
+  `src/slots/` holds the host slots (`DraftGraph`, `PatchEditor`) and `src/hooks.ts` the command
+  hooks. `task studio:build` builds it into `target/studio/www`; `task check:studio`
+  (`scripts/check-studio.sh`) checks the document, its types and vitest, and runs
+  `crates/agenticstudio/e2e`.
+- `package.json`, one npm package for `kit/` and `studio/`; `app/` keeps its own.
 
 `task ui:build` builds the app into `target/ui/www`. Outside `task check:app`, vitest runs as
 `slot --local npx vitest run --maxWorkers=2` from `ui/app`.
@@ -175,6 +191,8 @@ Beside the crates, `ui/` holds:
 | `scripts/check-generated.sh` | one line per generated directory, the drift check and the regeneration |
 | `scripts/ui-build.sh` | `task ui:build` |
 | `scripts/check-app.sh` | `task check:app`: types, vitest, the build, and the Playwright gates and ratchet of `ux/` |
+| `scripts/check-ui-kit.sh`, `scripts/check-studio.sh` | `task check:ui-kit` and `task check:studio` (`ui/kit`, `ui/studio`, `crates/agenticstudio/e2e`); `SCREENS=1` writes screenshots into `target/screens` |
+| `studio/studio.ui.yaml` | the studio app as an `ess-ui/1` document over the `studio` model (`studio/components.yaml` serves it); its `unmapped` entries name what the document cannot say yet |
 | `ux/` | the ui-iteration-loop: adapter, scenarios, `baseline.json`, `round.sh`, rounds and findings |
 | `scripts/change-class.sh`, `change-class.test.sh` | the change classifier of `pages.yml` (planning, docs-site, code) and its cases, run by `task check:scripts`. `design/` and `research/` are planning; `website/` and `docs/` are the site. A new site source goes into its path list with a case |
 | `website/` | the public documentation site at `https://beyond10x.github.io/agenticspec/` (Docusaurus on `@beyond10x/docs-system`, pinned by commit in `package.json`). Its pages are `docs/*.md`, the user documentation, read in place; `docusaurus.config.ts` gives each its route, title and header (`pages`). `product.json` is the landing page. A new page needs an entry in `pages` and in `sidebars.ts`. A Markdown link to a file the site does not publish fails the build, so link such files by GitHub URL. `task site` builds it |

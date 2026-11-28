@@ -21,6 +21,7 @@ const sidebars: SidebarsConfig = {
     },
     'docs/privacy',
     'docs/library',
+    'docs/studio',
     {
       type: 'category',
       label: 'Building blocks',

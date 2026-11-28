@@ -572,3 +572,20 @@ types:
       - name: written
         type: Boolean
         summary: The file was written; false with `--check`, where it was found current.
+  - name: agenticspec.cli.UiGenerateInput
+    kind: struct
+    fields:
+      - name: path
+        type: String
+        summary: An `ess-ui/1` document, such as `studio/studio.ui.yaml`.
+      - name: out
+        type: String
+        summary: The directory the app is written into; what was in it before is replaced.
+
+  - name: agenticspec.cli.UiGenerateResult
+    kind: struct
+    fields:
+      - {name: out, type: String}
+      - name: files
+        type: List<String>
+        summary: The files written, by their path below `out`.

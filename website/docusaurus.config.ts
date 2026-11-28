@@ -69,6 +69,11 @@ const pages: Record<string, Page> = {
     title: 'Records library',
     lede: 'Write session records from your own program, such as an LLM gateway.',
   },
+  'docs/studio.md': {
+    slug: '/studio',
+    title: 'agenticstudio',
+    lede: 'Open an architecture as a draft, change it with patches, and see its graph and its check.',
+  },
 };
 
 const config: Config = {

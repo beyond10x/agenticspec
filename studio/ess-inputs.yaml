@@ -6,4 +6,5 @@ specification:
   - domains/draft.yaml
   - domains/evaluation.yaml
   - domains/session.yaml
+  - components.yaml
 scenarios: []

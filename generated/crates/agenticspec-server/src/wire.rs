@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest cbeec308ed7f2f09e1949e424571e922f7db168a87b5203f047e7c4a572da298
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -2806,6 +2806,82 @@ pub fn decode_agenticspec_cli_tool_figures(value: &json::Value, at: &str) -> Res
             let at3 = json::nested(at, "failed");
             let member3 = json::member_at(value, at, "failed")?;
             json::integer_at(member3, &at3, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiGenerateInput` as JSON.
+pub fn encode_agenticspec_cli_ui_generate_input(value: &agenticspec_types::cli::UiGenerateInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "path");
+    json::push_text(out, &value.path);
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiGenerateInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_generate_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiGenerateInput, json::DecodeError> {
+    json::closed_at(value, at, &["path", "out"])?;
+    Ok(agenticspec_types::cli::UiGenerateInput {
+        path: {
+            let at0 = json::nested(at, "path");
+            let member0 = json::member_at(value, at, "path")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        out: {
+            let at1 = json::nested(at, "out");
+            let member1 = json::member_at(value, at, "out")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiGenerateResult` as JSON.
+pub fn encode_agenticspec_cli_ui_generate_result(value: &agenticspec_types::cli::UiGenerateResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "files");
+    out.push('[');
+    for (index0, item0) in value.files.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        json::push_text(out, &*item0);
+    }
+    out.push(']');
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiGenerateResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_generate_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiGenerateResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "files"])?;
+    Ok(agenticspec_types::cli::UiGenerateResult {
+        out: {
+            let at0 = json::nested(at, "out");
+            let member0 = json::member_at(value, at, "out")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        files: {
+            let at1 = json::nested(at, "files");
+            let member1 = json::member_at(value, at, "files")?;
+            {
+                let mut items1 = Vec::new();
+                for (index1, element1) in json::items_at(member1, &at1, "an array")?.iter().enumerate() {
+                    let nested1 = json::nested(&at1, &index1.to_string());
+                    items1.push(json::text_at(element1, &nested1, "a string")?.to_owned());
+                }
+                items1
+            }
         },
     })
 }

@@ -1,0 +1,29 @@
+{
+  "name": "agenticspec-ui-kit-and-studio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The design system of ui/kit and the generated studio app of ui/studio, which share these dependencies. ui/app is a package of its own.",
+  "scripts": {
+    "kit:typecheck": "vue-tsc --noEmit -p kit/tsconfig.json",
+    "kit:test": "vitest run --config kit/vite.config.ts",
+    "kit:build": "vite build --config kit/vite.config.ts --logLevel warn",
+    "studio:typecheck": "vue-tsc --noEmit -p studio/tsconfig.json",
+    "studio:test": "vitest run --config studio/vite.config.ts",
+    "studio:build": "vite build --config studio/vite.config.ts --logLevel warn"
+  },
+  "dependencies": {
+    "vue": "3.5.46"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
+    "@playwright/test": "1.65.1",
+    "@vitejs/plugin-vue": "6.0.11",
+    "@vue/test-utils": "2.6.0",
+    "happy-dom": "21.0.4",
+    "typescript": "6.0.3",
+    "vite": "8.3.8",
+    "vitest": "5.1.2",
+    "vue-tsc": "3.3.14"
+  }
+}

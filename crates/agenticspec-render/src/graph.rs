@@ -474,6 +474,7 @@ struct Level {
 pub struct Graph {
     pub svg: String,
     pub width: f64,
+    pub height: f64,
 }
 
 fn pava(target: &[f64], weight: &[f64]) -> Vec<f64> {
@@ -1170,7 +1171,7 @@ pub fn render(arch: &Architecture, outcome: Option<&Outcome>) -> Graph {
         );
     }
     svg.push_str("</g></svg>");
-    Graph { svg, width }
+    Graph { svg, width, height }
 }
 
 fn edge_path(svg: &mut String, d: &str, link: &crate::model::Link) {

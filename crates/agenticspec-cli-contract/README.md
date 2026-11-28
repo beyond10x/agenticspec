@@ -116,8 +116,6 @@ Error `ladder_refused`: `agenticspec.cli.Refusal`.
 
 Error `ladder_stale`: `agenticspec.cli.Refusal`.
 
-Error `out_unwritable`: `agenticspec.cli.Refusal`.
-
 ### `sim render`
 
 Write the page of an architecture, with the result of a run when given
@@ -148,6 +146,18 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `ui generate`
+
+Generate the Vue app of an ess-ui/1 document over the components of ui/kit
+
+Callable: `ui_generate`. Input: `agenticspec.cli.UiGenerateInput`. Result: `agenticspec.cli.UiGenerateResult`.
+
+Error `document_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
 ## Runtime obligations
 
 - handler:analyze: implement the owner-qualified callable and its declared result/error contract
@@ -163,3 +173,4 @@ Error `store_unavailable`: `agenticspec.cli.Refusal`.
 - handler:sim_render: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_generate: implement the owner-qualified callable and its declared result/error contract
