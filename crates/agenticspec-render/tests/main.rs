@@ -1,6 +1,8 @@
 //! The page of the workstation architecture, with and without a simulation result.
 
+mod bands;
 mod graph;
+mod model;
 mod optim;
 mod page;
 

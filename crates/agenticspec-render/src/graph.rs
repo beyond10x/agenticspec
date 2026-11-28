@@ -51,7 +51,7 @@ pub(crate) struct Decor {
     pub chips: Vec<Option<Chip>>,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct NodeDecor {
     /// The line under the label; the group's label without it.
     pub subtitle: Option<String>,
@@ -484,8 +484,8 @@ impl Scene {
         })
     }
 
-    fn read(page: &Page, decor: &Decor) -> Self {
-        let palette = Palette::of(page, &decor.groups);
+    fn read(page: &Page, decor: &Decor, frame: &Frame) -> Self {
+        let palette = Palette::of(frame.palette.unwrap_or(page), &decor.groups);
         let group_label = |g: &str| -> String {
             decor
                 .groups
@@ -706,11 +706,7 @@ impl Scene {
                 },
                 via: decor.vias.get(i).cloned().flatten(),
                 multi: e.count.is_some_and(|c| c > 1),
-                weight: match e.count.unwrap_or(1) {
-                    0..=1 => 1,
-                    2..=3 => 2,
-                    _ => 3,
-                },
+                weight: weight_of(e.count),
             })
             .collect();
         Scene {
@@ -1147,8 +1143,454 @@ fn pava(target: &[f64], weight: &[f64]) -> Vec<f64> {
     out
 }
 
+/// Where [`layered`] draws: the top left its layout starts from, and the page whose groups give
+/// the colours (a band draws a part of a page in the colours of the whole).
+#[derive(Default)]
+struct Frame<'a> {
+    origin: (f64, f64),
+    palette: Option<&'a Page>,
+}
+
+/// A layout drawn without the `<svg>` around it.
+struct Drawn {
+    body: String,
+    width: f64,
+    height: f64,
+    /// The highest y anything is drawn at.
+    top: f64,
+    /// Each node card, by part id.
+    boxes: Vec<(String, [f64; 4])>,
+    /// Each frame, by part id.
+    frames: Vec<(String, [f64; 4])>,
+}
+
+/// The graph of a page, laid out as its `layout` says.
 pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
-    let scene = Scene::read(page, decor);
+    match page.layout {
+        page::Layout::Graph => {
+            let d = layered(page, decor, &Frame::default());
+            wrap(page, decor, &d.body, d.width, d.height)
+        }
+        page::Layout::Bands => {
+            let (body, width, height) = bands(page, decor);
+            wrap(page, decor, &body, width, height)
+        }
+    }
+}
+
+/// The height of a band's head, the least gap between two bands, and the room of one line
+/// beside the bands.
+const BAND_HEAD: f64 = 26.0;
+const BAND_GAP: f64 = 24.0;
+const GUTTER: f64 = 14.0;
+
+/// An edge between two bands: its edge, the bands it leaves and enters, its track in the gap
+/// next to the band it leaves, and, past a band between, its track in the gap next to the band
+/// it enters and its line beside the bands.
+struct Crossing {
+    link: usize,
+    from: usize,
+    to: usize,
+    first: (usize, usize),
+    second: Option<(usize, usize)>,
+    gutter: Option<usize>,
+}
+
+/// The graph of a page in bands, one per top-level region in the order of the list and a last
+/// one for the nodes in none: what a band holds is laid out by [`layered`] as a page of its own,
+/// and an edge between two bands runs through the gaps. Returns the body, width and height.
+fn bands(page: &Page, decor: &Decor) -> (String, f64, f64) {
+    let whole = Scene::read(page, decor, &Frame::default());
+    let tops = &page.regions;
+    let loose = tops.len();
+    // The band of each region: the top-level region it lies in.
+    fn walk<'a>(r: &'a Region, b: usize, out: &mut Vec<(&'a str, usize)>) {
+        out.push((&r.id, b));
+        for c in &r.regions {
+            walk(c, b, out);
+        }
+    }
+    let mut region_band: Vec<(&str, usize)> = Vec::new();
+    for (b, r) in tops.iter().enumerate() {
+        walk(r, b, &mut region_band);
+    }
+    let in_region = |r: &str| region_band.iter().find(|x| x.0 == r).map(|x| x.1);
+    // A node whose id is a top-level region's is that band's own card.
+    let node_band: Vec<usize> = page
+        .nodes
+        .iter()
+        .map(|n| {
+            tops.iter()
+                .position(|r| r.id == n.id)
+                .or_else(|| in_region(n.region.as_deref()?))
+                .unwrap_or(loose)
+        })
+        .collect();
+    let band_of = |id: &str| -> Option<usize> {
+        match page.nodes.iter().position(|n| n.id == id) {
+            Some(i) => Some(node_band[i]),
+            None => in_region(id),
+        }
+    };
+    let end_band = |end: &str| whole.index(end).and_then(|p| band_of(&whole.parts[p].id));
+    let mut shown: Vec<usize> = (0..loose).collect();
+    if node_band.contains(&loose) || shown.is_empty() {
+        shown.push(loose);
+    }
+
+    // Edges within one band, and edges between two.
+    let mut inner: Vec<Vec<usize>> = vec![Vec::new(); loose + 1];
+    let mut crossings: Vec<Crossing> = Vec::new();
+    let gaps_n = shown.len().saturating_sub(1);
+    let mut tracks = vec![0usize; gaps_n];
+    let mut gutters = 0;
+    for (li, e) in page.edges.iter().enumerate() {
+        let (Some(a), Some(b)) = (end_band(&e.from), end_band(&e.to)) else {
+            continue;
+        };
+        if a == b {
+            inner[a].push(li);
+            continue;
+        }
+        let mut track = |g: usize| {
+            tracks[g] += 1;
+            (g, tracks[g] - 1)
+        };
+        let (g1, g2) = if a < b { (a, b - 1) } else { (a - 1, b) };
+        let first = track(g1);
+        let second = (g2 != g1).then(|| track(g2));
+        let gutter = second.map(|_| {
+            gutters += 1;
+            gutters - 1
+        });
+        crossings.push(Crossing {
+            link: li,
+            from: a,
+            to: b,
+            first,
+            second,
+            gutter,
+        });
+    }
+
+    // Each band as a page of its own, laid out once to measure it.
+    let pages: Vec<(Page, Decor)> = shown
+        .iter()
+        .map(|&b| {
+            let top = tops.get(b);
+            let mut sub = Page {
+                format: page.format.clone(),
+                title: page.title.clone(),
+                regions: top.map(|r| r.regions.clone()).unwrap_or_default(),
+                groups: page.groups.clone(),
+                ..Page::default()
+            };
+            for (n, _) in page.nodes.iter().zip(&node_band).filter(|x| *x.1 == b) {
+                let mut n = n.clone();
+                if top.is_none_or(|r| r.id == n.id || n.region.as_deref() == Some(r.id.as_str())) {
+                    n.region = None;
+                }
+                sub.nodes.push(n);
+            }
+            let ids: Vec<String> = sub.nodes.iter().map(|n| n.id.clone()).collect();
+            let held = |id: &str| ids.iter().any(|n| n == id);
+            sub.ports = page
+                .ports
+                .iter()
+                .filter(|p| held(&p.node))
+                .cloned()
+                .collect();
+            let marks: Vec<usize> = (0..page.marks.len())
+                .filter(|&i| held(&page.marks[i].target.node))
+                .collect();
+            let sd = Decor {
+                words: Words::default(),
+                groups: decor.groups.clone(),
+                nodes: decor
+                    .nodes
+                    .iter()
+                    .filter(|(id, _)| held(id))
+                    .cloned()
+                    .collect(),
+                vias: inner[b]
+                    .iter()
+                    .map(|&i| decor.vias.get(i).cloned().flatten())
+                    .collect(),
+                chips: marks
+                    .iter()
+                    .map(|&i| decor.chips.get(i).cloned().flatten())
+                    .collect(),
+            };
+            sub.marks = marks.iter().map(|&i| page.marks[i].clone()).collect();
+            sub.edges = inner[b].iter().map(|&i| page.edges[i].clone()).collect();
+            (sub, sd)
+        })
+        .collect();
+    let colours = |origin: (f64, f64)| Frame {
+        origin,
+        palette: Some(page),
+    };
+    let measured: Vec<Drawn> = pages
+        .iter()
+        .map(|(sub, sd)| layered(sub, sd, &colours((0.0, 0.0))))
+        .collect();
+    let heads: Vec<Option<(String, String, bool)>> = shown
+        .iter()
+        .map(|&b| {
+            tops.get(b).map(|r| {
+                let heading = match (&r.per, &r.r#in) {
+                    (Some(p), _) => format!("per {p}"),
+                    (None, Some(i)) => format!("in {i}"),
+                    (None, None) => format!("in {}", r.label),
+                };
+                (r.label.clone(), heading, r.per.is_some())
+            })
+        })
+        .collect();
+    let band_w = measured
+        .iter()
+        .zip(&heads)
+        .map(|(d, h)| {
+            let head = h.as_ref().map_or(0.0, |(l, s, _)| {
+                text_w(l, 12.0, true) + 8.0 + text_w(s, 11.0, false) + 2.0 * FPAD
+            });
+            d.width.max(head)
+        })
+        .fold(0.0, f64::max)
+        .ceil();
+    let gap_h: Vec<f64> = tracks
+        .iter()
+        .map(|&n| BAND_GAP.max(n as f64 * LANE + 12.0))
+        .collect();
+
+    // Top to bottom: each band's box and the origin of what it holds.
+    let mut boxes: Vec<[f64; 4]> = Vec::new();
+    let mut origins: Vec<(f64, f64)> = Vec::new();
+    let mut y = MARGIN;
+    for (k, d) in measured.iter().enumerate() {
+        let lift = 8.0f64.max(BAND_HEAD - d.top).ceil();
+        let ox = MARGIN + ((band_w - d.width) / 2.0).floor();
+        let h = lift + d.height - 12.0;
+        boxes.push([MARGIN, y, band_w, h]);
+        origins.push((ox, y + lift));
+        y += h;
+        if let Some(g) = gap_h.get(k) {
+            y += g;
+        }
+    }
+    let width = MARGIN
+        + band_w
+        + if gutters > 0 {
+            GUTTER * (gutters as f64 + 1.0)
+        } else {
+            0.0
+        }
+        + MARGIN;
+    let height = (y + MARGIN).ceil();
+    let drawn: Vec<Drawn> = pages
+        .iter()
+        .zip(&origins)
+        .map(|((sub, sd), &o)| layered(sub, sd, &colours(o)))
+        .collect();
+
+    // The box an edge end lands on: its node's card, its region's frame, or its band.
+    let end_box = |band: usize, end: &str| -> [f64; 4] {
+        let id = whole.index(end).map(|p| whole.parts[p].id.as_str());
+        id.and_then(|id| {
+            drawn[band]
+                .boxes
+                .iter()
+                .chain(&drawn[band].frames)
+                .find(|b| b.0 == id)
+        })
+        .map(|b| b.1)
+        .unwrap_or(boxes[band])
+    };
+    // From a point on a card's side to the band's edge at `edge_y`: straight when no other card
+    // of the band is in the way; else out to a row clear of cards, along it to the band's right
+    // margin, where no card stands, and along the margin to the edge.
+    let exit = |band: usize, own: [f64; 4], (x, y): (f64, f64), edge_y: f64, k: usize| {
+        let cards: Vec<[f64; 4]> = drawn[band]
+            .boxes
+            .iter()
+            .map(|b| b.1)
+            .filter(|b| *b != own)
+            .collect();
+        let across = |b: &[f64; 4], x0: f64, x1: f64| x1 > b[0] && x0 < b[0] + b[2];
+        let along = |b: &[f64; 4], y0: f64, y1: f64| y1 > b[1] && y0 < b[1] + b[3];
+        let (lo, hi) = (y.min(edge_y), y.max(edge_y));
+        if !cards.iter().any(|b| across(b, x, x) && along(b, lo, hi)) {
+            return vec![(x, edge_y)];
+        }
+        let down = edge_y > y;
+        let step = if down { 1.0 } else { -1.0 };
+        let mx = boxes[band][0] + boxes[band][2] - 5.0 - 3.0 * (k % 4) as f64;
+        let mut yd = y + step * (8.0 + 3.0 * (k % 3) as f64);
+        for _ in 0..=cards.len() {
+            let hit: Vec<&[f64; 4]> = cards
+                .iter()
+                .filter(|b| across(b, x.min(mx), x.max(mx)) && along(b, yd - 1.0, yd + 1.0))
+                .collect();
+            if hit.is_empty() {
+                break;
+            }
+            yd = if down {
+                hit.iter().map(|b| b[1] + b[3]).fold(yd, f64::max) + 8.0
+            } else {
+                hit.iter().map(|b| b[1]).fold(yd, f64::min) - 8.0
+            };
+        }
+        if (down && yd >= edge_y) || (!down && yd <= edge_y) {
+            return vec![(x, edge_y)];
+        }
+        vec![(x, yd), (mx, yd), (mx, edge_y)]
+    };
+    let track_y = |(g, t): (usize, usize)| {
+        let b = boxes[g];
+        b[1] + b[3] + 6.0 + LANE * (t as f64 + 0.5)
+    };
+    let gutter_x = |k: usize| MARGIN + band_w + GUTTER * (k as f64 + 1.0);
+    let centre = |b: [f64; 4]| b[0] + b[2] / 2.0;
+    // The ends at one side of one card spread over its width in the order of where they go.
+    // crossing, start, box, bottom side, toward x
+    let mut ends: Vec<(usize, bool, [f64; 4], bool, f64)> = Vec::new();
+    for (k, c) in crossings.iter().enumerate() {
+        let link = &page.edges[c.link];
+        let (fb, tb) = (end_box(c.from, &link.from), end_box(c.to, &link.to));
+        let down = c.from < c.to;
+        let (tf, tt) = match c.gutter {
+            Some(g) => (gutter_x(g), gutter_x(g)),
+            None => (centre(tb), centre(fb)),
+        };
+        ends.push((k, true, fb, down, tf));
+        ends.push((k, false, tb, !down, tt));
+    }
+    let end_x = |k: usize, start: bool| -> f64 {
+        let Some(&(_, _, b, side, _)) = ends.iter().find(|e| e.0 == k && e.1 == start) else {
+            return 0.0;
+        };
+        let mut at: Vec<&(usize, bool, [f64; 4], bool, f64)> =
+            ends.iter().filter(|e| e.2 == b && e.3 == side).collect();
+        at.sort_by(|x, y| x.4.total_cmp(&y.4).then(x.0.cmp(&y.0)).then(y.1.cmp(&x.1)));
+        let m = at.len() as f64;
+        if m < 2.0 {
+            return centre(b);
+        }
+        let j = at
+            .iter()
+            .position(|e| e.0 == k && e.1 == start)
+            .unwrap_or(0) as f64;
+        let span = (b[2] - 40.0).max(0.0).min(26.0 * (m - 1.0));
+        centre(b) - span / 2.0 + span * j / (m - 1.0)
+    };
+
+    let mut svg = String::new();
+    svg.push_str("<g class=\"bands\">");
+    for ((&b, head), bx) in shown.iter().zip(&heads).zip(&boxes) {
+        let id = tops.get(b).map_or("", |r| r.id.as_str());
+        let per = head.as_ref().is_some_and(|h| h.2);
+        let _ = write!(
+            svg,
+            "<g class=\"region band{} f-other\" data-band=\"{}\"><rect class=\"region-bg\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"12\" data-band-box=\"{} {} {} {}\"/>",
+            if per { " per" } else { "" },
+            esc(id),
+            px(bx[0]),
+            px(bx[1]),
+            px(bx[2]),
+            px(bx[3]),
+            px(bx[0]),
+            px(bx[1]),
+            px(bx[2]),
+            px(bx[3])
+        );
+        if let Some((label, heading, _)) = head {
+            let tx = bx[0] + FPAD;
+            let _ = write!(
+                svg,
+                "<text class=\"region-name\" x=\"{}\" y=\"{}\">{}</text><text class=\"region-sub\" x=\"{}\" y=\"{}\">{}</text>",
+                px(tx),
+                px(bx[1] + 17.0),
+                esc(label),
+                px(tx + text_w(label, 12.0, true) + 8.0),
+                px(bx[1] + 17.0),
+                esc(heading)
+            );
+        }
+        svg.push_str("</g>");
+    }
+    svg.push_str("</g><g class=\"edges\">");
+    let mut pills: Vec<(f64, f64, String)> = Vec::new();
+    for (k, c) in crossings.iter().enumerate() {
+        let link = &whole.links[c.link];
+        let (fb, tb) = (
+            end_box(c.from, &page.edges[c.link].from),
+            end_box(c.to, &page.edges[c.link].to),
+        );
+        let down = c.from < c.to;
+        let (sx, ex) = (end_x(k, true), end_x(k, false));
+        let (sy, ey) = if down {
+            (fb[1] + fb[3], tb[1] - 1.0)
+        } else {
+            (fb[1], tb[1] + tb[3] + 1.0)
+        };
+        let edge = |b: usize, bottom: bool| boxes[b][1] + if bottom { boxes[b][3] } else { 0.0 };
+        let out = exit(c.from, fb, (sx, sy), edge(c.from, down), k);
+        let card_y = if down { tb[1] } else { tb[1] + tb[3] };
+        let mut inn = exit(c.to, tb, (ex, card_y), edge(c.to, !down), k);
+        inn.reverse();
+        let (x1, x2) = (out[out.len() - 1].0, inn[0].0);
+        let y1 = track_y(c.first);
+        let mut pts = vec![(sx, sy)];
+        pts.extend(out);
+        pts.push((x1, y1));
+        let turn = match (c.second, c.gutter) {
+            (Some(second), Some(g)) => {
+                let (gx, y2) = (gutter_x(g), track_y(second));
+                pts.extend([(gx, y1), (gx, y2), (x2, y2)]);
+                gx
+            }
+            _ => {
+                pts.push((x2, y1));
+                x2
+            }
+        };
+        pts.extend(inn);
+        pts.push((ex, ey));
+        pts.dedup();
+        // A corner that does not turn is no corner.
+        let mut i = 1;
+        while i + 1 < pts.len() {
+            let (a, b, c) = (pts[i - 1], pts[i], pts[i + 1]);
+            if (a.0 == b.0 && b.0 == c.0) || (a.1 == b.1 && b.1 == c.1) {
+                pts.remove(i);
+            } else {
+                i += 1;
+            }
+        }
+        let mut d = format!("M{} {}", px(pts[0].0), px(pts[0].1));
+        for p in &pts[1..] {
+            let _ = write!(d, "L{} {}", px(p.0), px(p.1));
+        }
+        edge_path(&mut svg, &d, link);
+        let label = edge_label(&whole, link, false);
+        let half = (text_w(&label, 11.5, false) + 18.0) / 2.0;
+        let mid = (x1 + turn) / 2.0;
+        let (lo, hi) = (half + 4.0, width - half - 4.0);
+        pills.push((if lo <= hi { mid.clamp(lo, hi) } else { mid }, y1, label));
+    }
+    svg.push_str("</g><g class=\"labels\">");
+    for (cx, cy, label) in &pills {
+        pill(&mut svg, *cx, *cy, label, None);
+    }
+    svg.push_str("</g>");
+    for d in &drawn {
+        svg.push_str(&d.body);
+    }
+    (svg, width, height)
+}
+
+fn layered(page: &Page, decor: &Decor, frame: &Frame) -> Drawn {
+    let scene = Scene::read(page, decor, frame);
     let sc = &scene;
     let n = sc.parts.len();
     // An edge end `<node>.<port>` lands on the card of the node with that port.
@@ -1769,7 +2211,11 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
         .iter()
         .map(|it| it.x - it.w / 2.0)
         .fold(f64::INFINITY, f64::min);
-    let shift = if left.is_finite() { MARGIN - left } else { 0.0 };
+    let shift = if left.is_finite() {
+        MARGIN + frame.origin.0 - left
+    } else {
+        0.0
+    };
     for it in &mut items {
         it.x = (it.x + shift).round();
     }
@@ -1809,7 +2255,7 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
     };
     let mut mid_top = vec![0.0; layers_n];
     let mut mid_h = vec![0.0; layers_n];
-    let mut y = MARGIN + 6.0;
+    let mut y = MARGIN + 6.0 + frame.origin.1;
     for li in 0..layers_n {
         let h = layers[li].iter().map(|&it| items[it].h).fold(0.0, f64::max);
         let h = if li % 2 == 1 { h.max(16.0) } else { h };
@@ -1987,32 +2433,8 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
     }
 
     let mut svg = String::new();
-    let _ = write!(
-        svg,
-        "<svg class=\"graph\" viewBox=\"0 0 {w} {h}\" width=\"{w}\" height=\"{h}\" role=\"group\" aria-labelledby=\"graph-title graph-desc\">",
-        w = px(width),
-        h = px(height)
-    );
-    let _ = write!(
-        svg,
-        "<title id=\"graph-title\">{}</title><desc id=\"graph-desc\">{}</desc>",
-        esc(&decor.words.title),
-        esc(&decor.words.desc)
-    );
-    svg.push_str(
-        "<defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker>",
-    );
-    // A heavier edge's arrowhead is drawn smaller in its stroke's units, so it keeps one size.
-    for (weight, width) in [(2, WEIGHT_2), (3, WEIGHT_3)] {
-        if sc.links.iter().any(|l| l.weight == weight) {
-            let m = px(7.0 * 1.4 / width);
-            let _ = write!(
-                svg,
-                "<marker id=\"arrow-{weight}\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"{m}\" markerHeight=\"{m}\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker>"
-            );
-        }
-    }
-    svg.push_str("</defs>");
+    // The highest y anything is drawn at: the top of the first row, or an arc over it.
+    let mut reach = MARGIN + 6.0 + frame.origin.1;
 
     // Edges across rows.
     svg.push_str("<g class=\"edges\">");
@@ -2183,6 +2605,7 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
                     px(ey - 1.0)
                 );
                 edge_path(&mut svg, &d, link);
+                reach = reach.min(top - lift * 0.75 - PILL_H / 2.0);
                 row_labels.push(((sx + ex) / 2.0, top - lift * 0.75, label));
             }
         }
@@ -2368,12 +2791,73 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
 
     // Cards.
     svg.push_str("<g class=\"nodes\">");
+    let mut boxes: Vec<(String, [f64; 4])> = Vec::new();
+    let mut frames: Vec<(String, [f64; 4])> = Vec::new();
     for (ci, card) in cards.iter().enumerate() {
         let it = &items[ci];
-        draw_card(&mut svg, sc, card, it.x - card.w / 2.0, it.y - card.h / 2.0);
+        let (x, y) = (it.x - card.w / 2.0, it.y - card.h / 2.0);
+        draw_card(&mut svg, sc, card, x, y);
+        for &(p, dx, dy, w, h) in &card.nodes {
+            boxes.push((sc.parts[p].id.clone(), [x + dx, y + dy, w, h]));
+        }
+        for &(p, dx, dy, w, h) in &card.frames {
+            frames.push((sc.parts[p].id.clone(), [x + dx, y + dy, w, h]));
+        }
     }
-    svg.push_str("</g></svg>");
+    svg.push_str("</g>");
+    Drawn {
+        body: svg,
+        width,
+        height,
+        top: reach,
+        boxes,
+        frames,
+    }
+}
+
+/// The SVG of a page's graph: its accessible title and description, the arrowheads, and what
+/// `body` draws in a `width` × `height` box.
+fn wrap(page: &Page, decor: &Decor, body: &str, width: f64, height: f64) -> Graph {
+    let mut svg = String::with_capacity(body.len() + 2048);
+    let _ = write!(
+        svg,
+        "<svg class=\"graph\" viewBox=\"0 0 {w} {h}\" width=\"{w}\" height=\"{h}\" role=\"group\" aria-labelledby=\"graph-title graph-desc\">",
+        w = px(width),
+        h = px(height)
+    );
+    let _ = write!(
+        svg,
+        "<title id=\"graph-title\">{}</title><desc id=\"graph-desc\">{}</desc>",
+        esc(&decor.words.title),
+        esc(&decor.words.desc)
+    );
+    svg.push_str(
+        "<defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker>",
+    );
+    // A heavier edge's arrowhead is drawn smaller in its stroke's units, so it keeps one size.
+    for (weight, w) in [(2, WEIGHT_2), (3, WEIGHT_3)] {
+        if page.edges.iter().any(|e| weight_of(e.count) == weight) {
+            let m = px(7.0 * 1.4 / w);
+            let _ = write!(
+                svg,
+                "<marker id=\"arrow-{weight}\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"{m}\" markerHeight=\"{m}\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker>"
+            );
+        }
+    }
+    svg.push_str("</defs>");
+    svg.push_str(body);
+    svg.push_str("</svg>");
     Graph { svg, width, height }
+}
+
+/// The stroke of an edge that stands for `count`: 1 for one edge, 2 for two or three, 3 for four
+/// or more.
+fn weight_of(count: Option<u64>) -> u8 {
+    match count.unwrap_or(1) {
+        0..=1 => 1,
+        2..=3 => 2,
+        _ => 3,
+    }
 }
 
 fn edge_path(svg: &mut String, d: &str, link: &Link) {
