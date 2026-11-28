@@ -259,6 +259,14 @@ callables:
       document_refused: agenticspec.cli.Refusal
       derived_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+  ui_build:
+    target: {kind: local, owner: agenticspec.cli, action: ui_build}
+    input: agenticspec.cli.UiBuildInput
+    result: agenticspec.cli.UiBuildResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
   deploy_check:
     target: {kind: local, owner: agenticspec.cli, action: deploy_check}
     input: agenticspec.cli.DeployCheckInput
@@ -485,6 +493,15 @@ commands:
       - {field: out, source: {kind: option, long: out}}
       - {field: root, source: {kind: option, long: root}}
       - {field: check, source: {kind: flag, long: check}}
+  - path: [ui, build]
+    callable: ui_build
+    about: Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), and with --archive a reproducible tar beside them with its sha256
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: contract, source: {kind: option, long: contract}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: api_base, source: {kind: option, long: api-base}}
+      - {field: archive, source: {kind: flag, long: archive}}
   - path: [deploy, check]
     callable: deploy_check
     about: Admit a written deployment bundle again from what it carries, for a reader that did not write it; refuses a digest that does not hold, an undeclared secret or egress, a secret value and every other finding of admission

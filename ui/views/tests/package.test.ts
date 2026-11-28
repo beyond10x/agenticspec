@@ -84,6 +84,26 @@ describe('the package of ui/views', () => {
     app.unmount();
   });
 
+  it('hides an action the action set the host hands over does not allow', async () => {
+    vi.stubGlobal('fetch', fixtureFetch('http://fixtures.test'));
+    vi.stubGlobal('EventSource', class { addEventListener() {} close() {} });
+    const el = document.createElement('div');
+    document.body.append(el);
+    const app = createApp(AgenticPartPage, {
+      source: 'http://fixtures.test',
+      architecture: 'workstation',
+      part: 'operator',
+      layout: layoutJson as unknown as Layout,
+      allowed: [],
+    });
+    installViews(app);
+    app.mount(el);
+    await settle();
+    expect(el.querySelector('h2.part-title')?.textContent).toBe('operator');
+    expect([...el.querySelectorAll('button')].some((b) => b.textContent?.includes('Send a message'))).toBe(false);
+    app.unmount();
+  });
+
   it('keeps the host title and sets a theme only when the host has none', () => {
     document.title = 'Host';
     document.documentElement.dataset.theme = 'dark';

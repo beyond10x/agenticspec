@@ -819,6 +819,43 @@ types:
         type: Boolean
         summary: The files were written; false with `--check`, where they were found current.
 
+  - name: agenticspec.cli.UiBuildInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: An architecture document (`agenticspec-architecture/1`); the documents its nested parts reference are read too.
+      - name: contract
+        type: String
+        summary: The contract of the architecture (`agenticspec-contract/1`), derived from the ports this binary carries.
+      - name: out
+        type: String
+        summary: The directory to write; a new or empty one, or one an earlier build wrote, which is replaced.
+      - name: api_base
+        type: Optional<String>
+        summary: The base path or URL of the runtime's adapter the UI reads at, written into `config.json`; `/api/` by default.
+      - name: archive
+        type: Boolean
+        summary: Also write `<out>.tar`, the same files as a tar with sorted entries, mode 0644, owner 0 and time 0, and print its sha256.
+
+  - name: agenticspec.cli.UiBuildResult
+    kind: struct
+    naming:
+      summary: >-
+        The static files of an operator UI: `index.html`, `app.js` and `app.css` of the operator
+        app built into the binary, `views.json` (the layout of the derived UI), `contract.json`,
+        `ports.json` and `config.json`; the same inputs give the same bytes.
+    fields:
+      - {name: out, type: String}
+      - {name: files, type: Integer}
+      - {name: bytes, type: Integer}
+      - name: archive
+        type: Optional<String>
+        summary: The tar written with `--archive`.
+      - name: archive_sha256
+        type: Optional<String>
+        summary: The sha256 of the tar, the digest a deployment bundle carries for it.
+
   - name: agenticspec.cli.SimPortsInput
     kind: struct
     fields:

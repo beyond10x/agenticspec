@@ -360,6 +360,18 @@ Error `root_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `store_unavailable`: `agenticspec.cli.Refusal`.
 
+### `ui build`
+
+Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), and with --archive a reproducible tar beside them with its sha256
+
+Callable: `ui_build`. Input: `agenticspec.cli.UiBuildInput`. Result: `agenticspec.cli.UiBuildResult`.
+
+Error `document_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
 ### `ui conform`
 
 Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)
@@ -438,6 +450,7 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_trace: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_build: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_conform: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_derive: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_generate: implement the owner-qualified callable and its declared result/error contract

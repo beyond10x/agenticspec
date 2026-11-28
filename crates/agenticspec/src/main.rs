@@ -645,6 +645,7 @@ impl Handler for Commands {
                 }))
             }
             "ui_derive" => ui_derive(&inv.input),
+            "ui_build" => ui_build(&inv.input),
             "deploy_check" => {
                 let accepts = inv
                     .input
@@ -769,6 +770,61 @@ fn ui_derive(input: &Value) -> HandlerReply {
 }
 
 /// A path field of the input; the parser has made every required one present.
+/// `agenticspec ui build`: the embedded operator app with the data files of one architecture,
+/// and with `--archive` their reproducible tar and its sha256.
+fn ui_build(input: &Value) -> HandlerReply {
+    use agenticspec_ui::derive::Failure;
+    use agenticspec_ui::operator::{self, API_BASE, Inputs};
+    let architecture = path_of(input, "architecture");
+    let out = path_of(input, "out");
+    let inputs = Inputs {
+        root: PathBuf::from("."),
+        architecture: architecture.clone(),
+        contract: path_of(input, "contract"),
+        api_base: input
+            .get("api_base")
+            .and_then(Value::as_str)
+            .unwrap_or(API_BASE)
+            .to_string(),
+    };
+    let files = match operator::build(&inputs) {
+        Ok(f) => f,
+        Err(Failure::Unreadable(e)) => return refusal("document_unreadable", e),
+        Err(Failure::Refused(rs)) => {
+            let lines: Vec<String> = rs.iter().map(ToString::to_string).collect();
+            return refusal(
+                "document_refused",
+                format!("{}:\n{}", architecture.display(), lines.join("\n")),
+            );
+        }
+    };
+    if let Err(e) = operator::write(&files, &out) {
+        return refusal("out_unwritable", format!("{}: {e}", out.display()));
+    }
+    let mut answer = json!({
+        "out": out.to_string_lossy(),
+        "files": files.len(),
+        "bytes": files.iter().map(|(_, b)| b.len()).sum::<usize>(),
+    });
+    if input
+        .get("archive")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+    {
+        let tar = match operator::archive(&files) {
+            Ok(t) => t,
+            Err(e) => return refusal("out_unwritable", e),
+        };
+        let path = operator::archive_path(&out);
+        if let Err(e) = std::fs::write(&path, &tar) {
+            return refusal("out_unwritable", format!("{}: {e}", path.display()));
+        }
+        answer["archive"] = json!(path.to_string_lossy());
+        answer["archive_sha256"] = json!(operator::sha256(&tar));
+    }
+    HandlerReply::Success(answer)
+}
+
 fn path_of(input: &Value, field: &str) -> PathBuf {
     PathBuf::from(input.get(field).and_then(Value::as_str).unwrap_or(""))
 }

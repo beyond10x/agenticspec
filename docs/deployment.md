@@ -239,6 +239,34 @@ that enforces no network policy. A refusal exits 1 with `not_admitted` and names
 agenticspec deploy check workstation.bundle.yaml
 ```
 
+## The operator UI
+
+`agenticspec ui build <architecture> --contract <file> --out <dir> [--api-base <path>]
+[--archive]` writes the operator UI of an architecture as static files, from the binary alone: no
+node and no app of your own. The directory holds:
+
+| file | holds |
+|---|---|
+| `index.html`, `app.js`, `app.css` | the operator app, built into the binary, the same for every architecture |
+| `views.json` | the layout of the UI, the pages and panels `agenticspec ui derive` derives from the architecture and its contract |
+| `contract.json` | the contract, as JSON |
+| `ports.json` | the port catalogue the binary carries |
+| `config.json` | the architecture, the title, and `api_base`: where the runtime's adapter answers the runtime interface (`/api/` unless `--api-base` names another path or URL) |
+
+The app reads these files when it starts and calls the adapter at
+`<api_base>/scopes/<architecture>/<part>`. Serve the directory as it is; `config.json` may be
+edited where it is served. The contract must come from the same ports as the binary
+(`agenticspec sim contract` of the same version); another is refused. The directory must be new,
+empty or written by an earlier `ui build`, which is replaced. The same inputs give the same bytes.
+
+`--archive` also writes `<dir>.tar`, the same files with sorted entries, mode 0644, owner 0 and
+time 0, and prints its SHA-256 as `archive_sha256`, the digest a bundle carries for the archive.
+
+```sh
+agenticspec sim contract workstation.yaml --out workstation.contract.yaml
+agenticspec ui build workstation.yaml --contract workstation.contract.yaml --out ui --archive
+```
+
 ## Fixture bundles
 
 `bundles/` holds a bundle of each catalog architecture under each test binding of

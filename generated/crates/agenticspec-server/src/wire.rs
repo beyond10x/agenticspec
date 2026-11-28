@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
+// contract digest abc2efe4b9124d3590d1cfd5ec8ac7618eaf3901e79a176eb47162dd06b4b4ff
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -4868,6 +4868,122 @@ pub fn decode_agenticspec_cli_tool_figures(value: &json::Value, at: &str) -> Res
             let at3 = json::nested(at, "failed");
             let member3 = json::member_at(value, at, "failed")?;
             json::integer_at(member3, &at3, "an integer")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiBuildInput` as JSON.
+pub fn encode_agenticspec_cli_ui_build_input(value: &agenticspec_types::cli::UiBuildInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "contract");
+    json::push_text(out, &value.contract);
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    if let Some(held0) = &value.api_base {
+        json::member(out, "api_base");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "archive");
+    json::push_bool(out, value.archive);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiBuildInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_build_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiBuildInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "contract", "out", "api_base", "archive"])?;
+    Ok(agenticspec_types::cli::UiBuildInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        contract: {
+            let at1 = json::nested(at, "contract");
+            let member1 = json::member_at(value, at, "contract")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        out: {
+            let at2 = json::nested(at, "out");
+            let member2 = json::member_at(value, at, "out")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        api_base: match value.member("api_base") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "api_base");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        archive: {
+            let at4 = json::nested(at, "archive");
+            let member4 = json::member_at(value, at, "archive")?;
+            json::bool_at(member4, &at4, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.UiBuildResult` as JSON.
+pub fn encode_agenticspec_cli_ui_build_result(value: &agenticspec_types::cli::UiBuildResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "out");
+    json::push_text(out, &value.out);
+    json::member(out, "files");
+    json::push_integer(out, value.files);
+    json::member(out, "bytes");
+    json::push_integer(out, value.bytes);
+    if let Some(held0) = &value.archive {
+        json::member(out, "archive");
+        json::push_text(out, &*held0);
+    }
+    if let Some(held0) = &value.archive_sha256 {
+        json::member(out, "archive_sha256");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.UiBuildResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_ui_build_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::UiBuildResult, json::DecodeError> {
+    json::closed_at(value, at, &["out", "files", "bytes", "archive", "archive_sha256"])?;
+    Ok(agenticspec_types::cli::UiBuildResult {
+        out: {
+            let at0 = json::nested(at, "out");
+            let member0 = json::member_at(value, at, "out")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        files: {
+            let at1 = json::nested(at, "files");
+            let member1 = json::member_at(value, at, "files")?;
+            json::integer_at(member1, &at1, "an integer")?
+        },
+        bytes: {
+            let at2 = json::nested(at, "bytes");
+            let member2 = json::member_at(value, at, "bytes")?;
+            json::integer_at(member2, &at2, "an integer")?
+        },
+        archive: match value.member("archive") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "archive");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+        archive_sha256: match value.member("archive_sha256") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "archive_sha256");
+                Some(json::text_at(member4, &at4, "a string")?.to_owned())
+            }
         },
     })
 }
