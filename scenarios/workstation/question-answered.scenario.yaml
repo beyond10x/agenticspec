@@ -5,7 +5,7 @@ summary: >-
   on over the chat, the owner picks option B after ten minutes, inside the default deadline, and
   the worker completes the task.
 architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
-profile: { ref: ../../profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
+profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
 seed: 1
 horizon: 2h
 

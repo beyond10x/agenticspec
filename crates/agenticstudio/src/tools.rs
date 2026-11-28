@@ -21,7 +21,7 @@ use crate::routes::{to_json, val};
 use crate::studio::Outcome;
 
 /// The profile a simulate runs with when it names none.
-pub const DEFAULT_PROFILE: &str = "profiles/coding.yaml";
+pub const DEFAULT_PROFILE: &str = "fields/coding/profiles/coding.yaml";
 /// The seeds a simulate runs when it names no budget, and the most it runs.
 pub const DEFAULT_BUDGET: u64 = 4;
 pub const MAX_BUDGET: u64 = 16;
@@ -207,16 +207,20 @@ fn round(v: f64) -> Value {
     serde_json::Number::from_f64(r).map_or(Value::Null, Value::Number)
 }
 
-fn plain_under(rel: &str, dir: &str) -> bool {
+/// A profile path: relative, without `..`, a `.yaml` file under `profiles/` or under a field's
+/// `fields/<field>/profiles/`.
+fn profile_path_ok(rel: &str) -> bool {
     let p = Path::new(rel);
     p.components().all(|c| matches!(c, Component::Normal(_)))
-        && p.starts_with(dir)
         && rel.ends_with(".yaml")
+        && (p.starts_with("profiles")
+            || (p.starts_with("fields")
+                && p.components().nth(2) == Some(Component::Normal("profiles".as_ref()))))
 }
 
 /// The answer of `simulate`: the draft's current revision at its marked values, run for
 /// `budget` seeds (`arguments.budget`, default 4, at most 16) over `arguments.horizon` (default
-/// 24h) with the behaviour profile `arguments.profile` (default `profiles/coding.yaml`). It
+/// 24h) with the behaviour profile `arguments.profile` (default `fields/coding/profiles/coding.yaml`). It
 /// answers the mean of each KPI over the seeds, with what the KPI catalogue says it measures,
 /// and the KPIs per part.
 pub fn simulate(
@@ -239,9 +243,9 @@ pub fn simulate(
         .filter(|h| *h > 0.0)
         .ok_or_else(|| format!("InvalidHorizon: `{horizon_text}` is no duration such as 24h"))?;
     let profile_path = arguments["profile"].as_str().unwrap_or(DEFAULT_PROFILE);
-    if !plain_under(profile_path, "profiles") {
+    if !profile_path_ok(profile_path) {
         return Err(format!(
-            "NoSuchProfile: {profile_path} is no profile under profiles/"
+            "NoSuchProfile: {profile_path} is no profile under profiles/ or fields/<field>/profiles/"
         ));
     }
     let profile_doc = agenticspec_sim::doc::load_yaml(&root.join(profile_path))

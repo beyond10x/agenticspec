@@ -55,7 +55,7 @@ fn simulated(architecture: &str, dir: &Path) -> PathBuf {
     let out = dir.join("trace.json");
     let answer = cli::trace(&TraceOptions {
         architecture: &root.join(architecture),
-        profile: &root.join("profiles/coding.yaml"),
+        profile: &root.join("fields/coding/profiles/coding.yaml"),
         seed: Some(1),
         horizon: None,
         out: Some(&out),
@@ -258,7 +258,7 @@ fn the_workstation_trace_holds_every_invariant_and_breaks_when_an_inference_leav
 fn every_catalog_architecture_keeps_its_routes_and_recording_changes_no_kpi() {
     let root = repo_root();
     let ports = PortsFile::load(&root.join("blocks/ports.json")).unwrap();
-    let profile_doc = agenticspec_sim::doc::load_yaml(&root.join("profiles/coding.yaml")).unwrap();
+    let profile_doc = agenticspec_sim::doc::load_yaml(&root.join("fields/coding/profiles/coding.yaml")).unwrap();
     let profile = Profile::parse(&profile_doc).unwrap();
     let mut files: Vec<PathBuf> = std::fs::read_dir(root.join("architectures"))
         .unwrap()

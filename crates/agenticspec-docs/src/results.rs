@@ -49,6 +49,8 @@ pub struct Source {
     pub arch_text: String,
     pub profile_path: PathBuf,
     pub profile_text: String,
+    /// The field of work the experiment names (`field:`), a directory under `fields/`.
+    pub field: String,
     /// The entry: the architecture's file stem, or the experiment's when another entry has it.
     pub name: String,
 }
@@ -100,6 +102,13 @@ pub fn sources(root: &Path) -> Result<Vec<Source>, String> {
         };
         let arch_path = field("architecture")?;
         let profile_path = field("profile")?;
+        let field_name = edoc["field"]
+            .as_str()
+            .filter(|f| root.join("fields").join(f).join("field.yaml").exists())
+            .ok_or(format!(
+                "{exp_file}: needs `field`, the name of a field under fields/"
+            ))?
+            .to_string();
         let mut name = stem(&arch_path);
         if out.iter().any(|s| s.name == name) {
             name = stem(&ep);
@@ -113,6 +122,7 @@ pub fn sources(root: &Path) -> Result<Vec<Source>, String> {
             edoc,
             arch_path,
             profile_path,
+            field: field_name,
             name,
         });
     }

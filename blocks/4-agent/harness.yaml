@@ -9,8 +9,9 @@ summary: >-
   Every model call of a session is a turn, with the inference it made and its usage. Every call of a
   tool by a session is a tool call: requested, decided (allowed or denied, with who decided), and
   then completed, failed, or recorded as could not read when its result could not be read; a call
-  of a withdrawn tool is refused, and a call that was not allowed cannot complete. A session that
-  restarts an ended one names it, and the chain of restarts is its lineage.
+  of a withdrawn tool is refused, and a call that was not allowed cannot complete. A session opens
+  in a permission mode a field of work or a binding registered; the core names no mode. A session
+  that restarts an ended one names it, and the chain of restarts is its lineage.
 
 naming:
   wire: harness
@@ -37,15 +38,6 @@ types:
         Vendor is a loop a vendor ships and this system only observes. Driven is a loop whose
         steps an orchestrator outside it issues. Native is a loop written for this system.
 
-  - name: agentic.harness.PermissionMode
-    kind: enum
-    variants: [Ask, AcceptEdits, PlanOnly, Unrestricted]
-    naming:
-      summary: >-
-        How the session treats an action that needs a decision: ask every time, accept edits and
-        ask for the rest, plan without acting, or take every action. The default of a session is
-        the mode it is opened with; a sub-agent starts in its parent's mode.
-
   - name: agentic.harness.SessionRole
     kind: enum
     variants: [Main, SubAgent]
@@ -53,6 +45,33 @@ types:
       summary: Main is a session opened for a principal; SubAgent is one a session spawned.
 
 entities:
+  - name: agentic.harness.PermissionMode
+    naming:
+      summary: >-
+        One registered way a session treats an action that needs a decision (ask every time, plan
+        without acting, take the actions of some kinds without asking). The core names no mode:
+        a field of work or the binding of a harness registers the modes it has as rows here. A
+        retired mode opens no new session; sessions already in it keep it.
+    identity:
+      name: permission_mode_id
+      type: agentic.shared.PermissionModeId
+    fields:
+      - name: name
+        type: agentic.shared.Name
+      - name: summary
+        type: String
+        summary: What the mode takes without asking and what it asks for, in a few words.
+      - name: registered_at
+        type: Timestamp
+    lifecycle:
+      initial: Registered
+      states: [Registered, Retired]
+      terminal: [Retired]
+      transitions:
+        - name: retire
+          from: [Registered]
+          to: Retired
+
   - name: agentic.harness.Harness
     naming:
       summary: >-
@@ -112,7 +131,8 @@ entities:
       - name: context_window
         type: Integer
       - name: permission_mode
-        type: agentic.harness.PermissionMode
+        type: agentic.shared.PermissionModeId
+        summary: The registered mode the session treats actions in; a sub-agent starts in its parent's.
       - name: opened_at
         type: Timestamp
       - name: name
@@ -173,6 +193,11 @@ entities:
         target: agentic.harness.HarnessSession
         cardinality: one
         via: parent_session_id
+      - name: mode
+        kind: references
+        target: agentic.harness.PermissionMode
+        cardinality: one
+        via: permission_mode
     lifecycle:
       initial: Open
       states: [Open, Ended]
@@ -330,6 +355,18 @@ actors:
       - agentic.harness.DecideToolCall
 
 errors:
+  - name: agentic.harness.UnknownPermissionMode
+    summary: No permission mode of this identity is registered.
+    fields:
+      - name: permission_mode_id
+        type: agentic.shared.PermissionModeId
+
+  - name: agentic.harness.PermissionModeStateConflict
+    summary: The permission mode is not in a state this command acts from.
+    fields:
+      - name: state
+        type: agentic.harness.PermissionMode.State
+
   - name: agentic.harness.InvalidLimits
     summary: The context window is not at least 1 or the depth limit is negative.
     fields:
@@ -463,6 +500,17 @@ errors:
       - {name: state, type: agentic.harness.ToolCall.State}
 
 events:
+  - name: agentic.harness.PermissionModeRegistered
+    fields:
+      - {name: permission_mode_id, type: agentic.shared.PermissionModeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: at, type: Timestamp}
+
+  - name: agentic.harness.PermissionModeRetired
+    fields:
+      - {name: permission_mode_id, type: agentic.shared.PermissionModeId}
+      - {name: at, type: Timestamp}
+
   - name: agentic.harness.HarnessRegistered
     fields:
       - {name: harness_id, type: agentic.shared.HarnessId}
@@ -482,7 +530,7 @@ events:
       - {name: harness_id, type: agentic.shared.HarnessId}
       - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
       - {name: principal_id, type: agentic.shared.PrincipalId}
-      - {name: permission_mode, type: agentic.harness.PermissionMode}
+      - {name: permission_mode, type: agentic.shared.PermissionModeId}
       - {name: name, type: Optional<agentic.shared.Name>}
       - {name: at, type: Timestamp}
 
@@ -550,6 +598,61 @@ events:
       - {name: read_failure, type: String}
 
 commands:
+  - name: agentic.harness.RegisterPermissionMode
+    naming:
+      wire: register-permission-mode
+      display: Register a permission mode
+    input:
+      - {name: permission_mode_id, type: agentic.shared.PermissionModeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: summary, type: String}
+      - {name: at, type: Timestamp}
+    outcomes:
+      # UNMAPPED: a second registered mode of the same name is not refused; the registrar (a field
+      # being installed, a binding) keeps names unique.
+      - name: registered
+        creates: agentic.harness.PermissionMode
+        instance: permission_mode_id
+        sets:
+          name: input.name
+          summary: input.summary
+          registered_at: input.at
+        emits: [agentic.harness.PermissionModeRegistered]
+        payload:
+          agentic.harness.PermissionModeRegistered:
+            permission_mode_id: input.permission_mode_id
+            name: input.name
+            at: input.at
+        summary: Sessions may open in the mode.
+
+  - name: agentic.harness.RetirePermissionMode
+    naming:
+      wire: retire-permission-mode
+      display: Retire a permission mode
+    input:
+      - {name: permission_mode_id, type: agentic.shared.PermissionModeId}
+      - {name: at, type: Timestamp}
+    outcomes:
+      - name: no-such-mode
+        unknown_instance: true
+        error: agentic.harness.UnknownPermissionMode
+        payload:
+          agentic.harness.UnknownPermissionMode: {permission_mode_id: input.permission_mode_id}
+      - name: retired
+        moves: agentic.harness.PermissionMode.retire
+        instance: permission_mode_id
+        emits: [agentic.harness.PermissionModeRetired]
+        payload:
+          agentic.harness.PermissionModeRetired:
+            permission_mode_id: input.permission_mode_id
+            at: input.at
+        summary: No new session opens in the mode; sessions already in it keep it.
+      - name: wrong-state
+        wrong_state: true
+        error: agentic.harness.PermissionModeStateConflict
+        payload:
+          agentic.harness.PermissionModeStateConflict: {state: {subject: state}}
+
   - name: agentic.harness.RegisterHarness
     naming:
       wire: register-harness
@@ -625,13 +728,13 @@ commands:
       display: Open a session
       summary: >-
         Starts an agent revision in a harness for a principal. Default deny: an unknown or
-        retired harness, revision or principal is refused.
+        retired harness, revision, principal or permission mode is refused.
     input:
       - {name: harness_session_id, type: agentic.shared.HarnessSessionId}
       - {name: harness_id, type: agentic.shared.HarnessId}
       - {name: agent_revision_id, type: agentic.shared.AgentRevisionId}
       - {name: principal_id, type: agentic.shared.PrincipalId}
-      - {name: permission_mode, type: agentic.harness.PermissionMode}
+      - {name: permission_mode, type: agentic.shared.PermissionModeId}
       - {name: context_window, type: Integer}
       - {name: max_depth, type: Integer}
       - {name: name, type: Optional<agentic.shared.Name>}
@@ -657,6 +760,17 @@ commands:
         error: agentic.harness.UnknownPrincipal
         payload:
           agentic.harness.UnknownPrincipal: {principal_id: input.principal_id}
+      - name: no-such-mode
+        when_related: {via: input.permission_mode, exists: false}
+        error: agentic.harness.UnknownPermissionMode
+        payload:
+          agentic.harness.UnknownPermissionMode: {permission_mode_id: input.permission_mode}
+      - name: mode-retired
+        when_related: {via: input.permission_mode, predicate: state == Retired}
+        error: agentic.harness.PermissionModeStateConflict
+        payload:
+          agentic.harness.PermissionModeStateConflict:
+            state: {related: {via: input.permission_mode, field: state}}
       - name: harness-retired
         when_related: {via: input.harness_id, predicate: state == Retired}
         error: agentic.harness.HarnessStateConflict
@@ -1167,6 +1281,19 @@ commands:
 
 
 views:
+  - name: agentic.harness.PermissionModes
+    source: agentic.harness.PermissionMode
+    consistency: read_your_writes
+    fields:
+      - {name: permission_mode_id, type: agentic.shared.PermissionModeId}
+      - {name: name, type: agentic.shared.Name}
+      - {name: summary, type: String}
+      - {name: registered_at, type: Timestamp}
+      - {name: state, type: agentic.harness.PermissionMode.State}
+    naming:
+      wire: permission-modes
+      display: Permission modes
+
   - name: agentic.harness.Harnesses
     source: agentic.harness.Harness
     consistency: read_your_writes
@@ -1195,7 +1322,7 @@ views:
       - {name: depth, type: Integer}
       - {name: max_depth, type: Integer}
       - {name: context_window, type: Integer}
-      - {name: permission_mode, type: agentic.harness.PermissionMode}
+      - {name: permission_mode, type: agentic.shared.PermissionModeId}
       - {name: opened_at, type: Timestamp}
       - {name: name, type: Optional<agentic.shared.Name>}
       - {name: requested_route, type: Optional<agentic.shared.RouteId>}

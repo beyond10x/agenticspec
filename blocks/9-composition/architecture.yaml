@@ -120,7 +120,7 @@ types:
 
   # The full name of a command of this system (`agentic.model.StartInference`).
   # ESS limit (0.99.2): a field cannot reference a command, so the name is text. The derivation
-  # writes only names `ess specify compile` lists.
+  # writes only names the compiled blocks declare.
   - name: agentic.architecture.CommandName
     kind: newtype
     of: String
@@ -226,7 +226,7 @@ types:
 
   # One operation of a resolved interface: its kind and the full name of the command, view or
   # event, or the KPI's id. ESS limit (0.99.2): a field cannot reference a command, view or
-  # event, so the name is text; the derivation writes only names `ess specify compile` lists and
+  # event, so the name is text; the derivation writes only names the compiled blocks declare and
   # ids of kpis/catalogue.yaml.
   - name: agentic.architecture.ContractOperation
     kind: struct
@@ -1359,7 +1359,7 @@ commands:
   # true}`, error DryRunCommits) beside `no-such-revision` validates, and synthesis arranges the
   # `no-such-revision` scenario on a dry-run application, where the held-state refusal answers
   # first by the precedence rule; the interpreted target answers `dry-run-commits` and the
-  # scenario fails. Until synthesis honours the earlier branch, the applier keeps that rule.
+  # scenario fails. Until synthesis honours the earlier outcome, the applier keeps that rule.
   - name: agentic.architecture.RecordPatchApplied
     naming:
       display: Record an applied patch

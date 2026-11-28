@@ -127,8 +127,22 @@ change.
     than one field reuses, in the namespace `agentic.<word>` (`source-control` is `agentic.scm`,
     then `tracking`, `files`, `shell`); a pack depends on the core and on the packs its
     `pack.yaml` lists under `uses:`;
-  - fields: `fields/<field>/` (`field.yaml`, `architectures/`, `README.md`), one kind of work; a
-    field lists the packs it uses and adds a block only for a concept no other field shares.
+  - fields: `fields/<field>/`, one kind of work; a field lists the packs it uses and adds a block
+    only for a concept no other field shares. `field.yaml` (`agenticspec-field/1`) lists its
+    `packs`, `architectures`, `profiles` (behaviour profiles, the simulator's input), `kpis`
+    (its catalogue), `rows` (`agenticspec-rows/1`: rows it registers in core catalog entities, as
+    inputs of a core register command) and `words` (the words only it uses).
+- The rule of the tiers: a term only one field uses is never an enum variant, entity or field of
+  a core block. Where a core block must tell such values apart, it holds a catalog entity whose
+  rows a field registers (`agentic.harness.PermissionMode`; the coding field registers
+  `accept-edits`). The test for a new core term: would a security-review or AI-research setup need
+  it under the same name? If not, it is a row, a KPI or a profile of a field.
+- `scripts/check-neutral.sh` (`task check:neutral`, in `check:blocks`) refuses every word of a
+  field's `words.txt` in `blocks/` and `kpis/catalogue.yaml`; each fixture under
+  `scripts/fixtures/neutral/` must fail. A new coding term in a core block or core KPI goes into
+  the field, or gets a neutral name in the core.
+- Every experiment under `experiments/` names its `field:` and runs a profile that field lists
+  (`scripts/check-packs.sh`); the catalog of the docs groups its entries by field.
 - The root `ess-inputs.yaml` is the whole system: `packs/system.yaml` (the core domains and the
   pack domains), every core file, every pack file and the packs' authored scenarios. It pins
   `ess 0.99` (the minor line), so it does not take over every `ess` run at the root. A new block of
@@ -149,8 +163,10 @@ change.
   those fail. `task slow:fields` synthesizes afresh and compares bytes.
 - A refusal synthesis cannot reach gets an authored scenario in `packs/<pack>/scenarios/`.
 - KPIs of a pack are in `packs/<pack>/kpis.yaml` (same format as `kpis/catalogue.yaml`, `block`
-  is the domain without `agentic.`, at least 2 per block); `scripts/check-kpis.sh` checks every
-  catalogue.
+  is the domain without `agentic.`, at least 2 per block). KPIs of a field are in
+  `fields/<field>/kpis.yaml`: `block` is the core block or pack block whose events it reads, no
+  least number per block; a core KPI whose `block` is a field is refused.
+  `scripts/check-kpis.sh` checks every catalogue.
 - The docs pages of the packs and fields are generated with the others: `docs/packs/`,
   `docs/fields/`, `website/static/fields/`.
 

@@ -4,6 +4,11 @@
 measures, how it is computed, its direction under each work mode, whether it is a gate, and
 where it is computed today. The docs site renders it on each block's page.
 
+It holds the KPIs of the core only. A pack keeps its KPIs in `packs/<pack>/kpis.yaml` and a field
+in `fields/<field>/kpis.yaml`, in the same format: a field's KPI names the core or pack block whose
+events it reads (`block: workspace`), and the core catalogue never names a field. No KPI here may
+use a word a field lists in `fields/<field>/words.txt` (`task check:neutral`).
+
 ```yaml
 format: agenticspec-kpis/1
 kpis:

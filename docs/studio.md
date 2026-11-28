@@ -145,7 +145,7 @@ how it was answered.
 | `query` | `{"selector": "part{id: P, block: \"agent\"}"}` | `columns`, and `rows`: one object per answer of the selector, keyed by its variables |
 | `apply` | `{"patch": "<rules>"}`, or a patch document as `patch`; `dry_run` beside the arguments | `outcome` (`Applied`, `DryRun` or `Refused`), `diff`, `check`, `refusal` with the rule's position and error, the `revision` it made |
 | `check` | none | `check`: `passed` and each refusal with its rule, part and message |
-| `simulate` | `{"budget": 4, "horizon": "24h", "profile": "profiles/coding.yaml"}`, each optional | the mean of each KPI over `budget` seeds (1 to 16), with its unit, which direction is better and what it measures, and the KPIs per part |
+| `simulate` | `{"budget": 4, "horizon": "24h", "profile": "fields/coding/profiles/coding.yaml"}`, each optional | the mean of each KPI over `budget` seeds (1 to 16), with its unit, which direction is better and what it measures, and the KPIs per part |
 
 Every answer has a `summary`: one or a few lines that say what happened, such as
 `Refused at rule 2: UnknownVerb — ...` or `owner_wait_share = 0.0317 — Share of agent time spent

@@ -10,7 +10,7 @@ const USAGE: &str = "usage: agenticspec-docs [--root DIR] [--results] [--check]
   writes docs/blocks/, docs/architectures/, docs/catalog/, docs/kpis-catalogue.md,
   website/static/architectures/, website/static/catalog/
   and website/src/generated/ from blocks/, kpis/catalogue.yaml, architectures/, experiments/
-  and profiles/;
+  and fields/ (with packs/ and the root ess-inputs.yaml: docs/packs/, docs/fields/);
   --check writes nothing and exits 1 when a file differs, is missing or is not generated;
   --results runs every experiment at its own budget and seeds and writes
   website/static/catalog/<entry>/result.json and sources.sha256 (with --check: compares them)";

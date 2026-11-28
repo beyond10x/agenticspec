@@ -340,7 +340,7 @@ fn simulate_answers_each_kpi_with_what_it_measures() {
     let (_, v) = tool(
         &s,
         &session,
-        json!({"tool": "simulate", "arguments": {"profile": "../profiles/coding.yaml"}}),
+        json!({"tool": "simulate", "arguments": {"profile": "../fields/coding/profiles/coding.yaml"}}),
     );
     assert!(
         v["call"]["failure"]

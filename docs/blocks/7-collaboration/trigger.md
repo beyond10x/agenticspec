@@ -417,7 +417,7 @@ Called by: Dispatcher.
 | KPI | unit | better | gate | status |
 |---|---|---|---|---|
 | `firing_failure_share`<br/>Share of started firings whose run failed.<br/><small>How: FiringFailed events divided by FiringStarted events per trigger.</small> | share | lower | – | simulated<br/><small>source: design</small> |
-| `duplicate_runs`<br/>Tasks finished a second time from the same origin, so a second run did work already done.<br/><small>How: Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate, like false_completions_shipped.</small> | count | lower | – | simulated<br/><small>source: design</small> |
+| `duplicate_runs`<br/>Tasks finished a second time from the same origin, so a second run did work already done.<br/><small>How: Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate.</small> | count | lower | – | simulated<br/><small>source: design</small> |
 
 ### Quality
 

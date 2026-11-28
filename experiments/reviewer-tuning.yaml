@@ -1,7 +1,8 @@
 format: agenticspec-experiment/1
 experiment: reviewer-tuning
 architecture: ../architectures/author-reviewer.yaml
-profile: ../profiles/coding.yaml
+field: coding
+profile: ../fields/coding/profiles/coding.yaml
 horizon: 24h
 seeds: 8
 seed: 1

@@ -1,6 +1,6 @@
 # The authority decides a harness tool call through three bindings (blocks/components.yaml):
 # decide-tool-call-on-decision, allow-tool-call-on-approval and deny-tool-call-on-rejection.
-# Synthesis has no flow scenario for them: DecideToolCall's branch is chosen by the verdict the
+# Synthesis has no flow scenario for them: DecideToolCall's outcome is chosen by the verdict the
 # event fills (ESS-SYNTH-010). So this scenario walks each one by hand: a denial denies one call, an
 # approved request allows a second, a rejected request denies a third, and a request no tool call
 # names decides none.

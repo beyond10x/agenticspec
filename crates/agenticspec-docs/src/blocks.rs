@@ -443,7 +443,7 @@ fn result(o: &Value, ctx: &Ctx) -> String {
     }
 }
 
-fn kpi_table(s: &mut String, kpis: &[&Kpi]) {
+pub(crate) fn kpi_table(s: &mut String, kpis: &[&Kpi]) {
     s.push_str("| KPI | unit | better | gate | status |\n|---|---|---|---|---|\n");
     for k in kpis {
         let mut what = format!("{}<br/>{}", code(&k.id), text(&k.summary));

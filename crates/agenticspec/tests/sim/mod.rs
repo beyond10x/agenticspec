@@ -76,7 +76,7 @@ fn run_writes_the_result_with_the_threads_given() {
         format!(
             "format: agenticspec-experiment/1\nexperiment: cli-run\narchitecture: {}\nprofile: {}\nhorizon: 1h\nseeds: 1\nseed: 1\noptimize: marked\nsearch:\n  mode: fit\n  budget: 2\n  restarts: 1\n  weights:\n    tasks_done: 1\n",
             repo().join("architectures/workstation.yaml").display(),
-            repo().join("profiles/coding.yaml").display(),
+            repo().join("fields/coding/profiles/coding.yaml").display(),
         ),
     )
     .unwrap();

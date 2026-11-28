@@ -498,14 +498,18 @@
         "agentic.harness.RecordTurn": "report",
         "agentic.harness.RecordUnreadableResult": "report",
         "agentic.harness.RegisterHarness": "configuration",
+        "agentic.harness.RegisterPermissionMode": "intent",
         "agentic.harness.RequestToolCall": "configuration",
         "agentic.harness.RetireHarness": "administration",
+        "agentic.harness.RetirePermissionMode": "report",
         "agentic.harness.SpawnSubAgent": "intent"
       },
       "events": [
         "agentic.harness.ContextCompacted",
         "agentic.harness.HarnessRegistered",
         "agentic.harness.HarnessRetired",
+        "agentic.harness.PermissionModeRegistered",
+        "agentic.harness.PermissionModeRetired",
         "agentic.harness.SessionEnded",
         "agentic.harness.SessionOpened",
         "agentic.harness.SessionRestarted",
@@ -519,6 +523,7 @@
       "views": [
         "agentic.harness.HarnessSessions",
         "agentic.harness.Harnesses",
+        "agentic.harness.PermissionModes",
         "agentic.harness.ToolCalls",
         "agentic.harness.Turns"
       ]
@@ -999,6 +1004,17 @@
     },
     {
       "block": "harness",
+      "intent_event": "agentic.harness.PermissionModeRegistered",
+      "kind": "Outbound",
+      "name": "harness.permission-mode",
+      "protocol": "RegisterPermissionMode RetirePermissionMode",
+      "reports": [
+        "agentic.harness.RetirePermissionMode"
+      ],
+      "waiting_state": "agentic.harness.PermissionMode.Registered"
+    },
+    {
+      "block": "harness",
       "intent_event": "agentic.harness.SessionOpened",
       "kind": "Outbound",
       "name": "harness.session",
@@ -1205,5 +1221,5 @@
       "waiting_state": "agentic.workspace.Proposal.Proposed"
     }
   ],
-  "sources_sha256": "4a4b92b3f6ac2e0b0b87be77148ae27f8e8ef6463f7b3fcb5b9994b0d385db53"
+  "sources_sha256": "3e1bf009ac181854cf7a5d43d821885a2b9300f205e23169156c7a56f4736401"
 }

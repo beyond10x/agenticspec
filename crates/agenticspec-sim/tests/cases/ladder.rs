@@ -294,7 +294,9 @@ fn a_stage_without_a_rung_is_refused() {
 fn the_simulation_gives_each_rung_its_numbers_and_the_same_seed_the_same_numbers() {
     let sim = format!(
         "simulation:\n  profile: {}\n  horizon: 4h\n  seeds: 2\n  seed: 3\n  tasks_per_hour_per_worker: 1\n",
-        repo_root().join("profiles/coding.yaml").display()
+        repo_root()
+            .join("fields/coding/profiles/coding.yaml")
+            .display()
     );
     let path = fixture("sim", TESTS_TRUST, &sim);
     let a = accepted(&path);

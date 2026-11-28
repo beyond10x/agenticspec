@@ -124,6 +124,12 @@ pub struct Field {
     pub packs: Vec<String>,
     /// `fields/coding/architectures/auto-merger.yaml`
     pub architectures: Vec<String>,
+    /// `fields/coding/profiles/coding.yaml`
+    pub profiles: Vec<String>,
+    /// `fields/coding/kpis.yaml`, when the field has KPIs.
+    pub kpis: Option<String>,
+    /// `fields/coding/rows.yaml`, when the field registers rows of core catalog entities.
+    pub rows: Option<String>,
 }
 
 fn strings(v: &Value) -> Vec<String> {
@@ -135,7 +141,7 @@ fn strings(v: &Value) -> Vec<String> {
         .collect()
 }
 
-fn read_yaml(root: &Path, rel: &str) -> Result<Value, String> {
+pub(crate) fn read_yaml(root: &Path, rel: &str) -> Result<Value, String> {
     let text = std::fs::read_to_string(root.join(rel)).map_err(|e| format!("{rel}: {e}"))?;
     serde_yaml_ng::from_str(&text).map_err(|e| format!("{rel}: {e}"))
 }
@@ -234,6 +240,12 @@ pub fn fields(root: &Path) -> Result<Vec<Field>, String> {
                 .into_iter()
                 .map(|a| format!("fields/{name}/{a}"))
                 .collect(),
+            profiles: strings(&doc["profiles"])
+                .into_iter()
+                .map(|a| format!("fields/{name}/{a}"))
+                .collect(),
+            kpis: doc["kpis"].as_str().map(|f| format!("fields/{name}/{f}")),
+            rows: doc["rows"].as_str().map(|f| format!("fields/{name}/{f}")),
             name,
         });
     }

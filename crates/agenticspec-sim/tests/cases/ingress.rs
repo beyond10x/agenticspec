@@ -285,7 +285,7 @@ fn the_ports_file_gives_each_command_its_role_and_each_actor_its_commands() {
 fn the_ingress_example_simulates_like_the_workstation() {
     use agenticspec_sim::{Experiment, run};
     let root = repo_root();
-    let profile = load(&root.join("profiles/coding.yaml"));
+    let profile = load(&root.join("fields/coding/profiles/coding.yaml"));
     let experiment = yaml(
         "format: agenticspec-experiment/1\nexperiment: same\nhorizon: 4h\nseeds: 1\nseed: 3\n\
          optimize: marked\nsearch: { mode: fit, budget: 1, weights: { tasks_done: 1 } }\n",

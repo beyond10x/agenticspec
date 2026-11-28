@@ -146,7 +146,7 @@
       "events": 3,
       "family": "capability",
       "h": 92.0,
-      "kpis": 3,
+      "kpis": 2,
       "layer": 3,
       "name": "knowledge",
       "route": "/docs/blocks/3-capability/knowledge",
@@ -214,9 +214,9 @@
       "y": 858.0
     },
     {
-      "commands": 10,
-      "entities": 5,
-      "events": 10,
+      "commands": 12,
+      "entities": 6,
+      "events": 12,
       "family": "agent",
       "h": 92.0,
       "kpis": 5,
@@ -237,7 +237,7 @@
         "principal",
         "shared"
       ],
-      "views": 4,
+      "views": 5,
       "w": 181.5,
       "x": 557.0,
       "y": 858.0
@@ -271,7 +271,7 @@
       "events": 14,
       "family": "work",
       "h": 92.0,
-      "kpis": 10,
+      "kpis": 8,
       "layer": 5,
       "name": "work",
       "route": "/docs/blocks/5-work/work",
@@ -466,7 +466,7 @@
       "events": 10,
       "family": "place",
       "h": 92.0,
-      "kpis": 6,
+      "kpis": 2,
       "layer": 8,
       "name": "workspace",
       "route": "/docs/blocks/8-place/workspace",

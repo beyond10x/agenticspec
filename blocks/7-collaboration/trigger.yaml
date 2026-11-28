@@ -1,6 +1,6 @@
 # Trigger: what wakes an agent. Source: the brief of 2026-11-27 (triggers, schedules, firings) and
 # design/research-findings.md: wake rules on intake cut total coordination failure from 21 of 50
-# to 4 of 32 (2611.00689); scheduled agent loops went from 2.2 to about 35 merged pull requests per
+# to 4 of 32 (2611.00689); scheduled agent loops went from 2.2 to about 35 merged changes per
 # day (2610.36254).
 domain: agentic.trigger
 

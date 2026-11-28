@@ -1,0 +1,5 @@
+format: agenticspec-kpis/1
+kpis:
+  - id: open_seconds
+    block: base
+    summary: Time from a change to its Pull Request.

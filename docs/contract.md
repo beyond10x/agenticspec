@@ -383,7 +383,7 @@ an instance of a part, with its begin, its end, the use it lies inside and its c
 simulator writes one for a single run:
 
 ```sh
-agenticspec sim trace architectures/workstation.yaml --profile profiles/coding.yaml \
+agenticspec sim trace architectures/workstation.yaml --profile fields/coding/profiles/coding.yaml \
   --seed 1 --out workstation.trace.json
 agenticspec sim contract architectures/workstation.yaml --trace workstation.trace.json
 ```

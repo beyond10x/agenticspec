@@ -268,18 +268,6 @@ kpis:
     status: planned
     source: research/2610.30571
 
-  - id: docs_changed_with_code_share
-    block: knowledge
-    kind: completeness
-    unit: share
-    summary: Share of merged code changes that also change the documentation they affect.
-    how: ProposalMerged events whose proposal writes source paths and also writes a documentation path or revises an entry, divided by merged proposals that write source paths.
-    direction: higher
-    gate: false
-    reads: [agentic.workspace.ProposalMerged, agentic.workspace.PathWritten, agentic.knowledge.KnowledgeRevised]
-    status: planned
-    source: research/2610.27381
-
   - id: sub_agents_started
     block: agent
     kind: quality
@@ -437,18 +425,6 @@ kpis:
     status: simulated
     source: research/2610.04375
 
-  - id: false_completions_shipped
-    block: work
-    kind: correctness
-    unit: count
-    summary: Tasks reported done, incorrect, and accepted.
-    how: Tasks claimed done minus tasks correct, restricted to deliverables that were accepted and merged. Must be 0.
-    direction: lower
-    gate: true
-    reads: [agentic.work.DeliverableSubmitted, agentic.work.DeliverableAccepted, agentic.work.TaskCompleted]
-    status: simulated
-    source: research/2610.04375
-
   - id: rework_turns
     block: work
     kind: quality
@@ -484,18 +460,6 @@ kpis:
     gate: false
     reads: [agentic.work.TaskCreated, agentic.work.RunStarted]
     status: simulated
-    source: design
-
-  - id: task_to_merge_seconds
-    block: work
-    kind: quality
-    unit: seconds
-    summary: Time from task start to merge of its change.
-    how: Seconds between TaskCreated and the ProposalMerged of the task's deliverable, median and 90th percentile.
-    direction: lower
-    gate: false
-    reads: [agentic.work.TaskCreated, agentic.workspace.ProposalMerged]
-    status: planned
     source: design
 
   - id: forbidden_path_writes
@@ -753,18 +717,6 @@ kpis:
     status: planned
     source: design
 
-  - id: proposals_merged_share
-    block: workspace
-    kind: completeness
-    unit: share
-    summary: Proposals merged of proposals made.
-    how: ProposalMerged events divided by ChangeProposed events. Superseded and rejected proposals stay in the divisor.
-    direction: higher
-    gate: false
-    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged, agentic.workspace.ProposalRejected, agentic.workspace.ProposalSuperseded]
-    status: planned
-    source: design
-
   - id: writes_without_lease
     block: workspace
     kind: correctness
@@ -776,30 +728,6 @@ kpis:
     reads: [agentic.workspace.PathWritten, agentic.workspace.LeaseGranted, agentic.workspace.LeaseReleased, agentic.workspace.LeaseExpired]
     status: planned
     source: research/2609.00252
-
-  - id: revert_rate
-    block: workspace
-    kind: correctness
-    unit: share
-    summary: Share of merged proposals that a later proposal reverts.
-    how: ProposalMerged events whose changes are undone by a later merged proposal, divided by ProposalMerged events, per author kind (agent, human). A rate, so not a gate.
-    direction: lower
-    gate: false
-    reads: [agentic.workspace.ProposalMerged, agentic.workspace.ChangeProposed]
-    status: planned
-    source: research/2609.17598
-
-  - id: open_to_merge_seconds
-    block: workspace
-    kind: quality
-    unit: seconds
-    summary: Time from a proposal to its merge.
-    how: Seconds between ChangeProposed and ProposalMerged of one proposal, median and 90th percentile.
-    direction: lower
-    gate: false
-    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged]
-    status: planned
-    source: research/2610.28683
 
   - id: secrets_left_session
     block: sandbox
@@ -1178,24 +1106,12 @@ kpis:
     kind: correctness
     unit: share
     summary: Share of failed runs that reported done.
-    how: Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. The shipped count is false_completions_shipped; this rate is not a gate.
+    how: Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. This rate is not a gate.
     direction: lower
     gate: false
     reads: [agentic.work.RunEnded, agentic.work.DeliverableSubmitted]
     status: planned
     source: research/2610.04375
-
-  - id: vacuous_check_share
-    block: verification
-    kind: correctness
-    unit: share
-    summary: Share of checks that pass on a change that touches nothing relevant.
-    how: Run each accepted check against a commit that does not touch what the check covers; checks that pass divided by checks run. A check needs a negative case.
-    direction: lower
-    gate: false
-    reads: [agentic.work.DeliverableAccepted]
-    status: planned
-    source: research/2611.13709
 
   - id: critic_false_accept_share
     block: verification
@@ -1454,7 +1370,7 @@ kpis:
     kind: correctness
     unit: count
     summary: Tasks finished a second time from the same origin, so a second run did work already done.
-    how: Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate, like false_completions_shipped.
+    how: Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate.
     direction: lower
     gate: false
     reads: [agentic.trigger.FiringStarted, agentic.work.DeliverableAccepted]
@@ -1494,18 +1410,6 @@ kpis:
     direction: lower
     gate: false
     reads: [agentic.channel.MessageSent]
-    status: simulated
-    source: design
-
-  - id: merge_conflicts
-    block: workspace
-    kind: quality
-    unit: count
-    summary: Merges that touched a scope another merge changed since the work started.
-    how: ProposalMerged events whose scope another merge touched after the proposal's work began. The simulator counts them per partitioned part; under a mesh the conflict costs a round of rework, without one the merge lands broken.
-    direction: lower
-    gate: false
-    reads: [agentic.workspace.ChangeProposed, agentic.workspace.ProposalMerged]
     status: simulated
     source: design
 

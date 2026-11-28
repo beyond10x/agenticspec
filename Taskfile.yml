@@ -23,12 +23,13 @@ tasks:
       - task: test
 
   check:blocks:
-    desc: Validate the building blocks (blocks/) and the agenticstudio system (studio/), hold their layering, and run their conformance suite, authored scenarios included, on the interpreter. The suite is synthesized once per digest of its sources into target/blocks-conform/ (scripts/check-blocks-conform.sh).
+    desc: Validate the building blocks (blocks/) and the agenticstudio system (studio/), hold their layering, keep the words of every field out of the core (check:neutral), and run their conformance suite, authored scenarios included, on the interpreter. The suite is synthesized once per digest of its sources into target/blocks-conform/ (scripts/check-blocks-conform.sh).
     cmds:
       - ess specify validate --path blocks --strict-requires
       - ess specify validate --path studio --strict-requires
       - task: check:layers
       - task: check:kpis
+      - task: check:neutral
       - scripts/check-blocks-conform.sh
 
   slow:blocks:
@@ -85,9 +86,15 @@ tasks:
       - scripts/contract-conform.sh {{.CLI_ARGS}}
 
   check:kpis:
-    desc: Check kpis/catalogue.yaml and every packs/<pack>/kpis.yaml against their format, their blocks and the events they may read.
+    desc: Check kpis/catalogue.yaml, every packs/<pack>/kpis.yaml and every fields/<field>/kpis.yaml against their format, their blocks and the events they may read.
     cmds:
       - scripts/check-kpis.sh
+
+  check:neutral:
+    desc: Fail when a word a field lists in fields/<field>/words.txt appears in the core, blocks/ or kpis/catalogue.yaml; then each fixture under scripts/fixtures/neutral must fail.
+    cmds:
+      - scripts/check-neutral.sh
+      - scripts/check-neutral.sh --negative
 
   check:layers:
     desc: Fail when a block depends on a block of a higher layer, two blocks of one layer depend on each other, a core block depends on a pack or field, a pack on a field or an undeclared pack, or a field on another field; for blocks/ and for the whole system. Then each fixture under scripts/fixtures/layers must fail and each under scripts/fixtures/layers-pass must pass.

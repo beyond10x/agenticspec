@@ -9,7 +9,7 @@ scenario: restart-lineage
 summary: A restarted session records the session it replaces and keeps the lineage of the first one; a second restart and a restart of an open session are refused.
 
 timeline:
-  # a principal, an agent revision and a harness
+  # a principal, an agent revision, a harness and a permission mode
   - at: 2026-11-27T09:00:00Z
     command: agentic.principal.RegisterPrincipal
     input: {principal_id: 00000000-0000-4000-8000-0000000007a1, kind: Agent, name: coder, at: 2026-11-27T09:00:00Z}
@@ -37,6 +37,11 @@ timeline:
     input: {harness_id: 00000000-0000-4000-8000-0000000007b1, kind: Vendor, name: coding, context_window: 200000, max_depth: 2, at: 2026-11-27T09:00:03Z}
     outcome: registered
 
+  - at: 2026-11-27T09:00:04Z
+    command: agentic.harness.RegisterPermissionMode
+    input: {permission_mode_id: 00000000-0000-4000-8000-0000000007c1, name: ask, summary: Asks before every action., at: 2026-11-27T09:00:04Z}
+    outcome: registered
+
   # session 1 opens and ends
   - at: 2026-11-27T10:00:00Z
     command: agentic.harness.OpenSession
@@ -45,7 +50,7 @@ timeline:
       harness_id: 00000000-0000-4000-8000-0000000007b1
       agent_revision_id: 00000000-0000-4000-8000-0000000007a3
       principal_id: 00000000-0000-4000-8000-0000000007a1
-      permission_mode: Ask
+      permission_mode: 00000000-0000-4000-8000-0000000007c1
       context_window: 100000
       max_depth: 1
       at: 2026-11-27T10:00:00Z
@@ -59,7 +64,7 @@ timeline:
       harness_id: 00000000-0000-4000-8000-0000000007b1
       agent_revision_id: 00000000-0000-4000-8000-0000000007a3
       principal_id: 00000000-0000-4000-8000-0000000007a1
-      permission_mode: Ask
+      permission_mode: 00000000-0000-4000-8000-0000000007c1
       context_window: 100000
       max_depth: 1
       at: 2026-11-27T10:30:00Z
@@ -106,7 +111,7 @@ timeline:
       harness_id: 00000000-0000-4000-8000-0000000007b1
       agent_revision_id: 00000000-0000-4000-8000-0000000007a3
       principal_id: 00000000-0000-4000-8000-0000000007a1
-      permission_mode: Ask
+      permission_mode: 00000000-0000-4000-8000-0000000007c1
       context_window: 100000
       max_depth: 1
       at: 2026-11-27T12:00:01Z

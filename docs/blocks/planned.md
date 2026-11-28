@@ -69,14 +69,13 @@ The [KPI catalogue](../kpis-catalogue.md) measures 4 blocks the specification do
 
 ## verification
 
-<BlockHeader name={"verification"} family={"other"} planned counts={{"kpis":8}} />
+<BlockHeader name={"verification"} family={"other"} planned counts={{"kpis":7}} />
 
 ### Correctness
 
 | KPI | unit | better | gate | status |
 |---|---|---|---|---|
-| `false_completion_claim_share`<br/>Share of failed runs that reported done.<br/><small>How: Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. The shipped count is false_completions_shipped; this rate is not a gate.</small> | share | lower | – | planned<br/><small>source: research/2610.04375</small> |
-| `vacuous_check_share`<br/>Share of checks that pass on a change that touches nothing relevant.<br/><small>How: Run each accepted check against a commit that does not touch what the check covers; checks that pass divided by checks run. A check needs a negative case.</small> | share | lower | – | planned<br/><small>source: research/2611.13709</small> |
+| `false_completion_claim_share`<br/>Share of failed runs that reported done.<br/><small>How: Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. This rate is not a gate.</small> | share | lower | – | planned<br/><small>source: research/2610.04375</small> |
 | `critic_false_accept_share`<br/>Share of wrong deliverables a critic or reviewer accepted.<br/><small>How: Verdicts that accept a deliverable the oracle fails, divided by deliverables the oracle fails. Report the false-reject share beside it, since a strict reviewer rejects correct work.</small> | share | lower | – | planned<br/><small>source: research/2611.02207</small> |
 | `oracle_not_independent`<br/>Deliverables whose only evidence is tests the same agent wrote.<br/><small>How: Accepted deliverables whose every passing check was authored by the agent that produced the deliverable. Must be 0.</small> | count | lower | <span className="as-tag as-tag--gate">gate</span> | planned<br/><small>source: research/2611.07166</small> |
 | `invalid_receipts_accepted`<br/>Forged, stale or rebound receipts that were accepted.<br/><small>How: Receipts accepted that were not signed outside the sandbox, are past their validity, or are bound to another deliverable. Must be 0.</small> | count | lower | <span className="as-tag as-tag--gate">gate</span> | planned<br/><small>source: research/2611.06946</small> |
