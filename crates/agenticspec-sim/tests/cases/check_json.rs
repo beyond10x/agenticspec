@@ -160,6 +160,7 @@ fn check_json_carries_no_other_field() {
             "links",
             "nested",
             "parts",
+            "requirements",
             "single_points",
             "valid",
             "violations"

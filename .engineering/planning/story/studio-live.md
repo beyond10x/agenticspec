@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:studio-live
 kind: story
-status: draft
+status: implemented
 title: Studio sessions and tool calls, published live on a draft's event channel
 summary: Every query, apply, check and simulate on a draft is a tool call of a session, each answer and revision reaches every client over SSE, and a draft's revisions can be listed and read.
 relations:
@@ -13,7 +13,11 @@ scope:
   path: crates/agenticstudio
 - confidence: cited
   path: docs/studio.md
-revision: 5
+revision: 8
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:17Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:17Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

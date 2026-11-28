@@ -1,0 +1,170 @@
+{
+  "rows": [
+    {
+      "architecture": "team-with-console",
+      "label": "Open: Open questions of an addressee for owner",
+      "page": "control.inbox",
+      "view": "agentic.question.OpenQuestions"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Open: Questions for owner",
+      "page": "control.inbox",
+      "view": "agentic.question.Questions"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Agents of worker",
+      "page": "control.operations",
+      "view": "agentic.agent.Agents"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Harnesses of worker",
+      "page": "control.operations",
+      "view": "agentic.harness.Harnesses"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Gateways of gateway",
+      "page": "control.operations",
+      "view": "agentic.gateway.Gateways"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Upstreams of gateway",
+      "page": "control.operations",
+      "view": "agentic.gateway.Upstreams"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Models of model",
+      "page": "control.operations",
+      "view": "agentic.model.Models"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Routes of model",
+      "page": "control.operations",
+      "view": "agentic.model.Routes"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Principals of owner",
+      "page": "control.operations",
+      "view": "agentic.principal.Principals"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Agents of console.helper",
+      "page": "control.operations",
+      "view": "agentic.agent.Agents"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Harnesses of console.helper",
+      "page": "control.operations",
+      "view": "agentic.harness.Harnesses"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Agents of console.steward",
+      "page": "control.operations",
+      "view": "agentic.agent.Agents"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Harnesses of console.steward",
+      "page": "control.operations",
+      "view": "agentic.harness.Harnesses"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Gateways of console.gateway",
+      "page": "control.operations",
+      "view": "agentic.gateway.Gateways"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Upstreams of console.gateway",
+      "page": "control.operations",
+      "view": "agentic.gateway.Upstreams"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Models of console.model",
+      "page": "control.operations",
+      "view": "agentic.model.Models"
+    },
+    {
+      "architecture": "team-with-console",
+      "label": "Routes of console.model",
+      "page": "control.operations",
+      "view": "agentic.model.Routes"
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "cache_bust_count",
+      "label": "Cache bust count",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "cache_hit_share",
+      "label": "Cache hit share",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "context_size_p90_tokens",
+      "label": "Context size p90 tokens",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "cost_usd",
+      "label": "Cost usd",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "human_prompt_share",
+      "label": "Human prompt share",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "owner_wait_share",
+      "label": "Owner wait share",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "priced_message_share",
+      "label": "Priced message share",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "sub_agents_started",
+      "label": "Sub agents started",
+      "page": "control.metrics",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "subagent_cost_share",
+      "label": "Subagent cost share",
+      "page": "control.metrics",
+      "prediction": null
+    }
+  ],
+  "view": "agentic.architecture.ControlTiles"
+}

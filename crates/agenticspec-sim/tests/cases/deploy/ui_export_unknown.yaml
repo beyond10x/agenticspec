@@ -1,0 +1,9 @@
+format: agenticspec-binding/1
+binding: ui-export-unknown
+architecture: workstation
+refines: egress/workstation.yaml
+summary: A UI of the consumer's own serves an export no ingress of the architecture has.
+ui:
+  console:
+    source: {archive: ../../../../../bundles/bindings/console-ui.tar, digest: "sha256:879ecfbd367fa94f9f585c9065a74bde9b3415dbf0b36d8de8d8b8f483ad734e"}
+    export: operator.console

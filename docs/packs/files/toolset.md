@@ -265,3 +265,15 @@ Called by: File tool.
 | `file_churn_ratio`<br/>Edits per file an agent changed in one run.<br/><small>How: FileEdited events divided by the distinct files written or edited, per lease. A high ratio is an agent editing the same file over and over.</small> | ratio | lower | – | planned<br/><small>source: design</small> |
 | `stale_edit_share`<br/>Share of edits made against content that had changed since it was read.<br/><small>How: edit_file calls refused content-changed divided by all edit_file calls. Counted from the tool's answers; each refusal is an agent working from a stale read.</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `files.toolset`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ingress-format
 kind: story
-status: draft
+status: implemented
 title: 'The ingress: key of the architecture format and its check rules'
 summary: 'A top-level ingress: key (audience, authenticated, interface, exports), the eleven I9 check refusals, the audience counted as a name, best.rs TOP, a reference page and the workstation example.'
 relations:
@@ -31,7 +31,11 @@ scope:
   path: docs/ingress.md
 - confidence: inferred
   path: website/static/catalog
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

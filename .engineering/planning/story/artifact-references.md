@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:artifact-references
 kind: story
-status: draft
+status: active
 title: Deliverables, evidence and handback name artifacts and records
 summary: Deliverable.artifact_id, evidence as record ids checked at acceptance, workspace handback as an artifact id, knowledge naming its store; branch, review_ref and KnowledgeScope Repository leave the core.
 relations:
@@ -25,7 +25,10 @@ scope:
   path: docs/blocks
 - confidence: inferred
   path: website/src/generated
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 5}
 ---
 ## Outcome
 
@@ -69,3 +72,7 @@ workspace. This takes step 3 of `design/fields.md` for the handback. Design:
 
 The source-control pack rows that take `branch` and `review_ref` (`epic:fields`); evidence stores
 in the ladder (`story:evidence-stores`).
+
+## Remaining at 9bb5998
+
+Delivered in 2b85ba1. Missing: the checks that evidence exists and was not recorded by the submitter alone are UNMAPPED (blocks/5-work/work.yaml:290).

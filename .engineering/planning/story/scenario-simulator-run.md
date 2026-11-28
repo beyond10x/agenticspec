@@ -20,7 +20,7 @@ scope:
   path: crates/agenticspec-sim/src/sim.rs
 - confidence: cited
   path: crates/agenticspec-sim/tests/cases
-revision: 8
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 7}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 8}
@@ -82,3 +82,7 @@ of its commands, so it depends on that story.
 
 The observed column (a runtime, next epic); corpus tasks as inputs (`story:task-corpus`); KPI
 bounds in a `then`; the simulator modelling more blocks than it does today.
+
+## Remaining at 9bb5998
+
+Missing: expectations are matched on simulator event names, not qualified block events (crates/agenticspec-sim/src/scenario.rs).

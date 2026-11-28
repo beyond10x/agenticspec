@@ -105,3 +105,15 @@ Identified by `process_id` (`ProcessId`).
 |---|---|---|---|---|
 | `process_steps_done_share`<br/>Share of the steps of a task's process that have a recorded result.<br/><small>How: For tasks that name a process, steps with a recorded result divided by steps of the published process. The process is referenced by identifier and evaluated elsewhere.</small> | share | higher | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `process`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

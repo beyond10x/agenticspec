@@ -146,37 +146,13 @@ pub fn block_ports(doc: &Value, name: &str, part: &Value) -> Result<Vec<&'static
     })
 }
 
-/// The settings of a part of `block` copied into the contract for a port it uses; any other
-/// setting is not copied. A port a part uses through a link (an agent's inferences, a principal
-/// sending over a channel) takes no setting of that part, except the kind of a principal that
-/// answers questions.
-fn narrowing(block: &str, port: &str) -> &'static [&'static str] {
-    match (block, port) {
-        ("agent", "harness.session") => &["harness", "role", "acts_for"],
-        ("agent", "harness.tool-call") => &["harness"],
-        ("harness", _) => &["kind"],
-        ("model", "model.inference") => &["route"],
-        ("gateway", "gateway.call") => &["rate_limit_per_minute"],
-        ("pool", "resource.claim") => &["kind", "capacity", "job_limit"],
-        ("channel", _) => &["kind", "distribution"],
-        ("principal", "question.question") => &["kind"],
-        ("trigger" | "schedule", "trigger.firing") => &[
-            "kind",
-            "every",
-            "schedule",
-            "channel",
-            "policy",
-            "max_parallel",
-            "event_name",
-            "source",
-        ],
-        ("schedule", "trigger.schedule") => &["every", "next_fire_at"],
-        ("workspace", _) => &["kind", "sharing"],
-        ("sandbox", _) => &["isolation", "egress"],
-        ("authority", _) => &["kind"],
-        ("runtime", _) => &["kind"],
-        _ => &[],
-    }
+/// The settings of a part of `block` copied into the contract for a port it uses: those the
+/// block's settings table (`blocks/settings.yaml`) marks as narrowing the port; any other setting
+/// is not copied. A port a part uses through a link (an agent's inferences, a principal sending
+/// over a channel) takes no setting of that part, except those the table names for it (the kind
+/// of a principal that answers questions).
+fn narrowing(block: &str, port: &str) -> Vec<&'static str> {
+    crate::settings::table().narrowing(block, port)
 }
 
 fn shared(part: &Value) -> bool {

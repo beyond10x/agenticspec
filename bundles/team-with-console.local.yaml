@@ -1,0 +1,566 @@
+format: agenticspec-deployment/1
+generator: agenticspec 0.4.1
+architecture:
+  document:
+    architecture: team-with-console
+    border:
+    - console.steward
+    format: agenticspec-architecture/1
+    links:
+    - carries: prompt
+      from: owner
+      to: console.steward
+    - carries: question
+      from: console.steward
+      to: owner
+    - carries: order
+      from: console.steward
+      to: worker
+    - carries: question
+      from: worker
+      to: console.steward
+    - carries: model_call
+      from: worker
+      to: gateway
+    - carries: model_call
+      from: gateway
+      to: model
+    parts:
+      console:
+        block: architecture
+        digest: sha256:d58215ae6adcce5c73a0acf90692b6497aa10960d8b2f7fcda97d62c1d803c24
+        ref: console.yaml
+      gateway:
+        block: gateway
+        rate_limit_per_minute: 60
+      model:
+        block: model
+        route: frontier
+      owner:
+        block: principal
+        kind: human
+      worker:
+        block: agent
+        count: 3
+        harness: coding
+    policies:
+      question_default_after: 15m
+    summary: A team that reaches its operations through a console modelled as an architecture of its own, console, nested here as one part pinned by its digest. The owner prompts the console's steward, the one part on the console's border, as `console.steward`; the steward orders the workers and answers their questions, and asks the owner what it cannot decide. The simulator flattens the console into this document (its parts run as `console.steward`, `console.helper`, `console.gateway` and `console.model`) and simulates the result as any other architecture.
+  name: team-with-console
+  revision: sha256:5525b06ef3b3b7d7a3f10e96c109f7a52a2d052c3baff85fa267cf540209e7f5
+  sha256: sha256:31f2be7fe673abc9f02bc217babc5878f8c95d101d1312d6cbfd3e0df19081f9
+nested:
+  sha256:d58215ae6adcce5c73a0acf90692b6497aa10960d8b2f7fcda97d62c1d803c24:
+    architecture: console
+    content_base64: Zm9ybWF0OiBhZ2VudGljc3BlYy1hcmNoaXRlY3R1cmUvMQphcmNoaXRlY3R1cmU6IGNvbnNvbGUKc3VtbWFyeTogPi0KICBBIGNvbnNvbGUgYXMgYW4gYXJjaGl0ZWN0dXJlIG9mIGl0cyBvd24sIG1hZGUgdG8gYmUgbmVzdGVkIGluIGFub3RoZXIgb25lOiBhIHN0ZXdhcmQgYWdlbnQgaXMKICB0aGUgb25lIHBhcnQgb24gaXRzIGJvcmRlciwgaGFuZHMgd29yayB0byBhIGhlbHBlciBhZ2VudCwgYW5kIGJvdGggcmVhY2ggdGhlaXIgbW9kZWwgdGhyb3VnaCBhCiAgZ2F0ZXdheS4gQSBkb2N1bWVudCB0aGF0IG5lc3RzIGl0IHJlYWNoZXMgdGhlIHN0ZXdhcmQgYXMgYGNvbnNvbGUuc3Rld2FyZGAgYW5kIG5vdGhpbmcgZWxzZSBvZgogIGl0LiBPbiBpdHMgb3duIHRoZSBjb25zb2xlIGhhcyBubyBwcmluY2lwYWw6IGl0IGlzIGNoZWNrZWQgYW5kIGRyYXduIGhlcmUsIGFuZCBzaW11bGF0ZWQgaW5zaWRlCiAgdGhlIGFyY2hpdGVjdHVyZSB0aGF0IG5lc3RzIGl0LCB0ZWFtLXdpdGgtY29uc29sZS4KCnBhcnRzOgogIHN0ZXdhcmQ6IHsgYmxvY2s6IGFnZW50LCBoYXJuZXNzOiBjb2RpbmcsIHJvbGU6IG9yY2hlc3RyYXRvciB9CiAgaGVscGVyOiAgeyBibG9jazogYWdlbnQsIGhhcm5lc3M6IGNvZGluZyB9CiAgZ2F0ZXdheTogeyBibG9jazogZ2F0ZXdheSwgcmF0ZV9saW1pdF9wZXJfbWludXRlOiA2MCB9CiAgbW9kZWw6ICAgeyBibG9jazogbW9kZWwsIHJvdXRlOiBmcm9udGllciB9CgpsaW5rczoKICAtIHsgZnJvbTogc3Rld2FyZCwgdG86IGhlbHBlciwgIGNhcnJpZXM6IG9yZGVyIH0KICAtIHsgZnJvbTogaGVscGVyLCAgdG86IHN0ZXdhcmQsIGNhcnJpZXM6IHF1ZXN0aW9uIH0KICAtIHsgZnJvbTogc3Rld2FyZCwgdG86IGdhdGV3YXksIGNhcnJpZXM6IG1vZGVsX2NhbGwgfQogIC0geyBmcm9tOiBoZWxwZXIsICB0bzogZ2F0ZXdheSwgY2FycmllczogbW9kZWxfY2FsbCB9CiAgLSB7IGZyb206IGdhdGV3YXksIHRvOiBtb2RlbCwgICBjYXJyaWVzOiBtb2RlbF9jYWxsIH0KCmJvcmRlcjogW3N0ZXdhcmRdCg==
+    document:
+      architecture: console
+      border:
+      - steward
+      format: agenticspec-architecture/1
+      links:
+      - carries: order
+        from: steward
+        to: helper
+      - carries: question
+        from: helper
+        to: steward
+      - carries: model_call
+        from: steward
+        to: gateway
+      - carries: model_call
+        from: helper
+        to: gateway
+      - carries: model_call
+        from: gateway
+        to: model
+      parts:
+        gateway:
+          block: gateway
+          rate_limit_per_minute: 60
+        helper:
+          block: agent
+          harness: coding
+        model:
+          block: model
+          route: frontier
+        steward:
+          block: agent
+          harness: coding
+          role: orchestrator
+      summary: 'A console as an architecture of its own, made to be nested in another one: a steward agent is the one part on its border, hands work to a helper agent, and both reach their model through a gateway. A document that nests it reaches the steward as `console.steward` and nothing else of it. On its own the console has no principal: it is checked and drawn here, and simulated inside the architecture that nests it, team-with-console.'
+    parts:
+    - console
+    sha256: sha256:330bd69675b94a9461baed62f67557b88ecf6c349f975fbea5fff5f0daa59623
+contract:
+  digest: sha256:c3f7e5b5ff0cd6c92db4564d7edf7b23ea6e8e65444d7d1d2e641c2995e1da59
+  document:
+    architecture: team-with-console
+    border:
+    - console.steward
+    format: agenticspec-contract/1
+    ingress:
+    - audience: control.monitor
+      authenticated: false
+      exports:
+      - metrics_scrape
+      name: metrics
+      operations:
+      - kind: metric
+        name: cache_bust_count
+      - kind: metric
+        name: cache_hit_share
+      - kind: metric
+        name: context_size_p90_tokens
+      - kind: metric
+        name: cost_usd
+      - kind: metric
+        name: human_prompt_share
+      - kind: metric
+        name: owner_wait_share
+      - kind: metric
+        name: priced_message_share
+      - kind: metric
+        name: sub_agents_started
+      - kind: metric
+        name: subagent_cost_share
+    - audience: control.operator
+      authenticated: true
+      exports:
+      - http
+      - event_stream
+      - ui
+      - tool
+      name: operator
+      operations:
+      - kind: command
+        name: agentic.gateway.DetachUpstream
+      - kind: command
+        name: agentic.gateway.DrainGateway
+      - kind: command
+        name: agentic.gateway.StopGateway
+      - kind: command
+        name: agentic.question.Answer
+      - kind: view
+        name: agentic.agent.AgentRevisions
+      - kind: view
+        name: agentic.agent.Agents
+      - kind: view
+        name: agentic.gateway.Calls
+      - kind: view
+        name: agentic.gateway.Gateways
+      - kind: view
+        name: agentic.gateway.Upstreams
+      - kind: view
+        name: agentic.harness.HarnessSessions
+      - kind: view
+        name: agentic.harness.Harnesses
+      - kind: view
+        name: agentic.harness.PermissionModes
+      - kind: view
+        name: agentic.harness.ToolCalls
+      - kind: view
+        name: agentic.harness.Turns
+      - kind: view
+        name: agentic.model.Endpoints
+      - kind: view
+        name: agentic.model.Inferences
+      - kind: view
+        name: agentic.model.Models
+      - kind: view
+        name: agentic.model.Routes
+      - kind: view
+        name: agentic.principal.Principals
+      - kind: view
+        name: agentic.question.OpenQuestions
+      - kind: view
+        name: agentic.question.Questions
+      - kind: feed
+        name: agentic.agent.AgentDefined
+      - kind: feed
+        name: agentic.agent.AgentRetired
+      - kind: feed
+        name: agentic.agent.AgentRevisionPublished
+      - kind: feed
+        name: agentic.agent.AgentRevisionRetired
+      - kind: feed
+        name: agentic.agent.AgentRevisionUsed
+      - kind: feed
+        name: agentic.gateway.CallCompleted
+      - kind: feed
+        name: agentic.gateway.CallDecided
+      - kind: feed
+        name: agentic.gateway.GatewayDrained
+      - kind: feed
+        name: agentic.gateway.GatewayOpened
+      - kind: feed
+        name: agentic.gateway.GatewayStopped
+      - kind: feed
+        name: agentic.gateway.UpstreamAttached
+      - kind: feed
+        name: agentic.gateway.UpstreamDetached
+      - kind: feed
+        name: agentic.gateway.UpstreamRestored
+      - kind: feed
+        name: agentic.gateway.UpstreamSaturated
+      - kind: feed
+        name: agentic.harness.ContextCompacted
+      - kind: feed
+        name: agentic.harness.HarnessRegistered
+      - kind: feed
+        name: agentic.harness.HarnessRetired
+      - kind: feed
+        name: agentic.harness.PermissionModeRegistered
+      - kind: feed
+        name: agentic.harness.PermissionModeRetired
+      - kind: feed
+        name: agentic.harness.SessionEnded
+      - kind: feed
+        name: agentic.harness.SessionOpened
+      - kind: feed
+        name: agentic.harness.SessionRestarted
+      - kind: feed
+        name: agentic.harness.SubAgentSpawned
+      - kind: feed
+        name: agentic.harness.ToolCallCompleted
+      - kind: feed
+        name: agentic.harness.ToolCallDecided
+      - kind: feed
+        name: agentic.harness.ToolCallRequested
+      - kind: feed
+        name: agentic.harness.ToolResultNotRead
+      - kind: feed
+        name: agentic.harness.TurnRecorded
+      - kind: feed
+        name: agentic.model.EndpointClosed
+      - kind: feed
+        name: agentic.model.EndpointOpened
+      - kind: feed
+        name: agentic.model.InferenceFinished
+      - kind: feed
+        name: agentic.model.InferenceStarted
+      - kind: feed
+        name: agentic.model.ModelDeclared
+      - kind: feed
+        name: agentic.model.ModelRetired
+      - kind: feed
+        name: agentic.model.ProviderRegistered
+      - kind: feed
+        name: agentic.model.RouteDefined
+      - kind: feed
+        name: agentic.model.RouteRetired
+      - kind: feed
+        name: agentic.principal.PrincipalRegistered
+      - kind: feed
+        name: agentic.principal.PrincipalRetired
+      - kind: feed
+        name: agentic.question.AnswerNotRead
+      - kind: feed
+        name: agentic.question.DefaultTaken
+      - kind: feed
+        name: agentic.question.QuestionAnswered
+      - kind: feed
+        name: agentic.question.QuestionAsked
+      - kind: feed
+        name: agentic.question.QuestionWithdrawn
+    invariants:
+    - link: console.steward -> owner carries question
+      port: question.question
+      predicate: every question.question@console.steward to owner
+    - link: worker -> console.steward carries question
+      port: question.question
+      predicate: every question.question@worker to console.steward
+    - link: worker -> gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@worker inside gateway.call@gateway
+      within: gateway.call
+    - link: gateway -> model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@gateway to model
+    - link: console.helper -> console.steward carries question
+      port: question.question
+      predicate: every question.question@console.helper to console.steward
+    - link: console.steward -> console.gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@console.steward inside gateway.call@console.gateway
+      within: gateway.call
+    - link: console.helper -> console.gateway carries model_call
+      port: model.inference
+      predicate: every model.inference@console.helper inside gateway.call@console.gateway
+      within: gateway.call
+    - link: console.gateway -> console.model carries model_call
+      port: gateway.call
+      predicate: every gateway.call@console.gateway to console.model
+    ports:
+    - instances: 1
+      part: console.gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 60
+    - instances: 1
+      part: console.helper
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 1
+      part: console.helper
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 1
+      part: console.helper
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 1
+      part: console.model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: console.steward
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+        role: orchestrator
+    - instances: 1
+      part: console.steward
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 1
+      part: console.steward
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    - instances: 1
+      part: gateway
+      port: gateway.call
+      protocol: AdmitCall CompleteCall
+      settings:
+        rate_limit_per_minute: 60
+    - instances: 1
+      part: model
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings:
+        route: frontier
+    - instances: 1
+      part: owner
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings:
+        kind: human
+    - instances: 3
+      part: worker
+      port: harness.session
+      protocol: (OpenSession | SpawnSubAgent) (CompactContext | RecordRestart | RecordTurn)* EndSession
+      settings:
+        harness: coding
+    - instances: 3
+      part: worker
+      port: model.inference
+      protocol: StartInference FinishInference
+      settings: {}
+    - instances: 3
+      part: worker
+      port: question.question
+      protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
+      settings: {}
+    ports_digest: b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1
+binding:
+  digest: sha256:a65be2f086046338aa5009f363582c2ccf730350224595c398240e4eef53097c
+  document:
+    architecture: team-with-console
+    binding: local
+    format: agenticspec-binding/1
+    parts:
+      console.gateway:
+        egress:
+        - console.model
+      console.steward:
+        egress:
+        - owner
+      gateway:
+        egress:
+        - model
+    summary: 'The local test: every part in the core unit, principals and hosted model routes outside. The base of each local-<architecture>.yaml, which declares where its parts reach. Fits any architecture whose sandboxes ask for no more than a container.'
+  name: local
+packing:
+  digest: sha256:f337f3a1eccb48086432fdea2405761367058cfc999b47d81ddd5588bb7d534a
+  document:
+    external:
+    - kind: model
+      part: console.model
+      reach:
+        name: console.model
+    - kind: model
+      part: model
+      reach:
+        name: model
+    - kind: principal
+      part: owner
+      reach:
+        name: owner
+    units:
+    - kind: core
+      name: core
+      parts:
+      - console.gateway
+      - console.helper
+      - console.steward
+      - gateway
+      - worker
+      replicas: 1
+  strategy: single
+units:
+- checks:
+    alive:
+      kind: http
+      path: /alive
+    ready:
+      kind: http
+      path: /ready
+  claims:
+    accelerators: 0
+    cpu_millis: 500
+    memory_mib: 512
+    volumes: []
+  code:
+    role: core-runtime
+  egress:
+  - carries: model_call
+    external: true
+    from: console.gateway
+    link: console.gateway -> console.model carries model_call
+    name: console.model
+    to: console.model
+  - carries: question
+    external: true
+    from: console.steward
+    link: console.steward -> owner carries question
+    name: owner
+    to: owner
+  - carries: model_call
+    external: true
+    from: gateway
+    link: gateway -> model carries model_call
+    name: model
+    to: model
+  isolation: none
+  kind: core
+  name: core
+  parts:
+  - console.gateway
+  - console.helper
+  - console.steward
+  - gateway
+  - worker
+  ports:
+  - instances: 1
+    part: console.gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 60
+  - instances: 1
+    part: console.helper
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 1
+    part: console.helper
+    port: model.inference
+    settings: {}
+  - instances: 1
+    part: console.helper
+    port: question.question
+    settings: {}
+  - instances: 1
+    part: console.steward
+    port: harness.session
+    settings:
+      harness: coding
+      role: orchestrator
+  - instances: 1
+    part: console.steward
+    port: model.inference
+    settings: {}
+  - instances: 1
+    part: console.steward
+    port: question.question
+    settings: {}
+  - instances: 1
+    part: gateway
+    port: gateway.call
+    settings:
+      rate_limit_per_minute: 60
+  - instances: 3
+    part: worker
+    port: harness.session
+    settings:
+      harness: coding
+  - instances: 3
+    part: worker
+    port: model.inference
+    settings: {}
+  - instances: 3
+    part: worker
+    port: question.question
+    settings: {}
+  replicas: 1
+  roles:
+  - core-runtime
+  - model-route:frontier
+  secrets: []
+  source:
+    parts:
+    - console.gateway
+    - console.helper
+    - console.steward
+    - gateway
+    - worker
+    unit: core
+ingress:
+- audience: control.monitor
+  authenticated: false
+  bind: loopback
+  ingress: metrics
+  part: control
+  protocol: metrics_scrape
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: http
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: event_stream
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: ui
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: tool
+  unit: core
+requirements: []
+agents: {}
+runtimes: {}
+digest: sha256:acefab7b6af7927c8ce1d35931be20cb624d3f128377cf98f9f728414dff3444

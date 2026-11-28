@@ -314,6 +314,14 @@
         "kind": "Quality",
         "value": 6726.25
       },
+      "setting_invalid": {
+        "kind": "Correctness",
+        "value": 0.0
+      },
+      "setting_unknown": {
+        "kind": "Correctness",
+        "value": 0.0
+      },
       "shared_workspaces": {
         "kind": "Quality",
         "value": 0.0
@@ -876,6 +884,14 @@
       "rework_turns": {
         "kind": "Quality",
         "value": 9922.625
+      },
+      "setting_invalid": {
+        "kind": "Correctness",
+        "value": 0.0
+      },
+      "setting_unknown": {
+        "kind": "Correctness",
+        "value": 0.0
       },
       "shared_workspaces": {
         "kind": "Quality",
@@ -11834,6 +11850,14 @@
           "kind": "Quality",
           "value": 3348.0
         },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "shared_workspaces": {
           "kind": "Quality",
           "value": 0.0
@@ -12164,6 +12188,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 6729.875
+        },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "shared_workspaces": {
           "kind": "Quality",
@@ -12496,6 +12528,14 @@
           "kind": "Quality",
           "value": 9700.625
         },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "shared_workspaces": {
           "kind": "Quality",
           "value": 0.0
@@ -12826,6 +12866,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9925.125
+        },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "shared_workspaces": {
           "kind": "Quality",
@@ -13158,6 +13206,14 @@
           "kind": "Quality",
           "value": 3346.125
         },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "shared_workspaces": {
           "kind": "Quality",
           "value": 0.0
@@ -13488,6 +13544,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 6726.25
+        },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "shared_workspaces": {
           "kind": "Quality",
@@ -13820,6 +13884,14 @@
           "kind": "Quality",
           "value": 9698.0
         },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "shared_workspaces": {
           "kind": "Quality",
           "value": 0.0
@@ -14150,6 +14222,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9922.625
+        },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "shared_workspaces": {
           "kind": "Quality",
@@ -14482,6 +14562,14 @@
           "kind": "Quality",
           "value": 3345.5
         },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "shared_workspaces": {
           "kind": "Quality",
           "value": 0.0
@@ -14812,6 +14900,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 6706.75
+        },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "shared_workspaces": {
           "kind": "Quality",
@@ -15144,6 +15240,14 @@
           "kind": "Quality",
           "value": 9696.125
         },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "shared_workspaces": {
           "kind": "Quality",
           "value": 0.0
@@ -15474,6 +15578,14 @@
         "rework_turns": {
           "kind": "Quality",
           "value": 9918.375
+        },
+        "setting_invalid": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "setting_unknown": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "shared_workspaces": {
           "kind": "Quality",

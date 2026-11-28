@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: epic:architecture-deployment
 kind: epic
-status: draft
+status: active
 title: 'Architecture deployment: packing, admission and the deployment bundle'
 summary: A binding's packing groups parts into units; admission and agenticspec deploy bundle write agenticspec-deployment/1 for cloudspec to translate and a target to run; the in-process runtime is the local test (K1-K16).
 relations:
@@ -10,7 +10,10 @@ relations:
 - depends_on: epic:ingress
 - informed_by: epic:control-plane
 - informed_by: epic:events-and-storage
-revision: 1
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:22Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:23Z", actor: "human:operator", revision: 3}
 ---
 ## Outcome
 

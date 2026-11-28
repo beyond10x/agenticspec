@@ -1,0 +1,59 @@
+{
+  "rows": [
+    {
+      "architecture": "team-with-console",
+      "kpi": "cache_bust_count",
+      "label": "Cache bust count",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "cache_hit_share",
+      "label": "Cache hit share",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "context_size_p90_tokens",
+      "label": "Context size p90 tokens",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "cost_usd",
+      "label": "Cost usd",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "human_prompt_share",
+      "label": "Human prompt share",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "owner_wait_share",
+      "label": "Owner wait share",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "priced_message_share",
+      "label": "Priced message share",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "sub_agents_started",
+      "label": "Sub agents started",
+      "prediction": null
+    },
+    {
+      "architecture": "team-with-console",
+      "kpi": "subagent_cost_share",
+      "label": "Subagent cost share",
+      "prediction": null
+    }
+  ],
+  "view": "agentic.architecture.ControlMetrics"
+}

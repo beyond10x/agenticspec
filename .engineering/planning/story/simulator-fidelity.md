@@ -31,7 +31,7 @@ scope:
   path: profiles/coding.yaml
 - confidence: cited
   path: website/static/catalog
-revision: 14
+revision: 15
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 13}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 14}
@@ -120,3 +120,7 @@ Changing `sim.rs` changes the committed catalog results: `task catalog:generate`
 Part kinds other than process running in the simulator; person steps of a process
 (`story:block-remainders` settles whether they are required); fitting role or route parameters
 from sessions (`epic:evaluation-loop`); a scenario's inputs (`story:scenario-simulator-run`).
+
+## Remaining at 9bb5998
+
+Missing: a trigger to a process part is refused; only agent and runtime are allowed (crates/agenticspec-sim/src/check.rs:476-478).

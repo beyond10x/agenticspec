@@ -24,7 +24,7 @@ scope:
   path: ui/README.md
 - confidence: inferred
   path: ui/views/examples
-revision: 2
+revision: 3
 ---
 ## Outcome
 
@@ -65,3 +65,7 @@ Epic: `epic:ingress`.
 
 The default control plane's pages (`story:control-plane-pages`); per-scope grants
 (`story:action-sets`).
+
+## Remaining at 9bb5998
+
+Missing: only the operator ingress has a UI, with a fixed root (crates/agenticspec-ui/src/serve.rs:47); no UI per ingress with a ui export.

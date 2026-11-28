@@ -337,3 +337,16 @@ Called by: Caller.
 | `cache_hit_share`<br/>Share of input tokens served from the prompt cache.<br/><small>How: Cache read tokens divided by cache read plus cache write plus uncached input tokens, summed over ModelTurnRecorded events (reported as hit_permille).</small> | share | higher | – | computed today<br/><small>source: docs/kpis.md</small> |
 | `cache_bust_count`<br/>Model turns that wrote most of the context to the cache again.<br/><small>How: Turns that read under half of the previous turn's context from the cache and wrote over half again, contexts over 20,000 tokens only, by cause (compacted, model_changed, ttl_expired, unexplained).</small> | count | lower | – | computed today<br/><small>source: docs/kpis.md</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `model`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `route` | string |  |  | `model.inference` | The route of the model, priced by the behaviour profile. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

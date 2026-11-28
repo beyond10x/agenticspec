@@ -29,7 +29,7 @@ A marked place carries `vary`: the value as built and the values a search may tr
 
 ## KPIs that moved
 
-33 of 80 KPIs differ between the architecture as built and its best variant; the others are equal. A weight is what the experiment scores a KPI by: above 0 more is better, below 0 less is better.
+33 of 82 KPIs differ between the architecture as built and its best variant; the others are equal. A weight is what the experiment scores a KPI by: above 0 more is better, below 0 less is better.
 
 | KPI | weight | as built | best variant | change |
 |---|---|---|---|---|
@@ -217,6 +217,8 @@ Every KPI of the architecture as built and of its best variant:
 | `reviews` | quality | 0 | 0 |
 | `reviews_rejected` | quality | 0 | 0 |
 | `rework_turns` | quality | 3175 | 6624.5 |
+| `setting_invalid` | correctness | 0 | 0 |
+| `setting_unknown` | correctness | 0 | 0 |
 | `shared_workspaces` | quality | 0 | 0 |
 | `single_points` | quality | 2 | 2 |
 | `slot_wait_share` | quality | 0 | 0.001 |

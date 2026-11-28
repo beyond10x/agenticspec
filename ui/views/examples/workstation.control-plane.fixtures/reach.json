@@ -1,0 +1,95 @@
+{
+  "rows": [
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "carries": "Prompt",
+      "from_kind": "Principal",
+      "from_name": "owner",
+      "from_part_id": "00000000-0000-4000-8000-130bd43336c1",
+      "link_id": "00000000-0000-4000-8000-e32708d25242",
+      "over_part_id": "00000000-0000-4000-8000-8d5e524cfaac",
+      "to_kind": "Agent",
+      "to_name": "operator",
+      "to_part_id": "00000000-0000-4000-8000-5b753faf7efc"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "carries": "Question",
+      "from_kind": "Agent",
+      "from_name": "operator",
+      "from_part_id": "00000000-0000-4000-8000-5b753faf7efc",
+      "link_id": "00000000-0000-4000-8000-d8877d3ee6aa",
+      "over_part_id": "00000000-0000-4000-8000-8d5e524cfaac",
+      "to_kind": "Principal",
+      "to_name": "owner",
+      "to_part_id": "00000000-0000-4000-8000-130bd43336c1"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "carries": "Question",
+      "from_kind": "Agent",
+      "from_name": "worker",
+      "from_part_id": "00000000-0000-4000-8000-521528611c24",
+      "link_id": "00000000-0000-4000-8000-d063a1d1168a",
+      "to_kind": "Agent",
+      "to_name": "operator",
+      "to_part_id": "00000000-0000-4000-8000-5b753faf7efc"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "carries": "Order",
+      "from_kind": "Agent",
+      "from_name": "operator",
+      "from_part_id": "00000000-0000-4000-8000-5b753faf7efc",
+      "link_id": "00000000-0000-4000-8000-5abbf4eea68d",
+      "to_kind": "Agent",
+      "to_name": "worker",
+      "to_part_id": "00000000-0000-4000-8000-521528611c24"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "carries": "ModelCall",
+      "from_kind": "Agent",
+      "from_name": "operator",
+      "from_part_id": "00000000-0000-4000-8000-5b753faf7efc",
+      "link_id": "00000000-0000-4000-8000-062502a04868",
+      "to_kind": "Gateway",
+      "to_name": "gateway",
+      "to_part_id": "00000000-0000-4000-8000-5e3ec0b5fa2d"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "carries": "ModelCall",
+      "from_kind": "Agent",
+      "from_name": "worker",
+      "from_part_id": "00000000-0000-4000-8000-521528611c24",
+      "link_id": "00000000-0000-4000-8000-410b71d7ad65",
+      "to_kind": "Gateway",
+      "to_name": "gateway",
+      "to_part_id": "00000000-0000-4000-8000-5e3ec0b5fa2d"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "carries": "ModelCall",
+      "from_kind": "Gateway",
+      "from_name": "gateway",
+      "from_part_id": "00000000-0000-4000-8000-5e3ec0b5fa2d",
+      "link_id": "00000000-0000-4000-8000-cab9c132b8d9",
+      "to_kind": "Model",
+      "to_name": "model",
+      "to_part_id": "00000000-0000-4000-8000-f70a15790a60"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "carries": "Claim",
+      "from_kind": "Agent",
+      "from_name": "worker",
+      "from_part_id": "00000000-0000-4000-8000-521528611c24",
+      "link_id": "00000000-0000-4000-8000-97050d03c032",
+      "to_kind": "Pool",
+      "to_name": "builds",
+      "to_part_id": "00000000-0000-4000-8000-a376fc9ea3bf"
+    }
+  ],
+  "view": "agentic.architecture.Reach"
+}

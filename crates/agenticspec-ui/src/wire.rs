@@ -460,6 +460,7 @@ pub fn read_request<R: BufRead>(r: &mut R) -> io::Result<Request> {
 pub fn reason(status: u16) -> &'static str {
     match status {
         200 => "OK",
+        308 => "Permanent Redirect",
         400 => "Bad Request",
         401 => "Unauthorized",
         404 => "Not Found",

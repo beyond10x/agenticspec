@@ -52,7 +52,7 @@ pub struct CheckOptions<'a> {
     /// The ports file; `blocks/ports.json` when absent. Read only for a document with `ingress:`.
     pub ports: Option<&'a Path>,
     /// The KPI catalogue; `kpis/catalogue.yaml` when absent. Read only for a document with
-    /// `ingress:`.
+    /// `ingress:` or `requirements:`.
     pub kpis: Option<&'a Path>,
 }
 
@@ -147,12 +147,35 @@ fn accepted(arch: &Value, flat: &Value, o: &CheckOptions) -> Result<Value, Refus
         })?;
         ingresses = contract.ingress.len();
     }
+    let requirements = check_requirements(flat, o.kpis)?;
     let mut out = summary(arch);
     out["kpis"] = Value::Object(kpis);
     out["single_points"] = json!(crate::whole::single_point_parts(flat));
     out["nested"] = json!(nest::listed(arch));
     out["ingresses"] = json!(ingresses);
+    out["requirements"] = json!(requirements);
     Ok(out)
+}
+
+/// The requirements of a document (`flat`, flattened) the structural check accepted, each with
+/// its stage and state ([`crate::requirements::at_check`]), or every refusal of its
+/// `requirements:` (`architecture_refused`). The KPI catalogue (`kpis/catalogue.yaml` when
+/// `kpis` is absent) is read only for a document with `requirements:`. A missed requirement is
+/// reported in the list, never refused.
+fn check_requirements(flat: &Value, kpis: Option<&Path>) -> Result<Vec<Value>, Refusal> {
+    use crate::requirements as req;
+    if !req::declares(flat) {
+        return Ok(Vec::new());
+    }
+    let kpis =
+        crate::contract::ingress::Kpis::load(kpis.unwrap_or(Path::new("kpis/catalogue.yaml")))
+            .map_err(|e| refused("kpis_unreadable", e))?;
+    let refusals = req::refusals(flat, &kpis);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    Ok(req::at_check(flat, &kpis))
 }
 
 fn summary(arch: &Value) -> Value {
@@ -941,7 +964,8 @@ pub struct BundleOptions<'a> {
 }
 
 /// `deploy bundle <architecture> --binding <file> [--out <file>] [--ports <file>]
-/// [--accepts <file>] [--kpis <file>]`: admit the architecture, its contract (its ingresses
+/// [--accepts <file>] [--kpis <file>]`: admit the architecture (its nesting chain resolved and
+/// flattened, each nested document carried), its requirements, its contract (its ingresses
 /// resolved), the binding and its packing, and only then write the bundle
 /// (`agenticspec-deployment/1`), or print it when no `--out` is given. A refusal writes nothing
 /// and names every finding.
@@ -952,10 +976,14 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
     let unreadable = |e: String| refused("document_unreadable", e);
     let bytes = std::fs::read(o.architecture)
         .map_err(|e| unreadable(format!("{}: {e}", o.architecture.display())))?;
-    let arch = std::str::from_utf8(&bytes)
+    let written = std::str::from_utf8(&bytes)
         .map_err(|e| e.to_string())
         .and_then(crate::doc::parse_yaml)
         .map_err(|e| unreadable(format!("{}: {e}", o.architecture.display())))?;
+    // The nesting chain resolved and pinned; what follows reads the document flattened.
+    let resolved = load_nested(o.architecture)?;
+    let nested = bundle::nested_documents(o.architecture, &written).map_err(unreadable)?;
+    let arch = nest::flatten(&resolved);
     let refusals = check_architecture(&arch);
     if !refusals.is_empty() {
         let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
@@ -963,7 +991,10 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
     }
     let ports_path = o.ports.unwrap_or(Path::new("blocks/ports.json"));
     let ports = PortsFile::load(ports_path).map_err(|e| refused("ports_unreadable", e))?;
-    let contract = derive_contract(&arch, &ports, o.kpis)?;
+    let kpis =
+        crate::contract::ingress::Kpis::load(o.kpis.unwrap_or(Path::new("kpis/catalogue.yaml")))
+            .map_err(|e| refused("kpis_unreadable", e))?;
+    let contract = derive_contract_with(&arch, &ports, &kpis)?;
     let problems = d::check(&contract, &arch, &ports);
     if !problems.is_empty() {
         return Err(refused("contract_refused", problems.join("; ")));
@@ -996,7 +1027,10 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
     let built = bundle::build(&bundle::Inputs {
         architecture: o.architecture,
         arch_bytes: &bytes,
+        written: &written,
         arch: &arch,
+        nested: &nested,
+        kpis: &kpis,
         contract: &contract,
         binding: &b,
         packing: &p,

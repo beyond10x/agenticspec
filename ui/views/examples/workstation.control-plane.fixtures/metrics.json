@@ -1,0 +1,77 @@
+{
+  "rows": [
+    {
+      "architecture": "workstation",
+      "kpi": "cache_bust_count",
+      "label": "Cache bust count",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "cache_hit_share",
+      "label": "Cache hit share",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "context_size_p90_tokens",
+      "label": "Context size p90 tokens",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "cost_usd",
+      "label": "Cost usd",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "human_prompt_share",
+      "label": "Human prompt share",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "owner_wait_share",
+      "label": "Owner wait share",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "priced_message_share",
+      "label": "Priced message share",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "secrets_in_prompts",
+      "label": "Secrets in prompts",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "secrets_in_tool_output",
+      "label": "Secrets in tool output",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "secrets_left_session",
+      "label": "Secrets left session",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "sub_agents_started",
+      "label": "Sub agents started",
+      "prediction": null
+    },
+    {
+      "architecture": "workstation",
+      "kpi": "subagent_cost_share",
+      "label": "Subagent cost share",
+      "prediction": null
+    }
+  ],
+  "view": "agentic.architecture.ControlMetrics"
+}

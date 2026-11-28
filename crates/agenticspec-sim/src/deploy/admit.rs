@@ -28,12 +28,17 @@ pub const REFUSALS: &[&str] = &[
     "agent_document_missing",
     "agent_document_digest",
     "image_unpinned",
+    "unit_image_conflict",
+    "unit_image_missing",
     "volume_mount_missing",
     "secret_value",
     "secret_undeclared",
     "egress_undeclared",
     "address_in_architecture",
     "ui_upstream_unknown",
+    "ui_export_unknown",
+    "ui_archive_mismatch",
+    "ui_build_needs_toolchain",
 ];
 
 /// The transport of the link from a clock into the scheduled unit it starts: the target's
@@ -166,17 +171,18 @@ fn stateful(part: &Value) -> Option<&'static str> {
 }
 
 /// The roles a unit needs: `agent-runtime` for an agent, job or scheduled unit;
-/// `core-runtime` for the core and service units unless the binding pins the core runtime;
-/// `start-jobs` for the core when a job unit exists; `model-server` and `store` for those
-/// kinds; `model-route:<route>` for each hosted model route a part of the unit calls.
+/// `core-runtime` for a core or service unit the binding gives no image
+/// ([`super::binding::unit_image`]); `start-jobs` for the core when a job unit exists;
+/// `model-server` and `store` for those kinds; `model-route:<route>` for each hosted model route
+/// a part of the unit calls.
 fn roles(arch: &Value, binding: &Value, packing: &Packing, unit: &Unit) -> Vec<String> {
     let mut out = BTreeSet::new();
-    let core_pinned = binding["runtimes"]["core"].is_object();
+    let imaged = super::binding::unit_image(binding, unit).image().is_some();
     match unit.kind.as_str() {
         "agent" | "job" | "scheduled" => {
             out.insert("agent-runtime".to_owned());
         }
-        "core" | "service" if !core_pinned => {
+        "core" | "service" if !imaged => {
             out.insert("core-runtime".to_owned());
         }
         "model" => {

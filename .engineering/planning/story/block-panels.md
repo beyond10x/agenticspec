@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:block-panels
 kind: story
-status: active
+status: implemented
 title: 'Block panels: one generated ess-ui/1 widget per block view, with fixtures and a gallery'
 summary: agenticspec ui panels writes ui/views/blocks.ui.yaml from the compiled blocks, one widget per view and a gallery page per domain, held by ess ui check --model blocks at 0 errors (M43).
 relations:
@@ -41,10 +41,11 @@ scope:
   path: ui/views/gallery
 - confidence: inferred
   path: website/src/generated
-revision: 8
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-28T00:20:31Z", actor: "human:operator", revision: 4}
 - {from: "proposed", to: "active", at: "2026-11-28T00:20:31Z", actor: "human:operator", revision: 5}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:12Z", actor: "human:operator", revision: 9, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

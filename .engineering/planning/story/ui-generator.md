@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ui-generator
 kind: story
-status: active
+status: implemented
 title: 'Our own UI: generate Vue components from an ess-ui document over our design kit'
 summary: agenticspec ui generate turns studio/studio.ui.yaml into Vue 3 components that use only ui/kit; every look lives in the kit
 relations:
@@ -25,10 +25,11 @@ scope:
   path: ui/kit
 - confidence: cited
   path: ui/studio
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:18:38Z", actor: "human:operator", revision: 3}
 - {from: "proposed", to: "active", at: "2026-11-27T23:18:38Z", actor: "human:operator", revision: 4}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:12Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

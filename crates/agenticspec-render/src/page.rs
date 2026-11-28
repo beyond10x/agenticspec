@@ -14,11 +14,18 @@
 //!
 //! - A node is a card coloured by its `group`. Rows run top to bottom by the longest chain of
 //!   edges that leads to a node; edges between two rows carry their label in the row between.
+//! - A group listed in `groups` takes its `colour` (a [`Colour`]: a hex colour, `rgb()`, `hsl()`
+//!   or one of [`NAMED_COLOURS`]) and its `icon` (one of [`ICONS`], or a text of one or two
+//!   characters); a group not listed keeps the palette and the plain icon.
 //! - A port is one row of its node's card; an edge end `node.port` lands on that card and its
 //!   label names the port.
 //! - A node with a `region` is drawn as a small card inside the card of the outermost region it
 //!   lies in: the node whose id is the region's id, or a card of the region itself. Its edges land
-//!   on that card.
+//!   on that card. An edge between two cards inside one region is drawn too: straight across
+//!   when they stand side by side, else on a lane of its own below what the region holds.
+//! - An edge with a `count` is drawn heavier: 2 or 3 wider than 1, 4 or more wider again.
+//! - A badge is a pill on its card, or with `on: panel` a row of the table "Details" under the
+//!   graph.
 //! - A mark is a chip on its card. A refusal also rings the card, or marks its port.
 //! - A panel is a table in a card beside the graph.
 //!
@@ -34,7 +41,7 @@
 //!     { "id": "user", "label": "user", "group": "principal" },
 //!     { "id": "session", "label": "session", "group": "agent", "badges": [{ "name": "count", "value": "8" }] },
 //!     { "id": "scratch", "label": "scratch", "group": "place", "region": "session" },
-//!     { "id": "model", "label": "model", "group": "intel" }
+//!     { "id": "model", "label": "model", "group": "intel", "badges": [{ "name": "region", "value": "eu", "on": "panel" }] }
 //!   ],
 //!   "ports": [{ "node": "model", "name": "complete", "kind": "http", "direction": "in", "contract": "complete/1" }],
 //!   "edges": [
@@ -45,7 +52,8 @@
 //!     { "target": { "node": "model", "port": "complete" }, "name": "rate_limit", "detail": "over 60 a minute" },
 //!     { "target": { "node": "session" }, "name": "budget", "detail": "40 % used", "level": "info" }
 //!   ],
-//!   "panels": [{ "title": "Owners", "columns": ["node", "owner"], "rows": [["session", "team a"], ["model", "team b"]] }]
+//!   "panels": [{ "title": "Owners", "columns": ["node", "owner"], "rows": [["session", "team a"], ["model", "team b"]] }],
+//!   "groups": [{ "name": "agent", "colour": "#2f7d5b", "icon": "bot" }, { "name": "intel", "icon": "AI" }]
 //! }
 //! ```
 
@@ -82,6 +90,236 @@ pub struct Page {
     pub marks: Vec<Mark>,
     #[serde(default)]
     pub panels: Vec<Panel>,
+    /// The colour and icon of a group, by its name. A group not listed keeps the palette.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<Group>,
+}
+
+/// The look of the nodes of one group: a colour for card, frame and legend swatch, an icon for
+/// the card. Either may be left out; the palette colour and the plain icon stand in.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Group {
+    /// The `group` of the nodes it styles.
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub colour: Option<Colour>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub icon: Option<Icon>,
+}
+
+/// The named colours a [`Colour`] may be, besides a hex colour, `rgb()` and `hsl()`.
+pub const NAMED_COLOURS: [&str; 40] = [
+    "black",
+    "white",
+    "gray",
+    "grey",
+    "silver",
+    "red",
+    "maroon",
+    "crimson",
+    "tomato",
+    "coral",
+    "salmon",
+    "orange",
+    "darkorange",
+    "gold",
+    "yellow",
+    "khaki",
+    "olive",
+    "lime",
+    "green",
+    "darkgreen",
+    "forestgreen",
+    "seagreen",
+    "teal",
+    "turquoise",
+    "cyan",
+    "aqua",
+    "skyblue",
+    "steelblue",
+    "blue",
+    "darkblue",
+    "navy",
+    "slateblue",
+    "indigo",
+    "purple",
+    "violet",
+    "orchid",
+    "plum",
+    "magenta",
+    "fuchsia",
+    "pink",
+];
+
+/// A CSS colour that can be written into a style attribute and nothing else:
+///
+/// - a hex colour, `#` and 3, 4, 6 or 8 hex digits: `#3a7`, `#33aa77cc`;
+/// - `rgb(…)`, `rgba(…)`, `hsl(…)` or `hsla(…)` holding 3 or 4 numbers, each optionally followed
+///   by `%` or `deg`, apart by spaces, commas or one `/`: `rgb(51 170 119)`,
+///   `hsl(150deg, 50%, 43%)`, `rgb(51 170 119 / 50%)`;
+/// - one of [`NAMED_COLOURS`], in lower case.
+///
+/// Anything else is refused, by [`Colour::new`], by deserialization and by the schema.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
+pub struct Colour(String);
+
+impl Colour {
+    pub fn new(text: impl Into<String>) -> Result<Self, String> {
+        let text = text.into();
+        if colour_ok(&text) {
+            Ok(Colour(text))
+        } else {
+            Err(format!(
+                "colour {text:?} is not a hex colour, rgb(), hsl() or a named colour of the list"
+            ))
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for Colour {
+    type Error = String;
+    fn try_from(s: String) -> Result<Self, String> {
+        Colour::new(s)
+    }
+}
+
+impl From<Colour> for String {
+    fn from(c: Colour) -> String {
+        c.0
+    }
+}
+
+fn colour_ok(s: &str) -> bool {
+    if let Some(hex) = s.strip_prefix('#') {
+        return matches!(hex.len(), 3 | 4 | 6 | 8) && hex.bytes().all(|b| b.is_ascii_hexdigit());
+    }
+    if NAMED_COLOURS.contains(&s) {
+        return true;
+    }
+    let Some(args) = ["rgba(", "rgb(", "hsla(", "hsl("]
+        .iter()
+        .find_map(|f| s.strip_prefix(f))
+        .and_then(|r| r.strip_suffix(')'))
+    else {
+        return false;
+    };
+    // Numbers apart by at least one space, comma or slash: `-?([0-9]+|[0-9]*\.[0-9]+)(%|deg)?`.
+    let b = args.as_bytes();
+    let mut i = 0;
+    let mut n = 0;
+    let skip_ws = |i: &mut usize| {
+        while *i < b.len() && b[*i] == b' ' {
+            *i += 1;
+        }
+    };
+    skip_ws(&mut i);
+    loop {
+        if i < b.len() && b[i] == b'-' {
+            i += 1;
+        }
+        let int = b[i..].iter().take_while(|c| c.is_ascii_digit()).count();
+        i += int;
+        if i < b.len() && b[i] == b'.' {
+            i += 1;
+            let frac = b[i..].iter().take_while(|c| c.is_ascii_digit()).count();
+            if frac == 0 {
+                return false;
+            }
+            i += frac;
+        } else if int == 0 {
+            return false;
+        }
+        if b[i..].starts_with(b"%") {
+            i += 1;
+        } else if b[i..].starts_with(b"deg") {
+            i += 3;
+        }
+        n += 1;
+        let start = i;
+        skip_ws(&mut i);
+        let sep = i < b.len() && matches!(b[i], b',' | b'/');
+        if sep {
+            i += 1;
+            skip_ws(&mut i);
+        }
+        if i == b.len() && !sep {
+            break;
+        }
+        if i == start || i == b.len() {
+            return false;
+        }
+    }
+    matches!(n, 3 | 4)
+}
+
+/// The icon names an [`Icon`] may be, each a stroke icon this crate draws.
+pub const ICONS: [&str; 14] = [
+    "person",
+    "bot",
+    "bubble",
+    "gateway",
+    "chip",
+    "wrench",
+    "folder",
+    "shield",
+    "play",
+    "stack",
+    "checklist",
+    "lock",
+    "frame",
+    "circle",
+];
+
+/// The icon of a card: one of [`ICONS`], drawn as that stroke icon, or a text of one or two
+/// characters (no control character, not only spaces), drawn in the icon's tile. Anything else is
+/// refused, by [`Icon::new`], by deserialization and by the schema.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
+pub struct Icon(String);
+
+impl Icon {
+    pub fn new(text: impl Into<String>) -> Result<Self, String> {
+        let text = text.into();
+        let chars = text.chars().count();
+        let short = (1..=2).contains(&chars)
+            && !text.chars().any(char::is_control)
+            && !text.trim().is_empty();
+        if ICONS.contains(&text.as_str()) || short {
+            Ok(Icon(text))
+        } else {
+            Err(format!(
+                "icon {text:?} is not an icon name of the list or a text of 1 or 2 characters"
+            ))
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
+    /// The name of the stroke icon, or `None` for a text.
+    pub fn name(&self) -> Option<&'static str> {
+        ICONS.iter().copied().find(|n| *n == self.0)
+    }
+}
+
+impl TryFrom<String> for Icon {
+    type Error = String;
+    fn try_from(s: String) -> Result<Self, String> {
+        Icon::new(s)
+    }
+}
+
+impl From<Icon> for String {
+    fn from(i: Icon) -> String {
+        i.0
+    }
 }
 
 impl Page {
@@ -120,9 +358,11 @@ pub struct Node {
     pub label: String,
     /// Colour and legend entry. One of the palette names of the stylesheet (`principal`,
     /// `agent`, `collab`, `work`, `intel`, `capability`, `place`, `resource`, `nested`, `other`)
-    /// takes that colour; any other name takes the next one no group of the page names.
+    /// takes that colour; any other name takes the next one no group of the page names. An entry
+    /// of the page's `groups` with this name sets its colour and icon.
     pub group: String,
-    /// Pills at the card's top right: `count` reads `×<value>`, any other `<name> <value>`.
+    /// Pills at the card's top right: `count` reads `×<value>`, any other `<name> <value>`. A
+    /// badge `on: panel` is a row of the table "Details" under the graph instead.
     #[serde(default)]
     pub badges: Vec<Badge>,
     /// The id of the region the node is drawn in.
@@ -135,6 +375,25 @@ pub struct Node {
 pub struct Badge {
     pub name: String,
     pub value: String,
+    /// Where the badge is shown: a pill on the card (the default), or a row of the table
+    /// "Details" under the graph.
+    #[serde(default, skip_serializing_if = "On::is_card")]
+    pub on: On,
+}
+
+/// Where a [`Badge`] is shown.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum On {
+    #[default]
+    Card,
+    Panel,
+}
+
+impl On {
+    fn is_card(&self) -> bool {
+        *self == On::Card
+    }
 }
 
 /// A named port on a node, addressed by an edge end `node.port`. A port is one row of its
@@ -173,7 +432,8 @@ pub struct Edge {
     pub from: String,
     pub to: String,
     pub label: String,
-    /// How many edges this one stands for, shown as `×n` after the label.
+    /// How many edges this one stands for, shown as `×n` after the label. The stroke has three
+    /// widths: up to 1, 2 or 3, and 4 or more.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub count: Option<u64>,
 }
@@ -291,7 +551,7 @@ impl Shell {
             graph_hint: "Select a node to follow its edges".to_string(),
             legend: legend(page),
             side,
-            after: String::new(),
+            after: details(page),
             footer: format!(
                 "{} · rendered by agenticspec, self-contained, no network",
                 esc(format)
@@ -402,9 +662,16 @@ fn legend(page: &Page) -> String {
         }
     }
     for g in groups {
+        let style = page
+            .groups
+            .iter()
+            .find(|x| x.name == g)
+            .and_then(|x| x.colour.as_ref())
+            .map(|c| format!(" style=\"--c:{}\"", esc(c.as_str())))
+            .unwrap_or_default();
         let _ = write!(
             h,
-            "<li><span class=\"swatch f-{}\"></span>{}</li>",
+            "<li><span class=\"swatch f-{}\"{style}></span>{}</li>",
             palette.slot(g),
             esc(if g.is_empty() { "other" } else { g })
         );
@@ -421,6 +688,31 @@ fn legend(page: &Page) -> String {
         h.push_str("<li><span class=\"swatch chip-sample\"></span>information</li>");
     }
     h.push_str("</ul>");
+    h
+}
+
+/// The badges shown on a panel: one table "Details" under the graph, a row per badge, the rows
+/// of one node together in the order of the nodes. Empty when no badge is shown on a panel.
+fn details(page: &Page) -> String {
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    for n in &page.nodes {
+        for b in n.badges.iter().filter(|b| b.on == On::Panel) {
+            rows.push(vec![n.label.clone(), b.name.clone(), b.value.clone()]);
+        }
+    }
+    if rows.is_empty() {
+        return String::new();
+    }
+    let mut h = String::from("<section class=\"section-gap\" aria-label=\"Details\">");
+    panel(
+        &mut h,
+        &Panel {
+            title: "Details".to_string(),
+            columns: vec!["node".to_string(), "name".to_string(), "value".to_string()],
+            rows,
+        },
+    );
+    h.push_str("</section>\n");
     h
 }
 

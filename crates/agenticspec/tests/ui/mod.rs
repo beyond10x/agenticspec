@@ -166,6 +166,36 @@ fn ui_build_writes_the_app_and_its_data_and_the_same_archive_each_time() {
     assert_ne!(rc["archive_sha256"].as_str(), Some(digest));
 }
 
+/// `ui build --control-plane` writes the control-plane UI from the binary alone: the same app,
+/// the layout `ui derive --control-plane` writes, and a config in control-plane mode.
+#[test]
+fn ui_build_control_plane_writes_the_pages_across_parts() {
+    let tmp = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("ui-build-control");
+    let _ = std::fs::remove_dir_all(&tmp);
+    std::fs::create_dir_all(&tmp).unwrap();
+    let dir = tmp.join("control-plane-ui");
+    let r = result(&ui_build(&dir, &["--control-plane", "--archive"]));
+    assert_eq!(
+        std::fs::read(dir.join("views.json")).unwrap(),
+        std::fs::read(repo().join("ui/views/examples/workstation.control-plane.layout.json"))
+            .unwrap(),
+        "views.json is not the derived control-plane layout"
+    );
+    assert_eq!(
+        std::fs::read(dir.join("app.js")).unwrap(),
+        std::fs::read(repo().join("ui/operator/built/app.js")).unwrap()
+    );
+    let config: Value =
+        serde_json::from_str(&std::fs::read_to_string(dir.join("config.json")).unwrap()).unwrap();
+    assert_eq!(config["mode"], "control-plane");
+    assert_eq!(config["title"], "workstation control plane");
+    let tar = std::fs::read(tmp.join("control-plane-ui.tar")).unwrap();
+    assert_eq!(
+        r["archive_sha256"].as_str(),
+        Some(agenticspec_ui::operator::sha256(&tar).as_str())
+    );
+}
+
 /// Every file of `ui/operator/built` is embedded, and nothing else.
 #[test]
 fn the_binary_embeds_every_built_file_of_the_operator_app() {

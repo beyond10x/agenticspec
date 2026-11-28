@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:studio-file-follow
 kind: story
-status: draft
+status: active
 title: Studio drafts follow their files on disk
 summary: 'A change on disk to a draft''s file becomes a revision: the difference as a patch, applied by a tool call with caller File and published on the draft''s channel.'
 relations:
@@ -17,7 +17,10 @@ scope:
   path: docs/studio.md
 - confidence: inferred
   path: studio/domains/session.yaml
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 3}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
 ---
 ## Outcome
 
@@ -47,3 +50,7 @@ on the draft's channel, so every client sees it (LQ5, recommended option A). Ext
 ## Not in this story
 
 Write-back on release (`story:studio-release`).
+
+## Remaining at 9bb5998
+
+Delivered in f154cbf. Missing: a revision from disk has no tool call with caller File, no patch and no check refusal (crates/agenticstudio/src/studio.rs:590-594).

@@ -1,0 +1,9 @@
+format: agenticspec-binding/1
+binding: ui-build-needs-toolchain
+architecture: workstation
+refines: egress/workstation.yaml
+summary: A UI of the consumer's own named by its ess-ui/1 document, whose pages need node and vite to build.
+ui:
+  console:
+    source: {ess_ui: ../../../../../ui/views/examples/workstation.ui.yaml}
+    export: operator.ui

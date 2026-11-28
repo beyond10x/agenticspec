@@ -172,3 +172,17 @@ Called by: Operator.
 |---|---|---|---|---|
 | `egress_denied_attempts`<br/>Tool calls refused because they reach outside the sandbox.<br/><small>How: ToolCallDecided refusals on tools of category Network or Message, or Execute with an outward effect, per sandbox.</small> | count | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `sandbox`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `isolation` | enum `IsolationLevel`: `none`, `process`, `container`, `user_kernel`, `micro_vm` |  |  | every port | How the sandbox isolates what runs in it. |
+| `egress` | part list |  |  | every port | The parts the sandbox may reach. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

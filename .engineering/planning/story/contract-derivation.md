@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:contract-derivation
 kind: story
-status: active
+status: implemented
 title: 'Derive and check the contract of an architecture: agenticspec sim contract'
 summary: 'agenticspec sim contract writes agenticspec-contract/1 for every accepted architecture document: ports per part with protocol, narrowing settings and instances, routing invariants whose predicates parse, border.'
 relations:
@@ -35,10 +35,11 @@ scope:
   path: spec/cli.yaml
 - confidence: cited
   path: spec/domains/cli.yaml
-revision: 11
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:33:37Z", actor: "human:operator", revision: 10, decided_on: {"recorded":{"review_outcome":5}}}
 - {from: "proposed", to: "active", at: "2026-11-27T23:33:37Z", actor: "human:operator", revision: 11, decided_on: {"recorded":{"review_outcome":5}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:11Z", actor: "human:operator", revision: 12, decided_on: {"recorded":{"test_result":1,"review_outcome":5}}}
 ---
 ## Outcome
 

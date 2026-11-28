@@ -205,3 +205,15 @@ Called by: Asker.
 | `question_round_trip_p90_seconds`<br/>90th percentile of the time from a question to its answer.<br/><small>How: Seconds between QuestionAsked and QuestionAnswered of the same question, 90th percentile. Questions that took their default are left out.</small> | seconds | lower | – | planned<br/><small>source: research/2611.00689</small> |
 | `answers_not_read_share`<br/>Share of questions whose answer could not be read.<br/><small>How: AnswerNotRead events divided by QuestionAsked events, per addressee. A reply that could not be read ends the question; its default is never taken in its place.</small> | share | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `question`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

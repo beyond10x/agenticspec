@@ -107,7 +107,7 @@ architecture:
   sha256: sha256:2af94059ae00c1db726e3b40ce42186064d1120bda2b4e26694d29dc14ba76f4
 nested: {}
 contract:
-  digest: sha256:2649954e478e50df00aa50a626001064d5c44544ecfdab7fe7a2f38de5051380
+  digest: sha256:be8ea8560379815e41661565d2e598116a9aee1d9b01e7676287216c906de782
   document:
     architecture: scheduled-loops
     border: []
@@ -476,7 +476,7 @@ contract:
       port: resource.claim
       protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
       settings: {}
-    ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
+    ports_digest: b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1
 binding:
   digest: sha256:38277983d86061676435359c2dfd647066b6bf400f9eeba544e4069765b90ba6
   document:
@@ -797,4 +797,4 @@ runtimes:
     image: agenticspec-core
     name: core
     tag: dev
-digest: sha256:6ac8eee6d66e5269e954d9c4970e62ecc7dba9a1382c3a3c5cea57c694a64ccb
+digest: sha256:4490ebb47c1c35629d201f63b4ed9a40aebfa1b785338d4d0952ddf46b7c7381

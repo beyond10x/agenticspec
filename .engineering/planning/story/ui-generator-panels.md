@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ui-generator-panels
 kind: story
-status: draft
+status: active
 title: 'Generator additions for the view layer: widgets as SFCs, actor.may, metric, live refetch, embed, custom elements'
 summary: agenticspec ui generate emits one SFC per widget and draws visible by actor.may from R5, metric, live refetch, the embed shell and a custom-element build mode (D8).
 relations:
@@ -15,7 +15,10 @@ scope:
   path: crates/agenticspec-ui
 - confidence: cited
   path: ui/kit
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 5}
 ---
 ## Outcome
 
@@ -77,3 +80,7 @@ no `live` effect, no `embed` shell and no `actor.may`. This story adds those, as
 The block panels (`story:block-panels`); the derivation from an architecture
 (`story:architecture-ui`); the Vue package and custom-element bundle (`story:views-package`); the
 R5 answer from grants (`story:action-sets`).
+
+## Remaining at 9bb5998
+
+Delivered in 1d07919. Missing: the metric and embed widgets (crates/agenticspec-ui/src/check.rs:284).

@@ -1,0 +1,136 @@
+{
+  "rows": [
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 1,
+      "kind": "Principal",
+      "name": "owner",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-130bd43336c1",
+      "settings": []
+    },
+    {
+      "acts_for_part_id": "00000000-0000-4000-8000-130bd43336c1",
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 1,
+      "kind": "Agent",
+      "name": "operator",
+      "on_border": true,
+      "part_id": "00000000-0000-4000-8000-5b753faf7efc",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "operator"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 12,
+      "kind": "Agent",
+      "name": "worker",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-521528611c24",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 1,
+      "kind": "Channel",
+      "name": "chat",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-8d5e524cfaac",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 1,
+      "kind": "Gateway",
+      "name": "gateway",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-5e3ec0b5fa2d",
+      "settings": [
+        {
+          "name": "rate_limit_per_minute",
+          "value": "120"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 1,
+      "kind": "Model",
+      "name": "model",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-f70a15790a60",
+      "settings": [
+        {
+          "name": "route",
+          "value": "frontier"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 1,
+      "kind": "Pool",
+      "name": "builds",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-a376fc9ea3bf",
+      "settings": [
+        {
+          "name": "capacity",
+          "value": "16"
+        },
+        {
+          "name": "job_limit",
+          "value": "10m"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 1,
+      "kind": "Sandbox",
+      "name": "box",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-e0fed65de0a6",
+      "per_part_id": "00000000-0000-4000-8000-521528611c24",
+      "settings": [
+        {
+          "name": "egress",
+          "value": "[\"gateway\"]"
+        },
+        {
+          "name": "isolation",
+          "value": "process"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-659084d3d437",
+      "count": 1,
+      "kind": "Workspace",
+      "name": "tree",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-6eb670d1959e",
+      "per_part_id": "00000000-0000-4000-8000-521528611c24",
+      "settings": [
+        {
+          "name": "sharing",
+          "value": "exclusive"
+        }
+      ]
+    }
+  ],
+  "view": "agentic.architecture.Parts"
+}

@@ -26,13 +26,13 @@ but `format` and `binding` is optional.
 | `architecture` | the name of the architecture it is for; any architecture when absent |
 | `refines` | a base binding file, relative to this one. The base's keys are read first and this file's keys go over them, mapping by mapping |
 | `target` | what the target gives each unit: `isolation`, one of `none`, `process`, `container`, `user_kernel`, `micro_vm` (`container` when absent); `images`, where it takes runtime images from, `registry` (the default) or `local` (its own image store); `network_policy`, `enforced` or `not_enforced` (unknown when absent) |
-| `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists) |
+| `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists), `image` (the runtime image of its core or service unit, below) |
 | `transports` | per carried value (`model_call`, `order`, `question`, `claim`, ...), the transport a link that crosses units uses |
-| `runtimes` | runtime images: `core` for the core and service units, `agent-runtime` for the agent units (the role it plays; without it the target binds the role, and the older name `agent` is refused). Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both |
-| `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui` |
-| `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below); the operator UI's unit, `operator-ui`, has `ready` and `alive` |
+| `runtimes` | runtime images: `core` for the core unit, `agent-runtime` for the agent units (the role it plays; without it the target binds the role, and the older name `agent` is refused). Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both. A core or service unit may run an image of its own, in the same form: `image` of the unit as `packing.units` lists it, else `parts.<part>.image` of its parts, which must all name the same one (`unit_image_conflict`), else, for the core unit only, `runtimes.core`. A service unit with none names the role `core-runtime`; a core or service unit that holds a runtime part (block `runtime`) and has none is refused (`unit_image_missing`) |
+| `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator). The operator UI's unit is `operator-ui`, the control-plane UI's `control-plane-ui` |
+| `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below); the UI units, `operator-ui` and `control-plane-ui`, have `ready` and `alive` |
 | `ingress` | per ingress of the contract and per protocol it exports, where it listens: `{operator: {exports: {http: {port: 8080, bind: all}}}}`. `port` (1 to 65535), `bind` (`loopback`, the default, or `all`), `address` (the address it is reached at, text) and `part` (a part of a unit that serves it, when not the control plane of the core) |
-| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) |
+| `ui` | the UIs to deploy as units of their own: `{operator: {port, bind, upstream: {unit, port}}, control-plane: {port, bind, upstream: {unit, port}}}`, every key optional (`ui: {operator: {}}`). See [the operator UI in a bundle](#the-operator-ui-in-a-bundle) and [the control-plane UI](#the-control-plane-ui) |
 | `packing` | the packing section below |
 
 A binding never changes the architecture: promoting a revision to another target is a new binding
@@ -139,7 +139,7 @@ packing:
 ```
 
 In the resolved form, `units:` lists every unit (`name`, `kind`, `parts`, `replicas` for a unit
-that runs as copies, `schedule` for a scheduled unit with a cron rule) and `external:` the parts outside, each a part's name or `{part: <name>, reach:
+that runs as copies, `schedule` for a scheduled unit with a cron rule, `image` for a core or service unit that runs an image of its own) and `external:` the parts outside, each a part's name or `{part: <name>, reach:
 {...}}`; `strategy`, `groups` and `parts` do not go with it. A section of the wrong form (an unknown key, strategy, kind or part, two units of one
 name) is refused with every problem as `binding_invalid`.
 
@@ -165,13 +165,20 @@ order of the table, and writes nothing.
 | `unit_not_hosted` | a unit's kind or one of its roles is not in the accepted list |
 | `agent_document_missing` | an agent, job or scheduled unit holds an agent part the binding names no readable agent document for |
 | `agent_document_digest` | an agent document is not the digest the binding pins |
-| `image_unpinned` | a runtime from the target's local store names neither a `tag` nor a `digest` |
+| `image_unpinned` | a runtime, a part's `image` or a unit's `image` from the target's local store names neither a `tag` nor a `digest` |
+| `unit_image_conflict` | parts of one core or service unit name different images under `parts.<part>.image`, and the unit names none under `packing.units` |
+| `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image: neither its own, its parts', nor, for the core unit, `runtimes.core`. The finding names the unit and its runtime parts |
 | `volume_mount_missing` | a unit claims a workspace's volume and no part of the unit mounts it, or mounts it at a path that is not absolute; there is no default path |
 | `secret_value` | something that looks like a secret's value stands where a secret name belongs (see [secrets and egress](#secrets-and-egress)) |
 | `secret_undeclared` | an egress entry, or in a written bundle a unit, names a secret that no part of its unit declares |
 | `egress_undeclared` | a link leaves its unit, for an external part or a part of another unit, and the part it starts at does not declare that destination in its `egress` |
 | `address_in_architecture` | the architecture names an address: a key `address`, `host`, `hostname` or `url` anywhere in it (see [the bundle](#the-bundle)) |
 | `ui_upstream_unknown` | the UI the binding asks for reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have |
+| `requirement_kpi_unknown` | a requirement names a KPI that is in neither the KPI catalogue nor the simulator and is not a cloud KPI (`cloudspec:<id>`) |
+| `requirement_invalid` | a requirement of the wrong form: no `kpi`, not exactly one number of `at_least`, `at_most`, `equals`, a `part` the architecture does not have or on a KPI of the architecture as a whole, a `window` that is no duration, an unknown key |
+| `ui_export_unknown` | a UI of your own serves an export (`ui.<name>.export`, `<ingress>.<protocol>`) that no ingress of the architecture has |
+| `ui_archive_mismatch` | the archive a UI of your own names (`ui.<name>.source.archive`) is not the SHA-256 its `digest` gives |
+| `ui_build_needs_toolchain` | a UI of your own names an `ess-ui/1` document (`ui.<name>.source.ess_ui`): its pages need node and vite to build, which the binary does not run; name the archive you built from it instead |
 
 The **accepted list** (`bundles/cloudspec-accepts.yaml`, `agenticspec-cloudspec-accepts/1`) is
 the copy of the unit kinds and roles the translator accepts, with the commit it was copied from
@@ -191,15 +198,15 @@ SHA-256 of the canonical JSON of what it covers (keys sorted, no space).
 |---|---|
 | `format`, `generator` | `agenticspec-deployment/1`; the agenticspec version that wrote it |
 | `architecture` | the document, its name, its revision digest (of its `parts`, `links` and `border`) and the digest of its bytes (`sha256`) |
-| `nested` | the documents the architecture names, by digest; empty while architectures do not nest |
+| `nested` | every document the architecture nests, and every document those nest, keyed by its canonical digest, the pin its part writes (`agenticspec sim digest`): its `architecture` name, the `parts` that refer to it (dotted from the outermost document, `console`, `console.vault`), `sha256`, the digest of its file's bytes, `content_base64`, those exact bytes in standard base64, and `document`, the same document parsed. Empty when the architecture nests none. The units, the packing and the contract read the architecture flattened (`console.steward`) |
 | `contract` | the contract (`agenticspec-contract/1`, see [the contract](contract.md)) and its digest |
 | `binding` | the binding with its `refines:` chain resolved, its name and digest |
 | `packing` | the resolved packing, its strategy and digest; its `external` lists each part outside as `{part, kind, reach}`, `kind` the part's block and `reach` the binding's or `{name: <part>}` |
 | `units` | one entry per unit, below |
 | `ingress` | one entry per export of each ingress of the contract: `ingress`, `protocol`, `audience`, `authenticated`, the `unit` and `part` that serve it (`control`, the control plane in the core unit, unless the binding names a part), `bind` (`loopback` unless the binding says `all`), and `port` and `address` when the binding gives them. An entry without `port` has no entry point on the target |
-| `requirements` | the architecture's `requirements:`, empty when it has none |
+| `requirements` | each entry of the architecture's `requirements:` as written, with its `stage` (`check`, `evaluation`, `operation` or `cloud`), its `state` and, when decided, the `value` it was decided on: a KPI of the architecture as a whole or a gate count is `met` or `missed` here, every other one `undecided`. A missed requirement does not refuse the bundle. Empty when it has none. See [requirements](architectures/index.md#requirements) |
 | `agents` | each agent document the binding names, keyed by the digest of its file's bytes: the parts it plays, `content_base64`, those exact bytes in standard base64, and `document`, the same document parsed |
-| `runtimes` | each runtime image the binding pins. From a registry: keyed by its digest, with its name and its image reference `<image>@sha256:<digest>`. From the target's local store: what the binding gave, its name, `image`, and `tag`, `digest` or both, keyed by the digest, else by `<image>:<tag>` |
+| `runtimes` | each runtime image the binding pins under `runtimes`, then each image a core or service unit runs of its own that is not one of those. From a registry: keyed by its digest, with its name (the runtime's, or the unit's for its own image) and its image reference `<image>@sha256:<digest>`. From the target's local store: what the binding gave, its name, `image`, and `tag`, `digest` or both, keyed by the digest, else by `<image>:<tag>` |
 | `files` | only when the binding asks for a UI: each file a unit names, by its file name, with its `digest`, its `size` in bytes and its bytes in `base64`. A UI unit's archive is carried here |
 | `digest` | the bundle digest, of every member but this one |
 
@@ -210,7 +217,7 @@ Each unit:
 | `name`, `kind`, `parts` | the unit, its kind and its parts. The packing's `agent`, `job` and `scheduled` units are all of kind `agent` here, told apart by `shape` |
 | `shape` | an agent unit only: `service` (long-running, the packing's `agent`), `job` (until done, started on demand) or `scheduled` (until done, started by a clock) |
 | `replicas` | the copies that run; absent for a `job` or `scheduled` unit |
-| `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (`runtimes.agent-runtime`) (from a local store `<image>:<tag>`, else its config id). The core and service units run the pinned core runtime, by the same reference, or name the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
+| `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (`runtimes.agent-runtime`) (from a local store `<image>:<tag>`, else its config id). A core or service unit runs its image as `runtime`, by the same reference: its own, its parts', or for the core unit the pinned core runtime (`runtimes.core`); a unit without one names the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
 | `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace, with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
@@ -219,7 +226,7 @@ Each unit:
 | `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (`/api/`) |
 | `secrets` | the secret names its parts declare, never a value |
 | `egress` | every destination its parts declare, each with the part it starts at (`from`), the secret it authenticates with, when declared (`secret`), and `name`, what the target resolves: a link to another unit, with its transport, named by that unit; a link to an external part (`external: true`), named by its reach (its name, or its address, which is then also `address`); or a destination outside the architecture (`named: true`, no link), named by its own name, with the `address` the binding gives it, else `unresolved: true`. Nothing that is not listed is granted |
-| `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime`, `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls, `operator-ui` for the operator UI's unit |
+| `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime` (a core or service unit without an image), `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls, `operator-ui` for the operator UI's unit, `control-plane-ui` for the control-plane UI's unit |
 | `ports` | the contract ports its parts use, by their derived names, with their settings and instances |
 | `source` | the unit and its parts, carried into what the translator makes of it |
 
@@ -238,14 +245,18 @@ carries, for a reader that did not write it. It refuses with `bundle_invalid` a 
 `agenticspec-deployment/1`, lacks a member, whose digests do not hold (the bundle's, the
 architecture's revision, the contract's, the binding's, the packing's) or whose binding or packing
 is of the wrong form (a check, a claim or an ingress export the packing or the contract does not
-have among them). Otherwise it admits the architecture under the binding and packing the bundle
-carries, checks that each agent unit carries the agent documents of its agent parts at the digests
+have among them). It resolves a nested architecture from the documents the bundle carries, each
+found by the digest its part pins: it refuses a reference whose digest the bundle carries no
+document of (`nested_document_missing`), and a carried document whose `content_base64` does not
+decode to bytes whose SHA-256 is its `sha256`, which parse to its `document` and whose canonical
+digest is its key (`nested_document_mismatch`). Otherwise it admits the architecture, flattened,
+under the binding and packing the bundle carries, checks that each agent unit carries the agent documents of its agent parts at the digests
 the binding pins and that each agent document's `content_base64` decodes to bytes whose SHA-256 is
 its key and which parse to its `document` (`agent_document_mismatch`), and checks the secrets and egress of the binding and of every unit: a unit's
 secret or an egress entry's secret that no part of the unit declares, an egress entry whose part
 does not declare its destination, and a secret value, each by its name. It also refuses what the
 target cannot be asked to serve: a volume without an absolute mount (in the binding or in a unit),
-a local runtime image with neither tag nor digest, a part isolated on the network of a target
+a local runtime image with neither tag nor digest, a core or service unit whose parts name different images or that holds a runtime part without an image (`unit_image_conflict`, `unit_image_missing`), a part isolated on the network of a target
 that enforces no network policy, and a scheduled unit whose `schedule` is not the rule of its
 binding or of its schedule's `every` (`schedule_not_cron`). Of a UI unit it hashes the archive the bundle carries and refuses
 an archive that is missing or whose SHA-256 is not the unit's `digest` (`ui_archive_mismatch`),
@@ -309,12 +320,80 @@ The bundle then has:
 - the `ingress` entry of the operator ingress's `ui` export naming `unit: operator-ui` and `part:
   control`; its other exports stay where they were.
 
-`deploy bundle` refuses, with `binding_invalid`, a `ui:` of the wrong form, a contract whose
-operator ingress exports no `ui`, a packing that has a unit named `operator-ui`, and a `part` on
-the `ui` export; with `not_admitted`, an upstream that names no unit of the packing
-(`ui_upstream_unknown`), a role `operator-ui` the accepted list does not hold
+`deploy bundle` refuses, with `binding_invalid`, a `ui:` of the wrong form, a packing that has a
+unit named `operator-ui`, and a `part` on the `ui` export; with `not_admitted`, a contract whose
+operator ingress exports no `ui` (`ui_export_unknown`), an upstream that names no unit of the
+packing (`ui_upstream_unknown`), a role `operator-ui` the accepted list does not hold
 (`unit_not_hosted`), and a UI that does not build (`ui_build_refused`, for example a contract
 from other ports than the binary's). `bundles/bindings/operator-ui.yaml` is the worked example.
+
+### The control-plane UI
+
+`agenticspec ui build ... --control-plane [--prediction <result.json>]` writes the control-plane
+UI: the same app and files, with pages across parts beside the overviews and part pages, and
+`config.json` in `mode: control-plane`. `ui derive --control-plane` derives the same layout,
+by the same code path. The pages are chosen by port class and by the split of entry commands into
+configuration and administration, read from the contract and the port catalogue, never by a view
+name:
+
+| page | shows |
+|---|---|
+| Inbox | per principal part (kind `human` or `service`), the views over the entity each of its principal ports opens, with the port's answers as row actions |
+| Activity | the views over the entities the other ports the parts use open, across parts, newest first |
+| Operations | per part, the views over the entities a configuration command of its blocks creates or an administration command moves, with the administration commands of the operator ingress as row actions; then the placements |
+| Metrics | the KPIs of the `metrics` ingress, each with the simulator's prediction from `--prediction` (a result of the same revision; another is refused) |
+| Architecture | the views of the architecture block, read-only |
+| Events | the top level's channel as a live log |
+
+The top overview gets tiles: the open rows of each Inbox view, the rows per state of each
+Operations view, and each KPI. A page never offers a configuration command, a command that only
+actors holding the report of a non-principal port may issue, or machine traffic (the commands of
+a port that a `model_call`, `tool_call` or `claim` link stands for), whatever the operator ingress
+lists. `ui serve` serves the control-plane UI at `/control/` beside the operator UI, and
+`ui conform --architecture` checks its reads across parts at the architecture's scope.
+
+A binding with `ui: {control-plane: {port, bind, upstream}}` adds the unit `control-plane-ui`:
+`roles: [control-plane-ui]`, `code: {kind: static, archive: control-plane-ui.tar, digest}`, the
+archive under `files`, the same keys, defaults and refusals as `ui.operator`. Both UIs can run
+side by side: the operator UI then serves the operator ingress's `ui` export, and the
+control-plane UI listens on `ui.control-plane.port` (its checks on that port) and reads the same
+upstream. Asked alone, the control-plane UI serves the export. `bundles/bindings/operator-ui.yaml`
+asks for both.
+
+### A UI of your own
+
+Any other key under `ui:` is a UI you built yourself, carried as a unit of the bundle beside the
+operator and control-plane UIs. The key is the unit's name: lower-case letters, digits and `-`,
+starting with a letter.
+
+```yaml
+ui:
+  console:
+    source: {archive: console-ui.tar, digest: "sha256:<hex>"}
+    export: operator.ui
+    port: 8091
+```
+
+| key under `ui.<name>` | holds |
+|---|---|
+| `source` | `{archive: <file>, digest: sha256:<hex>}`: a tar of the static files you built, read from the directory of the binding file that names it, and the SHA-256 of the file, which `deploy bundle` checks. Or `{ess_ui: <file>}`, your `ess-ui/1` document, which is refused (below) |
+| `export` | `<ingress>.<protocol>`: the export of an ingress of the architecture the UI serves |
+| `port`, `bind`, `upstream` | as for `ui.operator` |
+
+The bundle then has a unit `<name>`, `kind: service`, `roles: [ui]`, `code: {kind: static,
+archive: <name>.tar, digest}`, your archive byte for byte under `files: {<name>.tar: {digest,
+size, base64}}`, and the `upstream`, checks and claims of a UI unit. The first UI that serves an
+export serves it, `operator` and `control-plane` first and then the others by name; a UI beside
+it listens on `ui.<name>.port`. The accepted list must hold the role `ui`.
+
+`{ess_ui: <file>}` is refused with `ui_build_needs_toolchain`: the pages `agenticspec ui generate`
+writes from an `ess-ui/1` document are Vue components that need node and vite to build, and the
+binary does not run them. Generate and build the app yourself, pack its output as a tar and name it
+as `{archive, digest}`. Besides the refusals of `ui.operator`, `deploy bundle` refuses, with
+`binding_invalid`, a `ui.<name>` without `source` or `export` or of the wrong form, and a name that
+is a unit of the packing or of another UI; with `not_admitted`, an export no ingress has
+(`ui_export_unknown`) and an archive that is not its digest (`ui_archive_mismatch`). The `console`
+UI of `bundles/bindings/operator-ui.yaml` is the worked example.
 
 ### Before a runtime: the UI on fixtures
 

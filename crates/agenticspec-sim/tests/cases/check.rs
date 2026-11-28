@@ -446,11 +446,15 @@ fn more_than_one_run_under_skip_or_queue_is_refused() {
         a["parts"]["wake"]["policy"] = json!(policy);
         a["parts"]["wake"]["max_parallel"] = json!(max);
         let r = refused(&a);
-        assert_eq!(
-            r == vec![("invalid_concurrency".to_string(), "wake".to_string())],
-            want,
-            "{policy} {max}: {r:?}"
-        );
+        let concurrency = ("invalid_concurrency".to_string(), "wake".to_string());
+        // A policy that is no ConcurrencyPolicy is also a value outside the setting's type.
+        let typed = ("setting_invalid".to_string(), "wake".to_string());
+        let expected = match (want, policy) {
+            (false, _) => vec![],
+            (true, "sometimes") => vec![typed, concurrency],
+            (true, _) => vec![concurrency],
+        };
+        assert_eq!(r, expected, "{policy} {max}");
     }
 }
 
@@ -473,13 +477,19 @@ fn swarm_settings_on_a_part_that_is_not_an_agent_are_refused() {
     a["parts"]["model"]["coordination"] = json!("mesh");
     assert_eq!(
         refused(&a),
-        vec![("swarm_needs_agent".into(), "model".into())]
+        vec![
+            ("setting_unknown".into(), "model".into()),
+            ("swarm_needs_agent".into(), "model".into())
+        ]
     );
     let mut b = scheduled();
     b["parts"]["sweeper"]["coordination"] = json!("hive");
     assert_eq!(
         refused(&b),
-        vec![("swarm_needs_agent".into(), "sweeper".into())],
+        vec![
+            ("setting_invalid".into(), "sweeper".into()),
+            ("swarm_needs_agent".into(), "sweeper".into())
+        ],
         "an unknown coordination"
     );
 }

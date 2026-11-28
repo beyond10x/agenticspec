@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:administration-commands
 kind: story
-status: draft
+status: implemented
 title: 'Configuration and administration: split entry commands by their outcomes'
 summary: The port derivation classes an entry command creating its entity as configuration and one moving an existing entity as administration; blocks/ports.json marks both and every actor that issues a port report.
 relations:
@@ -19,7 +19,11 @@ scope:
   path: crates/agenticspec-sim/tests
 - confidence: inferred
   path: docs/contract.md
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:18Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

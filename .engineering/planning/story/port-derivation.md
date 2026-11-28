@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:port-derivation
 kind: story
-status: active
+status: implemented
 title: Derive the ports of the blocks from bindings and lifecycles, and compare them with the design's table
 summary: agenticspec sim ports classifies every command and event of blocks/, derives Outbound, Clock and Principal ports into the committed blocks/ports.json, and lists every difference from the design's 15 ports.
 relations:
@@ -48,10 +48,11 @@ scope:
   path: website/docusaurus.config.ts
 - confidence: cited
   path: website/sidebars.ts
-revision: 9
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:33:36Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-11-27T23:33:36Z", actor: "human:operator", revision: 9, decided_on: {"recorded":{"review_outcome":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:11Z", actor: "human:operator", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Outcome
 

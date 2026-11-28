@@ -256,3 +256,17 @@ Called by: Operator.
 | `instance_start_p90_seconds`<br/>90th percentile of the time from start to running.<br/><small>How: Seconds between InstanceStarted and InstanceRunning of one instance, 90th percentile per workload.</small> | seconds | lower | – | planned<br/><small>source: design</small> |
 | `worker_busy_share`<br/>Share of instance time spent doing work.<br/><small>How: Busy seconds of instances divided by instance seconds between InstanceRunning and exit. Low means idle workers, whatever the cause.</small> | share | higher | – | simulated<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `runtime`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  | every port | What kind of runtime the part is. |
+| `role` | string |  |  |  | The role of the behaviour profile the runtime's runs play. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

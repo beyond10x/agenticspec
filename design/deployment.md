@@ -1,7 +1,7 @@
 # Deployment: from an agentic architecture to a running target
 
 Status: approved, every open point (Q1-Q17) at its recommended option; nothing built. Decisions
-K1-K18. Builds on `design/architecture-runtime.md`, `design/ingress.md` (I1-I12),
+K1-K19. Builds on `design/architecture-runtime.md`, `design/ingress.md` (I1-I12),
 `design/control-plane.md` (C1-C8), `design/view-layer.md` (D1-D11) and
 `design/events-and-storage.md` (E1-E10) without repeating them. Heads read: weft `main` at
 `4138723`, cited `weft:<path>:<line>`; Loom `main` at `b4b5de28c`, cited `loom:<path>:<line>`;
@@ -128,10 +128,17 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `schedule_not_cron` | a `scheduled` unit without a cron rule of the binding whose clock's `every` no cron rule states exactly (K18); in a written bundle, also a unit whose `schedule` is not that rule |
 | `core_count` | not exactly one `core` |
 | `unit_not_hosted` | a unit kind or a role the copy of cloudspec's accepted list (K16) does not hold |
-| `image_unpinned` | with `target.images: local`, a runtime with neither `tag` nor `digest` (with `registry`, the default, a runtime without its repository digest is refused as a binding of the wrong form) |
+| `image_unpinned` | with `target.images: local`, a runtime, a part's `image` or a listed unit's `image` with neither `tag` nor `digest` (with `registry`, the default, one without its repository digest is refused as a binding of the wrong form) |
+| `unit_image_conflict` | parts of one core or service unit name different images (`parts.<p>.image`) and the unit names none (`packing.units[].image`); K19 |
+| `unit_image_missing` | a core or service unit holds a runtime part (block `runtime`) and has no image of its own, of its parts or, for the core unit only, `runtimes.core`; names the unit and its runtime parts; K19 |
 | `volume_mount_missing` | a volume a unit claims that no part of the unit mounts (`parts.<p>.volumes[].mount`, matched by name), or mounts at a relative path; there is no default path |
 | `ui_upstream_unknown` | a UI unit (K17) reads the adapter of a unit (`ui.<ui>.upstream.unit`) the packing does not have; in a written bundle, a UI unit's `upstream.unit` that is no other unit of the bundle |
-| `ui_archive_mismatch` | in a written bundle (`deploy check`) only: a UI unit's archive is not in `files`, or its SHA-256 is not the unit's `code.digest` |
+| `nested_document_missing` | in a written bundle (`deploy check`) only: a part of block `architecture`, at any depth, pins a digest the bundle's `nested` carries no document of |
+| `nested_document_mismatch` | in a written bundle (`deploy check`) only: a carried nested document whose `content_base64` is not its `sha256`, does not parse to its `document`, or whose canonical digest is not its key |
+| `requirement_kpi_unknown`, `requirement_invalid` | a requirement (K12) names a KPI no stage knows, or is not `{kpi, at_least \| at_most \| equals, part?, window?}` with one number; `sim check` refuses both as `architecture_refused` |
+| `ui_archive_mismatch` | at bundle time, the archive a UI of the consumer's own names (`ui.<name>.source.archive`) is not its `digest`; in a written bundle (`deploy check`), a UI unit's archive is not in `files`, or its SHA-256 is not the unit's `code.digest` |
+| `ui_export_unknown` | a UI serves an export (`ui.<name>.export`; `operator.ui` for the built-in UIs) that no ingress of the architecture has |
+| `ui_build_needs_toolchain` | a UI of the consumer's own names an `ess-ui/1` document (`ui.<name>.source.ess_ui`): its generated pages need node and vite, which the binary does not run; the detail names the archive form |
 
 ## K6 The bundle: `agenticspec-deployment/1`
 
@@ -145,15 +152,15 @@ with every member inline, each document keyed by its digest (Q2). Same inputs, s
 |---|---|---|
 | `format`, `generator` | `agenticspec-deployment/1`; the agenticspec version | inside the bundle digest |
 | `architecture` | the released document as written, its name | revision digest: SHA-256 of the canonical JSON of `parts`, `links`, `border` (`agentic.architecture.Digest`); and the digest of its bytes |
-| `nested` | every document the architecture references, as written | its canonical digest, the pin `crates/agenticspec-sim/src/nest.rs` checks |
+| `nested` | every document the architecture references, the nesting chain resolved: per document its name, the parts that refer to it (dotted), `document` parsed and `content_base64`, its exact bytes, with their `sha256`. `deploy check` resolves the architecture from these by the pins, recomputes each digest (`nested_document_mismatch`) and refuses a pin with no document (`nested_document_missing`); units, packing and contract read the architecture flattened | its canonical digest, the pin `crates/agenticspec-sim/src/nest.rs` checks |
 | `contract` | `agenticspec-contract/1`: ports, routing invariants, multiplicities, ingress | `Contract.digest` |
 | `binding` | `agenticspec-binding/1`, its `refines:` chain resolved into one document. Its `target` says what the target gives: `isolation`, `images` (`registry` or `local`), `network_policy` (`enforced` or `not_enforced`; absent, unknown), which a part marked `parts.<p>.network: isolated` needs enforced (`network_isolation_unmet`) | binding digest |
 | `packing` | the resolved packing, the default applied (K4); its `external` a list of `{part, kind, reach}`: the part, its block, and where the target reaches it, `{address: <text>}` or `{name: <text>}` from the binding (`packing.external` entries `<part>` or `{part, reach}` beside `units:`, `packing.parts.<p>.reach` beside a strategy), `{name: <part>}` when it gives none. Any part may be external | packing digest |
 | `units` | one entry per unit with the fields of K7 | inside the bundle digest |
 | `ingress` | one entry per export of each ingress of the contract: `ingress`, `protocol`, `audience`, `authenticated`; `unit` and `part` that serve it (the binding's `part`, else `control`, the control plane in the core unit; the UI unit for the export a UI serves, K17); `bind` (`loopback` or `all`, `loopback` when the binding names none); `port` (an integer) and `address` when the binding gives them, from `ingress.<name>.exports.<protocol>`. Without a port the entry has no entry point on the target, and nothing is refused | operations inside the contract digest; unit, part, port, bind and address in the binding digest |
-| `requirements` | the `requirements:` of K12, each with the stage it is decided at | inside the bundle digest |
+| `requirements` | the `requirements:` of K12, each as written with the stage it is decided at (`check`, `evaluation`, `operation`, `cloud`), its state (`met`, `missed`, `undecided`) and the value where known; checked like `sim check` does, a refusal a finding of K14 | inside the bundle digest |
 | `agents` | each `loom.agent/1` document the binding names: `document`, parsed, and `content_base64`, the file's exact bytes (K18) | the SHA-256 of those bytes (Q12) |
-| `runtimes` | each runtime artifact the binding pins: the core runtime image (`core`); an agent runtime image (`agent-runtime`, K18) only where the binding pins one (Q8). With `target.images: registry` (the default) by OCI repository digest, `<image>@sha256:<digest>`; with `local`, what the binding gave, `{image, tag, digest}` with a tag, a digest (the image's config id) or both | the image digest, or `<image>:<tag>` for a local image without one |
+| `runtimes` | each runtime artifact the binding pins: the core runtime image (`core`); an agent runtime image (`agent-runtime`, K18) only where the binding pins one (Q8); then each image a core or service unit runs of its own (K19), named by the unit, unless one of those carries it already. With `target.images: registry` (the default) by OCI repository digest, `<image>@sha256:<digest>`; with `local`, what the binding gave, `{image, tag, digest}` with a tag, a digest (the image's config id) or both | the image digest, or `<image>:<tag>` for a local image without one |
 | `files` | only with a UI unit (K17): each file a unit names, by file name: `{digest, size, base64}`, the bytes inline | its `digest`, the unit's `code.digest` |
 | `digest` | the bundle digest: SHA-256 of the canonical JSON of the document without this member | |
 
@@ -170,7 +177,7 @@ Each entry of `units`:
 | `shape` | an agent unit's: `service`, `job` or `scheduled` (K18) |
 | `parts` | the part instances, by path |
 | `replicas` | from `count`; `scheduled` and `job` units have none |
-| `code` | the artifact that runs, by digest. An `agent`, `job` or `scheduled` unit stays one agent: its agent document (instructions, tools, model route, authority, harness role) by digest and the role `agent-runtime`, never flattened into a process command; other units name a runtime of `runtimes`; a UI unit (K17) serves static files, `{kind: static, archive, digest}` |
+| `code` | the artifact that runs, by digest. An `agent`, `job` or `scheduled` unit stays one agent: its agent document (instructions, tools, model route, authority, harness role) by digest and the role `agent-runtime`, never flattened into a process command; a core or service unit names its image (K19) of `runtimes` as `runtime`, or the role `core-runtime` without one; a UI unit (K17) serves static files, `{kind: static, archive, digest}` |
 | `claims` | CPU, memory, accelerators: the unit's `Shape` (`blocks/8-place/runtime.yaml`), plus an accelerator for `model`; `volumes`, one per workspace (Q16), each with its access, size and `mount`, the absolute path from the binding's `parts.<p>.volumes[].mount` of a part of the unit, matched by name (no default path; `volume_mount_missing`) |
 | `isolation` | the least isolation level required, the highest of its sandboxes |
 | `checks` | `startup`, `ready`, `alive`, each with its kind and path or command, and `port` (an integer) where the binding gives one (`checks.<unit>.<check>.port`). An agent unit with `expose.a2a` uses Loom's readiness and liveness probes (`loom:README.md:727`); without it, `b10x-loom agent check` is its startup command |
@@ -264,6 +271,21 @@ requirements as constraints before weights and stops when all are met. The Metri
 shows each with its target, met or missed, predicted beside observed. A cloud KPI (node count,
 cost per hour) is named by its cloudspec id and evaluated by cloudspec. The bundle carries the
 requirements; the translator keeps them with the revision and no target enforces them yet.
+
+As built (`crates/agenticspec-sim/src/requirements.rs`):
+
+- Entry: `{kpi, at_least | at_most | equals, part?, window?}`, exactly one number as target;
+  anything else is `requirement_invalid`, an id no stage knows `requirement_kpi_unknown`. A cloud
+  KPI is written `cloudspec:<id>`. A design KPI takes no `part`.
+- Stages: `check` for the KPIs of `whole.rs` and the gate counts; `evaluation` for what the
+  simulator measures or the catalogue marks `simulated`; `operation` for the rest of the
+  catalogue; `cloud` for `cloudspec:<id>`.
+- A missed requirement is a finding the check reports (`sim check` prints each with its state),
+  never a refusal: K14 admits on a known KPI and a well-formed target, the Metrics page shows met
+  or missed, and no target enforces a requirement yet. The same holds in the bundle.
+- The search ranks a feasible variant by requirements missed, then by fitness; `fit` stops after
+  the round in which a variant first meets every requirement it can decide. A target is never
+  searched, also under `optimize: all`.
 
 ## K13 Translation, in cloudspec
 
@@ -359,9 +381,22 @@ additions are a unit, the optional member `files` and the unit of one ingress en
   `deploy check` hashes the carried archive against the unit's digest (`ui_archive_mismatch`);
   the role is in the accepted list (K16, `unit_not_hosted`); a UI that does not build is
   `ui_build_refused`.
-- A UI is one row of a table (`crates/agenticspec-sim/src/deploy/ui.rs`, `KINDS`): its key under
-  `ui:`, its role, the ingress and export it serves and how its files are built. A second UI
-  (`control-plane-ui`) is a second row of the same shape.
+- A UI is one row (`crates/agenticspec-sim/src/deploy/ui.rs`, `Ui`): its key under `ui:`, its
+  unit's name and role, the ingress and export it serves and the source of its files. Two sources
+  are built in (`BUILT_IN`): `operator` (`operator-ui`) and `control-plane` (`control-plane-ui`,
+  `ui build --control-plane`), both serving `operator.ui`, on the same code path as any other row.
+- A UI of the consumer's own (R84) is any other key: `ui.<name>: {source, export, upstream?,
+  port?, bind?}`. `source` is `{archive: <file>, digest: sha256:<hex>}`, a static archive the
+  consumer built, read beside the binding file that names it and checked against `digest`
+  (`ui_archive_mismatch`), or `{ess_ui: <file>}`, an `ess-ui/1` document, refused with
+  `ui_build_needs_toolchain`: `ui generate` writes Vue components that need node and vite to
+  build, and the binary does not run them (the operator app is prebuilt and renders a derived
+  layout, not an arbitrary `ess-ui/1` document). `export` is `<ingress>.<protocol>`
+  (`ui_export_unknown` when no ingress has it). Its unit is `{name: <name>, kind: service, roles:
+  [ui], code: {kind: static, archive: <name>.tar, digest}, ...}`, the archive carried byte for
+  byte in `files`, with the upstream, checks, claims and refusals of the built-in UIs. The first UI
+  that serves an export serves it, the built-in ones first, then the others by key; the accepted
+  list holds the role `ui`.
 
 ## K18 Agent units, as the translator reads them
 
@@ -394,6 +429,30 @@ Settled with the translator, names exact; the bundle stays `/1`.
   binding gives wins, whatever the `every`. The packing document keeps only the binding's rules.
   `deploy check` derives the same rule and refuses a unit that carries another, or none where one
   is due, as `schedule_not_cron`.
+
+## K19 A runtime image per unit
+
+An architecture may hold several runtime parts that are different programs, so each core and
+service unit may run an image of its own. Settled with the consumer (R83), names exact; the bundle
+stays `/1`.
+
+- **Binding.** `parts.<p>.image` or, on a unit listed under `packing.units`, its `image`, each
+  `{image, tag?, digest}` under the `target.images` rules of `runtimes.core` (registry: repository
+  digest, no tag; local: tag, config id or both, `image_unpinned` with neither). Only a part of a
+  core or service unit, or such a listed unit, may name one; anywhere else it is a binding of the
+  wrong form.
+- **Which image.** The unit's own wins over its parts'. Parts of one unit that name different
+  images, with none from the unit, are refused as `unit_image_conflict` (the finding names the
+  parts, never the images). Else the parts' image; else, for the core unit only, `runtimes.core`.
+  `runtimes.core` is never a default for a service unit.
+- **None.** A core or service unit that holds a runtime part (block `runtime`) and has no image is
+  refused as `unit_image_missing`, naming the unit and its runtime parts. One without a runtime
+  part keeps the role `core-runtime`, which the target binds, as before.
+- **Bundle.** The unit's `code.runtime` names its image by the reference of `runtimes.core`
+  (`<image>@<digest>`; local `<image>:<tag>`, else the config id). `runtimes` carries every image
+  used, keyed as `runtimes.core` is: the binding's runtimes by their names, then each unit's own by
+  the unit's name, unless an entry of the same key is there already.
+- **Check.** `deploy check` reads the binding the bundle carries and applies the same rules.
 
 ## Risks
 

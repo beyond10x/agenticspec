@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:architecture-ui
 kind: story
-status: draft
+status: implemented
 title: 'Derive the operator UI of an architecture: overview, nested pages, part pages, channels, actions'
 summary: 'agenticspec ui derive turns an architecture, its contract and its view: key into one ess-ui/1 composition; the 37-part fixture opens every part in two steps at 1366x768 (M43).'
 relations:
@@ -36,7 +36,11 @@ scope:
   path: spec/cli.yaml
 - confidence: cited
   path: ui/views/examples
-revision: 4
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:15Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 00fb71ae170fbec426a26c46270451dd7c59b5683dc2c912b0f53ea80bf7d891
+// contract digest b8f23e9b2c092077465347f0fbbae30dec676cfb4ee76e860761fa72b4bc5749
 // do not edit: regenerate with `ess synthesize`
 
 //! JSON at this system's boundary: a reader, a writer, and the base64 codec `Bytes` needs.

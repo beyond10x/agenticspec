@@ -115,3 +115,16 @@ Identified by `principal_id` (`PrincipalId`).
 | `owner_wait_share`<br/>Share of agent time spent waiting on the human owner.<br/><small>How: Seconds from a main agent's turn end to the owner's next prompt (waits over one hour counted apart as away), divided by working plus waiting seconds. The simulator divides owner wait by instance time.</small><br/><small>By work mode: autonomous: lower, pairing: ignore, review: ignore</small> | share | lower | – | computed and simulated<br/><small>source: docs/kpis.md</small> |
 | `human_prompt_share`<br/>Share of prompts to main agents written by a human.<br/><small>How: PromptSubmitted events with author Human, divided by all PromptSubmitted events of main agents. Compare the split by author (Human, Delegate, PeerSession, ParentAgent, Harness, Hook).</small><br/><small>By work mode: autonomous: lower, pairing: ignore, review: ignore</small> | share | lower | – | computed today<br/><small>source: docs/kpis.md</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `principal`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | enum `PrincipalKind`: `human`, `organization`, `service`, `agent` |  | `human` | `question.question` | What kind of principal answers; picks its entry of the behaviour profile. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

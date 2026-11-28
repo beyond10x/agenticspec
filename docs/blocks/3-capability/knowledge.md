@@ -136,3 +136,16 @@ Called by: Knowledge author.
 |---|---|---|---|---|
 | `precedence_followed_share`<br/>Share of conflicts between a written rule and the code in which the agent followed the rule.<br/><small>How: In probe tasks where an instruction and the code disagree, runs that followed the instruction divided by probe runs. Run per model, because wording is tested per model.</small> | share | higher | – | planned<br/><small>source: research/2610.30571</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `knowledge`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  |  | What the knowledge is. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:sim-event-log
 kind: story
-status: draft
+status: active
 title: The simulator's run as block events, replayed by ui serve --sim
 summary: The simulator writes its timeline as block events with subject keys and part paths; agenticspec ui serve --sim replays it; every result.json stays byte for byte.
 relations:
@@ -26,7 +26,10 @@ scope:
   path: spec/domains/cli.yaml
 - confidence: inferred
   path: ui/README.md
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 5}
 ---
 ## Outcome
 
@@ -61,3 +64,7 @@ every `result.json` stays byte for byte. Design: `design/control-plane.md` C5, P
 ## Not in this story
 
 Store events and reactions in the simulator (`story:sim-store-and-bus`).
+
+## Remaining at 9bb5998
+
+Delivered in e56e484: events.jsonl. Missing: ui serve --sim (spec/domains/cli.yaml:520-525).

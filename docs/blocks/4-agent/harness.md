@@ -486,3 +486,16 @@ Called by: Calling harness.
 | `session_restart_share`<br/>Share of opened sessions that restart an ended one.<br/><small>How: SessionRestarted events divided by SessionOpened events, per principal. Time and tokens of a lineage are summed over its sessions, grouped by the lineage each restart names.</small> | share | lower | – | planned<br/><small>source: design</small> |
 | `tool_results_not_read`<br/>Tool calls whose result could not be read.<br/><small>How: ToolResultNotRead events per session and per tool. Each is recorded as could not read, never as an empty result.</small> | count | lower | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `harness`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  | every port | The kind of harness, a row a field registers. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

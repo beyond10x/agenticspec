@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:architecture-references
 kind: story
-status: active
+status: implemented
 title: An architecture as a part of another, referenced by path and digest
 summary: 'A part { block: architecture, ref, digest } whose border is its interface; links address <part>.<border part>; check resolves it, render draws one box (consumer gaps M1, M2)'
 relations:
@@ -37,10 +37,11 @@ scope:
   path: kpis/catalogue.yaml
 - confidence: inferred
   path: website/src/generated
-revision: 17
+revision: 18
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:07Z", actor: "human:operator", revision: 16}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:07Z", actor: "human:operator", revision: 17}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:12Z", actor: "human:operator", revision: 18, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

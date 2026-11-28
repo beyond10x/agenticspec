@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:deployment-domain
 kind: story
-status: draft
+status: active
 title: 'The agentic.deployment domain: deployments, units, states, refusals'
 summary: Deployment with its digests, target and scope by value and nine states; Unit; RequestDeployment refused as NotReleased, NotAdmitted, CoverageRefused, TargetRefused, ScopeTaken; the Units view.
 relations:
@@ -22,7 +22,10 @@ scope:
   path: docs/blocks
 - confidence: inferred
   path: website/src/generated
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 3}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
 ---
 ## Outcome
 
@@ -63,3 +66,7 @@ parts. Design: `design/deployment.md` K10, K11. Epic: `epic:architecture-deploym
 ## Not in this story
 
 The Operations page (`story:control-plane-units`); writing the bundle (`story:deployment-bundle`).
+
+## Remaining at 9bb5998
+
+Delivered in 43047c2, 9788c3e. Missing: unit health comes from ObserveUnit, not from the workload.run reports (blocks/9-composition/deployment.yaml:1181).

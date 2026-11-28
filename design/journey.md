@@ -22,7 +22,7 @@ Deployment: `design/deployment.md`. Story ids are those of the planning store.
 |---|---|---|
 | the control plane of the draft, inside the studio | `design/control-plane.md` C6, P8; proposed `control-plane-pages`, `ui-serve-fixtures`, `sim-event-log`; `story:views-package` | planned (preview on fixtures or a simulator run) |
 | the control plane of a running local deployment, inside the studio | `design/control-plane.md` C4 ("place panels in its own app") allows it; nothing plans it | **gap**: `studio-control-plane`: the studio mounts the shell with the local deployment's `operator` ingress as source |
-| a requirement becomes a KPI with a target | `story:architecture-kpis` (design KPIs: `agents_total`, `capacity_ratio`); the catalogue (`cache_hit_share`, `cost_usd`) | **gap**: `requirements-kpis` (`design/deployment.md` K12) |
+| a requirement becomes a KPI with a target | `story:architecture-kpis` (design KPIs: `agents_total`, `capacity_ratio`); the catalogue (`cache_hit_share`, `cost_usd`) | built: `requirements:` (`design/deployment.md` K12), decided at check, in `sim run` and in the bundle |
 | KPIs shown met or missed | Metrics page, `design/control-plane.md` C3 | partly; status per requirement in `control-plane-units` |
 | a KPI of the infrastructure (build or worker node count) | cloudspec's catalogue | **gap** outside this repository: request C6 (`design/deployment.md` § "Requests to cloudspec") |
 

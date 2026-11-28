@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:contract-conformance
 kind: story
-status: draft
+status: implemented
 title: Cut the blocks' conformance suite to one contract's ports and run it
 summary: agenticspec sim contract --suite keeps the scenarios of a contract's ports; task contract:conform runs them green on the ESS interpreter, as a cut suite or selected by scenario id.
 relations:
@@ -37,7 +37,11 @@ scope:
   path: spec/cli.yaml
 - confidence: cited
   path: spec/domains/cli.yaml
-revision: 8
+revision: 11
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:13Z", actor: "human:operator", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Outcome
 

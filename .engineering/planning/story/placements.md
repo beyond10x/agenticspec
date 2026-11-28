@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:placements
 kind: story
-status: draft
+status: implemented
 title: 'Placements: record which part an entity sits on, and the scope rule over views'
 summary: agentic.architecture.Placement, PlaceEntity and Placements; a row is in scope of a part when its id or an id field of its view is placed to the part (M45, O3).
 relations:
@@ -23,7 +23,11 @@ scope:
   path: ui/views/fixtures
 - confidence: inferred
   path: website/src/generated
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:14Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

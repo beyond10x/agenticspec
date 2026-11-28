@@ -222,6 +222,7 @@ the built-in fixtures, or on those below `--root` when it is named.
 | path | answers |
 |---|---|
 | `/` | the operator app `agenticspec ui build` writes for the architecture, its `config.json` with `api_base` `/ingress/operator`; the page sets the session cookie |
+| `/control/` | the control-plane UI `agenticspec ui build --control-plane` writes for the architecture: the same app with the pages across parts (Inbox, Activity, Operations, Metrics, Architecture, Events) and tiles on the overview, reading the same interface; `/control` redirects here |
 | `/ingress/operator/scopes/{scope}/api/views/{view}` | R1: the rows of the fixture of each view of the plane (`views/fixtures/<view>.json`), at every scope |
 | `/ingress/operator/scopes/{scope}/api/channels/{channel}` | R2: a level's channel plays every script of `views/fixtures/scripts/` in turn, a block's channel its own, each event the operator ingress carries, the cursor its position; a reconnect with `Last-Event-ID` gets the events after it |
 | `/ingress/operator/scopes/{scope}/api/commands/{command}` | R4: records the command and answers the outcome `views/source/outcomes.json` scripts for it (per command, optionally per input, the accepted row or the refusal's row with 422), `{"row": null}` when none does |

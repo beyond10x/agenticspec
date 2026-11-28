@@ -45,6 +45,8 @@ use crate::wire::{self, Request};
 
 /// The base path of the operator ingress; the scopes are below `{ROOT}/scopes/`.
 pub const ROOT: &str = "/ingress/operator";
+/// The path the control-plane UI is served below, beside the operator app at `/`.
+pub const CONTROL_PATH: &str = "/control/";
 /// The port when none is named, the default `root` of `ui/runtime.openapi.yaml`.
 pub const PORT: u16 = 7430;
 /// The panels' fixtures below the repository root.
@@ -434,6 +436,23 @@ impl Served {
         fixtures: Fixtures,
         options: Options,
     ) -> io::Result<Served> {
+        Served::start_with(plane, app, Vec::new(), fixtures, options)
+    }
+
+    /// Starts the server as [`Served::start`] does, with the files of the control-plane UI
+    /// `control` (what [`crate::operator::build_ui`] writes with the pages across parts) at
+    /// [`CONTROL_PATH`] beside the operator app; empty serves none.
+    ///
+    /// # Errors
+    ///
+    /// The port cannot be bound.
+    pub fn start_with(
+        plane: Plane,
+        app: Vec<(String, Vec<u8>)>,
+        control: Vec<(String, Vec<u8>)>,
+        fixtures: Fixtures,
+        options: Options,
+    ) -> io::Result<Served> {
         let listener = TcpListener::bind(("127.0.0.1", options.port))?;
         let url = format!("http://{}", listener.local_addr()?);
         let recorded = Arc::new(Mutex::new(Vec::new()));
@@ -441,6 +460,7 @@ impl Served {
         let shared = Arc::new(Shared {
             plane,
             app,
+            control,
             fixtures,
             token: options.token,
             faults: options.faults,
@@ -500,6 +520,7 @@ impl Drop for Served {
 struct Shared {
     plane: Plane,
     app: Vec<(String, Vec<u8>)>,
+    control: Vec<(String, Vec<u8>)>,
     fixtures: Fixtures,
     token: String,
     faults: Faults,
@@ -629,11 +650,20 @@ impl Shared {
             let (s, b) = error(405, "MethodNotAllowed", format!("{} {}", r.method, r.path));
             return wire::write_json(out, s, &[], &b);
         }
-        let name = match r.path.trim_start_matches('/') {
+        let path = r.path.split('?').next().unwrap_or("");
+        let control_root = CONTROL_PATH.trim_end_matches('/');
+        if !self.control.is_empty() && path == control_root {
+            return write_bytes(out, 308, &[("Location", CONTROL_PATH)], "text/plain", b"");
+        }
+        let (files, rest) = match path.strip_prefix(CONTROL_PATH) {
+            Some(rest) if !self.control.is_empty() => (&self.control, rest),
+            _ => (&self.app, path.trim_start_matches('/')),
+        };
+        let name = match rest {
             "" => "index.html",
             n => n,
         };
-        let Some((_, bytes)) = self.app.iter().find(|(n, _)| n == name) else {
+        let Some((_, bytes)) = files.iter().find(|(n, _)| n == name) else {
             let (s, b) = error(404, "NotFound", format!("{} is no file of the app", r.path));
             return wire::write_json(out, s, &[], &b);
         };

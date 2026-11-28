@@ -1,0 +1,33 @@
+views:
+  agentic.architecture.Parts: parts.json
+  agentic.architecture.Reach: reach.json
+  agentic.agent.AgentRevisions: ../../fixtures/agentic.agent.AgentRevisions.json
+  agentic.agent.Agents: ../../fixtures/agentic.agent.Agents.json
+  agentic.architecture.Architectures: ../../fixtures/agentic.architecture.Architectures.json
+  agentic.architecture.Contracts: ../../fixtures/agentic.architecture.Contracts.json
+  agentic.architecture.Ingresses: ../../fixtures/agentic.architecture.Ingresses.json
+  agentic.architecture.Parts: ../../fixtures/agentic.architecture.Parts.json
+  agentic.architecture.PatchApplications: ../../fixtures/agentic.architecture.PatchApplications.json
+  agentic.architecture.Patches: ../../fixtures/agentic.architecture.Patches.json
+  agentic.architecture.Placements: ../../fixtures/agentic.architecture.Placements.json
+  agentic.architecture.Ports: ../../fixtures/agentic.architecture.Ports.json
+  agentic.architecture.Reach: ../../fixtures/agentic.architecture.Reach.json
+  agentic.architecture.Revisions: ../../fixtures/agentic.architecture.Revisions.json
+  agentic.gateway.Calls: ../../fixtures/agentic.gateway.Calls.json
+  agentic.gateway.Gateways: ../../fixtures/agentic.gateway.Gateways.json
+  agentic.gateway.Upstreams: ../../fixtures/agentic.gateway.Upstreams.json
+  agentic.harness.HarnessSessions: ../../fixtures/agentic.harness.HarnessSessions.json
+  agentic.harness.Harnesses: ../../fixtures/agentic.harness.Harnesses.json
+  agentic.harness.PermissionModes: ../../fixtures/agentic.harness.PermissionModes.json
+  agentic.harness.ToolCalls: ../../fixtures/agentic.harness.ToolCalls.json
+  agentic.harness.Turns: ../../fixtures/agentic.harness.Turns.json
+  agentic.model.Endpoints: ../../fixtures/agentic.model.Endpoints.json
+  agentic.model.Inferences: ../../fixtures/agentic.model.Inferences.json
+  agentic.model.Models: ../../fixtures/agentic.model.Models.json
+  agentic.model.Routes: ../../fixtures/agentic.model.Routes.json
+  agentic.principal.Principals: ../../fixtures/agentic.principal.Principals.json
+  agentic.question.OpenQuestions: ../../fixtures/agentic.question.OpenQuestions.json
+  agentic.question.Questions: ../../fixtures/agentic.question.Questions.json
+scripts:
+  level: scripts/level.json
+  level_console: scripts/level_console.json

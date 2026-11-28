@@ -243,3 +243,18 @@ Called by: Claimant.
 | `jobs_killed`<br/>Claims killed at their time limit.<br/><small>How: ClaimKilled events in the window. Each is a job that ran past its limit.</small> | count | lower | – | simulated<br/><small>source: design</small> |
 | `slot_wait_share`<br/>Share of agent time spent waiting for a pool slot.<br/><small>How: Seconds agents wait between ClaimQueued and ClaimGranted, divided by instance seconds.</small> | share | lower | – | simulated<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `pool`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | enum `PoolKind`: `build_slots`, `rate_limit`, `cache`, `seats` |  |  | `resource.claim` | What the pool hands out. |
+| `capacity` | integer of at least 0 | slots |  | `resource.claim` | How many claims the pool holds at once; without it, no limit. |
+| `job_limit` | duration of at least 0s |  |  | `resource.claim` | How long one claim may hold a slot; without it, no limit. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

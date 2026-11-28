@@ -1,0 +1,122 @@
+{
+  "rows": [
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "carries": "Prompt",
+      "from_kind": "Principal",
+      "from_name": "owner",
+      "from_part_id": "00000000-0000-4000-8000-8169e9f87da7",
+      "link_id": "00000000-0000-4000-8000-81f6f0d0db12",
+      "to_name": "console.steward",
+      "to_part_id": "00000000-0000-4000-8000-c3dab7c78b0b"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "carries": "Question",
+      "from_name": "console.steward",
+      "from_part_id": "00000000-0000-4000-8000-c3dab7c78b0b",
+      "link_id": "00000000-0000-4000-8000-ca854a3e01a3",
+      "to_kind": "Principal",
+      "to_name": "owner",
+      "to_part_id": "00000000-0000-4000-8000-8169e9f87da7"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "carries": "Order",
+      "from_name": "console.steward",
+      "from_part_id": "00000000-0000-4000-8000-c3dab7c78b0b",
+      "link_id": "00000000-0000-4000-8000-b54a09487445",
+      "to_kind": "Agent",
+      "to_name": "worker",
+      "to_part_id": "00000000-0000-4000-8000-3c7c06989283"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "carries": "Question",
+      "from_kind": "Agent",
+      "from_name": "worker",
+      "from_part_id": "00000000-0000-4000-8000-3c7c06989283",
+      "link_id": "00000000-0000-4000-8000-77a8aa3faea2",
+      "to_name": "console.steward",
+      "to_part_id": "00000000-0000-4000-8000-c3dab7c78b0b"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "carries": "ModelCall",
+      "from_kind": "Agent",
+      "from_name": "worker",
+      "from_part_id": "00000000-0000-4000-8000-3c7c06989283",
+      "link_id": "00000000-0000-4000-8000-638f03749678",
+      "to_kind": "Gateway",
+      "to_name": "gateway",
+      "to_part_id": "00000000-0000-4000-8000-64a6c751a3f9"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-12e720222a4d",
+      "carries": "ModelCall",
+      "from_kind": "Gateway",
+      "from_name": "gateway",
+      "from_part_id": "00000000-0000-4000-8000-64a6c751a3f9",
+      "link_id": "00000000-0000-4000-8000-6b2d0ece045a",
+      "to_kind": "Model",
+      "to_name": "model",
+      "to_part_id": "00000000-0000-4000-8000-a1cdb84057bc"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "carries": "Order",
+      "from_kind": "Agent",
+      "from_name": "steward",
+      "from_part_id": "00000000-0000-4000-8000-8cf8f777bce0",
+      "link_id": "00000000-0000-4000-8000-b95d7fc239bd",
+      "to_kind": "Agent",
+      "to_name": "helper",
+      "to_part_id": "00000000-0000-4000-8000-e0934b838cd2"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "carries": "Question",
+      "from_kind": "Agent",
+      "from_name": "helper",
+      "from_part_id": "00000000-0000-4000-8000-e0934b838cd2",
+      "link_id": "00000000-0000-4000-8000-99dc4bd6a88c",
+      "to_kind": "Agent",
+      "to_name": "steward",
+      "to_part_id": "00000000-0000-4000-8000-8cf8f777bce0"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "carries": "ModelCall",
+      "from_kind": "Agent",
+      "from_name": "steward",
+      "from_part_id": "00000000-0000-4000-8000-8cf8f777bce0",
+      "link_id": "00000000-0000-4000-8000-c19f3e09fde6",
+      "to_kind": "Gateway",
+      "to_name": "gateway",
+      "to_part_id": "00000000-0000-4000-8000-ca920be09642"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "carries": "ModelCall",
+      "from_kind": "Agent",
+      "from_name": "helper",
+      "from_part_id": "00000000-0000-4000-8000-e0934b838cd2",
+      "link_id": "00000000-0000-4000-8000-ed004eb9dc6e",
+      "to_kind": "Gateway",
+      "to_name": "gateway",
+      "to_part_id": "00000000-0000-4000-8000-ca920be09642"
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-5a95f6679c11",
+      "carries": "ModelCall",
+      "from_kind": "Gateway",
+      "from_name": "gateway",
+      "from_part_id": "00000000-0000-4000-8000-ca920be09642",
+      "link_id": "00000000-0000-4000-8000-55db5bc2cb5b",
+      "to_kind": "Model",
+      "to_name": "model",
+      "to_part_id": "00000000-0000-4000-8000-b17693b4f9fd"
+    }
+  ],
+  "view": "agentic.architecture.Reach"
+}

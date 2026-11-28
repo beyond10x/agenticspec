@@ -3,7 +3,8 @@
 //! the renderer names no agenticspec term.
 
 use agenticspec_render::page::{
-    Badge, Direction, Edge, FORMAT, Level, Mark, Node, Page, Panel, Port, Region, Target, render,
+    Badge, Colour, Direction, Edge, FORMAT, Group, ICONS, Icon, Level, Mark, NAMED_COLOURS, Node,
+    On, Page, Panel, Port, Region, Target, render,
 };
 use serde_json::{Value, json};
 
@@ -80,6 +81,17 @@ fn full() -> Page {
     p.nodes[0].badges = vec![Badge {
         name: "count".to_string(),
         value: "3".to_string(),
+        on: On::Card,
+    }];
+    p.nodes[1].badges = vec![Badge {
+        name: "owner".to_string(),
+        value: "team-pay".to_string(),
+        on: On::Panel,
+    }];
+    p.groups = vec![Group {
+        name: "service".to_string(),
+        colour: Some(Colour::new("#2f7d5b").expect("a hex colour")),
+        icon: Some(Icon::new("lock").expect("an icon name")),
     }];
     p.nodes[2].region = Some("rack".to_string());
     p.ports = vec![Port {
@@ -266,6 +278,318 @@ fn an_edge_to_a_node_inside_a_region_lands_on_the_node_card() {
     );
 }
 
+/// The edge paths of a page as `(from, to)`, in the order they are drawn.
+fn edge_paths(html: &str) -> Vec<(String, String)> {
+    let attr = |tag: &str, name: &str| -> String {
+        let at = tag.find(&format!("{name}=\"")).expect("the attribute") + name.len() + 2;
+        tag[at..at + tag[at..].find('"').expect("closed")].to_string()
+    };
+    html.match_indices("<path class=\"edge")
+        .map(|(i, _)| {
+            let tag = &html[i..i + html[i..].find('>').expect("tag ends")];
+            (attr(tag, "data-from"), attr(tag, "data-to"))
+        })
+        .collect()
+}
+
+/// A region with three nodes and two edges between them, one between nodes that are not side by
+/// side, and a region inside it with an edge across its frame.
+fn one_region() -> Page {
+    let mut p = Page::new("cell");
+    p.regions = vec![Region {
+        id: "cell".to_string(),
+        label: "cell".to_string(),
+        regions: vec![Region {
+            id: "core".to_string(),
+            label: "core".to_string(),
+            ..Region::default()
+        }],
+        ..Region::default()
+    }];
+    p.nodes = vec![
+        node("a", "service"),
+        node("b", "service"),
+        node("c", "store"),
+        node("d", "store"),
+        node("e", "store"),
+    ];
+    for n in &mut p.nodes[..3] {
+        n.region = Some("cell".to_string());
+    }
+    for n in &mut p.nodes[3..] {
+        n.region = Some("core".to_string());
+    }
+    p.edges = vec![
+        edge("a", "c", "reads"),
+        edge("c", "b", "feeds"),
+        edge("b", "d", "nests"),
+        edge("d", "e", "inner"),
+    ];
+    p
+}
+
+#[test]
+fn every_edge_inside_one_region_is_drawn() {
+    let page = one_region();
+    let html = render(&page);
+    let drawn = edge_paths(&html);
+    for e in &page.edges {
+        assert!(
+            drawn.contains(&(e.from.clone(), e.to.clone())),
+            "edge {} -> {} is drawn: {drawn:?}",
+            e.from,
+            e.to
+        );
+        assert!(
+            html.contains(&format!(">{}<", e.label)),
+            "label {}",
+            e.label
+        );
+    }
+    assert_eq!(drawn.len(), page.edges.len(), "{drawn:?}");
+    // No label overlaps a card or another label, and no edge passes through a card it does not
+    // end at.
+    let boxes: Vec<[f64; 4]> = html
+        .split("data-box=\"")
+        .skip(1)
+        .map(|piece| {
+            let v: Vec<f64> = piece[..piece.find('"').expect("closed")]
+                .split(' ')
+                .map(|n| n.parse().expect("a number"))
+                .collect();
+            [v[0], v[1], v[2], v[3]]
+        })
+        .collect();
+    for (i, a) in boxes.iter().enumerate() {
+        for b in &boxes[i + 1..] {
+            let apart = a[0] + a[2] <= b[0]
+                || b[0] + b[2] <= a[0]
+                || a[1] + a[3] <= b[1]
+                || b[1] + b[3] <= a[1];
+            assert!(apart, "{a:?} and {b:?} overlap");
+        }
+    }
+    for (from, to) in &drawn {
+        let at = html
+            .find(&format!("data-from=\"{from}\" data-to=\"{to}\""))
+            .expect("the edge");
+        let open = html[..at].rfind("<path").expect("the path");
+        let d0 = open + html[open..].find("d=\"").expect("d") + 3;
+        let d = &html[d0..d0 + html[d0..].find('"').expect("d ends")];
+        assert!(!d.contains('C'), "a straight path: {d}");
+        let pts: Vec<(f64, f64)> = d
+            .split(['M', 'L'])
+            .filter(|s| !s.is_empty())
+            .map(|s| {
+                let (x, y) = s.split_once(' ').expect("x y");
+                (x.parse().expect("x"), y.parse().expect("y"))
+            })
+            .collect();
+        for id in ["a", "b", "c", "d", "e"] {
+            if id == from || id == to {
+                continue;
+            }
+            let [x, y, w, h] = box_of(&html, id);
+            for s in pts.windows(2) {
+                for k in 0..=20 {
+                    let t = k as f64 / 20.0;
+                    let (px, py) = (
+                        s[0].0 + (s[1].0 - s[0].0) * t,
+                        s[0].1 + (s[1].1 - s[0].1) * t,
+                    );
+                    assert!(
+                        !(px > x + 1.0 && px < x + w - 1.0 && py > y + 1.0 && py < y + h - 1.0),
+                        "{from} -> {to} passes through {id}: {d}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn a_listed_group_sets_the_colour_and_icon_of_its_cards_and_others_keep_the_palette() {
+    let mut page = minimal();
+    page.nodes.push(node("queue", "queue"));
+    let before = render(&page);
+    page.groups = vec![
+        Group {
+            name: "service".to_string(),
+            colour: Some(Colour::new("hsl(150deg, 50%, 33%)").expect("hsl")),
+            icon: Some(Icon::new("lock").expect("an icon name")),
+        },
+        Group {
+            name: "store".to_string(),
+            colour: None,
+            icon: Some(Icon::new("DB").expect("a text icon")),
+        },
+    ];
+    let html = render(&page);
+    let style = "style=\"--c:hsl(150deg, 50%, 33%)\"";
+    for id in ["shop", "pay"] {
+        assert!(card_of(&html, id).contains(style), "{}", card_of(&html, id));
+    }
+    assert!(
+        html.contains(&format!("{style}></span>service</li>")),
+        "the legend swatch takes the colour"
+    );
+    let lock = "M3.5 6.5h7v5.5h-7zM5 6.5V4.8a2 2 0 0 1 4 0v1.7";
+    assert!(
+        html.contains(lock) && !before.contains(lock),
+        "the lock icon"
+    );
+    assert!(html.contains("class=\"icon-text\""), "a text icon");
+    assert!(html.contains(">DB</text>"), "the text icon reads DB");
+    assert!(!card_of(&html, "db").contains("style="), "no colour named");
+    for id in ["db", "queue"] {
+        assert_eq!(
+            card_of(&html, id),
+            card_of(&before, id),
+            "{id} keeps its palette slot"
+        );
+    }
+}
+
+#[test]
+fn a_colour_that_is_not_a_plain_colour_is_refused() {
+    for ok in [
+        "#3a7",
+        "#3a7c",
+        "#33AA77",
+        "#33aa77cc",
+        "rgb(51 170 119)",
+        "rgb(51, 170, 119)",
+        "rgba(51,170,119,.5)",
+        "rgb(51 170 119 / 50%)",
+        "hsl(150deg, 50%, 43%)",
+        "hsla(-30 50% 43% / 0.5)",
+        "teal",
+    ] {
+        assert!(Colour::new(ok).is_ok(), "{ok} is a colour");
+    }
+    for bad in [
+        "",
+        "red;}body{display:none",
+        "red\" onload=\"x",
+        "url(x)",
+        "var(--x)",
+        "expression(1)",
+        "Teal",
+        "rebeccapurple",
+        "#12345",
+        "#ggg",
+        "rgb(1,2)",
+        "rgb(1,2,3,4,5)",
+        "rgb(1,2,3,)",
+        "rgb(1,,2,3)",
+        "rgb(1-2-3)",
+        "rgb(1 2 3);x",
+        "rgb(calc(1) 2 3)",
+        "hsl(1e3 2 3)",
+    ] {
+        assert!(Colour::new(bad).is_err(), "{bad:?} is refused");
+    }
+    let mut v = serde_json::to_value(full()).expect("serializes");
+    v["groups"][0]["colour"] = json!("red;}*{display:none");
+    let err = serde_json::from_value::<Page>(v)
+        .expect_err("the types refuse the colour")
+        .to_string();
+    assert!(err.contains("colour"), "{err}");
+    for icon in ["", "abc", "\u{7}", "  ", "rocket"] {
+        assert!(Icon::new(icon).is_err(), "icon {icon:?} is refused");
+        let mut v = serde_json::to_value(full()).expect("serializes");
+        v["groups"][0]["icon"] = json!(icon);
+        assert!(serde_json::from_value::<Page>(v.clone()).is_err());
+        if icon.chars().count() > 2 {
+            assert!(!validate(&schema(), &v, false).is_empty(), "schema: {icon}");
+        }
+    }
+    // The schema lists the same named colours and icon names as the types.
+    let s = schema();
+    let list = |def: &str, branch: usize| -> Vec<String> {
+        s["$defs"][def]["anyOf"][branch]["enum"]
+            .as_array()
+            .expect("an enum")
+            .iter()
+            .map(|x| x.as_str().expect("a name").to_string())
+            .collect()
+    };
+    assert_eq!(list("Colour", 2), NAMED_COLOURS.to_vec());
+    assert_eq!(list("Icon", 0), ICONS.to_vec());
+}
+
+/// The style attribute of the edge path `from -> to`, or "".
+fn edge_style(html: &str, from: &str, to: &str) -> String {
+    let at = html
+        .find(&format!("data-from=\"{from}\" data-to=\"{to}\""))
+        .unwrap_or_else(|| panic!("edge {from} -> {to}"));
+    let tag = &html[at..at + html[at..].find('>').expect("tag ends")];
+    tag.find("style=\"")
+        .map(|i| tag[i + 7..i + 7 + tag[i + 7..].find('"').expect("closed")].to_string())
+        .unwrap_or_default()
+}
+
+#[test]
+fn an_edge_is_drawn_heavier_as_its_count_grows() {
+    let mut page = Page::new("weights");
+    page.nodes = vec![
+        node("a", "x"),
+        node("b", "x"),
+        node("c", "x"),
+        node("d", "x"),
+    ];
+    page.edges = vec![
+        edge("a", "b", "one"),
+        edge("a", "c", "three"),
+        edge("a", "d", "nine"),
+    ];
+    let plain = render(&page);
+    assert!(!plain.contains("id=\"arrow-2\"") && !plain.contains("id=\"arrow-3\""));
+    page.edges[0].count = Some(1);
+    page.edges[1].count = Some(3);
+    page.edges[2].count = Some(9);
+    let html = render(&page);
+    assert_eq!(
+        edge_style(&html, "a", "b"),
+        "",
+        "one edge keeps the plain stroke"
+    );
+    let three = edge_style(&html, "a", "c");
+    let nine = edge_style(&html, "a", "d");
+    assert!(
+        three.contains("stroke-width:2.4") && three.contains("url(#arrow-2)"),
+        "{three}"
+    );
+    assert!(
+        nine.contains("stroke-width:3.6") && nine.contains("url(#arrow-3)"),
+        "{nine}"
+    );
+    assert!(html.contains("<marker id=\"arrow-2\"") && html.contains("<marker id=\"arrow-3\""));
+    assert!(html.contains("class=\"edge multi\""));
+}
+
+#[test]
+fn a_panel_badge_is_a_row_of_the_details_table_and_not_a_pill() {
+    let plain = render(&minimal());
+    assert!(
+        !plain.contains("aria-label=\"Details\""),
+        "no panel badge, no table"
+    );
+    let html = render(&full());
+    let svg = &html[html.find("<svg").expect("svg")..html.find("</svg>").expect("svg ends")];
+    assert!(svg.contains(">×3<"), "a card badge is a pill");
+    assert!(!svg.contains("team-pay"), "a panel badge is no pill");
+    let at = html
+        .find("aria-label=\"Details\"")
+        .expect("the details table");
+    assert!(at > html.find("</svg>").unwrap(), "under the graph");
+    let table = &html[at..at + html[at..].find("</section>").expect("ends")];
+    assert!(
+        table.contains("<tr><th scope=\"row\">pay label</th><td>owner</td><td>team-pay</td></tr>"),
+        "{table}"
+    );
+}
+
 #[test]
 fn an_unknown_field_is_refused_by_the_types() {
     let mut ok = serde_json::to_value(minimal()).expect("serializes");
@@ -303,6 +627,7 @@ fn the_schema_accepts_a_page_and_refuses_an_unknown_field() {
 fn the_schema_and_the_types_name_the_same_fields() {
     let mut page = full();
     page.edges[1].count = Some(1);
+    page.nodes[0].badges[0].on = On::Panel;
     for n in &mut page.nodes {
         n.region = Some("zone".to_string());
     }
@@ -357,10 +682,16 @@ fn the_renderer_names_no_agenticspec_term() {
 
 /// The errors of `v` against the subset of JSON Schema the committed schema uses: `$ref` into
 /// `$defs`, `type`, `const`, `enum`, `properties`, `required`, `additionalProperties: false`,
-/// `items`, `minimum`. With `all`, every declared property must be present too.
+/// `items`, `minimum`, `anyOf`, `minLength`, `maxLength`. `pattern` is not checked here: the
+/// types check the same grammar, see `a_colour_that_is_not_a_plain_colour_is_refused`. With
+/// `all`, every declared property must be present too.
 fn validate(root: &Value, v: &Value, all: bool) -> Vec<String> {
+    validate_at(root, root, v, all)
+}
+
+fn validate_at(root: &Value, s: &Value, v: &Value, all: bool) -> Vec<String> {
     let mut errs = Vec::new();
-    check(root, root, v, "$", all, &mut errs);
+    check(root, s, v, "$", all, &mut errs);
     errs
 }
 
@@ -378,6 +709,23 @@ fn check(root: &Value, s: &Value, v: &Value, at: &str, all: bool, errs: &mut Vec
         && !e.contains(v)
     {
         errs.push(format!("{at}: {v} not in {e:?}"));
+    }
+    if let Some(branches) = s.get("anyOf").and_then(Value::as_array)
+        && branches
+            .iter()
+            .all(|b| !validate_at(root, b, v, all).is_empty())
+    {
+        errs.push(format!("{at}: {v} matches no branch of anyOf"));
+    }
+    if let (Some(n), Some(t)) = (s.get("minLength").and_then(Value::as_u64), v.as_str())
+        && (t.chars().count() as u64) < n
+    {
+        errs.push(format!("{at}: shorter than {n}"));
+    }
+    if let (Some(n), Some(t)) = (s.get("maxLength").and_then(Value::as_u64), v.as_str())
+        && (t.chars().count() as u64) > n
+    {
+        errs.push(format!("{at}: longer than {n}"));
     }
     if let Some(t) = s.get("type").and_then(Value::as_str) {
         let ok = match t {

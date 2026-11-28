@@ -5,6 +5,7 @@ use crate::check::{GATE_KPIS, gate_counts};
 use crate::doc::{load_yaml, num};
 use crate::marked::{Marked, collect, resolve};
 use crate::profile::Profile;
+use crate::requirements::Requirement;
 use crate::rng::Rng;
 use crate::sim::{Fault, Model, RUN_KPIS, RunOut, parse_bursts, parse_faults, simulate};
 use crate::whole::{measure, measure_of};
@@ -58,6 +59,8 @@ pub struct Experiment {
     pub bursts: Vec<(f64, usize)>,
     pub marked: Vec<Marked>,
     pub search: Search,
+    /// The architecture's `requirements:`: constraints of the search, before its weights.
+    pub requirements: Vec<Requirement>,
     profile_parsed: Profile,
 }
 
@@ -137,6 +140,12 @@ impl Experiment {
             }
         };
         let marked = collect(&architecture, all)?;
+        let (requirements, refused) =
+            crate::requirements::parse(&crate::nest::flatten(&architecture));
+        if !refused.is_empty() {
+            let lines: Vec<String> = refused.iter().map(ToString::to_string).collect();
+            return Err(lines.join("; "));
+        }
         let s = &doc["search"];
         let usize_or = |k: &str, d: usize| s[k].as_u64().map_or(d, |v| v as usize);
         let mut weights = BTreeMap::new();
@@ -187,6 +196,7 @@ impl Experiment {
             bursts,
             marked,
             search,
+            requirements,
             profile_parsed,
         };
         e.model(&e.params(&e.baseline_point()))?;
@@ -244,15 +254,33 @@ struct Eval {
     per_part: BTreeMap<String, BTreeMap<String, f64>>,
     fitness: f64,
     feasible: bool,
+    /// Each requirement with its state in this variant, as written.
+    requirements: Vec<Value>,
+    /// Requirements decided in this variant, and of those the ones missed.
+    decided: usize,
+    missed: usize,
 }
 
 impl Eval {
-    fn score(&self) -> f64 {
+    /// How the search ranks a variant: a feasible one above every infeasible one, then fewer
+    /// requirements missed, then a higher fitness. Requirements are constraints before weights;
+    /// without requirements this is the fitness of a feasible variant.
+    fn score(&self) -> (f64, f64) {
         if self.feasible {
-            self.fitness
+            self.rank()
         } else {
-            f64::NEG_INFINITY
+            (f64::NEG_INFINITY, f64::NEG_INFINITY)
         }
+    }
+
+    /// Fewer requirements missed first, then the fitness.
+    fn rank(&self) -> (f64, f64) {
+        (-(self.missed as f64), self.fitness)
+    }
+
+    /// Feasible, and every requirement decided and met, at least one of them decided.
+    fn meets_all(&self) -> bool {
+        self.feasible && self.decided > 0 && self.missed == 0
     }
 }
 
@@ -314,6 +342,8 @@ fn evaluate(e: &Experiment, points: &[Vec<usize>]) -> Result<Vec<Eval>, String> 
             .iter()
             .map(|(k, w)| w * kpis.get(k).copied().unwrap_or(0.0))
             .sum();
+        let (requirements, decided, missed) =
+            crate::requirements::at_evaluation(&e.requirements, &kpis, &per_part);
         out.push(Eval {
             point: points[v].clone(),
             params,
@@ -321,6 +351,9 @@ fn evaluate(e: &Experiment, points: &[Vec<usize>]) -> Result<Vec<Eval>, String> 
             per_part,
             fitness,
             feasible,
+            requirements,
+            decided,
+            missed,
         });
     }
     Ok(out)
@@ -366,7 +399,9 @@ fn neighbours(marked: &[Marked], at: &[usize]) -> Vec<Vec<usize>> {
 
 /// Hill climbing: from the baseline, evaluate every neighbour not yet seen (one marked place one
 /// step), move to the best that improves, and restart from a random unseen point at a local
-/// optimum, within the budget of evaluations.
+/// optimum, within the budget of evaluations. A variant improves on another when it is feasible
+/// and the other is not, misses fewer requirements, or has a higher fitness, in that order; the
+/// climb stops after the round in which a variant first meets every requirement.
 fn fit(book: &mut Book<'_>) -> Result<(), String> {
     let e = book.e;
     let budget = e.search.budget;
@@ -377,6 +412,11 @@ fn fit(book: &mut Book<'_>) -> Result<(), String> {
     let mut score = book.evals[first].score();
     let mut restarts = e.search.restarts;
     while book.evals.len() < budget {
+        // With requirements, the search stops at the first round in which a variant meets
+        // every one of them.
+        if book.evals.iter().any(Eval::meets_all) {
+            break;
+        }
         let mut fresh: Vec<Vec<usize>> = neighbours(&e.marked, &current)
             .into_iter()
             .filter(|n| !book.seen.contains_key(n))
@@ -402,7 +442,7 @@ fn fit(book: &mut Book<'_>) -> Result<(), String> {
         }
         fresh.truncate(budget - book.evals.len());
         let ids = book.add(fresh.clone())?;
-        let mut improved: Option<(f64, usize)> = None;
+        let mut improved: Option<((f64, f64), usize)> = None;
         for (n, id) in ids.iter().enumerate() {
             let s = book.evals[*id].score();
             if s > score && improved.is_none_or(|(b, _)| s > b) {
@@ -464,13 +504,17 @@ fn per_part_json(per_part: &PerPart) -> Value {
 }
 
 fn summary(ev: &Eval) -> Value {
-    json!({
+    let mut v = json!({
         "params": ev.params,
         "kpis": kpi_json(&ev.kpis),
         "per_part": per_part_json(&ev.per_part),
         "fitness": ev.fitness,
         "feasible": ev.feasible,
-    })
+    });
+    if !ev.requirements.is_empty() {
+        v["requirements"] = json!(ev.requirements);
+    }
+    v
 }
 
 /// The run a result's timeline samples: the best variant, or the baseline when none is
@@ -512,7 +556,7 @@ fn run_inside(e: &Experiment) -> Result<(Value, Shown), String> {
     let mut best: Option<usize> = None;
     let mut trace = Vec::new();
     for (i, ev) in book.evals.iter().enumerate() {
-        if ev.feasible && best.is_none_or(|b| ev.fitness > book.evals[b].fitness) {
+        if ev.feasible && best.is_none_or(|b| ev.rank() > book.evals[b].rank()) {
             best = Some(i);
         }
         trace.push(json!({
@@ -527,7 +571,11 @@ fn run_inside(e: &Experiment) -> Result<(Value, Shown), String> {
         .iter()
         .enumerate()
         .map(|(i, ev)| {
-            json!({"id": i, "params": ev.params, "kpis": kpi_json(&ev.kpis), "fitness": ev.fitness, "feasible": ev.feasible})
+            let mut v = json!({"id": i, "params": ev.params, "kpis": kpi_json(&ev.kpis), "fitness": ev.fitness, "feasible": ev.feasible});
+            if !e.requirements.is_empty() {
+                v["requirements_missed"] = json!(ev.missed);
+            }
+            v
         })
         .collect();
     let shown = &book.evals[best.unwrap_or(baseline_id)];
@@ -543,7 +591,7 @@ fn run_inside(e: &Experiment) -> Result<(Value, Shown), String> {
         .iter()
         .map(|m| json!({"path": m.path, "value": m.value, "range": m.range}))
         .collect();
-    let result = json!({
+    let mut result = json!({
         "format": "agenticspec-sim-result/1",
         "experiment": e.doc,
         "architecture": e.architecture,
@@ -555,6 +603,10 @@ fn run_inside(e: &Experiment) -> Result<(Value, Shown), String> {
         "trace": trace,
         "timeline": timeline,
     });
+    if !e.requirements.is_empty() {
+        // The requirements of the variant shown: the best, else the baseline.
+        result["requirements"] = json!(shown.requirements);
+    }
     let shown = Shown {
         architecture: shown_arch,
         seed,

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:studio-first-slice
 kind: story
-status: active
+status: implemented
 title: 'agenticstudio first slice: open a draft in the browser, apply a patch, see the check'
 summary: agenticstudio serve opens a draft of an architecture document, applies a set/add patch atomically and shows the graph and the check result.
 relations:
@@ -26,10 +26,11 @@ scope:
   path: scripts/check-generated.sh
 - confidence: cited
   path: studio
-revision: 13
+revision: 14
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T22:24:14Z", actor: "human:operator", revision: 12, decided_on: {"recorded":{"review":1,"review_outcome":3}}}
 - {from: "proposed", to: "active", at: "2026-11-27T22:24:17Z", actor: "human:operator", revision: 13, decided_on: {"recorded":{"review":1,"review_outcome":3}}}
+- {from: "active", to: "implemented", at: "2026-11-28T08:40:12Z", actor: "human:operator", revision: 14, decided_on: {"recorded":{"test_result":1,"review":1,"review_outcome":3}}}
 ---
 ## Outcome
 

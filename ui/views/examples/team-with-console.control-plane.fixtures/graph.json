@@ -1,0 +1,251 @@
+{
+  "rows": [
+    {
+      "architecture": "team-with-console",
+      "draft_id": "team-with-console",
+      "height": 495.0,
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "owner",
+          "over": null,
+          "to": "console.steward"
+        },
+        {
+          "carries": "question",
+          "from": "console.steward",
+          "over": null,
+          "to": "owner"
+        },
+        {
+          "carries": "order",
+          "from": "console.steward",
+          "over": null,
+          "to": "worker"
+        },
+        {
+          "carries": "question",
+          "from": "worker",
+          "over": null,
+          "to": "console.steward"
+        },
+        {
+          "carries": "model_call",
+          "from": "worker",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "over": null,
+          "to": "model"
+        }
+      ],
+      "name": "team-with-console",
+      "parts": [
+        {
+          "acts_for": null,
+          "block": "architecture",
+          "border": false,
+          "count": null,
+          "family": "nested",
+          "id": "console",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "ref",
+              "console.yaml"
+            ]
+          ],
+          "subtitle": "console.yaml"
+        },
+        {
+          "acts_for": null,
+          "block": "gateway",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "gateway",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "rate limit per minute",
+              "60"
+            ]
+          ],
+          "subtitle": "gateway"
+        },
+        {
+          "acts_for": null,
+          "block": "model",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "model",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "route",
+              "frontier"
+            ]
+          ],
+          "subtitle": "model · frontier"
+        },
+        {
+          "acts_for": null,
+          "block": "principal",
+          "border": false,
+          "count": null,
+          "family": "principal",
+          "id": "owner",
+          "kind": "human",
+          "per": null,
+          "properties": [],
+          "subtitle": "principal · human"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": "3",
+          "family": "agent",
+          "id": "worker",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ]
+          ],
+          "subtitle": "agent · coding"
+        }
+      ],
+      "revision": 1,
+      "summary": "A team that reaches its operations through a console modelled as an architecture of its own, console, nested here as one part pinned by its digest. The owner prompts the console's steward, the one part on the console's border, as `console.steward`; the steward orders the workers and answers their questions, and asks the owner what it cannot decide. The simulator flattens the console into this document (its parts run as `console.steward`, `console.helper`, `console.gateway` and `console.model`) and simulates the result as any other architecture.",
+      "svg": "<svg class=\"graph\" viewBox=\"0 0 1038 495\" width=\"1038\" height=\"495\" role=\"group\" aria-labelledby=\"graph-title graph-desc\"><title id=\"graph-title\">Architecture team-with-console</title><desc id=\"graph-desc\">5 parts in rows by block layer, 6 links as arrows labelled by what they carry. The tables of parts and links beside the graph list every part and every link as text.</desc><defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker></defs><g class=\"edges\"><path class=\"edge\" d=\"M140 76C140 86 130 86 130 96L130 112L130 132L130 184C130 194 76 194 76 204L76 224C76 233.5 241 233.5 241 243\" data-from=\"owner\" data-to=\"console.steward\"><title>owner → console.steward: prompt</title></path><path class=\"edge\" d=\"M267 243C267 233.5 214 233.5 214 224L214 204C214 194 175 194 175 184L175 132L175 112L175 96C175 86.5 166 86.5 166 77\" data-from=\"console.steward\" data-to=\"owner\"><title>console.steward → owner: question</title></path><path class=\"edge\" d=\"M293 243C293 233.5 346 233.5 346 224L346 204C346 194.5 437 194.5 437 185\" data-from=\"console.steward\" data-to=\"worker\"><title>console.steward → worker: order</title></path><path class=\"edge\" d=\"M463 184C463 194 478 194 478 204L478 224C478 233.5 319 233.5 319 243\" data-from=\"worker\" data-to=\"console.steward\"><title>worker → console.steward: question</title></path><path class=\"edge\" d=\"M489 184C489 194 565 194 565 204L565 224L565 244L565 336C565 346 572 346 572 356L572 376C572 385.5 574 385.5 574 395\" data-from=\"worker\" data-to=\"gateway\"><title>worker → gateway: model_call</title></path><path class=\"edge\" d=\"M659 433.5L851 433.5\" data-from=\"gateway\" data-to=\"model\"><title>gateway → model: model_call</title></path></g><g class=\"labels\"><g class=\"pill\"><rect x=\"715.9\" y=\"423.5\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"715.9 423.5 78.1 20\"/><text x=\"755\" y=\"437.5\" text-anchor=\"middle\">model_call</text></g><g class=\"pill\"><rect x=\"17.6\" y=\"204\" width=\"116.9\" height=\"20\" rx=\"10\" data-box=\"17.6 204 116.9 20\"/><text x=\"76\" y=\"218\" text-anchor=\"middle\">prompt · steward</text></g><g class=\"pill\"><rect x=\"151.2\" y=\"204\" width=\"125.6\" height=\"20\" rx=\"10\" data-box=\"151.2 204 125.6 20\"/><text x=\"214\" y=\"218\" text-anchor=\"middle\">question · steward</text></g><g class=\"pill\"><rect x=\"292.6\" y=\"204\" width=\"106.8\" height=\"20\" rx=\"10\" data-box=\"292.6 204 106.8 20\"/><text x=\"346\" y=\"218\" text-anchor=\"middle\">order · steward</text></g><g class=\"pill\"><rect x=\"415.2\" y=\"204\" width=\"125.6\" height=\"20\" rx=\"10\" data-box=\"415.2 204 125.6 20\"/><text x=\"478\" y=\"218\" text-anchor=\"middle\">question · steward</text></g><g class=\"pill\"><rect x=\"532.9\" y=\"356\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"532.9 356 78.1 20\"/><text x=\"572\" y=\"370\" text-anchor=\"middle\">model_call</text></g></g><g class=\"nodes\"><g class=\"node f-principal\" data-part=\"owner\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"owner, principal · human\" x=\"69\" y=\"24\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"69 24 168 52\"/><rect class=\"icon-bg\" x=\"81\" y=\"36\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(89 44) scale(1)\" d=\"M7 6.6a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM2.4 12.6c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2\"/><text class=\"name\" x=\"121\" y=\"48\">owner</text><text class=\"sub\" x=\"121\" y=\"63\">principal · human</text></g><g class=\"node f-nested on-border\" data-part=\"console\"><rect class=\"border-mark\" x=\"177.5\" y=\"239\" width=\"205\" height=\"102\" rx=\"14\"/><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"console, console.yaml, ports console.steward\" x=\"182.5\" y=\"244\" width=\"195\" height=\"92\" rx=\"10\" data-box=\"182.5 244 195 92\"/><rect class=\"icon-bg\" x=\"194.5\" y=\"256\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(202.5 264) scale(1)\" d=\"M1.5 2.5h11v9h-11zM4 5h6v4H4zM1.5 7H4M10 7h2.5\"/><text class=\"name\" x=\"234.5\" y=\"268\">console</text><text class=\"sub\" x=\"234.5\" y=\"283\">console.yaml</text><g class=\"tag\"><rect x=\"317.2\" y=\"272\" width=\"48.3\" height=\"16\" rx=\"8\"/><text x=\"341.3\" y=\"283.5\" text-anchor=\"middle\">border</text></g><text class=\"prop\" x=\"194.5\" y=\"308\"><tspan class=\"prop-k\">ref</tspan> console.yaml</text><g class=\"port\" data-port=\"console.steward\"><title>border part console.steward</title><rect class=\"port-mark\" x=\"177.5\" y=\"316.5\" width=\"10\" height=\"10\" rx=\"2\"/><text class=\"prop\" x=\"194.5\" y=\"325\"><tspan class=\"prop-k\">port</tspan> steward</text></g></g><g class=\"node f-agent\" data-part=\"worker\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"worker, agent · coding, count 3\" x=\"379\" y=\"132\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"379 132 168 52\"/><rect class=\"icon-bg\" x=\"391\" y=\"144\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(399 152) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"431\" y=\"156\">worker</text><text class=\"sub\" x=\"431\" y=\"171\">agent · coding</text><g class=\"badge\"><rect x=\"509.4\" y=\"143\" width=\"25.6\" height=\"18\" rx=\"9\"/><text x=\"522.2\" y=\"156\" text-anchor=\"middle\">×3</text></g></g><g class=\"node f-intel\" data-part=\"gateway\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"gateway, gateway\" x=\"490\" y=\"396\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"490 396 168 75\"/><rect class=\"icon-bg\" x=\"502\" y=\"408\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(510 416) scale(1)\" d=\"M2 2.5v9M5 7h7M9 4l3 3-3 3\"/><text class=\"name\" x=\"542\" y=\"420\">gateway</text><text class=\"sub\" x=\"542\" y=\"435\">gateway</text><text class=\"prop\" x=\"502\" y=\"460\"><tspan class=\"prop-k\">rate limit per minute</tspan> 60</text></g><g class=\"node f-intel\" data-part=\"model\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"model, model · frontier\" x=\"852\" y=\"407.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"852 407.5 168 52\"/><rect class=\"icon-bg\" x=\"864\" y=\"419.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(872 427.5) scale(1)\" d=\"M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5\"/><text class=\"name\" x=\"904\" y=\"431.5\">model</text><text class=\"sub\" x=\"904\" y=\"446.5\">model · frontier</text></g></g></svg>",
+      "width": 1038.0
+    },
+    {
+      "architecture": "console",
+      "draft_id": "console",
+      "height": 268.0,
+      "links": [
+        {
+          "carries": "order",
+          "from": "steward",
+          "over": null,
+          "to": "helper"
+        },
+        {
+          "carries": "question",
+          "from": "helper",
+          "over": null,
+          "to": "steward"
+        },
+        {
+          "carries": "model_call",
+          "from": "steward",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "helper",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "over": null,
+          "to": "model"
+        }
+      ],
+      "name": "console",
+      "parts": [
+        {
+          "acts_for": null,
+          "block": "gateway",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "gateway",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "rate limit per minute",
+              "60"
+            ]
+          ],
+          "subtitle": "gateway"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": null,
+          "family": "agent",
+          "id": "helper",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ]
+          ],
+          "subtitle": "agent · coding"
+        },
+        {
+          "acts_for": null,
+          "block": "model",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "model",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "route",
+              "frontier"
+            ]
+          ],
+          "subtitle": "model · frontier"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": true,
+          "count": null,
+          "family": "agent",
+          "id": "steward",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "orchestrator"
+            ]
+          ],
+          "subtitle": "agent · orchestrator"
+        }
+      ],
+      "revision": 1,
+      "summary": "A console as an architecture of its own, made to be nested in another one: a steward agent is the one part on its border, hands work to a helper agent, and both reach their model through a gateway. A document that nests it reaches the steward as `console.steward` and nothing else of it. On its own the console has no principal: it is checked and drawn here, and simulated inside the architecture that nests it, team-with-console.",
+      "svg": "<svg class=\"graph\" viewBox=\"0 0 705 268\" width=\"705\" height=\"268\" role=\"group\" aria-labelledby=\"graph-title graph-desc\"><title id=\"graph-title\">Architecture console</title><desc id=\"graph-desc\">4 parts in rows by block layer, 5 links as arrows labelled by what they carry. The tables of parts and links beside the graph list every part and every link as text.</desc><defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker></defs><g class=\"edges\"><path class=\"edge\" d=\"M136 99L136 124L289 124L289 139L289 168\" data-from=\"steward\" data-to=\"gateway\"><title>steward → gateway: model_call</title></path><path class=\"edge\" d=\"M443 87.5L443 99L443 124L289 124L289 139L289 168\" data-from=\"helper\" data-to=\"gateway\"><title>helper → gateway: model_call</title></path><path class=\"edge\" d=\"M254.5 48.5L358 48.5\" data-from=\"steward\" data-to=\"helper\"><title>steward → helper: order</title></path><path class=\"edge\" d=\"M358 74.5L254.5 74.5\" data-from=\"helper\" data-to=\"steward\"><title>helper → steward: question</title></path><path class=\"edge\" d=\"M374 206.5L518 206.5\" data-from=\"gateway\" data-to=\"model\"><title>gateway → model: model_call</title></path></g><g class=\"labels\"><g class=\"pill\"><rect x=\"282.6\" y=\"38.5\" width=\"47.2\" height=\"20\" rx=\"10\" data-box=\"282.6 38.5 47.2 20\"/><text x=\"306.3\" y=\"52.5\" text-anchor=\"middle\">order</text></g><g class=\"pill\"><rect x=\"273.2\" y=\"64.5\" width=\"66.1\" height=\"20\" rx=\"10\" data-box=\"273.2 64.5 66.1 20\"/><text x=\"306.3\" y=\"78.5\" text-anchor=\"middle\">question</text></g><g class=\"pill\"><rect x=\"406.9\" y=\"196.5\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"406.9 196.5 78.1 20\"/><text x=\"446\" y=\"210.5\" text-anchor=\"middle\">model_call</text></g><g class=\"pill\"><rect x=\"249.9\" y=\"129\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"249.9 129 78.1 20\"/><text x=\"289\" y=\"143\" text-anchor=\"middle\">model_call</text></g></g><g class=\"nodes\"><g class=\"node f-agent on-border\" data-part=\"steward\"><rect class=\"border-mark\" x=\"13.5\" y=\"19\" width=\"245\" height=\"85\" rx=\"14\"/><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"steward, agent · orchestrator, on the border\" x=\"18.5\" y=\"24\" width=\"235\" height=\"75\" rx=\"10\" data-box=\"18.5 24 235 75\"/><rect class=\"icon-bg\" x=\"30.5\" y=\"36\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(38.5 44) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"70.5\" y=\"48\">steward</text><text class=\"sub\" x=\"70.5\" y=\"63\">agent · orchestrator</text><g class=\"tag\"><rect x=\"193.2\" y=\"52\" width=\"48.3\" height=\"16\" rx=\"8\"/><text x=\"217.3\" y=\"63.5\" text-anchor=\"middle\">border</text></g><text class=\"prop\" x=\"30.5\" y=\"88\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"node f-agent\" data-part=\"helper\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"helper, agent · coding\" x=\"359\" y=\"35.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"359 35.5 168 52\"/><rect class=\"icon-bg\" x=\"371\" y=\"47.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(379 55.5) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"411\" y=\"59.5\">helper</text><text class=\"sub\" x=\"411\" y=\"74.5\">agent · coding</text></g><g class=\"node f-intel\" data-part=\"gateway\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"gateway, gateway\" x=\"205\" y=\"169\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"205 169 168 75\"/><rect class=\"icon-bg\" x=\"217\" y=\"181\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(225 189) scale(1)\" d=\"M2 2.5v9M5 7h7M9 4l3 3-3 3\"/><text class=\"name\" x=\"257\" y=\"193\">gateway</text><text class=\"sub\" x=\"257\" y=\"208\">gateway</text><text class=\"prop\" x=\"217\" y=\"233\"><tspan class=\"prop-k\">rate limit per minute</tspan> 60</text></g><g class=\"node f-intel\" data-part=\"model\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"model, model · frontier\" x=\"519\" y=\"180.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"519 180.5 168 52\"/><rect class=\"icon-bg\" x=\"531\" y=\"192.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(539 200.5) scale(1)\" d=\"M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5\"/><text class=\"name\" x=\"571\" y=\"204.5\">model</text><text class=\"sub\" x=\"571\" y=\"219.5\">model · frontier</text></g></g></svg>",
+      "width": 705.0
+    }
+  ],
+  "view": "agentic.architecture.Graph"
+}

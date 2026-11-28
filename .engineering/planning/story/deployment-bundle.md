@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:deployment-bundle
 kind: story
-status: draft
+status: active
 title: 'agenticspec deploy bundle: the agenticspec-deployment/1 format'
 summary: Admit, then write one YAML bundle with every member inline keyed by digest, per-unit fields and abstract roles, no secret, host, provider or target; a refusal writes nothing and lists every finding.
 relations:
@@ -26,7 +26,10 @@ scope:
   path: spec/cli.yaml
 - confidence: inferred
   path: spec/domains/cli.yaml
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 3}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:20Z", actor: "human:operator", revision: 4}
 ---
 ## Outcome
 
@@ -72,3 +75,7 @@ Q17 A. Epic: `epic:architecture-deployment`.
 ## Not in this story
 
 The fixture bundles (`story:bundle-fixtures`); the translator and targets (cloudspec C1-C7).
+
+## Remaining at 9bb5998
+
+Delivered in 43047c2, 30d708d, fa4c997, 9eac003. Missing: nested documents are not carried (crates/agenticspec-sim/src/deploy/bundle.rs:280 writes an empty nested map) and requirements are copied without a check (bundle.rs:294).

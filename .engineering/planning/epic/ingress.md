@@ -2,13 +2,16 @@
 format: aep.planning-md/3
 id: epic:ingress
 kind: epic
-status: draft
+status: active
 title: 'Ingress: the interfaces an architecture exposes to the outside'
 summary: 'Per audience an ingress: an interface resolved from the contract (commands, views, feeds, metrics) and exports over http, event_stream, cli, tool, agent, metrics_scrape and ui (I1-I12).'
 relations:
 - depends_on: epic:architecture-contract
 - informed_by: epic:view-layer
-revision: 1
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T08:40:23Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-28T08:40:23Z", actor: "human:operator", revision: 3}
 ---
 ## Outcome
 

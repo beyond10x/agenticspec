@@ -242,3 +242,16 @@ Lifecycle: one state, `Set`; a recorded WorkModeDirection does not change.
 |---|---|---|---|---|
 | `kpi_measured_share`<br/>Share of defined, unretired KPIs with at least one measurement.<br/><small>How: KPIs with a MeasurementRecorded divided by KPIs with a KpiDefined and no KpiRetired.</small> | share | higher | – | planned<br/><small>source: design</small> |
 
+
+## Settings
+
+The settings a part of this block carries in an architecture document. `agenticspec sim check` refuses any other setting (`setting_unknown`) and a value outside its type (`setting_invalid`); the contract copies a setting into the ports it narrows. The last rows of each table are the settings every part takes.
+
+A part `kpi`:
+
+| setting | type | unit | default | contract | what |
+|---|---|---|---|---|---|
+| `kind` | string |  |  |  | What the KPI measures. |
+| `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
+| `per` | part |  |  |  | One copy of the part for each copy of the named part. |
+

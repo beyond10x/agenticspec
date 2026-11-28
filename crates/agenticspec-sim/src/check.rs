@@ -12,18 +12,6 @@ use std::sync::OnceLock;
 /// carries.
 const DOMAIN: &str = include_str!("../../../blocks/9-composition/architecture.yaml");
 
-/// A variant of a domain enum as an architecture document writes it: `ModelCall` is `model_call`.
-fn snake(variant: &str) -> String {
-    let mut out = String::new();
-    for (i, c) in variant.chars().enumerate() {
-        if c.is_ascii_uppercase() && i > 0 {
-            out.push('_');
-        }
-        out.push(c.to_ascii_lowercase());
-    }
-    out
-}
-
 /// The variants of enum `name` of the domain, in snake case and in the order it declares them.
 fn variants(name: &str) -> Vec<String> {
     let doc: Value = serde_yaml_ng::from_str(DOMAIN).unwrap_or(Value::Null);
@@ -36,7 +24,7 @@ fn variants(name: &str) -> Vec<String> {
         .into_iter()
         .flatten()
         .filter_map(Value::as_str)
-        .map(snake)
+        .map(crate::settings::snake)
         .collect()
 }
 
@@ -93,6 +81,20 @@ pub enum Refusal {
         part: String,
         carries: String,
     },
+    /// A part carries a setting its block does not declare (`blocks/settings.yaml`).
+    SettingUnknown {
+        part: String,
+        block: String,
+        setting: String,
+    },
+    /// A part's setting has a value outside the type its block declares; `expected` is the type
+    /// in words.
+    SettingInvalid {
+        part: String,
+        setting: String,
+        value: String,
+        expected: String,
+    },
     /// A part's `per` names no part.
     PerWithoutPart { part: String, names: String },
     /// A part's `acts_for` names no part.
@@ -135,6 +137,8 @@ pub const GATE_KPIS: &[&str] = &[
     "unknown_link_parts",
     "unknown_blocks",
     "unknown_carries",
+    "setting_unknown",
+    "setting_invalid",
     "per_without_part",
     "acts_for_without_part",
     "egress_without_part",
@@ -157,6 +161,8 @@ impl Refusal {
             Refusal::UnknownLinkPart { .. } => "unknown_link_parts",
             Refusal::UnknownBlock { .. } => "unknown_blocks",
             Refusal::UnknownCarries { .. } => "unknown_carries",
+            Refusal::SettingUnknown { .. } => "setting_unknown",
+            Refusal::SettingInvalid { .. } => "setting_invalid",
             Refusal::PerWithoutPart { .. } => "per_without_part",
             Refusal::ActsForWithoutPart { .. } => "acts_for_without_part",
             Refusal::EgressWithoutPart { .. } => "egress_without_part",
@@ -179,6 +185,8 @@ impl Refusal {
             Refusal::UnknownLinkPart { part, .. }
             | Refusal::UnknownBlock { part, .. }
             | Refusal::UnknownCarries { part, .. }
+            | Refusal::SettingUnknown { part, .. }
+            | Refusal::SettingInvalid { part, .. }
             | Refusal::PerWithoutPart { part, .. }
             | Refusal::ActsForWithoutPart { part, .. }
             | Refusal::EgressWithoutPart { part, .. }
@@ -212,6 +220,16 @@ impl fmt::Display for Refusal {
                 "link {link} carries `{c}`, which agentic.architecture does not declare ({})",
                 carries().join(", ")
             ),
+            Refusal::SettingUnknown { block, setting, .. } => format!(
+                "setting `{setting}` is not a setting of block `{block}` ({})",
+                crate::settings::table().names(block).join(", ")
+            ),
+            Refusal::SettingInvalid {
+                setting,
+                value,
+                expected,
+                ..
+            } => format!("setting `{setting}` is {value}, expected {expected}"),
             Refusal::PerWithoutPart { names, .. } => format!("per `{names}` names no part"),
             Refusal::ActsForWithoutPart { names, .. } => {
                 format!("acts_for `{names}` names no part")
@@ -348,6 +366,45 @@ fn trigger_source(architecture: &Value, p: &Value) -> Option<String> {
     }
 }
 
+/// The settings refusals of the parts: a setting the part's block does not declare, and a value
+/// outside its declared type. A marked place is judged by its `value`. A part of a block that is
+/// no part kind is left to `unknown_blocks`.
+fn settings(parts: &serde_json::Map<String, Value>) -> Vec<Refusal> {
+    let table = crate::settings::table();
+    let mut out = Vec::new();
+    for (name, p) in parts {
+        let Some(b) = s(&p["block"]).filter(|b| is_part_block(b)) else {
+            continue;
+        };
+        for (key, raw) in p.as_object().into_iter().flatten() {
+            if crate::settings::NOT_SETTINGS.contains(&key.as_str()) {
+                continue;
+            }
+            let Some(setting) = table.setting(b, key) else {
+                out.push(Refusal::SettingUnknown {
+                    part: name.clone(),
+                    block: b.to_string(),
+                    setting: key.clone(),
+                });
+                continue;
+            };
+            let v = value(raw);
+            if v.is_null() {
+                continue;
+            }
+            if let Err(expected) = setting.ty.accepts(v) {
+                out.push(Refusal::SettingInvalid {
+                    part: name.clone(),
+                    setting: key.clone(),
+                    value: v.to_string(),
+                    expected,
+                });
+            }
+        }
+    }
+    out
+}
+
 pub fn check(architecture: &Value) -> Vec<Refusal> {
     let empty = serde_json::Map::new();
     let parts = architecture["parts"].as_object().unwrap_or(&empty);
@@ -402,6 +459,7 @@ pub fn check(architecture: &Value) -> Vec<Refusal> {
             });
         }
     }
+    out.extend(settings(parts));
     for (key, make) in [
         (
             "per",
