@@ -147,7 +147,7 @@ with every member inline, each document keyed by its digest (Q2). Same inputs, s
 | `ingress` | per ingress its audience and operations; per export its protocol, the unit that serves it, port, authenticated or not, public or internal, the address from the binding | inside the contract digest, address in the binding digest |
 | `requirements` | the `requirements:` of K12, each with the stage it is decided at | inside the bundle digest |
 | `agents` | each `loom.agent/1` document the binding names | its digest (Q12) |
-| `runtimes` | each runtime artifact by OCI digest: the Loom agent image (`ghcr.io/beyond10x/loom-agent@sha256:…`), the core runtime image | the image digest (Q8) |
+| `runtimes` | each runtime artifact the bundle pins by OCI digest: the core runtime image; an agent runtime image only where the binding pins one (Q8) | the image digest |
 | `digest` | the bundle digest: SHA-256 of the canonical JSON of the document without this member | |
 
 The bundle carries no secret value, no host, no provider and no target name: it is the input of
@@ -162,7 +162,7 @@ Each entry of `units`:
 | `name`, `kind` | the unit's name; its kind (K3) |
 | `parts` | the part instances, by path |
 | `replicas` | from `count`; `scheduled` and `job` units have none |
-| `code` | the artifact that runs, by digest: a runtime of `runtimes`, and for an `agent`, `job` or `scheduled` unit the agent document's digest it serves |
+| `code` | the artifact that runs, by digest. An `agent`, `job` or `scheduled` unit stays one agent: its agent document (instructions, tools, model route, authority, harness role) by digest and the role `agent-runtime`, never flattened into a process command; other units name a runtime of `runtimes` |
 | `claims` | CPU, memory, accelerators: the unit's `Shape` (`blocks/8-place/runtime.yaml`), plus an accelerator for `model` |
 | `isolation` | the least isolation level required, the highest of its sandboxes |
 | `checks` | `startup`, `ready`, `alive`, each with its kind and path or command. An agent unit with `expose.a2a` uses Loom's readiness and liveness probes (`loom:README.md:727`); without it, `b10x-loom agent check` is its startup command |
@@ -190,9 +190,12 @@ translator's and the target's.
   `weft:docs/domain-sketch.md:713`); a container host and a cluster namespace get files generated
   from the same architecture (Compose, Helm). Each declares through cloudspec the unit kinds,
   roles and isolation it hosts and refuses the rest by name.
-- **Agents run on the same target, as Loom runtime processes.** An `agent`, `job` or `scheduled`
-  unit is a workload process of the target that runs the Loom image of `runtimes` by digest over
-  its agent document: `agent serve` for a long-running unit, `agent run` for one turn
+- **An agent stays an agent workload, and the target picks its runtime.** An `agent`, `job` or
+  `scheduled` unit reaches cloudspec as an agent workload (package kind `Agent` over its agent
+  document), not as a generic process. The target binds the role `agent-runtime`: weft runs the
+  unit as a Loom agent (its deployment source kind `LoomAgent`, `weft:ess/6-delivery/deployments.yaml:34`;
+  Loom owns the agent document format, `weft:docs/domain-sketch.md:725-726`), as a workload
+  process that runs Loom over the agent document: `agent serve` for a long-running unit, `agent run` for one turn
   (`loom:README.md:285`, `:310`). The target embeds no Loom. One scope and one network carry
   everything. Loom serves no web service, so it is never a whole target: `core` and the control
   plane need a service. Agents that already run elsewhere are bound `external` (Q11).
@@ -260,7 +263,7 @@ granting nothing the bundle does not declare. What agenticspec asks it to map:
 
 | agentic | cloudspec construct (cloudspec `docs/boundary.md` row) |
 |---|---|
-| `agent` unit | package kind `Agent`: the Loom image by digest over the agent document; shape `Service` with the unit's replicas (row 10) |
+| `agent` unit | package kind `Agent` over the agent document, its runtime bound by role (on weft: Loom); shape `Service` with the unit's replicas (row 10) |
 | `job` unit | `Job`, started at run time (`agent run`); needs the role "start jobs in the scope" |
 | `scheduled` unit | `Schedule` of a `Job`, overlap from the trigger's `policy` (row 10) |
 | `service` unit, `core` unit | `Service`; `core` runs the core runtime image (Q4) |
@@ -327,24 +330,33 @@ cloudspec infrastructure load (Q15).
 
 ## Requests to cloudspec
 
-Story ids follow under cloudspec's epic `translation` (placeholder: `cloudspec epic:translation`,
-stories to be named). Nothing is written in weft; weft gets what it needs from the cloudspec side.
+Filed in beyond10x/cloudspec under `epic:translation` (pull request 2); each request names its
+story there. Nothing is written in weft; weft gets what it needs from the cloudspec side. weft's
+own epic `agent-workloads` runs a vendored fixture bundle from a hand-written formation until the
+translator exists (`story:agent-architecture-run`), and frames `agenticspec sim render` output by
+its `data-part` attribute per part (`story:agenticspec-render-contract`; the attribute exists).
 
-- C1 An architecture format with K13's constructs: component; package (an agent document with a
-  runtime by digest, an ESS system, an image); shape (service, job, schedule with an overlap
-  rule); replicas; volume per replica; link with protocol; endpoint and route; storage kinds;
-  secrets by name; isolation level; checks.
-- C2 The inbound translator of `agenticspec-deployment/1` (epic `translation`), with K13's
-  mapping, the coverage outcomes, role binding reported per role, and the grant rule.
-- C3 A source field on every object, kept into target objects and observations.
-- C4 A published list of accepted unit kinds and roles with refusal names, and `scope` (D1 A) as
-  the target boundary.
-- C5 An observation contract a target fulfils: per unit release state, instances, health,
-  failures, drift; a resumable feed per instance of a workload's own records (Loom's run records).
-  weft fulfils it.
-- C6 External dependencies with egress routes (cloudspec E4); KPI ids qualified by system, series
-  labelled with the source.
-- C7 The vendored fixture bundles with their lock and the coverage test (K16).
+- C1 (`story:architecture-format-constructs`) An architecture format with K13's constructs:
+  component; package (an agent document with a runtime by digest, an ESS system, an image); shape
+  (service, job, schedule with an overlap rule); replicas; volume per replica; link with protocol;
+  endpoint and route; storage kinds; secrets by name; isolation level; checks.
+- C2 (`story:translate-in-agenticspec`) The inbound translator of `agenticspec-deployment/1`, with
+  K13's mapping, the coverage outcomes, role binding reported per role, and the grant rule.
+- C3 (`story:source-field`) A source field on every object, kept into target objects and
+  observations.
+- C4 (`story:accepted-kinds-and-roles`) A published list of accepted unit kinds and roles with
+  refusal names, and `scope` (D1 A) as the target boundary.
+- C5 (`story:observation-contract`) An observation contract a target fulfils: per unit release
+  state, instances, health, failures, drift; a resumable feed per instance of a workload's own
+  records (Loom's run records). weft fulfils it.
+- C6 (`story:external-dependencies-and-kpi-ids`) External dependencies with egress routes
+  (cloudspec E4); KPI ids qualified by system, series labelled with the source.
+- C7 (`story:agenticspec-fixture-bundles`) The vendored fixture bundles with their lock and the
+  coverage test (K16).
+
+Gaps cloudspec names, open on both sides: disk and volume claims per unit (the bundle's `claims`
+carry CPU, memory and accelerators only; Q16), and how a unit's `isolation` maps to weft's level
+names (Q17).
 
 No request for a realization on this host: the in-process runtime is the local test, and weft's
 `local` lowering runs a deployment on this host.
@@ -360,7 +372,7 @@ No request for a realization on this host: the in-process runtime is the local t
 | Q5 | who reads the target's reports | A: the `core` unit, its own deployment's feeds, with its workload identity. B: the deployer's agenticspec polls | A |
 | Q6 | how agent runs come back | A: the target forwards Loom's records as a feed per instance (C5); agenticspec lifts them. B: each agent posts them to `core` over a link | A: Loom stays unaware of the blocks |
 | Q7 | `job` units started at run time | A: `core` starts jobs through the target, under the role "start jobs in the scope". B: jobs declared ahead and woken by a trigger | A |
-| Q8 | how the Loom runtime is pinned | A: image by digest. B: a version name | A: the node verifies a digest before start (`weft:docs/domain-sketch.md:222-223`) |
+| Q8 | how an agent unit's runtime is chosen | A: by the role `agent-runtime`, bound by the target (weft: Loom); a binding may pin an image by digest. B: the bundle always pins the Loom image by digest | A: the agent stays an agent workload through cloudspec; where a digest is pinned the node verifies it before start (`weft:docs/domain-sketch.md:222-223`) |
 | Q9 | where the packing lives | A: section of the binding. B: its own document | A |
 | Q10 | default strategy | A: `single` everywhere. B: `by_part` on remote targets | A |
 | Q11 | where agent units run | A: on the same target as Loom runtime processes. B: Loom elsewhere, the agent parts bound `external` | A |
@@ -368,6 +380,8 @@ No request for a realization on this host: the in-process runtime is the local t
 | Q13 | a target always a scope | A: yes, one deployment per scope. B: several deployments share one | A |
 | Q14 | requirements | A: `requirements:` key of the architecture. B: in the experiment | A |
 | Q15 | simulation coupling | A: one way, agent run to cloud load. B: co-simulation | A |
+| Q16 | disk and volume per unit | A: `claims` gains `volumes`, each with size and access mode, from the `store` role. B: only `store` units claim disk | A: a `job` unit's workspace needs disk too |
+| Q17 | isolation names | A: agenticspec keeps its own levels, and cloudspec's accepted list (C4) maps them to each target's names. B: use weft's level names | A: the bundle names no target |
 
 ## Proposed stories
 
