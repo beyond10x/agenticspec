@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `agenticspec sim` simulates more of an architecture: an agent that reaches several model parts splits its calls by its `model_share` and each call is priced by its model's route; a runtime part given runs (a `run` or `order` link, or a trigger) executes their steps, model calls and person steps; an `on_event` trigger fires when the simulation emits its event (`agentic.work.TaskCompleted` and seven more), optionally only for the part its `source` names, and a trigger may wake a runtime
+- The architecture block records where an entity of a lower block sits: `agentic.architecture.Placement` (architecture, revision, part path, copy, entity name and id), recorded by the runtime through `PlaceEntity` and read through the view `Placements`, filtered by part path, copy and entity name. A row of any block view is in scope of a part when its own id, or an id field of its view one hop away, is placed to that part
 
 ### Changed
 
