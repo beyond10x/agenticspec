@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest ecebe31c819be66d65fca9f7ce1c10126a0bfbf0f5f62a7b61d761cbdbae367f
+// contract digest f4b1e7573a55fe33c2448a14f80acf8d3bd697688f0e85033b08c189708dc01c
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -613,7 +613,7 @@ pub struct SimCheckInput {
 
 /// SimCheckResult — `agenticspec.cli.SimCheckResult`.
 ///
-/// The architecture the check accepted, with its counts of parts and links.
+/// The architecture the check accepted, with its counts of parts and links and the KPIs of the architecture as a whole.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCheckResult {
     /// `architecture` — `String`.
@@ -622,6 +622,10 @@ pub struct SimCheckResult {
     pub parts: i64,
     /// `links` — `Integer`.
     pub links: i64,
+    /// `kpis` — `Json`.
+    pub kpis: crate::json::Value,
+    /// `single_points` — `List<String>`.
+    pub single_points: Vec<String>,
 }
 
 /// SimContractInput — `agenticspec.cli.SimContractInput`.

@@ -2724,6 +2724,271 @@
       "status": "simulated",
       "summary": "Merges that touched a scope another merge changed since the work started.",
       "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "higher",
+      "family": "composition",
+      "gate": false,
+      "how": "The sum of count over the parts with block agent, 1 for a part without count; a marked count at its value as built. Read from the architecture document by agenticspec sim check, before any simulation.",
+      "id": "agents_total",
+      "kind": "completeness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Agent copies: the sum of count over the agent parts.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Parts with block principal in the architecture document, read by agenticspec sim check.",
+      "id": "principals_total",
+      "kind": "completeness",
+      "layer": 9,
+      "modes": [
+        {
+          "direction": "lower",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "higher",
+          "mode": "pairing"
+        },
+        {
+          "direction": "higher",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Principal parts.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Links whose to is a principal part and whose carries is question or proposal, the two kinds the architectures use to ask a human to decide. A prompt from a principal is not counted. Read by agenticspec sim check.",
+      "id": "human_touchpoints",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [
+        {
+          "direction": "lower",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "ignore",
+          "mode": "pairing"
+        },
+        {
+          "direction": "ignore",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Links that end at a principal and carry a question or a proposal.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "The longest path without a repeated part over links that carry order or question and join two agent parts, counted in links; no principal is on such a chain. 0 when no agent passes work or a question to another. Read by agenticspec sim check.",
+      "id": "autonomy_depth",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [
+        {
+          "direction": "ignore",
+          "mode": "autonomous"
+        },
+        {
+          "direction": "lower",
+          "mode": "pairing"
+        },
+        {
+          "direction": "lower",
+          "mode": "review"
+        }
+      ],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Links in the longest chain of order and question links from agent to agent.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "higher",
+      "family": "composition",
+      "gate": false,
+      "how": "Paths without a repeated part over model_call links that start at an agent part and end at the first model part they reach, summed over the agent parts. More than one per agent is a fallback. Read by agenticspec sim check.",
+      "id": "model_call_paths",
+      "kind": "completeness",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Distinct paths of model_call links from an agent part to a model part.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Of the paths model_call_paths counts, those with no gateway part between the agent and the model. Such a call has no rate limit, budget or record of a gateway. Read by agenticspec sim check.",
+      "id": "ungated_model_calls",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Paths of model_call links from an agent to a model that pass no gateway part.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "The cut vertices of the model_call graph between agents and models. A part counts when some other agent part that reaches a model reaches none once the part is removed; a lone gateway or a lone model counts. agenticspec sim check names them.",
+      "id": "single_points",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Parts whose removal leaves some agent with no model_call path to a model.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Distinct names in the border of the architecture document that are parts. Fewer is a smaller surface. Read by agenticspec sim check.",
+      "id": "border_parts",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartBordered"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Parts named in the border, the parts that take input from outside.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "The union of the egress lists of every part with block sandbox, counting the names that are parts once. Fewer is a smaller exposure. Read by agenticspec sim check.",
+      "id": "egress_targets",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Distinct parts named in the egress of the sandbox parts.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "Parts with block workspace whose sharing is anything but exclusive, a workspace without sharing included. Read by agenticspec sim check.",
+      "id": "shared_workspaces",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Workspace parts whose sharing is not exclusive.",
+      "unit": "count"
+    },
+    {
+      "block": "architecture",
+      "direction": "lower",
+      "family": "composition",
+      "gate": false,
+      "how": "For each pool part with a capacity, the copies of the agent parts with a claim link to it divided by the capacity; the largest of these, 0 without a pool. A marked count or capacity at its value as built, as the simulator reads it. Above 1, copies wait for the pool. Read by agenticspec sim check.",
+      "id": "capacity_ratio",
+      "kind": "quality",
+      "layer": 9,
+      "modes": [],
+      "planned": false,
+      "reads": [
+        "agentic.architecture.LinkAdded",
+        "agentic.architecture.PartAdded"
+      ],
+      "route": "/docs/blocks/9-composition/architecture#kpis",
+      "source": "design",
+      "status": "simulated",
+      "summary": "Agent copies that claim a pool divided by its capacity, the largest over the pools.",
+      "unit": "ratio"
     }
   ]
 }

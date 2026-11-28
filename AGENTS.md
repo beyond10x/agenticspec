@@ -98,7 +98,8 @@ change.
   runs them (and refuses a `best.yaml` that does not score the best fitness), then
   `task docs:generate`; `task slow:catalog` runs them afresh and compares bytes. The catalog
   components are in `website/src/components/catalog/`; a ladder stage on a card comes from
-  `STAGES` in `catalog.rs`.
+  `STAGES` in `catalog.rs`; the sortable table of the architectures as a whole on the index is
+  `ArchitectureKpis.tsx`, from `agenticspec_sim::whole`.
 - Cross-block causation is declared as ESS bindings in `blocks/components.yaml` (one component
   owns every block); `scripts/check-layers.sh` counts a binding as a dependency of the event's
   domain on the command's, and `scripts/check-blocks-conform.sh` fails when a binding has no
@@ -180,7 +181,7 @@ change.
 | `agenticspec` | `serve.rs` | `agenticspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `agenticspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
 | `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli`, `agenticspec ui panels` calls `agenticspec_views::run` |
-| `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
+| `agenticspec-sim` | `check.rs`, `whole.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, measured as a whole (`whole.rs`: the KPIs `sim check` reports and every variant of a result carries), simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
 | `agenticspec-sim` | `scenario.rs`, `corpus.rs`, `events.rs`, `reader.rs`, `sim/script.rs` | `agenticspec sim scenario check\|run` and `sim corpus run` (`docs/scenarios.md`): scenarios (`agenticspec-scenario/1`) and task corpora (`agenticspec-corpus/1`), read by a typed reader that refuses an unknown key by its path. A run drives the simulator with a `Script` (arrivals, run outcomes, build times, replies) on the scenario's seed, and `events::TABLE` is the one map from the simulator's event kinds to block events and marks the eight an `on_event` trigger waits for; a test holds it against every kind the sources record and every event `blocks/` declares. `scenario.rs` does not change an experiment's result and is left out of the catalog digest (`events.rs` is in it, for the trigger rows); a profile draws its tasks from a corpus with `load.corpus` |
 | `agenticspec-sim` | `contract/ports.rs`, `contract/protocol.rs` | `agenticspec sim ports`: the ports of the building blocks from their compiled ESS system, their protocols (regular expressions over command names), `blocks/ports.json` and its digest |
 | `agenticspec-sim` | `contract/derive.rs`, `contract/predicate.rs` | `agenticspec sim contract`: the contract of an architecture document (`agenticspec-contract/1`), its check, and the predicate language of routing invariants |

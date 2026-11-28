@@ -16,5 +16,6 @@ pub mod rng;
 pub mod scenario;
 pub mod search;
 pub mod sim;
+pub mod whole;
 
 pub use search::{Experiment, run};

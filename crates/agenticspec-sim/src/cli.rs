@@ -34,7 +34,8 @@ fn write(path: &Path, text: &str) -> Result<(), Refusal> {
     std::fs::write(path, text).map_err(|e| unwritable(format!("{}: {e}", path.display())))
 }
 
-/// `sim check <architecture>`: the architecture with its counts, or every refusal of the check.
+/// `sim check <architecture>`: the architecture with its counts and the KPIs of the architecture as
+/// a whole (`whole.rs`), or every refusal of the check.
 pub fn check(path: &Path) -> Result<Value, Refusal> {
     let arch = load_yaml(path).map_err(|e| refused("document_unreadable", e))?;
     let refusals = check_architecture(&arch);
@@ -42,10 +43,16 @@ pub fn check(path: &Path) -> Result<Value, Refusal> {
         let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
         return Err(refused("architecture_refused", names.join("; ")));
     }
+    let kpis: serde_json::Map<String, Value> = crate::whole::measure(&arch)
+        .into_iter()
+        .map(|(k, v)| (k.to_string(), crate::doc::number(v)))
+        .collect();
     Ok(json!({
         "architecture": arch["architecture"].as_str().unwrap_or("architecture"),
         "parts": arch["parts"].as_object().map_or(0, |p| p.len()),
         "links": arch["links"].as_array().map_or(0, |l| l.len()),
+        "kpis": kpis,
+        "single_points": crate::whole::single_point_parts(&arch),
     }))
 }
 

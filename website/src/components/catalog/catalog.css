@@ -107,3 +107,8 @@
 .markdown:has(.as-cat) table { font-size: 0.875rem; }
 .markdown:has(.as-cat) table th { font-size: 0.875rem; letter-spacing: 0; text-transform: none; }
 .markdown:has(.as-cat) table td, .markdown:has(.as-cat) table th { vertical-align: top; padding: 0.45rem 0.65rem; }
+
+/* The architectures as a whole on the index: one column per KPI, numbers aligned. */
+.as-cat-whole td a { font-family: var(--b10x-font-mono, ui-monospace, monospace); white-space: nowrap; }
+.as-cat-whole__num { text-align: right; font-variant-numeric: tabular-nums; }
+.markdown .as-cat-whole table thead th { padding: 0; }

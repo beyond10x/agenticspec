@@ -7,6 +7,7 @@ use crate::md::{attr, code, text, yaml};
 use crate::model::Block;
 use agenticspec_sim::check::check;
 use agenticspec_sim::marked::collect;
+use agenticspec_sim::whole::{measure, measure_of, single_point_parts};
 use agenticspec_sim::{Experiment, run};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
@@ -329,6 +330,59 @@ A weight is what the experiment scores a KPI by: above 0 more is better, below 0
     s.push('\n');
 }
 
+/// A KPI of the architecture as a whole for a reader: whole numbers as such, else at most three
+/// decimals without trailing zeros (`0.75`, `0.375`).
+pub fn whole_value(x: f64) -> String {
+    if x.fract() == 0.0 && x.abs() < 1e12 {
+        return format!("{}", x as i64);
+    }
+    let s = format!("{x:.3}");
+    s.trim_end_matches('0').trim_end_matches('.').to_string()
+}
+
+/// The section "The architecture as a whole": the KPIs `agenticspec sim check` reports for `doc`,
+/// and with `best` (the KPIs of a best variant in a result) their values there. `up` is the way
+/// up from the page to `docs/`.
+pub fn whole_section(s: &mut String, doc: &Value, best: Option<&Value>, up: &str) {
+    s.push_str("## The architecture as a whole\n\n");
+    let _ = write!(
+        s,
+        "Read from the document alone, before any simulation: its size, autonomy, exposure, weak points and fixed limits. \
+`agenticspec sim check` reports the same numbers; a marked place counts at its value as built. \
+The KPIs are in the [KPI catalogue]({up}kpis-catalogue.md) under the block `architecture`.\n\n",
+    );
+    let points = single_point_parts(doc);
+    let best = best.filter(|b| b.is_object());
+    if best.is_some() {
+        s.push_str("| KPI | as written | optimized | what it counts |\n|---|---|---|---|\n");
+    } else {
+        s.push_str("| KPI | value | what it counts |\n|---|---|---|\n");
+    }
+    for (id, v) in measure(doc) {
+        let mut cell = whole_value(v);
+        if id == "single_points" && !points.is_empty() {
+            let names: Vec<String> = points.iter().map(|p| code(p)).collect();
+            let _ = write!(cell, " ({})", names.join(", "));
+        }
+        let what = measure_of(id).map_or("", |m| m.what);
+        match best {
+            Some(b) => {
+                let _ = writeln!(
+                    s,
+                    "| {} | {cell} | {} | {} |",
+                    code(id),
+                    b[id]["value"].as_f64().map_or("–".into(), whole_value),
+                    text(what)
+                );
+            }
+            None => {
+                let _ = writeln!(s, "| {} | {cell} | {} |", code(id), text(what));
+            }
+        }
+    }
+    s.push('\n');
+}
+
 /// The table of the marked places, with the best value of the search when there is one.
 fn marked_places(s: &mut String, doc: &Value, best: Option<&Value>) {
     s.push_str("## Marked places\n\n");
@@ -469,6 +523,8 @@ How the run was made: [Optimization](#optimization).\n",
         }
         s.push('\n');
     }
+
+    whole_section(&mut s, doc, None, &a.up);
 
     let file = format!("{}.contract.yaml", a.name);
     let target = format!("pathname:///{}.contract.yaml", a.slug);
