@@ -81,6 +81,29 @@ pub struct Part {
     /// Plain properties, shown as `key value`.
     pub props: Vec<(String, String)>,
     pub places: Vec<Place>,
+    /// For a part of block `architecture`: the architecture it nests.
+    pub nested: Option<Nested>,
+}
+
+/// The architecture a part of block `architecture` nests, as far as the document tells: its name
+/// and part count when the simulator resolved it beside the part (`inner`), its border parts as
+/// ports, addressed `<part>.<border part>`.
+pub struct Nested {
+    pub name: Option<String>,
+    pub parts: Option<usize>,
+    pub reference: Option<String>,
+    pub digest: Option<String>,
+    /// Full addresses, `console.steward`: the nested border, or without it the addresses the
+    /// document writes.
+    pub ports: Vec<String>,
+}
+
+/// Whether link end `end` lands on part `name`: the part itself or one of its ports.
+pub fn lands_on(end: &str, name: &str) -> bool {
+    end == name
+        || end
+            .strip_prefix(name)
+            .is_some_and(|rest| rest.starts_with('.'))
 }
 
 pub struct Link {
@@ -109,7 +132,58 @@ fn text(v: Option<&Value>) -> Option<String> {
     }
 }
 
-const SPECIAL: [&str; 5] = ["block", "kind", "count", "per", "acts_for"];
+const SPECIAL: [&str; 7] = [
+    "block", "kind", "count", "per", "acts_for", "inner", "digest",
+];
+
+/// The names written as strings in `v`: one string or a list.
+fn strings(v: Option<&Value>) -> Vec<String> {
+    match v {
+        Some(Value::String(s)) => vec![s.clone()],
+        Some(Value::Array(xs)) => xs
+            .iter()
+            .filter_map(Value::as_str)
+            .map(str::to_string)
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+/// The nested architecture of part `name`, when its block is `architecture`.
+fn nested_of(doc: &Value, name: &str, body: &Map<String, Value>) -> Option<Nested> {
+    if body.get("block").and_then(Value::as_str) != Some("architecture") {
+        return None;
+    }
+    let inner = body.get("inner").filter(|v| v.is_object());
+    let ports: Vec<String> = match inner {
+        Some(i) => strings(i.get("border"))
+            .into_iter()
+            .map(|b| format!("{name}.{b}"))
+            .collect(),
+        None => {
+            let mut seen: Vec<String> = Vec::new();
+            let links = doc.get("links").and_then(Value::as_array);
+            let ends = links.into_iter().flatten().flat_map(|l| {
+                strings(l.get("from"))
+                    .into_iter()
+                    .chain(strings(l.get("to")))
+            });
+            for end in ends.chain(strings(doc.get("border"))) {
+                if end != name && lands_on(&end, name) && !seen.contains(&end) {
+                    seen.push(end);
+                }
+            }
+            seen
+        }
+    };
+    Some(Nested {
+        name: inner.and_then(|i| text(i.get("architecture"))),
+        parts: inner.and_then(|i| i.get("parts")?.as_object().map(Map::len)),
+        reference: text(body.get("ref")),
+        digest: text(body.get("digest")),
+        ports,
+    })
+}
 
 impl Architecture {
     pub fn read(doc: &Value) -> Self {
@@ -124,6 +198,9 @@ impl Architecture {
             let mut props = Vec::new();
             let mut places = Vec::new();
             for (k, v) in body_map {
+                if k == "inner" {
+                    continue;
+                }
                 places_in(&format!("parts.{name}"), k, v, &mut places);
                 if !SPECIAL.contains(&k.as_str()) && marked(v).is_none() {
                     props.push((k.clone(), fmt::value(v)));
@@ -138,6 +215,7 @@ impl Architecture {
                 acts_for: text(body_map.get("acts_for")),
                 props,
                 places,
+                nested: nested_of(doc, name, body_map),
             });
         }
         let links = doc

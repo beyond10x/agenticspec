@@ -7,6 +7,7 @@ mod dynamics;
 mod fidelity;
 mod ladder;
 mod marked;
+mod nest;
 mod search;
 mod sim;
 mod swarm;

@@ -27,8 +27,10 @@ No experiment searches these architectures yet. Each links to its architecture p
 
 | architecture | what it is for |
 |---|---|
+| [console](../architectures/console.md) | A console as an architecture of its own, made to be nested in another one: a steward agent is the one part on its border, hands work to a helper agent, and both reach their model through a gateway. |
 | [handoff](../architectures/handoff.md) | A sequential hand-off: agent a works first and hands its result to agent b. |
 | [parallel-unaware](../architectures/parallel-unaware.md) | Two agents work in parallel and have no channel between them. |
 | [planner-executor](../architectures/planner-executor.md) | One planner agent writes a plan for every task and posts it to a queue; executor agents, woken by each post, take the plans in order. |
 | [solo](../architectures/solo.md) | One agent with both tasks, asking its owner directly. |
+| [team-with-console](../architectures/team-with-console.md) | A team that reaches its operations through a console modelled as an architecture of its own, console, nested here as one part pinned by its digest. |
 

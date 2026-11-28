@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest 2e052f8e35c6fba5ca7c6715bc50aaa36402f4d8f9e21d8af82b86a24b7e4580
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -593,7 +593,7 @@ pub struct SimCheckInput {
 
 /// SimCheckResult — `agenticspec.cli.SimCheckResult`.
 ///
-/// The architecture the check accepted, with its counts of parts and links.
+/// The architecture the check accepted, with its counts of parts and links and the architectures it nests.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimCheckResult {
     /// `architecture` — `String`.
@@ -602,6 +602,26 @@ pub struct SimCheckResult {
     pub parts: i64,
     /// `links` — `Integer`.
     pub links: i64,
+    /// `nested` — `List<agenticspec.cli.SimNested>`.
+    pub nested: Vec<SimNested>,
+}
+
+/// SimDigestInput — `agenticspec.cli.SimDigestInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimDigestInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+}
+
+/// SimDigestResult — `agenticspec.cli.SimDigestResult`.
+///
+/// The digest a referring document pins the architecture with: `sha256:` and the SHA-256 of the canonical JSON (keys sorted, no whitespace) of its parts, links and border.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimDigestResult {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `digest` — `String`.
+    pub digest: String,
 }
 
 /// SimLadderInput — `agenticspec.cli.SimLadderInput`.
@@ -624,6 +644,25 @@ pub struct SimLadderResult {
     pub rungs: i64,
     /// `written` — `Boolean`.
     pub written: bool,
+}
+
+/// SimNested — `agenticspec.cli.SimNested`.
+///
+/// One nested architecture a check resolved.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimNested {
+    /// `part` — `String`.
+    pub part: String,
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `reference` — `String`.
+    pub reference: String,
+    /// `digest` — `String`.
+    pub digest: String,
+    /// `parts` — `Integer`.
+    pub parts: i64,
+    /// `links` — `Integer`.
+    pub links: i64,
 }
 
 /// SimRenderInput — `agenticspec.cli.SimRenderInput`.

@@ -201,7 +201,10 @@ fn every_architecture_file_is_accepted() {
     for entry in std::fs::read_dir(&dir).unwrap() {
         let path = entry.unwrap().path();
         if path.extension().is_some_and(|e| e == "yaml") {
-            let a = yaml(&std::fs::read_to_string(&path).unwrap());
+            // A nested architecture is resolved from its file and checked flattened.
+            let a = agenticspec_sim::nest::load(&path)
+                .unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+            let a = agenticspec_sim::nest::flatten(&a);
             assert_eq!(check(&a), Vec::<Refusal>::new(), "{}", path.display());
             names.push(path.file_name().unwrap().to_string_lossy().into_owned());
         }
@@ -217,8 +220,112 @@ fn every_architecture_file_is_accepted() {
         "scheduled-loops.yaml",
         "shared-board.yaml",
         "orchestrator-workers.yaml",
+        "team-with-console.yaml",
+        "console.yaml",
     ] {
         assert!(names.iter().any(|n| n == want), "{want} missing");
+    }
+}
+
+/// The variants of an enum of `agentic.architecture`, in snake case, read from the block.
+fn domain_variants(name: &str) -> Vec<String> {
+    let text = std::fs::read_to_string(repo_root().join("blocks/9-composition/architecture.yaml"))
+        .unwrap();
+    let doc = yaml(&text);
+    let t = doc["types"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["name"] == name)
+        .unwrap_or_else(|| panic!("{name} is declared"));
+    t["variants"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| {
+            let mut out = String::new();
+            for (i, c) in v.as_str().unwrap().chars().enumerate() {
+                if c.is_ascii_uppercase() && i > 0 {
+                    out.push('_');
+                }
+                out.push(c.to_ascii_lowercase());
+            }
+            out
+        })
+        .collect()
+}
+
+#[test]
+fn the_checker_and_the_domain_agree_on_part_kinds_and_carries() {
+    assert_eq!(
+        agenticspec_sim::check::part_kinds(),
+        domain_variants("agentic.architecture.PartKind")
+    );
+    assert_eq!(
+        agenticspec_sim::check::carries(),
+        domain_variants("agentic.architecture.Carries")
+    );
+    assert!(
+        agenticspec_sim::check::part_kinds()
+            .iter()
+            .any(|k| k == "architecture")
+    );
+}
+
+#[test]
+fn every_block_and_carries_written_under_architectures_is_declared() {
+    let root = repo_root().join("architectures");
+    let mut files: Vec<std::path::PathBuf> = Vec::new();
+    for dir in [root.clone(), root.join("ladder")] {
+        for entry in std::fs::read_dir(&dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().is_some_and(|e| e == "yaml") {
+                files.push(path);
+            }
+        }
+    }
+    assert!(files.len() > 15, "{}", files.len());
+    for path in files {
+        let a = yaml(&std::fs::read_to_string(&path).unwrap());
+        let unknown: Vec<String> = check(&a)
+            .iter()
+            .filter(|r| matches!(r.rule(), "unknown_blocks" | "unknown_carries"))
+            .map(ToString::to_string)
+            .collect();
+        assert!(unknown.is_empty(), "{}: {unknown:?}", path.display());
+    }
+}
+
+#[test]
+fn a_block_the_domain_does_not_declare_is_refused() {
+    let mut a = base();
+    a["parts"]["robot"] = json!({"block": "robot"});
+    a["links"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"from": "operator", "to": "robot", "carries": "order"}));
+    assert_eq!(refused(&a), vec![("unknown_blocks".into(), "robot".into())]);
+}
+
+#[test]
+fn a_carries_the_domain_does_not_declare_is_refused() {
+    let mut a = base();
+    a["links"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"from": "worker", "to": "operator", "carries": "telepathy"}));
+    let r = check(&a);
+    assert_eq!(
+        refused(&a),
+        vec![("unknown_carries".into(), "worker".into())]
+    );
+    assert!(r[0].to_string().contains("telepathy"), "{}", r[0]);
+}
+
+#[test]
+fn the_kind_rules_are_gate_kpis() {
+    for rule in ["unknown_blocks", "unknown_carries"] {
+        assert!(GATE_KPIS.contains(&rule), "{rule} is not a gate KPI");
     }
 }
 

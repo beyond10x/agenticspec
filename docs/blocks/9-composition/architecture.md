@@ -446,10 +446,10 @@ Relations:
 
 | type | is | values or fields |
 |---|---|---|
-| `Carries` | one of | `Prompt`, `Order`, `Question`, `Answer`, `ModelCall`, `ToolCall`, `Claim`, `Message`, `Trigger` |
+| `Carries` | one of | `Prompt`, `Order`, `Question`, `Answer`, `ModelCall`, `ToolCall`, `Claim`, `Message`, `Trigger`, `Review`, `Handoff`, `Call`, `Context`, `Grant`, `Proposal`, `Spec`, `Checkout`, `Result`, `Report`, `Record`, `Read`, `Run` |
 | `Coordination` | one of | `Orchestrator`, `Board`, `Mesh`, `None` |
 | `Digest`<br/>Digest of the canonical form of an architecture's parts, links and border. | an identifier or value | `string` |
-| `PartKind` | one of | `Principal`, `Agent`, `Harness`, `Model`, `Gateway`, `Tool`, `Knowledge`, `Channel`, `Workspace`, `Sandbox`, `Runtime`, `Pool`, `Trigger`, `Schedule` |
+| `PartKind` | one of | `Principal`, `Agent`, `Harness`, `Model`, `Gateway`, `Tool`, `Knowledge`, `Channel`, `Workspace`, `Sandbox`, `Runtime`, `Pool`, `Trigger`, `Schedule`, `Authority`, `Work`, `Experiment`, `Kpi`, `Question`, `Process`, `Delegation`, `Architecture` |
 | `PatchRule` | a record | `verb` PatchVerb, `text` string |
 | `PatchVerb` | one of | `Set`, `Add`, `Remove`, `Connect`, `Replicate`, `Wrap`, `Prepend`, `Append`, `Mark`, `Unmark` |
 | `Setting` | a record | `name` string, `value` string |

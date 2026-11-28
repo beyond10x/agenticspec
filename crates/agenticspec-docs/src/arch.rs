@@ -7,6 +7,7 @@ use crate::md::{attr, code, text, yaml};
 use crate::model::Block;
 use agenticspec_sim::check::check;
 use agenticspec_sim::marked::collect;
+use agenticspec_sim::nest;
 use agenticspec_sim::{Experiment, run};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
@@ -22,8 +23,33 @@ pub struct Architecture {
     /// The file name without `.yaml`.
     pub name: String,
     pub file: String,
+    /// The document, its nested architectures resolved beside their parts when they resolve.
     pub doc: Value,
+    /// What `agenticspec sim check` refuses: rule and text.
+    pub refusals: Vec<(String, String)>,
     pub experiment: Option<Run>,
+}
+
+/// The document at `path` as `agenticspec sim check` reads it, and what the check refuses.
+fn checked(path: &Path) -> Result<(Value, Vec<(String, String)>), String> {
+    match nest::load(path) {
+        Ok(doc) => {
+            let refusals = check(&nest::flatten(&doc))
+                .iter()
+                .map(|r| (r.rule().to_string(), r.to_string()))
+                .collect();
+            Ok((doc, refusals))
+        }
+        Err(nest::Error::Unreadable(e)) => Err(e),
+        Err(nest::Error::Refused(list)) => {
+            let doc = agenticspec_sim::doc::load_yaml(path)?;
+            let refusals = list
+                .iter()
+                .map(|r| (r.rule().to_string(), r.to_string()))
+                .collect();
+            Ok((doc, refusals))
+        }
+    }
 }
 
 pub struct Run {
@@ -65,8 +91,8 @@ pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
             .file_stem()
             .map(|s| s.to_string_lossy().into_owned())
             .unwrap_or_default();
-        let doc = agenticspec_sim::doc::load_yaml(&path)
-            .map_err(|e| format!("architectures/{name}.yaml: {e}"))?;
+        let (doc, refusals) =
+            checked(&path).map_err(|e| format!("architectures/{name}.yaml: {e}"))?;
         let mut experiment = None;
         for ep in &experiments {
             let Ok(edoc) = agenticspec_sim::doc::load_yaml(ep) else {
@@ -114,6 +140,7 @@ pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
             file: format!("architectures/{name}.yaml"),
             name,
             doc,
+            refusals,
             experiment,
         });
     }
@@ -331,6 +358,21 @@ fn marked_places(s: &mut String, doc: &Value, best: Option<&Value>) {
     }
 }
 
+/// A link to the page of the nested architecture at `reference` (relative to `a`'s file): its page
+/// when the file lies beside `a` under `architectures/`, else the reference as code.
+fn nested_link(a: &Architecture, reference: &str, label: &str) -> String {
+    let beside = !reference.contains('/') && !reference.contains('\\');
+    match reference
+        .strip_suffix(".yaml")
+        .or_else(|| reference.strip_suffix(".yml"))
+    {
+        Some(stem) if beside && a.file.starts_with("architectures/") => {
+            format!("[{}]({stem}.md)", text(label))
+        }
+        _ => code(reference),
+    }
+}
+
 pub fn page(a: &Architecture, blocks: &[Block]) -> String {
     let doc = &a.doc;
     let summary = doc["summary"].as_str().unwrap_or("");
@@ -356,7 +398,7 @@ pub fn page(a: &Architecture, blocks: &[Block]) -> String {
         "architectures/ and experiments/",
     ));
 
-    let refusals = check(doc);
+    let refusals = &a.refusals;
     let parts = doc["parts"].as_object().cloned().unwrap_or_default();
     let links = doc["links"].as_array().cloned().unwrap_or_default();
     // Without `.html`: `docusaurus serve` answers `<name>.html` with a redirect that drops the base
@@ -429,8 +471,8 @@ How the run was made: [Optimization](#optimization).\n",
             refusals.len(),
             if refusals.len() == 1 { "" } else { "s" }
         );
-        for r in &refusals {
-            let _ = writeln!(s, "- {}: {}", code(r.rule()), text(&r.to_string()));
+        for (rule, t) in refusals {
+            let _ = writeln!(s, "- {}: {}", code(rule), text(t));
         }
         s.push('\n');
     }
@@ -452,14 +494,18 @@ How the run was made: [Optimization](#optimization).\n",
             .as_object()
             .map(|o| {
                 o.iter()
-                    .filter(|(k, _)| k.as_str() != "block")
+                    .filter(|(k, _)| k.as_str() != "block" && k.as_str() != nest::INNER)
                     .map(|(k, v)| (k.clone(), v.clone()))
                     .collect()
             })
             .unwrap_or_default();
         let set: Vec<String> = settings
             .iter()
-            .map(|(k, v)| format!("{} {}", text(k), value(v)))
+            .map(|(k, v)| match (block, k.as_str(), v.as_str()) {
+                (nest::BLOCK, "ref", Some(r)) => format!("ref {}", nested_link(a, r, r)),
+                (nest::BLOCK, "digest", Some(d)) => format!("digest {}", code(d)),
+                _ => format!("{} {}", text(k), value(v)),
+            })
             .collect();
         let _ = writeln!(
             s,
@@ -474,6 +520,29 @@ How the run was made: [Optimization](#optimization).\n",
         );
     }
     s.push('\n');
+
+    let nested = nest::listed(doc);
+    if !nested.is_empty() {
+        s.push_str(
+            "## Nested architectures\n\nA nested architecture is one part here; a link reaches one of its border parts as `<part>.<border part>`. \
+The simulator runs its parts under those names. How nesting works: [Nesting an architecture](index.md#nesting-an-architecture).\n\n\
+| part | architecture | parts | links | digest |\n|---|---|---|---|---|\n",
+        );
+        for e in &nested {
+            let reference = e["reference"].as_str().unwrap_or("");
+            let name = e["architecture"].as_str().unwrap_or(reference);
+            let _ = writeln!(
+                s,
+                "| {} | {} | {} | {} | {} |",
+                code(e["part"].as_str().unwrap_or("")),
+                nested_link(a, reference, name),
+                e["parts"],
+                e["links"],
+                code(e["digest"].as_str().unwrap_or(""))
+            );
+        }
+        s.push('\n');
+    }
 
     s.push_str("## Links\n\nNo link, no reach: a part reaches only what a link names.\n\n");
     for l in &links {
@@ -562,6 +631,8 @@ pub fn index(archs: &[Architecture]) -> String {
             SOURCE_BASE.replace("/blob/", "/tree/")
         ))
     );
+    // The table of all architectures needs the full width; a contents column would make it scroll.
+    s.push_str("hide_table_of_contents: true\n");
     s.push_str("mdx:\n  format: mdx\n---\n\n");
     s.push_str(&GENERATED_NOTE.replace(
         "the specification in blocks/",
@@ -575,7 +646,7 @@ Each page shows the result of the structural check and the architecture drawn as
     );
     s.push_str("| architecture | what it is | parts | links | check | experiment |\n|---|---|---|---|---|---|\n");
     for a in archs {
-        let refusals = check(&a.doc).len();
+        let refusals = a.refusals.len();
         let _ = writeln!(
             s,
             "| [{}]({}.md) | {} | {} | {} | {} | {} |",
@@ -613,5 +684,47 @@ A `question` link to a principal adds person steps, answered with the principal'
 An `on_event` trigger fires on that event at any part, or only at the part its `source` names; it may wake an agent or a runtime.\n",
         events.join(", ")
     );
+    s.push('\n');
+    s.push_str(NESTING);
     s
 }
+
+/// The section of the index on nested architectures.
+const NESTING: &str = r#"## Nesting an architecture
+
+A part may be an architecture of its own: a setup that has its own document, nested in another one as a single part. The part names the file and pins it:
+
+```yaml
+parts:
+  console: { block: architecture, ref: console.yaml, digest: sha256:<hex> }
+```
+
+- `ref` is the path of the nested document, relative to the document that writes it.
+- `digest` is `sha256:` and the SHA-256 of the canonical form of the nested document's `parts`, `links` and `border`: that part of the document as JSON with its keys sorted and no whitespace. Reformatting the file, reordering its keys, its comments, its summary and its policies keep the pin; a change of a part, a link or the border breaks it. `agenticspec sim digest console.yaml` prints the digest to write.
+
+The nested document's `border` is its interface. A link, the border, a part's `per`, `acts_for`, `egress` or `model_share` and a trigger's `source` reach one of its border parts as `<part>.<border part>`; no other part of the nested document is addressable from outside:
+
+```yaml
+links:
+  - { from: owner, to: console.steward, carries: prompt }
+  - { from: console.steward, to: worker, carries: order }
+border: [console.steward]
+```
+
+`agenticspec sim check` reads every nested document, and the documents those nest, and refuses:
+
+| rule | refused |
+|---|---|
+| `nested_reference_invalid` | a part of block `architecture` without `ref` or `digest`, a digest that is not `sha256:` and 64 lowercase hex digits, a `count` other than 1, or a file that is no architecture document |
+| `nested_missing` | a `ref` whose file cannot be read |
+| `nested_digest_mismatch` | a nested document whose digest is not the pinned one; it names the expected and the actual digest |
+| `nested_cycle` | a reference that leads back to a document that refers to it, with the chain of files |
+| `nested_refused` | a nested document its own check refuses, with that refusal |
+| `nested_not_in_border` | an address `<part>.<name>` whose name is not in the nested document's border |
+
+Its output lists each nested architecture with its part, name, `reference`, digest and counts of parts and links, outermost first.
+
+The simulator flattens a nested architecture into the document that nests it: its parts become parts named `<part>.<inner part>` (`console.steward`), its links join the outer ones under those names, and a link to `console.steward` reaches that part. It then checks and simulates the result like any other architecture. The nested document's marked places are fixed at their values (an experiment of the outer document does not search them), and its policies do not apply: the outer document's policies hold for every part. An inner part keeps its `role`, so the profile gives its behaviour under `roles.<role>` like any other part's (an inner agent that answers questions takes `roles.<role>.answer_seconds`); an inner `model_share` and an inner trigger's `source` are renamed with the parts they name.
+
+The graph draws a nested architecture as one box, labelled with its name and part count, its border parts as ports on the box. Its page links to the page of the nested architecture, which is also drawn on its own. [team-with-console](team-with-console.md) nests [console](console.md).
+"#;

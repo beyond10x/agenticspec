@@ -175,6 +175,7 @@ fn every_architecture_has_a_page_and_a_rendered_html() {
             "{name}: the page has its contents list"
         );
     }
+    a_nested_architecture_links_to_the_page_of_the_one_it_nests(&g);
 }
 
 /// SUF-002: on an architecture with an experiment, the search result (the marked places with their
@@ -506,4 +507,25 @@ fn a_catalog_result_is_the_bytes_of_a_fresh_run() {
         std::fs::read_to_string(root().join("website/static/catalog/shared-board/result.json"))
             .unwrap();
     assert!(committed == fresh, "run `task catalog:generate`");
+}
+
+/// A nested architecture: its page links to the page of the architecture it nests, and the index
+/// explains the format. Called from the test of the architecture pages, so the pages are generated
+/// once for both.
+fn a_nested_architecture_links_to_the_page_of_the_one_it_nests(g: &Generated) {
+    let page = &g.files["docs/architectures/team-with-console.md"];
+    assert!(page.contains("## Nested architectures\n"), "{page}");
+    assert!(page.contains("[console](console.md)"), "{page}");
+    assert!(
+        page.contains("accepted"),
+        "the nested pair passes the check"
+    );
+    let index = &g.files["docs/architectures/index.md"];
+    assert!(index.contains("## Nesting an architecture\n"), "{index}");
+    assert!(index.contains("agenticspec sim digest"), "{index}");
+    let html = &g.files["website/static/architectures/team-with-console.html"];
+    assert!(
+        html.contains("data-port=\"console."),
+        "the graph draws the ports"
+    );
 }

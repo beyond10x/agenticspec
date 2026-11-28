@@ -1,6 +1,7 @@
 {
   "architectures": [
     "docs/architectures/author-reviewer",
+    "docs/architectures/console",
     "docs/architectures/handoff",
     "docs/architectures/orchestrator-workers",
     "docs/architectures/parallel-unaware",
@@ -9,6 +10,7 @@
     "docs/architectures/scope-partition",
     "docs/architectures/shared-board",
     "docs/architectures/solo",
+    "docs/architectures/team-with-console",
     "docs/architectures/workstation"
   ],
   "blocks": [

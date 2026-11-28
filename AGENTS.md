@@ -83,8 +83,9 @@ change.
   `best.yaml` from `agenticspec_sim::best`, the experiment pointing at the files beside it,
   `result.json`) and the index cards. The results of the experiments at their own budget and seeds
   are committed inputs: `website/static/catalog/<entry>/result.json` with `sources.sha256` beside
-  it (the experiment, architecture, profile, the simulator's sources that change a result, its
-  dependency versions in `Cargo.lock`, `rust-toolchain.toml`). `task docs:generate` never runs a
+  it (the experiment, architecture, profile, the simulator's sources that change a result, the
+  part kinds and `carries` values of the architecture block, its dependency versions in
+  `Cargo.lock`, `rust-toolchain.toml`). `task docs:generate` never runs a
   full experiment and refuses a result whose digest file no longer matches; `task catalog:generate`
   runs them (and refuses a `best.yaml` that does not score the best fitness), then
   `task docs:generate`; `task slow:catalog` runs them afresh and compares bytes. The catalog
@@ -120,8 +121,8 @@ change.
 | `agenticspec` | `serve.rs` | `agenticspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `agenticspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
 | `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli` |
-| `agenticspec-sim` | `check.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count |
-| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result |
+| `agenticspec-sim` | `check.rs`, `nest.rs`, `sim.rs`, `sim/swarm.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|digest\|run\|render\|ladder` (`cli.rs`, no binary of its own): an architecture document (`architectures/`) checked, simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count. `check.rs` reads the part kinds and `carries` values from `blocks/9-composition/architecture.yaml` (compiled in), so the check and the block cannot differ. `nest.rs` resolves a part of block `architecture` (`ref`, `digest` of the canonical parts, links and border) and flattens it into parts named `<part>.<inner part>` before the check and the simulation |
+| `agenticspec-render` | `lib.rs` | `page(architecture, result)`: one HTML page with the architecture graph and, when given, the search result; a nested architecture (resolved beside its part as `inner`) is one box with its border parts as ports |
 | `agenticspec-docs` | `lib.rs`, `main.rs` | the generated docs pages of the blocks, architectures and KPI catalogue (`task docs:generate`, `--check`) |
 
 Beside the crates, `ui/` holds:

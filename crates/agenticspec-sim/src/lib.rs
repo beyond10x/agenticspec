@@ -7,6 +7,7 @@ pub mod cli;
 pub mod doc;
 pub mod ladder;
 pub mod marked;
+pub mod nest;
 pub mod profile;
 pub mod rng;
 pub mod search;

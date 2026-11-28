@@ -395,6 +395,7 @@ impl Handler for Commands {
                 HandlerReply::Success(json!({ "url": url }))
             }
             "sim_check" => sim_reply(sim::check(&path_of(&inv.input, "architecture"))),
+            "sim_digest" => sim_reply(sim::digest(&path_of(&inv.input, "architecture"))),
             "sim_run" => {
                 let threads = inv
                     .input

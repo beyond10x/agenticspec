@@ -1,0 +1,29 @@
+format: agenticspec-architecture/1
+architecture: team-with-console
+summary: >-
+  A team that reaches its operations through a console modelled as an architecture of its own,
+  console, nested here as one part pinned by its digest. The owner prompts the console's steward,
+  the one part on the console's border, as `console.steward`; the steward orders the workers and
+  answers their questions, and asks the owner what it cannot decide. The simulator flattens the
+  console into this document (its parts run as `console.steward`, `console.helper`,
+  `console.gateway` and `console.model`) and simulates the result as any other architecture.
+
+parts:
+  owner:   { block: principal, kind: human }
+  console: { block: architecture, ref: console.yaml, digest: sha256:d58215ae6adcce5c73a0acf90692b6497aa10960d8b2f7fcda97d62c1d803c24 }
+  worker:  { block: agent, harness: coding, count: 3 }
+  gateway: { block: gateway, rate_limit_per_minute: 60 }
+  model:   { block: model, route: frontier }
+
+links:
+  - { from: owner,           to: console.steward, carries: prompt }
+  - { from: console.steward, to: owner,           carries: question }
+  - { from: console.steward, to: worker,          carries: order }
+  - { from: worker,          to: console.steward, carries: question }
+  - { from: worker,          to: gateway,         carries: model_call }
+  - { from: gateway,         to: model,           carries: model_call }
+
+border: [console.steward]
+
+policies:
+  question_default_after: 15m

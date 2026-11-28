@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "8b12a32dcc485e3c2515c968411d86b6a59aeeed0c6812f469ccc7edbee32174",
-    "contract_digest": "be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c"
+    "source_digest": "1dca21fbd9ce19790c2cd9fa6a38addda308b28fc3b5b0a16aceb005afd259de",
+    "contract_digest": "2e052f8e35c6fba5ca7c6715bc50aaa36402f4d8f9e21d8af82b86a24b7e4580"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -291,6 +291,20 @@
     },
     {
       "kind": "domain_type",
+      "source": "agenticspec.cli.SimDigestInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimDigestResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
       "source": "agenticspec.cli.SimLadderInput",
       "disposition": {
         "disposition": "generated"
@@ -299,6 +313,13 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.SimLadderResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.SimNested",
       "disposition": {
         "disposition": "generated"
       }

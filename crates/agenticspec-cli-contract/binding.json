@@ -1161,6 +1161,32 @@
             "links": {
               "kind": "integer"
             },
+            "nested": {
+              "kind": "list",
+              "of": {
+                "kind": "struct",
+                "fields": {
+                  "architecture": {
+                    "kind": "string"
+                  },
+                  "digest": {
+                    "kind": "string"
+                  },
+                  "links": {
+                    "kind": "integer"
+                  },
+                  "part": {
+                    "kind": "string"
+                  },
+                  "parts": {
+                    "kind": "integer"
+                  },
+                  "reference": {
+                    "kind": "string"
+                  }
+                }
+              }
+            },
             "parts": {
               "kind": "integer"
             }
@@ -1179,6 +1205,51 @@
             }
           }
         },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sim_digest": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "sim_digest"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.SimDigestInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.SimDigestResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "digest": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
         "document_unreadable": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
@@ -1787,6 +1858,24 @@
     {
       "path": [
         "sim",
+        "digest"
+      ],
+      "aliases": [],
+      "callable": "sim_digest",
+      "about": "Print the digest a document pins a nested architecture with (sha256 of its canonical parts, links and border)",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "sim",
         "ladder"
       ],
       "aliases": [],
@@ -1915,6 +2004,7 @@
     "handler:query: implement the owner-qualified callable and its declared result/error contract",
     "handler:serve: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_check: implement the owner-qualified callable and its declared result/error contract",
+    "handler:sim_digest: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_render: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_run: implement the owner-qualified callable and its declared result/error contract",

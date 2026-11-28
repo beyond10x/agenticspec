@@ -27,20 +27,37 @@ types:
   # resource block's pool (the example's `builds: {block: resource, kind: pool}`).
   # Trigger and Schedule (agentic.trigger) are parts: what wakes an agent part is part of the
   # setup, and a link carrying Trigger says which agent part it wakes.
-  # UNMAPPED: whether delegation, work, process, authority, question, knowledge and the other
-  # resource kinds (queue, rate limit, cache) are parts of an architecture or only of a run. The
-  # design's example uses none of them. Taken: Knowledge is a part (an agent is given it); the
-  # others are not.
+  # Knowledge is a part (an agent is given it). Authority (a grant, a budget, a policy), Work (a
+  # spec, a body of evidence), Experiment (a comparison of runs) and Kpi (a measure the owner
+  # reads) are parts too: the ladder's architectures place them, and links say who reads them.
+  # Question (a standing question and its answers), Process (a defined sequence of steps) and
+  # Delegation (a principal's grant to act for it) are parts when a setup models them as places
+  # that agents and principals write to and read from.
+  # Architecture: the part is another architecture document, referred to by `ref` (a path
+  # relative to the referring document) and `digest` (`sha256:<hex>` of that file's bytes), both
+  # kept as settings; its border is its interface, and a link addresses a border part as
+  # `<part>.<border part>`.
+  # UNMAPPED: whether the other resource kinds (queue, rate limit, cache) are parts of an
+  # architecture or only of a run. No architecture places them. Taken: they are not parts.
+  # The command line's structural check reads this list and Carries from this file, so a block
+  # or a carries value that is not declared here is refused there.
   - name: agentic.architecture.PartKind
     kind: enum
-    variants: [Principal, Agent, Harness, Model, Gateway, Tool, Knowledge, Channel, Workspace, Sandbox, Runtime, Pool, Trigger, Schedule]
+    variants: [Principal, Agent, Harness, Model, Gateway, Tool, Knowledge, Channel, Workspace, Sandbox, Runtime, Pool, Trigger, Schedule, Authority, Work, Experiment, Kpi, Question, Process, Delegation, Architecture]
 
   # What a link carries. The example writes `carries: question`, `order`, `claim`; a link with no
   # `carries:` (`worker -> gateway`) is a model call, and `owner -> operator over chat` a prompt.
-  # Trigger: a trigger or schedule part wakes an agent part.
+  # Trigger: a trigger or schedule part wakes an agent or runtime part. Review: a task reported done goes to
+  # a reviewer agent. Handoff: one agent hands its result to the next. Call: an agent runs a tool.
+  # Context: knowledge or a contract is given to an agent. Grant: an authority part permits an
+  # agent. Proposal: an agent proposes a change to its owner. Spec: a written task goes to work
+  # or to an agent. Checkout: a workspace is checked out for a run. Result: a run reports to an
+  # experiment. Report: an experiment, evidence or a KPI reports to a person. Record: an agent or
+  # a team records evidence. Read: a part reads work, a question or a record it is given access
+  # to. Run: an agent hands a run to a runtime part, which executes its steps.
   - name: agentic.architecture.Carries
     kind: enum
-    variants: [Prompt, Order, Question, Answer, ModelCall, ToolCall, Claim, Message, Trigger]
+    variants: [Prompt, Order, Question, Answer, ModelCall, ToolCall, Claim, Message, Trigger, Review, Handoff, Call, Context, Grant, Proposal, Spec, Checkout, Result, Report, Record, Read, Run]
 
   # How the copies of an agent part (a swarm) coordinate: Orchestrator, one copy or another part
   # hands out the work; Board, the copies read and write a typed board without an orchestrator

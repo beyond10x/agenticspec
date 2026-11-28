@@ -104,6 +104,14 @@ Error `architecture_refused`: `agenticspec.cli.Refusal`.
 
 Error `document_unreadable`: `agenticspec.cli.Refusal`.
 
+### `sim digest`
+
+Print the digest a document pins a nested architecture with (sha256 of its canonical parts, links and border)
+
+Callable: `sim_digest`. Input: `agenticspec.cli.SimDigestInput`. Result: `agenticspec.cli.SimDigestResult`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
 ### `sim ladder`
 
 Check the agentic ladder and write the data file of its page, or compare it with --check
@@ -159,6 +167,7 @@ Error `store_unavailable`: `agenticspec.cli.Refusal`.
 - handler:query: implement the owner-qualified callable and its declared result/error contract
 - handler:serve: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_check: implement the owner-qualified callable and its declared result/error contract
+- handler:sim_digest: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_ladder: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_render: implement the owner-qualified callable and its declared result/error contract
 - handler:sim_run: implement the owner-qualified callable and its declared result/error contract

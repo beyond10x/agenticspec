@@ -6,12 +6,65 @@ use crate::doc::num;
 use serde_json::Value;
 use std::collections::{BTreeSet, VecDeque};
 use std::fmt;
+use std::sync::OnceLock;
+
+/// The domain of the architecture block, the one source of the part kinds and of what a link
+/// carries.
+const DOMAIN: &str = include_str!("../../../blocks/9-composition/architecture.yaml");
+
+/// A variant of a domain enum as an architecture document writes it: `ModelCall` is `model_call`.
+fn snake(variant: &str) -> String {
+    let mut out = String::new();
+    for (i, c) in variant.chars().enumerate() {
+        if c.is_ascii_uppercase() && i > 0 {
+            out.push('_');
+        }
+        out.push(c.to_ascii_lowercase());
+    }
+    out
+}
+
+/// The variants of enum `name` of the domain, in snake case and in the order it declares them.
+fn variants(name: &str) -> Vec<String> {
+    let doc: Value = serde_yaml_ng::from_str(DOMAIN).unwrap_or(Value::Null);
+    doc["types"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .find(|t| t["name"] == name)
+        .and_then(|t| t["variants"].as_array())
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .map(snake)
+        .collect()
+}
+
+/// The blocks a part may instantiate: the variants of `agentic.architecture.PartKind`.
+pub fn part_kinds() -> &'static [String] {
+    static KINDS: OnceLock<Vec<String>> = OnceLock::new();
+    KINDS.get_or_init(|| variants("agentic.architecture.PartKind"))
+}
+
+/// What a link may carry: the variants of `agentic.architecture.Carries`.
+pub fn carries() -> &'static [String] {
+    static CARRIES: OnceLock<Vec<String>> = OnceLock::new();
+    CARRIES.get_or_init(|| variants("agentic.architecture.Carries"))
+}
 
 /// One refusal of an architecture, with the part it concerns.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Refusal {
     /// A link's `from`, `to` or `over` names no part.
     UnknownLinkPart { link: usize, part: String },
+    /// A part's `block` is not a part kind of the domain.
+    UnknownBlock { part: String, block: String },
+    /// A link's `carries` is not a value of the domain; `part` is the link's `from`.
+    UnknownCarries {
+        link: usize,
+        part: String,
+        carries: String,
+    },
     /// A part's `per` names no part.
     PerWithoutPart { part: String, names: String },
     /// A part's `acts_for` names no part.
@@ -52,6 +105,8 @@ pub const DISTRIBUTIONS: &[&str] = &["direct", "topic", "queue", "board"];
 /// Every rule, in the order the check applies them; each is a gate KPI.
 pub const GATE_KPIS: &[&str] = &[
     "unknown_link_parts",
+    "unknown_blocks",
+    "unknown_carries",
     "per_without_part",
     "acts_for_without_part",
     "egress_without_part",
@@ -72,6 +127,8 @@ impl Refusal {
     pub fn rule(&self) -> &'static str {
         match self {
             Refusal::UnknownLinkPart { .. } => "unknown_link_parts",
+            Refusal::UnknownBlock { .. } => "unknown_blocks",
+            Refusal::UnknownCarries { .. } => "unknown_carries",
             Refusal::PerWithoutPart { .. } => "per_without_part",
             Refusal::ActsForWithoutPart { .. } => "acts_for_without_part",
             Refusal::EgressWithoutPart { .. } => "egress_without_part",
@@ -92,6 +149,8 @@ impl Refusal {
     pub fn part(&self) -> &str {
         match self {
             Refusal::UnknownLinkPart { part, .. }
+            | Refusal::UnknownBlock { part, .. }
+            | Refusal::UnknownCarries { part, .. }
             | Refusal::PerWithoutPart { part, .. }
             | Refusal::ActsForWithoutPart { part, .. }
             | Refusal::EgressWithoutPart { part, .. }
@@ -116,6 +175,14 @@ impl fmt::Display for Refusal {
             Refusal::UnknownLinkPart { link, .. } => {
                 format!("link {link} names a part that does not exist")
             }
+            Refusal::UnknownBlock { block, .. } => format!(
+                "block `{block}` is not a part kind of agentic.architecture ({})",
+                part_kinds().join(", ")
+            ),
+            Refusal::UnknownCarries { link, carries: c, .. } => format!(
+                "link {link} carries `{c}`, which agentic.architecture does not declare ({})",
+                carries().join(", ")
+            ),
             Refusal::PerWithoutPart { names, .. } => format!("per `{names}` names no part"),
             Refusal::ActsForWithoutPart { names, .. } => {
                 format!("acts_for `{names}` names no part")
@@ -276,6 +343,27 @@ pub fn check(architecture: &Value) -> Vec<Refusal> {
             }
         }
     }
+    for (name, p) in parts {
+        if let Some(b) = s(&p["block"])
+            && !part_kinds().iter().any(|k| k == b)
+        {
+            out.push(Refusal::UnknownBlock {
+                part: name.clone(),
+                block: b.to_string(),
+            });
+        }
+    }
+    for (i, l) in links.iter().enumerate() {
+        if let Some(c) = s(&l["carries"])
+            && !carries().iter().any(|k| k == c)
+        {
+            out.push(Refusal::UnknownCarries {
+                link: i,
+                part: s(&l["from"]).unwrap_or("").to_string(),
+                carries: c.to_string(),
+            });
+        }
+    }
     for (key, make) in [
         (
             "per",
@@ -398,6 +486,16 @@ pub fn check(architecture: &Value) -> Vec<Refusal> {
         if swarm && !(agent && known && stagger_ok) {
             out.push(Refusal::SwarmNeedsAgent { part: name.clone() });
         }
+    }
+    // The border parts of a flattened nested architecture are its interface: reached from outside
+    // whether or not this document links to them.
+    for n in architecture["nested"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .flat_map(|e| names(&e["border"]))
+    {
+        referenced.insert(n);
     }
     for n in names(&architecture["border"]) {
         referenced.insert(n);

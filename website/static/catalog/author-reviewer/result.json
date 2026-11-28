@@ -389,6 +389,14 @@
         "kind": "Quality",
         "value": 19066.375
       },
+      "unknown_blocks": {
+        "kind": "Correctness",
+        "value": 0.0
+      },
+      "unknown_carries": {
+        "kind": "Correctness",
+        "value": 0.0
+      },
       "unknown_link_parts": {
         "kind": "Correctness",
         "value": 0.0
@@ -903,6 +911,14 @@
         "kind": "Quality",
         "value": 22634.625
       },
+      "unknown_blocks": {
+        "kind": "Correctness",
+        "value": 0.0
+      },
+      "unknown_carries": {
+        "kind": "Correctness",
+        "value": 0.0
+      },
       "unknown_link_parts": {
         "kind": "Correctness",
         "value": 0.0
@@ -1390,6 +1406,11 @@
         }
       },
       "orchestrator": {
+        "answer_seconds": {
+          "dist": "lognormal",
+          "median": 30,
+          "p90": 120
+        },
         "task_turns": 3,
         "tokens_per_turn": {
           "cache_read": 20000,
@@ -1454,6 +1475,7 @@
       "roles.executor": "as roles.coding apart from step_pass_after_fail",
       "roles.executor.step_pass_after_fail": "2610.29870 and 2611.07166: a plan raised resolved from 50.2% to 65.0% (x1.295); applied to the share of tasks whose last step passes under the coding chain (0.321 to 0.416), which gives 0.212 after a failed step",
       "roles.operator.answer_seconds": "estimate of how long an agent acting for the owner takes to answer or pass on a question",
+      "roles.orchestrator.answer_seconds": "estimate, as roles.operator.answer_seconds; an orchestrator answers the agents it orders",
       "roles.orchestrator.task_turns": "estimate of the calls an orchestrator spends handing out one task",
       "roles.orchestrator.tokens_per_turn": "estimate, a smaller context than a coding turn",
       "roles.planner.task_turns": "2610.29870: the planner used under 2% of the executor's tokens; one turn against the executor's median of 40",
@@ -11887,6 +11909,14 @@
           "kind": "Quality",
           "value": 10077.375
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -12165,6 +12195,14 @@
         "turns": {
           "kind": "Quality",
           "value": 10149.375
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -12445,6 +12483,14 @@
           "kind": "Quality",
           "value": 10269.875
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -12723,6 +12769,14 @@
         "turns": {
           "kind": "Quality",
           "value": 15009.25
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -13003,6 +13057,14 @@
           "kind": "Quality",
           "value": 15097.375
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -13281,6 +13343,14 @@
         "turns": {
           "kind": "Quality",
           "value": 15279.875
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -13561,6 +13631,14 @@
           "kind": "Quality",
           "value": 18791.5
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -13839,6 +13917,14 @@
         "turns": {
           "kind": "Quality",
           "value": 19066.375
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -14119,6 +14205,14 @@
           "kind": "Quality",
           "value": 19545.25
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -14397,6 +14491,14 @@
         "turns": {
           "kind": "Quality",
           "value": 20511.875
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -14677,6 +14779,14 @@
           "kind": "Quality",
           "value": 20956.75
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -14955,6 +15065,14 @@
         "turns": {
           "kind": "Quality",
           "value": 21964.625
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -15235,6 +15353,14 @@
           "kind": "Quality",
           "value": 20778.0
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -15513,6 +15639,14 @@
         "turns": {
           "kind": "Quality",
           "value": 21313.125
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -15793,6 +15927,14 @@
           "kind": "Quality",
           "value": 22531.875
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -16071,6 +16213,14 @@
         "turns": {
           "kind": "Quality",
           "value": 20853.625
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -16351,6 +16501,14 @@
           "kind": "Quality",
           "value": 21407.875
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -16629,6 +16787,14 @@
         "turns": {
           "kind": "Quality",
           "value": 22634.625
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -16909,6 +17075,14 @@
           "kind": "Quality",
           "value": 20878.0
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -17187,6 +17361,14 @@
         "turns": {
           "kind": "Quality",
           "value": 21445.75
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -17467,6 +17649,14 @@
           "kind": "Quality",
           "value": 22677.125
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -17745,6 +17935,14 @@
         "turns": {
           "kind": "Quality",
           "value": 20878.375
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -18025,6 +18223,14 @@
           "kind": "Quality",
           "value": 21453.0
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -18303,6 +18509,14 @@
         "turns": {
           "kind": "Quality",
           "value": 22693.25
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",
@@ -18583,6 +18797,14 @@
           "kind": "Quality",
           "value": 20878.375
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -18862,6 +19084,14 @@
           "kind": "Quality",
           "value": 21453.375
         },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
         "unknown_link_parts": {
           "kind": "Correctness",
           "value": 0.0
@@ -19140,6 +19370,14 @@
         "turns": {
           "kind": "Quality",
           "value": 22691.75
+        },
+        "unknown_blocks": {
+          "kind": "Correctness",
+          "value": 0.0
+        },
+        "unknown_carries": {
+          "kind": "Correctness",
+          "value": 0.0
         },
         "unknown_link_parts": {
           "kind": "Correctness",

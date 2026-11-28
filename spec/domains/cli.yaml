@@ -499,11 +499,49 @@ types:
   - name: agenticspec.cli.SimCheckResult
     kind: struct
     naming:
-      summary: The architecture the check accepted, with its counts of parts and links.
+      summary: The architecture the check accepted, with its counts of parts and links and the architectures it nests.
     fields:
       - {name: architecture, type: String}
       - {name: parts, type: Integer}
       - {name: links, type: Integer}
+      - name: nested
+        type: List<agenticspec.cli.SimNested>
+        summary: Every nested architecture, resolved recursively, outermost first; empty when it nests none.
+
+  - name: agenticspec.cli.SimNested
+    kind: struct
+    naming:
+      summary: One nested architecture a check resolved.
+    fields:
+      - name: part
+        type: String
+        summary: The part that refers to it, dotted from the outermost document (`console`, `console.vault`).
+      - {name: architecture, type: String}
+      - name: reference
+        type: String
+        summary: The `ref` of the part, relative to the document that writes it.
+      - name: digest
+        type: String
+        summary: "`sha256:<hex>`, the pin the referring document writes, which the check found equal."
+      - {name: parts, type: Integer}
+      - {name: links, type: Integer}
+
+  - name: agenticspec.cli.SimDigestInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: An `agenticspec-architecture/1` file.
+
+  - name: agenticspec.cli.SimDigestResult
+    kind: struct
+    naming:
+      summary: >-
+        The digest a referring document pins the architecture with: `sha256:` and the SHA-256 of
+        the canonical JSON (keys sorted, no whitespace) of its parts, links and border.
+    fields:
+      - {name: architecture, type: String}
+      - {name: digest, type: String}
 
   - name: agenticspec.cli.SimRunInput
     kind: struct

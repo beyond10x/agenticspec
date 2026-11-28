@@ -6,6 +6,7 @@ description: "Concrete setups composed of building blocks, checked and simulated
 lede: "An architecture composes building blocks into one concrete setup: which agents, which channels, which sandbox, how many. It is checked before anything is built and simulated to score it."
 source: "architectures/"
 source_url: "https://github.com/beyond10x/agenticspec/tree/main/architectures"
+hide_table_of_contents: true
 mdx:
   format: mdx
 ---
@@ -19,6 +20,7 @@ Each page shows the result of the structural check and the architecture drawn as
 | architecture | what it is | parts | links | check | experiment |
 |---|---|---|---|---|---|
 | [author-reviewer](author-reviewer.md) | Workers write; a reviewer agent checks every task a worker reports done and sends a rejected one back for rework. An author-reviewer loop cost $0.95-1.07 per file against $1.98-2.91 for a multi-agent workflow (2610.09995); required review sub-agents raised the defects reported from 49.9% to 69.6% (2609.20812). The simulator models the reviewer by its false-accept and false-reject rates (2611.02207) and the cost of its model calls; it does not model a reviewer that misses planted harm (2611.00689) apart from those rates, nor a reviewer that teaches a worker. | 10 | 10 | accepted | `reviewer-tuning` |
+| [console](console.md) | A console as an architecture of its own, made to be nested in another one: a steward agent is the one part on its border, hands work to a helper agent, and both reach their model through a gateway. A document that nests it reaches the steward as `console.steward` and nothing else of it. On its own the console has no principal: it is checked and drawn here, and simulated inside the architecture that nests it, team-with-console. | 4 | 5 | accepted | – |
 | [handoff](handoff.md) | A sequential hand-off: agent a works first and hands its result to agent b. In 2611.00314 this solved 54% at the cost of one agent; more alternating turns gave no gain at 1.59 times the cost. The simulator has no hand-off: the `handoff` link is drawn and checked but not simulated, so a and b both take tasks from the backlog as two independent workers. | 4 | 6 | accepted | – |
 | [orchestrator-workers](orchestrator-workers.md) | An orchestrator agent takes every task, spends its model calls on handing it out, and dispatches it over an order link to a worker swarm whose copies start one after another. Task-specific sub-agents helped (+5.91, +4.46) and general stage sub-agents hurt (-0.70, -2.31) (2609.32459); sub-agent concurrency helped only on the largest tasks (2610.10263); an author-reviewer loop cost $0.95-1.07 per file against $1.98-2.91 for a multi-agent workflow (2610.09995). The simulator charges the orchestrator the profile role `orchestrator` for every task, counts those calls as coordination calls, and makes it a queue every task passes; the workers take the handed tasks in order. With an orchestrator handing out the work no two copies race for one task, so a start stagger here only holds copies back. The simulator does not model how the orchestrator splits a task, results that come back to it, nor any gain or loss in success from orchestration: workers keep the coding role's pass rates. | 7 | 7 | accepted | `orchestrator-workers-tuning` |
 | [parallel-unaware](parallel-unaware.md) | Two agents work in parallel and have no channel between them. In 2611.00314 this topology solved 16% of tasks, against 62% for one agent with both tasks; a broadcast channel between parallel agents lowered results too (2609.40303). The simulator does not model work that conflicts or repeats: both agents take tasks from one backlog and each task's success comes from the profile's step chain, so a run shows the gain in throughput and none of the loss. | 4 | 6 | accepted | – |
@@ -27,6 +29,7 @@ Each page shows the result of the structural check and the architecture drawn as
 | [scope-partition](scope-partition.md) | An upfront scope partition with a merge order: each copy of `team` owns one scope, every task goes to the owner of its scope, and merges land in the order the tasks finish. In 2610.07261 this integrated cleanly in 9 of 9 runs, against 4 of 9 when the agents reacted to each other and 1 of 9 without coordination; a vague change notice was no better than none. The simulator draws a task's scope and lets it touch each other scope with the profile's `scope_overlap`, so more scopes mean more tasks that cross one. A merge conflicts when another merge touched one of its scopes after its work started. Under `coordination: mesh` every copy tells the others which task it takes (one model call per reader) and a conflict costs a round of rework; under `none` the conflicting merge ships broken. The simulator does not model how the partition is cut or what cutting it costs, scopes whose load differs, conflicts inside one scope, nor a copy that helps another scope when its own is empty. | 6 | 5 | accepted | `scope-partition-tuning` |
 | [shared-board](shared-board.md) | A team without an orchestrator on a shared board: the owner posts every task to the board, each post wakes the team, and every idle copy reads it and races to claim it. A team without an orchestrator on one repository resolved 19.31% at 1 agent and 28.78% at 128, with a typed board of length-limited entries (2609.26781); that study started one agent every 30 s, then every 3 s. The simulator charges each read of a post by an idle copy one model call and counts a claim conflict when a reader reads within `claim_window_seconds` of the copy that claims; a start stagger holds copies back so that a burst of posts is claimed one by one. A post that finds the team at its limit is offered again when a run ends. The simulator does not model the board's entry kinds and length limits, entries other than tasks (facts, failures, patch summaries), a reader that is busy while it reads, nor any effect of the team's size on how often a task succeeds. | 8 | 6 | accepted | `shared-board-tuning` |
 | [solo](solo.md) | One agent with both tasks, asking its owner directly. In 2611.00314 this topology solved 62%, against 16% for two agents that do not see each other and 54% for a hand-off. The simulator draws every task's success from the profile's step chain, whatever the topology, so these differences do not come out of a run; it shows what one agent costs in waiting, money and backlog. | 3 | 3 | accepted | – |
+| [team-with-console](team-with-console.md) | A team that reaches its operations through a console modelled as an architecture of its own, console, nested here as one part pinned by its digest. The owner prompts the console's steward, the one part on the console's border, as `console.steward`; the steward orders the workers and answers their questions, and asks the owner what it cannot decide. The simulator flattens the console into this document (its parts run as `console.steward`, `console.helper`, `console.gateway` and `console.model`) and simulates the result as any other architecture. | 5 | 6 | accepted | – |
 | [workstation](workstation.md) | One workstation, one owner, an operator agent acting for the owner, coding agents, a shared build pool. | 9 | 8 | accepted | `workstation-tuning` |
 
 What the simulator models:
@@ -36,3 +39,41 @@ What the simulator models:
 - **Models.** Each model call goes to one of the model parts the agent reaches over `model_call` links, drawn by the agent's `model_share` (a share per model part; equal shares when it gives none), and is priced by that model's `route` in the profile. A route the profile does not price is refused, by name.
 - **Runtimes.** A runtime part that is given runs (a `run` or `order` link, or a trigger) executes them with the profile role its `role` names: `task_turns` steps a run, each lasting `turn_seconds`, each a model call when the runtime reaches a model. A `question` link to a principal adds person steps, answered with the principal's delay. A runtime is not charged as a live agent.
 - **Triggers.** A trigger fires on its schedule, on a post to a shared channel, or on an event of the simulation: `agentic.work.TaskCreated`, `agentic.work.TaskCompleted`, `agentic.work.DeliverableRejected`, `agentic.question.QuestionAsked`, `agentic.question.QuestionAnswered`, `agentic.question.DefaultTaken`, `agentic.resource.ClaimKilled`, `agentic.trigger.FiringFailed`. An `on_event` trigger fires on that event at any part, or only at the part its `source` names; it may wake an agent or a runtime.
+
+## Nesting an architecture
+
+A part may be an architecture of its own: a setup that has its own document, nested in another one as a single part. The part names the file and pins it:
+
+```yaml
+parts:
+  console: { block: architecture, ref: console.yaml, digest: sha256:<hex> }
+```
+
+- `ref` is the path of the nested document, relative to the document that writes it.
+- `digest` is `sha256:` and the SHA-256 of the canonical form of the nested document's `parts`, `links` and `border`: that part of the document as JSON with its keys sorted and no whitespace. Reformatting the file, reordering its keys, its comments, its summary and its policies keep the pin; a change of a part, a link or the border breaks it. `agenticspec sim digest console.yaml` prints the digest to write.
+
+The nested document's `border` is its interface. A link, the border, a part's `per`, `acts_for`, `egress` or `model_share` and a trigger's `source` reach one of its border parts as `<part>.<border part>`; no other part of the nested document is addressable from outside:
+
+```yaml
+links:
+  - { from: owner, to: console.steward, carries: prompt }
+  - { from: console.steward, to: worker, carries: order }
+border: [console.steward]
+```
+
+`agenticspec sim check` reads every nested document, and the documents those nest, and refuses:
+
+| rule | refused |
+|---|---|
+| `nested_reference_invalid` | a part of block `architecture` without `ref` or `digest`, a digest that is not `sha256:` and 64 lowercase hex digits, a `count` other than 1, or a file that is no architecture document |
+| `nested_missing` | a `ref` whose file cannot be read |
+| `nested_digest_mismatch` | a nested document whose digest is not the pinned one; it names the expected and the actual digest |
+| `nested_cycle` | a reference that leads back to a document that refers to it, with the chain of files |
+| `nested_refused` | a nested document its own check refuses, with that refusal |
+| `nested_not_in_border` | an address `<part>.<name>` whose name is not in the nested document's border |
+
+Its output lists each nested architecture with its part, name, `reference`, digest and counts of parts and links, outermost first.
+
+The simulator flattens a nested architecture into the document that nests it: its parts become parts named `<part>.<inner part>` (`console.steward`), its links join the outer ones under those names, and a link to `console.steward` reaches that part. It then checks and simulates the result like any other architecture. The nested document's marked places are fixed at their values (an experiment of the outer document does not search them), and its policies do not apply: the outer document's policies hold for every part. An inner part keeps its `role`, so the profile gives its behaviour under `roles.<role>` like any other part's (an inner agent that answers questions takes `roles.<role>.answer_seconds`); an inner `model_share` and an inner trigger's `source` are renamed with the parts they name.
+
+The graph draws a nested architecture as one box, labelled with its name and part count, its border parts as ports on the box. Its page links to the page of the nested architecture, which is also drawn on its own. [team-with-console](team-with-console.md) nests [console](console.md).

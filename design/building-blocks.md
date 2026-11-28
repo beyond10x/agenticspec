@@ -285,21 +285,30 @@ KPI, the count of its refusals:
 | rule | refused when |
 |---|---|
 | `unknown_link_parts` | a link's `from`, `to` or `over` names no part |
+| `unknown_blocks` | a part's `block` is not a variant of `agentic.architecture.PartKind` (the check reads the list from the block) |
+| `unknown_carries` | a link's `carries` is not a variant of `agentic.architecture.Carries` |
 | `per_without_part`, `acts_for_without_part`, `egress_without_part` | the field names no part |
 | `agent_without_model_path` | an agent reaches no `model` part over `model_call` links (through a gateway or not) |
 | `question_without_answerer` | a `question` link ends at a part that is not a principal or an agent |
 | `review_without_reviewer` | a `review` link ends at a part that is not an agent with `role: reviewer` |
 | `border_without_part` | `border` names no part |
 | `trigger_source_not_trigger` | a `trigger` link starts at a part that is not a trigger or a schedule |
-| `trigger_target_not_agent` | a `trigger` link ends at a part that is not an agent |
-| `trigger_without_source` | the trigger's kind is missing or unknown; or an `on_schedule` trigger names no schedule part; or an `on_message` trigger names no topic, queue or board channel; or an `on_event` trigger names no `event_name` |
+| `trigger_target_not_agent` | a `trigger` link ends at a part that is neither an agent nor a runtime |
+| `trigger_without_source` | the trigger's kind is missing or unknown; or an `on_schedule` trigger names no schedule part; or an `on_message` trigger names no topic, queue or board channel; or an `on_event` trigger names no `event_name`, or a `source` that is no part |
 | `invalid_concurrency` | `policy` is not `skip`, `queue` or `parallel`; or `max_parallel` is not a whole number of at least 1; or it is above 1 under `skip` or `queue` |
 | `invalid_schedule` | a schedule part has no positive `every` |
 | `swarm_needs_agent` | `coordination` or `start_stagger` is on a part that is not an agent; or the coordination is unknown; or the stagger is not a duration |
-| `unreachable_parts` | no link, `per`, `acts_for`, `egress` or `border` names the part, and it has no `per`; a trigger's `schedule` and `channel` count as names |
+| `unreachable_parts` | no link, `per`, `acts_for`, `egress` or `border` names the part, and it has no `per`; a trigger's `schedule`, `channel` and `source` count as names |
 
 The trigger, schedule and swarm rules read the `value` of a marked place, so a document with
 markers is checked as built.
+
+A part of block `architecture` nests another document (`ref`, `digest`); the check resolves it
+first (rules `nested_*`, not gate KPIs: a result is only computed for a document that resolves)
+and then applies the rules above to the flattened document, where the nested parts are named
+`<part>.<inner part>`. The digest is the one `agentic.architecture.Digest` describes: the
+canonical form of the parts, links and border. The format: `docs/architectures/index.md`,
+"Nesting an architecture".
 
 ## Simulation
 

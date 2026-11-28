@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest be02d9250c5132aafc4fdd4b97ff8bc3b9ac004e4eef7eb31bf9b65cae4f790c
+// contract digest 2e052f8e35c6fba5ca7c6715bc50aaa36402f4d8f9e21d8af82b86a24b7e4580
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -2325,6 +2325,15 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
     json::push_integer(out, value.parts);
     json::member(out, "links");
     json::push_integer(out, value.links);
+    json::member(out, "nested");
+    out.push('[');
+    for (index0, item0) in value.nested.iter().enumerate() {
+        if index0 > 0 {
+            out.push(',');
+        }
+        encode_agenticspec_cli_sim_nested(&*item0, out);
+    }
+    out.push(']');
     out.push('}');
 }
 
@@ -2334,7 +2343,7 @@ pub fn encode_agenticspec_cli_sim_check_result(value: &agenticspec_types::cli::S
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimCheckResult, json::DecodeError> {
-    json::closed_at(value, at, &["architecture", "parts", "links"])?;
+    json::closed_at(value, at, &["architecture", "parts", "links", "nested"])?;
     Ok(agenticspec_types::cli::SimCheckResult {
         architecture: {
             let at0 = json::nested(at, "architecture");
@@ -2350,6 +2359,73 @@ pub fn decode_agenticspec_cli_sim_check_result(value: &json::Value, at: &str) ->
             let at2 = json::nested(at, "links");
             let member2 = json::member_at(value, at, "links")?;
             json::integer_at(member2, &at2, "an integer")?
+        },
+        nested: {
+            let at3 = json::nested(at, "nested");
+            let member3 = json::member_at(value, at, "nested")?;
+            {
+                let mut items3 = Vec::new();
+                for (index3, element3) in json::items_at(member3, &at3, "an array")?.iter().enumerate() {
+                    let nested3 = json::nested(&at3, &index3.to_string());
+                    items3.push(decode_agenticspec_cli_sim_nested(element3, &nested3)?);
+                }
+                items3
+            }
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimDigestInput` as JSON.
+pub fn encode_agenticspec_cli_sim_digest_input(value: &agenticspec_types::cli::SimDigestInput, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimDigestInput` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_digest_input(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimDigestInput, json::DecodeError> {
+    json::closed_at(value, at, &["architecture"])?;
+    Ok(agenticspec_types::cli::SimDigestInput {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimDigestResult` as JSON.
+pub fn encode_agenticspec_cli_sim_digest_result(value: &agenticspec_types::cli::SimDigestResult, out: &mut String) {
+    out.push('{');
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "digest");
+    json::push_text(out, &value.digest);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimDigestResult` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_digest_result(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimDigestResult, json::DecodeError> {
+    json::closed_at(value, at, &["architecture", "digest"])?;
+    Ok(agenticspec_types::cli::SimDigestResult {
+        architecture: {
+            let at0 = json::nested(at, "architecture");
+            let member0 = json::member_at(value, at, "architecture")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        digest: {
+            let at1 = json::nested(at, "digest");
+            let member1 = json::member_at(value, at, "digest")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
         },
     })
 }
@@ -2426,6 +2502,65 @@ pub fn decode_agenticspec_cli_sim_ladder_result(value: &json::Value, at: &str) -
             let at2 = json::nested(at, "written");
             let member2 = json::member_at(value, at, "written")?;
             json::bool_at(member2, &at2, "a boolean")?
+        },
+    })
+}
+
+/// Writes `agenticspec.cli.SimNested` as JSON.
+pub fn encode_agenticspec_cli_sim_nested(value: &agenticspec_types::cli::SimNested, out: &mut String) {
+    out.push('{');
+    json::member(out, "part");
+    json::push_text(out, &value.part);
+    json::member(out, "architecture");
+    json::push_text(out, &value.architecture);
+    json::member(out, "reference");
+    json::push_text(out, &value.reference);
+    json::member(out, "digest");
+    json::push_text(out, &value.digest);
+    json::member(out, "parts");
+    json::push_integer(out, value.parts);
+    json::member(out, "links");
+    json::push_integer(out, value.links);
+    out.push('}');
+}
+
+/// Reads `agenticspec.cli.SimNested` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_agenticspec_cli_sim_nested(value: &json::Value, at: &str) -> Result<agenticspec_types::cli::SimNested, json::DecodeError> {
+    json::closed_at(value, at, &["part", "architecture", "reference", "digest", "parts", "links"])?;
+    Ok(agenticspec_types::cli::SimNested {
+        part: {
+            let at0 = json::nested(at, "part");
+            let member0 = json::member_at(value, at, "part")?;
+            json::text_at(member0, &at0, "a string")?.to_owned()
+        },
+        architecture: {
+            let at1 = json::nested(at, "architecture");
+            let member1 = json::member_at(value, at, "architecture")?;
+            json::text_at(member1, &at1, "a string")?.to_owned()
+        },
+        reference: {
+            let at2 = json::nested(at, "reference");
+            let member2 = json::member_at(value, at, "reference")?;
+            json::text_at(member2, &at2, "a string")?.to_owned()
+        },
+        digest: {
+            let at3 = json::nested(at, "digest");
+            let member3 = json::member_at(value, at, "digest")?;
+            json::text_at(member3, &at3, "a string")?.to_owned()
+        },
+        parts: {
+            let at4 = json::nested(at, "parts");
+            let member4 = json::member_at(value, at, "parts")?;
+            json::integer_at(member4, &at4, "an integer")?
+        },
+        links: {
+            let at5 = json::nested(at, "links");
+            let member5 = json::member_at(value, at, "links")?;
+            json::integer_at(member5, &at5, "an integer")?
         },
     })
 }
