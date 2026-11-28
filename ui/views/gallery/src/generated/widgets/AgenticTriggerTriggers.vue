@@ -8,7 +8,7 @@ import { useRead, useWidget } from '../runtime';
 /** Rows of the view agentic.trigger.Triggers over Trigger, keyed by trigger_id. */
 const args = defineProps<{ architecture?: string; channel: string; instance?: number; part?: string; source?: string }>();
 const client = useWidget(args);
-const r_rows = useRead('agentic.trigger.Triggers', () => ({}), { channel: args['channel'], on: ['agentic.trigger.FiringEnded', 'agentic.trigger.FiringStarted', 'agentic.trigger.TriggerCreated', 'agentic.trigger.TriggerDisabled', 'agentic.trigger.TriggerEnabled'], coalesce: 1000 }, client);
+const r_rows = useRead('agentic.trigger.Triggers', () => ({}), { channel: args['channel'], on: ['agentic.trigger.FiringEnded', 'agentic.trigger.FiringReplaced', 'agentic.trigger.FiringStarted', 'agentic.trigger.TriggerCreated', 'agentic.trigger.TriggerDisabled', 'agentic.trigger.TriggerEnabled'], coalesce: 1000 }, client);
 const fields_rows: FieldDef[] = [
   { field: 'trigger_id', label: 'Trigger id', as: 'text' },
   { field: 'kind', label: 'Kind', as: 'badge' },
@@ -24,6 +24,7 @@ const fields_rows: FieldDef[] = [
   { field: 'process_id', label: 'Process id', as: 'text' },
   { field: 'intake', label: 'Intake', as: 'text' },
   { field: 'start_mode', label: 'Start mode', as: 'badge' },
+  { field: 'subject_policy', label: 'Subject policy', as: 'badge' },
   { field: 'state', label: 'State', as: 'badge' },
 ];
 </script>

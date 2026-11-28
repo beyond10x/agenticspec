@@ -8,7 +8,7 @@ import { useRead, useWidget } from '../runtime';
 /** Rows of the view agentic.question.OpenQuestions over Question, keyed by question_id. */
 const args = defineProps<{ addressee: string; architecture?: string; channel: string; instance?: number; part?: string; source?: string }>();
 const client = useWidget(args);
-const r_rows = useRead('agentic.question.OpenQuestions', () => ({ addressee: args['addressee'] }), { channel: args['channel'], on: ['agentic.question.DefaultTaken', 'agentic.question.QuestionAnswered', 'agentic.question.QuestionAsked', 'agentic.question.QuestionWithdrawn'], coalesce: 1000 }, client);
+const r_rows = useRead('agentic.question.OpenQuestions', () => ({ addressee: args['addressee'] }), { channel: args['channel'], on: ['agentic.question.AnswerNotRead', 'agentic.question.DefaultTaken', 'agentic.question.QuestionAnswered', 'agentic.question.QuestionAsked', 'agentic.question.QuestionWithdrawn'], coalesce: 1000 }, client);
 const fields_rows: FieldDef[] = [
   { field: 'question_id', label: 'Question id', as: 'text' },
   { field: 'asked_by', label: 'Asked by', as: 'text' },

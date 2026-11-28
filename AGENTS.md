@@ -205,7 +205,7 @@ change.
 | `agenticspec` | `draft.rs` | `agenticspec blocks lift\|scenario`: the lifted rows checked against the blocks built into the simulator, the draft scenario checked against its architecture and profile before it is written |
 | `agenticspec` | `serve.rs` | `agenticspec serve`: the `session-view` views from the store, the built UI, SSE channels. It never lifts: each sync is a `agenticspec sync` child (`Syncer`), one at a time, and the server publishes what the child wrote |
 | `agenticspec` | `html.rs`, `assets/dashboard.html` | the dashboard file `agenticspec analyze` writes |
-| `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli`, `agenticspec ui panels` calls `agenticspec_views::run`, `agenticspec ui conform` runs `agenticspec_ui::conform` (against the fixture source of `agenticspec_ui::source` without `--source`) |
+| `agenticspec` | `main.rs` | handler behind the generated CLI; `agenticspec sim …` calls `agenticspec_sim::cli`, `agenticspec ui panels` calls `agenticspec_views::run`, `agenticspec ui derive` calls `agenticspec_ui::derive_ui`, `agenticspec ui conform` runs `agenticspec_ui::conform` (against the fixture source of `agenticspec_ui::source` without `--source`) |
 | `agenticspec-sim` | `check.rs`, `whole.rs`, `nest.rs`, `sim.rs`, `sim/swarm.rs`, `sim/record.rs`, `search.rs`, `profile.rs`, `cli.rs` | the library of `agenticspec sim check\|digest\|run\|render\|ladder` (`cli.rs`, no binary of its own); `sim check --json` prints the `agenticspec-check/1` document (`cli::check_document`, in `cli.rs` because the catalog digest leaves it out): an architecture document (`architectures/`) checked, measured as a whole (`whole.rs`: the KPIs `sim check` reports and every variant of a result carries), simulated with a behaviour profile (`profiles/`) and searched over its marked places (`experiments/`); the same seeds give the same `result.json` at any thread count. `check.rs` reads the part kinds and `carries` values from `blocks/9-composition/architecture.yaml` (compiled in), so the check and the block cannot differ. `nest.rs` resolves a part of block `architecture` (`ref`, `digest` of the canonical parts, links and border) and flattens it into parts named `<part>.<inner part>` before the check and the simulation |
 | `agenticspec-sim` | `scenario.rs`, `corpus.rs`, `events.rs`, `reader.rs`, `sim/script.rs` | `agenticspec sim scenario check\|run` and `sim corpus run` (`docs/scenarios.md`): scenarios (`agenticspec-scenario/1`) and task corpora (`agenticspec-corpus/1`), read by a typed reader that refuses an unknown key by its path. A run drives the simulator with a `Script` (arrivals, run outcomes, build times, replies) on the scenario's seed, and `events::TABLE` is the one map from the simulator's event kinds to block events and marks the eight an `on_event` trigger waits for; a test holds it against every kind the sources record and every event `blocks/` declares. `scenario.rs` does not change an experiment's result and is left out of the catalog digest (`events.rs` is in it, for the trigger rows); a profile draws its tasks from a corpus with `load.corpus` |
 | `agenticspec-sim` | `event_log.rs` | the event log of a recorded run (`sim run --events`, `events.jsonl`): each timeline kind written as the block event of its table `LOG` (or listed in `SILENT`), with part path, copy and subject key. Not an input of a catalog result (`SIM_EXCLUDED` in `crates/agenticspec-docs/src/results.rs`); a new timeline kind needs a row in `LOG` or `SILENT`, and `tests/cases/event_log.rs` checks each row against `blocks/` |
@@ -226,6 +226,7 @@ change.
 | `agenticspec-records` | `sq/architecture.rs` | the fact base of an architecture (`part`, `setting`, `link`, `marker`), compiled apart from the session relations |
 | `agenticspec-patch` | `lib.rs`, `facts.rs`, `text.rs`, `diff.rs` | `agenticspec-patch/1`: the facts of an architecture document, the verbs `set` and `add`, atomic application checked by `agenticspec-sim`'s check, refusals by rule position and error name (`ErrorName`, each listed in `docs/studio.md`) |
 | `agenticspec-ui` | `doc.rs`, `check.rs`, `emit.rs`, `runtime.ts`, `interface.rs`, `source.rs`, `conform.rs`, `wire.rs` | `agenticspec ui generate --path --out`: an `ess-ui/1` document to Vue pages, one component per widget (`widgets/<Widget>.vue`, the same bytes for the same widget in any document), a hash router with the navigation, a typed client and a runtime (live re-read coalesced or row patch, the scope client of a widget) over `ui/kit` components and host slots only, byte for byte the same each run. A construct it cannot draw is refused by its node path; the look is never generated. An action that sends a command shows only while the action set (R5) of its scope allows it. Golden tests in `tests/cases/` (`UPDATE_GOLDEN=1` rewrites them). Beside it, the runtime interface (`ui/runtime.openapi.yaml`, `interface.rs`): the fixture source that answers it (`source.rs`), the conformance suite of `agenticspec ui conform` run against a source by URL (`conform.rs`) and the small HTTP client and server both use (`wire.rs`) |
+| `agenticspec-ui` | `derive/` (`mod.rs`, `model.rs`, `view_key.rs`, `write.rs`) | `agenticspec ui derive`: an architecture (its nested documents, its `view:` key), its contract and ports into one `ess-ui/1` document over the block panels, copying each widget of `ui/views/blocks.ui.yaml` byte for byte, with its fixtures (`<name>.fixtures/`), its layout (`<name>.layout.json`, `agenticspec-ui-layout/1`, read by the package of `ui/views`) and the digest of its inputs; tests in `tests/derive/` |
 | `agenticstudio` | `studio.rs`, `tools.rs`, `live.rs`, `routes.rs`, `app.rs`, `http.rs`, `main.rs` | `agenticstudio serve`: drafts, revisions, patches and applications, studio sessions and their tool calls in memory; the four tools (`tools.rs`: query, apply, check, simulate, each answer with a `summary`); the event channel of each draft (`live.rs`, server-sent events of `studio.draft.DraftRevised` and the answered or failed calls) and the source files of open drafts read again every 500 ms (a change on disk is a new revision); the views and commands of `studio/studio.ui.yaml` (`/api/views`, `/api/commands`, `app.rs`), the older `/api` routes, and the built app of `ui/studio` from `--www`. Its types are `src/generated/` (`ess generate types` from `studio/` and the architecture block, held by `task check:generated`), included as modules; its browser test is `e2e/` (`task check:studio`) |
 | `agenticstudio-mcp` | `lib.rs`, `main.rs` | the agent channel: an MCP server over stdio (`agenticstudio-mcp --studio <url> [--draft <id> \| --open <source>]`) whose tools `query`, `apply`, `check` and `simulate` are calls with caller `Agent` in a studio session, through `POST /api/sessions/<id>/calls` of a running `agenticstudio serve` (`Http`) or a studio in the same process (`Local`, which its tests use). Its tests replay the recorded exchange `tests/exchange.jsonl` |
 
@@ -246,11 +247,11 @@ Beside the crates, `ui/` holds:
   the gallery build and its browser test.
 - `studio/`, the agenticstudio app: `src/generated/` is written by `agenticspec ui generate` from
   `studio/studio.ui.yaml` (`task ui:generate`, held by `task check:generated`), never edited;
-  `src/slots/` holds the host slots (`DraftGraph`, `PatchEditor`) and `src/hooks.ts` the command
+  `src/slots/` holds the host slots (`DraftGraph`, `DraftPanels`, `PatchEditor`) and `src/hooks.ts` the command
   hooks. `task studio:build` builds it into `target/studio/www`; `task check:studio`
   (`scripts/check-studio.sh`) checks the document, its types and vitest, and runs
   `crates/agenticstudio/e2e`.
-- `package.json`, one npm package for `kit/`, `studio/` and `views/gallery/`; `app/` keeps its own.
+- `package.json`, one npm package for `kit/`, `studio/`, `views/` and its apps; `app/` keeps its own.
 - `views/`, generated by `agenticspec ui panels` and never edited by hand: `blocks.ui.yaml`, the
   block panels as an `ess-ui/1` document over `blocks/` (one widget per view, named as the view,
   and a gallery page per block), `fixtures/` (three rows per view, a script per block channel)
@@ -266,6 +267,26 @@ Beside the crates, `ui/` holds:
 - `views/source/`, written by hand: `source.json`, the fixture source (principals by token,
   placements, parts, grants, the action class of each command, command answers), and `plan.json`,
   its conformance plan. Synthetic ids only; `agenticspec ui conform` and the gallery read them.
+- `views/examples/`, written by `agenticspec ui derive` (`task ui:derive`) and never edited by
+  hand: `workstation.ui.yaml` from `architectures/workstation.yaml` with
+  `workstation.contract.yaml` (written by `agenticspec sim contract`) and `ports.json` (a copy of
+  `blocks/ports.json`), both written by `task ui:derive` and held by `task check:ui`,
+  `large-37.ui.yaml` from
+  `crates/agenticspec-render/tests/fixtures/large-37.yaml`, each with `<name>.fixtures/`,
+  `<name>.layout.json` and `<name>.sources.sha256`; `task check:ui` compares them and holds them
+  at 0 errors and 0 warnings. `host-slot.ui.yaml` (hand-written) places the custom element through
+  a host slot. `views/examples/app/` shows both over the fixtures: `src/<name>/generated/` is
+  written by `agenticspec ui generate` (held by `task check:generated`); `task check:examples`
+  (`scripts/check-examples.sh`) runs its types, vitest, build and browser test
+  (`views/examples/app/e2e`).
+- `views/package.json`, `views/src/`: the Vue package `@agenticspec/views` (the panels of
+  `views/gallery/src/generated/widgets`, `AgenticPartPage` and `AgenticOverview` drawn from a
+  layout, `AgenticBlockPanels`, the panels' runtime re-exported) and `src/elements.ts`, the custom
+  elements built from the same components (`task elements:build`, into `target/views/elements`).
+  `views/hosts/` holds the plain and React test pages; `task check:elements`
+  (`scripts/check-elements.sh`) runs the package's types and vitest, both builds and the browser
+  test (`views/hosts/e2e`). agenticstudio imports the panels from here (`studio/src/slots/DraftPanels.vue`);
+  no panel file is written under `ui/studio/`.
 
 `task ui:build` builds the app into `target/ui/www`. Outside `task check:app`, vitest runs as
 `slot --local npx vitest run --maxWorkers=2` from `ui/app`.

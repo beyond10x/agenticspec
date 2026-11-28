@@ -825,3 +825,22 @@ fn a_nested_architecture_links_to_the_page_of_the_one_it_nests(g: &Generated) {
         "the graph draws the ports"
     );
 }
+
+/// The `view:` key is presentation only: a catalog result's digest reads the architecture without it,
+/// so a label edit leaves the committed result current.
+#[test]
+fn a_view_key_edit_leaves_the_digest_of_a_catalog_result_as_it_was() {
+    let text = std::fs::read_to_string(root().join("architectures/workstation.yaml")).unwrap();
+    let at = text
+        .find("\nview:")
+        .expect("workstation.yaml has a view key");
+    let bare = format!("{}\n", text[..at].trim_end_matches('\n'));
+    assert_eq!(agenticspec_docs::without_view(&text), bare);
+    let edited = text.replace("worker: coding agents", "worker: agents that code");
+    assert_ne!(edited, text);
+    assert_eq!(agenticspec_docs::without_view(&edited), bare);
+    let commented = format!("{bare}\n# How the UI looks.\nview:\n  home: overview\n");
+    assert_eq!(agenticspec_docs::without_view(&commented), bare);
+    let middle = "a: 1\nview:\n  home: overview\n\nb: 2\n";
+    assert_eq!(agenticspec_docs::without_view(middle), "a: 1\nb: 2\n");
+}

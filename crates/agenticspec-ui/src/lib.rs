@@ -20,6 +20,7 @@ use std::path::Path;
 
 mod check;
 pub mod conform;
+pub mod derive;
 pub mod interface;
 pub mod source;
 pub mod wire;
@@ -55,6 +56,19 @@ pub fn generate(text: &str) -> Result<Files, Vec<Refusal>> {
     let (doc, _raw) = check::parse(text)?;
     let app = check::resolve(&doc)?;
     Ok(emit::emit(&app))
+}
+
+/// `agenticspec ui derive`: compiles the blocks under `inputs.root` and derives the composition
+/// of the architecture (see [`derive`]).
+///
+/// # Errors
+///
+/// The blocks do not compile, an input cannot be read, or the architecture or its `view:` key is
+/// refused.
+pub fn derive_ui(inputs: &derive::Inputs) -> Result<derive::Derivation, derive::Failure> {
+    let ir = agenticspec_views::compile(&inputs.root.join("blocks"))
+        .map_err(derive::Failure::Unreadable)?;
+    derive::derive_with(inputs, &ir)
 }
 
 /// Replaces `out` with exactly `files`: what was in it before is removed.

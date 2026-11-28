@@ -14,6 +14,7 @@ const fields_rows: FieldDef[] = [
   { field: 'assignment_id', label: 'Assignment id', as: 'text' },
   { field: 'task_id', label: 'Task id', as: 'text' },
   { field: 'kind', label: 'Kind', as: 'badge' },
+  { field: 'artifact_id', label: 'Artifact id', as: 'text' },
   { field: 'evidence', label: 'Evidence', as: 'list' },
   { field: 'state', label: 'State', as: 'badge' },
 ];

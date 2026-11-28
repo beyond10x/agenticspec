@@ -177,6 +177,20 @@ test.describe('the largest public architecture', () => {
     await page.keyboard.press('Escape');
   });
 
+  test('the draft view shows the block panels of ui/views for a part, on their fixtures', async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await openDraft(page, 'workstation');
+    const slot = page.locator('[data-slot="draft-panels"]');
+    const toggle = page.locator('[data-panel="panels"] button[aria-expanded]').first();
+    if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+    await expect(slot).toHaveAttribute('data-part', /.+/);
+    await expect(slot.locator('.island [data-panel="rows"] tr[data-row]').first()).toBeAttached();
+    await slot.getByRole('combobox', { name: 'Part' }).click();
+    await page.getByRole('option', { name: /^builds / }).click();
+    await expect(slot.locator('.island')).toHaveAttribute('data-block', 'pool');
+    await expect(slot.locator('.island [data-panel="rows"] tr[data-row]').first()).toBeAttached();
+  });
+
   test('the description is two lines with more, in the side panel', async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 768 });
     await openDraft(page, 'ladder/09-factory');

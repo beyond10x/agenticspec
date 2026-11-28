@@ -76,6 +76,17 @@ fn written_like_its_source_the_parts_keep_their_order() {
 }
 
 #[test]
+fn written_like_its_source_the_view_key_is_kept_unchanged() {
+    let source =
+        std::fs::read_to_string(repo_root().join("architectures/workstation.yaml")).unwrap();
+    let doc = parse_yaml(&source).unwrap();
+    assert!(doc["view"].is_object(), "workstation.yaml has a view key");
+    let text = best::yaml_like(&doc, &source).unwrap();
+    assert_eq!(parse_yaml(&text).unwrap()["view"], doc["view"], "{text}");
+    assert!(text.contains("\nview:"), "{text}");
+}
+
+#[test]
 fn no_best_variant_means_no_document() {
     let e = experiment("fit", 4, 256);
     let mut result = run(&e, 2).unwrap();

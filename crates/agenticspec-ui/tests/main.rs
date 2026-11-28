@@ -8,12 +8,15 @@
 //! - `runtime`: the runtime interface of `ui/runtime.openapi.yaml`: the fixture source, the
 //!   conformance suite against it and against a source with one fault, and the generated client
 //!   held to the document.
+//! - `derive`: `agenticspec ui derive` on the committed examples and the documents of
+//!   `tests/derive/`.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use agenticspec_ui::{Refusal, generate};
 
+mod derive;
 mod runtime;
 
 fn cases() -> PathBuf {

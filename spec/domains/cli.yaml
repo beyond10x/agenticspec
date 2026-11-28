@@ -780,6 +780,45 @@ types:
         type: Boolean
         summary: The files were written; false with `--check`, where they were found current.
 
+  - name: agenticspec.cli.UiDeriveInput
+    kind: struct
+    fields:
+      - name: path
+        type: String
+        summary: An architecture document (`agenticspec-architecture/1`); the documents its nested parts reference are read too.
+      - name: contract
+        type: Optional<String>
+        summary: The contract of the architecture (`agenticspec-contract/1`); without it the domains of a part come from the architecture alone and no action is derived.
+      - name: ports
+        type: Optional<String>
+        summary: The port catalogue (`agenticspec-ports/1`); `blocks/ports.json` when it exists.
+      - name: out
+        type: String
+        summary: The document to write, `<dir>/<name>.ui.yaml`; its digest, fixtures and layout are written beside it.
+      - name: root
+        type: Optional<String>
+        summary: The repository root that holds `blocks/` and `ui/views/`; the current directory by default.
+      - name: check
+        type: Boolean
+        summary: Compare a fresh derivation with the files instead of writing them.
+
+  - name: agenticspec.cli.UiDeriveResult
+    kind: struct
+    naming:
+      summary: >-
+        The operator UI of an architecture: one `ess-ui/1` document (an overview per level, a page
+        per part, a channel per level, the actions of the contract) with `<name>.sources.sha256`,
+        `<name>.fixtures/` and `<name>.layout.json` beside it.
+    fields:
+      - {name: out, type: String}
+      - {name: pages, type: Integer}
+      - {name: actions, type: Integer}
+      - {name: channels, type: Integer}
+      - {name: files, type: Integer}
+      - name: written
+        type: Boolean
+        summary: The files were written; false with `--check`, where they were found current.
+
   - name: agenticspec.cli.SimPortsInput
     kind: struct
     fields:

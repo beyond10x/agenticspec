@@ -15,6 +15,13 @@ export interface DraftGraphProps {
 }
 
 /**
+ * `pages/draft/sections/panels`, standing in for `none`: shows the block panels of one part of the draft, imported from the package of ui/views and answered by the panels' fixtures; ess-ui places no widget of another document
+ */
+export interface DraftPanelsProps {
+  read: ReadState<'studio.DraftGraph'>;
+}
+
+/**
  * `pages/draft/sections/patch/fields/arguments`, standing in for `rich_text`: edits the rules of an agenticspec-patch/1 patch with its syntax marked; ess-ui has no editor of a rule language
  */
 export interface PatchEditorProps {
@@ -27,7 +34,8 @@ export interface PatchEditorProps {
 /** The components the host registers, one per host slot. */
 export interface HostComponents {
   DraftGraph: Component;
+  DraftPanels: Component;
   PatchEditor: Component;
 }
 
-export const HOSTS = ['DraftGraph', 'PatchEditor'] as const;
+export const HOSTS = ['DraftGraph', 'DraftPanels', 'PatchEditor'] as const;

@@ -1,0 +1,8 @@
+{
+  "view": "agentic.deployment.Units",
+  "rows": [
+    {"unit_id": "00000000-0000-4000-8000-9b5920e10000", "deployment_id": "00000000-0000-4000-8000-0b4df8530000", "name": "name 1", "kind": "Core", "parts": ["parts 1"], "replicas": 1, "ready": 1, "last_failure": "last failure 1", "workload_id": "00000000-0000-4000-8000-160df8830000", "target_object": "target object 1", "state": {"name":"Declared","summary":"Named by the bundle."}},
+    {"unit_id": "00000000-0000-4000-8000-9b5920e10001", "deployment_id": "00000000-0000-4000-8000-0b4df8530000", "name": "name 2", "kind": "Agent", "parts": ["parts 2"], "ready": 2, "state": {"name":"Mapped","summary":"Mapped to an object of the target's architecture."}},
+    {"unit_id": "00000000-0000-4000-8000-9b5920e10002", "deployment_id": "00000000-0000-4000-8000-0b4df8530000", "name": "name 3", "kind": "Service", "parts": ["parts 3"], "replicas": 3, "ready": 3, "last_failure": "last failure 3", "workload_id": "00000000-0000-4000-8000-160df8830002", "target_object": "target object 3", "state": {"name":"Declared","summary":"Named by the bundle."}}
+  ]
+}

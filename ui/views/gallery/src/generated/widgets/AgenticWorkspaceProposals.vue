@@ -18,9 +18,8 @@ const fields_rows: FieldDef[] = [
   { field: 'change', label: 'Change', as: 'json' },
   { field: 'merged_revision', label: 'Merged revision', as: 'text' },
   { field: 'superseded_by', label: 'Superseded by', as: 'text' },
-  { field: 'branch', label: 'Branch', as: 'text' },
+  { field: 'handback', label: 'Handback', as: 'text' },
   { field: 'head_revision', label: 'Head revision', as: 'text' },
-  { field: 'review_ref', label: 'Review ref', as: 'text' },
   { field: 'merged_under', label: 'Merged under', as: 'text' },
   { field: 'state', label: 'State', as: 'badge' },
 ];

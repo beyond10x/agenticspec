@@ -155,10 +155,10 @@ fn the_fixture_source_conforms_and_answers_each_scope() {
     assert!(at_worker.get("grant_id").is_none());
 }
 
-/// A reconnect with the cursor of event 3 receives exactly events 4 and 5, in order, each named
+/// A reconnect with the cursor of event 3 receives exactly events 4 to 6, in order, each named
 /// by its qualified event name.
 #[test]
-fn a_reconnect_from_the_cursor_of_event_3_receives_exactly_events_4_and_5() {
+fn a_reconnect_from_the_cursor_of_event_3_receives_exactly_events_4_to_6() {
     let src = source(Faults::default());
     let url = format!(
         "{}/api/channels/harness",
@@ -171,7 +171,7 @@ fn a_reconnect_from_the_cursor_of_event_3_receives_exactly_events_4_and_5() {
         sent.push(e);
     }
     drop(first);
-    assert_eq!(sent.len(), 5, "{sent:#?}");
+    assert_eq!(sent.len(), 6, "{sent:#?}");
     assert!(sent.iter().all(|e| e.event.starts_with("agentic.harness.")));
     let cursor = sent[2].id.clone().unwrap();
     let again = wire::subscribe(

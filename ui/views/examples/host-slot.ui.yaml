@@ -1,0 +1,42 @@
+# A host page that places the custom element <agentic-part-panel> of ui/views (the package's
+# bundle, target/views/elements) through a host slot. The slot's reads and commands declare what the
+# element reads and sends for the part `owner` of workstation, so `ess ui check --model blocks`
+# holds them to the blocks like a generated node's.
+format: ess-ui/1
+app: host_slot
+title: A host page with a part page of workstation
+model: agentic
+actor: from_session
+placement_profile: fat
+
+shells:
+  app:
+    regions:
+      main: {kind: page_outlet}
+
+navigation:
+  home: owner
+  sections:
+    - {name: parts, label: Parts, pages: [owner]}
+
+page_kinds:
+  part:
+    purpose: the part page of one part, drawn by the custom element of ui/views
+
+pages:
+  owner:
+    kind: part
+    title: owner
+    nav: {label: owner}
+    sections:
+      - name: part_page
+        host: AgenticPartPanel
+        reason: >-
+          the part page of ui/views as the custom element <agentic-part-panel source architecture
+          part>, drawn from the layout `agenticspec ui derive` wrote; the host only places it
+        stands_in_for: none
+        reads: {view: agentic.question.OpenQuestions, params: {addressee: "'00000000-0000-4000-8000-761908b00000'"}}
+        commands:
+          - agentic.question.Answer
+          - agentic.authority.ApproveDecision
+          - agentic.authority.RejectDecision

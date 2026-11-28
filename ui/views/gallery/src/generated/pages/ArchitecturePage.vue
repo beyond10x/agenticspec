@@ -5,6 +5,7 @@ import { KitPanel, KitShell, KitStack } from '@kit';
 import { useShell } from '../runtime';
 import AgenticArchitectureArchitectures from '../widgets/AgenticArchitectureArchitectures.vue';
 import AgenticArchitectureContracts from '../widgets/AgenticArchitectureContracts.vue';
+import AgenticArchitectureIngresses from '../widgets/AgenticArchitectureIngresses.vue';
 import AgenticArchitectureParts from '../widgets/AgenticArchitectureParts.vue';
 import AgenticArchitecturePatchApplications from '../widgets/AgenticArchitecturePatchApplications.vue';
 import AgenticArchitecturePatches from '../widgets/AgenticArchitecturePatches.vue';
@@ -24,6 +25,9 @@ const shell = useShell();
       </KitPanel>
       <KitPanel name="contracts" title="Contracts" collapsible>
         <AgenticArchitectureContracts :channel="'architecture'" :revision_id="'00000000-0000-4000-8000-8dac41280000'" />
+      </KitPanel>
+      <KitPanel name="ingresses" title="Ingresses" collapsible>
+        <AgenticArchitectureIngresses :architecture_id="'00000000-0000-4000-8000-463ec9280000'" :channel="'architecture'" />
       </KitPanel>
       <KitPanel name="parts" title="Parts" collapsible>
         <AgenticArchitectureParts :channel="'architecture'" />

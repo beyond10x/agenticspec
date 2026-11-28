@@ -5,6 +5,7 @@ import { KitPanel, KitShell, KitStack } from '@kit';
 import { useShell } from '../runtime';
 import AgenticHarnessHarnessSessions from '../widgets/AgenticHarnessHarnessSessions.vue';
 import AgenticHarnessHarnesses from '../widgets/AgenticHarnessHarnesses.vue';
+import AgenticHarnessPermissionModes from '../widgets/AgenticHarnessPermissionModes.vue';
 import AgenticHarnessToolCalls from '../widgets/AgenticHarnessToolCalls.vue';
 import AgenticHarnessTurns from '../widgets/AgenticHarnessTurns.vue';
 
@@ -19,6 +20,9 @@ const shell = useShell();
       </KitPanel>
       <KitPanel name="harnesses" title="Harnesses" collapsible>
         <AgenticHarnessHarnesses :channel="'harness'" />
+      </KitPanel>
+      <KitPanel name="permission_modes" title="Permission modes" collapsible>
+        <AgenticHarnessPermissionModes :channel="'harness'" />
       </KitPanel>
       <KitPanel name="tool_calls" title="Tool calls" collapsible>
         <AgenticHarnessToolCalls :channel="'harness'" />

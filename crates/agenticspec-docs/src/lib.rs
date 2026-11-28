@@ -20,6 +20,7 @@ mod results;
 
 pub use kpis::{Catalogue, Kpi};
 pub use model::layer_edges;
+pub use results::without_view;
 
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};

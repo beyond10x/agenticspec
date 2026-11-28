@@ -644,6 +644,7 @@ impl Handler for Commands {
                     kpis: kpis.as_deref(),
                 }))
             }
+            "ui_derive" => ui_derive(&inv.input),
             _ => HandlerReply::Unavailable,
         }
     }
@@ -701,6 +702,59 @@ fn ui_conform(input: &Value) -> HandlerReply {
         );
     }
     HandlerReply::Success(report.to_json())
+}
+
+/// `agenticspec ui derive`: derive, then write the files or with `--check` compare them.
+fn ui_derive(input: &Value) -> HandlerReply {
+    use agenticspec_ui::derive::{Failure, Inputs, differences, write};
+    let opt = |k: &str| input.get(k).and_then(Value::as_str).map(PathBuf::from);
+    let root = opt("root").unwrap_or_else(|| PathBuf::from("."));
+    let inputs = Inputs {
+        architecture: path_of(input, "path"),
+        contract: opt("contract"),
+        ports: opt("ports"),
+        out: path_of(input, "out"),
+        root,
+    };
+    let check = input.get("check").and_then(Value::as_bool).unwrap_or(false);
+    let d = match agenticspec_ui::derive_ui(&inputs) {
+        Ok(d) => d,
+        Err(Failure::Unreadable(e)) => return refusal("document_unreadable", e),
+        Err(Failure::Refused(rs)) => {
+            let lines: Vec<String> = rs.iter().map(ToString::to_string).collect();
+            return refusal(
+                "document_refused",
+                format!("{}:\n{}", inputs.architecture.display(), lines.join("\n")),
+            );
+        }
+    };
+    let answer = |written: bool| {
+        json!({
+            "out": inputs.out.to_string_lossy(),
+            "pages": d.pages,
+            "actions": d.actions,
+            "channels": d.channels,
+            "files": d.files.len(),
+            "written": written,
+        })
+    };
+    if check {
+        let diff = differences(&d);
+        if diff.is_empty() {
+            return HandlerReply::Success(answer(false));
+        }
+        return refusal(
+            "derived_stale",
+            format!(
+                "{}. A derived file is never edited: derive it again",
+                diff.join("; ")
+            ),
+        );
+    }
+    if let Err(e) = write(&d) {
+        return refusal("out_unwritable", format!("{}: {e}", inputs.out.display()));
+    }
+    HandlerReply::Success(answer(true))
 }
 
 /// A path field of the input; the parser has made every required one present.

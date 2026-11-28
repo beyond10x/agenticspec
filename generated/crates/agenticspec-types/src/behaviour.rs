@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
+// contract digest 238a19fb6ae6bbc5b648eba06c828c629deaeed26ee2b95e60532c84a0ca0908
 // do not edit: regenerate with `ess synthesize`
 
 //! What the specification fully determines, generated: the behaviour of every command the plan
@@ -42,7 +42,10 @@ pub trait AgentStorage {
 /// Keyed by the identity `exposure_id`. Generated network entries supply an ephemeral implementation; durable storage remains a port.
 pub trait ExposureStorage {
     /// The instance with this identity, or `None` where none is stored.
-    fn get(&self, identity: &crate::session::ExposureId) -> Option<crate::session::ExposureSnapshot>;
+    fn get(
+        &self,
+        identity: &crate::session::ExposureId,
+    ) -> Option<crate::session::ExposureSnapshot>;
 
     /// Stores this instance under its identity, replacing what was held.
     fn put(&mut self, snapshot: crate::session::ExposureSnapshot);
@@ -78,7 +81,10 @@ pub trait SessionStorage {
 /// Keyed by the identity `tool_call_id`. Generated network entries supply an ephemeral implementation; durable storage remains a port.
 pub trait ToolCallStorage {
     /// The instance with this identity, or `None` where none is stored.
-    fn get(&self, identity: &crate::session::ToolCallId) -> Option<crate::session::ToolCallSnapshot>;
+    fn get(
+        &self,
+        identity: &crate::session::ToolCallId,
+    ) -> Option<crate::session::ToolCallSnapshot>;
 
     /// Stores this instance under its identity, replacing what was held.
     fn put(&mut self, snapshot: crate::session::ToolCallSnapshot);
@@ -168,7 +174,10 @@ pub trait SessionCheckStorage {
 /// Keyed by the identity `session_id`. Generated network entries supply an ephemeral implementation; durable storage remains a port.
 pub trait SessionListingStorage {
     /// The instance with this identity, or `None` where none is stored.
-    fn get(&self, identity: &crate::session::SessionId) -> Option<crate::view::SessionListingSnapshot>;
+    fn get(
+        &self,
+        identity: &crate::session::SessionId,
+    ) -> Option<crate::view::SessionListingSnapshot>;
 
     /// Stores this instance under its identity, replacing what was held.
     fn put(&mut self, snapshot: crate::view::SessionListingSnapshot);
@@ -220,20 +229,37 @@ impl<P> crate::session::obligations::CompactContextBehavior for Generated<P>
 where
     P: AgentStorage,
 {
-    fn compact_context(&mut self, input: crate::session::CompactContext) -> Result<crate::session::CompactContextOutcome, UnmetObligation> {
+    fn compact_context(
+        &mut self,
+        input: crate::session::CompactContext,
+    ) -> Result<crate::session::CompactContextOutcome, UnmetObligation> {
         let _ = &input;
         // The addressed row's existence, at step 2 of the one precedence rule.
         if AgentStorage::get(&self.ports, &input.agent_id).is_none() {
-            return Ok(crate::session::CompactContextOutcome::NoSuchAgent { error: crate::session::UnknownAgent { agent_id: input.agent_id.clone() } });
+            return Ok(crate::session::CompactContextOutcome::NoSuchAgent {
+                error: crate::session::UnknownAgent {
+                    agent_id: input.agent_id.clone(),
+                },
+            });
         }
         // `compacted`: the default.
         let Some(held) = AgentStorage::get(&self.ports, &input.agent_id) else {
-            return Ok(crate::session::CompactContextOutcome::NoSuchAgent { error: crate::session::UnknownAgent { agent_id: input.agent_id.clone() } });
+            return Ok(crate::session::CompactContextOutcome::NoSuchAgent {
+                error: crate::session::UnknownAgent {
+                    agent_id: input.agent_id.clone(),
+                },
+            });
         };
         let _ = &held;
         let mut next = held;
         next.data.context_tokens = 0;
-        let answer = crate::session::CompactContextOutcome::Compacted { context_compacted: crate::session::ContextCompacted { agent_id: input.agent_id.clone(), context_tokens_before: input.context_tokens_before.clone(), at: input.at.clone() } };
+        let answer = crate::session::CompactContextOutcome::Compacted {
+            context_compacted: crate::session::ContextCompacted {
+                agent_id: input.agent_id.clone(),
+                context_tokens_before: input.context_tokens_before.clone(),
+                at: input.at.clone(),
+            },
+        };
         AgentStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -244,21 +270,40 @@ impl<P> crate::session::obligations::CompleteToolCallBehavior for Generated<P>
 where
     P: ToolCallStorage,
 {
-    fn complete_tool_call(&mut self, input: crate::session::CompleteToolCall) -> Result<crate::session::CompleteToolCallOutcome, UnmetObligation> {
+    fn complete_tool_call(
+        &mut self,
+        input: crate::session::CompleteToolCall,
+    ) -> Result<crate::session::CompleteToolCallOutcome, UnmetObligation> {
         let _ = &input;
         // `succeeded`: an accepting branch, in declaration order.
-        if decided(equal(Some(&input.ok).map(|value| *value), Some(true)), "agenticspec.session.CompleteToolCall")? {
+        if decided(
+            equal(Some(&input.ok).map(|value| *value), Some(true)),
+            "agenticspec.session.CompleteToolCall",
+        )? {
             let Some(held) = ToolCallStorage::get(&self.ports, &input.tool_call_id) else {
                 return Ok(crate::session::CompleteToolCallOutcome::WrongStateUnknownInstance);
             };
             let _ = &held;
             let held_state = held.state;
             let moved = match held.refine() {
-                crate::session::AnyToolCall::Accepted(instance) => crate::session::AnyToolCall::Succeeded(instance.succeed()),
-                _ => return Ok(crate::session::CompleteToolCallOutcome::WrongState { error: crate::session::ToolCallStateConflict { state: held_state } }),
+                crate::session::AnyToolCall::Accepted(instance) => {
+                    crate::session::AnyToolCall::Succeeded(instance.succeed())
+                }
+                _ => {
+                    return Ok(crate::session::CompleteToolCallOutcome::WrongState {
+                        error: crate::session::ToolCallStateConflict { state: held_state },
+                    })
+                }
             };
             let next = moved.snapshot();
-            let answer = crate::session::CompleteToolCallOutcome::Succeeded { tool_call_completed: crate::session::ToolCallCompleted { tool_call_id: input.tool_call_id.clone(), ok: input.ok.clone(), output: input.output.clone(), at: input.at.clone() } };
+            let answer = crate::session::CompleteToolCallOutcome::Succeeded {
+                tool_call_completed: crate::session::ToolCallCompleted {
+                    tool_call_id: input.tool_call_id.clone(),
+                    ok: input.ok.clone(),
+                    output: input.output.clone(),
+                    at: input.at.clone(),
+                },
+            };
             ToolCallStorage::put(&mut self.ports, next);
             return Ok(answer);
         }
@@ -269,11 +314,24 @@ where
         let _ = &held;
         let held_state = held.state;
         let moved = match held.refine() {
-            crate::session::AnyToolCall::Accepted(instance) => crate::session::AnyToolCall::Failed(instance.fail()),
-            _ => return Ok(crate::session::CompleteToolCallOutcome::WrongState { error: crate::session::ToolCallStateConflict { state: held_state } }),
+            crate::session::AnyToolCall::Accepted(instance) => {
+                crate::session::AnyToolCall::Failed(instance.fail())
+            }
+            _ => {
+                return Ok(crate::session::CompleteToolCallOutcome::WrongState {
+                    error: crate::session::ToolCallStateConflict { state: held_state },
+                })
+            }
         };
         let next = moved.snapshot();
-        let answer = crate::session::CompleteToolCallOutcome::Failed { tool_call_completed: crate::session::ToolCallCompleted { tool_call_id: input.tool_call_id.clone(), ok: input.ok.clone(), output: input.output.clone(), at: input.at.clone() } };
+        let answer = crate::session::CompleteToolCallOutcome::Failed {
+            tool_call_completed: crate::session::ToolCallCompleted {
+                tool_call_id: input.tool_call_id.clone(),
+                ok: input.ok.clone(),
+                output: input.output.clone(),
+                at: input.at.clone(),
+            },
+        };
         ToolCallStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -284,21 +342,50 @@ impl<P> crate::session::obligations::DecideToolCallBehavior for Generated<P>
 where
     P: ToolCallStorage,
 {
-    fn decide_tool_call(&mut self, input: crate::session::DecideToolCall) -> Result<crate::session::DecideToolCallOutcome, UnmetObligation> {
+    fn decide_tool_call(
+        &mut self,
+        input: crate::session::DecideToolCall,
+    ) -> Result<crate::session::DecideToolCallOutcome, UnmetObligation> {
         let _ = &input;
         // `accepted`: an accepting branch, in declaration order.
-        if decided(equal(Some(&input.decision).map(|value| match value { crate::session::Decision::Accept => "Accept", crate::session::Decision::Refuse => "Refuse" }.to_owned()), Some("Accept".to_owned())), "agenticspec.session.DecideToolCall")? {
+        if decided(
+            equal(
+                Some(&input.decision).map(|value| {
+                    match value {
+                        crate::session::Decision::Accept => "Accept",
+                        crate::session::Decision::Refuse => "Refuse",
+                    }
+                    .to_owned()
+                }),
+                Some("Accept".to_owned()),
+            ),
+            "agenticspec.session.DecideToolCall",
+        )? {
             let Some(held) = ToolCallStorage::get(&self.ports, &input.tool_call_id) else {
                 return Ok(crate::session::DecideToolCallOutcome::WrongStateUnknownInstance);
             };
             let _ = &held;
             let held_state = held.state;
             let moved = match held.refine() {
-                crate::session::AnyToolCall::Requested(instance) => crate::session::AnyToolCall::Accepted(instance.accept()),
-                _ => return Ok(crate::session::DecideToolCallOutcome::WrongState { error: crate::session::ToolCallStateConflict { state: held_state } }),
+                crate::session::AnyToolCall::Requested(instance) => {
+                    crate::session::AnyToolCall::Accepted(instance.accept())
+                }
+                _ => {
+                    return Ok(crate::session::DecideToolCallOutcome::WrongState {
+                        error: crate::session::ToolCallStateConflict { state: held_state },
+                    })
+                }
             };
             let next = moved.snapshot();
-            let answer = crate::session::DecideToolCallOutcome::Accepted { tool_call_decided: crate::session::ToolCallDecided { tool_call_id: input.tool_call_id.clone(), decision: input.decision.clone(), decider: input.decider.clone(), reason: input.reason.clone(), at: input.at.clone() } };
+            let answer = crate::session::DecideToolCallOutcome::Accepted {
+                tool_call_decided: crate::session::ToolCallDecided {
+                    tool_call_id: input.tool_call_id.clone(),
+                    decision: input.decision.clone(),
+                    decider: input.decider.clone(),
+                    reason: input.reason.clone(),
+                    at: input.at.clone(),
+                },
+            };
             ToolCallStorage::put(&mut self.ports, next);
             return Ok(answer);
         }
@@ -309,11 +396,25 @@ where
         let _ = &held;
         let held_state = held.state;
         let moved = match held.refine() {
-            crate::session::AnyToolCall::Requested(instance) => crate::session::AnyToolCall::Refused(instance.refuse()),
-            _ => return Ok(crate::session::DecideToolCallOutcome::WrongState { error: crate::session::ToolCallStateConflict { state: held_state } }),
+            crate::session::AnyToolCall::Requested(instance) => {
+                crate::session::AnyToolCall::Refused(instance.refuse())
+            }
+            _ => {
+                return Ok(crate::session::DecideToolCallOutcome::WrongState {
+                    error: crate::session::ToolCallStateConflict { state: held_state },
+                })
+            }
         };
         let next = moved.snapshot();
-        let answer = crate::session::DecideToolCallOutcome::Refused { tool_call_decided: crate::session::ToolCallDecided { tool_call_id: input.tool_call_id.clone(), decision: input.decision.clone(), decider: input.decider.clone(), reason: input.reason.clone(), at: input.at.clone() } };
+        let answer = crate::session::DecideToolCallOutcome::Refused {
+            tool_call_decided: crate::session::ToolCallDecided {
+                tool_call_id: input.tool_call_id.clone(),
+                decision: input.decision.clone(),
+                decider: input.decider.clone(),
+                reason: input.reason.clone(),
+                at: input.at.clone(),
+            },
+        };
         ToolCallStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -324,7 +425,10 @@ impl<P> crate::session::obligations::EndAgentBehavior for Generated<P>
 where
     P: AgentStorage,
 {
-    fn end_agent(&mut self, input: crate::session::EndAgent) -> Result<crate::session::EndAgentOutcome, UnmetObligation> {
+    fn end_agent(
+        &mut self,
+        input: crate::session::EndAgent,
+    ) -> Result<crate::session::EndAgentOutcome, UnmetObligation> {
         let _ = &input;
         // `ended`: the default.
         let Some(held) = AgentStorage::get(&self.ports, &input.agent_id) else {
@@ -333,12 +437,25 @@ where
         let _ = &held;
         let held_state = held.state;
         let moved = match held.refine() {
-            crate::session::AnyAgent::Idle(instance) => crate::session::AnyAgent::Ended(instance.end()),
-            crate::session::AnyAgent::Working(instance) => crate::session::AnyAgent::Ended(instance.end()),
-            _ => return Ok(crate::session::EndAgentOutcome::WrongState { error: crate::session::AgentStateConflict { state: held_state } }),
+            crate::session::AnyAgent::Idle(instance) => {
+                crate::session::AnyAgent::Ended(instance.end())
+            }
+            crate::session::AnyAgent::Working(instance) => {
+                crate::session::AnyAgent::Ended(instance.end())
+            }
+            _ => {
+                return Ok(crate::session::EndAgentOutcome::WrongState {
+                    error: crate::session::AgentStateConflict { state: held_state },
+                })
+            }
         };
         let next = moved.snapshot();
-        let answer = crate::session::EndAgentOutcome::Ended { agent_ended: crate::session::AgentEnded { agent_id: input.agent_id.clone(), at: input.at.clone() } };
+        let answer = crate::session::EndAgentOutcome::Ended {
+            agent_ended: crate::session::AgentEnded {
+                agent_id: input.agent_id.clone(),
+                at: input.at.clone(),
+            },
+        };
         AgentStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -349,7 +466,10 @@ impl<P> crate::session::obligations::EndSessionBehavior for Generated<P>
 where
     P: SessionStorage,
 {
-    fn end_session(&mut self, input: crate::session::EndSession) -> Result<crate::session::EndSessionOutcome, UnmetObligation> {
+    fn end_session(
+        &mut self,
+        input: crate::session::EndSession,
+    ) -> Result<crate::session::EndSessionOutcome, UnmetObligation> {
         let _ = &input;
         // `ended`: the default.
         let Some(held) = SessionStorage::get(&self.ports, &input.session_id) else {
@@ -358,11 +478,22 @@ where
         let _ = &held;
         let held_state = held.state;
         let moved = match held.refine() {
-            crate::session::AnySession::Open(instance) => crate::session::AnySession::Ended(instance.end()),
-            _ => return Ok(crate::session::EndSessionOutcome::WrongState { error: crate::session::SessionStateConflict { state: held_state } }),
+            crate::session::AnySession::Open(instance) => {
+                crate::session::AnySession::Ended(instance.end())
+            }
+            _ => {
+                return Ok(crate::session::EndSessionOutcome::WrongState {
+                    error: crate::session::SessionStateConflict { state: held_state },
+                })
+            }
         };
         let next = moved.snapshot();
-        let answer = crate::session::EndSessionOutcome::Ended { session_ended: crate::session::SessionEnded { session_id: input.session_id.clone(), at: input.at.clone() } };
+        let answer = crate::session::EndSessionOutcome::Ended {
+            session_ended: crate::session::SessionEnded {
+                session_id: input.session_id.clone(),
+                at: input.at.clone(),
+            },
+        };
         SessionStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -373,7 +504,10 @@ impl<P> crate::session::obligations::EndTurnBehavior for Generated<P>
 where
     P: AgentStorage,
 {
-    fn end_turn(&mut self, input: crate::session::EndTurn) -> Result<crate::session::EndTurnOutcome, UnmetObligation> {
+    fn end_turn(
+        &mut self,
+        input: crate::session::EndTurn,
+    ) -> Result<crate::session::EndTurnOutcome, UnmetObligation> {
         let _ = &input;
         // `ended`: the default.
         let Some(held) = AgentStorage::get(&self.ports, &input.agent_id) else {
@@ -382,11 +516,22 @@ where
         let _ = &held;
         let held_state = held.state;
         let moved = match held.refine() {
-            crate::session::AnyAgent::Working(instance) => crate::session::AnyAgent::Idle(instance.end_turn()),
-            _ => return Ok(crate::session::EndTurnOutcome::WrongState { error: crate::session::AgentStateConflict { state: held_state } }),
+            crate::session::AnyAgent::Working(instance) => {
+                crate::session::AnyAgent::Idle(instance.end_turn())
+            }
+            _ => {
+                return Ok(crate::session::EndTurnOutcome::WrongState {
+                    error: crate::session::AgentStateConflict { state: held_state },
+                })
+            }
         };
         let next = moved.snapshot();
-        let answer = crate::session::EndTurnOutcome::Ended { turn_ended: crate::session::TurnEnded { agent_id: input.agent_id.clone(), at: input.at.clone() } };
+        let answer = crate::session::EndTurnOutcome::Ended {
+            turn_ended: crate::session::TurnEnded {
+                agent_id: input.agent_id.clone(),
+                at: input.at.clone(),
+            },
+        };
         AgentStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -397,7 +542,10 @@ impl<P> crate::session::obligations::OpenSessionBehavior for Generated<P>
 where
     P: SessionStorage,
 {
-    fn open_session(&mut self, input: crate::session::OpenSession) -> Result<crate::session::OpenSessionOutcome, UnmetObligation> {
+    fn open_session(
+        &mut self,
+        input: crate::session::OpenSession,
+    ) -> Result<crate::session::OpenSessionOutcome, UnmetObligation> {
         let _ = &input;
         // `opened`: the default.
         let identity: crate::session::SessionId = input.session_id.clone();
@@ -406,8 +554,19 @@ where
             harness: input.harness.clone(),
             opened_at: input.at.clone(),
         };
-        let answer = crate::session::OpenSessionOutcome::Opened { session_opened: crate::session::SessionOpened { session_id: identity.clone(), harness: input.harness.clone(), source: input.source.clone(), session_hash: input.session_hash.clone(), at: input.at.clone() } };
-        SessionStorage::put(&mut self.ports, crate::session::AnySession::Open(crate::session::Session::new(data)).snapshot());
+        let answer = crate::session::OpenSessionOutcome::Opened {
+            session_opened: crate::session::SessionOpened {
+                session_id: identity.clone(),
+                harness: input.harness.clone(),
+                source: input.source.clone(),
+                session_hash: input.session_hash.clone(),
+                at: input.at.clone(),
+            },
+        };
+        SessionStorage::put(
+            &mut self.ports,
+            crate::session::AnySession::Open(crate::session::Session::new(data)).snapshot(),
+        );
         return Ok(answer);
     }
 }
@@ -417,7 +576,10 @@ impl<P> crate::session::obligations::RecordExposureBehavior for Generated<P>
 where
     P: ExposureStorage,
 {
-    fn record_exposure(&mut self, input: crate::session::RecordExposure) -> Result<crate::session::RecordExposureOutcome, UnmetObligation> {
+    fn record_exposure(
+        &mut self,
+        input: crate::session::RecordExposure,
+    ) -> Result<crate::session::RecordExposureOutcome, UnmetObligation> {
         let _ = &input;
         // `recorded`: the default.
         let identity: crate::session::ExposureId = input.exposure_id.clone();
@@ -431,8 +593,23 @@ where
             verdict: input.verdict.clone(),
             tool_call_id: input.tool_call_id.clone(),
         };
-        let answer = crate::session::RecordExposureOutcome::Recorded { exposure_detected: crate::session::ExposureDetected { exposure_id: identity.clone(), agent_id: input.agent_id.clone(), channel: input.channel.clone(), class: input.class.clone(), kind: input.kind.clone(), alias: input.alias.clone(), verdict: input.verdict.clone(), tool_call_id: input.tool_call_id.clone(), at: input.at.clone() } };
-        ExposureStorage::put(&mut self.ports, crate::session::AnyExposure::Recorded(crate::session::Exposure::new(data)).snapshot());
+        let answer = crate::session::RecordExposureOutcome::Recorded {
+            exposure_detected: crate::session::ExposureDetected {
+                exposure_id: identity.clone(),
+                agent_id: input.agent_id.clone(),
+                channel: input.channel.clone(),
+                class: input.class.clone(),
+                kind: input.kind.clone(),
+                alias: input.alias.clone(),
+                verdict: input.verdict.clone(),
+                tool_call_id: input.tool_call_id.clone(),
+                at: input.at.clone(),
+            },
+        };
+        ExposureStorage::put(
+            &mut self.ports,
+            crate::session::AnyExposure::Recorded(crate::session::Exposure::new(data)).snapshot(),
+        );
         return Ok(answer);
     }
 }
@@ -442,21 +619,49 @@ impl<P> crate::session::obligations::RecordModelTurnBehavior for Generated<P>
 where
     P: AgentStorage,
 {
-    fn record_model_turn(&mut self, input: crate::session::RecordModelTurn) -> Result<crate::session::RecordModelTurnOutcome, UnmetObligation> {
+    fn record_model_turn(
+        &mut self,
+        input: crate::session::RecordModelTurn,
+    ) -> Result<crate::session::RecordModelTurnOutcome, UnmetObligation> {
         let _ = &input;
         // The addressed row's existence, at step 2 of the one precedence rule.
         if AgentStorage::get(&self.ports, &input.agent_id).is_none() {
-            return Ok(crate::session::RecordModelTurnOutcome::NoSuchAgent { error: crate::session::UnknownAgent { agent_id: input.agent_id.clone() } });
+            return Ok(crate::session::RecordModelTurnOutcome::NoSuchAgent {
+                error: crate::session::UnknownAgent {
+                    agent_id: input.agent_id.clone(),
+                },
+            });
         }
         // `recorded`: the default.
         let Some(held) = AgentStorage::get(&self.ports, &input.agent_id) else {
-            return Ok(crate::session::RecordModelTurnOutcome::NoSuchAgent { error: crate::session::UnknownAgent { agent_id: input.agent_id.clone() } });
+            return Ok(crate::session::RecordModelTurnOutcome::NoSuchAgent {
+                error: crate::session::UnknownAgent {
+                    agent_id: input.agent_id.clone(),
+                },
+            });
         };
         let _ = &held;
         let mut next = held;
         next.data.model = Some(input.model.clone());
         next.data.context_tokens = input.context_tokens.clone();
-        let answer = crate::session::RecordModelTurnOutcome::Recorded { model_turn_recorded: crate::session::ModelTurnRecorded { agent_id: input.agent_id.clone(), model: input.model.clone(), usage: input.usage.clone(), context_tokens: input.context_tokens.clone(), message_id: input.message_id.clone(), call_id: input.call_id.clone(), route: input.route.clone(), upstream: input.upstream.clone(), attempts: input.attempts.clone(), queue_wait_ms: input.queue_wait_ms.clone(), ttft_ms: input.ttft_ms.clone(), declared_cost_microdollars: input.declared_cost_microdollars.clone(), incomplete: input.incomplete.clone(), at: input.at.clone() } };
+        let answer = crate::session::RecordModelTurnOutcome::Recorded {
+            model_turn_recorded: crate::session::ModelTurnRecorded {
+                agent_id: input.agent_id.clone(),
+                model: input.model.clone(),
+                usage: input.usage.clone(),
+                context_tokens: input.context_tokens.clone(),
+                message_id: input.message_id.clone(),
+                call_id: input.call_id.clone(),
+                route: input.route.clone(),
+                upstream: input.upstream.clone(),
+                attempts: input.attempts.clone(),
+                queue_wait_ms: input.queue_wait_ms.clone(),
+                ttft_ms: input.ttft_ms.clone(),
+                declared_cost_microdollars: input.declared_cost_microdollars.clone(),
+                incomplete: input.incomplete.clone(),
+                at: input.at.clone(),
+            },
+        };
         AgentStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -467,7 +672,10 @@ impl<P> crate::session::obligations::RequestToolCallBehavior for Generated<P>
 where
     P: ToolCallStorage,
 {
-    fn request_tool_call(&mut self, input: crate::session::RequestToolCall) -> Result<crate::session::RequestToolCallOutcome, UnmetObligation> {
+    fn request_tool_call(
+        &mut self,
+        input: crate::session::RequestToolCall,
+    ) -> Result<crate::session::RequestToolCallOutcome, UnmetObligation> {
         let _ = &input;
         // `requested`: the default.
         let identity: crate::session::ToolCallId = input.tool_call_id.clone();
@@ -477,8 +685,22 @@ where
             tool: input.tool.clone(),
             category: input.category.clone(),
         };
-        let answer = crate::session::RequestToolCallOutcome::Requested { tool_call_requested: crate::session::ToolCallRequested { tool_call_id: identity.clone(), agent_id: input.agent_id.clone(), tool: input.tool.clone(), category: input.category.clone(), input: input.input.clone(), cwd: input.cwd.clone(), background: input.background.clone(), at: input.at.clone() } };
-        ToolCallStorage::put(&mut self.ports, crate::session::AnyToolCall::Requested(crate::session::ToolCall::new(data)).snapshot());
+        let answer = crate::session::RequestToolCallOutcome::Requested {
+            tool_call_requested: crate::session::ToolCallRequested {
+                tool_call_id: identity.clone(),
+                agent_id: input.agent_id.clone(),
+                tool: input.tool.clone(),
+                category: input.category.clone(),
+                input: input.input.clone(),
+                cwd: input.cwd.clone(),
+                background: input.background.clone(),
+                at: input.at.clone(),
+            },
+        };
+        ToolCallStorage::put(
+            &mut self.ports,
+            crate::session::AnyToolCall::Requested(crate::session::ToolCall::new(data)).snapshot(),
+        );
         return Ok(answer);
     }
 }
@@ -488,7 +710,10 @@ impl<P> crate::session::obligations::StartAgentBehavior for Generated<P>
 where
     P: AgentStorage,
 {
-    fn start_agent(&mut self, input: crate::session::StartAgent) -> Result<crate::session::StartAgentOutcome, UnmetObligation> {
+    fn start_agent(
+        &mut self,
+        input: crate::session::StartAgent,
+    ) -> Result<crate::session::StartAgentOutcome, UnmetObligation> {
         let _ = &input;
         // `started`: the default.
         let identity: crate::session::AgentId = input.agent_id.clone();
@@ -500,8 +725,20 @@ where
             model: None,
             context_tokens: 0,
         };
-        let answer = crate::session::StartAgentOutcome::Started { agent_started: crate::session::AgentStarted { agent_id: identity.clone(), session_id: input.session_id.clone(), parent_agent_id: input.parent_agent_id.clone(), role: input.role.clone(), spawned_by: input.spawned_by.clone(), at: input.at.clone() } };
-        AgentStorage::put(&mut self.ports, crate::session::AnyAgent::Idle(crate::session::Agent::new(data)).snapshot());
+        let answer = crate::session::StartAgentOutcome::Started {
+            agent_started: crate::session::AgentStarted {
+                agent_id: identity.clone(),
+                session_id: input.session_id.clone(),
+                parent_agent_id: input.parent_agent_id.clone(),
+                role: input.role.clone(),
+                spawned_by: input.spawned_by.clone(),
+                at: input.at.clone(),
+            },
+        };
+        AgentStorage::put(
+            &mut self.ports,
+            crate::session::AnyAgent::Idle(crate::session::Agent::new(data)).snapshot(),
+        );
         return Ok(answer);
     }
 }
@@ -511,7 +748,10 @@ impl<P> crate::session::obligations::SubmitPromptBehavior for Generated<P>
 where
     P: AgentStorage,
 {
-    fn submit_prompt(&mut self, input: crate::session::SubmitPrompt) -> Result<crate::session::SubmitPromptOutcome, UnmetObligation> {
+    fn submit_prompt(
+        &mut self,
+        input: crate::session::SubmitPrompt,
+    ) -> Result<crate::session::SubmitPromptOutcome, UnmetObligation> {
         let _ = &input;
         // `submitted`: the default.
         let Some(held) = AgentStorage::get(&self.ports, &input.agent_id) else {
@@ -520,12 +760,29 @@ where
         let _ = &held;
         let held_state = held.state;
         let moved = match held.refine() {
-            crate::session::AnyAgent::Idle(instance) => crate::session::AnyAgent::Working(instance.resume()),
-            crate::session::AnyAgent::Working(instance) => crate::session::AnyAgent::Working(instance.resume()),
-            _ => return Ok(crate::session::SubmitPromptOutcome::WrongState { error: crate::session::AgentStateConflict { state: held_state } }),
+            crate::session::AnyAgent::Idle(instance) => {
+                crate::session::AnyAgent::Working(instance.resume())
+            }
+            crate::session::AnyAgent::Working(instance) => {
+                crate::session::AnyAgent::Working(instance.resume())
+            }
+            _ => {
+                return Ok(crate::session::SubmitPromptOutcome::WrongState {
+                    error: crate::session::AgentStateConflict { state: held_state },
+                })
+            }
         };
         let next = moved.snapshot();
-        let answer = crate::session::SubmitPromptOutcome::Submitted { prompt_submitted: crate::session::PromptSubmitted { agent_id: input.agent_id.clone(), author: input.author.clone(), attribution: input.attribution.clone(), class: input.class.clone(), content: input.content.clone(), at: input.at.clone() } };
+        let answer = crate::session::SubmitPromptOutcome::Submitted {
+            prompt_submitted: crate::session::PromptSubmitted {
+                agent_id: input.agent_id.clone(),
+                author: input.author.clone(),
+                attribution: input.attribution.clone(),
+                class: input.class.clone(),
+                content: input.content.clone(),
+                at: input.at.clone(),
+            },
+        };
         AgentStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -619,10 +876,51 @@ impl<P> crate::view::obligations::AgentTurnsQuery for Generated<P>
 where
     P: EventRowStorage,
 {
-    fn agent_turns(&self, param_0: crate::session::SessionId, param_1: crate::session::AgentId) -> Result<Vec<crate::view::AgentTurns>, UnmetObligation> {
+    fn agent_turns(
+        &self,
+        param_0: crate::session::SessionId,
+        param_1: crate::session::AgentId,
+    ) -> Result<Vec<crate::view::AgentTurns>, UnmetObligation> {
         let mut admitted = EventRowStorage::list(&self.ports);
         // `filter:` shows a row where it holds; false or unknown hides it.
-        admitted.retain(|held| all(&[equal(Some(&held.data.session_id).map(|value| &value.0).map(|value| value.clone()), Some(&param_0).map(|value| &value.0).map(|value| value.clone())), equal(Some(&held.data.agent).map(|value| &value.0).map(|value| value.clone()), Some(&param_1).map(|value| &value.0).map(|value| value.clone())), equal(Some(&held.data.kind).map(|value| match value { crate::view::EventKind::AgentStarted => "agent_started", crate::view::EventKind::Prompt => "prompt", crate::view::EventKind::ModelTurn => "model_turn", crate::view::EventKind::ToolCall => "tool_call", crate::view::EventKind::Decision => "decision", crate::view::EventKind::ToolResult => "tool_result", crate::view::EventKind::TurnEnd => "turn_end", crate::view::EventKind::Compaction => "compaction", crate::view::EventKind::Exposure => "exposure", crate::view::EventKind::CacheBust => "cache_bust" }.to_owned()), Some("model_turn".to_owned()))]) == Some(true));
+        admitted.retain(|held| {
+            all(&[
+                equal(
+                    Some(&held.data.session_id)
+                        .map(|value| &value.0)
+                        .map(|value| value.clone()),
+                    Some(&param_0)
+                        .map(|value| &value.0)
+                        .map(|value| value.clone()),
+                ),
+                equal(
+                    Some(&held.data.agent)
+                        .map(|value| &value.0)
+                        .map(|value| value.clone()),
+                    Some(&param_1)
+                        .map(|value| &value.0)
+                        .map(|value| value.clone()),
+                ),
+                equal(
+                    Some(&held.data.kind).map(|value| {
+                        match value {
+                            crate::view::EventKind::AgentStarted => "agent_started",
+                            crate::view::EventKind::Prompt => "prompt",
+                            crate::view::EventKind::ModelTurn => "model_turn",
+                            crate::view::EventKind::ToolCall => "tool_call",
+                            crate::view::EventKind::Decision => "decision",
+                            crate::view::EventKind::ToolResult => "tool_result",
+                            crate::view::EventKind::TurnEnd => "turn_end",
+                            crate::view::EventKind::Compaction => "compaction",
+                            crate::view::EventKind::Exposure => "exposure",
+                            crate::view::EventKind::CacheBust => "cache_bust",
+                        }
+                        .to_owned()
+                    }),
+                    Some("model_turn".to_owned()),
+                ),
+            ]) == Some(true)
+        });
         Ok(admitted
             .into_iter()
             .map(|held| crate::view::AgentTurns {
@@ -656,10 +954,27 @@ impl<P> crate::view::obligations::OverviewFiguresQuery for Generated<P>
 where
     P: FigureBucketStorage,
 {
-    fn overview_figures(&self, param_0: crate::primitives::Timestamp, param_1: i64) -> Result<Vec<crate::view::OverviewFigures>, UnmetObligation> {
+    fn overview_figures(
+        &self,
+        param_0: crate::primitives::Timestamp,
+        param_1: i64,
+    ) -> Result<Vec<crate::view::OverviewFigures>, UnmetObligation> {
         let mut admitted = FigureBucketStorage::list(&self.ports);
         // `filter:` shows a row where it holds; false or unknown hides it.
-        admitted.retain(|held| all(&[compare_instants(Some(&held.data.start).map(|value| value.0.clone()), Some(&param_0).map(|value| value.0.clone()), core::cmp::Ordering::is_ge), compare_numbers(Some(&held.data.bucket_seconds).map(|value| value.to_string()), Some(&param_1).map(|value| value.to_string()), core::cmp::Ordering::is_eq)]) == Some(true));
+        admitted.retain(|held| {
+            all(&[
+                compare_instants(
+                    Some(&held.data.start).map(|value| value.0.clone()),
+                    Some(&param_0).map(|value| value.0.clone()),
+                    core::cmp::Ordering::is_ge,
+                ),
+                compare_numbers(
+                    Some(&held.data.bucket_seconds).map(|value| value.to_string()),
+                    Some(&param_1).map(|value| value.to_string()),
+                    core::cmp::Ordering::is_eq,
+                ),
+            ]) == Some(true)
+        });
         Ok(admitted
             .into_iter()
             .map(|held| crate::view::OverviewFigures {
@@ -683,10 +998,22 @@ impl<P> crate::view::obligations::SessionAgentsQuery for Generated<P>
 where
     P: AgentListingStorage,
 {
-    fn session_agents(&self, param_0: crate::session::SessionId) -> Result<Vec<crate::view::SessionAgents>, UnmetObligation> {
+    fn session_agents(
+        &self,
+        param_0: crate::session::SessionId,
+    ) -> Result<Vec<crate::view::SessionAgents>, UnmetObligation> {
         let mut admitted = AgentListingStorage::list(&self.ports);
         // `filter:` shows a row where it holds; false or unknown hides it.
-        admitted.retain(|held| equal(Some(&held.data.session_id).map(|value| &value.0).map(|value| value.clone()), Some(&param_0).map(|value| &value.0).map(|value| value.clone())) == Some(true));
+        admitted.retain(|held| {
+            equal(
+                Some(&held.data.session_id)
+                    .map(|value| &value.0)
+                    .map(|value| value.clone()),
+                Some(&param_0)
+                    .map(|value| &value.0)
+                    .map(|value| value.clone()),
+            ) == Some(true)
+        });
         Ok(admitted
             .into_iter()
             .map(|held| crate::view::SessionAgents {
@@ -713,10 +1040,22 @@ impl<P> crate::view::obligations::SessionByIdQuery for Generated<P>
 where
     P: SessionListingStorage,
 {
-    fn session_by_id(&self, param_0: crate::session::SessionId) -> Result<Vec<crate::view::SessionById>, UnmetObligation> {
+    fn session_by_id(
+        &self,
+        param_0: crate::session::SessionId,
+    ) -> Result<Vec<crate::view::SessionById>, UnmetObligation> {
         let mut admitted = SessionListingStorage::list(&self.ports);
         // `filter:` shows a row where it holds; false or unknown hides it.
-        admitted.retain(|held| equal(Some(&held.data.session_id).map(|value| &value.0).map(|value| value.clone()), Some(&param_0).map(|value| &value.0).map(|value| value.clone())) == Some(true));
+        admitted.retain(|held| {
+            equal(
+                Some(&held.data.session_id)
+                    .map(|value| &value.0)
+                    .map(|value| value.clone()),
+                Some(&param_0)
+                    .map(|value| &value.0)
+                    .map(|value| value.clone()),
+            ) == Some(true)
+        });
         Ok(admitted
             .into_iter()
             .map(|held| crate::view::SessionById {
@@ -750,10 +1089,22 @@ impl<P> crate::view::obligations::SessionChecksQuery for Generated<P>
 where
     P: SessionCheckStorage,
 {
-    fn session_checks(&self, param_0: crate::session::SessionId) -> Result<Vec<crate::view::SessionChecks>, UnmetObligation> {
+    fn session_checks(
+        &self,
+        param_0: crate::session::SessionId,
+    ) -> Result<Vec<crate::view::SessionChecks>, UnmetObligation> {
         let mut admitted = SessionCheckStorage::list(&self.ports);
         // `filter:` shows a row where it holds; false or unknown hides it.
-        admitted.retain(|held| equal(Some(&held.data.session_id).map(|value| &value.0).map(|value| value.clone()), Some(&param_0).map(|value| &value.0).map(|value| value.clone())) == Some(true));
+        admitted.retain(|held| {
+            equal(
+                Some(&held.data.session_id)
+                    .map(|value| &value.0)
+                    .map(|value| value.clone()),
+                Some(&param_0)
+                    .map(|value| &value.0)
+                    .map(|value| value.clone()),
+            ) == Some(true)
+        });
         Ok(admitted
             .into_iter()
             .map(|held| crate::view::SessionChecks {
@@ -770,21 +1121,61 @@ where
     }
 }
 
-impl<P: crate::view::obligations::SessionEventCountsQuery> crate::view::obligations::SessionEventCountsQuery for Generated<P> {
-    fn session_event_counts(&self, session_id: crate::session::SessionId, agent: Option<crate::session::AgentId>) -> Result<Vec<crate::view::SessionEventCounts>, UnmetObligation> {
-        crate::view::obligations::SessionEventCountsQuery::session_event_counts(&self.ports, session_id, agent)
+impl<P: crate::view::obligations::SessionEventCountsQuery>
+    crate::view::obligations::SessionEventCountsQuery for Generated<P>
+{
+    fn session_event_counts(
+        &self,
+        session_id: crate::session::SessionId,
+        agent: Option<crate::session::AgentId>,
+    ) -> Result<Vec<crate::view::SessionEventCounts>, UnmetObligation> {
+        crate::view::obligations::SessionEventCountsQuery::session_event_counts(
+            &self.ports,
+            session_id,
+            agent,
+        )
     }
 }
 
-impl<P: crate::view::obligations::SessionEventsQuery> crate::view::obligations::SessionEventsQuery for Generated<P> {
-    fn session_events(&self, session_id: crate::session::SessionId, agent: Option<crate::session::AgentId>, kind: Option<crate::view::EventKind>, notable: Option<bool>, before: Option<i64>) -> Result<Vec<crate::view::SessionEvents>, UnmetObligation> {
-        crate::view::obligations::SessionEventsQuery::session_events(&self.ports, session_id, agent, kind, notable, before)
+impl<P: crate::view::obligations::SessionEventsQuery> crate::view::obligations::SessionEventsQuery
+    for Generated<P>
+{
+    fn session_events(
+        &self,
+        session_id: crate::session::SessionId,
+        agent: Option<crate::session::AgentId>,
+        kind: Option<crate::view::EventKind>,
+        notable: Option<bool>,
+        before: Option<i64>,
+    ) -> Result<Vec<crate::view::SessionEvents>, UnmetObligation> {
+        crate::view::obligations::SessionEventsQuery::session_events(
+            &self.ports,
+            session_id,
+            agent,
+            kind,
+            notable,
+            before,
+        )
     }
 }
 
-impl<P: crate::view::obligations::SessionListQuery> crate::view::obligations::SessionListQuery for Generated<P> {
-    fn session_list(&self, since: Option<crate::primitives::Timestamp>, search: Option<String>, limit: Option<i64>, offset: Option<i64>) -> Result<Vec<crate::view::SessionList>, UnmetObligation> {
-        crate::view::obligations::SessionListQuery::session_list(&self.ports, since, search, limit, offset)
+impl<P: crate::view::obligations::SessionListQuery> crate::view::obligations::SessionListQuery
+    for Generated<P>
+{
+    fn session_list(
+        &self,
+        since: Option<crate::primitives::Timestamp>,
+        search: Option<String>,
+        limit: Option<i64>,
+        offset: Option<i64>,
+    ) -> Result<Vec<crate::view::SessionList>, UnmetObligation> {
+        crate::view::obligations::SessionListQuery::session_list(
+            &self.ports,
+            since,
+            search,
+            limit,
+            offset,
+        )
     }
 }
 
@@ -793,10 +1184,30 @@ impl<P> crate::view::obligations::SessionTimelineQuery for Generated<P>
 where
     P: TimelineSlotStorage,
 {
-    fn session_timeline(&self, param_0: crate::session::SessionId, param_1: i64) -> Result<Vec<crate::view::SessionTimeline>, UnmetObligation> {
+    fn session_timeline(
+        &self,
+        param_0: crate::session::SessionId,
+        param_1: i64,
+    ) -> Result<Vec<crate::view::SessionTimeline>, UnmetObligation> {
         let mut admitted = TimelineSlotStorage::list(&self.ports);
         // `filter:` shows a row where it holds; false or unknown hides it.
-        admitted.retain(|held| all(&[equal(Some(&held.data.session_id).map(|value| &value.0).map(|value| value.clone()), Some(&param_0).map(|value| &value.0).map(|value| value.clone())), compare_numbers(Some(&held.data.slot_seconds).map(|value| value.to_string()), Some(&param_1).map(|value| value.to_string()), core::cmp::Ordering::is_eq)]) == Some(true));
+        admitted.retain(|held| {
+            all(&[
+                equal(
+                    Some(&held.data.session_id)
+                        .map(|value| &value.0)
+                        .map(|value| value.clone()),
+                    Some(&param_0)
+                        .map(|value| &value.0)
+                        .map(|value| value.clone()),
+                ),
+                compare_numbers(
+                    Some(&held.data.slot_seconds).map(|value| value.to_string()),
+                    Some(&param_1).map(|value| value.to_string()),
+                    core::cmp::Ordering::is_eq,
+                ),
+            ]) == Some(true)
+        });
         Ok(admitted
             .into_iter()
             .map(|held| crate::view::SessionTimeline {
@@ -834,10 +1245,42 @@ impl<P> crate::view::obligations::SessionTurnsQuery for Generated<P>
 where
     P: EventRowStorage,
 {
-    fn session_turns(&self, param_0: crate::session::SessionId) -> Result<Vec<crate::view::SessionTurns>, UnmetObligation> {
+    fn session_turns(
+        &self,
+        param_0: crate::session::SessionId,
+    ) -> Result<Vec<crate::view::SessionTurns>, UnmetObligation> {
         let mut admitted = EventRowStorage::list(&self.ports);
         // `filter:` shows a row where it holds; false or unknown hides it.
-        admitted.retain(|held| all(&[equal(Some(&held.data.session_id).map(|value| &value.0).map(|value| value.clone()), Some(&param_0).map(|value| &value.0).map(|value| value.clone())), equal(Some(&held.data.kind).map(|value| match value { crate::view::EventKind::AgentStarted => "agent_started", crate::view::EventKind::Prompt => "prompt", crate::view::EventKind::ModelTurn => "model_turn", crate::view::EventKind::ToolCall => "tool_call", crate::view::EventKind::Decision => "decision", crate::view::EventKind::ToolResult => "tool_result", crate::view::EventKind::TurnEnd => "turn_end", crate::view::EventKind::Compaction => "compaction", crate::view::EventKind::Exposure => "exposure", crate::view::EventKind::CacheBust => "cache_bust" }.to_owned()), Some("model_turn".to_owned()))]) == Some(true));
+        admitted.retain(|held| {
+            all(&[
+                equal(
+                    Some(&held.data.session_id)
+                        .map(|value| &value.0)
+                        .map(|value| value.clone()),
+                    Some(&param_0)
+                        .map(|value| &value.0)
+                        .map(|value| value.clone()),
+                ),
+                equal(
+                    Some(&held.data.kind).map(|value| {
+                        match value {
+                            crate::view::EventKind::AgentStarted => "agent_started",
+                            crate::view::EventKind::Prompt => "prompt",
+                            crate::view::EventKind::ModelTurn => "model_turn",
+                            crate::view::EventKind::ToolCall => "tool_call",
+                            crate::view::EventKind::Decision => "decision",
+                            crate::view::EventKind::ToolResult => "tool_result",
+                            crate::view::EventKind::TurnEnd => "turn_end",
+                            crate::view::EventKind::Compaction => "compaction",
+                            crate::view::EventKind::Exposure => "exposure",
+                            crate::view::EventKind::CacheBust => "cache_bust",
+                        }
+                        .to_owned()
+                    }),
+                    Some("model_turn".to_owned()),
+                ),
+            ]) == Some(true)
+        });
         Ok(admitted
             .into_iter()
             .map(|held| crate::view::SessionTurns {
@@ -904,7 +1347,11 @@ fn number_parts(text: &str) -> Option<(bool, String, String)> {
     if whole.is_empty() && fraction.is_empty() {
         return None;
     }
-    if !whole.bytes().chain(fraction.bytes()).all(|byte| byte.is_ascii_digit()) {
+    if !whole
+        .bytes()
+        .chain(fraction.bytes())
+        .all(|byte| byte.is_ascii_digit())
+    {
         return None;
     }
     let whole = whole.trim_start_matches('0').to_owned();
@@ -953,9 +1400,9 @@ fn instant_of(text: &str) -> Option<(i64, u32)> {
         if slice.is_empty() || !slice.iter().all(u8::is_ascii_digit) {
             return None;
         }
-        slice
-            .iter()
-            .try_fold(0u32, |total, digit| Some(total * 10 + u32::from(digit - b'0')))
+        slice.iter().try_fold(0u32, |total, digit| {
+            Some(total * 10 + u32::from(digit - b'0'))
+        })
     };
     let at = |index: usize, expected: &[u8]| bytes.get(index).is_some_and(|b| expected.contains(b));
     if !(at(4, b"-") && at(7, b"-") && at(10, b"Tt") && at(13, b":") && at(16, b":")) {
@@ -991,12 +1438,19 @@ fn instant_of(text: &str) -> Option<(i64, u32)> {
     let offset = match bytes.get(position..)? {
         b"Z" | b"z" => 0i64,
         [sign @ (b'+' | b'-'), _, _, b':', _, _] => {
-            let (hours, minutes) = (digits(position + 1, position + 3)?, digits(position + 4, position + 6)?);
+            let (hours, minutes) = (
+                digits(position + 1, position + 3)?,
+                digits(position + 4, position + 6)?,
+            );
             if hours > 23 || minutes > 59 {
                 return None;
             }
             let magnitude = i64::from(hours * 3600 + minutes * 60);
-            if *sign == b'-' { -magnitude } else { magnitude }
+            if *sign == b'-' {
+                -magnitude
+            } else {
+                magnitude
+            }
         }
         _ => return None,
     };
@@ -1007,5 +1461,8 @@ fn instant_of(text: &str) -> Option<(i64, u32)> {
     let of_year = (153 * march + 2) / 5 + i64::from(day) - 1;
     let of_cycle = of_era * 365 + of_era / 4 - of_era / 100 + of_year;
     let days = era * 146_097 + of_cycle - 719_468;
-    Some((days * 86_400 + i64::from(hour * 3600 + minute * 60 + second) - offset, nanos))
+    Some((
+        days * 86_400 + i64::from(hour * 3600 + minute * 60 + second) - offset,
+        nanos,
+    ))
 }

@@ -77,3 +77,18 @@ Its output lists each nested architecture with its part, name, `reference`, dige
 The simulator flattens a nested architecture into the document that nests it: its parts become parts named `<part>.<inner part>` (`console.steward`), its links join the outer ones under those names, and a link to `console.steward` reaches that part. It then checks and simulates the result like any other architecture. The nested document's marked places are fixed at their values (an experiment of the outer document does not search them), and its policies do not apply: the outer document's policies hold for every part. An inner part keeps its `role`, so the profile gives its behaviour under `roles.<role>` like any other part's (an inner agent that answers questions takes `roles.<role>.answer_seconds`); an inner `model_share` and an inner trigger's `source` are renamed with the parts they name.
 
 The graph draws a nested architecture as one box, labelled with its name and part count, its border parts as ports on the box. Its page links to the page of the nested architecture, which is also drawn on its own. [team-with-console](team-with-console.md) nests [console](console.md).
+
+**The view key.** An architecture document may hold a top-level `view:` key: how its operator UI looks, and nothing else. `agenticspec ui derive --path <architecture> --out <name>.ui.yaml` writes that UI as one `ess-ui/1` document: an overview of each level (its parts, its links in a table filterable by part, its graph, its policies and marked places), a page per part with the panels of every block it uses, and a live channel per level. `--contract` adds the actions of the architecture's contract and the domains its ports use; `--check` compares instead of writing. The key is read by the derivation only: the simulator, the check and the digest of a catalog result ignore it, so a label edit changes no result.
+
+- `home`: the page the UI opens on: `overview`, or a part's name
+- `order.parts`: the parts shown first in the parts table and the navigation, in this order; the rest follow nested architectures first, then by block, then by name
+- `order.panels.<part>`: the panels shown first on that part's page, by view name, such as `agentic.harness.Turns`
+- `labels.parts.<part>`: the label of a part
+- `labels.panels.<view>`: the title of a panel
+- `labels.columns.<table>.<field>`: the label of a column of the overview's `parts` or `reach` table
+- `hide.panels`: panels not shown, by view name
+- `hide.columns.<table>`: columns of the `parts` or `reach` table not shown
+- `hide.actions`: actions not shown, by name, such as `reject_decision`
+- `groups`: navigation groups, each a `name`, a `label` and its `parts`; a label only, the parts stay where they are
+
+An entry that names a part, panel, column or action the document does not have, or that holds a read, a filter, a field list or a command, is refused with its path, such as `view/labels/parts/nope`. A panel's own columns are labelled by its block, since every architecture shows the same panel. The key of a nested document applies on that document's pages.

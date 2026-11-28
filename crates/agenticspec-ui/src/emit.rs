@@ -528,6 +528,8 @@ struct PageOut<'a> {
     rt: BTreeSet<&'static str>,
     widgets: BTreeSet<String>,
     field_defs: bool,
+    /// A row action sends a field of its row, which the table hands over untyped.
+    row_values: bool,
     script: String,
     /// The page's path parameters, which a form sends; none in a widget.
     params: &'a [String],
@@ -704,7 +706,14 @@ impl PageOut<'_> {
                 self.rt.insert("useCommand");
                 let fields: Vec<String> = input
                     .iter()
-                    .map(|(k, v)| format!("{}: {v}", prop(k)))
+                    .map(|(k, v)| {
+                        if in_row && v.starts_with("row[") {
+                            self.row_values = true;
+                            format!("{}: {v} as Value", prop(k))
+                        } else {
+                            format!("{}: {v}", prop(k))
+                        }
+                    })
                     .collect();
                 let object = if fields.is_empty() {
                     "{}".to_string()
@@ -878,6 +887,17 @@ impl PageOut<'_> {
                 }
                 format!("<{component}{attrs} />\n")
             }
+            SectionKind::Frame { sections } => {
+                self.kit("KitStack");
+                let mut inner = String::new();
+                for c in sections {
+                    inner.push_str(&self.section(c, false));
+                }
+                format!(
+                    "<KitStack :padded=\"false\">\n{}</KitStack>\n",
+                    indent(&inner, 2)
+                )
+            }
             SectionKind::Host { host } => match &s.read {
                 Some(r) => format!("<component :is=\"hosts.{host}\" :read=\"{}\" />\n", r.var),
                 None => format!("<component :is=\"hosts.{host}\" />\n"),
@@ -890,14 +910,19 @@ impl PageOut<'_> {
             } => {
                 let r = s.read.as_ref();
                 let rows = match (r, r.and_then(|r| r.filter.as_ref())) {
-                    (Some(r), Some((field, state))) => {
+                    (Some(r), Some((fields, state))) => {
                         self.rt.insert("contains");
-                        format!(
-                            "{}.rows.filter((row) => contains(row[{}], page.state[{}]))",
-                            r.var,
-                            ts_str(field),
-                            ts_str(state)
-                        )
+                        let terms: Vec<String> = fields
+                            .iter()
+                            .map(|f| {
+                                format!(
+                                    "contains(row[{}], page.state[{}])",
+                                    ts_str(f),
+                                    ts_str(state)
+                                )
+                            })
+                            .collect();
+                        format!("{}.rows.filter((row) => {})", r.var, terms.join(" || "))
                     }
                     (Some(r), None) => format!("{}.rows", r.var),
                     (None, _) => "[]".into(),
@@ -1100,6 +1125,9 @@ fn imports(out: &PageOut, widgets_dir: &str) -> String {
         "import {{ {} }} from '../runtime';",
         out.rt.iter().copied().collect::<Vec<_>>().join(", ")
     );
+    if out.row_values {
+        s.push_str("import type { Value } from '../client';\n");
+    }
     for w in &out.widgets {
         let _ = writeln!(s, "import {w} from '{widgets_dir}{w}.vue';");
     }
@@ -1126,6 +1154,7 @@ fn widget_vue(w: &WidgetModel) -> String {
         rt: BTreeSet::new(),
         widgets: BTreeSet::new(),
         field_defs: false,
+        row_values: false,
         script: String::new(),
         params: &[],
         client: scoped.then_some("client"),
@@ -1197,12 +1226,25 @@ fn page_vue(app: &App, page: &PageModel) -> String {
         rt: BTreeSet::new(),
         widgets: BTreeSet::new(),
         field_defs: false,
+        row_values: false,
         script: String::new(),
         params: &page.params,
         client: None,
     };
     out.kit("KitShell");
-    let bar = page.bar.as_ref().map(|b| out.bar(b));
+    let mut bar = page.bar.as_ref().map(|b| out.bar(b));
+    if !page.actions.is_empty() {
+        out.kit("KitToolbar");
+        let mut inner = String::new();
+        for a in &page.actions {
+            inner.push_str(&out.action(a, false));
+        }
+        let acts = format!(
+            "<KitToolbar label=\"Actions\">\n{}</KitToolbar>\n",
+            indent(&inner, 2)
+        );
+        bar = Some(bar.unwrap_or_default() + &acts);
+    }
     let body = if page.side.is_empty() {
         out.column(&page.main, true)
     } else {

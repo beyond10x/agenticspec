@@ -16,6 +16,7 @@ const fields_rows: FieldDef[] = [
   { field: 'ports', label: 'Ports', as: 'json' },
   { field: 'invariants', label: 'Invariants', as: 'json' },
   { field: 'border', label: 'Border', as: 'list' },
+  { field: 'ingress', label: 'Ingress', as: 'json' },
 ];
 </script>
 

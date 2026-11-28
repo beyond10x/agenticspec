@@ -3248,6 +3248,120 @@
         }
       }
     },
+    "ui_derive": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_derive"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiDeriveInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "check": {
+              "kind": "boolean"
+            },
+            "contract": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "out": {
+              "kind": "string"
+            },
+            "path": {
+              "kind": "string"
+            },
+            "ports": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "root": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiDeriveResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "actions": {
+              "kind": "integer"
+            },
+            "channels": {
+              "kind": "integer"
+            },
+            "files": {
+              "kind": "integer"
+            },
+            "out": {
+              "kind": "string"
+            },
+            "pages": {
+              "kind": "integer"
+            },
+            "written": {
+              "kind": "boolean"
+            }
+          }
+        }
+      },
+      "errors": {
+        "derived_stale": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "ui_generate": {
       "target": {
         "kind": "local",
@@ -4312,6 +4426,59 @@
     {
       "path": [
         "ui",
+        "derive"
+      ],
+      "aliases": [],
+      "callable": "ui_derive",
+      "about": "Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check",
+      "arguments": [
+        {
+          "field": "path",
+          "source": {
+            "kind": "option",
+            "long": "path"
+          }
+        },
+        {
+          "field": "contract",
+          "source": {
+            "kind": "option",
+            "long": "contract"
+          }
+        },
+        {
+          "field": "ports",
+          "source": {
+            "kind": "option",
+            "long": "ports"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "root",
+          "source": {
+            "kind": "option",
+            "long": "root"
+          }
+        },
+        {
+          "field": "check",
+          "source": {
+            "kind": "flag",
+            "long": "check"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ui",
         "generate"
       ],
       "aliases": [],
@@ -4387,6 +4554,7 @@
     "handler:sim_trace: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_conform: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_derive: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_generate: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract"
   ]

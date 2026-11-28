@@ -785,6 +785,7 @@ An `on_event` trigger fires on that event at any part, or only at the part its `
     );
     s.push('\n');
     s.push_str(NESTING);
+    s.push_str(VIEW_KEY_DOC);
     s
 }
 
@@ -827,3 +828,26 @@ The simulator flattens a nested architecture into the document that nests it: it
 
 The graph draws a nested architecture as one box, labelled with its name and part count, its border parts as ports on the box. Its page links to the page of the nested architecture, which is also drawn on its own. [team-with-console](team-with-console.md) nests [console](console.md).
 "#;
+
+/// The reference of the `view:` key on the architectures index.
+const VIEW_KEY_DOC: &str = "\n**The view key.** \
+An architecture document may hold a top-level `view:` key: how its operator UI looks, and nothing else. \
+`agenticspec ui derive --path <architecture> --out <name>.ui.yaml` writes that UI as one `ess-ui/1` document: \
+an overview of each level (its parts, its links in a table filterable by part, its graph, its policies and marked places), \
+a page per part with the panels of every block it uses, and a live channel per level. \
+`--contract` adds the actions of the architecture's contract and the domains its ports use; `--check` compares instead of writing. \
+The key is read by the derivation only: the simulator, the check and the digest of a catalog result ignore it, \
+so a label edit changes no result.\n\n\
+- `home`: the page the UI opens on: `overview`, or a part's name\n\
+- `order.parts`: the parts shown first in the parts table and the navigation, in this order; the rest follow nested architectures first, then by block, then by name\n\
+- `order.panels.<part>`: the panels shown first on that part's page, by view name, such as `agentic.harness.Turns`\n\
+- `labels.parts.<part>`: the label of a part\n\
+- `labels.panels.<view>`: the title of a panel\n\
+- `labels.columns.<table>.<field>`: the label of a column of the overview's `parts` or `reach` table\n\
+- `hide.panels`: panels not shown, by view name\n\
+- `hide.columns.<table>`: columns of the `parts` or `reach` table not shown\n\
+- `hide.actions`: actions not shown, by name, such as `reject_decision`\n\
+- `groups`: navigation groups, each a `name`, a `label` and its `parts`; a label only, the parts stay where they are\n\n\
+An entry that names a part, panel, column or action the document does not have, or that holds a read, a filter, a field list or a command, \
+is refused with its path, such as `view/labels/parts/nope`. A panel's own columns are labelled by its block, since every architecture shows the same panel. \
+The key of a nested document applies on that document's pages.\n";

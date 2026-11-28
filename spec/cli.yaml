@@ -250,6 +250,15 @@ callables:
       projection_refused: agenticspec.cli.Refusal
       projections_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+  ui_derive:
+    target: {kind: local, owner: agenticspec.cli, action: ui_derive}
+    input: agenticspec.cli.UiDeriveInput
+    result: agenticspec.cli.UiDeriveResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
+      derived_stale: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
 commands:
   - path: [lift]
     callable: lift
@@ -457,3 +466,13 @@ commands:
       - {field: blocks, source: {kind: option, long: blocks}}
       - {field: ports, source: {kind: option, long: ports}}
       - {field: kpis, source: {kind: option, long: kpis}}
+  - path: [ui, derive]
+    callable: ui_derive
+    about: Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check
+    arguments:
+      - {field: path, source: {kind: option, long: path}}
+      - {field: contract, source: {kind: option, long: contract}}
+      - {field: ports, source: {kind: option, long: ports}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: root, source: {kind: option, long: root}}
+      - {field: check, source: {kind: flag, long: check}}

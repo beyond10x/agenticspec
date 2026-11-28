@@ -1,0 +1,8 @@
+{
+  "view": "agentic.store.Records",
+  "rows": [
+    {"record_id": "00000000-0000-4000-8000-ad68d5e40000", "store_id": "00000000-0000-4000-8000-78c858f60000", "kind": "Record", "key": "key 1", "revision": 1, "content": {"class":"class 1","digest":"digest 1","length":1}, "recorded_by": "00000000-0000-4000-8000-322d9f1c0000", "recorded_at": "2026-11-20T09:07:00Z", "derived_from": ["00000000-0000-4000-8000-ad68d5e40000"], "supersedes": "00000000-0000-4000-8000-ad68d5e40000", "expires_at": "2026-11-20T09:10:00Z", "state": "Deleted"},
+    {"record_id": "00000000-0000-4000-8000-ad68d5e40001", "store_id": "00000000-0000-4000-8000-78c858f60001", "kind": "Artifact", "key": "key 2", "revision": 2, "content": {"class":"class 2","digest":"digest 2","length":2}, "recorded_by": "00000000-0000-4000-8000-322d9f1c0001", "recorded_at": "2026-11-20T10:07:00Z", "derived_from": ["00000000-0000-4000-8000-ad68d5e40001"], "state": "Expired"},
+    {"record_id": "00000000-0000-4000-8000-ad68d5e40002", "store_id": "00000000-0000-4000-8000-78c858f60002", "kind": "KeyValue", "key": "key 3", "revision": 3, "content": {"class":"class 3","digest":"digest 3","length":3}, "recorded_by": "00000000-0000-4000-8000-322d9f1c0002", "recorded_at": "2026-11-20T11:07:00Z", "derived_from": ["00000000-0000-4000-8000-ad68d5e40002"], "supersedes": "00000000-0000-4000-8000-ad68d5e40002", "expires_at": "2026-11-20T11:10:00Z", "state": "Failed"}
+  ]
+}

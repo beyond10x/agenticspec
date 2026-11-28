@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
+// contract digest 238a19fb6ae6bbc5b648eba06c828c629deaeed26ee2b95e60532c84a0ca0908
 // do not edit: regenerate with `ess synthesize`
 
 //! How the specification's primitives are spelled in this workspace.
@@ -80,7 +80,10 @@ impl Binary64 {
     /// an infinity or spells no number.
     #[must_use]
     pub fn from_token(token: &str) -> Option<Self> {
-        token.parse::<f64>().ok().and_then(|value| Self::new(value).ok())
+        token
+            .parse::<f64>()
+            .ok()
+            .and_then(|value| Self::new(value).ok())
     }
 
     /// The JSON number the wire writes: the shortest digits that read back as the value,
@@ -89,7 +92,12 @@ impl Binary64 {
     pub fn token(&self) -> String {
         let value = self.0;
         if value == 0.0 {
-            return if value.is_sign_negative() { "-0.0" } else { "0.0" }.to_owned();
+            return if value.is_sign_negative() {
+                "-0.0"
+            } else {
+                "0.0"
+            }
+            .to_owned();
         }
         let sign = if value < 0.0 { "-" } else { "" };
         let scientific = format!("{:e}", value.abs());

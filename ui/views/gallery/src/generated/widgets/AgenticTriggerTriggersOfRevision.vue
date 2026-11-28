@@ -8,7 +8,7 @@ import { useRead, useWidget } from '../runtime';
 /** Rows of the view agentic.trigger.TriggersOfRevision over Trigger, keyed by trigger_id. */
 const args = defineProps<{ agent_revision_id: string; architecture?: string; channel: string; instance?: number; part?: string; source?: string }>();
 const client = useWidget(args);
-const r_rows = useRead('agentic.trigger.TriggersOfRevision', () => ({ agent_revision_id: args['agent_revision_id'] }), { channel: args['channel'], on: ['agentic.trigger.FiringEnded', 'agentic.trigger.FiringStarted', 'agentic.trigger.TriggerCreated', 'agentic.trigger.TriggerDisabled', 'agentic.trigger.TriggerEnabled'], coalesce: 1000 }, client);
+const r_rows = useRead('agentic.trigger.TriggersOfRevision', () => ({ agent_revision_id: args['agent_revision_id'] }), { channel: args['channel'], on: ['agentic.trigger.FiringEnded', 'agentic.trigger.FiringReplaced', 'agentic.trigger.FiringStarted', 'agentic.trigger.TriggerCreated', 'agentic.trigger.TriggerDisabled', 'agentic.trigger.TriggerEnabled'], coalesce: 1000 }, client);
 const fields_rows: FieldDef[] = [
   { field: 'trigger_id', label: 'Trigger id', as: 'text' },
   { field: 'kind', label: 'Kind', as: 'badge' },

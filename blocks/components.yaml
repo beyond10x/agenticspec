@@ -1,6 +1,7 @@
 # The deployment unit of the building blocks. One component owns every block and serves its views
 # over HTTP, so an `ess-ui/1` document over this system (`ui/views/blocks.ui.yaml`) reads them
-# from outside the process.
+# from outside the process, and accepts the commands an operator UI derived from an architecture sends
+# as actions (`agenticspec ui derive`).
 #
 # The cross-block causation of the building blocks: a command one block causes in another when an
 # event of the first is published. A command a binding causes is behaviour of the specification;

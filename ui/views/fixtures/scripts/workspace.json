@@ -1,7 +1,7 @@
 {
   "channel": "workspace",
   "events": [
-    {"at": "1s", "event": "agentic.workspace.ChangeProposed", "payload": {"proposal_id": "00000000-0000-4000-8000-87b5c6d60000", "lease_id": "00000000-0000-4000-8000-33e91c530000", "proposed_by": "00000000-0000-4000-8000-761908b00000", "base_revision": "base revision 1", "branch": "branch 1", "head_revision": "head revision 1", "review_ref": "review ref 1"}},
+    {"at": "1s", "event": "agentic.workspace.ChangeProposed", "payload": {"proposal_id": "00000000-0000-4000-8000-87b5c6d60000", "lease_id": "00000000-0000-4000-8000-33e91c530000", "proposed_by": "00000000-0000-4000-8000-761908b00000", "base_revision": "base revision 1", "handback": "00000000-0000-4000-8000-ad68d5e40000", "head_revision": "head revision 1"}},
     {"at": "2s", "event": "agentic.workspace.LeaseExpired", "payload": {"lease_id": "00000000-0000-4000-8000-33e91c530000"}},
     {"at": "3s", "event": "agentic.workspace.LeaseGranted", "payload": {"lease_id": "00000000-0000-4000-8000-33e91c530000", "workspace_id": "00000000-0000-4000-8000-881697980000"}},
     {"at": "4s", "event": "agentic.workspace.LeaseReleased", "payload": {"lease_id": "00000000-0000-4000-8000-33e91c530000"}},

@@ -133,6 +133,38 @@ pub fn sources(root: &Path) -> Result<Vec<Source>, String> {
     Ok(out)
 }
 
+/// The text of an architecture without its top-level `view:` key and the blank or comment lines
+/// right before it: the view key is presentation only, so editing it leaves the digest of a result
+/// as it was.
+pub fn without_view(text: &str) -> String {
+    let lines: Vec<&str> = text.split_inclusive('\n').collect();
+    let Some(start) = lines
+        .iter()
+        .position(|l| l.starts_with("view:") || l.starts_with("view :"))
+    else {
+        return text.to_string();
+    };
+    let mut from = start;
+    while from > 0 && {
+        let t = lines[from - 1].trim();
+        t.is_empty() || lines[from - 1].starts_with('#')
+    } {
+        from -= 1;
+    }
+    let mut to = start + 1;
+    while to < lines.len() {
+        let l = lines[to];
+        let t = l.trim();
+        if !(t.is_empty() || l.starts_with(' ') || l.starts_with('\t') || l.starts_with('#')) {
+            break;
+        }
+        to += 1;
+    }
+    let mut out: String = lines[..from].concat();
+    out.push_str(&lines[to..].concat());
+    out
+}
+
 fn hex(bytes: &[u8]) -> String {
     Sha256::digest(bytes)
         .iter()
@@ -185,7 +217,10 @@ pub fn digest(root: &Path, s: &Source) -> Result<String, String> {
     let mut lines: Vec<String> = Vec::new();
     let mut add = |bytes: &[u8], what: String| lines.push(format!("{}  {what}", hex(bytes)));
     add(s.exp_text.as_bytes(), s.exp_file.clone());
-    add(s.arch_text.as_bytes(), relative(root, &s.arch_path));
+    add(
+        without_view(&s.arch_text).as_bytes(),
+        relative(root, &s.arch_path),
+    );
     add(s.profile_text.as_bytes(), relative(root, &s.profile_path));
     let sim = root.join("crates/agenticspec-sim/src");
     let mut files = Vec::new();

@@ -49,7 +49,7 @@ A refused command exits 1 and prints `<code>: <detail>` to standard error:
 format: agenticspec-scenario/1
 scenario: question-answered
 summary: The worker asks a question only the owner can answer; the owner picks B.
-architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
 profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
 seed: 1
 horizon: 2h
@@ -307,13 +307,13 @@ The class a run predicts is the first that applies:
 ```yaml
 format: agenticspec-corpus/1
 corpus: workstation-examples
-architecture: { ref: ../../architectures/workstation.yaml, digest: 76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7 }
+architecture: { ref: ../../architectures/workstation.yaml, digest: 9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99 }
 profile: { ref: ../../fields/coding/profiles/coding.yaml, digest: f8f5d0007605f7d4b4da01c9996165d3a93e7e3e81ca23168412fc508bf83335 }
 seed: 1
 horizon: 4h
 
 entries:
-  - scenario: { ref: question-answered.scenario.yaml, digest: caf4b97b8f15fec7bd811c7a197af48c84a8c747ae60e63fbb5e2af320c7c6eb }
+  - scenario: { ref: question-answered.scenario.yaml, digest: c41a31c4225f675d2e429f2e155b54c74c2ee866f63851dbf862d73b265f63b5 }
     kind: prompt
     input_digest: 674bead15a2e6fe07d6bffb0d9e6c35e414ddeb8701cd9b3521840636b2d3d62
     expected: question

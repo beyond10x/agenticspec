@@ -1,8 +1,8 @@
 {
   "view": "agentic.harness.ToolCalls",
   "rows": [
-    {"tool_call_id": "00000000-0000-4000-8000-b72db82b0000", "tool_id": "00000000-0000-4000-8000-b84588820000", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000", "input": {"class":"class 1","digest":"digest 1","length":1}, "verdict": "Allow", "decider": "PermissionMode", "attribution": "Known", "output": {"class":"class 1","digest":"digest 1","length":1}, "state": "Allowed"},
+    {"tool_call_id": "00000000-0000-4000-8000-b72db82b0000", "tool_id": "00000000-0000-4000-8000-b84588820000", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0000", "input": {"class":"class 1","digest":"digest 1","length":1}, "verdict": "Allow", "decider": "PermissionMode", "attribution": "Known", "output": {"class":"class 1","digest":"digest 1","length":1}, "read_failure": "read failure 1", "state": "Allowed"},
     {"tool_call_id": "00000000-0000-4000-8000-b72db82b0001", "tool_id": "00000000-0000-4000-8000-b84588820001", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0001", "input": {"class":"class 2","digest":"digest 2","length":2}, "state": "Completed"},
-    {"tool_call_id": "00000000-0000-4000-8000-b72db82b0002", "tool_id": "00000000-0000-4000-8000-b84588820002", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0002", "input": {"class":"class 3","digest":"digest 3","length":3}, "verdict": "ApprovalRequired", "decider": "Hook", "attribution": "NotRecorded", "output": {"class":"class 3","digest":"digest 3","length":3}, "state": "Denied"}
+    {"tool_call_id": "00000000-0000-4000-8000-b72db82b0002", "tool_id": "00000000-0000-4000-8000-b84588820002", "harness_session_id": "00000000-0000-4000-8000-a83fcb5e0002", "input": {"class":"class 3","digest":"digest 3","length":3}, "verdict": "ApprovalRequired", "decider": "Hook", "attribution": "NotRecorded", "output": {"class":"class 3","digest":"digest 3","length":3}, "read_failure": "read failure 3", "state": "CouldNotRead"}
   ]
 }

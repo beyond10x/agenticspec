@@ -83,6 +83,7 @@ const TOP: &[&str] = &[
     "border",
     "ingress",
     "policies",
+    "view",
 ];
 
 /// Keys inside a part, a link or a marker, when no source gives the order: first these, the rest

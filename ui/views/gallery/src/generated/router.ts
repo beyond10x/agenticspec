@@ -9,6 +9,7 @@ import ArchitecturePage from './pages/ArchitecturePage.vue';
 import AuthorityPage from './pages/AuthorityPage.vue';
 import ChannelPage from './pages/ChannelPage.vue';
 import DelegationPage from './pages/DelegationPage.vue';
+import DeploymentPage from './pages/DeploymentPage.vue';
 import ExperimentPage from './pages/ExperimentPage.vue';
 import GatewayPage from './pages/GatewayPage.vue';
 import HarnessPage from './pages/HarnessPage.vue';
@@ -21,6 +22,7 @@ import QuestionPage from './pages/QuestionPage.vue';
 import ResourcePage from './pages/ResourcePage.vue';
 import RuntimePage from './pages/RuntimePage.vue';
 import SandboxPage from './pages/SandboxPage.vue';
+import StorePage from './pages/StorePage.vue';
 import ToolPage from './pages/ToolPage.vue';
 import TriggerPage from './pages/TriggerPage.vue';
 import WorkPage from './pages/WorkPage.vue';
@@ -32,6 +34,7 @@ export const routes: RouteDef[] = [
   { name: 'authority', segments: ['authority'], params: [], component: AuthorityPage },
   { name: 'channel', segments: ['channel'], params: [], component: ChannelPage },
   { name: 'delegation', segments: [], params: [], component: DelegationPage },
+  { name: 'deployment', segments: ['deployment'], params: [], component: DeploymentPage },
   { name: 'experiment', segments: ['experiment'], params: [], component: ExperimentPage },
   { name: 'gateway', segments: ['gateway'], params: [], component: GatewayPage },
   { name: 'harness', segments: ['harness'], params: [], component: HarnessPage },
@@ -44,6 +47,7 @@ export const routes: RouteDef[] = [
   { name: 'resource', segments: ['resource'], params: [], component: ResourcePage },
   { name: 'runtime', segments: ['runtime'], params: [], component: RuntimePage },
   { name: 'sandbox', segments: ['sandbox'], params: [], component: SandboxPage },
+  { name: 'store', segments: ['store'], params: [], component: StorePage },
   { name: 'tool', segments: ['tool'], params: [], component: ToolPage },
   { name: 'trigger', segments: ['trigger'], params: [], component: TriggerPage },
   { name: 'work', segments: ['work'], params: [], component: WorkPage },

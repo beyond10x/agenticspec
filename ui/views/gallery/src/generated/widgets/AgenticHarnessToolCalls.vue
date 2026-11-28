@@ -8,7 +8,7 @@ import { useRead, useWidget } from '../runtime';
 /** Rows of the view agentic.harness.ToolCalls over ToolCall, keyed by tool_call_id. */
 const args = defineProps<{ architecture?: string; channel: string; instance?: number; part?: string; source?: string }>();
 const client = useWidget(args);
-const r_rows = useRead('agentic.harness.ToolCalls', () => ({}), { channel: args['channel'], on: ['agentic.harness.ToolCallCompleted', 'agentic.harness.ToolCallDecided', 'agentic.harness.ToolCallRequested'], coalesce: 1000 }, client);
+const r_rows = useRead('agentic.harness.ToolCalls', () => ({}), { channel: args['channel'], on: ['agentic.harness.ToolCallCompleted', 'agentic.harness.ToolCallDecided', 'agentic.harness.ToolCallRequested', 'agentic.harness.ToolResultNotRead'], coalesce: 1000 }, client);
 const fields_rows: FieldDef[] = [
   { field: 'tool_call_id', label: 'Tool call id', as: 'text' },
   { field: 'tool_id', label: 'Tool id', as: 'text' },
@@ -18,6 +18,7 @@ const fields_rows: FieldDef[] = [
   { field: 'decider', label: 'Decider', as: 'badge' },
   { field: 'attribution', label: 'Attribution', as: 'badge' },
   { field: 'output', label: 'Output', as: 'json' },
+  { field: 'read_failure', label: 'Read failure', as: 'text' },
   { field: 'state', label: 'State', as: 'badge' },
 ];
 </script>

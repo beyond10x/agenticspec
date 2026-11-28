@@ -1,6 +1,6 @@
 // Unit tests of the studio's host code: the patch tokens, the graph card's facts, the hook after
-// OpenDraft, the graph slot's selection, and the one event stream per draft the generated client
-// keeps.
+// OpenDraft, the graph slot's selection, the one event stream per draft the generated client
+// keeps, and the panels of the draft view.
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick, reactive } from 'vue';
@@ -9,6 +9,7 @@ import { asGraph, facts, linksOf, type GraphRow } from '../src/slots/graph';
 import { hooks } from '../src/hooks';
 import DraftGraph from '../src/slots/DraftGraph.vue';
 import { createClient } from '../src/generated/client';
+import DraftPanels from '../src/slots/DraftPanels.vue';
 
 const graph: GraphRow = {
   draft_id: 'd1',
@@ -128,5 +129,24 @@ describe('event channel', () => {
     stopC();
     expect(opened[1].closed).toBe(true);
     vi.unstubAllGlobals();
+  });
+});
+
+describe('the panels of the draft view', () => {
+  it('come from ui/views: no panel file is written under ui/studio', () => {
+    const files = Object.keys(import.meta.glob('../src/**/*.vue'));
+    expect(files.filter((f) => /\/widgets\/|\/Agentic[A-Z]/.test(f))).toEqual([]);
+  });
+
+  it('draw the panels of the block of the chosen part from the fixtures', async () => {
+    const read = reactive({ state: 'ready', rows: [graph], row: graph, error: '', reload: vi.fn() });
+    const w = mount(DraftPanels, { props: { read } as never, attachTo: document.body });
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 0));
+    await nextTick();
+    expect(w.find('[data-slot="draft-panels"]').attributes('data-part')).toBe('a');
+    expect(w.find('.island').attributes('data-block')).toBe('agent');
+    expect(w.find('.island [data-panel="rows"]').exists()).toBe(true);
+    w.unmount();
   });
 });

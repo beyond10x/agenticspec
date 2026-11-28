@@ -35,6 +35,8 @@ crates/agenticstudio/src/generated/session|ess generate types --path studio --ta
 crates/agenticstudio/src/generated/architecture|ess generate types --path blocks --target rust --package agenticstudio-architecture-types --names short --declared-field-order --rust-box-only-recursion --root agentic.architecture.Revisions.row --root agentic.architecture.Patches.row --root agentic.architecture.PatchApplications.row --out {out}
 ui/studio/src/generated|cargo run --quiet --locked -p agenticspec -- ui generate --path studio/studio.ui.yaml --out {out}
 ui/views/gallery/src/generated|cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/blocks.ui.yaml --out {out}
+ui/views/examples/app/src/workstation/generated|cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/examples/workstation.ui.yaml --out {out}
+ui/views/examples/app/src/large-37/generated|cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/examples/large-37.ui.yaml --out {out}
 LINES
 }
 

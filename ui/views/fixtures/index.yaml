@@ -11,12 +11,19 @@ views:
   agentic.model.Routes: agentic.model.Routes.json
   agentic.knowledge.Knowledge: agentic.knowledge.Knowledge.json
   agentic.knowledge.PublishedConcepts: agentic.knowledge.PublishedConcepts.json
+  agentic.store.Artifacts: agentic.store.Artifacts.json
+  agentic.store.PresentRecords: agentic.store.PresentRecords.json
+  agentic.store.Queries: agentic.store.Queries.json
+  agentic.store.Reads: agentic.store.Reads.json
+  agentic.store.Records: agentic.store.Records.json
+  agentic.store.Stores: agentic.store.Stores.json
   agentic.tool.ToolProviders: agentic.tool.ToolProviders.json
   agentic.tool.Tools: agentic.tool.Tools.json
   agentic.agent.AgentRevisions: agentic.agent.AgentRevisions.json
   agentic.agent.Agents: agentic.agent.Agents.json
   agentic.harness.HarnessSessions: agentic.harness.HarnessSessions.json
   agentic.harness.Harnesses: agentic.harness.Harnesses.json
+  agentic.harness.PermissionModes: agentic.harness.PermissionModes.json
   agentic.harness.ToolCalls: agentic.harness.ToolCalls.json
   agentic.harness.Turns: agentic.harness.Turns.json
   agentic.process.Processes: agentic.process.Processes.json
@@ -54,6 +61,7 @@ views:
   agentic.workspace.Workspaces: agentic.workspace.Workspaces.json
   agentic.architecture.Architectures: agentic.architecture.Architectures.json
   agentic.architecture.Contracts: agentic.architecture.Contracts.json
+  agentic.architecture.Ingresses: agentic.architecture.Ingresses.json
   agentic.architecture.Parts: agentic.architecture.Parts.json
   agentic.architecture.PatchApplications: agentic.architecture.PatchApplications.json
   agentic.architecture.Patches: agentic.architecture.Patches.json
@@ -61,6 +69,13 @@ views:
   agentic.architecture.Ports: agentic.architecture.Ports.json
   agentic.architecture.Reach: agentic.architecture.Reach.json
   agentic.architecture.Revisions: agentic.architecture.Revisions.json
+  agentic.deployment.ArchitectureRuns: agentic.deployment.ArchitectureRuns.json
+  agentic.deployment.Deployments: agentic.deployment.Deployments.json
+  agentic.deployment.Installations: agentic.deployment.Installations.json
+  agentic.deployment.InstallationsOfRuntime: agentic.deployment.InstallationsOfRuntime.json
+  agentic.deployment.RunsOfInstallation: agentic.deployment.RunsOfInstallation.json
+  agentic.deployment.RunsOfSubject: agentic.deployment.RunsOfSubject.json
+  agentic.deployment.Units: agentic.deployment.Units.json
   agentic.experiment.BestVariant: agentic.experiment.BestVariant.json
   agentic.experiment.Experiments: agentic.experiment.Experiments.json
   agentic.experiment.Variants: agentic.experiment.Variants.json
@@ -73,6 +88,7 @@ scripts:
   gateway: scripts/gateway.json
   model: scripts/model.json
   knowledge: scripts/knowledge.json
+  store: scripts/store.json
   tool: scripts/tool.json
   agent: scripts/agent.json
   harness: scripts/harness.json
@@ -87,5 +103,6 @@ scripts:
   sandbox: scripts/sandbox.json
   workspace: scripts/workspace.json
   architecture: scripts/architecture.json
+  deployment: scripts/deployment.json
   experiment: scripts/experiment.json
   kpi: scripts/kpi.json

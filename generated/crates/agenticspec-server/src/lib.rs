@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
+// contract digest 238a19fb6ae6bbc5b648eba06c828c629deaeed26ee2b95e60532c84a0ca0908
 // do not edit: regenerate with `ess synthesize`
 
 //! The HTTP surface of `agenticspec` v1, synthesised.
@@ -20,8 +20,8 @@
 pub mod entry;
 pub mod http;
 pub mod json;
-pub mod wire;
+pub mod memory;
 pub mod session_ir;
 pub mod session_view;
-pub mod memory;
 mod static_assets;
+pub mod wire;

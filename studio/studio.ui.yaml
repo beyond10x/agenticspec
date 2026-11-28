@@ -107,7 +107,7 @@ pages:
     layout:
       columns:
         - {name: canvas, sections: [graph], width: wide}
-        - {name: panel, sections: [patch, summary, refusals, parts], width: narrow}
+        - {name: panel, sections: [patch, summary, refusals, parts, panels], width: narrow}
     sections:
       - name: graph
         host: DraftGraph
@@ -118,6 +118,15 @@ pages:
         stands_in_for: graph_editor
         reads: {placeholder: studio.DraftGraph, fixture: graph.json, params: {draft_id: params.draft_id}}
         live: {channel: draft_events, on: [studio.draft.DraftRevised], effect: refetch}
+
+      - name: panels
+        title: Panels of a part
+        host: DraftPanels
+        reason: >-
+          shows the block panels of one part of the draft, imported from the package of ui/views
+          and answered by the panels' fixtures; ess-ui places no widget of another document
+        stands_in_for: none
+        reads: {placeholder: studio.DraftGraph, fixture: graph.json, params: {draft_id: params.draft_id}}
 
       - name: patch
         title: Patch

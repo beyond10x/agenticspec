@@ -8,7 +8,7 @@ import { useRead, useWidget } from '../runtime';
 /** Rows of the view agentic.harness.HarnessSessions over HarnessSession, keyed by harness_session_id. */
 const args = defineProps<{ architecture?: string; channel: string; instance?: number; part?: string; source?: string }>();
 const client = useWidget(args);
-const r_rows = useRead('agentic.harness.HarnessSessions', () => ({}), { channel: args['channel'], on: ['agentic.harness.SessionEnded', 'agentic.harness.SessionOpened', 'agentic.harness.SubAgentSpawned'], coalesce: 1000 }, client);
+const r_rows = useRead('agentic.harness.HarnessSessions', () => ({}), { channel: args['channel'], on: ['agentic.harness.SessionEnded', 'agentic.harness.SessionOpened', 'agentic.harness.SessionRestarted', 'agentic.harness.SubAgentSpawned'], coalesce: 1000 }, client);
 const fields_rows: FieldDef[] = [
   { field: 'harness_session_id', label: 'Harness session id', as: 'text' },
   { field: 'harness_id', label: 'Harness id', as: 'text' },
@@ -19,10 +19,12 @@ const fields_rows: FieldDef[] = [
   { field: 'depth', label: 'Depth', as: 'number' },
   { field: 'max_depth', label: 'Max depth', as: 'number' },
   { field: 'context_window', label: 'Context window', as: 'number' },
-  { field: 'permission_mode', label: 'Permission mode', as: 'badge' },
+  { field: 'permission_mode', label: 'Permission mode', as: 'text' },
   { field: 'opened_at', label: 'Opened at', as: 'timestamp' },
   { field: 'name', label: 'Name', as: 'text' },
   { field: 'requested_route', label: 'Requested route', as: 'text' },
+  { field: 'replaces', label: 'Replaces', as: 'text' },
+  { field: 'lineage', label: 'Lineage', as: 'text' },
   { field: 'state', label: 'State', as: 'badge' },
 ];
 </script>

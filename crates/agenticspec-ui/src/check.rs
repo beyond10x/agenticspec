@@ -103,6 +103,8 @@ pub struct PageModel {
     pub title: String,
     pub title_from: Option<(String, String)>,
     pub bar: Option<SectionModel>,
+    /// The header's primary actions.
+    pub actions: Vec<ActionModel>,
     pub main: Vec<SectionModel>,
     pub side: Vec<SectionModel>,
 }
@@ -147,6 +149,10 @@ pub enum SectionKind {
     Host {
         host: String,
     },
+    /// A shared frame of a layout area: its sections under the frame's title.
+    Frame {
+        sections: Vec<SectionModel>,
+    },
     /// A use of a widget: its component and each argument as an expression.
     Widget {
         component: String,
@@ -159,7 +165,8 @@ pub struct ReadUse {
     pub view: String,
     pub params: Vec<(String, String)>,
     pub key: Option<String>,
-    pub filter: Option<(String, String)>,
+    /// The fields any of which holds the text of the state, and the state.
+    pub filter: Option<(Vec<String>, String)>,
     pub live: Option<LiveUse>,
 }
 
@@ -971,30 +978,47 @@ impl<'a> Resolver<'a> {
                 .insert(k.clone());
             params.push((k.clone(), ts));
         }
+        // `row.<field> contains state.<name>`, or several such terms joined by `or` over one state.
         let filter = r.filter.as_ref().and_then(|f| {
-            let words: Vec<&str> = f.split_whitespace().collect();
-            match words.as_slice() {
-                [a, "contains", b] if a.starts_with("row.") && b.starts_with("state.") => {
-                    let field = a["row.".len()..].to_string();
-                    let state = b["state.".len()..].to_string();
-                    if !scope.state.contains(&state) {
+            let mut fields: Vec<String> = Vec::new();
+            let mut states: BTreeSet<String> = BTreeSet::new();
+            for term in f.split(" or ") {
+                let words: Vec<&str> = term.split_whitespace().collect();
+                match words.as_slice() {
+                    [a, "contains", b] if a.starts_with("row.") && b.starts_with("state.") => {
+                        fields.push(a["row.".len()..].to_string());
+                        states.insert(b["state.".len()..].to_string());
+                    }
+                    _ => {
                         self.refuse(
                             format!("{rpath}/filter"),
-                            format!("expression `{f}` reads `{b}`, which is not declared where it stands"),
+                            format!("expression `{f}` is not one this generator compiles as a filter (row.<field> contains state.<name>, joined by `or` over one state)"),
                         );
                         return None;
                     }
-                    self.reads.entry(view.clone()).or_default().fields.insert(field.clone());
-                    Some((field, state))
                 }
+            }
+            let state = match states.into_iter().collect::<Vec<_>>().as_slice() {
+                [one] => one.clone(),
                 _ => {
                     self.refuse(
                         format!("{rpath}/filter"),
-                        format!("expression `{f}` is not one this generator compiles as a filter (row.<field> contains state.<name>)"),
+                        format!("expression `{f}` reads more than one state; this generator filters by one"),
                     );
-                    None
+                    return None;
                 }
+            };
+            if !scope.state.contains(&state) {
+                self.refuse(
+                    format!("{rpath}/filter"),
+                    format!("expression `{f}` reads `state.{state}`, which is not declared where it stands"),
+                );
+                return None;
             }
+            for field in &fields {
+                self.reads.entry(view.clone()).or_default().fields.insert(field.clone());
+            }
+            Some((fields, state))
         });
         let live = n.live.as_ref().and_then(|l| {
             let lpath = format!("{path}/live");
@@ -1713,6 +1737,9 @@ impl<'a> Resolver<'a> {
             if !h.live.is_empty() {
                 header.live = h.live.clone();
             }
+            if !h.actions.is_empty() {
+                header.actions = h.actions.clone();
+            }
         }
         let mut models: Vec<SectionModel> = Vec::new();
         for (spath, s) in sections {
@@ -1720,6 +1747,11 @@ impl<'a> Resolver<'a> {
                 models.push(m);
             }
         }
+        let actions: Vec<ActionModel> = header
+            .actions
+            .iter()
+            .filter_map(|a| self.action(a, &format!("{path}/header/actions"), &scope, name, None))
+            .collect();
         let names: BTreeSet<String> = models.iter().map(|m| m.name.clone()).collect();
         let bar = match &header.filters {
             Some(f) => match models.iter().position(|m| &m.name == f) {
@@ -1762,6 +1794,89 @@ impl<'a> Resolver<'a> {
         let layout = page.layout.clone().or_else(|| kind.layout.clone());
         let (main, side) = match layout {
             None | Some(Layout::Stack(_)) => (models, Vec::new()),
+            Some(Layout::Areas(a)) => {
+                let apath = format!("{path}/layout/areas");
+                let mut order: Vec<String> = Vec::new();
+                for row in &a.areas.grid {
+                    let distinct: BTreeSet<&String> = row.iter().collect();
+                    if distinct.len() != 1 {
+                        self.refuse(
+                            format!("{apath}/grid"),
+                            "this generator stacks the areas of a one-column grid: each row names one area",
+                        );
+                    }
+                    if let Some(n) = row.first()
+                        && !order.contains(n)
+                    {
+                        order.push(n.clone());
+                    }
+                }
+                for k in a.areas.place.keys() {
+                    if !order.contains(k) {
+                        self.refuse(
+                            format!("{apath}/place/{k}"),
+                            "the area is in no row of the grid",
+                        );
+                    }
+                }
+                let mut pool = models;
+                let mut main = Vec::new();
+                for area in &order {
+                    let Some(place) = a.areas.place.get(area) else {
+                        self.refuse(
+                            format!("{apath}/grid"),
+                            format!("the area `{area}` has no place entry"),
+                        );
+                        continue;
+                    };
+                    let (secs, shared) = match place {
+                        doc::Place::Sections(s) => (s.clone(), None),
+                        doc::Place::Framed(f) => (
+                            f.sections.clone(),
+                            (f.frame == Some(doc::FrameKind::Shared))
+                                .then(|| (f.title.clone(), f.collapsed.unwrap_or(false))),
+                        ),
+                    };
+                    let mut taken = Vec::new();
+                    for s in &secs {
+                        // The header's filter bar is drawn in the header wherever it is placed.
+                        if bar.as_ref().is_some_and(|b| &b.name == s) {
+                            continue;
+                        }
+                        match pool.iter().position(|m| &m.name == s) {
+                            Some(i) => taken.push(pool.remove(i)),
+                            None => self.refuse(
+                                format!("{apath}/place/{area}"),
+                                format!("no section `{s}` on the page, or it is placed twice"),
+                            ),
+                        }
+                    }
+                    match shared {
+                        Some((Some(title), collapsed)) => main.push(SectionModel {
+                            name: area.clone(),
+                            var: ident(area),
+                            title: Some(title.clone()),
+                            label: title,
+                            bare: false,
+                            collapsed,
+                            kind: SectionKind::Frame { sections: taken },
+                            read: None,
+                            empty: None,
+                            failed: None,
+                        }),
+                        Some((None, _)) => {
+                            self.refuse(
+                                format!("{apath}/place/{area}"),
+                                "a shared frame has a title",
+                            );
+                            main.extend(taken);
+                        }
+                        None => main.extend(taken),
+                    }
+                }
+                main.extend(pool);
+                (main, Vec::new())
+            }
             Some(Layout::Columns(c)) => {
                 if c.columns.len() > 2 {
                     self.refuse(
@@ -1824,6 +1939,7 @@ impl<'a> Resolver<'a> {
                 .unwrap_or_else(|| humanize(name)),
             title_from,
             bar,
+            actions,
             main,
             side,
         })

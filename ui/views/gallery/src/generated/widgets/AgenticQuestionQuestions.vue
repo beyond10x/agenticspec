@@ -8,7 +8,7 @@ import { useRead, useWidget } from '../runtime';
 /** Rows of the view agentic.question.Questions over Question, keyed by question_id. */
 const args = defineProps<{ architecture?: string; channel: string; instance?: number; part?: string; source?: string }>();
 const client = useWidget(args);
-const r_rows = useRead('agentic.question.Questions', () => ({}), { channel: args['channel'], on: ['agentic.question.DefaultTaken', 'agentic.question.QuestionAnswered', 'agentic.question.QuestionAsked', 'agentic.question.QuestionWithdrawn'], coalesce: 1000 }, client);
+const r_rows = useRead('agentic.question.Questions', () => ({}), { channel: args['channel'], on: ['agentic.question.AnswerNotRead', 'agentic.question.DefaultTaken', 'agentic.question.QuestionAnswered', 'agentic.question.QuestionAsked', 'agentic.question.QuestionWithdrawn'], coalesce: 1000 }, client);
 const fields_rows: FieldDef[] = [
   { field: 'question_id', label: 'Question id', as: 'text' },
   { field: 'kind', label: 'Kind', as: 'badge' },
@@ -23,6 +23,7 @@ const fields_rows: FieldDef[] = [
   { field: 'answered_via', label: 'Answered via', as: 'text' },
   { field: 'topic', label: 'Topic', as: 'text' },
   { field: 'run_id', label: 'Run id', as: 'text' },
+  { field: 'read_failure', label: 'Read failure', as: 'text' },
   { field: 'state', label: 'State', as: 'badge' },
 ];
 </script>

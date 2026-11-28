@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "The design system of ui/kit, the generated studio app of ui/studio and the gallery of the block panels in ui/views/gallery, which share these dependencies. ui/app is a package of its own.",
+  "description": "The design system of ui/kit, the generated studio app of ui/studio, the package of ui/views with its gallery, its derived examples and its custom elements, which share these dependencies (React only for the React host page of the elements test). ui/app is a package of its own.",
   "scripts": {
     "kit:typecheck": "vue-tsc --noEmit -p kit/tsconfig.json",
     "kit:test": "vitest run --config kit/vite.config.ts",
@@ -24,6 +24,8 @@
     "@vitejs/plugin-vue": "6.0.11",
     "@vue/test-utils": "2.6.0",
     "happy-dom": "21.0.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "typescript": "6.0.3",
     "vite": "8.3.8",
     "vitest": "5.1.2",

@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import { KitButton, KitPanel, KitTable, type FieldDef } from '@kit';
 import { useActions, useCommand, useRead, useWidget } from '../runtime';
+import type { Value } from '../client';
 
 /** Rows of the view desk.OpenQuestions, keyed by question_id, with the actions on a question. */
 const args = defineProps<{ architecture?: string; instance?: number; part?: string; source?: string }>();
@@ -23,8 +24,8 @@ const c_rows_withdraw = useCommand('desk.Withdraw', () => ({ question_id: null }
   <KitPanel name="rows" bare :state="r_rows.state" :error="r_rows.error" @retry="r_rows.reload()">
     <KitTable label="Open questions" :columns="fields_rows" :rows="r_rows.rows" row-key="question_id">
       <template #actions="{ row }">
-        <KitButton v-if="may.allows('desk.Answer')" tone="secondary" size="sm" :busy="c_rows_answer.busy" @click="c_rows_answer.run({ option: 'A', question_id: row['question_id'] })">Answer</KitButton>
-        <KitButton v-if="may.allows('desk.Withdraw') && (row['open'])" tone="secondary" size="sm" :busy="c_rows_withdraw.busy" @click="c_rows_withdraw.run({ question_id: row['question_id'] })">Withdraw</KitButton>
+        <KitButton v-if="may.allows('desk.Answer')" tone="secondary" size="sm" :busy="c_rows_answer.busy" @click="c_rows_answer.run({ option: 'A', question_id: row['question_id'] as Value })">Answer</KitButton>
+        <KitButton v-if="may.allows('desk.Withdraw') && (row['open'])" tone="secondary" size="sm" :busy="c_rows_withdraw.busy" @click="c_rows_withdraw.run({ question_id: row['question_id'] as Value })">Withdraw</KitButton>
       </template>
     </KitTable>
   </KitPanel>

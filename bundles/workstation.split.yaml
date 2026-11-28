@@ -99,12 +99,28 @@ architecture:
         - 15m
         - 60m
     summary: One workstation, one owner, an operator agent acting for the owner, coding agents, a shared build pool.
+    view:
+      groups:
+      - label: People
+        name: people
+        parts:
+        - owner
+      home: overview
+      labels:
+        parts:
+          builds: build slots
+          worker: coding agents
+      order:
+        parts:
+        - owner
+        - operator
+        - worker
   name: workstation
   revision: sha256:1747ef6f93056c20a57ee5bdf8d6e719d74a6963f60d7f65ef6efaaba4d4ae2a
-  sha256: sha256:76b32d4bc28eac17ce6ff3d7464f69ab96218d764dc0a5ceb298ecc5029e8ad7
+  sha256: sha256:9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99
 nested: {}
 contract:
-  digest: sha256:55b1bdc1b3cb612f558de22071521620c2c84e999a52b2715741237601e10465
+  digest: sha256:d4b6c197fa6f7d222bad887c3c4f0cfbfe6500cc50cb41f2856c2d6fcd0ca0f0
   document:
     architecture: workstation
     border:
@@ -496,7 +512,7 @@ contract:
       port: resource.claim
       protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
       settings: {}
-    ports_digest: e27a903f813debdc635e012c6366c4dc759903acfe98ceef1c447fe1a4dc1e25
+    ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 binding:
   digest: sha256:ae71fbbb086cfd45ef91aa424e7222a3d4617e0c81c5fbbd27ed75484ee551ac
   document:
@@ -864,4 +880,4 @@ runtimes:
   sha256:0000000000000000000000000000000000000000000000000000000000000001:
     image: registry.example/agenticspec-core
     name: core
-digest: sha256:99488e6ae30a450074f0d2fdd9c85849352a015022ecac1734736ca2722ceba9
+digest: sha256:499114ad3793f3820bce90e808f053684d6298acb6766dd3a2f062fa0e67b6e2

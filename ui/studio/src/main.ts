@@ -3,6 +3,7 @@ import '@kit';
 import { createGeneratedApp } from './generated/app';
 import { hooks } from './hooks';
 import DraftGraph from './slots/DraftGraph.vue';
+import DraftPanels from './slots/DraftPanels.vue';
 import PatchEditor from './slots/PatchEditor.vue';
 
-createGeneratedApp({ hosts: { DraftGraph, PatchEditor }, hooks }).mount('#app');
+createGeneratedApp({ hosts: { DraftGraph, DraftPanels, PatchEditor }, hooks }).mount('#app');

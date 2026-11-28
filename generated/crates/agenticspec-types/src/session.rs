@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
+// contract digest 238a19fb6ae6bbc5b648eba06c828c629deaeed26ee2b95e60532c84a0ca0908
 // do not edit: regenerate with `ess synthesize`
 
 //! Session — `agenticspec.session`.
@@ -1909,7 +1909,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.CompactContext`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn compact_context(&mut self, input: super::CompactContext) -> Result<super::CompactContextOutcome, crate::obligation::UnmetObligation>;
+        fn compact_context(
+            &mut self,
+            input: super::CompactContext,
+        ) -> Result<super::CompactContextOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.CompleteToolCall` — generated.
@@ -1920,7 +1923,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.CompleteToolCall`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn complete_tool_call(&mut self, input: super::CompleteToolCall) -> Result<super::CompleteToolCallOutcome, crate::obligation::UnmetObligation>;
+        fn complete_tool_call(
+            &mut self,
+            input: super::CompleteToolCall,
+        ) -> Result<super::CompleteToolCallOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.DecideToolCall` — generated.
@@ -1931,7 +1937,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.DecideToolCall`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn decide_tool_call(&mut self, input: super::DecideToolCall) -> Result<super::DecideToolCallOutcome, crate::obligation::UnmetObligation>;
+        fn decide_tool_call(
+            &mut self,
+            input: super::DecideToolCall,
+        ) -> Result<super::DecideToolCallOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.EndAgent` — generated.
@@ -1942,7 +1951,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.EndAgent`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn end_agent(&mut self, input: super::EndAgent) -> Result<super::EndAgentOutcome, crate::obligation::UnmetObligation>;
+        fn end_agent(
+            &mut self,
+            input: super::EndAgent,
+        ) -> Result<super::EndAgentOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.EndSession` — generated.
@@ -1953,7 +1965,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.EndSession`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn end_session(&mut self, input: super::EndSession) -> Result<super::EndSessionOutcome, crate::obligation::UnmetObligation>;
+        fn end_session(
+            &mut self,
+            input: super::EndSession,
+        ) -> Result<super::EndSessionOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.EndTurn` — generated.
@@ -1964,7 +1979,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.EndTurn`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn end_turn(&mut self, input: super::EndTurn) -> Result<super::EndTurnOutcome, crate::obligation::UnmetObligation>;
+        fn end_turn(
+            &mut self,
+            input: super::EndTurn,
+        ) -> Result<super::EndTurnOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.OpenSession` — generated.
@@ -1975,7 +1993,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.OpenSession`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn open_session(&mut self, input: super::OpenSession) -> Result<super::OpenSessionOutcome, crate::obligation::UnmetObligation>;
+        fn open_session(
+            &mut self,
+            input: super::OpenSession,
+        ) -> Result<super::OpenSessionOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.RecordExposure` — generated.
@@ -1986,7 +2007,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.RecordExposure`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn record_exposure(&mut self, input: super::RecordExposure) -> Result<super::RecordExposureOutcome, crate::obligation::UnmetObligation>;
+        fn record_exposure(
+            &mut self,
+            input: super::RecordExposure,
+        ) -> Result<super::RecordExposureOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.RecordModelTurn` — generated.
@@ -1997,7 +2021,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.RecordModelTurn`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn record_model_turn(&mut self, input: super::RecordModelTurn) -> Result<super::RecordModelTurnOutcome, crate::obligation::UnmetObligation>;
+        fn record_model_turn(
+            &mut self,
+            input: super::RecordModelTurn,
+        ) -> Result<super::RecordModelTurnOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.RequestToolCall` — generated.
@@ -2008,7 +2035,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.RequestToolCall`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn request_tool_call(&mut self, input: super::RequestToolCall) -> Result<super::RequestToolCallOutcome, crate::obligation::UnmetObligation>;
+        fn request_tool_call(
+            &mut self,
+            input: super::RequestToolCall,
+        ) -> Result<super::RequestToolCallOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.StartAgent` — generated.
@@ -2019,7 +2049,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.StartAgent`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn start_agent(&mut self, input: super::StartAgent) -> Result<super::StartAgentOutcome, crate::obligation::UnmetObligation>;
+        fn start_agent(
+            &mut self,
+            input: super::StartAgent,
+        ) -> Result<super::StartAgentOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `agenticspec.session.SubmitPrompt` — generated.
@@ -2030,7 +2063,10 @@ pub mod obligations {
         /// Decides and enacts exactly one declared outcome of `agenticspec.session.SubmitPrompt`.
         ///
         /// `Err` is the typed refusal of a request the model declares no outcome for.
-        fn submit_prompt(&mut self, input: super::SubmitPrompt) -> Result<super::SubmitPromptOutcome, crate::obligation::UnmetObligation>;
+        fn submit_prompt(
+            &mut self,
+            input: super::SubmitPrompt,
+        ) -> Result<super::SubmitPromptOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The query `agenticspec.session.Agents` — generated.
@@ -2076,5 +2112,4 @@ pub mod obligations {
         /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
         fn tool_calls(&self) -> Result<Vec<super::ToolCalls>, crate::obligation::UnmetObligation>;
     }
-
 }

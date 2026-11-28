@@ -396,6 +396,9 @@ pub struct Header {
     pub filters: Option<String>,
     #[serde(default)]
     pub live: Vec<String>,
+    /// Primary actions, drawn above the page's sections.
+    #[serde(default)]
+    pub actions: Vec<Action>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -410,6 +413,48 @@ pub struct TitleFrom {
 pub enum Layout {
     Stack(StackWord),
     Columns(Columns),
+    Areas(AreasLayout),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AreasLayout {
+    pub areas: Areas,
+}
+
+/// A grid of area names row by row, and the sections each area holds.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Areas {
+    pub grid: Vec<Vec<String>>,
+    pub place: BTreeMap<String, Place>,
+}
+
+/// The sections of an area: a list (each in a frame of its own), or a record that frames them.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Place {
+    Sections(Vec<String>),
+    Framed(Framed),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Framed {
+    pub sections: Vec<String>,
+    #[serde(default)]
+    pub frame: Option<FrameKind>,
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub collapsed: Option<bool>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FrameKind {
+    Each,
+    Shared,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]

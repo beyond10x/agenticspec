@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
+// contract digest 238a19fb6ae6bbc5b648eba06c828c629deaeed26ee2b95e60532c84a0ca0908
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -1288,6 +1288,42 @@ pub struct UiConformResult {
     pub skipped: i64,
     /// `checks` — `List<agenticspec.cli.UiConformCheck>`.
     pub checks: Vec<UiConformCheck>,
+}
+
+/// UiDeriveInput — `agenticspec.cli.UiDeriveInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiDeriveInput {
+    /// `path` — `String`.
+    pub path: String,
+    /// `contract` — `Optional<String>`.
+    pub contract: Option<String>,
+    /// `ports` — `Optional<String>`.
+    pub ports: Option<String>,
+    /// `out` — `String`.
+    pub out: String,
+    /// `root` — `Optional<String>`.
+    pub root: Option<String>,
+    /// `check` — `Boolean`.
+    pub check: bool,
+}
+
+/// UiDeriveResult — `agenticspec.cli.UiDeriveResult`.
+///
+/// The operator UI of an architecture: one `ess-ui/1` document (an overview per level, a page per part, a channel per level, the actions of the contract) with `<name>.sources.sha256`, `<name>.fixtures/` and `<name>.layout.json` beside it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiDeriveResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `pages` — `Integer`.
+    pub pages: i64,
+    /// `actions` — `Integer`.
+    pub actions: i64,
+    /// `channels` — `Integer`.
+    pub channels: i64,
+    /// `files` — `Integer`.
+    pub files: i64,
+    /// `written` — `Boolean`.
+    pub written: bool,
 }
 
 /// UiGenerateInput — `agenticspec.cli.UiGenerateInput`.

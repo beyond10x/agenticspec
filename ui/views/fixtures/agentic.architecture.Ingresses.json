@@ -1,0 +1,8 @@
+{
+  "view": "agentic.architecture.Ingresses",
+  "rows": [
+    {"ingress_id": "00000000-0000-4000-8000-db6201a80000", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "name 1", "audience_part_id": "00000000-0000-4000-8000-7784d89c0000", "audience_name": "audience name 1", "authenticated": true, "interface": "interface 1"},
+    {"ingress_id": "00000000-0000-4000-8000-db6201a80001", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "name 2", "audience_part_id": "00000000-0000-4000-8000-7784d89c0001", "authenticated": false, "interface": "interface 2"},
+    {"ingress_id": "00000000-0000-4000-8000-db6201a80002", "architecture_id": "00000000-0000-4000-8000-463ec9280000", "name": "name 3", "audience_part_id": "00000000-0000-4000-8000-7784d89c0002", "audience_name": "audience name 3", "authenticated": true, "interface": "interface 3"}
+  ]
+}

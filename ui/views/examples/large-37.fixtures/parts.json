@@ -1,0 +1,493 @@
+{
+  "rows": [
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Agent",
+      "name": "architect",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-23d6e1c3df62",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "architect"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 6,
+      "kind": "Agent",
+      "name": "builders",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-24f043386538",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "executor"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 3,
+      "kind": "Agent",
+      "name": "night",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-980f264e7db7",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        }
+      ]
+    },
+    {
+      "acts_for_part_id": "00000000-0000-4000-8000-6f08f9b6b59e",
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Agent",
+      "name": "operator",
+      "on_border": true,
+      "part_id": "00000000-0000-4000-8000-db663edf1a14",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "operator"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Agent",
+      "name": "planner",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-9692bdd41a57",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "planner"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Agent",
+      "name": "release",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-dd4ed67f4460",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "release"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 2,
+      "kind": "Agent",
+      "name": "reviewers",
+      "on_border": true,
+      "part_id": "00000000-0000-4000-8000-98f0003365bb",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "reviewer"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 3,
+      "kind": "Agent",
+      "name": "testers",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-a04b45c2d32a",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "tester"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 2,
+      "kind": "Agent",
+      "name": "triage",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-3f84a2d1acdd",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "triage"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Agent",
+      "name": "writer",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-35cdb54a0192",
+      "settings": [
+        {
+          "name": "harness",
+          "value": "coding"
+        },
+        {
+          "name": "role",
+          "value": "writer"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Authority",
+      "name": "budgets",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-a2fbaae76c07",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Authority",
+      "name": "grants",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-39a955c6ee98",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Channel",
+      "name": "alerts",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-725c9354dbc1",
+      "settings": [
+        {
+          "name": "distribution",
+          "value": "topic"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Channel",
+      "name": "board",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-c3406abeff6e",
+      "settings": [
+        {
+          "name": "distribution",
+          "value": "board"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Gateway",
+      "name": "gateway",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-a2cae6b5fea0",
+      "settings": [
+        {
+          "name": "rate_limit_per_minute",
+          "value": "240"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Harness",
+      "name": "harness",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-a0e4aae99350",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Knowledge",
+      "name": "context",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-9fb7fd7c800d",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Knowledge",
+      "name": "contract",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-cea75d8395f1",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Knowledge",
+      "name": "runbook",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-720f8b46926d",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Kpi",
+      "name": "kpis",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-61534725c954",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Model",
+      "name": "frontier",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-21f7cb5b9e6c",
+      "settings": [
+        {
+          "name": "route",
+          "value": "frontier"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Model",
+      "name": "small",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-3057c1886c0a",
+      "settings": [
+        {
+          "name": "route",
+          "value": "small"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Pool",
+      "name": "slots",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-ae87abdb9b1d",
+      "settings": [
+        {
+          "name": "capacity",
+          "value": "16"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Principal",
+      "name": "maintainer",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-720aa38f1714",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Principal",
+      "name": "owner",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-6f08f9b6b59e",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Question",
+      "name": "approvals",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-b7de72387736",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Runtime",
+      "name": "ci",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-ecab83e5935f",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Sandbox",
+      "name": "box",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-0402372e9f08",
+      "per_part_id": "00000000-0000-4000-8000-980f264e7db7",
+      "settings": [
+        {
+          "name": "isolation",
+          "value": "container"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Schedule",
+      "name": "clock",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-9cdf9f22323a",
+      "settings": [
+        {
+          "name": "every",
+          "value": "30m"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Tool",
+      "name": "lint",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-2fe5178542f6",
+      "settings": [
+        {
+          "name": "category",
+          "value": "execute"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Tool",
+      "name": "search",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-91ca85d98d83",
+      "settings": [
+        {
+          "name": "category",
+          "value": "read"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Tool",
+      "name": "tests",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-337dad523d8d",
+      "settings": [
+        {
+          "name": "category",
+          "value": "execute"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Work",
+      "name": "backlog",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-be33a333b3ec",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Work",
+      "name": "evidence",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-1347b2a5b874",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Work",
+      "name": "specs",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-5ec789604ec3",
+      "settings": []
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Workspace",
+      "name": "repo",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-ead9be58e5f0",
+      "per_part_id": "00000000-0000-4000-8000-db663edf1a14",
+      "settings": [
+        {
+          "name": "sharing",
+          "value": "exclusive"
+        }
+      ]
+    },
+    {
+      "architecture_id": "00000000-0000-4000-8000-c68154b57b10",
+      "count": 1,
+      "kind": "Workspace",
+      "name": "trees",
+      "on_border": false,
+      "part_id": "00000000-0000-4000-8000-9cc9154defc8",
+      "per_part_id": "00000000-0000-4000-8000-24f043386538",
+      "settings": [
+        {
+          "name": "sharing",
+          "value": "exclusive"
+        }
+      ]
+    }
+  ],
+  "view": "agentic.architecture.Parts"
+}

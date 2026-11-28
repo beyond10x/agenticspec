@@ -18,13 +18,13 @@ navigation:
   sections:
     - {name: layer_1, label: "Layer 1: principals", pages: [delegation, principal]}
     - {name: layer_2, label: "Layer 2: intelligence", pages: [gateway, model]}
-    - {name: layer_3, label: "Layer 3: capability", pages: [knowledge, tool]}
+    - {name: layer_3, label: "Layer 3: capability", pages: [knowledge, store, tool]}
     - {name: layer_4, label: "Layer 4: agent", pages: [agent, harness]}
     - {name: layer_5, label: "Layer 5: work", pages: [process, work]}
     - {name: layer_6, label: "Layer 6: governance", pages: [authority]}
     - {name: layer_7, label: "Layer 7: collaboration", pages: [channel, question, trigger]}
     - {name: layer_8, label: "Layer 8: place", pages: [resource, runtime, sandbox, workspace]}
-    - {name: layer_9, label: "Layer 9: composition", pages: [architecture]}
+    - {name: layer_9, label: "Layer 9: composition", pages: [architecture, deployment]}
     - {name: layer_10, label: "Layer 10: evaluation", pages: [experiment, kpi]}
 
 page_kinds:
@@ -94,6 +94,28 @@ channels:
     delivery: every_event
     resume: from_last_seen
     lifecycle: [connecting, live, reconnecting, stale, closed]
+  store:
+    carries:
+      events:
+        - agentic.store.PutFailed
+        - agentic.store.PutRequested
+        - agentic.store.QueryAnswered
+        - agentic.store.QueryFailed
+        - agentic.store.QueryRequested
+        - agentic.store.ReadFailed
+        - agentic.store.ReadRequested
+        - agentic.store.RecordDeleted
+        - agentic.store.RecordExpired
+        - agentic.store.RecordPut
+        - agentic.store.RecordReturned
+        - agentic.store.RecordSuperseded
+        - agentic.store.RevisionRequested
+        - agentic.store.StoreCreated
+        - agentic.store.StoreRetired
+    direction: server_to_client
+    delivery: every_event
+    resume: from_last_seen
+    lifecycle: [connecting, live, reconnecting, stale, closed]
   tool:
     carries:
       events:
@@ -121,12 +143,16 @@ channels:
       events:
         - agentic.harness.HarnessRegistered
         - agentic.harness.HarnessRetired
+        - agentic.harness.PermissionModeRegistered
+        - agentic.harness.PermissionModeRetired
         - agentic.harness.SessionEnded
         - agentic.harness.SessionOpened
+        - agentic.harness.SessionRestarted
         - agentic.harness.SubAgentSpawned
         - agentic.harness.ToolCallCompleted
         - agentic.harness.ToolCallDecided
         - agentic.harness.ToolCallRequested
+        - agentic.harness.ToolResultNotRead
         - agentic.harness.TurnRecorded
     direction: server_to_client
     delivery: every_event
@@ -199,6 +225,7 @@ channels:
   question:
     carries:
       events:
+        - agentic.question.AnswerNotRead
         - agentic.question.DefaultTaken
         - agentic.question.QuestionAnswered
         - agentic.question.QuestionAsked
@@ -213,6 +240,7 @@ channels:
         - agentic.trigger.FiringEnded
         - agentic.trigger.FiringFailed
         - agentic.trigger.FiringQueued
+        - agentic.trigger.FiringReplaced
         - agentic.trigger.FiringSkipped
         - agentic.trigger.FiringStarted
         - agentic.trigger.ScheduleAdvanced
@@ -291,6 +319,7 @@ channels:
         - agentic.architecture.ContractRecorded
         - agentic.architecture.DryRunApplied
         - agentic.architecture.EntityPlaced
+        - agentic.architecture.IngressAdded
         - agentic.architecture.LinkAdded
         - agentic.architecture.PartAdded
         - agentic.architecture.PartBordered
@@ -302,6 +331,36 @@ channels:
         - agentic.architecture.PortDeclared
         - agentic.architecture.RevisionCommitted
         - agentic.architecture.SwarmSet
+    direction: server_to_client
+    delivery: every_event
+    resume: from_last_seen
+    lifecycle: [connecting, live, reconnecting, stale, closed]
+  deployment:
+    carries:
+      events:
+        - agentic.deployment.DeploymentBundled
+        - agentic.deployment.DeploymentDegraded
+        - agentic.deployment.DeploymentFailed
+        - agentic.deployment.DeploymentRefused
+        - agentic.deployment.DeploymentRequested
+        - agentic.deployment.DeploymentRunning
+        - agentic.deployment.DeploymentStopped
+        - agentic.deployment.DeploymentTranslated
+        - agentic.deployment.DrainStarted
+        - agentic.deployment.InstallationDrained
+        - agentic.deployment.InstallationRolledBack
+        - agentic.deployment.RealizingStarted
+        - agentic.deployment.RevisionInstalled
+        - agentic.deployment.RunCancelled
+        - agentic.deployment.RunDone
+        - agentic.deployment.RunFailed
+        - agentic.deployment.RunQueued
+        - agentic.deployment.RunResumed
+        - agentic.deployment.RunStarted
+        - agentic.deployment.RunWaiting
+        - agentic.deployment.UnitMapped
+        - agentic.deployment.UnitObserved
+        - agentic.deployment.UnitRecorded
     direction: server_to_client
     delivery: every_event
     resume: from_last_seen
@@ -668,6 +727,201 @@ widgets:
           - knowledge_id
           - name
           - {field: scope, as: badge}
+  agentic.store.Artifacts:
+    summary: "Rows of the view agentic.store.Artifacts over Record, keyed by record_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.store.Artifacts, key: record_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.store.PutFailed
+            - agentic.store.PutRequested
+            - agentic.store.RecordDeleted
+            - agentic.store.RecordExpired
+            - agentic.store.RecordPut
+            - agentic.store.RecordSuperseded
+            - agentic.store.RevisionRequested
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - record_id
+          - store_id
+          - {field: content, as: json}
+          - recorded_by
+          - {field: recorded_at, as: timestamp}
+          - {field: derived_from, as: list}
+          - {field: state, as: badge}
+  agentic.store.PresentRecords:
+    summary: "Rows of the view agentic.store.PresentRecords over Record, keyed by record_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.store.PresentRecords, key: record_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.store.PutFailed
+            - agentic.store.PutRequested
+            - agentic.store.RecordDeleted
+            - agentic.store.RecordExpired
+            - agentic.store.RecordPut
+            - agentic.store.RecordSuperseded
+            - agentic.store.RevisionRequested
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - record_id
+          - store_id
+          - key
+          - {field: revision, as: number}
+          - {field: content, as: json}
+          - {field: expires_at, as: timestamp}
+  agentic.store.Queries:
+    summary: "Rows of the view agentic.store.Queries over Query, keyed by query_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.store.Queries, key: query_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.store.QueryAnswered
+            - agentic.store.QueryFailed
+            - agentic.store.QueryRequested
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - query_id
+          - store_id
+          - {field: form, as: badge}
+          - {field: question, as: json}
+          - {field: limit, as: number}
+          - read_by
+          - {field: requested_at, as: timestamp}
+          - {field: answer, as: json}
+          - {field: count, as: number}
+          - {field: answered_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.store.Reads:
+    summary: "Rows of the view agentic.store.Reads over Read, keyed by read_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.store.Reads, key: read_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.store.ReadFailed
+            - agentic.store.ReadRequested
+            - agentic.store.RecordReturned
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - read_id
+          - store_id
+          - key
+          - read_by
+          - {field: requested_at, as: timestamp}
+          - record_id
+          - {field: answered_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.store.Records:
+    summary: "Rows of the view agentic.store.Records over Record, keyed by record_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.store.Records, key: record_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.store.PutFailed
+            - agentic.store.PutRequested
+            - agentic.store.RecordDeleted
+            - agentic.store.RecordExpired
+            - agentic.store.RecordPut
+            - agentic.store.RecordSuperseded
+            - agentic.store.RevisionRequested
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - record_id
+          - store_id
+          - {field: kind, as: badge}
+          - key
+          - {field: revision, as: number}
+          - {field: content, as: json}
+          - recorded_by
+          - {field: recorded_at, as: timestamp}
+          - {field: derived_from, as: list}
+          - supersedes
+          - {field: expires_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.store.Stores:
+    summary: "Rows of the view agentic.store.Stores over Store, keyed by store_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.store.Stores, key: store_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.store.StoreCreated
+            - agentic.store.StoreRetired
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - store_id
+          - name
+          - {field: kind, as: badge}
+          - {field: scope, as: badge}
+          - {field: retention, as: badge}
+          - {field: retention_seconds, as: number}
+          - record_type
+          - {field: state, as: badge}
   agentic.tool.ToolProviders:
     summary: "Rows of the view agentic.tool.ToolProviders over ToolProvider, keyed by tool_provider_id."
     params:
@@ -799,6 +1053,7 @@ widgets:
           on:
             - agentic.harness.SessionEnded
             - agentic.harness.SessionOpened
+            - agentic.harness.SessionRestarted
             - agentic.harness.SubAgentSpawned
           effect: refetch
           coalesce: 1s
@@ -812,10 +1067,12 @@ widgets:
           - {field: depth, as: number}
           - {field: max_depth, as: number}
           - {field: context_window, as: number}
-          - {field: permission_mode, as: badge}
+          - permission_mode
           - {field: opened_at, as: timestamp}
           - name
           - requested_route
+          - replaces
+          - lineage
           - {field: state, as: badge}
   agentic.harness.Harnesses:
     summary: "Rows of the view agentic.harness.Harnesses over Harness, keyed by harness_id."
@@ -845,6 +1102,32 @@ widgets:
           - {field: max_depth, as: number}
           - {field: registered_at, as: timestamp}
           - {field: state, as: badge}
+  agentic.harness.PermissionModes:
+    summary: "Rows of the view agentic.harness.PermissionModes over PermissionMode, keyed by permission_mode_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.harness.PermissionModes, key: permission_mode_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.harness.PermissionModeRegistered
+            - agentic.harness.PermissionModeRetired
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - permission_mode_id
+          - name
+          - summary
+          - {field: registered_at, as: timestamp}
+          - {field: state, as: badge}
   agentic.harness.ToolCalls:
     summary: "Rows of the view agentic.harness.ToolCalls over ToolCall, keyed by tool_call_id."
     params:
@@ -864,6 +1147,7 @@ widgets:
             - agentic.harness.ToolCallCompleted
             - agentic.harness.ToolCallDecided
             - agentic.harness.ToolCallRequested
+            - agentic.harness.ToolResultNotRead
           effect: refetch
           coalesce: 1s
         columns:
@@ -875,6 +1159,7 @@ widgets:
           - {field: decider, as: badge}
           - {field: attribution, as: badge}
           - {field: output, as: json}
+          - read_failure
           - {field: state, as: badge}
   agentic.harness.Turns:
     summary: "Rows of the view agentic.harness.Turns over Turn, keyed by turn_id."
@@ -982,6 +1267,7 @@ widgets:
           - assignment_id
           - task_id
           - {field: kind, as: badge}
+          - artifact_id
           - {field: evidence, as: list}
           - {field: state, as: badge}
   agentic.work.Runs:
@@ -1419,6 +1705,7 @@ widgets:
         live:
           channel: args.channel
           on:
+            - agentic.question.AnswerNotRead
             - agentic.question.DefaultTaken
             - agentic.question.QuestionAnswered
             - agentic.question.QuestionAsked
@@ -1447,6 +1734,7 @@ widgets:
         live:
           channel: args.channel
           on:
+            - agentic.question.AnswerNotRead
             - agentic.question.DefaultTaken
             - agentic.question.QuestionAnswered
             - agentic.question.QuestionAsked
@@ -1467,6 +1755,7 @@ widgets:
           - answered_via
           - topic
           - run_id
+          - read_failure
           - {field: state, as: badge}
   agentic.trigger.Firings:
     summary: "Rows of the view agentic.trigger.Firings over Firing, keyed by firing_id."
@@ -1581,6 +1870,7 @@ widgets:
           channel: args.channel
           on:
             - agentic.trigger.FiringEnded
+            - agentic.trigger.FiringReplaced
             - agentic.trigger.FiringStarted
             - agentic.trigger.TriggerCreated
             - agentic.trigger.TriggerDisabled
@@ -1602,6 +1892,7 @@ widgets:
           - process_id
           - intake
           - {field: start_mode, as: badge}
+          - {field: subject_policy, as: badge}
           - {field: state, as: badge}
   agentic.trigger.TriggersOfRevision:
     summary: "Rows of the view agentic.trigger.TriggersOfRevision over Trigger, keyed by trigger_id."
@@ -1621,6 +1912,7 @@ widgets:
           channel: args.channel
           on:
             - agentic.trigger.FiringEnded
+            - agentic.trigger.FiringReplaced
             - agentic.trigger.FiringStarted
             - agentic.trigger.TriggerCreated
             - agentic.trigger.TriggerDisabled
@@ -1891,9 +2183,8 @@ widgets:
           - {field: change, as: json}
           - merged_revision
           - superseded_by
-          - branch
+          - handback
           - head_revision
-          - review_ref
           - merged_under
           - {field: state, as: badge}
   agentic.workspace.Workspaces:
@@ -1972,6 +2263,35 @@ widgets:
           - {field: ports, as: json}
           - {field: invariants, as: json}
           - {field: border, as: list}
+          - {field: ingress, as: json}
+  agentic.architecture.Ingresses:
+    summary: "Rows of the view agentic.architecture.Ingresses over Ingress, keyed by ingress_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+      architecture_id: {type: ArchitectureId, required: true, note: the parameter architecture_id of the view}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.architecture.Ingresses, key: ingress_id, params: {architecture_id: args.architecture_id}}
+        live:
+          channel: args.channel
+          on:
+            - agentic.architecture.IngressAdded
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - ingress_id
+          - architecture_id
+          - name
+          - audience_part_id
+          - audience_name
+          - authenticated
+          - interface
   agentic.architecture.Parts:
     summary: "Rows of the view agentic.architecture.Parts over Part, keyed by part_id."
     params:
@@ -2177,6 +2497,243 @@ widgets:
           - architecture_id
           - {field: number, as: number}
           - digest
+  agentic.deployment.ArchitectureRuns:
+    summary: "Rows of the view agentic.deployment.ArchitectureRuns over ArchitectureRun, keyed by run_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.deployment.ArchitectureRuns, key: run_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.deployment.RunCancelled
+            - agentic.deployment.RunDone
+            - agentic.deployment.RunFailed
+            - agentic.deployment.RunQueued
+            - agentic.deployment.RunResumed
+            - agentic.deployment.RunStarted
+            - agentic.deployment.RunWaiting
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - run_id
+          - installation_id
+          - revision_id
+          - binding
+          - subject_key
+          - task_id
+          - {field: queued_at, as: timestamp}
+          - failure
+          - {field: cancelled_for, as: badge}
+          - {field: state, as: badge}
+  agentic.deployment.Deployments:
+    summary: "Rows of the view agentic.deployment.Deployments over Deployment, keyed by deployment_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.deployment.Deployments, key: deployment_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.deployment.DeploymentBundled
+            - agentic.deployment.DeploymentDegraded
+            - agentic.deployment.DeploymentFailed
+            - agentic.deployment.DeploymentRefused
+            - agentic.deployment.DeploymentRequested
+            - agentic.deployment.DeploymentRunning
+            - agentic.deployment.DeploymentStopped
+            - agentic.deployment.DeploymentTranslated
+            - agentic.deployment.RealizingStarted
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - deployment_id
+          - architecture_id
+          - revision_id
+          - in_process
+          - target
+          - scope
+          - contract_digest
+          - binding_digest
+          - packing_digest
+          - bundle_digest
+          - translation_digest
+          - promoted_from
+          - {field: refusal, as: badge}
+          - {field: findings, as: json}
+          - reason
+          - {field: state, as: badge}
+  agentic.deployment.Installations:
+    summary: "Rows of the view agentic.deployment.Installations over Installation, keyed by installation_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.deployment.Installations, key: installation_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.deployment.DrainStarted
+            - agentic.deployment.InstallationDrained
+            - agentic.deployment.InstallationRolledBack
+            - agentic.deployment.RevisionInstalled
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - installation_id
+          - runtime_id
+          - revision_id
+          - binding
+          - replaces
+          - {field: installed_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.deployment.InstallationsOfRuntime:
+    summary: "Rows of the view agentic.deployment.InstallationsOfRuntime over Installation, keyed by installation_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+      runtime_id: {type: RuntimeId, required: true, note: the parameter runtime_id of the view}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.deployment.InstallationsOfRuntime, key: installation_id, params: {runtime_id: args.runtime_id}}
+        live:
+          channel: args.channel
+          on:
+            - agentic.deployment.DrainStarted
+            - agentic.deployment.InstallationDrained
+            - agentic.deployment.InstallationRolledBack
+            - agentic.deployment.RevisionInstalled
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - installation_id
+          - revision_id
+          - replaces
+          - {field: installed_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.deployment.RunsOfInstallation:
+    summary: "Rows of the view agentic.deployment.RunsOfInstallation over ArchitectureRun, keyed by run_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+      installation_id: {type: InstallationId, required: true, note: the parameter installation_id of the view}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.deployment.RunsOfInstallation, key: run_id, params: {installation_id: args.installation_id}}
+        live:
+          channel: args.channel
+          on:
+            - agentic.deployment.RunCancelled
+            - agentic.deployment.RunDone
+            - agentic.deployment.RunFailed
+            - agentic.deployment.RunQueued
+            - agentic.deployment.RunResumed
+            - agentic.deployment.RunStarted
+            - agentic.deployment.RunWaiting
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - run_id
+          - revision_id
+          - subject_key
+          - {field: queued_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.deployment.RunsOfSubject:
+    summary: "Rows of the view agentic.deployment.RunsOfSubject over ArchitectureRun, keyed by run_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+      subject_key: {type: string, required: true, note: the parameter subject_key of the view}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.deployment.RunsOfSubject, key: run_id, params: {subject_key: args.subject_key}}
+        live:
+          channel: args.channel
+          on:
+            - agentic.deployment.RunCancelled
+            - agentic.deployment.RunDone
+            - agentic.deployment.RunFailed
+            - agentic.deployment.RunQueued
+            - agentic.deployment.RunResumed
+            - agentic.deployment.RunStarted
+            - agentic.deployment.RunWaiting
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - run_id
+          - installation_id
+          - revision_id
+          - {field: queued_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.deployment.Units:
+    summary: "Rows of the view agentic.deployment.Units over DeploymentUnit, keyed by unit_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+      deployment_id: {type: DeploymentId, required: true, note: the parameter deployment_id of the view}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.deployment.Units, key: unit_id, params: {deployment_id: args.deployment_id}}
+        live:
+          channel: args.channel
+          on:
+            - agentic.deployment.UnitMapped
+            - agentic.deployment.UnitObserved
+            - agentic.deployment.UnitRecorded
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - unit_id
+          - deployment_id
+          - name
+          - {field: kind, as: badge}
+          - {field: parts, as: list}
+          - {field: replicas, as: number}
+          - {field: ready, as: number}
+          - last_failure
+          - workload_id
+          - target_object
+          - {field: state, as: badge}
   agentic.experiment.BestVariant:
     summary: "Rows of the view agentic.experiment.BestVariant over Variant, keyed by variant_id."
     params:
@@ -2418,6 +2975,35 @@ pages:
         title: Published concepts
         component: agentic.knowledge.PublishedConcepts
         args: {channel: knowledge}
+  store:
+    kind: gallery
+    title: Store
+    nav: {label: Store}
+    sections:
+      - name: artifacts
+        title: Artifacts
+        component: agentic.store.Artifacts
+        args: {channel: store}
+      - name: present_records
+        title: Present records
+        component: agentic.store.PresentRecords
+        args: {channel: store}
+      - name: queries
+        title: Queries
+        component: agentic.store.Queries
+        args: {channel: store}
+      - name: reads
+        title: Reads
+        component: agentic.store.Reads
+        args: {channel: store}
+      - name: records
+        title: Records
+        component: agentic.store.Records
+        args: {channel: store}
+      - name: stores
+        title: Stores
+        component: agentic.store.Stores
+        args: {channel: store}
   tool:
     kind: gallery
     title: Tool
@@ -2456,6 +3042,10 @@ pages:
       - name: harnesses
         title: Harnesses
         component: agentic.harness.Harnesses
+        args: {channel: harness}
+      - name: permission_modes
+        title: Permission modes
+        component: agentic.harness.PermissionModes
         args: {channel: harness}
       - name: tool_calls
         title: Tool calls
@@ -2660,6 +3250,10 @@ pages:
         title: Contracts
         component: agentic.architecture.Contracts
         args: {channel: architecture, revision_id: "'00000000-0000-4000-8000-8dac41280000'"}
+      - name: ingresses
+        title: Ingresses
+        component: agentic.architecture.Ingresses
+        args: {channel: architecture, architecture_id: "'00000000-0000-4000-8000-463ec9280000'"}
       - name: parts
         title: Parts
         component: agentic.architecture.Parts
@@ -2688,6 +3282,39 @@ pages:
         title: Revisions
         component: agentic.architecture.Revisions
         args: {channel: architecture}
+  deployment:
+    kind: gallery
+    title: Deployment
+    nav: {label: Deployment}
+    sections:
+      - name: architecture_runs
+        title: Architecture runs
+        component: agentic.deployment.ArchitectureRuns
+        args: {channel: deployment}
+      - name: deployments
+        title: Deployments
+        component: agentic.deployment.Deployments
+        args: {channel: deployment}
+      - name: installations
+        title: Installations
+        component: agentic.deployment.Installations
+        args: {channel: deployment}
+      - name: installations_of_runtime
+        title: Installations of a runtime
+        component: agentic.deployment.InstallationsOfRuntime
+        args: {channel: deployment, runtime_id: "'00000000-0000-4000-8000-303c84bb0000'"}
+      - name: runs_of_installation
+        title: Runs of an installation
+        component: agentic.deployment.RunsOfInstallation
+        args: {channel: deployment, installation_id: "'00000000-0000-4000-8000-7128a6e00000'"}
+      - name: runs_of_subject
+        title: Runs of a subject
+        component: agentic.deployment.RunsOfSubject
+        args: {channel: deployment, subject_key: "'subject key 1'"}
+      - name: units
+        title: Units
+        component: agentic.deployment.Units
+        args: {channel: deployment, deployment_id: "'00000000-0000-4000-8000-0b4df8530000'"}
   experiment:
     kind: gallery
     title: Experiment

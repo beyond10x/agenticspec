@@ -1,0 +1,1154 @@
+{
+  "rows": [
+    {
+      "architecture": "large-37",
+      "draft_id": "large-37",
+      "height": 1410.0,
+      "links": [
+        {
+          "carries": "prompt",
+          "from": "owner",
+          "over": null,
+          "to": "operator"
+        },
+        {
+          "carries": "question",
+          "from": "operator",
+          "over": null,
+          "to": "owner"
+        },
+        {
+          "carries": "proposal",
+          "from": "operator",
+          "over": null,
+          "to": "owner"
+        },
+        {
+          "carries": "prompt",
+          "from": "maintainer",
+          "over": null,
+          "to": "reviewers"
+        },
+        {
+          "carries": "question",
+          "from": "reviewers",
+          "over": null,
+          "to": "maintainer"
+        },
+        {
+          "carries": "spec",
+          "from": "owner",
+          "over": null,
+          "to": "specs"
+        },
+        {
+          "carries": "story",
+          "from": "maintainer",
+          "over": null,
+          "to": "backlog"
+        },
+        {
+          "carries": "order",
+          "from": "operator",
+          "over": null,
+          "to": "planner"
+        },
+        {
+          "carries": "model_call",
+          "from": "operator",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "message",
+          "from": "operator",
+          "over": null,
+          "to": "board"
+        },
+        {
+          "carries": "question",
+          "from": "operator",
+          "over": null,
+          "to": "approvals"
+        },
+        {
+          "carries": "question",
+          "from": "approvals",
+          "over": null,
+          "to": "owner"
+        },
+        {
+          "carries": "story",
+          "from": "planner",
+          "over": null,
+          "to": "backlog"
+        },
+        {
+          "carries": "order",
+          "from": "planner",
+          "over": null,
+          "to": "architect"
+        },
+        {
+          "carries": "model_call",
+          "from": "planner",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "message",
+          "from": "planner",
+          "over": null,
+          "to": "board"
+        },
+        {
+          "carries": "spec",
+          "from": "specs",
+          "over": null,
+          "to": "planner"
+        },
+        {
+          "carries": "spec",
+          "from": "specs",
+          "over": null,
+          "to": "architect"
+        },
+        {
+          "carries": "record",
+          "from": "architect",
+          "over": null,
+          "to": "contract"
+        },
+        {
+          "carries": "model_call",
+          "from": "architect",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "message",
+          "from": "architect",
+          "over": null,
+          "to": "board"
+        },
+        {
+          "carries": "call",
+          "from": "architect",
+          "over": null,
+          "to": "search"
+        },
+        {
+          "carries": "task",
+          "from": "backlog",
+          "over": null,
+          "to": "builders"
+        },
+        {
+          "carries": "claim",
+          "from": "board",
+          "over": null,
+          "to": "builders"
+        },
+        {
+          "carries": "model_call",
+          "from": "builders",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "builders",
+          "over": null,
+          "to": "tests"
+        },
+        {
+          "carries": "call",
+          "from": "builders",
+          "over": null,
+          "to": "lint"
+        },
+        {
+          "carries": "call",
+          "from": "builders",
+          "over": null,
+          "to": "search"
+        },
+        {
+          "carries": "review",
+          "from": "builders",
+          "over": null,
+          "to": "reviewers"
+        },
+        {
+          "carries": "question",
+          "from": "builders",
+          "over": null,
+          "to": "operator"
+        },
+        {
+          "carries": "build",
+          "from": "builders",
+          "over": null,
+          "to": "ci"
+        },
+        {
+          "carries": "request",
+          "from": "builders",
+          "over": null,
+          "to": "slots"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "over": null,
+          "to": "builders"
+        },
+        {
+          "carries": "context",
+          "from": "contract",
+          "over": null,
+          "to": "builders"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "over": null,
+          "to": "builders"
+        },
+        {
+          "carries": "model_call",
+          "from": "testers",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "testers",
+          "over": null,
+          "to": "tests"
+        },
+        {
+          "carries": "build",
+          "from": "testers",
+          "over": null,
+          "to": "ci"
+        },
+        {
+          "carries": "record",
+          "from": "testers",
+          "over": null,
+          "to": "evidence"
+        },
+        {
+          "carries": "message",
+          "from": "testers",
+          "over": null,
+          "to": "board"
+        },
+        {
+          "carries": "claim",
+          "from": "board",
+          "over": null,
+          "to": "testers"
+        },
+        {
+          "carries": "context",
+          "from": "contract",
+          "over": null,
+          "to": "testers"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "over": null,
+          "to": "testers"
+        },
+        {
+          "carries": "model_call",
+          "from": "reviewers",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "record",
+          "from": "reviewers",
+          "over": null,
+          "to": "evidence"
+        },
+        {
+          "carries": "verdict",
+          "from": "reviewers",
+          "over": null,
+          "to": "board"
+        },
+        {
+          "carries": "call",
+          "from": "reviewers",
+          "over": null,
+          "to": "search"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "over": null,
+          "to": "reviewers"
+        },
+        {
+          "carries": "model_call",
+          "from": "writer",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "writer",
+          "over": null,
+          "to": "search"
+        },
+        {
+          "carries": "claim",
+          "from": "board",
+          "over": null,
+          "to": "writer"
+        },
+        {
+          "carries": "context",
+          "from": "context",
+          "over": null,
+          "to": "writer"
+        },
+        {
+          "carries": "review",
+          "from": "writer",
+          "over": null,
+          "to": "reviewers"
+        },
+        {
+          "carries": "build",
+          "from": "release",
+          "over": null,
+          "to": "ci"
+        },
+        {
+          "carries": "question",
+          "from": "release",
+          "over": null,
+          "to": "approvals"
+        },
+        {
+          "carries": "model_call",
+          "from": "release",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "record",
+          "from": "evidence",
+          "over": null,
+          "to": "release"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "over": null,
+          "to": "release"
+        },
+        {
+          "carries": "context",
+          "from": "runbook",
+          "over": null,
+          "to": "release"
+        },
+        {
+          "carries": "notice",
+          "from": "alerts",
+          "over": null,
+          "to": "triage"
+        },
+        {
+          "carries": "notice",
+          "from": "ci",
+          "over": null,
+          "to": "alerts"
+        },
+        {
+          "carries": "model_call",
+          "from": "triage",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "story",
+          "from": "triage",
+          "over": null,
+          "to": "backlog"
+        },
+        {
+          "carries": "question",
+          "from": "triage",
+          "over": null,
+          "to": "operator"
+        },
+        {
+          "carries": "call",
+          "from": "triage",
+          "over": null,
+          "to": "search"
+        },
+        {
+          "carries": "context",
+          "from": "runbook",
+          "over": null,
+          "to": "triage"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "over": null,
+          "to": "triage"
+        },
+        {
+          "carries": "trigger",
+          "from": "clock",
+          "over": null,
+          "to": "night"
+        },
+        {
+          "carries": "model_call",
+          "from": "night",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "call",
+          "from": "night",
+          "over": null,
+          "to": "tests"
+        },
+        {
+          "carries": "call",
+          "from": "night",
+          "over": null,
+          "to": "lint"
+        },
+        {
+          "carries": "review",
+          "from": "night",
+          "over": null,
+          "to": "reviewers"
+        },
+        {
+          "carries": "question",
+          "from": "night",
+          "over": null,
+          "to": "approvals"
+        },
+        {
+          "carries": "task",
+          "from": "backlog",
+          "over": null,
+          "to": "night"
+        },
+        {
+          "carries": "grant",
+          "from": "grants",
+          "over": null,
+          "to": "night"
+        },
+        {
+          "carries": "session",
+          "from": "harness",
+          "over": null,
+          "to": "builders"
+        },
+        {
+          "carries": "session",
+          "from": "harness",
+          "over": null,
+          "to": "testers"
+        },
+        {
+          "carries": "session",
+          "from": "harness",
+          "over": null,
+          "to": "night"
+        },
+        {
+          "carries": "grant",
+          "from": "budgets",
+          "over": null,
+          "to": "gateway"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "over": null,
+          "to": "frontier"
+        },
+        {
+          "carries": "model_call",
+          "from": "gateway",
+          "over": null,
+          "to": "small"
+        },
+        {
+          "carries": "request",
+          "from": "tests",
+          "over": null,
+          "to": "slots"
+        },
+        {
+          "carries": "request",
+          "from": "lint",
+          "over": null,
+          "to": "slots"
+        },
+        {
+          "carries": "request",
+          "from": "ci",
+          "over": null,
+          "to": "slots"
+        },
+        {
+          "carries": "record",
+          "from": "ci",
+          "over": null,
+          "to": "evidence"
+        },
+        {
+          "carries": "record",
+          "from": "evidence",
+          "over": null,
+          "to": "kpis"
+        },
+        {
+          "carries": "report",
+          "from": "kpis",
+          "over": null,
+          "to": "owner"
+        },
+        {
+          "carries": "report",
+          "from": "kpis",
+          "over": null,
+          "to": "maintainer"
+        },
+        {
+          "carries": "report",
+          "from": "evidence",
+          "over": null,
+          "to": "owner"
+        },
+        {
+          "carries": "report",
+          "from": "release",
+          "over": null,
+          "to": "owner"
+        }
+      ],
+      "name": "large-37",
+      "parts": [
+        {
+          "acts_for": null,
+          "block": "channel",
+          "border": false,
+          "count": null,
+          "family": "collab",
+          "id": "alerts",
+          "kind": "notification",
+          "per": null,
+          "properties": [
+            [
+              "distribution",
+              "topic"
+            ]
+          ],
+          "subtitle": "channel · notification"
+        },
+        {
+          "acts_for": null,
+          "block": "question",
+          "border": false,
+          "count": null,
+          "family": "collab",
+          "id": "approvals",
+          "kind": "approval",
+          "per": null,
+          "properties": [],
+          "subtitle": "question · approval"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": null,
+          "family": "agent",
+          "id": "architect",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "architect"
+            ]
+          ],
+          "subtitle": "agent · architect"
+        },
+        {
+          "acts_for": null,
+          "block": "work",
+          "border": false,
+          "count": null,
+          "family": "work",
+          "id": "backlog",
+          "kind": "backlog",
+          "per": null,
+          "properties": [],
+          "subtitle": "work · backlog"
+        },
+        {
+          "acts_for": null,
+          "block": "channel",
+          "border": false,
+          "count": null,
+          "family": "collab",
+          "id": "board",
+          "kind": "agent_message",
+          "per": null,
+          "properties": [
+            [
+              "distribution",
+              "board"
+            ]
+          ],
+          "subtitle": "channel · agent_message"
+        },
+        {
+          "acts_for": null,
+          "block": "sandbox",
+          "border": false,
+          "count": null,
+          "family": "place",
+          "id": "box",
+          "kind": null,
+          "per": "night",
+          "properties": [
+            [
+              "isolation",
+              "container"
+            ]
+          ],
+          "subtitle": "sandbox · container"
+        },
+        {
+          "acts_for": null,
+          "block": "authority",
+          "border": false,
+          "count": null,
+          "family": "work",
+          "id": "budgets",
+          "kind": "budget",
+          "per": null,
+          "properties": [],
+          "subtitle": "authority · budget"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": "6",
+          "family": "agent",
+          "id": "builders",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "executor"
+            ]
+          ],
+          "subtitle": "agent · executor"
+        },
+        {
+          "acts_for": null,
+          "block": "runtime",
+          "border": false,
+          "count": null,
+          "family": "place",
+          "id": "ci",
+          "kind": "ci",
+          "per": null,
+          "properties": [],
+          "subtitle": "runtime · ci"
+        },
+        {
+          "acts_for": null,
+          "block": "schedule",
+          "border": false,
+          "count": null,
+          "family": "other",
+          "id": "clock",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "every",
+              "30m"
+            ]
+          ],
+          "subtitle": "schedule"
+        },
+        {
+          "acts_for": null,
+          "block": "knowledge",
+          "border": false,
+          "count": null,
+          "family": "capability",
+          "id": "context",
+          "kind": "context_files",
+          "per": null,
+          "properties": [],
+          "subtitle": "knowledge · context_files"
+        },
+        {
+          "acts_for": null,
+          "block": "knowledge",
+          "border": false,
+          "count": null,
+          "family": "capability",
+          "id": "contract",
+          "kind": "contract",
+          "per": null,
+          "properties": [],
+          "subtitle": "knowledge · contract"
+        },
+        {
+          "acts_for": null,
+          "block": "work",
+          "border": false,
+          "count": null,
+          "family": "work",
+          "id": "evidence",
+          "kind": "evidence",
+          "per": null,
+          "properties": [],
+          "subtitle": "work · evidence"
+        },
+        {
+          "acts_for": null,
+          "block": "model",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "frontier",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "route",
+              "frontier"
+            ]
+          ],
+          "subtitle": "model · frontier"
+        },
+        {
+          "acts_for": null,
+          "block": "gateway",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "gateway",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "rate limit per minute",
+              "240"
+            ]
+          ],
+          "subtitle": "gateway"
+        },
+        {
+          "acts_for": null,
+          "block": "authority",
+          "border": false,
+          "count": null,
+          "family": "work",
+          "id": "grants",
+          "kind": "permissions",
+          "per": null,
+          "properties": [],
+          "subtitle": "authority · permissions"
+        },
+        {
+          "acts_for": null,
+          "block": "harness",
+          "border": false,
+          "count": null,
+          "family": "agent",
+          "id": "harness",
+          "kind": "coding",
+          "per": null,
+          "properties": [],
+          "subtitle": "harness · coding"
+        },
+        {
+          "acts_for": null,
+          "block": "kpi",
+          "border": false,
+          "count": null,
+          "family": "other",
+          "id": "kpis",
+          "kind": "delivery",
+          "per": null,
+          "properties": [],
+          "subtitle": "kpi · delivery"
+        },
+        {
+          "acts_for": null,
+          "block": "tool",
+          "border": false,
+          "count": null,
+          "family": "capability",
+          "id": "lint",
+          "kind": "linter",
+          "per": null,
+          "properties": [
+            [
+              "category",
+              "execute"
+            ]
+          ],
+          "subtitle": "tool · linter"
+        },
+        {
+          "acts_for": null,
+          "block": "principal",
+          "border": false,
+          "count": null,
+          "family": "principal",
+          "id": "maintainer",
+          "kind": "human",
+          "per": null,
+          "properties": [],
+          "subtitle": "principal · human"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": "3",
+          "family": "agent",
+          "id": "night",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ]
+          ],
+          "subtitle": "agent · coding"
+        },
+        {
+          "acts_for": "owner",
+          "block": "agent",
+          "border": true,
+          "count": null,
+          "family": "agent",
+          "id": "operator",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "operator"
+            ]
+          ],
+          "subtitle": "agent · operator"
+        },
+        {
+          "acts_for": null,
+          "block": "principal",
+          "border": false,
+          "count": null,
+          "family": "principal",
+          "id": "owner",
+          "kind": "human",
+          "per": null,
+          "properties": [],
+          "subtitle": "principal · human"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": null,
+          "family": "agent",
+          "id": "planner",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "planner"
+            ]
+          ],
+          "subtitle": "agent · planner"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": null,
+          "family": "agent",
+          "id": "release",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "release"
+            ]
+          ],
+          "subtitle": "agent · release"
+        },
+        {
+          "acts_for": null,
+          "block": "workspace",
+          "border": false,
+          "count": null,
+          "family": "place",
+          "id": "repo",
+          "kind": "checkout",
+          "per": "operator",
+          "properties": [
+            [
+              "sharing",
+              "exclusive"
+            ]
+          ],
+          "subtitle": "workspace · checkout"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": true,
+          "count": "2",
+          "family": "agent",
+          "id": "reviewers",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "reviewer"
+            ]
+          ],
+          "subtitle": "agent · reviewer"
+        },
+        {
+          "acts_for": null,
+          "block": "knowledge",
+          "border": false,
+          "count": null,
+          "family": "capability",
+          "id": "runbook",
+          "kind": "runbook",
+          "per": null,
+          "properties": [],
+          "subtitle": "knowledge · runbook"
+        },
+        {
+          "acts_for": null,
+          "block": "tool",
+          "border": false,
+          "count": null,
+          "family": "capability",
+          "id": "search",
+          "kind": "code_search",
+          "per": null,
+          "properties": [
+            [
+              "category",
+              "read"
+            ]
+          ],
+          "subtitle": "tool · code_search"
+        },
+        {
+          "acts_for": null,
+          "block": "pool",
+          "border": false,
+          "count": null,
+          "family": "resource",
+          "id": "slots",
+          "kind": "build_slots",
+          "per": null,
+          "properties": [
+            [
+              "capacity",
+              "16"
+            ]
+          ],
+          "subtitle": "pool · build_slots"
+        },
+        {
+          "acts_for": null,
+          "block": "model",
+          "border": false,
+          "count": null,
+          "family": "intel",
+          "id": "small",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "route",
+              "small"
+            ]
+          ],
+          "subtitle": "model · small"
+        },
+        {
+          "acts_for": null,
+          "block": "work",
+          "border": false,
+          "count": null,
+          "family": "work",
+          "id": "specs",
+          "kind": "spec",
+          "per": null,
+          "properties": [],
+          "subtitle": "work · spec"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": "3",
+          "family": "agent",
+          "id": "testers",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "tester"
+            ]
+          ],
+          "subtitle": "agent · tester"
+        },
+        {
+          "acts_for": null,
+          "block": "tool",
+          "border": false,
+          "count": null,
+          "family": "capability",
+          "id": "tests",
+          "kind": "test_suite",
+          "per": null,
+          "properties": [
+            [
+              "category",
+              "execute"
+            ]
+          ],
+          "subtitle": "tool · test_suite"
+        },
+        {
+          "acts_for": null,
+          "block": "workspace",
+          "border": false,
+          "count": null,
+          "family": "place",
+          "id": "trees",
+          "kind": "worktree",
+          "per": "builders",
+          "properties": [
+            [
+              "sharing",
+              "exclusive"
+            ]
+          ],
+          "subtitle": "workspace · worktree"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": "2",
+          "family": "agent",
+          "id": "triage",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "triage"
+            ]
+          ],
+          "subtitle": "agent · triage"
+        },
+        {
+          "acts_for": null,
+          "block": "agent",
+          "border": false,
+          "count": null,
+          "family": "agent",
+          "id": "writer",
+          "kind": null,
+          "per": null,
+          "properties": [
+            [
+              "harness",
+              "coding"
+            ],
+            [
+              "role",
+              "writer"
+            ]
+          ],
+          "subtitle": "agent · writer"
+        }
+      ],
+      "revision": 1,
+      "summary": "A test fixture, not an architecture to copy: 37 parts and 90 links, wider than any page, so the renderer's large-graph view (natural size, pan, zoom, fit, the parts and links tables) has something to hold.",
+      "svg": "<svg class=\"graph\" viewBox=\"0 0 2436 1410\" width=\"2436\" height=\"1410\" role=\"group\" aria-labelledby=\"graph-title graph-desc\"><title id=\"graph-title\">Architecture large-37</title><desc id=\"graph-desc\">37 parts in rows by block layer, 90 links as arrows labelled by what they carry. The tables of parts and links beside the graph list every part and every link as text.</desc><defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead\"/></marker><marker id=\"arrow-hot\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0L10 5L0 10z\" class=\"arrowhead hot\"/></marker></defs><g class=\"edges\"><path class=\"edge\" d=\"M717 76C717 86 659 86 659 96L659 136C659 146 514 146 514 156L514 293C514 359 1023 359 1023 425L1023 445C1023 459.5 1239 459.5 1239 474\" data-from=\"owner\" data-to=\"operator\"><title>owner → operator: prompt</title></path><path class=\"edge\" d=\"M1213 474L1213 450L824 450L824 313C824 303 286 303 286 293L286 156C286 136 598 136 598 116C598 96.5 691 96.5 691 77\" data-from=\"operator\" data-to=\"owner\"><title>operator → owner: question</title></path><path class=\"edge\" d=\"M1265 474C1265 459.5 1100 459.5 1100 445L1100 425C1100 359 1523 359 1523 293L1523 156C1523 146 1132 146 1132 136L1132 96C1132 86.5 743 86.5 743 77\" data-from=\"operator\" data-to=\"owner\"><title>operator → owner: proposal</title></path><path class=\"edge\" d=\"M1194 76C1194 86 1396 86 1396 96L1396 136C1396 146 1587 146 1587 156L1587 293C1587 359 1395 359 1395 425L1395 445C1395 460 1545 460 1545 475L1545 513.5\" data-from=\"maintainer\" data-to=\"reviewers\"><title>maintainer → reviewers: prompt</title></path><path class=\"edge\" d=\"M1571 513.5L1571 475C1571 460 1473 460 1473 445L1473 425C1473 359 1619 359 1619 293L1619 156C1619 146 1428 146 1428 136L1428 96C1428 86.5 1220 86.5 1220 77\" data-from=\"reviewers\" data-to=\"maintainer\"><title>reviewers → maintainer: question</title></path><path class=\"edge\" d=\"M769 76C769 86 2310 86 2310 96L2310 136L2310 156L2310 293C2310 359 1837 359 1837 425L1837 445C1837 460 1871 460 1871 475L1871 629C1871 639 1894 639 1894 649L1894 725C1894 735 2024 735 2024 745L2024 755.5\" data-from=\"owner\" data-to=\"specs\"><title>owner → specs: spec</title></path><path class=\"edge\" d=\"M1168 76L1168 101L1364 101L1364 136C1364 146 1555 146 1555 156L1555 293C1555 303 1343 303 1343 313L1343 455C1343 465 1433 465 1433 475L1433 629C1433 664 1579 664 1579 699C1579 722 1700 722 1700 745L1700 755.5\" data-from=\"maintainer\" data-to=\"backlog\"><title>maintainer → backlog: story</title></path><path class=\"edge\" d=\"M1317 474C1317 459.5 1263 459.5 1263 445L1263 425C1263 359 1707 359 1707 293L1707 263\" data-from=\"operator\" data-to=\"planner\"><title>operator → planner: order</title></path><path class=\"edge\" d=\"M1265 629L1265 654L1338 654L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"operator\" data-to=\"gateway\"><title>operator → gateway: model_call</title></path><path class=\"edge\" d=\"M1291 629L1291 660L2098 660L2098 699C2098 721.5 2265 721.5 2265 744\" data-from=\"operator\" data-to=\"board\"><title>operator → board: message</title></path><path class=\"edge\" d=\"M1239 629L1239 666L801 666L801 699C801 722 688 722 688 745L688 755.5\" data-from=\"operator\" data-to=\"approvals\"><title>operator → approvals: question</title></path><path class=\"edge\" d=\"M662 755.5L662 745L662 714L740 714L740 649L740 629L740 475C740 465 824 465 824 455L824 313C824 303 286 303 286 293L286 156C286 136 598 136 598 116C598 96.5 691 96.5 691 77\" data-from=\"approvals\" data-to=\"owner\"><title>approvals → owner: question</title></path><path class=\"edge\" d=\"M1733 262L1733 293L1733 318L1343 318L1343 455C1343 465 1433 465 1433 475L1433 629C1433 664 1579 664 1579 699C1579 722 1700 722 1700 745L1700 755.5\" data-from=\"planner\" data-to=\"backlog\"><title>planner → backlog: story</title></path><path class=\"edge\" d=\"M1681 262L1681 293L1681 324L938 324L938 455C938 465 1096 465 1096 475L1096 629C1096 639 1338 639 1338 649L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"planner\" data-to=\"gateway\"><title>planner → gateway: model_call</title></path><path class=\"edge\" d=\"M1785 262L1785 293L1785 330L1915 330L1915 455C1915 465 2013 465 2013 475L2013 629C2013 664 2098 664 2098 699C2098 721.5 2265 721.5 2265 744\" data-from=\"planner\" data-to=\"board\"><title>planner → board: message</title></path><path class=\"edge\" d=\"M2050 755.5L2050 745C2050 722 1944 722 1944 699C1944 664 1920 664 1920 629L1920 475C1920 465 1883 465 1883 455L1883 390L1759 390L1759 293L1759 263\" data-from=\"specs\" data-to=\"planner\"><title>specs → planner: spec</title></path><path class=\"edge\" d=\"M2050 755.5L2050 745C2050 722 1944 722 1944 699C1944 664 1920 664 1920 629L1920 475C1920 465 1883 465 1883 455L1883 390L2014 390L2014 293L2014 263\" data-from=\"specs\" data-to=\"architect\"><title>specs → architect: spec</title></path><path class=\"edge\" d=\"M1962 262L1962 293C1962 303 1642 303 1642 313L1642 455C1642 465 1740 465 1740 475L1740 629C1740 639 1766 639 1766 649L1766 725C1766 735 1827 735 1827 745L1827 820C1827 830 1885 830 1885 840L1885 860C1885 870 1960 870 1960 880L1960 955L1960 975L1960 1005C1960 1015 1864 1015 1864 1025L1864 1035.5\" data-from=\"architect\" data-to=\"contract\"><title>architect → contract: record</title></path><path class=\"edge\" d=\"M1936 262L1936 293L1936 324L938 324L938 455C938 465 1096 465 1096 475L1096 629C1096 639 1338 639 1338 649L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"architect\" data-to=\"gateway\"><title>architect → gateway: model_call</title></path><path class=\"edge\" d=\"M2040 262L2040 293L2040 330L1915 330L1915 455C1915 465 2013 465 2013 475L2013 629C2013 664 2098 664 2098 699C2098 721.5 2265 721.5 2265 744\" data-from=\"architect\" data-to=\"board\"><title>architect → board: message</title></path><path class=\"edge\" d=\"M1988 262L1988 293L1988 342L1791 342L1791 455C1791 465 1836 465 1836 475L1836 629C1836 639 1862 639 1862 649L1862 725C1862 735 1923 735 1923 745L1923 820C1923 830 2042 830 2042 840L2042 860C2042 870 2151 870 2151 880L2151 955C2151 970 2248 970 2248 985C2248 1004.5 2333 1004.5 2333 1024\" data-from=\"architect\" data-to=\"search\"><title>architect → search: call</title></path><path class=\"edge\" d=\"M1726 755.5L1726 745C1726 722 1716 722 1716 699C1716 664 1708 664 1708 629L1708 475C1708 465 1610 465 1610 455L1610 396L674.3 396L674.3 294\" data-from=\"backlog\" data-to=\"builders\"><title>backlog → builders: task</title></path><path class=\"edge\" d=\"M2291 744C2291 721.5 2180 721.5 2180 699C2180 664 2070 664 2070 629L2070 475L2070 455L2070 402L715.5 402L715.5 294\" data-from=\"board\" data-to=\"builders\"><title>board → builders: claim</title></path><path class=\"edge\" d=\"M619.4 293L619.4 324L938 324L938 455C938 465 1096 465 1096 475L1096 629C1096 639 1338 639 1338 649L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"builders\" data-to=\"gateway\"><title>builders → gateway: model_call</title></path><path class=\"edge\" d=\"M605.7 293L605.7 348L906 348L906 455C906 465 1052 465 1052 475L1052 629C1052 639 1185 639 1185 649L1185 725C1185 735 1307 735 1307 745L1307 820C1307 830 1207 830 1207 840L1207 860C1207 870 1096 870 1096 880L1096 955C1096 970 1253 970 1253 985C1253 1004.5 1399 1004.5 1399 1024\" data-from=\"builders\" data-to=\"tests\"><title>builders → tests: call</title></path><path class=\"edge\" d=\"M633.1 293L633.1 354L970 354L970 455C970 465 1128 465 1128 475L1128 629C1128 639 1370 639 1370 649L1370 725C1370 735 1567 735 1567 745L1567 820C1567 830 1727 830 1727 840L1727 860C1727 870 1896 870 1896 880L1896 955C1896 970 1777 970 1777 985C1777 1004.5 1647 1004.5 1647 1024\" data-from=\"builders\" data-to=\"lint\"><title>builders → lint: call</title></path><path class=\"edge\" d=\"M701.8 293L701.8 342L1791 342L1791 455C1791 465 1836 465 1836 475L1836 629C1836 639 1862 639 1862 649L1862 725C1862 735 1923 735 1923 745L1923 820C1923 830 2042 830 2042 840L2042 860C2042 870 2151 870 2151 880L2151 955C2151 970 2248 970 2248 985C2248 1004.5 2333 1004.5 2333 1024\" data-from=\"builders\" data-to=\"search\"><title>builders → search: call</title></path><path class=\"edge\" d=\"M660.6 293L660.6 360L1554 360L1554 435C1554 455 1597 455 1597 475L1597 513.5\" data-from=\"builders\" data-to=\"reviewers\"><title>builders → reviewers: review</title></path><path class=\"edge\" d=\"M646.9 293L646.9 366L1186 366L1186 435C1186 454.5 1291 454.5 1291 474\" data-from=\"builders\" data-to=\"operator\"><title>builders → operator: question</title></path><path class=\"edge\" d=\"M564.5 293L564.5 372L728 372L728 455C728 465 813 465 813 475L813 629C813 639 862 639 862 649L862 725C862 735 792 735 792 745L792 820C792 830 687 830 687 840L687 860C687 870 747 870 747 880L747 955C747 965 795 965 795 975L795 1005C795 1015 835 1015 835 1025L835 1100C835 1120 864 1120 864 1140C864 1155 885 1155 885 1170L885 1180.5\" data-from=\"builders\" data-to=\"ci\"><title>builders → ci: build</title></path><path class=\"edge\" d=\"M592 293L592 378L856 378L856 455C856 465 1008 465 1008 475L1008 629C1008 639 1147 639 1147 649L1147 725C1147 735 1275 735 1275 745L1275 820C1275 830 1175 830 1175 840L1175 860C1175 870 1064 870 1064 880L1064 955C1064 965 1180 965 1180 975L1180 1005C1180 1015 1285 1015 1285 1025L1285 1100C1285 1120 1463 1120 1463 1140C1463 1154.5 1475 1154.5 1475 1169\" data-from=\"builders\" data-to=\"slots\"><title>builders → slots: request</title></path><path class=\"edge\" d=\"M2089 1035.5L2089 1025L2089 1000L1993 1000L1993 975C1993 965 1992 965 1992 955L1992 880C1992 870 1936 870 1936 860L1936 840C1936 830 1859 830 1859 820L1859 745C1859 735 1798 735 1798 725L1798 649C1798 639 1772 639 1772 629L1772 475C1772 455 1700 455 1700 435C1700 364.5 688 364.5 688 294\" data-from=\"context\" data-to=\"builders\"><title>context → builders: context</title></path><path class=\"edge\" d=\"M1890 1035.5L1890 1025L1890 1000L1993 1000L1993 975C1993 965 1992 965 1992 955L1992 880C1992 870 1936 870 1936 860L1936 840C1936 830 1859 830 1859 820L1859 745C1859 735 1798 735 1798 725L1798 649C1798 639 1772 639 1772 629L1772 475C1772 455 1700 455 1700 435C1700 364.5 688 364.5 688 294\" data-from=\"contract\" data-to=\"builders\"><title>contract → builders: context</title></path><path class=\"edge\" d=\"M1146 755.5L1146 745C1146 722 1040 722 1040 699C1040 664 922 664 922 629L922 475C922 465 792 465 792 455L792 408L578.2 408L578.2 294\" data-from=\"grants\" data-to=\"builders\"><title>grants → builders: grant</title></path><path class=\"edge\" d=\"M868.1 262L868.1 293L868.1 324L938 324L938 455C938 465 1096 465 1096 475L1096 629C1096 639 1338 639 1338 649L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"testers\" data-to=\"gateway\"><title>testers → gateway: model_call</title></path><path class=\"edge\" d=\"M849.9 262L849.9 293L849.9 348L906 348L906 455C906 465 1052 465 1052 475L1052 629C1052 639 1185 639 1185 649L1185 725C1185 735 1307 735 1307 745L1307 820C1307 830 1207 830 1207 840L1207 860C1207 870 1096 870 1096 880L1096 955C1096 970 1253 970 1253 985C1253 1004.5 1399 1004.5 1399 1024\" data-from=\"testers\" data-to=\"tests\"><title>testers → tests: call</title></path><path class=\"edge\" d=\"M813.3 262L813.3 293L813.3 372L728 372L728 455C728 465 813 465 813 475L813 629C813 639 862 639 862 649L862 725C862 735 792 735 792 745L792 820C792 830 687 830 687 840L687 860C687 870 747 870 747 880L747 955C747 965 795 965 795 975L795 1005C795 1015 835 1015 835 1025L835 1100C835 1120 864 1120 864 1140C864 1155 885 1155 885 1170L885 1180.5\" data-from=\"testers\" data-to=\"ci\"><title>testers → ci: build</title></path><path class=\"edge\" d=\"M795 262L795 293L795 384L664 384L664 455L664 475L664 629C664 664 685 664 685 699C685 722 490 722 490 745L490 755.5\" data-from=\"testers\" data-to=\"evidence\"><title>testers → evidence: record</title></path><path class=\"edge\" d=\"M904.7 262L904.7 293L904.7 330L1915 330L1915 455C1915 465 2013 465 2013 475L2013 629C2013 664 2098 664 2098 699C2098 721.5 2265 721.5 2265 744\" data-from=\"testers\" data-to=\"board\"><title>testers → board: message</title></path><path class=\"edge\" d=\"M2291 744C2291 721.5 2180 721.5 2180 699C2180 664 2070 664 2070 629L2070 475L2070 455L2070 402L923 402L923 293L923 263\" data-from=\"board\" data-to=\"testers\"><title>board → testers: claim</title></path><path class=\"edge\" d=\"M1838 1035.5L1838 1025C1838 1015 1928 1015 1928 1005L1928 975L1928 955L1928 880C1928 870 1781 870 1781 860L1781 840C1781 830 1599 830 1599 820L1599 745C1599 735 1506 735 1506 725L1506 649C1506 639 1401 639 1401 629L1401 475C1401 465 1311 465 1311 455L1311 313C1311 303 886.4 303 886.4 293L886.4 263\" data-from=\"contract\" data-to=\"testers\"><title>contract → testers: context</title></path><path class=\"edge\" d=\"M1146 755.5L1146 745C1146 722 1040 722 1040 699C1040 664 922 664 922 629L922 475C922 465 792 465 792 455L792 408L831.6 408L831.6 293L831.6 263\" data-from=\"grants\" data-to=\"testers\"><title>grants → testers: grant</title></path><path class=\"edge\" d=\"M1545 589.5L1545 629L1545 654L1338 654L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"reviewers\" data-to=\"gateway\"><title>reviewers → gateway: model_call</title></path><path class=\"edge\" d=\"M1519 589.5L1519 629L1519 678L685 678L685 699C685 722 490 722 490 745L490 755.5\" data-from=\"reviewers\" data-to=\"evidence\"><title>reviewers → evidence: record</title></path><path class=\"edge\" d=\"M1623 589.5L1623 629C1623 659 2015 659 2015 689L2015 709C2015 726.5 2239 726.5 2239 744\" data-from=\"reviewers\" data-to=\"board\"><title>reviewers → board: verdict</title></path><path class=\"edge\" d=\"M1597 589.5L1597 629L1597 672L1862 672L1862 725C1862 735 1923 735 1923 745L1923 820C1923 830 2042 830 2042 840L2042 860C2042 870 2151 870 2151 880L2151 955C2151 970 2248 970 2248 985C2248 1004.5 2333 1004.5 2333 1024\" data-from=\"reviewers\" data-to=\"search\"><title>reviewers → search: call</title></path><path class=\"edge\" d=\"M2115 1035.5L2115 1025C2115 1005 2070 1005 2070 985C2070 970 2025 970 2025 955L2025 880C2025 870 1968 870 1968 860L1968 840C1968 830 1891 830 1891 820L1891 745C1891 735 1830 735 1830 725L1830 684L1571 684L1571 629L1571 590.5\" data-from=\"context\" data-to=\"reviewers\"><title>context → reviewers: context</title></path><path class=\"edge\" d=\"M2144 262L2144 293L2144 324L938 324L938 455C938 465 1096 465 1096 475L1096 629C1096 639 1338 639 1338 649L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"writer\" data-to=\"gateway\"><title>writer → gateway: model_call</title></path><path class=\"edge\" d=\"M2222 262L2222 293L2222 342L1791 342L1791 455C1791 465 1836 465 1836 475L1836 629C1836 639 1862 639 1862 649L1862 725C1862 735 1923 735 1923 745L1923 820C1923 830 2042 830 2042 840L2042 860C2042 870 2151 870 2151 880L2151 955C2151 970 2248 970 2248 985C2248 1004.5 2333 1004.5 2333 1024\" data-from=\"writer\" data-to=\"search\"><title>writer → search: call</title></path><path class=\"edge\" d=\"M2291 744C2291 721.5 2180 721.5 2180 699C2180 664 2070 664 2070 629L2070 475L2070 455L2070 402L2248 402L2248 293L2248 263\" data-from=\"board\" data-to=\"writer\"><title>board → writer: claim</title></path><path class=\"edge\" d=\"M2115 1035.5L2115 1025C2115 1005 2070 1005 2070 985C2070 970 2025 970 2025 955L2025 880C2025 870 1968 870 1968 860L1968 840C1968 830 1891 830 1891 820L1891 745C1891 735 1830 735 1830 725L1830 649C1830 639 1804 639 1804 629L1804 475C1804 465 1759 465 1759 455L1759 414L2196 414L2196 293L2196 263\" data-from=\"context\" data-to=\"writer\"><title>context → writer: context</title></path><path class=\"edge\" d=\"M2170 262L2170 293L2170 360L1554 360L1554 435C1554 455 1597 455 1597 475L1597 513.5\" data-from=\"writer\" data-to=\"reviewers\"><title>writer → reviewers: review</title></path><path class=\"edge\" d=\"M184.8 262L184.8 293L184.8 372L728 372L728 455C728 465 813 465 813 475L813 629C813 639 862 639 862 649L862 725C862 735 792 735 792 745L792 820C792 830 687 830 687 840L687 860C687 870 747 870 747 880L747 955C747 965 795 965 795 975L795 1005C795 1015 835 1015 835 1025L835 1100C835 1120 864 1120 864 1140C864 1155 885 1155 885 1170L885 1180.5\" data-from=\"release\" data-to=\"ci\"><title>release → ci: build</title></path><path class=\"edge\" d=\"M159.2 262L159.2 293L159.2 336L696 336L696 455C696 465 781 465 781 475L781 629C781 664 801 664 801 699C801 722 688 722 688 745L688 755.5\" data-from=\"release\" data-to=\"approvals\"><title>release → approvals: question</title></path><path class=\"edge\" d=\"M236 262L236 293L236 324L938 324L938 455C938 465 1096 465 1096 475L1096 629C1096 639 1338 639 1338 649L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"release\" data-to=\"gateway\"><title>release → gateway: model_call</title></path><path class=\"edge\" d=\"M464 755.5L464 745C464 727 532 727 532 709L532 689C532 659 632 659 632 629L632 475L632 455L632 313C632 303 133.6 303 133.6 293L133.6 263\" data-from=\"evidence\" data-to=\"release\"><title>evidence → release: record</title></path><path class=\"edge\" d=\"M1146 755.5L1146 745C1146 722 1040 722 1040 699C1040 664 922 664 922 629L922 475C922 465 792 465 792 455L792 408L210.4 408L210.4 293L210.4 263\" data-from=\"grants\" data-to=\"release\"><title>grants → release: grant</title></path><path class=\"edge\" d=\"M508 1035.5L508 1025C508 1005 470 1005 470 985C470 970 420 970 420 955L420 880C420 870 358 870 358 860L358 840C358 830 286 830 286 820L286 745C286 735 256 735 256 725L256 649C256 639 215 639 215 629L215 475C215 465 161 465 161 455L161 420L108 420L108 293L108 263\" data-from=\"runbook\" data-to=\"release\"><title>runbook → release: context</title></path><path class=\"edge\" d=\"M915 744C915 726.5 913 726.5 913 709L913 689C913 659 845 659 845 629L845 475C845 465 760 465 760 455L760 313C760 303 357.3 303 357.3 293L357.3 263\" data-from=\"alerts\" data-to=\"triage\"><title>alerts → triage: notice</title></path><path class=\"edge\" d=\"M937 1180.5L937 1170C937 1160 964 1160 964 1150L964 1120L964 1100L964 1025C964 1010 969 1010 969 995L969 975C969 965 944 965 944 955L944 880L944 860L944 840C944 830.5 915 830.5 915 821\" data-from=\"ci\" data-to=\"alerts\"><title>ci → alerts: notice</title></path><path class=\"edge\" d=\"M400 262L400 293L400 324L938 324L938 455C938 465 1096 465 1096 475L1096 629C1096 639 1338 639 1338 649L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"triage\" data-to=\"gateway\"><title>triage → gateway: model_call</title></path><path class=\"edge\" d=\"M442.7 262L442.7 293L442.7 318L1343 318L1343 455C1343 465 1433 465 1433 475L1433 629C1433 664 1579 664 1579 699C1579 722 1700 722 1700 745L1700 755.5\" data-from=\"triage\" data-to=\"backlog\"><title>triage → backlog: story</title></path><path class=\"edge\" d=\"M421.3 262L421.3 293L421.3 366L1186 366L1186 435C1186 454.5 1291 454.5 1291 474\" data-from=\"triage\" data-to=\"operator\"><title>triage → operator: question</title></path><path class=\"edge\" d=\"M464 262L464 293L464 342L1791 342L1791 455C1791 465 1836 465 1836 475L1836 629C1836 639 1862 639 1862 649L1862 725C1862 735 1923 735 1923 745L1923 820C1923 830 2042 830 2042 840L2042 860C2042 870 2151 870 2151 880L2151 955C2151 970 2248 970 2248 985C2248 1004.5 2333 1004.5 2333 1024\" data-from=\"triage\" data-to=\"search\"><title>triage → search: call</title></path><path class=\"edge\" d=\"M508 1035.5L508 1025C508 1005 470 1005 470 985C470 970 420 970 420 955L420 880C420 870 358 870 358 860L358 840C358 830 286 830 286 820L286 745C286 735 256 735 256 725L256 649C256 639 215 639 215 629L215 475C215 465 161 465 161 455L161 420L336 420L336 293L336 263\" data-from=\"runbook\" data-to=\"triage\"><title>runbook → triage: context</title></path><path class=\"edge\" d=\"M1146 755.5L1146 745C1146 722 1040 722 1040 699C1040 664 922 664 922 629L922 475C922 465 792 465 792 455L792 408L378.7 408L378.7 293L378.7 263\" data-from=\"grants\" data-to=\"triage\"><title>grants → triage: grant</title></path><path class=\"edge\" d=\"M849 1310C849 1300.5 765 1300.5 765 1291L765 1265L765 1245L765 1170L765 1150L765 1120L765 1100L765 1025C765 1010 663 1010 663 995L663 975C663 965 593 965 593 955L593 880C593 870 511 870 511 860L511 840C511 830 350 830 350 820L350 745C350 735 445 735 445 725L445 649C445 639 529 639 529 629L529 475C529 465 600 465 600 455L600 313C600 303 1333.5 303 1333.5 293L1333.5 285.5\" data-from=\"clock\" data-to=\"night\"><title>clock → night: trigger</title></path><path class=\"edge\" d=\"M1412.9 284.5L1412.9 293L1412.9 324L938 324L938 455C938 465 1096 465 1096 475L1096 629C1096 639 1338 639 1338 649L1338 725C1338 735 1535 735 1535 745L1535 820C1535 835 1534 835 1534 850C1534 864.5 1509 864.5 1509 879\" data-from=\"night\" data-to=\"gateway\"><title>night → gateway: model_call</title></path><path class=\"edge\" d=\"M1393.1 284.5L1393.1 293L1393.1 348L906 348L906 455C906 465 1052 465 1052 475L1052 629C1052 639 1185 639 1185 649L1185 725C1185 735 1307 735 1307 745L1307 820C1307 830 1207 830 1207 840L1207 860C1207 870 1096 870 1096 880L1096 955C1096 970 1253 970 1253 985C1253 1004.5 1399 1004.5 1399 1024\" data-from=\"night\" data-to=\"tests\"><title>night → tests: call</title></path><path class=\"edge\" d=\"M1432.8 284.5L1432.8 293L1432.8 354L970 354L970 455C970 465 1128 465 1128 475L1128 629C1128 639 1370 639 1370 649L1370 725C1370 735 1567 735 1567 745L1567 820C1567 830 1727 830 1727 840L1727 860C1727 870 1896 870 1896 880L1896 955C1896 970 1777 970 1777 985C1777 1004.5 1647 1004.5 1647 1024\" data-from=\"night\" data-to=\"lint\"><title>night → lint: call</title></path><path class=\"edge\" d=\"M1452.6 284.5L1452.6 293L1452.6 360L1554 360L1554 435C1554 455 1597 455 1597 475L1597 513.5\" data-from=\"night\" data-to=\"reviewers\"><title>night → reviewers: review</title></path><path class=\"edge\" d=\"M1353.4 284.5L1353.4 293L1353.4 336L696 336L696 455C696 465 781 465 781 475L781 629C781 664 801 664 801 699C801 722 688 722 688 745L688 755.5\" data-from=\"night\" data-to=\"approvals\"><title>night → approvals: question</title></path><path class=\"edge\" d=\"M1726 755.5L1726 745C1726 722 1716 722 1716 699C1716 664 1708 664 1708 629L1708 475C1708 465 1610 465 1610 455L1610 396L1472.5 396L1472.5 293L1472.5 285.5\" data-from=\"backlog\" data-to=\"night\"><title>backlog → night: task</title></path><path class=\"edge\" d=\"M1146 755.5L1146 745C1146 722 1040 722 1040 699C1040 664 922 664 922 629L922 475C922 465 792 465 792 455L792 408L1373.2 408L1373.2 293L1373.2 285.5\" data-from=\"grants\" data-to=\"night\"><title>grants → night: grant</title></path><path class=\"edge\" d=\"M1421 808.5L1421 820C1421 830 1451 830 1451 840L1451 860C1451 869.5 1483 869.5 1483 879\" data-from=\"budgets\" data-to=\"gateway\"><title>budgets → gateway: grant</title></path><path class=\"edge\" d=\"M1399 1100L1399 1125L1463 1125L1463 1140C1463 1154.5 1475 1154.5 1475 1169\" data-from=\"tests\" data-to=\"slots\"><title>tests → slots: request</title></path><path class=\"edge\" d=\"M1647 1100L1647 1125L1463 1125L1463 1140C1463 1154.5 1475 1154.5 1475 1169\" data-from=\"lint\" data-to=\"slots\"><title>lint → slots: request</title></path><path class=\"edge\" d=\"M911 1180.5L911 1170C911 1160 914 1160 914 1150L914 1120L914 1100L914 1025C914 1010 846 1010 846 995L846 975C846 965 789 965 789 955L789 880L789 860L789 840C789 830 477 830 477 820L477 809.5\" data-from=\"ci\" data-to=\"evidence\"><title>ci → evidence: record</title></path><path class=\"edge\" d=\"M451 808.5L451 820C451 830 479 830 479 840L479 860C479 870 551 870 551 880L551 955C551 965 612 965 612 975L612 1005C612 1015 661 1015 661 1025L661 1100C661 1115 688 1115 688 1130L688 1150L688 1170L688 1245L688 1265L688 1291C688 1301 667 1301 667 1311L667 1321.5\" data-from=\"evidence\" data-to=\"kpis\"><title>evidence → kpis: record</title></path><path class=\"edge\" d=\"M615 1321.5L615 1311L615 1286L595 1286L595 1265C595 1255 537 1255 537 1245L537 1170C537 1160 467 1160 467 1150L467 1120C467 1110 386 1110 386 1100L386 1025C386 1015 371 1015 371 1005L371 975C371 965 343 965 343 955L343 880C343 870 304 870 304 860L304 840C304 830 254 830 254 820L254 745C254 735 291 735 291 725L291 649C291 639 248 639 248 629L248 475C248 465 193 465 193 455L193 313C193 303 26 303 26 293L26 156C26 136 408 136 408 116C408 96.5 665 96.5 665 77\" data-from=\"kpis\" data-to=\"owner\"><title>kpis → owner: report</title></path><path class=\"edge\" d=\"M641 1321.5L641 1311C641 1301 644 1301 644 1291L644 1265C644 1255 646 1255 646 1245L646 1170C646 1160 637 1160 637 1150L637 1120C637 1110 629 1110 629 1100L629 1025C629 1015 569 1015 569 1005L569 975C569 965 497 965 497 955L497 880C497 870 413 870 413 860L413 840C413 830 318 830 318 820L318 745C318 735 323 735 323 725L323 649C323 639 280 639 280 629L280 475C280 465 225 465 225 455L225 313C225 303 58 303 58 293L58 156C58 146 537 146 537 136L537 96C537 86.5 1142 86.5 1142 77\" data-from=\"kpis\" data-to=\"maintainer\"><title>kpis → maintainer: report</title></path><path class=\"edge\" d=\"M438 755.5L438 745L438 720L291 720L291 649C291 639 248 639 248 629L248 475C248 465 193 465 193 455L193 313C193 303 26 303 26 293L26 156C26 136 408 136 408 116C408 96.5 665 96.5 665 77\" data-from=\"evidence\" data-to=\"owner\"><title>evidence → owner: report</title></path><path class=\"edge\" d=\"M172 186L172 156L172 131L408 131L408 116C408 96.5 665 96.5 665 77\" data-from=\"release\" data-to=\"owner\"><title>release → owner: report</title></path><path class=\"edge\" d=\"M1818 224.5L1903 224.5\" data-from=\"planner\" data-to=\"architect\"><title>planner → architect: order</title></path><path class=\"edge\" d=\"M1128 156C1128 110 640 110 640 155\" data-from=\"harness\" data-to=\"builders\"><title>harness → builders: session</title></path><path class=\"edge\" d=\"M1043 224.5L944 224.5\" data-from=\"harness\" data-to=\"testers\"><title>harness → testers: session</title></path><path class=\"edge\" d=\"M1213 224.5L1312.5 224.5\" data-from=\"harness\" data-to=\"night\"><title>harness → night: session</title></path><path class=\"edge\" d=\"M1411 917.5L1295 917.5\" data-from=\"gateway\" data-to=\"frontier\"><title>gateway → frontier: model_call</title></path><path class=\"edge\" d=\"M1581 917.5L1697 917.5\" data-from=\"gateway\" data-to=\"small\"><title>gateway → small: model_call</title></path><path class=\"edge\" d=\"M996 1207.5L1390 1207.5\" data-from=\"ci\" data-to=\"slots\"><title>ci → slots: request</title></path></g><g class=\"labels\"><g class=\"pill\"><rect x=\"1836.9\" y=\"214.5\" width=\"47.2\" height=\"20\" rx=\"10\" data-box=\"1836.9 214.5 47.2 20\"/><text x=\"1860.5\" y=\"228.5\" text-anchor=\"middle\">order</text></g><g class=\"pill\"><rect x=\"853.3\" y=\"111.5\" width=\"61.5\" height=\"20\" rx=\"10\" data-box=\"853.3 111.5 61.5 20\"/><text x=\"884\" y=\"125.5\" text-anchor=\"middle\">session</text></g><g class=\"pill\"><rect x=\"962.8\" y=\"214.5\" width=\"61.5\" height=\"20\" rx=\"10\" data-box=\"962.8 214.5 61.5 20\"/><text x=\"993.5\" y=\"228.5\" text-anchor=\"middle\">session</text></g><g class=\"pill\"><rect x=\"1232\" y=\"214.5\" width=\"61.5\" height=\"20\" rx=\"10\" data-box=\"1232 214.5 61.5 20\"/><text x=\"1262.8\" y=\"228.5\" text-anchor=\"middle\">session</text></g><g class=\"pill\"><rect x=\"1313.9\" y=\"907.5\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"1313.9 907.5 78.1 20\"/><text x=\"1353\" y=\"921.5\" text-anchor=\"middle\">model_call</text></g><g class=\"pill\"><rect x=\"1599.9\" y=\"907.5\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"1599.9 907.5 78.1 20\"/><text x=\"1639\" y=\"921.5\" text-anchor=\"middle\">model_call</text></g><g class=\"pill\"><rect x=\"1162.7\" y=\"1197.5\" width=\"60.6\" height=\"20\" rx=\"10\" data-box=\"1162.7 1197.5 60.6 20\"/><text x=\"1193\" y=\"1211.5\" text-anchor=\"middle\">request</text></g><g class=\"pill\"><rect x=\"565\" y=\"106\" width=\"66.1\" height=\"20\" rx=\"10\" data-box=\"565 106 66.1 20\"/><text x=\"598\" y=\"120\" text-anchor=\"middle\">question</text></g><g class=\"pill\"><rect x=\"1555.4\" y=\"689\" width=\"47.2\" height=\"20\" rx=\"10\" data-box=\"1555.4 689 47.2 20\"/><text x=\"1579\" y=\"703\" text-anchor=\"middle\">story</text></g><g class=\"pill\"><rect x=\"1494.9\" y=\"840\" width=\"78.1\" height=\"20\" rx=\"10\" data-box=\"1494.9 840 78.1 20\"/><text x=\"1534\" y=\"854\" text-anchor=\"middle\">model_call</text></g><g class=\"pill\"><rect x=\"2063.9\" y=\"689\" width=\"68.1\" height=\"20\" rx=\"10\" data-box=\"2063.9 689 68.1 20\"/><text x=\"2098\" y=\"703\" text-anchor=\"middle\">message</text></g><g class=\"pill\"><rect x=\"768\" y=\"689\" width=\"66.1\" height=\"20\" rx=\"10\" data-box=\"768 689 66.1 20\"/><text x=\"801\" y=\"703\" text-anchor=\"middle\">question</text></g><g class=\"pill\"><rect x=\"2228.9\" y=\"975\" width=\"38.2\" height=\"20\" rx=\"10\" data-box=\"2228.9 975 38.2 20\"/><text x=\"2248\" y=\"989\" text-anchor=\"middle\">call</text></g><g class=\"pill\"><rect x=\"1233.9\" y=\"975\" width=\"38.2\" height=\"20\" rx=\"10\" data-box=\"1233.9 975 38.2 20\"/><text x=\"1253\" y=\"989\" text-anchor=\"middle\">call</text></g><g class=\"pill\"><rect x=\"1757.9\" y=\"975\" width=\"38.2\" height=\"20\" rx=\"10\" data-box=\"1757.9 975 38.2 20\"/><text x=\"1777\" y=\"989\" text-anchor=\"middle\">call</text></g><g class=\"pill\"><rect x=\"1525.9\" y=\"425\" width=\"56.2\" height=\"20\" rx=\"10\" data-box=\"1525.9 425 56.2 20\"/><text x=\"1554\" y=\"439\" text-anchor=\"middle\">review</text></g><g class=\"pill\"><rect x=\"1153\" y=\"425\" width=\"66.1\" height=\"20\" rx=\"10\" data-box=\"1153 425 66.1 20\"/><text x=\"1186\" y=\"439\" text-anchor=\"middle\">question</text></g><g class=\"pill\"><rect x=\"841.5\" y=\"1130\" width=\"44.9\" height=\"20\" rx=\"10\" data-box=\"841.5 1130 44.9 20\"/><text x=\"864\" y=\"1144\" text-anchor=\"middle\">build</text></g><g class=\"pill\"><rect x=\"1432.7\" y=\"1130\" width=\"60.6\" height=\"20\" rx=\"10\" data-box=\"1432.7 1130 60.6 20\"/><text x=\"1463\" y=\"1144\" text-anchor=\"middle\">request</text></g><g class=\"pill\"><rect x=\"1669.7\" y=\"425\" width=\"60.6\" height=\"20\" rx=\"10\" data-box=\"1669.7 425 60.6 20\"/><text x=\"1700\" y=\"439\" text-anchor=\"middle\">context</text></g><g class=\"pill\"><rect x=\"658.1\" y=\"689\" width=\"53.9\" height=\"20\" rx=\"10\" data-box=\"658.1 689 53.9 20\"/><text x=\"685\" y=\"703\" text-anchor=\"middle\">record</text></g><g class=\"pill\"><rect x=\"382.1\" y=\"106\" width=\"51.8\" height=\"20\" rx=\"10\" data-box=\"382.1 106 51.8 20\"/><text x=\"408\" y=\"120\" text-anchor=\"middle\">report</text></g><g class=\"pill\"><rect x=\"1921.7\" y=\"689\" width=\"44.7\" height=\"20\" rx=\"10\" data-box=\"1921.7 689 44.7 20\"/><text x=\"1944\" y=\"703\" text-anchor=\"middle\">spec</text></g><g class=\"pill\"><rect x=\"1694.7\" y=\"689\" width=\"42.6\" height=\"20\" rx=\"10\" data-box=\"1694.7 689 42.6 20\"/><text x=\"1716\" y=\"703\" text-anchor=\"middle\">task</text></g><g class=\"pill\"><rect x=\"2155.8\" y=\"689\" width=\"48.4\" height=\"20\" rx=\"10\" data-box=\"2155.8 689 48.4 20\"/><text x=\"2180\" y=\"703\" text-anchor=\"middle\">claim</text></g><g class=\"pill\"><rect x=\"1016.4\" y=\"689\" width=\"47.2\" height=\"20\" rx=\"10\" data-box=\"1016.4 689 47.2 20\"/><text x=\"1040\" y=\"703\" text-anchor=\"middle\">grant</text></g><g class=\"pill\"><rect x=\"2039.7\" y=\"975\" width=\"60.6\" height=\"20\" rx=\"10\" data-box=\"2039.7 975 60.6 20\"/><text x=\"2070\" y=\"989\" text-anchor=\"middle\">context</text></g><g class=\"pill\"><rect x=\"439.7\" y=\"975\" width=\"60.6\" height=\"20\" rx=\"10\" data-box=\"439.7 975 60.6 20\"/><text x=\"470\" y=\"989\" text-anchor=\"middle\">context</text></g><g class=\"pill\"><rect x=\"994.3\" y=\"425\" width=\"57.3\" height=\"20\" rx=\"10\" data-box=\"994.3 425 57.3 20\"/><text x=\"1023\" y=\"439\" text-anchor=\"middle\">prompt</text></g><g class=\"pill\"><rect x=\"1067\" y=\"425\" width=\"66.1\" height=\"20\" rx=\"10\" data-box=\"1067 425 66.1 20\"/><text x=\"1100\" y=\"439\" text-anchor=\"middle\">proposal</text></g><g class=\"pill\"><rect x=\"1366.3\" y=\"425\" width=\"57.3\" height=\"20\" rx=\"10\" data-box=\"1366.3 425 57.3 20\"/><text x=\"1395\" y=\"439\" text-anchor=\"middle\">prompt</text></g><g class=\"pill\"><rect x=\"1440\" y=\"425\" width=\"66.1\" height=\"20\" rx=\"10\" data-box=\"1440 425 66.1 20\"/><text x=\"1473\" y=\"439\" text-anchor=\"middle\">question</text></g><g class=\"pill\"><rect x=\"1814.7\" y=\"425\" width=\"44.7\" height=\"20\" rx=\"10\" data-box=\"1814.7 425 44.7 20\"/><text x=\"1837\" y=\"439\" text-anchor=\"middle\">spec</text></g><g class=\"pill\"><rect x=\"1239.4\" y=\"425\" width=\"47.2\" height=\"20\" rx=\"10\" data-box=\"1239.4 425 47.2 20\"/><text x=\"1263\" y=\"439\" text-anchor=\"middle\">order</text></g><g class=\"pill\"><rect x=\"1858.1\" y=\"840\" width=\"53.9\" height=\"20\" rx=\"10\" data-box=\"1858.1 840 53.9 20\"/><text x=\"1885\" y=\"854\" text-anchor=\"middle\">record</text></g><g class=\"pill\"><rect x=\"1750.7\" y=\"840\" width=\"60.6\" height=\"20\" rx=\"10\" data-box=\"1750.7 840 60.6 20\"/><text x=\"1781\" y=\"854\" text-anchor=\"middle\">context</text></g><g class=\"pill\"><rect x=\"1986.3\" y=\"689\" width=\"57.3\" height=\"20\" rx=\"10\" data-box=\"1986.3 689 57.3 20\"/><text x=\"2015\" y=\"703\" text-anchor=\"middle\">verdict</text></g><g class=\"pill\"><rect x=\"505.1\" y=\"689\" width=\"53.9\" height=\"20\" rx=\"10\" data-box=\"505.1 689 53.9 20\"/><text x=\"532\" y=\"703\" text-anchor=\"middle\">record</text></g><g class=\"pill\"><rect x=\"886.6\" y=\"689\" width=\"52.7\" height=\"20\" rx=\"10\" data-box=\"886.6 689 52.7 20\"/><text x=\"913\" y=\"703\" text-anchor=\"middle\">notice</text></g><g class=\"pill\"><rect x=\"942.6\" y=\"975\" width=\"52.7\" height=\"20\" rx=\"10\" data-box=\"942.6 975 52.7 20\"/><text x=\"969\" y=\"989\" text-anchor=\"middle\">notice</text></g><g class=\"pill\"><rect x=\"635.4\" y=\"975\" width=\"55.3\" height=\"20\" rx=\"10\" data-box=\"635.4 975 55.3 20\"/><text x=\"663\" y=\"989\" text-anchor=\"middle\">trigger</text></g><g class=\"pill\"><rect x=\"1427.4\" y=\"840\" width=\"47.2\" height=\"20\" rx=\"10\" data-box=\"1427.4 840 47.2 20\"/><text x=\"1451\" y=\"854\" text-anchor=\"middle\">grant</text></g><g class=\"pill\"><rect x=\"819.1\" y=\"975\" width=\"53.9\" height=\"20\" rx=\"10\" data-box=\"819.1 975 53.9 20\"/><text x=\"846\" y=\"989\" text-anchor=\"middle\">record</text></g><g class=\"pill\"><rect x=\"661.1\" y=\"1130\" width=\"53.9\" height=\"20\" rx=\"10\" data-box=\"661.1 1130 53.9 20\"/><text x=\"688\" y=\"1144\" text-anchor=\"middle\">record</text></g><g class=\"pill\"><rect x=\"387.1\" y=\"840\" width=\"51.8\" height=\"20\" rx=\"10\" data-box=\"387.1 840 51.8 20\"/><text x=\"413\" y=\"854\" text-anchor=\"middle\">report</text></g></g><g class=\"nodes\"><g class=\"node f-principal\" data-part=\"owner\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"owner, principal · human\" x=\"633\" y=\"24\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"633 24 168 52\"/><rect class=\"icon-bg\" x=\"645\" y=\"36\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(653 44) scale(1)\" d=\"M7 6.6a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM2.4 12.6c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2\"/><text class=\"name\" x=\"685\" y=\"48\">owner</text><text class=\"sub\" x=\"685\" y=\"63\">principal · human</text></g><g class=\"node f-agent on-border\" data-part=\"operator\"><rect class=\"border-mark\" x=\"1153.5\" y=\"470\" width=\"223\" height=\"164\" rx=\"14\"/><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"operator, agent · operator, on the border\" x=\"1158.5\" y=\"475\" width=\"213\" height=\"154\" rx=\"10\" data-box=\"1158.5 475 213 154\"/><rect class=\"icon-bg\" x=\"1170.5\" y=\"487\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1178.5 495) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"1210.5\" y=\"499\">operator</text><text class=\"sub\" x=\"1210.5\" y=\"514\">agent · operator</text><g class=\"tag\"><rect x=\"1311.2\" y=\"503\" width=\"48.3\" height=\"16\" rx=\"8\"/><text x=\"1335.3\" y=\"514.5\" text-anchor=\"middle\">border</text></g><text class=\"prop\" x=\"1170.5\" y=\"539\"><tspan class=\"prop-k\">acts for</tspan> owner</text><text class=\"prop\" x=\"1170.5\" y=\"556\"><tspan class=\"prop-k\">harness</tspan> coding</text><text class=\"per-head\" x=\"1170.5\" y=\"573\">per operator</text><g class=\"node child f-place\" data-part=\"repo\"><rect class=\"child-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"repo, workspace · checkout, one per operator\" x=\"1170.5\" y=\"579\" width=\"189\" height=\"38\" rx=\"8\"/><rect class=\"icon-bg\" x=\"1178.5\" y=\"588\" width=\"20\" height=\"20\" rx=\"4.7\"/><path class=\"icon\" transform=\"translate(1183.8 593.3) scale(0.67)\" d=\"M1.5 3.5h4l1.5 1.5h5.5v6.5h-11z\"/><text class=\"name xs\" x=\"1206.5\" y=\"595\">repo</text><text class=\"sub xs\" x=\"1206.5\" y=\"609\">workspace · checkout</text></g></g><g class=\"node f-principal\" data-part=\"maintainer\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"maintainer, principal · human\" x=\"1097\" y=\"24\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"1097 24 168 52\"/><rect class=\"icon-bg\" x=\"1109\" y=\"36\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1117 44) scale(1)\" d=\"M7 6.6a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM2.4 12.6c0-2.6 2-4.2 4.6-4.2s4.6 1.6 4.6 4.2\"/><text class=\"name\" x=\"1149\" y=\"48\">maintainer</text><text class=\"sub\" x=\"1149\" y=\"63\">principal · human</text></g><g class=\"node f-agent on-border\" data-part=\"reviewers\"><rect class=\"border-mark\" x=\"1458.5\" y=\"509.5\" width=\"225\" height=\"85\" rx=\"14\"/><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"reviewers, agent · reviewer, count 2, on the border\" x=\"1463.5\" y=\"514.5\" width=\"215\" height=\"75\" rx=\"10\" data-box=\"1463.5 514.5 215 75\"/><rect class=\"icon-bg\" x=\"1475.5\" y=\"526.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1483.5 534.5) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"1515.5\" y=\"538.5\">reviewers</text><text class=\"sub\" x=\"1515.5\" y=\"553.5\">agent · reviewer</text><g class=\"badge\"><rect x=\"1640.9\" y=\"525.5\" width=\"25.6\" height=\"18\" rx=\"9\"/><text x=\"1653.7\" y=\"538.5\" text-anchor=\"middle\">×2</text></g><g class=\"tag\"><rect x=\"1618.2\" y=\"542.5\" width=\"48.3\" height=\"16\" rx=\"8\"/><text x=\"1642.3\" y=\"554\" text-anchor=\"middle\">border</text></g><text class=\"prop\" x=\"1475.5\" y=\"578.5\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"node f-work\" data-part=\"specs\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"specs, work · spec\" x=\"1953\" y=\"756.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"1953 756.5 168 52\"/><rect class=\"icon-bg\" x=\"1965\" y=\"768.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1973 776.5) scale(1)\" d=\"M2 3.8l1.4 1.4L6 2.6M2 9l1.4 1.4L6 7.8M8 4.2h4.5M8 9.4h4.5\"/><text class=\"name\" x=\"2005\" y=\"780.5\">specs</text><text class=\"sub\" x=\"2005\" y=\"795.5\">work · spec</text></g><g class=\"node f-work\" data-part=\"backlog\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"backlog, work · backlog\" x=\"1629\" y=\"756.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"1629 756.5 168 52\"/><rect class=\"icon-bg\" x=\"1641\" y=\"768.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1649 776.5) scale(1)\" d=\"M2 3.8l1.4 1.4L6 2.6M2 9l1.4 1.4L6 7.8M8 4.2h4.5M8 9.4h4.5\"/><text class=\"name\" x=\"1681\" y=\"780.5\">backlog</text><text class=\"sub\" x=\"1681\" y=\"795.5\">work · backlog</text></g><g class=\"node f-agent\" data-part=\"planner\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"planner, agent · planner\" x=\"1649\" y=\"187\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"1649 187 168 75\"/><rect class=\"icon-bg\" x=\"1661\" y=\"199\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1669 207) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"1701\" y=\"211\">planner</text><text class=\"sub\" x=\"1701\" y=\"226\">agent · planner</text><text class=\"prop\" x=\"1661\" y=\"251\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"node f-intel\" data-part=\"gateway\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"gateway, gateway\" x=\"1412\" y=\"880\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"1412 880 168 75\"/><rect class=\"icon-bg\" x=\"1424\" y=\"892\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1432 900) scale(1)\" d=\"M2 2.5v9M5 7h7M9 4l3 3-3 3\"/><text class=\"name\" x=\"1464\" y=\"904\">gateway</text><text class=\"sub\" x=\"1464\" y=\"919\">gateway</text><text class=\"prop\" x=\"1424\" y=\"944\"><tspan class=\"prop-k\">rate limit per minute</tspan> 240</text></g><g class=\"node f-collab\" data-part=\"board\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"board, channel · agent_message\" x=\"2160.5\" y=\"745\" width=\"209\" height=\"75\" rx=\"10\" data-box=\"2160.5 745 209 75\"/><rect class=\"icon-bg\" x=\"2172.5\" y=\"757\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(2180.5 765) scale(1)\" d=\"M2 2.5h10v7H6.5L3.5 12V9.5H2z\"/><text class=\"name\" x=\"2212.5\" y=\"769\">board</text><text class=\"sub\" x=\"2212.5\" y=\"784\">channel · agent_message</text><text class=\"prop\" x=\"2172.5\" y=\"809\"><tspan class=\"prop-k\">distribution</tspan> board</text></g><g class=\"node f-collab\" data-part=\"approvals\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"approvals, question · approval\" x=\"588\" y=\"756.5\" width=\"174\" height=\"52\" rx=\"10\" data-box=\"588 756.5 174 52\"/><rect class=\"icon-bg\" x=\"600\" y=\"768.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(608 776.5) scale(1)\" d=\"M2 2.5h10v7H6.5L3.5 12V9.5H2z\"/><text class=\"name\" x=\"640\" y=\"780.5\">approvals</text><text class=\"sub\" x=\"640\" y=\"795.5\">question · approval</text></g><g class=\"node f-agent\" data-part=\"architect\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"architect, agent · architect\" x=\"1904\" y=\"187\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"1904 187 168 75\"/><rect class=\"icon-bg\" x=\"1916\" y=\"199\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1924 207) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"1956\" y=\"211\">architect</text><text class=\"sub\" x=\"1956\" y=\"226\">agent · architect</text><text class=\"prop\" x=\"1916\" y=\"251\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"node f-capability\" data-part=\"contract\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"contract, knowledge · contract\" x=\"1771.5\" y=\"1036.5\" width=\"185\" height=\"52\" rx=\"10\" data-box=\"1771.5 1036.5 185 52\"/><rect class=\"icon-bg\" x=\"1783.5\" y=\"1048.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1791.5 1056.5) scale(1)\" d=\"M9.6 1.8a3 3 0 0 0-3.4 4.1L2 10.1 3.9 12l4.2-4.2a3 3 0 0 0 4.1-3.4L10.4 6.2 8.6 5.4 7.8 3.6z\"/><text class=\"name\" x=\"1823.5\" y=\"1060.5\">contract</text><text class=\"sub\" x=\"1823.5\" y=\"1075.5\">knowledge · contract</text></g><g class=\"node f-capability\" data-part=\"search\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"search, tool · code_search\" x=\"2248\" y=\"1025\" width=\"170\" height=\"75\" rx=\"10\" data-box=\"2248 1025 170 75\"/><rect class=\"icon-bg\" x=\"2260\" y=\"1037\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(2268 1045) scale(1)\" d=\"M9.6 1.8a3 3 0 0 0-3.4 4.1L2 10.1 3.9 12l4.2-4.2a3 3 0 0 0 4.1-3.4L10.4 6.2 8.6 5.4 7.8 3.6z\"/><text class=\"name\" x=\"2300\" y=\"1049\">search</text><text class=\"sub\" x=\"2300\" y=\"1064\">tool · code_search</text><text class=\"prop\" x=\"2260\" y=\"1089\"><tspan class=\"prop-k\">category</tspan> read</text></g><g class=\"node f-agent\" data-part=\"builders\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"builders, agent · executor, count 6\" x=\"544.5\" y=\"156\" width=\"191\" height=\"137\" rx=\"10\" data-box=\"544.5 156 191 137\"/><rect class=\"icon-bg\" x=\"556.5\" y=\"168\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(564.5 176) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"596.5\" y=\"180\">builders</text><text class=\"sub\" x=\"596.5\" y=\"195\">agent · executor</text><g class=\"badge\"><rect x=\"697.9\" y=\"167\" width=\"25.6\" height=\"18\" rx=\"9\"/><text x=\"710.7\" y=\"180\" text-anchor=\"middle\">×6</text></g><text class=\"prop\" x=\"556.5\" y=\"220\"><tspan class=\"prop-k\">harness</tspan> coding</text><text class=\"per-head\" x=\"556.5\" y=\"237\">per builders</text><g class=\"node child f-place\" data-part=\"trees\"><rect class=\"child-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"trees, workspace · worktree, one per builders\" x=\"556.5\" y=\"243\" width=\"167\" height=\"38\" rx=\"8\"/><rect class=\"icon-bg\" x=\"564.5\" y=\"252\" width=\"20\" height=\"20\" rx=\"4.7\"/><path class=\"icon\" transform=\"translate(569.8 257.3) scale(0.67)\" d=\"M1.5 3.5h4l1.5 1.5h5.5v6.5h-11z\"/><text class=\"name xs\" x=\"592.5\" y=\"259\">trees</text><text class=\"sub xs\" x=\"592.5\" y=\"273\">workspace · worktree</text></g></g><g class=\"node f-capability\" data-part=\"tests\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"tests, tool · test_suite\" x=\"1315\" y=\"1025\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"1315 1025 168 75\"/><rect class=\"icon-bg\" x=\"1327\" y=\"1037\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1335 1045) scale(1)\" d=\"M9.6 1.8a3 3 0 0 0-3.4 4.1L2 10.1 3.9 12l4.2-4.2a3 3 0 0 0 4.1-3.4L10.4 6.2 8.6 5.4 7.8 3.6z\"/><text class=\"name\" x=\"1367\" y=\"1049\">tests</text><text class=\"sub\" x=\"1367\" y=\"1064\">tool · test_suite</text><text class=\"prop\" x=\"1327\" y=\"1089\"><tspan class=\"prop-k\">category</tspan> execute</text></g><g class=\"node f-capability\" data-part=\"lint\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"lint, tool · linter\" x=\"1563\" y=\"1025\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"1563 1025 168 75\"/><rect class=\"icon-bg\" x=\"1575\" y=\"1037\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1583 1045) scale(1)\" d=\"M9.6 1.8a3 3 0 0 0-3.4 4.1L2 10.1 3.9 12l4.2-4.2a3 3 0 0 0 4.1-3.4L10.4 6.2 8.6 5.4 7.8 3.6z\"/><text class=\"name\" x=\"1615\" y=\"1049\">lint</text><text class=\"sub\" x=\"1615\" y=\"1064\">tool · linter</text><text class=\"prop\" x=\"1575\" y=\"1089\"><tspan class=\"prop-k\">category</tspan> execute</text></g><g class=\"node f-place\" data-part=\"ci\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"ci, runtime · ci\" x=\"827\" y=\"1181.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"827 1181.5 168 52\"/><rect class=\"icon-bg\" x=\"839\" y=\"1193.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(847 1201.5) scale(1)\" d=\"M4 2.5v9l7.5-4.5z\"/><text class=\"name\" x=\"879\" y=\"1205.5\">ci</text><text class=\"sub\" x=\"879\" y=\"1220.5\">runtime · ci</text></g><g class=\"node f-resource\" data-part=\"slots\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"slots, pool · build_slots\" x=\"1391\" y=\"1170\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"1391 1170 168 75\"/><rect class=\"icon-bg\" x=\"1403\" y=\"1182\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1411 1190) scale(1)\" d=\"M2 2.5h10v2.5H2zM2 6.25h10v2.5H2zM2 10h10v2H2z\"/><text class=\"name\" x=\"1443\" y=\"1194\">slots</text><text class=\"sub\" x=\"1443\" y=\"1209\">pool · build_slots</text><text class=\"prop\" x=\"1403\" y=\"1234\"><tspan class=\"prop-k\">capacity</tspan> 16</text></g><g class=\"node f-capability\" data-part=\"context\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"context, knowledge · context_files\" x=\"1996\" y=\"1036.5\" width=\"212\" height=\"52\" rx=\"10\" data-box=\"1996 1036.5 212 52\"/><rect class=\"icon-bg\" x=\"2008\" y=\"1048.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(2016 1056.5) scale(1)\" d=\"M9.6 1.8a3 3 0 0 0-3.4 4.1L2 10.1 3.9 12l4.2-4.2a3 3 0 0 0 4.1-3.4L10.4 6.2 8.6 5.4 7.8 3.6z\"/><text class=\"name\" x=\"2048\" y=\"1060.5\">context</text><text class=\"sub\" x=\"2048\" y=\"1075.5\">knowledge · context_files</text></g><g class=\"node f-work\" data-part=\"grants\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"grants, authority · permissions\" x=\"1047.5\" y=\"756.5\" width=\"197\" height=\"52\" rx=\"10\" data-box=\"1047.5 756.5 197 52\"/><rect class=\"icon-bg\" x=\"1059.5\" y=\"768.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1067.5 776.5) scale(1)\" d=\"M3.5 6.5h7v5.5h-7zM5 6.5V4.8a2 2 0 0 1 4 0v1.7\"/><text class=\"name\" x=\"1099.5\" y=\"780.5\">grants</text><text class=\"sub\" x=\"1099.5\" y=\"795.5\">authority · permissions</text></g><g class=\"node f-agent\" data-part=\"testers\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"testers, agent · tester, count 3\" x=\"775\" y=\"187\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"775 187 168 75\"/><rect class=\"icon-bg\" x=\"787\" y=\"199\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(795 207) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"827\" y=\"211\">testers</text><text class=\"sub\" x=\"827\" y=\"226\">agent · tester</text><g class=\"badge\"><rect x=\"905.4\" y=\"198\" width=\"25.6\" height=\"18\" rx=\"9\"/><text x=\"918.2\" y=\"211\" text-anchor=\"middle\">×3</text></g><text class=\"prop\" x=\"787\" y=\"251\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"node f-work\" data-part=\"evidence\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"evidence, work · evidence\" x=\"380\" y=\"756.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"380 756.5 168 52\"/><rect class=\"icon-bg\" x=\"392\" y=\"768.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(400 776.5) scale(1)\" d=\"M2 3.8l1.4 1.4L6 2.6M2 9l1.4 1.4L6 7.8M8 4.2h4.5M8 9.4h4.5\"/><text class=\"name\" x=\"432\" y=\"780.5\">evidence</text><text class=\"sub\" x=\"432\" y=\"795.5\">work · evidence</text></g><g class=\"node f-agent\" data-part=\"writer\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"writer, agent · writer\" x=\"2112\" y=\"187\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"2112 187 168 75\"/><rect class=\"icon-bg\" x=\"2124\" y=\"199\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(2132 207) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"2164\" y=\"211\">writer</text><text class=\"sub\" x=\"2164\" y=\"226\">agent · writer</text><text class=\"prop\" x=\"2124\" y=\"251\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"node f-agent\" data-part=\"release\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"release, agent · release\" x=\"88\" y=\"187\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"88 187 168 75\"/><rect class=\"icon-bg\" x=\"100\" y=\"199\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(108 207) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"140\" y=\"211\">release</text><text class=\"sub\" x=\"140\" y=\"226\">agent · release</text><text class=\"prop\" x=\"100\" y=\"251\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"node f-capability\" data-part=\"runbook\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"runbook, knowledge · runbook\" x=\"416.5\" y=\"1036.5\" width=\"183\" height=\"52\" rx=\"10\" data-box=\"416.5 1036.5 183 52\"/><rect class=\"icon-bg\" x=\"428.5\" y=\"1048.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(436.5 1056.5) scale(1)\" d=\"M9.6 1.8a3 3 0 0 0-3.4 4.1L2 10.1 3.9 12l4.2-4.2a3 3 0 0 0 4.1-3.4L10.4 6.2 8.6 5.4 7.8 3.6z\"/><text class=\"name\" x=\"468.5\" y=\"1060.5\">runbook</text><text class=\"sub\" x=\"468.5\" y=\"1075.5\">knowledge · runbook</text></g><g class=\"node f-collab\" data-part=\"alerts\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"alerts, channel · notification\" x=\"822\" y=\"745\" width=\"186\" height=\"75\" rx=\"10\" data-box=\"822 745 186 75\"/><rect class=\"icon-bg\" x=\"834\" y=\"757\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(842 765) scale(1)\" d=\"M2 2.5h10v7H6.5L3.5 12V9.5H2z\"/><text class=\"name\" x=\"874\" y=\"769\">alerts</text><text class=\"sub\" x=\"874\" y=\"784\">channel · notification</text><text class=\"prop\" x=\"834\" y=\"809\"><tspan class=\"prop-k\">distribution</tspan> topic</text></g><g class=\"node f-agent\" data-part=\"triage\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"triage, agent · triage, count 2\" x=\"316\" y=\"187\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"316 187 168 75\"/><rect class=\"icon-bg\" x=\"328\" y=\"199\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(336 207) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"368\" y=\"211\">triage</text><text class=\"sub\" x=\"368\" y=\"226\">agent · triage</text><g class=\"badge\"><rect x=\"446.4\" y=\"198\" width=\"25.6\" height=\"18\" rx=\"9\"/><text x=\"459.2\" y=\"211\" text-anchor=\"middle\">×2</text></g><text class=\"prop\" x=\"328\" y=\"251\"><tspan class=\"prop-k\">harness</tspan> coding</text></g><g class=\"node f-other\" data-part=\"clock\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"clock, schedule\" x=\"765\" y=\"1311\" width=\"168\" height=\"75\" rx=\"10\" data-box=\"765 1311 168 75\"/><rect class=\"icon-bg\" x=\"777\" y=\"1323\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(785 1331) scale(1)\" d=\"M7 12A5 5 0 1 0 7 2a5 5 0 0 0 0 10z\"/><text class=\"name\" x=\"817\" y=\"1335\">clock</text><text class=\"sub\" x=\"817\" y=\"1350\">schedule</text><text class=\"prop\" x=\"777\" y=\"1375\"><tspan class=\"prop-k\">every</tspan> 30m</text></g><g class=\"node f-agent\" data-part=\"night\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"night, agent · coding, count 3\" x=\"1313.5\" y=\"164.5\" width=\"179\" height=\"120\" rx=\"10\" data-box=\"1313.5 164.5 179 120\"/><rect class=\"icon-bg\" x=\"1325.5\" y=\"176.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1333.5 184.5) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"1365.5\" y=\"188.5\">night</text><text class=\"sub\" x=\"1365.5\" y=\"203.5\">agent · coding</text><g class=\"badge\"><rect x=\"1454.9\" y=\"175.5\" width=\"25.6\" height=\"18\" rx=\"9\"/><text x=\"1467.7\" y=\"188.5\" text-anchor=\"middle\">×3</text></g><text class=\"per-head\" x=\"1325.5\" y=\"228.5\">per night</text><g class=\"node child f-place\" data-part=\"box\"><rect class=\"child-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"box, sandbox · container, one per night\" x=\"1325.5\" y=\"234.5\" width=\"155\" height=\"38\" rx=\"8\"/><rect class=\"icon-bg\" x=\"1333.5\" y=\"243.5\" width=\"20\" height=\"20\" rx=\"4.7\"/><path class=\"icon\" transform=\"translate(1338.8 248.8) scale(0.67)\" d=\"M7 1.5l5 2v3.6c0 2.9-2.1 4.7-5 5.4-2.9-.7-5-2.5-5-5.4V3.5z\"/><text class=\"name xs\" x=\"1361.5\" y=\"250.5\">box</text><text class=\"sub xs\" x=\"1361.5\" y=\"264.5\">sandbox · container</text></g></g><g class=\"node f-agent\" data-part=\"harness\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"harness, harness · coding\" x=\"1044\" y=\"198.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"1044 198.5 168 52\"/><rect class=\"icon-bg\" x=\"1056\" y=\"210.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1064 218.5) scale(1)\" d=\"M3.5 4.5h7a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 10.5V6a1.5 1.5 0 0 1 1.5-1.5zM7 4.5V2M5.2 8.2h.01M8.8 8.2h.01\"/><text class=\"name\" x=\"1096\" y=\"222.5\">harness</text><text class=\"sub\" x=\"1096\" y=\"237.5\">harness · coding</text></g><g class=\"node f-work\" data-part=\"budgets\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"budgets, authority · budget\" x=\"1337\" y=\"756.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"1337 756.5 168 52\"/><rect class=\"icon-bg\" x=\"1349\" y=\"768.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1357 776.5) scale(1)\" d=\"M3.5 6.5h7v5.5h-7zM5 6.5V4.8a2 2 0 0 1 4 0v1.7\"/><text class=\"name\" x=\"1389\" y=\"780.5\">budgets</text><text class=\"sub\" x=\"1389\" y=\"795.5\">authority · budget</text></g><g class=\"node f-intel\" data-part=\"frontier\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"frontier, model · frontier\" x=\"1126\" y=\"891.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"1126 891.5 168 52\"/><rect class=\"icon-bg\" x=\"1138\" y=\"903.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1146 911.5) scale(1)\" d=\"M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5\"/><text class=\"name\" x=\"1178\" y=\"915.5\">frontier</text><text class=\"sub\" x=\"1178\" y=\"930.5\">model · frontier</text></g><g class=\"node f-intel\" data-part=\"small\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"small, model · small\" x=\"1698\" y=\"891.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"1698 891.5 168 52\"/><rect class=\"icon-bg\" x=\"1710\" y=\"903.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(1718 911.5) scale(1)\" d=\"M4 4h6v6H4zM5.5 1.5V4M8.5 1.5V4M5.5 10v2.5M8.5 10v2.5M1.5 5.5H4M1.5 8.5H4M10 5.5h2.5M10 8.5h2.5\"/><text class=\"name\" x=\"1750\" y=\"915.5\">small</text><text class=\"sub\" x=\"1750\" y=\"930.5\">model · small</text></g><g class=\"node f-other\" data-part=\"kpis\"><rect class=\"card-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"kpis, kpi · delivery\" x=\"557\" y=\"1322.5\" width=\"168\" height=\"52\" rx=\"10\" data-box=\"557 1322.5 168 52\"/><rect class=\"icon-bg\" x=\"569\" y=\"1334.5\" width=\"30\" height=\"30\" rx=\"7\"/><path class=\"icon\" transform=\"translate(577 1342.5) scale(1)\" d=\"M7 12A5 5 0 1 0 7 2a5 5 0 0 0 0 10z\"/><text class=\"name\" x=\"609\" y=\"1346.5\">kpis</text><text class=\"sub\" x=\"609\" y=\"1361.5\">kpi · delivery</text></g></g></svg>",
+      "width": 2436.0
+    }
+  ],
+  "view": "agentic.architecture.Graph"
+}

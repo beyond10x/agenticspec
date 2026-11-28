@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest b85cf6e1d71f840050e4ba4b3bc45642b7b0348e414fcc89a3de7a9cdd9a28bb
+// contract digest 238a19fb6ae6bbc5b648eba06c828c629deaeed26ee2b95e60532c84a0ca0908
 // do not edit: regenerate with `ess synthesize`
 
 //! The typed refusal of an unmet obligation, and the conversion seams owed between contexts.
@@ -23,6 +23,10 @@ pub struct UnmetObligation {
 
 impl core::fmt::Display for UnmetObligation {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "unmet obligation: {} `{}` — see PLAN.md", self.capability, self.source)
+        write!(
+            f,
+            "unmet obligation: {} `{}` — see PLAN.md",
+            self.capability, self.source
+        )
     }
 }

@@ -199,6 +199,9 @@ _agenticspec() {
             agenticspec__subcmd__help__subcmd__ui,conform)
                 cmd="agenticspec__subcmd__help__subcmd__ui__subcmd__conform"
                 ;;
+            agenticspec__subcmd__help__subcmd__ui,derive)
+                cmd="agenticspec__subcmd__help__subcmd__ui__subcmd__derive"
+                ;;
             agenticspec__subcmd__help__subcmd__ui,generate)
                 cmd="agenticspec__subcmd__help__subcmd__ui__subcmd__generate"
                 ;;
@@ -304,6 +307,9 @@ _agenticspec() {
             agenticspec__subcmd__ui,conform)
                 cmd="agenticspec__subcmd__ui__subcmd__conform"
                 ;;
+            agenticspec__subcmd__ui,derive)
+                cmd="agenticspec__subcmd__ui__subcmd__derive"
+                ;;
             agenticspec__subcmd__ui,generate)
                 cmd="agenticspec__subcmd__ui__subcmd__generate"
                 ;;
@@ -315,6 +321,9 @@ _agenticspec() {
                 ;;
             agenticspec__subcmd__ui__subcmd__help,conform)
                 cmd="agenticspec__subcmd__ui__subcmd__help__subcmd__conform"
+                ;;
+            agenticspec__subcmd__ui__subcmd__help,derive)
+                cmd="agenticspec__subcmd__ui__subcmd__help__subcmd__derive"
                 ;;
             agenticspec__subcmd__ui__subcmd__help,generate)
                 cmd="agenticspec__subcmd__ui__subcmd__help__subcmd__generate"
@@ -1182,7 +1191,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__help__subcmd__ui)
-            opts="conform generate panels"
+            opts="conform derive generate panels"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -1196,6 +1205,20 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__help__subcmd__ui__subcmd__conform)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__help__subcmd__ui__subcmd__derive)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -2298,7 +2321,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__ui)
-            opts="-h --config --state-dir --output --help conform generate panels help"
+            opts="-h --config --state-dir --output --help conform derive generate panels help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -2361,6 +2384,52 @@ _agenticspec() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
+        agenticspec__subcmd__ui__subcmd__derive)
+            opts="-h --path --contract --ports --out --root --check --config --state-dir --output --help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --path)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --contract)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --ports)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --out)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --root)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --config)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --state-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --output)
+                    COMPREPLY=($(compgen -W "human json" -- "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
         agenticspec__subcmd__ui__subcmd__generate)
             opts="-h --path --out --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
@@ -2396,7 +2465,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__ui__subcmd__help)
-            opts="conform generate panels help"
+            opts="conform derive generate panels help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -2410,6 +2479,20 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__ui__subcmd__help__subcmd__conform)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        agenticspec__subcmd__ui__subcmd__help__subcmd__derive)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )

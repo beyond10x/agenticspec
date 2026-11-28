@@ -1,0 +1,10 @@
+format: agenticspec-architecture/1
+architecture: team
+summary: Coding agents with a workspace each, nested in parent.yaml.
+
+parts:
+  coder: { block: agent, harness: coding, count: 3 }
+  tree:  { block: workspace, sharing: exclusive, per: coder }
+
+links:
+  - { from: coder, to: tree, carries: claim }

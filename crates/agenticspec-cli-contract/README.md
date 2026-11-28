@@ -358,6 +358,20 @@ Error `plan_unreadable`: `agenticspec.cli.Refusal`.
 
 Error `source_unavailable`: `agenticspec.cli.Refusal`.
 
+### `ui derive`
+
+Derive the operator UI of an architecture as one ess-ui/1 composition, with its fixtures, layout and digest, or compare them with --check
+
+Callable: `ui_derive`. Input: `agenticspec.cli.UiDeriveInput`. Result: `agenticspec.cli.UiDeriveResult`.
+
+Error `derived_stale`: `agenticspec.cli.Refusal`.
+
+Error `document_refused`: `agenticspec.cli.Refusal`.
+
+Error `document_unreadable`: `agenticspec.cli.Refusal`.
+
+Error `out_unwritable`: `agenticspec.cli.Refusal`.
+
 ### `ui generate`
 
 Generate the Vue app of an ess-ui/1 document over the components of ui/kit
@@ -410,5 +424,6 @@ Error `panels_stale`: `agenticspec.cli.Refusal`.
 - handler:sim_trace: implement the owner-qualified callable and its declared result/error contract
 - handler:sync: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_conform: implement the owner-qualified callable and its declared result/error contract
+- handler:ui_derive: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_generate: implement the owner-qualified callable and its declared result/error contract
 - handler:ui_panels: implement the owner-qualified callable and its declared result/error contract

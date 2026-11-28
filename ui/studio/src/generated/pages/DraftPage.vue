@@ -38,6 +38,7 @@ const fields_parts: FieldDef[] = [
   { field: 'block', label: 'Block', as: 'text' },
   { field: 'count', label: 'Count', as: 'number' },
 ];
+const r_panels = useRead('studio.DraftGraph', () => ({ draft_id: page.params['draft_id'] }));
 </script>
 
 <template>
@@ -80,6 +81,9 @@ const fields_parts: FieldDef[] = [
           <KitPanel name="parts" title="Parts" collapsible :collapsed="true" :state="r_parts.state" :error="r_parts.error" empty-message="No part matches." @retry="r_parts.reload()">
             <KitSearch label="Find in parts" :model-value="text(page.state['part_search'])" @update:model-value="page.state['part_search'] = $event" />
             <KitTable label="Parts" :columns="fields_parts" :rows="r_parts.rows.filter((row) => contains(row['id'], page.state['part_search']))" row-key="id" empty-message="No part matches." />
+          </KitPanel>
+          <KitPanel name="panels" title="Panels of a part" collapsible>
+            <component :is="hosts.DraftPanels" :read="r_panels" />
           </KitPanel>
         </KitStack>
       </template>

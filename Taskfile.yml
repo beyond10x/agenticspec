@@ -15,6 +15,8 @@ tasks:
       - task: check:ui-kit
       - task: check:studio
       - task: check:views
+      - task: check:examples
+      - task: check:elements
       - task: check:generated
       - task: check:docs
       - task: check:ladder
@@ -235,6 +237,26 @@ tasks:
         out=$(ess ui check --path ui/views/blocks.ui.yaml --model blocks) || { echo "$out"; exit 1; }
         echo "$out"
         echo "$out" | grep -q ': 0 error(s), 0 warning(s)$' || { echo "check:ui: ui/views/blocks.ui.yaml has a warning"; exit 1; }
+      - target/debug/agenticspec sim contract architectures/workstation.yaml --check ui/views/examples/workstation.contract.yaml
+      - |
+        cmp blocks/ports.json ui/views/examples/ports.json || { echo "check:ui: ui/views/examples/ports.json differs from blocks/ports.json; run task ui:derive"; exit 1; }
+      - target/debug/agenticspec ui derive --check --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.ui.yaml
+      - target/debug/agenticspec ui derive --check --path crates/agenticspec-render/tests/fixtures/large-37.yaml --out ui/views/examples/large-37.ui.yaml
+      - |
+        for f in ui/views/examples/workstation.ui.yaml ui/views/examples/large-37.ui.yaml ui/views/examples/host-slot.ui.yaml; do
+          out=$(ess ui check --path "$f" --model blocks) || { echo "$out"; exit 1; }
+          echo "$out" | tail -n 1
+          echo "$out" | grep -q ': 0 error(s), 0 warning(s)$' || { echo "check:ui: $f has a warning"; exit 1; }
+        done
+
+  ui:derive:
+    desc: Write the derived examples of ui/views/examples/ with agenticspec ui derive - workstation.ui.yaml from architectures/workstation.yaml, its contract (written first by agenticspec sim contract) and a copy of blocks/ports.json beside it, and large-37.ui.yaml from the 37-part fixture alone - each with its fixtures, its layout and the digest of its inputs. Never edited by hand; task check:ui holds them.
+    cmds:
+      - cargo build --quiet --locked -p agenticspec
+      - target/debug/agenticspec sim contract architectures/workstation.yaml --out ui/views/examples/workstation.contract.yaml
+      - cp blocks/ports.json ui/views/examples/ports.json
+      - target/debug/agenticspec ui derive --path architectures/workstation.yaml --contract ui/views/examples/workstation.contract.yaml --ports ui/views/examples/ports.json --out ui/views/examples/workstation.ui.yaml
+      - target/debug/agenticspec ui derive --path crates/agenticspec-render/tests/fixtures/large-37.yaml --out ui/views/examples/large-37.ui.yaml
 
   ui:panels:
     desc: Write the block panels from blocks/ - ui/views/blocks.ui.yaml (one ess-ui/1 widget per view, a gallery page per block), its fixtures in ui/views/fixtures/ and the digest of its inputs, ui/views/blocks.sources.sha256. Never edited by hand.
@@ -258,15 +280,32 @@ tasks:
       - sh scripts/check-studio.sh
 
   ui:generate:
-    desc: Generate the pages, router, client and runtime of the studio app (ui/studio/src/generated) from studio/studio.ui.yaml, and the widgets and pages of the block panels' gallery (ui/views/gallery/src/generated) from ui/views/blocks.ui.yaml, with agenticspec ui generate. task check:generated holds them.
+    desc: Generate the pages, router, client and runtime of the studio app (ui/studio/src/generated) from studio/studio.ui.yaml, and the widgets and pages of the block panels' gallery (ui/views/gallery/src/generated) from ui/views/blocks.ui.yaml, and the apps of the derived examples (ui/views/examples/app/src/<name>/generated) from ui/views/examples/<name>.ui.yaml, with agenticspec ui generate. task check:generated holds them.
     cmds:
       - cargo run --quiet --locked -p agenticspec -- ui generate --path studio/studio.ui.yaml --out ui/studio/src/generated
       - cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/blocks.ui.yaml --out ui/views/gallery/src/generated
+      - cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/examples/workstation.ui.yaml --out ui/views/examples/app/src/workstation/generated
+      - cargo run --quiet --locked -p agenticspec -- ui generate --path ui/views/examples/large-37.ui.yaml --out ui/views/examples/app/src/large-37/generated
 
   check:views:
     desc: The gallery of the block panels - the types and unit tests of ui/views/gallery (live re-read and patch, the scope of a widget, the fixture client), a build into target/views/gallery, then its browser test (every panel shows its fixture rows; axe-core and overflow at 1366x768 and 390x844 in both themes). Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-views.sh.
     cmds:
       - sh scripts/check-views.sh
+
+  check:examples:
+    desc: The derived examples - the types and unit tests of ui/views/examples/app (the fixture client), a build into target/views/examples, then its browser test (the 37-part example at 1366x768 - the parts table on the first screen, no sideways overflow, every part in one step, the reach table filtered by part, the graph with pan, zoom and fit - and the workstation's labels, frames and actions). Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-examples.sh.
+    cmds:
+      - sh scripts/check-examples.sh
+
+  check:elements:
+    desc: The package of ui/views (the block panels, part pages and overviews as Vue components) - its types and unit tests, the bundle of its custom elements into target/views/elements, the React host page into target/views/hosts, then the browser test of the elements in a plain page and a React page over one fixture server (the rows, the host's --kit-accent, the agentic-navigate and agentic-command events). Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-elements.sh.
+    cmds:
+      - sh scripts/check-elements.sh
+
+  elements:build:
+    desc: Build the custom elements of ui/views (agentic-part-panel, agentic-overview, agentic-panel, agentic-block-panels and one element per panel) with Vue into target/views/elements/agentic-views.js and the kit's stylesheet into agentic-views.css; a host page loads both.
+    cmds:
+      - cd ui && ([ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund --loglevel=error) && npx vite build --config views/vite.config.ts --logLevel warn
 
   views:build:
     desc: Build the gallery of the block panels (ui/views/gallery, generated from ui/views/blocks.ui.yaml by agenticspec ui generate and held by task check:generated) into target/views/gallery; it reads the fixtures of ui/views/fixtures in the browser and needs no server.
