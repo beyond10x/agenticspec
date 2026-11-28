@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:sim-event-log
 kind: story
-status: active
+status: implemented
 title: The simulator's run as block events, replayed by ui serve --sim
 summary: The simulator writes its timeline as block events with subject keys and part paths; agenticspec ui serve --sim replays it; every result.json stays byte for byte.
 relations:
@@ -26,10 +26,11 @@ scope:
   path: spec/domains/cli.yaml
 - confidence: inferred
   path: ui/README.md
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
 - {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 5}
+- {from: "active", to: "implemented", at: "2026-11-28T12:11:09Z", actor: "human:operator", revision: 7, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 
@@ -68,3 +69,7 @@ Store events and reactions in the simulator (`story:sim-store-and-bus`).
 ## Remaining at 9bb5998
 
 Delivered in e56e484: events.jsonl. Missing: ui serve --sim (spec/domains/cli.yaml:520-525).
+
+## Remaining after batch 5
+
+Delivered in c51eca3: ui serve --sim. Not done: rows hold only identity and state; views no simulated event touches (the R3 views among them) are empty; commands do not change the replayed state.

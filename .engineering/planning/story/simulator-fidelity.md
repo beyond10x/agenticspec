@@ -31,7 +31,7 @@ scope:
   path: profiles/coding.yaml
 - confidence: cited
   path: website/static/catalog
-revision: 15
+revision: 16
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 13}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 14}
@@ -124,3 +124,7 @@ from sessions (`epic:evaluation-loop`); a scenario's inputs (`story:scenario-sim
 ## Remaining at 9bb5998
 
 Missing: a trigger to a process part is refused; only agent and runtime are allowed (crates/agenticspec-sim/src/check.rs:476-478).
+
+## Remaining after batch 5
+
+Delivered in 2a85d26: a trigger may wake a process part, which runs its program's steps. Missing: the architecture block (blocks/9-composition/architecture.yaml) still refuses a trigger to anything but an agent; an on_event trigger whose event the simulator does not produce is refused rather than reported not_simulated.

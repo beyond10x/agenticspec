@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:view-layer-per-ingress
 kind: story
-status: draft
+status: implemented
 title: One operator UI per ingress with a ui export
 summary: agenticspec ui derive writes one composition per ingress with a ui export, actions from its interface; R1-R5 under {root}/ingress/{ingress}/scopes/..., R5 answered per ingress.
 relations:
@@ -24,7 +24,11 @@ scope:
   path: ui/README.md
 - confidence: inferred
   path: ui/views/examples
-revision: 3
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-28T12:11:09Z", actor: "human:operator", revision: 4}
+- {from: "proposed", to: "active", at: "2026-11-28T12:11:09Z", actor: "human:operator", revision: 5}
+- {from: "active", to: "implemented", at: "2026-11-28T12:11:09Z", actor: "human:operator", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 
@@ -69,3 +73,7 @@ The default control plane's pages (`story:control-plane-pages`); per-scope grant
 ## Remaining at 9bb5998
 
 Missing: only the operator ingress has a UI, with a fixed root (crates/agenticspec-ui/src/serve.rs:47); no UI per ingress with a ui export.
+
+## Remaining after batch 5
+
+Delivered in e867387. Not done: ui conform checks only the operator plane (no --ingress); an architecture whose operator ingress has no ui export is refused by ui serve and ui build without --ingress.

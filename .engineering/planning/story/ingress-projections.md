@@ -27,7 +27,7 @@ scope:
   path: spec/cli.yaml
 - confidence: inferred
   path: spec/domains/cli.yaml
-revision: 5
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 3}
 - {from: "proposed", to: "active", at: "2026-11-28T08:40:21Z", actor: "human:operator", revision: 4}
@@ -80,3 +80,7 @@ Serving any projection (`story:ingress-admission`, `story:first-runtime`); the U
 ## Remaining at 9bb5998
 
 Delivered in a6f7440 for http only (crates/agenticspec-sim/src/contract/projection.rs:93). Missing: event_stream, cli, tool, agent and metrics_scrape projections.
+
+## Remaining after batch 5
+
+Delivered in 32cca73: event_stream, tool, agent and metrics_scrape. Missing: the cli projection is written but not validated (ess 0.99.2 cannot forward a command to a command's input or a view's parameters, reproduction design/ess-repro/cli-service-forward/); no sources digest and no slow lane; no AsyncAPI for event_stream.

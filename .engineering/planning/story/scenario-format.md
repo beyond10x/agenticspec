@@ -30,7 +30,7 @@ scope:
   path: scenarios
 - confidence: inferred
   path: website/src/generated
-revision: 15
+revision: 16
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 13}
 - {from: "proposed", to: "active", at: "2026-11-27T23:44:08Z", actor: "human:operator", revision: 14}
@@ -123,3 +123,7 @@ scenario (the epic after `epic:architecture-contract`).
 ## Remaining at 9bb5998
 
 Missing: then matches simulator event names instead of qualified block events; unknown_event, input_not_at_border and architecture_digest_mismatch do not exist (crates/agenticspec-sim/src/scenario.rs).
+
+## Remaining after batch 5
+
+Delivered in 2a85d26: then names qualified block events; unknown_event, input_not_at_border, architecture_digest_mismatch and five more refusals. Missing: no owner-task scenario; the evaluation nouns under blocks/10-evaluation and the eval-case/1 mapping.

@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-28T12:11:09Z",
+  "actor": "human:operator",
+  "artifact": "story:unit-runtime-check",
+  "kind": "story",
+  "revision": 1,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "slot --timeout 30m task check on integration/2026-11-28-c at cfebe23"
+  }
+}
