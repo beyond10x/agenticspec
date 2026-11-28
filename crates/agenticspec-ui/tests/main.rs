@@ -12,6 +12,8 @@
 //!   `tests/derive/`.
 //! - `serve`: the default control plane `agenticspec ui serve` answers, and `ui conform
 //!   --architecture` against a server with one fault per obligation.
+//! - `project`: `agenticspec ui generate --project`, held to the kit, the pins and the build
+//!   config of the operator app.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -19,6 +21,7 @@ use std::path::{Path, PathBuf};
 use agenticspec_ui::{Refusal, generate};
 
 mod derive;
+mod project;
 mod runtime;
 mod serve;
 

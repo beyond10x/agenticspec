@@ -13,6 +13,8 @@
 //! - `wire`: the small HTTP client and server both use.
 //! - `operator`: `agenticspec ui build`, the embedded operator app with the data files of one
 //!   architecture, and their reproducible archive.
+//! - `project`: `agenticspec ui generate --project`, the generated app as a project that builds on
+//!   its own with node, over the kit and the npm pins the operator app is built with.
 //! - `plane`: the default control plane of an architecture as that interface sees it, read from
 //!   the files of its operator UI.
 //! - `serve`: `agenticspec ui serve`, the operator app and that plane answered from fixtures,
@@ -31,6 +33,7 @@ pub mod derive;
 pub mod interface;
 pub mod operator;
 pub mod plane;
+pub mod project;
 pub mod serve;
 pub mod source;
 pub mod wire;
@@ -77,6 +80,18 @@ fn derive_ir(inputs: &derive::Inputs) -> Result<Cow<'static, serde_json::Value>,
             .map_err(derive::Failure::Unreadable),
         None => operator::built_in_model().map(Cow::Borrowed),
     }
+}
+
+/// The files of a project that builds the app of the document on its own with node (see
+/// [`project`]): the app under `src/generated/`, the kit, the host page, the build config, the
+/// npm manifest and lock, and the packer. Refused as [`generate`] refuses.
+pub fn generate_project(text: &str) -> Result<Files, Vec<Refusal>> {
+    project::project(&generate(text)?).map_err(|message| {
+        vec![Refusal {
+            path: String::new(),
+            message,
+        }]
+    })
 }
 
 /// `agenticspec ui derive`: compiles the blocks under `inputs.root` (without a root, reads the

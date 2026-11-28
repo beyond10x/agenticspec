@@ -328,7 +328,7 @@ tasks:
       - sh scripts/check-elements.sh
 
   check:operator:
-    desc: The operator UI of agenticspec ui build - the committed build of the operator app (ui/operator/built) against the digest of its sources (ui/operator/built.sources.sha256, no node), the app's types, then agenticspec ui build of the workstation into target/operator/workstation and its browser test over one static server and fixture adapter and over one agenticspec ui serve of the workstation. Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-operator.sh.
+    desc: The operator UI of agenticspec ui build - the committed build of the operator app (ui/operator/built) against the digest of its sources (ui/operator/built.sources.sha256, no node), the app's types, then agenticspec ui build of the workstation into target/operator/workstation and its browser test over one static server and fixture adapter and over one agenticspec ui serve of the workstation, and the project of agenticspec ui generate --project built with vite over ui/node_modules with its packer held to the bytes of ui build --archive. Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-operator.sh.
     cmds:
       - sh scripts/check-operator.sh
 

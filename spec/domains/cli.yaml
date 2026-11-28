@@ -1129,6 +1129,14 @@ types:
       - name: out
         type: String
         summary: The directory the app is written into; what was in it before is replaced.
+      - name: project
+        type: Boolean
+        summary: >-
+          Write a project that builds on its own with node instead: the app under
+          `src/generated/`, the kit's sources under `kit/`, a host page, a vite config, an npm
+          manifest and lock with the versions the operator UI of `ui build` is built with, and a
+          packer; `npm ci && npm run build` in it writes `dist/` and `dist.tar` and prints the
+          archive's sha256.
 
   - name: agenticspec.cli.UiGenerateResult
     kind: struct

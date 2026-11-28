@@ -2610,7 +2610,7 @@ _agenticspec() {
             return 0
             ;;
         agenticspec__subcmd__ui__subcmd__generate)
-            opts="-h --path --out --config --state-dir --output --help"
+            opts="-h --path --out --project --config --state-dir --output --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
