@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: image-unpinned
+architecture: workstation
+refines: egress/workstation.yaml
+summary: The core runtime is an image of the target's local store, named with neither a tag nor a digest.
+target: {images: local}
+runtimes:
+  core: {image: agenticspec-core}

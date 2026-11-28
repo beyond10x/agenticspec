@@ -528,8 +528,13 @@ impl Handler for Commands {
                     .get("check")
                     .and_then(Value::as_bool)
                     .unwrap_or(false);
-                match agenticspec_views::run(std::path::Path::new(root), check) {
-                    Ok(result) => HandlerReply::Success(result),
+                let root = std::path::Path::new(root);
+                match agenticspec_views::run(root, check) {
+                    Ok(result) => match agenticspec_ui::serve::write_bundle(root, check) {
+                        Ok(()) => HandlerReply::Success(result),
+                        Err(e) if check => refusal("panels_stale", e),
+                        Err(e) => refusal("out_unwritable", e),
+                    },
                     Err(r) => refusal(r.code, r.detail),
                 }
             }
@@ -645,6 +650,8 @@ impl Handler for Commands {
                 }))
             }
             "ui_derive" => ui_derive(&inv.input),
+            "ui_build" => ui_build(&inv.input),
+            "ui_serve" => ui_serve(&inv.input),
             "deploy_check" => {
                 let accepts = inv
                     .input
@@ -666,6 +673,9 @@ impl Handler for Commands {
 fn ui_conform(input: &Value) -> HandlerReply {
     use agenticspec_ui::{conform, source};
     let s = |k: &str| input.get(k).and_then(Value::as_str);
+    if s("architecture").is_some() {
+        return ui_conform_plane(input);
+    }
     let root = std::path::Path::new(s("root").unwrap_or("."));
     let plan_path = s("plan")
         .map(PathBuf::from)
@@ -713,6 +723,196 @@ fn ui_conform(input: &Value) -> HandlerReply {
         );
     }
     HandlerReply::Success(report.to_json())
+}
+
+/// The files of an operator UI by name.
+type OperatorFiles = Vec<(String, Vec<u8>)>;
+
+/// The files of the operator UI of `architecture` with `api_base`: from the contract at
+/// `contract`, or from the contract derived here from the architecture with the port and KPI
+/// catalogues built into the binary (`sim contract`), so no file of a checkout is read.
+fn operator_files(
+    architecture: &std::path::Path,
+    contract: Option<&str>,
+    api_base: &str,
+) -> Result<OperatorFiles, HandlerReply> {
+    use agenticspec_ui::derive::Failure;
+    use agenticspec_ui::operator;
+    let failed = |f: Failure| match f {
+        Failure::Unreadable(e) => refusal("document_unreadable", e),
+        Failure::Refused(rs) => {
+            let lines: Vec<String> = rs.iter().map(ToString::to_string).collect();
+            refusal(
+                "document_refused",
+                format!("{}:\n{}", architecture.display(), lines.join("\n")),
+            )
+        }
+    };
+    let (doc, shown) = match contract {
+        Some(path) => (
+            operator::read_doc(std::path::Path::new(path)).map_err(failed)?,
+            path.to_string(),
+        ),
+        None => {
+            let text = sim::contract_built_in(architecture).map_err(|r| {
+                let code = if r.code == "document_unreadable" {
+                    "document_unreadable"
+                } else {
+                    "document_refused"
+                };
+                refusal(code, format!("{}: {}", r.code, r.detail))
+            })?;
+            (
+                operator::parse_contract(&text).map_err(failed)?,
+                format!("the contract derived from {}", architecture.display()),
+            )
+        }
+    };
+    operator::build_with(
+        std::path::Path::new("."),
+        architecture,
+        &doc,
+        &shown,
+        api_base,
+    )
+    .map_err(failed)
+}
+
+/// The control plane of an architecture: the files of its operator UI with the API base of
+/// `ui serve`, and the plane read from them.
+fn plane_of(input: &Value) -> Result<(OperatorFiles, agenticspec_ui::plane::Plane), HandlerReply> {
+    let architecture = path_of(input, "architecture");
+    let contract = input.get("contract").and_then(Value::as_str);
+    let files = operator_files(&architecture, contract, agenticspec_ui::serve::ROOT)?;
+    let plane = agenticspec_ui::plane::Plane::from_files(&files)
+        .map_err(|e| refusal("document_refused", e))?;
+    Ok((files, plane))
+}
+
+/// The token of `ui serve` and `ui conform`: `AGENTICSPEC_UI_TOKEN` when set.
+fn ui_token() -> Option<String> {
+    std::env::var("AGENTICSPEC_UI_TOKEN")
+        .ok()
+        .filter(|t| !t.is_empty())
+}
+
+/// `agenticspec ui conform --architecture`: the checks of the default control plane of the
+/// architecture against `--source`, or against `ui serve` of it started here, on the fixtures
+/// built into the binary, or on those of `--root` when it is named.
+fn ui_conform_plane(input: &Value) -> HandlerReply {
+    use agenticspec_ui::{conform, serve};
+    let s = |k: &str| input.get(k).and_then(Value::as_str);
+    if s("plan").is_some() {
+        return refusal(
+            "plan_unreadable",
+            "--plan and --architecture name two plans; name one".to_string(),
+        );
+    }
+    let (files, plane) = match plane_of(input) {
+        Ok(x) => x,
+        Err(r) => return r,
+    };
+    let mut token = ui_token();
+    let served;
+    let url = match s("source") {
+        Some(u) => u.trim_end_matches('/').to_string(),
+        None => {
+            let t = token.clone().unwrap_or_else(serve::random_token);
+            let fixtures = match s("root") {
+                Some(root) => serve::Fixtures::load(std::path::Path::new(root)),
+                None => Ok(serve::Fixtures::embedded()),
+            };
+            let started = fixtures.and_then(|f| {
+                serve::Served::start(
+                    plane.clone(),
+                    files,
+                    f,
+                    serve::Options {
+                        port: 0,
+                        token: t.clone(),
+                        faults: serve::Faults::default(),
+                    },
+                )
+                .map_err(|e| e.to_string())
+            });
+            served = match started {
+                Ok(x) => x,
+                Err(e) => return refusal("source_unavailable", e),
+            };
+            token = Some(t);
+            served.interface_root()
+        }
+    };
+    let report = conform::run_plane(&url, &plane, token.as_deref(), conform::Options::default());
+    let failed = report.failed();
+    if !failed.is_empty() {
+        let lines: Vec<String> = failed.iter().map(ToString::to_string).collect();
+        return refusal(
+            "conformance_failed",
+            format!(
+                "{url}: {} of {} checks failed\n{}",
+                failed.len(),
+                report.checks.len(),
+                lines.join("\n")
+            ),
+        );
+    }
+    HandlerReply::Success(report.to_json())
+}
+
+/// `agenticspec ui serve`: the operator UI of an architecture and its default control plane on
+/// fixtures (those built into the binary, or a directory with `--fixtures`), on 127.0.0.1, until
+/// the process is stopped.
+fn ui_serve(input: &Value) -> HandlerReply {
+    use agenticspec_ui::serve;
+    let (files, plane) = match plane_of(input) {
+        Ok(x) => x,
+        Err(r) => return r,
+    };
+    let fixtures = match input.get("fixtures").and_then(Value::as_str) {
+        None => serve::Fixtures::embedded(),
+        Some(dir) => match serve::Fixtures::from_dir(std::path::Path::new(dir)) {
+            Ok(f) => f,
+            Err(e) => return refusal("fixtures_unreadable", e),
+        },
+    };
+    let port = input
+        .get("port")
+        .and_then(Value::as_i64)
+        .and_then(|p| u16::try_from(p).ok())
+        .unwrap_or(serve::PORT);
+    let given = ui_token();
+    let token = given.clone().unwrap_or_else(serve::random_token);
+    let architecture = plane.architecture.clone();
+    let served = match serve::Served::start(
+        plane,
+        files,
+        fixtures,
+        serve::Options {
+            port,
+            token: token.clone(),
+            faults: serve::Faults::default(),
+        },
+    ) {
+        Ok(s) => s,
+        Err(e) => return refusal("port_unavailable", format!("127.0.0.1:{port}: {e}")),
+    };
+    let url = format!("{}/", served.url());
+    let interface = served.interface_root();
+    let mut err = std::io::stderr().lock();
+    let _ = writeln!(
+        err,
+        "agenticspec: serving {url} (the operator UI of {architecture} on fixtures; the runtime interface at {interface})"
+    );
+    if given.is_none() {
+        let _ = writeln!(
+            err,
+            "agenticspec: token {token} (set AGENTICSPEC_UI_TOKEN to choose it; the page sets it as its cookie)"
+        );
+    }
+    drop(err);
+    served.wait();
+    HandlerReply::Success(json!({ "url": url, "interface": interface }))
 }
 
 /// `agenticspec ui derive`: derive, then write the files or with `--check` compare them.
@@ -769,6 +969,61 @@ fn ui_derive(input: &Value) -> HandlerReply {
 }
 
 /// A path field of the input; the parser has made every required one present.
+/// `agenticspec ui build`: the embedded operator app with the data files of one architecture,
+/// and with `--archive` their reproducible tar and its sha256.
+fn ui_build(input: &Value) -> HandlerReply {
+    use agenticspec_ui::derive::Failure;
+    use agenticspec_ui::operator::{self, API_BASE, Inputs};
+    let architecture = path_of(input, "architecture");
+    let out = path_of(input, "out");
+    let inputs = Inputs {
+        root: PathBuf::from("."),
+        architecture: architecture.clone(),
+        contract: path_of(input, "contract"),
+        api_base: input
+            .get("api_base")
+            .and_then(Value::as_str)
+            .unwrap_or(API_BASE)
+            .to_string(),
+    };
+    let files = match operator::build(&inputs) {
+        Ok(f) => f,
+        Err(Failure::Unreadable(e)) => return refusal("document_unreadable", e),
+        Err(Failure::Refused(rs)) => {
+            let lines: Vec<String> = rs.iter().map(ToString::to_string).collect();
+            return refusal(
+                "document_refused",
+                format!("{}:\n{}", architecture.display(), lines.join("\n")),
+            );
+        }
+    };
+    if let Err(e) = operator::write(&files, &out) {
+        return refusal("out_unwritable", format!("{}: {e}", out.display()));
+    }
+    let mut answer = json!({
+        "out": out.to_string_lossy(),
+        "files": files.len(),
+        "bytes": files.iter().map(|(_, b)| b.len()).sum::<usize>(),
+    });
+    if input
+        .get("archive")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+    {
+        let tar = match operator::archive(&files) {
+            Ok(t) => t,
+            Err(e) => return refusal("out_unwritable", e),
+        };
+        let path = operator::archive_path(&out);
+        if let Err(e) = std::fs::write(&path, &tar) {
+            return refusal("out_unwritable", format!("{}: {e}", path.display()));
+        }
+        answer["archive"] = json!(path.to_string_lossy());
+        answer["archive_sha256"] = json!(operator::sha256(&tar));
+    }
+    HandlerReply::Success(answer)
+}
+
 fn path_of(input: &Value, field: &str) -> PathBuf {
     PathBuf::from(input.get(field).and_then(Value::as_str).unwrap_or(""))
 }

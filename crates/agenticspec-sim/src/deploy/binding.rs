@@ -1,7 +1,10 @@
 //! The binding (`agenticspec-binding/1`): for one architecture and one target, which concrete
 //! thing plays each part, the transports of links that cross units, the runtimes pinned by
-//! digest, the claims of each unit, and the packing (`packing:`). A binding may `refines:` a base
-//! binding; [`load`] resolves the chain into one document, the child's keys over the base's.
+//! digest (or, from the target's local image store, by tag), the claims and check ports of each
+//! unit, where each export of an ingress listens (`ingress:`), what the target gives a unit
+//! (`target:` isolation, images, network policy), the UIs it asks for (`ui:`, [`super::ui`]),
+//! and the packing (`packing:`). A binding may `refines:` a base binding; [`load`] resolves the
+//! chain into one document, the child's keys over the base's.
 
 use crate::doc::load_yaml;
 use serde_json::{Map, Value};
@@ -22,16 +25,25 @@ const KEYS: &[&str] = &[
     "transports",
     "runtimes",
     "claims",
+    "checks",
+    "ingress",
+    "ui",
     "packing",
 ];
 
 /// The keys of one part's entry under `parts:`.
 const PART_KEYS: &[&str] = &[
-    "agent", "digest", "state", "inside", "secrets", "egress", "size",
+    "agent", "digest", "state", "inside", "secrets", "egress", "size", "volumes", "network",
 ];
 
 /// The keys of a runtime pinned under `runtimes:`.
-const RUNTIME_KEYS: &[&str] = &["image", "digest"];
+const RUNTIME_KEYS: &[&str] = &["image", "tag", "digest"];
+
+/// The runtime of the core and service units, under `runtimes:`.
+pub const CORE_RUNTIME: &str = "core";
+
+/// The runtime of the agent units, under `runtimes:`: the name of the role it plays.
+pub const AGENT_RUNTIME: &str = "agent-runtime";
 
 /// The isolation levels of agenticspec, lowest first (`agentic.shared.IsolationLevel`).
 pub const ISOLATION: &[&str] = &["none", "process", "container", "user_kernel", "micro_vm"];
@@ -148,6 +160,14 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                         "target: isolation is one of {}",
                         ISOLATION.join(", ")
                     )),
+                    "images" if v.as_str().is_some_and(|m| IMAGES.contains(&m)) => {}
+                    "images" => out.push(format!("target: images is one of {}", IMAGES.join(", "))),
+                    "network_policy" if v.as_str().is_some_and(|m| NETWORK_POLICY.contains(&m)) => {
+                    }
+                    "network_policy" => out.push(format!(
+                        "target: network_policy is one of {}",
+                        NETWORK_POLICY.join(", ")
+                    )),
                     other => out.push(format!("target: unknown key `{other}`")),
                 }
             }
@@ -173,15 +193,21 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                     egress_problems(name, v, parts, &mut out);
                     continue;
                 }
+                if k == "volumes" {
+                    volume_problems(name, v, parts, &mut out);
+                    continue;
+                }
                 let ok = match k.as_str() {
                     "state" => matches!(v.as_str(), Some("memory" | "service")),
                     "secrets" => v.as_array().is_some_and(|a| a.iter().all(Value::is_string)),
+                    "network" => v == "isolated",
                     _ => v.is_string(),
                 };
                 if !ok {
                     out.push(match k.as_str() {
                         "state" => format!("parts: {name}: state is memory or service"),
                         "secrets" => format!("parts: {name}: secrets is a list of names"),
+                        "network" => format!("parts: {name}: network is `isolated`"),
                         _ => format!("parts: {name}: `{k}` is text"),
                     });
                 }
@@ -199,8 +225,14 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
     } else if !binding["transports"].is_null() {
         out.push("`transports:` is a mapping from a carried value to a transport".into());
     }
+    let local = images(binding) == "local";
     if let Some(r) = binding["runtimes"].as_object() {
         for (name, v) in r {
+            if name == "agent" {
+                out.push(format!(
+                    "runtimes: `agent` is named `{AGENT_RUNTIME}`, the role the agent units' runtime plays"
+                ));
+            }
             let Some(m) = v.as_object() else {
                 out.push(format!("runtimes: `{name}` is a mapping"));
                 continue;
@@ -210,14 +242,33 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
                     out.push(format!("runtimes: {name}: unknown key `{k}`"));
                 }
             }
-            if !m
-                .get("digest")
-                .and_then(Value::as_str)
-                .is_some_and(is_digest)
-            {
-                out.push(format!(
-                    "runtimes: {name}: `digest:` is sha256:<64 hex digits>; a runtime is pinned by its digest"
-                ));
+            let digest = m.get("digest");
+            if local {
+                // A local image is pinned by its tag, its digest (the image's config id) or
+                // both; one with neither is refused by admission (`image_unpinned`).
+                if digest.is_some_and(|d| !d.as_str().is_some_and(is_digest)) {
+                    out.push(format!(
+                        "runtimes: {name}: `digest:` is sha256:<64 hex digits>, the image's config id"
+                    ));
+                }
+                if m.get("tag")
+                    .is_some_and(|t| !t.as_str().is_some_and(is_tag))
+                {
+                    out.push(format!(
+                        "runtimes: {name}: `tag:` is an image tag ([A-Za-z0-9_][A-Za-z0-9_.-]*, at most 128)"
+                    ));
+                }
+            } else {
+                if !digest.and_then(Value::as_str).is_some_and(is_digest) {
+                    out.push(format!(
+                        "runtimes: {name}: `digest:` is sha256:<64 hex digits>; a runtime is pinned by its digest"
+                    ));
+                }
+                if m.contains_key("tag") {
+                    out.push(format!(
+                        "runtimes: {name}: `tag:` goes with `target: {{images: local}}`; a registry image is pinned by its digest"
+                    ));
+                }
             }
             if !m.get("image").and_then(Value::as_str).is_some_and(is_image) {
                 out.push(format!(
@@ -249,13 +300,327 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
     } else if !binding["claims"].is_null() {
         out.push("`claims:` is a mapping from a unit name to its claims".into());
     }
+    if let Some(c) = binding["checks"].as_object() {
+        for (unit, v) in c {
+            let Some(m) = v.as_object() else {
+                out.push(format!("checks: `{unit}` is a mapping"));
+                continue;
+            };
+            for (k, x) in m {
+                if !CHECKS.contains(&k.as_str()) {
+                    out.push(format!(
+                        "checks: {unit}: `{k}` is not one of {}",
+                        CHECKS.join(", ")
+                    ));
+                    continue;
+                }
+                let Some(cm) = x.as_object() else {
+                    out.push(format!("checks: {unit}: {k} is a mapping"));
+                    continue;
+                };
+                for (ck, cv) in cm {
+                    match ck.as_str() {
+                        "port" if is_port(cv) => {}
+                        "port" => out.push(format!(
+                            "checks: {unit}: {k}: port is a whole number from 1 to 65535"
+                        )),
+                        other => out.push(format!("checks: {unit}: {k}: unknown key `{other}`")),
+                    }
+                }
+            }
+        }
+    } else if !binding["checks"].is_null() {
+        out.push("`checks:` is a mapping from a unit name to its checks".into());
+    }
+    if let Some(i) = binding["ingress"].as_object() {
+        for (name, v) in i {
+            ingress_problems(name, v, parts, &mut out);
+        }
+    } else if !binding["ingress"].is_null() {
+        out.push("`ingress:` is a mapping from an ingress name to its exports".into());
+    }
+    super::ui::problems(binding, &mut out);
     out
+}
+
+/// The checks of a unit a binding may give a port.
+pub const CHECKS: &[&str] = &["startup", "ready", "alive"];
+
+/// How an export listens: on the loopback interface only, or on every interface.
+pub const BIND: &[&str] = &["loopback", "all"];
+
+/// The bind of an export the binding names none for.
+pub const DEFAULT_BIND: &str = "loopback";
+
+/// Where a target takes runtime images from: a registry (pinned by repository digest) or the
+/// target's local image store (pinned by tag or config id). The first is the default.
+pub const IMAGES: &[&str] = &["registry", "local"];
+
+/// Whether the target enforces a network policy.
+pub const NETWORK_POLICY: &[&str] = &["enforced", "not_enforced"];
+
+/// A port: a whole number from 1 to 65535.
+pub fn is_port(v: &Value) -> bool {
+    v.as_u64().is_some_and(|p| (1..=65535).contains(&p))
+}
+
+/// The keys of one export under `ingress.<name>.exports.<protocol>`.
+const EXPORT_KEYS: &[&str] = &["port", "bind", "address", "part"];
+
+/// The problems of one ingress's entry: `{exports: {<protocol>: {port, bind, address, part}}}`.
+/// Whether the ingress and its protocols are the contract's is checked by [`served_problems`].
+fn ingress_problems(name: &str, v: &Value, parts: &Value, out: &mut Vec<String>) {
+    let Some(m) = v.as_object() else {
+        out.push(format!("ingress: `{name}` is a mapping"));
+        return;
+    };
+    for k in m.keys().filter(|k| *k != "exports") {
+        out.push(format!("ingress: {name}: unknown key `{k}`"));
+    }
+    let Some(exports) = m.get("exports").and_then(Value::as_object) else {
+        out.push(format!(
+            "ingress: {name}: `exports:` is a mapping from a protocol to its port, bind and address"
+        ));
+        return;
+    };
+    for (protocol, e) in exports {
+        let at = format!("ingress: {name}: exports: {protocol}");
+        let Some(em) = e.as_object() else {
+            out.push(format!("{at} is a mapping"));
+            continue;
+        };
+        for (k, x) in em {
+            if !EXPORT_KEYS.contains(&k.as_str()) {
+                out.push(format!("{at}: unknown key `{k}`"));
+                continue;
+            }
+            let ok = match k.as_str() {
+                "port" => is_port(x),
+                "bind" => x.as_str().is_some_and(|b| BIND.contains(&b)),
+                "address" => x.as_str().is_some_and(is_text),
+                _ => x.as_str().is_some_and(|p| parts.get(p).is_some()),
+            };
+            if !ok {
+                out.push(match k.as_str() {
+                    "port" => format!("{at}: port is a whole number from 1 to 65535"),
+                    "bind" => format!("{at}: bind is one of {}", BIND.join(", ")),
+                    "address" => format!("{at}: address is text without spaces"),
+                    _ => format!("{at}: part names a part of the document"),
+                });
+            }
+        }
+    }
+}
+
+/// The problems of a binding that need the contract and the packing: a claim or a check of a
+/// unit the packing does not have (nor a UI the binding asks for, a `service` unit named by its
+/// role), a check its unit's kind has not, an ingress or a protocol
+/// the contract does not export, an export served by a part no unit holds. `contract_ingress`
+/// is the contract's `ingress` as data.
+pub fn served_problems(
+    binding: &Value,
+    contract_ingress: &Value,
+    packing: &super::packing::Packing,
+) -> Vec<String> {
+    let mut out = Vec::new();
+    // The kind of a unit by name: a unit of the packing, or the `service` unit of a UI the
+    // binding asks for.
+    let ui_units: Vec<&str> = super::ui::asked(binding)
+        .into_iter()
+        .map(super::ui::unit_name)
+        .collect();
+    let kind = |name: &str| {
+        packing
+            .units
+            .iter()
+            .find(|u| u.name == name)
+            .map(|u| u.kind.as_str())
+            .or_else(|| ui_units.contains(&name).then_some("service"))
+    };
+    for name in binding["claims"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(k, _)| k)
+    {
+        if kind(name).is_none() {
+            out.push(format!("claims: `{name}` is not a unit of the packing"));
+        }
+    }
+    for (name, v) in binding["checks"].as_object().into_iter().flatten() {
+        let Some(kind) = kind(name) else {
+            out.push(format!("checks: `{name}` is not a unit of the packing"));
+            continue;
+        };
+        let has = unit_checks(kind);
+        for k in v.as_object().into_iter().flatten().map(|(k, _)| k) {
+            if CHECKS.contains(&k.as_str()) && !has.contains(&k.as_str()) {
+                out.push(format!("checks: {name}: a {kind} unit has no {k} check"));
+            }
+        }
+    }
+    let ingresses: Vec<&Value> = contract_ingress.as_array().into_iter().flatten().collect();
+    for (name, v) in binding["ingress"].as_object().into_iter().flatten() {
+        let Some(i) = ingresses.iter().find(|i| i["name"] == name.as_str()) else {
+            out.push(format!(
+                "ingress: `{name}` is not an ingress of the contract"
+            ));
+            continue;
+        };
+        for (protocol, e) in v["exports"].as_object().into_iter().flatten() {
+            if !i["exports"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|p| p == protocol.as_str())
+            {
+                out.push(format!(
+                    "ingress: {name}: exports: `{protocol}` is not an export of the ingress"
+                ));
+            }
+            if let Some(p) = e["part"].as_str()
+                && packing.unit_of(p).is_none()
+            {
+                out.push(format!(
+                    "ingress: {name}: exports: {protocol}: part {p} is in no unit of the packing"
+                ));
+            }
+        }
+    }
+    out.extend(super::ui::served_problems(
+        binding,
+        contract_ingress,
+        packing,
+    ));
+    out
+}
+
+/// The checks a unit of a kind has (`startup`, `ready`, `alive`).
+pub fn unit_checks(kind: &str) -> &'static [&'static str] {
+    match kind {
+        "agent" | "job" | "scheduled" => &["startup"],
+        "core" | "service" => &["ready", "alive"],
+        "model" => &["ready"],
+        _ => &[],
+    }
+}
+
+/// The problems of one part's `volumes:`: a list of `{name, mount}`, each naming a workspace
+/// part of the document. Whether a mount is an absolute path is admission's
+/// (`volume_mount_missing`).
+fn volume_problems(part: &str, v: &Value, parts: &Value, out: &mut Vec<String>) {
+    let Some(list) = v.as_array() else {
+        out.push(format!(
+            "parts: {part}: volumes is a list of {{name, mount}}"
+        ));
+        return;
+    };
+    for (i, e) in list.iter().enumerate() {
+        let at = format!("parts: {part}: volumes[{i}]");
+        let Some(m) = e.as_object() else {
+            out.push(format!("{at} is {{name, mount}}"));
+            continue;
+        };
+        for (k, x) in m {
+            match k.as_str() {
+                "name" => {
+                    if !x.as_str().is_some_and(|n| parts[n]["block"] == "workspace") {
+                        out.push(format!("{at}: name names a workspace part of the document"));
+                    }
+                }
+                "mount" if x.is_string() => {}
+                "mount" => out.push(format!("{at}: mount is a path")),
+                other => out.push(format!("{at}: unknown key `{other}`")),
+            }
+        }
+        if !m.contains_key("name") {
+            out.push(format!("{at} needs a `name:`, the workspace it mounts"));
+        }
+    }
+}
+
+/// Text without spaces, not empty.
+pub fn is_text(s: &str) -> bool {
+    !s.is_empty() && !s.chars().any(char::is_whitespace)
+}
+
+/// A network address an egress entry may name: a CIDR block (`10.0.0.0/8`, `fd00::/8`) or
+/// `<host>:<port>` (a host name, an IPv4 address or a bracketed IPv6 address).
+pub fn is_address(s: &str) -> bool {
+    use std::net::IpAddr;
+    if let Some((ip, bits)) = s.split_once('/') {
+        let Ok(bits) = bits.parse::<u8>() else {
+            return false;
+        };
+        return match ip.parse::<IpAddr>() {
+            Ok(IpAddr::V4(_)) => bits <= 32,
+            Ok(IpAddr::V6(_)) => bits <= 128,
+            Err(_) => false,
+        };
+    }
+    let Some((host, port)) = s.rsplit_once(':') else {
+        return false;
+    };
+    if !port.parse::<u16>().is_ok_and(|p| p > 0) {
+        return false;
+    }
+    if let Some(v6) = host.strip_prefix('[').and_then(|h| h.strip_suffix(']')) {
+        return v6.parse::<std::net::Ipv6Addr>().is_ok();
+    }
+    !host.is_empty()
+        && !host.starts_with(['-', '.'])
+        && host
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '.'))
+}
+
+/// The problems of an egress entry's `address`: a string ([`is_address`]) or
+/// `{namespace, labels}` (at least one; `labels` a mapping from text to text).
+fn address_problems(at: &str, v: &Value, out: &mut Vec<String>) {
+    match v {
+        Value::String(s) if is_address(s) => {}
+        Value::String(_) => out.push(format!(
+            "{at}: address is a CIDR block or <host>:<port>, or {{namespace, labels}}"
+        )),
+        Value::Object(m) => {
+            if m.is_empty() {
+                out.push(format!("{at}: address names a namespace, labels or both"));
+            }
+            for (k, x) in m {
+                let ok = match k.as_str() {
+                    "namespace" => x.as_str().is_some_and(is_text),
+                    "labels" => x.as_object().is_some_and(|l| {
+                        l.iter()
+                            .all(|(lk, lv)| is_text(lk) && lv.as_str().is_some_and(is_text))
+                    }),
+                    _ => {
+                        out.push(format!("{at}: address: unknown key `{k}`"));
+                        continue;
+                    }
+                };
+                if !ok {
+                    out.push(format!(
+                        "{at}: address: {k} is {}",
+                        if k == "labels" {
+                            "a mapping from text to text"
+                        } else {
+                            "text"
+                        }
+                    ));
+                }
+            }
+        }
+        _ => out.push(format!(
+            "{at}: address is a CIDR block or <host>:<port>, or {{namespace, labels}}"
+        )),
+    }
 }
 
 /// The problems of one part's `egress:`: a list of destinations, each a part of the document or
 /// a name the target resolves ([`super::grants::is_name`]), written as the name or as
-/// `{to: <name>, secret: <secret name>}`. Whether a secret is a name is checked by
-/// [`super::grants::values`].
+/// `{to: <name>, secret: <secret name>, address: <address>}`, `address` only for a name outside
+/// the document ([`is_address`], or `{namespace, labels}`). Whether a secret is a name is checked
+/// by [`super::grants::values`].
 fn egress_problems(part: &str, v: &Value, parts: &Value, out: &mut Vec<String>) {
     let Some(list) = v.as_array() else {
         out.push(format!("parts: {part}: egress is a list of destinations"));
@@ -267,11 +632,22 @@ fn egress_problems(part: &str, v: &Value, parts: &Value, out: &mut Vec<String>) 
             Value::String(to) => Some(to.as_str()),
             Value::Object(m) => {
                 for k in m.keys() {
-                    if k != "to" && k != "secret" {
+                    if !["to", "secret", "address"].contains(&k.as_str()) {
                         out.push(format!("parts: {part}: egress[{i}]: unknown key `{k}`"));
                     }
                 }
-                m.get("to").and_then(Value::as_str)
+                let to = m.get("to").and_then(Value::as_str);
+                if let Some(a) = m.get("address") {
+                    let at = format!("parts: {part}: egress[{i}]");
+                    if to.is_some_and(|t| parts.get(t).is_some()) {
+                        out.push(format!(
+                            "{at}: address is for a destination outside the document; an external part's address is its `reach`"
+                        ));
+                    } else {
+                        address_problems(&at, a, out);
+                    }
+                }
+                to
             }
             _ => None,
         };
@@ -294,14 +670,37 @@ pub fn is_image(s: &str) -> bool {
     !s.is_empty() && !last.is_empty() && !s.contains(['@', ' ']) && !last.contains(':')
 }
 
-/// The image reference of a runtime the binding pins: `<image>@<digest>`.
+/// Where the target takes runtime images from (`target.images`): `registry` unless the binding
+/// names `local`.
+pub fn images(binding: &Value) -> &str {
+    match binding["target"]["images"].as_str() {
+        Some("local") => "local",
+        _ => "registry",
+    }
+}
+
+/// The image reference of a runtime the binding pins. From a registry `<image>@<digest>`; from
+/// the target's local store `<image>:<tag>` when it names a tag, else its digest (the image's
+/// config id, which a local engine runs by). `None` when it is not pinned.
 pub fn image_reference(binding: &Value, runtime: &str) -> Option<String> {
     let r = &binding["runtimes"][runtime];
-    Some(format!(
-        "{}@{}",
-        r["image"].as_str()?,
-        r["digest"].as_str()?
-    ))
+    let image = r["image"].as_str()?;
+    if images(binding) == "local" {
+        return match (r["tag"].as_str(), r["digest"].as_str()) {
+            (Some(tag), _) => Some(format!("{image}:{tag}")),
+            (None, Some(d)) => Some(d.to_owned()),
+            (None, None) => None,
+        };
+    }
+    Some(format!("{image}@{}", r["digest"].as_str()?))
+}
+
+/// An image tag: `[A-Za-z0-9_][A-Za-z0-9_.-]*`, at most 128 characters.
+pub fn is_tag(s: &str) -> bool {
+    s.len() <= 128
+        && s.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '_')
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'))
 }
 
 /// `sha256:` and 64 lower-case hex digits.

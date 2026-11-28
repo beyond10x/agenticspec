@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: ui-upstream-unknown
+architecture: workstation
+refines: egress/workstation.yaml
+summary: The operator UI reads the adapter of a unit the packing does not have.
+ui:
+  operator:
+    upstream: {unit: adapter}

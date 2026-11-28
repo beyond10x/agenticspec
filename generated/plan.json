@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "2edc7b66add345b9c9a20d2dd29eaddb088b0092e645b2e09d0da2c333850fb4",
-    "contract_digest": "c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026"
+    "source_digest": "9c180670462765802659e5279ccf7559eba1b15cd6e038e25eb8782e2352f954",
+    "contract_digest": "00fb71ae170fbec426a26c46270451dd7c59b5683dc2c912b0f53ea80bf7d891"
   },
   "scope": {
     "profile": "component-skeletons"
@@ -606,6 +606,20 @@
     },
     {
       "kind": "domain_type",
+      "source": "agenticspec.cli.UiBuildInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.UiBuildResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
       "source": "agenticspec.cli.UiConformCheck",
       "disposition": {
         "disposition": "generated"
@@ -663,6 +677,20 @@
     {
       "kind": "domain_type",
       "source": "agenticspec.cli.UiPanelsResult",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.UiServeInput",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "agenticspec.cli.UiServeResult",
       "disposition": {
         "disposition": "generated"
       }

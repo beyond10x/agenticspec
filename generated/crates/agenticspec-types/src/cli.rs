@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
+// contract digest 00fb71ae170fbec426a26c46270451dd7c59b5683dc2c912b0f53ea80bf7d891
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -1275,6 +1275,38 @@ pub struct ToolFigures {
     pub failed: i64,
 }
 
+/// UiBuildInput — `agenticspec.cli.UiBuildInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiBuildInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `contract` — `String`.
+    pub contract: String,
+    /// `out` — `String`.
+    pub out: String,
+    /// `api_base` — `Optional<String>`.
+    pub api_base: Option<String>,
+    /// `archive` — `Boolean`.
+    pub archive: bool,
+}
+
+/// UiBuildResult — `agenticspec.cli.UiBuildResult`.
+///
+/// The static files of an operator UI: `index.html`, `app.js` and `app.css` of the operator app built into the binary, `views.json` (the layout of the derived UI), `contract.json`, `ports.json` and `config.json`; the same inputs give the same bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiBuildResult {
+    /// `out` — `String`.
+    pub out: String,
+    /// `files` — `Integer`.
+    pub files: i64,
+    /// `bytes` — `Integer`.
+    pub bytes: i64,
+    /// `archive` — `Optional<String>`.
+    pub archive: Option<String>,
+    /// `archive_sha256` — `Optional<String>`.
+    pub archive_sha256: Option<String>,
+}
+
 /// UiConformCheck — `agenticspec.cli.UiConformCheck`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UiConformCheck {
@@ -1295,6 +1327,10 @@ pub struct UiConformInput {
     pub plan: Option<String>,
     /// `root` — `Optional<String>`.
     pub root: Option<String>,
+    /// `architecture` — `Optional<String>`.
+    pub architecture: Option<String>,
+    /// `contract` — `Optional<String>`.
+    pub contract: Option<String>,
 }
 
 /// UiConformResult — `agenticspec.cli.UiConformResult`.
@@ -1379,7 +1415,7 @@ pub struct UiPanelsInput {
 
 /// UiPanelsResult — `agenticspec.cli.UiPanelsResult`.
 ///
-/// The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`, a gallery page per block, a fixture per view and a script per channel under `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`.
+/// The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`, a gallery page per block, a fixture per view and a script per channel under `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`; beside them `ui/views/serve.fixtures.json`, the fixtures and scripted outcomes of `agenticspec ui serve` in one file with the digest of its sources, which the binary embeds.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UiPanelsResult {
     /// `out` — `String`.
@@ -1390,4 +1426,28 @@ pub struct UiPanelsResult {
     pub files: i64,
     /// `written` — `Boolean`.
     pub written: bool,
+}
+
+/// UiServeInput — `agenticspec.cli.UiServeInput`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiServeInput {
+    /// `architecture` — `String`.
+    pub architecture: String,
+    /// `contract` — `Optional<String>`.
+    pub contract: Option<String>,
+    /// `port` — `Optional<Integer>`.
+    pub port: Option<i64>,
+    /// `fixtures` — `Optional<String>`.
+    pub fixtures: Option<String>,
+}
+
+/// UiServeResult — `agenticspec.cli.UiServeResult`.
+///
+/// Where the operator UI was served, `http://127.0.0.1:<port>/`, and the root of its runtime interface, `<url>ingress/operator`. The server runs until it is stopped.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UiServeResult {
+    /// `url` — `String`.
+    pub url: String,
+    /// `interface` — `String`.
+    pub interface: String,
 }

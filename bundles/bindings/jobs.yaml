@@ -4,7 +4,10 @@ architecture: scheduled-loops
 refines: local-scheduled-loops.yaml
 summary: >-
   The scheduled loops with the nightly sweep as a scheduled unit that a clock starts and that
-  ends when its run ends; everything else in the core unit.
+  ends when its run ends; everything else in the core unit. The core runtime is an image of the
+  target's local store, pinned by its tag.
+target:
+  images: local
 parts:
   sweeper: {agent: ../agents/sweeper.yaml, egress: [builds, gateway, owner]}
   sweep: {egress: [sweeper]}
@@ -14,6 +17,8 @@ transports:
   model_call: http
   claim: http
   question: a2a
+runtimes:
+  core: {image: agenticspec-core, tag: dev}
 packing:
   parts:
-    sweeper: {schedule: job}
+    sweeper: {schedule: "0 2 * * *"}

@@ -188,6 +188,8 @@ callables:
     result: agenticspec.cli.UiConformResult
     errors:
       plan_unreadable: agenticspec.cli.Refusal
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
       source_unavailable: agenticspec.cli.Refusal
       conformance_failed: agenticspec.cli.Refusal
   blocks_lift:
@@ -259,6 +261,23 @@ callables:
       document_refused: agenticspec.cli.Refusal
       derived_stale: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
+  ui_build:
+    target: {kind: local, owner: agenticspec.cli, action: ui_build}
+    input: agenticspec.cli.UiBuildInput
+    result: agenticspec.cli.UiBuildResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
+      out_unwritable: agenticspec.cli.Refusal
+  ui_serve:
+    target: {kind: local, owner: agenticspec.cli, action: ui_serve}
+    input: agenticspec.cli.UiServeInput
+    result: agenticspec.cli.UiServeResult
+    errors:
+      document_unreadable: agenticspec.cli.Refusal
+      document_refused: agenticspec.cli.Refusal
+      fixtures_unreadable: agenticspec.cli.Refusal
+      port_unavailable: agenticspec.cli.Refusal
   deploy_check:
     target: {kind: local, owner: agenticspec.cli, action: deploy_check}
     input: agenticspec.cli.DeployCheckInput
@@ -424,11 +443,13 @@ commands:
       - {field: out, source: {kind: option, long: out}}
   - path: [ui, conform]
     callable: ui_conform
-    about: Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)
+    about: Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml), by a plan or, with --architecture, against the default control plane of an architecture
     arguments:
       - {field: source, source: {kind: option, long: source}}
       - {field: plan, source: {kind: option, long: plan}}
       - {field: root, source: {kind: option, long: root}}
+      - {field: architecture, source: {kind: option, long: architecture}}
+      - {field: contract, source: {kind: option, long: contract}}
   - path: [blocks, lift]
     callable: blocks_lift
     about: Lift one Claude Code session into rows of the building blocks, each naming the node it came from
@@ -485,6 +506,23 @@ commands:
       - {field: out, source: {kind: option, long: out}}
       - {field: root, source: {kind: option, long: root}}
       - {field: check, source: {kind: flag, long: check}}
+  - path: [ui, build]
+    callable: ui_build
+    about: Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), and with --archive a reproducible tar beside them with its sha256
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: contract, source: {kind: option, long: contract}}
+      - {field: out, source: {kind: option, long: out}}
+      - {field: api_base, source: {kind: option, long: api-base}}
+      - {field: archive, source: {kind: flag, long: archive}}
+  - path: [ui, serve]
+    callable: ui_serve
+    about: Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures
+    arguments:
+      - {field: architecture, source: {kind: positional, index: 1}}
+      - {field: contract, source: {kind: option, long: contract}}
+      - {field: port, source: {kind: option, long: port}}
+      - {field: fixtures, source: {kind: option, long: fixtures}}
   - path: [deploy, check]
     callable: deploy_check
     about: Admit a written deployment bundle again from what it carries, for a reader that did not write it; refuses a digest that does not hold, an undeclared secret or egress, a secret value and every other finding of admission

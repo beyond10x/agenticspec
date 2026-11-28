@@ -3,7 +3,7 @@
 //! copy of cloudspec's accepted list (`bundles/cloudspec-accepts.yaml`, [`Accepts`]).
 
 use super::binding::{isolation_rank, target_isolation};
-use super::packing::{Packing, Unit, is_clock};
+use super::packing::{Packing, Unit, is_clock, schedule_of};
 use crate::check::value;
 use crate::contract::derive::link_name;
 use crate::doc::parse_yaml;
@@ -20,15 +20,20 @@ pub const REFUSALS: &[&str] = &[
     "shared_state_split",
     "link_without_transport",
     "isolation_unmet",
+    "network_isolation_unmet",
     "scheduled_with_inputs",
+    "schedule_not_cron",
     "core_count",
     "unit_not_hosted",
     "agent_document_missing",
     "agent_document_digest",
+    "image_unpinned",
+    "volume_mount_missing",
     "secret_value",
     "secret_undeclared",
     "egress_undeclared",
     "address_in_architecture",
+    "ui_upstream_unknown",
 ];
 
 /// The transport of the link from a clock into the scheduled unit it starts: the target's
@@ -350,9 +355,10 @@ pub fn admit(
         }
     }
 
-    // A scheduled unit is woken by its clock and takes no other input.
+    // A scheduled unit is woken by its clock and takes no other input. A cron rule the binding
+    // gives it is a clock of the target's.
     for u in packing.units.iter().filter(|u| u.kind == "scheduled") {
-        let mut woken = false;
+        let mut woken = u.schedule.is_some();
         for l in links(arch) {
             let to = text(&l["to"]);
             if !u.parts.iter().any(|p| p == to) {
@@ -379,6 +385,11 @@ pub fn admit(
                     u.name
                 ),
             ));
+        }
+        // Without a cron rule of the binding, the clock's `every` is the unit's rule, when one
+        // states it exactly.
+        if let Err(detail) = schedule_of(arch, u) {
+            out.push(finding("schedule_not_cron", detail));
         }
     }
 

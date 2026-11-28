@@ -1,5 +1,7 @@
 //! The generated documentation pages: deterministic, complete, and held by `--check`.
 
+mod cache;
+
 use agenticspec_docs::{Catalogue, Generated, OWNED_DIRS, OWNED_FILES, generate, layer_edges};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -17,8 +19,9 @@ fn fixture() -> Catalogue {
     Catalogue::parse(FIXTURE_CATALOGUE).expect("the fixture catalogue parses")
 }
 
+/// The pages with the fixture catalogue, generated once per test run (`cache.rs`).
 fn generated_with_fixture() -> Generated {
-    generate(&root(), Some(fixture())).expect("the pages generate")
+    cache::generated(&root(), Some(FIXTURE_CATALOGUE))
 }
 
 fn domains() -> Vec<String> {
@@ -37,9 +40,11 @@ fn domains() -> Vec<String> {
         .collect()
 }
 
+/// A fresh generation in this process and the shared one of the test run, made by another
+/// generation (in another process when the cache was warm).
 #[test]
 fn two_generations_are_the_same_bytes() {
-    let a = generated_with_fixture();
+    let a = generate(&root(), Some(fixture())).expect("the pages generate");
     let b = generated_with_fixture();
     assert_eq!(
         a.files.keys().collect::<Vec<_>>(),
@@ -78,15 +83,15 @@ fn every_domain_has_a_page_linked_from_the_layer_map() {
 
 #[test]
 fn every_kpi_of_the_catalogue_is_on_its_block_page_and_in_the_catalogue_page() {
-    let mut catalogues = vec![fixture()];
+    let mut catalogues = vec![FIXTURE_CATALOGUE.to_string()];
     let own = root().join("kpis/catalogue.yaml");
     if own.exists() {
-        let text = std::fs::read_to_string(&own).expect("kpis/catalogue.yaml");
-        catalogues.push(Catalogue::parse(&text).expect("kpis/catalogue.yaml parses"));
+        catalogues.push(std::fs::read_to_string(&own).expect("kpis/catalogue.yaml"));
     }
-    for catalogue in catalogues {
+    for text in catalogues {
+        let catalogue = Catalogue::parse(&text).expect("the catalogue parses");
         assert!(!catalogue.kpis.is_empty());
-        let g = generate(&root(), Some(catalogue.clone())).expect("the pages generate");
+        let g = cache::generated(&root(), Some(&text));
         let table = &g.files["docs/kpis-catalogue.md"];
         let data = &g.files["website/src/generated/kpis.json"];
         for kpi in &catalogue.kpis {
@@ -129,8 +134,7 @@ fn every_kpi_of_the_catalogue_is_on_its_block_page_and_in_the_catalogue_page() {
 #[test]
 fn a_kpi_of_a_block_not_yet_specified_is_on_the_planned_page() {
     let text = FIXTURE_CATALOGUE.replacen("block: question", "block: verification", 1);
-    let catalogue = Catalogue::parse(&text).expect("parses");
-    let g = generate(&root(), Some(catalogue)).expect("the pages generate");
+    let g = cache::generated(&root(), Some(&text));
     let planned = &g.files["docs/blocks/planned.md"];
     let at = planned
         .find("\n## verification\n")
@@ -289,7 +293,7 @@ fn the_architecture_as_a_whole_shows_what_check_reports() {
 /// KPI catalogue holds none of the field's KPIs.
 #[test]
 fn the_catalog_groups_by_field_and_the_field_page_holds_its_data() {
-    let g = generate(&root(), None).expect("the pages generate");
+    let g = cache::generated(&root(), None);
     let index = &g.files["docs/catalog/index.md"];
     let coding = index.find("\n## Coding\n").expect("a Coding group");
     for (_, name) in experiments() {
@@ -433,7 +437,8 @@ fn run(bin_root: &Path, args: &[&str]) -> (i32, String) {
 }
 
 /// A copy of the generator's inputs under the target's test directory: the sources, the committed
-/// results of the catalog with their digest files and what those digest, and the fixture catalogue.
+/// results of the catalog with their digest files and what those digest, and the fixture catalogue;
+/// the pages it generates are those of the repository with the fixture catalogue.
 fn copy_inputs(name: &str) -> PathBuf {
     let tmp = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name);
     let _ = std::fs::remove_dir_all(&tmp);
@@ -445,13 +450,22 @@ fn copy_inputs(name: &str) -> PathBuf {
         "crates/agenticspec-sim/src",
         "packs",
         "fields",
+        "ladder",
     ] {
         if root().join(dir).exists() {
             copy_dir(&root().join(dir), &tmp.join(dir));
         }
     }
-    for file in ["Cargo.lock", "rust-toolchain.toml", "ess-inputs.yaml"] {
-        std::fs::copy(root().join(file), tmp.join(file)).unwrap();
+    std::fs::create_dir_all(tmp.join("docs")).unwrap();
+    for file in [
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "ess-inputs.yaml",
+        "docs/ladder.mdx",
+    ] {
+        if root().join(file).exists() {
+            std::fs::copy(root().join(file), tmp.join(file)).unwrap();
+        }
     }
     for (_, name) in experiments() {
         let dir = format!("website/static/catalog/{name}");
@@ -502,21 +516,27 @@ fn a_change_of_the_contract_module_keeps_every_result_current() {
     let mut text = std::fs::read_to_string(&file).unwrap();
     text.push_str("\n// changed\n");
     std::fs::write(&file, text).unwrap();
-    generate(&tmp, Some(fixture()))
+    let current = agenticspec_docs::check_committed(&tmp)
         .expect("a change of the contract module is no change of a result");
+    assert_eq!(current, experiments().len());
 }
 
+/// The pages of the test run, written into a copy of the inputs, pass the binary's `--check`
+/// except for the files edited, removed and added, and the check writes nothing; a write puts
+/// them right.
 #[test]
 fn check_fails_after_a_generated_file_is_edited_or_added() {
     let tmp = copy_inputs("docs-check");
+    // The repository's own catalogue: the contracts read it from `kpis/`, so the copy generates
+    // the pages of the repository only with it.
+    let own = root().join("kpis/catalogue.yaml");
+    std::fs::copy(&own, tmp.join("kpis/catalogue.yaml")).unwrap();
 
-    let (code, text) = run(&tmp, &[]);
-    assert_eq!(code, 0, "{text}");
+    let g = cache::generated(&root(), None);
+    agenticspec_docs::write(&tmp, &g.files).expect("the pages are written");
     for p in OWNED_FILES {
         assert!(tmp.join(p).exists(), "{p} is written");
     }
-    let (code, text) = run(&tmp, &["--check"]);
-    assert_eq!(code, 0, "fresh pages pass: {text}");
 
     let page = tmp.join("docs/blocks/7-collaboration/question.md");
     let mut body = std::fs::read_to_string(&page).unwrap();
@@ -535,20 +555,37 @@ fn check_fails_after_a_generated_file_is_edited_or_added() {
         code, 1,
         "an edited, a missing and a stray file fail: {text}"
     );
-    for named in [
-        "changed: docs/blocks/7-collaboration/question.md",
-        "missing: website/static/architectures/workstation.html",
-        "changed: website/static/architectures/workstation.contract.yaml",
-        "not generated: docs/blocks/stray.md",
-    ] {
-        assert!(text.contains(named), "{named} in {text}");
-    }
+    let mut named: Vec<&str> = text
+        .lines()
+        .filter_map(|l| l.strip_prefix("docs: "))
+        .filter(|l| !l.ends_with("run `task docs:generate`"))
+        .collect();
+    named.sort_unstable();
+    // Exactly these: every other page of a fresh generation is the bytes written above.
+    assert_eq!(
+        named,
+        [
+            "changed: docs/blocks/7-collaboration/question.md",
+            "changed: website/static/architectures/workstation.contract.yaml",
+            "missing: website/static/architectures/workstation.html",
+            "not generated: docs/blocks/stray.md",
+        ],
+        "{text}"
+    );
     assert!(stray.exists() && !html.exists(), "--check writes nothing");
 
-    let (code, _) = run(&tmp, &[]);
-    assert_eq!(code, 0);
+    // The write the binary does without `--check`; a second run of the binary would generate the
+    // pages once more for the same files.
+    let mut written = agenticspec_docs::write(&tmp, &g.files).expect("the pages are written");
+    written.sort_unstable();
+    assert_eq!(written, named, "a write changes what --check names");
     assert!(!stray.exists(), "a write removes the stray file");
     assert!(html.exists(), "a write restores the missing file");
+    assert_eq!(
+        std::fs::read_to_string(&page).unwrap(),
+        g.files["docs/blocks/7-collaboration/question.md"],
+        "a write restores the edited file"
+    );
 }
 
 /// Each experiment as `(its name, the file stem of the architecture it names)`.

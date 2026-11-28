@@ -4,3 +4,4 @@ architecture: workstation
 summary: The operator's question to the owner leaves the core unit, and the operator declares no egress to the owner.
 parts:
   gateway: {egress: [model]}
+  tree: {volumes: [{name: tree, mount: /workspace}]}

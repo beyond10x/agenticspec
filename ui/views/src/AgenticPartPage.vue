@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // The page of one part of a derived UI, drawn from its layout: the part's actions, its instance
 // panel, then a frame per domain it uses. Parameterised by `source`, `architecture`, `part` and
-// `instance` only; the layout is read from the source unless the host hands it over. An action
-// sends `agentic-command` and nothing else.
+// `instance` only; the layout is read from the source unless the host hands it over, and a host
+// that read the action set (R5) of the scope hands over `allowed` to hide what it withholds. An
+// action sends `agentic-command` and nothing else.
 import { computed, ref, watch } from 'vue';
 import { KitButton, KitEmpty, KitError, KitLoading, KitPanel, KitStack, KitToolbar } from '@kit';
 import AgenticPanel from './AgenticPanel.vue';
@@ -15,6 +16,8 @@ const props = defineProps<{
   part: string;
   instance?: number;
   layout?: Layout;
+  /** The commands the action set (R5) of the scope allows; every action shows when absent. */
+  allowed?: string[] | null;
 }>();
 
 const read = ref<Layout | null>(props.layout ?? null);
@@ -40,6 +43,7 @@ watch(
 );
 
 const found = computed(() => (read.value ? pageOf(read.value, props.part) : null));
+const actions = computed(() => (found.value?.page.actions ?? []).filter((a) => !props.allowed || props.allowed.includes(a.command)));
 
 function act(a: LayoutAction): void {
   emitCommand(root.value, {
@@ -61,8 +65,8 @@ function act(a: LayoutAction): void {
     <KitStack v-else>
       <header class="head">
         <h2 class="part-title">{{ found.page.label }}</h2>
-        <KitToolbar v-if="found.page.actions.length" label="Actions">
-          <KitButton v-for="a in found.page.actions" :key="a.name" tone="primary" @click="act(a)">{{ a.label }}</KitButton>
+        <KitToolbar v-if="actions.length" label="Actions">
+          <KitButton v-for="a in actions" :key="a.name" tone="primary" @click="act(a)">{{ a.label }}</KitButton>
         </KitToolbar>
       </header>
       <template v-for="(frame, i) in found.page.frames" :key="i">

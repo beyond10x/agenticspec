@@ -74,12 +74,22 @@ fn derive_contract(
     ports: &crate::contract::ports::PortsFile,
     kpis: Option<&Path>,
 ) -> Result<crate::contract::derive::Contract, Refusal> {
+    let kpis =
+        crate::contract::ingress::Kpis::load(kpis.unwrap_or(Path::new("kpis/catalogue.yaml")))
+            .map_err(|e| refused("kpis_unreadable", e))?;
+    derive_contract_with(arch, ports, &kpis)
+}
+
+/// [`derive_contract`] with the KPI catalogue in memory.
+fn derive_contract_with(
+    arch: &Value,
+    ports: &crate::contract::ports::PortsFile,
+    kpis: &crate::contract::ingress::Kpis,
+) -> Result<crate::contract::derive::Contract, Refusal> {
     use crate::contract::{derive as d, ingress};
     let mut contract =
         d::derive(arch, ports).map_err(|r| refused("contract_refused", r.join("; ")))?;
-    let kpis = ingress::Kpis::load(kpis.unwrap_or(Path::new("kpis/catalogue.yaml")))
-        .map_err(|e| refused("kpis_unreadable", e))?;
-    let (resolved, refusals) = ingress::resolve(arch, &contract, ports, &kpis);
+    let (resolved, refusals) = ingress::resolve(arch, &contract, ports, kpis);
     if !refusals.is_empty() {
         let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
         return Err(refused("architecture_refused", names.join("; ")));
@@ -358,7 +368,7 @@ pub fn run(
     };
     write(
         &out.join("index.html"),
-        &agenticspec_render::page(&result["architecture"], Some(&result)),
+        &agenticspec_render::architecture::page(&result["architecture"], Some(&result)),
     )?;
     let source = e.doc["architecture"].as_str().and_then(|p| {
         std::fs::read_to_string(path.parent().unwrap_or(Path::new(".")).join(p)).ok()
@@ -422,7 +432,10 @@ pub fn render(path: &Path, result: Option<&Path>, out: &Path) -> Result<Value, R
         }
         None => None,
     };
-    write(out, &agenticspec_render::page(&arch, result.as_ref()))?;
+    write(
+        out,
+        &agenticspec_render::architecture::page(&arch, result.as_ref()),
+    )?;
     Ok(json!({ "out": out.display().to_string() }))
 }
 
@@ -719,6 +732,46 @@ pub fn contract(o: &ContractOptions, log: &mut dyn Write) -> Result<Value, Refus
     Ok(answer)
 }
 
+/// The port catalogue of the blocks this binary was built with.
+const BUILT_IN_PORTS: &str = include_str!("../../../blocks/ports.json");
+/// The KPI catalogue this binary was built with.
+const BUILT_IN_KPIS: &str = include_str!("../../../kpis/catalogue.yaml");
+
+/// The contract text of the architecture at `architecture` (what `sim contract` prints), derived
+/// from the port and KPI catalogues built into this binary, so it reads no file but the
+/// architecture and its nested documents (`agenticspec ui serve` and `ui conform` outside a
+/// checkout).
+///
+/// # Errors
+///
+/// The refusals of [`contract`] for the same document.
+pub fn contract_built_in(architecture: &Path) -> Result<String, Refusal> {
+    use crate::contract::{derive as d, ingress::Kpis, ports::PortsFile};
+    let arch = nest::flatten(&load_nested(architecture)?);
+    let refusals = check_architecture(&arch);
+    if !refusals.is_empty() {
+        let names: Vec<String> = refusals.iter().map(ToString::to_string).collect();
+        return Err(refused("architecture_refused", names.join("; ")));
+    }
+    let ports = PortsFile::parse(BUILT_IN_PORTS)
+        .map_err(|e| refused("ports_unreadable", format!("the built-in ports: {e}")))?;
+    let kpis = serde_yaml_ng::from_str::<Value>(BUILT_IN_KPIS)
+        .map_err(|e| e.to_string())
+        .and_then(|doc| Kpis::parse(&doc))
+        .map_err(|e| {
+            refused(
+                "kpis_unreadable",
+                format!("the built-in KPI catalogue: {e}"),
+            )
+        })?;
+    let contract = derive_contract_with(&arch, &ports, &kpis)?;
+    let problems = d::check(&contract, &arch, &ports);
+    if !problems.is_empty() {
+        return Err(refused("contract_refused", problems.join("; ")));
+    }
+    Ok(contract.text())
+}
+
 /// Cut the suite at `path` to the contract's ports and write it to `out`; the counts kept and
 /// whole.
 fn cut_suite(
@@ -926,12 +979,9 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
             None
         }
     };
-    if let (Some(p), Some(claims)) = (&p, b.doc["claims"].as_object()) {
-        for unit in claims.keys() {
-            if !p.units.iter().any(|u| &u.name == unit) {
-                problems.push(format!("claims: `{unit}` is not a unit of the packing"));
-            }
-        }
+    if let Some(p) = &p {
+        let contract_ingress = &contract.to_value()["ingress"];
+        problems.extend(binding::served_problems(&form, contract_ingress, p));
     }
     let Some(p) = p.filter(|_| problems.is_empty()) else {
         return Err(refused(
@@ -944,6 +994,7 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
         .unwrap_or(Path::new("bundles/cloudspec-accepts.yaml"));
     let accepts = Accepts::load(accepts_path).map_err(|e| refused("accepts_unreadable", e))?;
     let built = bundle::build(&bundle::Inputs {
+        architecture: o.architecture,
         arch_bytes: &bytes,
         arch: &arch,
         contract: &contract,

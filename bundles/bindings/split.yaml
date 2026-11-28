@@ -4,15 +4,23 @@ architecture: workstation
 refines: local.yaml
 summary: >-
   The workstation with one unit per part: the operator and the coding agents run as agents of
-  their own, the gateway and the build pool as services that keep their state in one place.
+  their own, the gateway and the build pool as services that keep their state in one place. The
+  control plane serves its ingresses on two ports, the coding agents are isolated on the network
+  and mount their trees, and the hosted model is reached at an address.
 target:
   isolation: container
+  images: registry
+  network_policy: enforced
 parts:
   operator:
     agent: ../agents/operator.yaml
     secrets: [chat-token]
-    egress: [gateway, owner, worker, {to: chat-relay, secret: chat-token}]
-  worker: {agent: ../agents/coder.yaml, egress: [builds, gateway, operator]}
+    egress: [gateway, owner, worker, {to: chat-relay, secret: chat-token, address: "chat-relay.example:443"}]
+  worker:
+    agent: ../agents/coder.yaml
+    egress: [builds, gateway, operator, docs-mirror]
+    network: isolated
+    volumes: [{name: tree, mount: /workspace}]
   gateway:
     state: service
     secrets: [model-api-key]
@@ -28,5 +36,19 @@ runtimes:
   core: {image: registry.example/agenticspec-core, digest: "sha256:0000000000000000000000000000000000000000000000000000000000000001"}
 claims:
   worker: {cpu_millis: 2000, memory_mib: 4096}
+checks:
+  core: {ready: {port: 8080}, alive: {port: 8080}}
+  gateway: {ready: {port: 8081}, alive: {port: 8081}}
+ingress:
+  operator:
+    exports:
+      http: {port: 8080, bind: all}
+      event_stream: {port: 8080, bind: all}
+      ui: {port: 8080, bind: all}
+  metrics:
+    exports:
+      metrics_scrape: {port: 9090, bind: all}
 packing:
   strategy: by_part
+  parts:
+    model: {reach: {address: "models.example:443"}}

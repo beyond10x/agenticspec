@@ -2,9 +2,9 @@
 //! the landscape of the fitness over marked places, the trade-offs between weighted KPIs and the
 //! sensitivity of the fitness to each place. Every view draws only variants the search evaluated.
 
+use super::model::{Architecture, Axis, Outcome, Run, norm};
+use super::result::ticks;
 use crate::fmt::{self, esc, px, text_w};
-use crate::model::{Architecture, Axis, Outcome, Run, norm};
-use crate::result::ticks;
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
@@ -101,7 +101,7 @@ pub fn objective(h: &mut String, o: &Outcome) {
         .fold(0.0f64, |m, c| m.max(c.abs()));
     h.push_str("<div class=\"table-wrap\"><table class=\"data terms\"><thead><tr><th scope=\"col\">weighted KPI</th><th scope=\"col\" class=\"r\">weight</th><th scope=\"col\" class=\"r\">baseline</th><th scope=\"col\" class=\"r\">best</th><th scope=\"col\" class=\"r\">change</th><th scope=\"col\" class=\"bar-h\">contribution to the fitness change</th><th scope=\"col\" class=\"r\">points</th></tr></thead><tbody>");
     for t in &terms {
-        let (text, tone) = crate::result::change(t.base, t.best, Some(t.weight.signum()));
+        let (text, tone) = super::result::change(t.base, t.best, Some(t.weight.signum()));
         let _ = write!(
             h,
             "<tr data-term=\"{}\" data-contribution=\"{}\"><th scope=\"row\"><span class=\"kpi-name\">{}</span></th><td class=\"r mono\">{}</td><td class=\"r muted\">{}</td><td class=\"r best\">{}</td><td class=\"r delta {tone}\">{}</td><td class=\"bar-cell\">",
@@ -140,7 +140,7 @@ pub fn objective(h: &mut String, o: &Outcome) {
             "<tr class=\"total\"><th scope=\"row\">fitness</th><td></td><td class=\"r muted\">{}</td><td class=\"r best\">{}</td><td class=\"r delta {}\">{}</td><td class=\"bar-cell\"></td><td class=\"r contrib\">{}</td></tr>",
             fmt::num_html(round2(a)),
             fmt::num_html(round2(b)),
-            crate::result::tone(b - a, Some(1.0)),
+            super::result::tone(b - a, Some(1.0)),
             esc(&fmt::signed(round2(b - a))),
             esc(&fmt::signed(round2(b - a)))
         );

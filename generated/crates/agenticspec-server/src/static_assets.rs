@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest c9ae076d815fbb4341caa04485d1130d9bb2b1604e647abb2eba4af223527026
+// contract digest 00fb71ae170fbec426a26c46270451dd7c59b5683dc2c912b0f53ea80bf7d891
 // do not edit: regenerate with `ess synthesize`
 
 //! Static fallback for paths outside a served route table.

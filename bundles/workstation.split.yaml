@@ -514,16 +514,48 @@ contract:
       settings: {}
     ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 binding:
-  digest: sha256:5b21534279cef4e74ee96670f086f42b56fa43019609591b7d3e3bc49aff7983
+  digest: sha256:e0c440db53b193935037133a96d68063f8c991fc9c7ced5c5a24e23f8742ecbe
   document:
     architecture: workstation
     binding: split
+    checks:
+      core:
+        alive:
+          port: 8080
+        ready:
+          port: 8080
+      gateway:
+        alive:
+          port: 8081
+        ready:
+          port: 8081
     claims:
       worker:
         cpu_millis: 2000
         memory_mib: 4096
     format: agenticspec-binding/1
+    ingress:
+      metrics:
+        exports:
+          metrics_scrape:
+            bind: all
+            port: 9090
+      operator:
+        exports:
+          event_stream:
+            bind: all
+            port: 8080
+          http:
+            bind: all
+            port: 8080
+          ui:
+            bind: all
+            port: 8080
     packing:
+      parts:
+        model:
+          reach:
+            address: models.example:443
       strategy: by_part
     parts:
       builds:
@@ -541,7 +573,8 @@ binding:
         - gateway
         - owner
         - worker
-        - secret: chat-token
+        - address: chat-relay.example:443
+          secret: chat-token
           to: chat-relay
         secrets:
         - chat-token
@@ -553,13 +586,20 @@ binding:
         - builds
         - gateway
         - operator
+        - docs-mirror
+        network: isolated
+        volumes:
+        - mount: /workspace
+          name: tree
     runtimes:
       core:
         digest: sha256:0000000000000000000000000000000000000000000000000000000000000001
         image: registry.example/agenticspec-core
-    summary: 'The workstation with one unit per part: the operator and the coding agents run as agents of their own, the gateway and the build pool as services that keep their state in one place.'
+    summary: 'The workstation with one unit per part: the operator and the coding agents run as agents of their own, the gateway and the build pool as services that keep their state in one place. The control plane serves its ingresses on two ports, the coding agents are isolated on the network and mount their trees, and the hosted model is reached at an address.'
     target:
+      images: registry
       isolation: container
+      network_policy: enforced
     transports:
       claim: http
       model_call: http
@@ -567,11 +607,17 @@ binding:
       question: a2a
   name: split
 packing:
-  digest: sha256:4e0275952cc00be906b06eda4f37b98aff4639f2fd7ea47a5298982d8113205d
+  digest: sha256:ca420b6f6e2be3216d6c44af80a4ff572cfd10bb88026845c425304b9a574d2a
   document:
     external:
-    - model
-    - owner
+    - kind: model
+      part: model
+      reach:
+        address: models.example:443
+    - kind: principal
+      part: owner
+      reach:
+        name: owner
     units:
     - kind: core
       name: core
@@ -606,9 +652,11 @@ units:
     alive:
       kind: http
       path: /alive
+      port: 8080
     ready:
       kind: http
       path: /ready
+      port: 8080
   claims:
     accelerators: 0
     cpu_millis: 500
@@ -674,9 +722,11 @@ units:
     alive:
       kind: http
       path: /alive
+      port: 8081
     ready:
       kind: http
       path: /ready
+      port: 8081
   claims:
     accelerators: 0
     cpu_millis: 500
@@ -685,10 +735,12 @@ units:
   code:
     runtime: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
   egress:
-  - carries: model_call
+  - address: models.example:443
+    carries: model_call
     external: true
     from: gateway
     link: gateway -> model carries model_call
+    name: models.example:443
     secret: model-api-key
     to: model
   isolation: none
@@ -727,13 +779,16 @@ units:
       part: operator
     role: agent-runtime
   egress:
-  - from: operator
+  - address: chat-relay.example:443
+    from: operator
+    name: chat-relay
     named: true
     secret: chat-token
     to: chat-relay
   - carries: model_call
     from: operator
     link: operator -> gateway carries model_call
+    name: gateway
     to: gateway
     transport: http
     unit: gateway
@@ -741,10 +796,12 @@ units:
     external: true
     from: operator
     link: operator -> owner carries question over chat
+    name: owner
     to: owner
   - carries: order
     from: operator
     link: operator -> worker carries order
+    name: worker
     to: worker
     transport: a2a
     unit: worker
@@ -778,6 +835,7 @@ units:
   - agent-runtime
   secrets:
   - chat-token
+  shape: service
   source:
     parts:
     - operator
@@ -793,6 +851,7 @@ units:
     memory_mib: 4096
     volumes:
     - access: read_write_once
+      mount: /workspace
       name: tree
       per_instance: true
       size: 20Gi
@@ -802,21 +861,29 @@ units:
       part: worker
     role: agent-runtime
   egress:
+  - from: worker
+    name: docs-mirror
+    named: true
+    to: docs-mirror
+    unresolved: true
   - carries: claim
     from: worker
     link: worker -> builds carries claim
+    name: builds
     to: builds
     transport: http
     unit: builds
   - carries: model_call
     from: worker
     link: worker -> gateway carries model_call
+    name: gateway
     to: gateway
     transport: http
     unit: gateway
   - carries: question
     from: worker
     link: worker -> operator carries question
+    name: operator
     to: operator
     transport: a2a
     unit: operator
@@ -866,16 +933,57 @@ units:
   roles:
   - agent-runtime
   secrets: []
+  shape: service
   source:
     parts:
     - box
     - tree
     - worker
     unit: worker
-ingress: []
+ingress:
+- audience: control.monitor
+  authenticated: false
+  bind: all
+  ingress: metrics
+  part: control
+  port: 9090
+  protocol: metrics_scrape
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: all
+  ingress: operator
+  part: control
+  port: 8080
+  protocol: http
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: all
+  ingress: operator
+  part: control
+  port: 8080
+  protocol: event_stream
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: all
+  ingress: operator
+  part: control
+  port: 8080
+  protocol: ui
+  unit: core
+- audience: control.operator
+  authenticated: true
+  bind: loopback
+  ingress: operator
+  part: control
+  protocol: tool
+  unit: core
 requirements: []
 agents:
   sha256:d8c0e5fc773801390e7d63d84585821ee37748788f2c44c3f77df1517331f04a:
+    content_base64: Zm9ybWF0OiBsb29tLmFnZW50LzEKYWdlbnQ6CiAgaWQ6IG9wZXJhdG9yCiAgbmFtZTogT3BlcmF0b3IKICBicmllZjogPi0KICAgIFlvdSBhY3QgZm9yIHRoZSBvd25lci4gVGFrZSBlYWNoIHByb21wdCwgb3JkZXIgY29kaW5nIGFnZW50cyB0byBkbyB0aGUgd29yaywgYW5zd2VyIHRoZWlyCiAgICBxdWVzdGlvbnMsIGFuZCBhc2sgdGhlIG93bmVyIG9ubHkgd2hhdCB5b3UgY2Fubm90IGRlY2lkZS4KbW9kZWw6CiAgcm9sZXM6CiAgICAtIHtyb2xlOiBhZ2VudCwgbW9kZWw6IGZyb250aWVyfQo=
     document:
       agent:
         brief: You act for the owner. Take each prompt, order coding agents to do the work, answer their questions, and ask the owner only what you cannot decide.
@@ -889,6 +997,7 @@ agents:
     parts:
     - operator
   sha256:f07e1a0c10934468d5ba578a33346e221576eea5adba211e0d0da8cd5d0704fd:
+    content_base64: Zm9ybWF0OiBsb29tLmFnZW50LzEKYWdlbnQ6CiAgaWQ6IGNvZGVyCiAgbmFtZTogQ29kaW5nIGFnZW50CiAgYnJpZWY6ID4tCiAgICBZb3UgdGFrZSBvbmUgdGFzaywgY2hhbmdlIHRoZSBjb2RlIGluIHlvdXIgb3duIHdvcmtzcGFjZSwgYnVpbGQgYW5kIHRlc3QgaXQsIGFuZCBwcm9wb3NlIHRoZQogICAgY2hhbmdlLiBBc2sgd2hlbiB0aGUgdGFzayBpcyB1bmNsZWFyLgptb2RlbDoKICByb2xlczoKICAgIC0ge3JvbGU6IGFnZW50LCBtb2RlbDogZnJvbnRpZXJ9Cg==
     document:
       agent:
         brief: You take one task, change the code in your own workspace, build and test it, and propose the change. Ask when the task is unclear.
@@ -905,4 +1014,4 @@ runtimes:
   sha256:0000000000000000000000000000000000000000000000000000000000000001:
     image: registry.example/agenticspec-core@sha256:0000000000000000000000000000000000000000000000000000000000000001
     name: core
-digest: sha256:8a873712df542454d9ee5a791952ca8859bbe15dec547129649503d63fdb6990
+digest: sha256:6339e4d2b09389d8f6aa48db3094b3d665f04f09282f71d7f9cbab7e9b907d35

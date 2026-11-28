@@ -1,19 +1,22 @@
 //! The deployment bundle (`agenticspec-deployment/1`): one YAML file with every member inline,
 //! the input a translator turns into an architecture of its target. [`build`] admits the
 //! architecture, its contract, the binding and the packing, and only then builds the bundle;
-//! the same inputs give the same bytes. The bundle names no secret value, host, provider or
-//! target.
+//! the same inputs give the same bytes. A UI the binding asks for is a unit of its own whose
+//! archive the bundle carries in `files` ([`super::ui`]). The bundle names no secret value, host,
+//! provider or target.
 
 use super::admit::{Accepts, Finding, Plan, PlannedUnit, admit, sort};
 use super::binding::{self as binding_form, Binding};
 use super::grants;
-use super::packing::{self, Packing, is_clock};
+use super::packing::{self, Packing, clock_link, schedule_of, schedule_part};
+use super::ui;
 use super::{digest, sha256};
 use crate::check::value;
 use crate::contract::derive::{Contract, link_name};
 use crate::doc::parse_yaml;
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::Path;
 
 pub const FORMAT: &str = "agenticspec-deployment/1";
 
@@ -34,13 +37,33 @@ pub const MEMBERS: &[&str] = &[
     "digest",
 ];
 
+/// The order members are written in: [`MEMBERS`] with `files`, which a bundle has only when it
+/// carries a file (a UI's archive, [`super::ui`]), before `digest`.
+const WRITTEN: &[&str] = &[
+    "format",
+    "generator",
+    "architecture",
+    "nested",
+    "contract",
+    "binding",
+    "packing",
+    "units",
+    "ingress",
+    "requirements",
+    "agents",
+    "runtimes",
+    "files",
+    "digest",
+];
+
 /// The claims of a unit the binding names none for.
 pub const DEFAULT_CPU_MILLIS: u64 = 500;
 pub const DEFAULT_MEMORY_MIB: u64 = 512;
 
 /// What a bundle is built from.
 pub struct Inputs<'a> {
-    /// The architecture document as written, and as data.
+    /// The architecture's file, which a UI's build reads; the document as written, and as data.
+    pub architecture: &'a Path,
     pub arch_bytes: &'a [u8],
     pub arch: &'a Value,
     pub contract: &'a Contract,
@@ -77,6 +100,7 @@ pub fn revision_digest(arch: &Value) -> String {
 struct AgentDoc {
     digest: String,
     document: Value,
+    bytes: Vec<u8>,
 }
 
 /// Read every agent document the binding names. A unit that stays an agent (`agent`, `job`,
@@ -127,6 +151,7 @@ fn agent_documents(
             AgentDoc {
                 digest: d,
                 document,
+                bytes,
             },
         );
     }
@@ -167,46 +192,82 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
         }
     };
     let docs = agent_documents(inputs, inputs.packing, &mut findings);
+    findings.extend(served(inputs.arch, &inputs.binding.doc, inputs.packing));
     findings.extend(grants::check(
         inputs.arch,
         &inputs.binding.doc,
         inputs.packing,
     ));
     findings.extend(addresses(inputs.arch));
+    let contract = inputs.contract.to_value();
+    let ingress = ingress(&contract["ingress"], &inputs.binding.doc, inputs.packing);
+    findings.extend(ui::findings(
+        &inputs.binding.doc,
+        &ingress,
+        inputs.packing,
+        inputs.accepts,
+    ));
     let Some(plan) = plan.filter(|_| findings.is_empty()) else {
         sort(&mut findings);
         return Err(findings);
     };
+    let (ui_units, files) = ui::units(
+        inputs.architecture,
+        &contract,
+        &inputs.binding.doc,
+        &ingress,
+    )?;
 
     let binding = &inputs.binding.doc;
     let mut units = Vec::new();
     for pu in &plan.units {
         units.push(unit(inputs, &plan, pu, &docs));
     }
+    units.extend(ui_units);
     let mut agents = Map::new();
-    let mut by_digest: BTreeMap<&str, (Vec<&str>, &Value)> = BTreeMap::new();
+    let mut by_digest: BTreeMap<&str, (Vec<&str>, &AgentDoc)> = BTreeMap::new();
     for (part, d) in &docs {
         let e = by_digest
             .entry(d.digest.as_str())
-            .or_insert((Vec::new(), &d.document));
+            .or_insert((Vec::new(), d));
         e.0.push(part);
     }
-    for (d, (parts, document)) in by_digest {
+    for (d, (parts, doc)) in by_digest {
         agents.insert(
             d.to_owned(),
-            json!({ "parts": parts, "document": document }),
+            json!({
+                "parts": parts,
+                "document": doc.document,
+                "content_base64": ui::base64(&doc.bytes),
+            }),
         );
     }
     let mut runtimes = Map::new();
+    let local = binding_form::images(binding) == "local";
     for (name, r) in binding["runtimes"].as_object().into_iter().flatten() {
-        let image = binding_form::image_reference(binding, name).unwrap_or_default();
-        runtimes.insert(
-            text(&r["digest"]).to_owned(),
-            json!({ "name": name, "image": image }),
-        );
+        if local {
+            // What the binding gave: the image, and its tag, its digest (config id) or both;
+            // keyed by the digest, else by `<image>:<tag>`.
+            let mut entry = json!({ "name": name, "image": text(&r["image"]) });
+            for k in ["tag", "digest"] {
+                if let Some(x) = r[k].as_str() {
+                    entry[k] = json!(x);
+                }
+            }
+            let key = match r["digest"].as_str() {
+                Some(d) => d.to_owned(),
+                None => format!("{}:{}", text(&r["image"]), text(&r["tag"])),
+            };
+            runtimes.insert(key, entry);
+        } else {
+            let image = binding_form::image_reference(binding, name).unwrap_or_default();
+            runtimes.insert(
+                text(&r["digest"]).to_owned(),
+                json!({ "name": name, "image": image }),
+            );
+        }
     }
-    let packing = inputs.packing.to_value();
-    let contract = inputs.contract.to_value();
+    let packing = inputs.packing.to_value(inputs.arch);
     let mut bundle = json!({
         "format": FORMAT,
         "generator": format!("agenticspec {}", env!("CARGO_PKG_VERSION")),
@@ -229,11 +290,14 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
             "document": packing,
         },
         "units": units,
-        "ingress": [],
+        "ingress": ingress,
         "requirements": inputs.arch.get("requirements").cloned().unwrap_or(json!([])),
         "agents": agents,
         "runtimes": runtimes,
     });
+    if !files.is_empty() {
+        bundle["files"] = Value::Object(files);
+    }
     let d = digest(&bundle);
     bundle["digest"] = json!(d);
     Ok(Bundle {
@@ -244,10 +308,11 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
     })
 }
 
-/// The bundle as YAML, members in the order of [`MEMBERS`], keys sorted inside each.
+/// The bundle as YAML, members in the order of [`MEMBERS`] with `files` before `digest`, keys
+/// sorted inside each.
 pub fn write(bundle: &Value) -> String {
     let mut s = String::new();
-    for m in MEMBERS {
+    for m in WRITTEN {
         if let Some(v) = bundle.get(*m) {
             let mut one = Map::new();
             one.insert((*m).to_owned(), v.clone());
@@ -264,6 +329,226 @@ pub fn recompute(bundle: &Value) -> String {
         m.remove("digest");
     }
     digest(&v)
+}
+
+/// The part that serves an export the binding names no part for: the control plane, whose
+/// adapter in the core unit serves every ingress. It is the reserved path no part of a document
+/// may take, under which the implied audiences `control.operator` and `control.monitor` sit.
+pub const CONTROL: &str = "control";
+
+/// The ingress of a bundle: one entry per export of each ingress of the contract
+/// (`contract_ingress`, the contract's `ingress` as data), in the contract's order: the
+/// ingress, its protocol, audience and whether callers authenticate; the unit and part that
+/// serve it (the binding's `part`, else [`CONTROL`] in the core unit); its `bind` (the
+/// binding's, else [`binding_form::DEFAULT_BIND`]); its `port` and `address` when the binding
+/// gives them.
+pub fn ingress(contract_ingress: &Value, binding: &Value, packing: &Packing) -> Vec<Value> {
+    let core = packing
+        .units
+        .iter()
+        .find(|u| u.kind == "core")
+        .map_or("core", |u| u.name.as_str());
+    let mut out = Vec::new();
+    for i in contract_ingress.as_array().into_iter().flatten() {
+        let name = text(&i["name"]);
+        for protocol in i["exports"].as_array().into_iter().flatten() {
+            let protocol = text(protocol);
+            let e = &binding["ingress"][name]["exports"][protocol];
+            let (unit, part) = match e["part"].as_str() {
+                Some(p) => (packing.unit_of(p).map_or(core, |u| u.name.as_str()), p),
+                None => (core, CONTROL),
+            };
+            let mut entry = json!({
+                "ingress": name,
+                "protocol": protocol,
+                "audience": i["audience"],
+                "authenticated": i["authenticated"],
+                "unit": unit,
+                "part": part,
+                "bind": e["bind"].as_str().unwrap_or(binding_form::DEFAULT_BIND),
+            });
+            if let Some(p) = e["port"].as_u64() {
+                entry["port"] = json!(p);
+            }
+            if let Some(a) = e["address"].as_str() {
+                entry["address"] = json!(a);
+            }
+            out.push(entry);
+        }
+    }
+    ui::serve(&mut out, binding);
+    out
+}
+
+/// The mount the binding gives a volume of a unit: `parts.<p>.volumes[].mount` of the first part
+/// `p` of the unit, in name order, that names the volume.
+fn mount_of<'a>(binding: &'a Value, parts: &[String], volume: &str) -> Option<&'a Value> {
+    parts.iter().find_map(|p| {
+        binding["parts"][p]["volumes"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|v| v["name"] == volume)
+            .map(|v| &v["mount"])
+    })
+}
+
+/// An absolute path: it starts with `/`.
+fn absolute(v: &Value) -> bool {
+    v.as_str().is_some_and(|m| m.starts_with('/'))
+}
+
+/// The findings of what the target is asked to serve, from the architecture, the binding and
+/// the packing: `network_isolation_unmet`, a part marked `network: isolated` on a target that
+/// enforces no network policy; `image_unpinned`, a runtime from the target's local store with
+/// neither tag nor digest; `volume_mount_missing`, a volume of a unit no part of it mounts at an
+/// absolute path. A finding names the part, runtime or volume, never a value.
+pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> {
+    let mut out = Vec::new();
+    if binding["target"]["network_policy"] == "not_enforced" {
+        for (p, entry) in binding["parts"].as_object().into_iter().flatten() {
+            if entry["network"] == "isolated" && packing.unit_of(p).is_some() {
+                out.push(Finding {
+                    refusal: "network_isolation_unmet",
+                    detail: format!(
+                        "part {p} is marked `network: isolated`, and the target does not enforce a network policy"
+                    ),
+                });
+            }
+        }
+    }
+    if binding_form::images(binding) == "local" {
+        for (name, r) in binding["runtimes"].as_object().into_iter().flatten() {
+            if r["tag"].is_null() && r["digest"].is_null() {
+                out.push(Finding {
+                    refusal: "image_unpinned",
+                    detail: format!(
+                        "runtimes: {name}: an image of the target's local store is pinned by its tag, its digest or both, and names neither"
+                    ),
+                });
+            }
+        }
+    }
+    for u in &packing.units {
+        for v in u
+            .parts
+            .iter()
+            .filter(|p| arch["parts"][*p]["block"] == "workspace")
+        {
+            let detail = match mount_of(binding, &u.parts, v) {
+                Some(m) if absolute(m) => continue,
+                Some(_) => format!(
+                    "unit {}: volume {v}: its mount is not an absolute path",
+                    u.name
+                ),
+                None => format!(
+                    "unit {}: volume {v} has no mount (a part of the unit names it under `volumes:` with `mount:`, an absolute path)",
+                    u.name
+                ),
+            };
+            out.push(Finding {
+                refusal: "volume_mount_missing",
+                detail,
+            });
+        }
+    }
+    out
+}
+
+/// The refusals only `deploy check` gives, beside those of [`super::ui::CHECK_REFUSALS`].
+pub const CHECK_REFUSALS: &[&str] = &["agent_document_mismatch"];
+
+/// The `agent_document_mismatch` findings of the `agents` of a written bundle: an entry whose
+/// `content_base64` is missing or not standard base64, whose bytes are not the digest it is keyed
+/// by, or whose `document` is not what those bytes parse to.
+fn agent_contents(agents: &Map<String, Value>) -> Vec<Finding> {
+    let mut out = Vec::new();
+    for (d, a) in agents {
+        let detail = match a["content_base64"].as_str().and_then(ui::unbase64) {
+            None => Some(format!(
+                "agents: {d}: carries no `content_base64` in standard base64"
+            )),
+            Some(bytes) => {
+                let got = sha256(&bytes);
+                if got != *d {
+                    Some(format!("agents: {d}: its content_base64 is {got}"))
+                } else if std::str::from_utf8(&bytes)
+                    .map_err(|e| e.to_string())
+                    .and_then(parse_yaml)
+                    .ok()
+                    .as_ref()
+                    != Some(&a["document"])
+                {
+                    Some(format!(
+                        "agents: {d}: `document` is not the document its content_base64 holds"
+                    ))
+                } else {
+                    None
+                }
+            }
+        };
+        if let Some(detail) = detail {
+            out.push(Finding {
+                refusal: "agent_document_mismatch",
+                detail,
+            });
+        }
+    }
+    out
+}
+
+/// The `schedule_not_cron` findings of the scheduled units of a written bundle whose `schedule`
+/// is not the cron rule of [`schedule_of`]: the binding's, else the one its clock's `every`
+/// states. An `every` no cron rule states is admission's finding already.
+fn unit_schedules(bundle: &Value, arch: &Value, packing: &Packing) -> Vec<Finding> {
+    let mut out = Vec::new();
+    for u in packing.units.iter().filter(|u| u.kind == "scheduled") {
+        let Ok(want) = schedule_of(arch, u) else {
+            continue;
+        };
+        let Some(written) = bundle["units"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|x| x["name"] == u.name.as_str())
+        else {
+            continue;
+        };
+        let got = written["schedule"].as_str();
+        if got != want.as_deref() {
+            out.push(Finding {
+                refusal: "schedule_not_cron",
+                detail: format!(
+                    "unit {}: carries schedule {}, and its binding and clock give {}",
+                    u.name,
+                    got.unwrap_or("(none)"),
+                    want.as_deref().unwrap_or("none")
+                ),
+            });
+        }
+    }
+    out
+}
+
+/// The `volume_mount_missing` findings of the units of a written bundle: a volume claim without
+/// a `mount`, or one that is not an absolute path.
+fn unit_volumes(bundle: &Value) -> Vec<Finding> {
+    let mut out = Vec::new();
+    for u in bundle["units"].as_array().into_iter().flatten() {
+        for v in u["claims"]["volumes"].as_array().into_iter().flatten() {
+            if !absolute(&v["mount"]) {
+                out.push(Finding {
+                    refusal: "volume_mount_missing",
+                    detail: format!(
+                        "unit {}: volume {} carries no absolute `mount`",
+                        text(&u["name"]),
+                        text(&v["name"])
+                    ),
+                });
+            }
+        }
+    }
+    out
 }
 
 /// The keys that hold where something is reached. An address is the binding's (per export, and
@@ -321,8 +606,10 @@ pub enum Refused {
 /// Admit a written bundle again from what it carries, for a reader that did not write it: its
 /// form and digests, then admission of its architecture under its binding and packing
 /// ([`admit`]), its agent documents against the parts that need them and the digests the
-/// binding pins, and the secrets and egress of the binding and of each unit
-/// ([`grants::check`], [`grants::check_units`]).
+/// binding pins, the bytes each agent document carries ([`CHECK_REFUSALS`]), the cron rule of
+/// each scheduled unit ([`packing::schedule_of`]), and the secrets and
+/// egress of the binding and of each unit
+/// ([`grants::check`], [`grants::check_units`]), and its UI units ([`ui::check`]).
 pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     let mut problems = Vec::new();
     if bundle["format"] != FORMAT {
@@ -362,6 +649,14 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
             None
         }
     };
+    if let Some(p) = &packing {
+        let contract_ingress = &bundle["contract"]["document"]["ingress"];
+        problems.extend(
+            binding_form::served_problems(binding, contract_ingress, p)
+                .into_iter()
+                .map(|x| format!("binding: {x}")),
+        );
+    }
     let Some(packing) = packing.filter(|_| problems.is_empty()) else {
         return Err(Refused::Invalid(problems));
     };
@@ -410,9 +705,14 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
             });
         }
     }
+    findings.extend(agent_contents(&agents));
+    findings.extend(unit_schedules(bundle, arch, &packing));
+    findings.extend(served(arch, binding, &packing));
+    findings.extend(unit_volumes(bundle));
     findings.extend(grants::check(arch, binding, &packing));
     findings.extend(grants::check_units(bundle));
     findings.extend(addresses(arch));
+    findings.extend(ui::check(bundle, accepts));
     if findings.is_empty() {
         return Ok(());
     }
@@ -444,6 +744,9 @@ fn volumes(inputs: &Inputs, parts: &[String]) -> Vec<Value> {
         if let Some(size) = inputs.binding.doc["parts"][p]["size"].as_str() {
             v["size"] = json!(size);
         }
+        if let Some(m) = mount_of(&inputs.binding.doc, parts, p).and_then(Value::as_str) {
+            v["mount"] = json!(m);
+        }
         out.push(v);
     }
     out
@@ -469,16 +772,18 @@ fn unit(
             .filter_map(|p| docs.get(p).map(|d| json!({ "part": p, "agent": d.digest })))
             .collect();
         let mut c = json!({ "role": "agent-runtime", "agents": agents });
-        if let Some(r) = binding_form::image_reference(binding, "agent") {
+        if let Some(r) = binding_form::image_reference(binding, binding_form::AGENT_RUNTIME) {
             c["runtime"] = json!(r);
         }
         c
     } else {
         match u.kind.as_str() {
-            "core" | "service" => match binding_form::image_reference(binding, "core") {
-                Some(r) => json!({ "runtime": r }),
-                None => json!({ "role": "core-runtime" }),
-            },
+            "core" | "service" => {
+                match binding_form::image_reference(binding, binding_form::CORE_RUNTIME) {
+                    Some(r) => json!({ "runtime": r }),
+                    None => json!({ "role": "core-runtime" }),
+                }
+            }
             "model" => json!({ "role": "model-server" }),
             _ => json!({ "role": "store" }),
         }
@@ -503,7 +808,7 @@ fn unit(
         .max_by_key(|l| super::binding::isolation_rank(l))
         .unwrap_or("none");
 
-    let checks = match u.kind.as_str() {
+    let mut checks = match u.kind.as_str() {
         "agent" | "job" | "scheduled" => json!({
             "startup": { "kind": "role", "role": "agent-runtime", "step": "check" },
         }),
@@ -514,6 +819,11 @@ fn unit(
         "model" => json!({ "ready": { "kind": "role", "role": "model-server", "step": "ready" } }),
         _ => json!({}),
     };
+    for (k, c) in binding["checks"][&u.name].as_object().into_iter().flatten() {
+        if let (Some(port), Some(check)) = (c["port"].as_u64(), checks.get_mut(k)) {
+            check["port"] = json!(port);
+        }
+    }
 
     let secrets: BTreeSet<String> = u
         .parts
@@ -522,7 +832,9 @@ fn unit(
         .collect();
 
     // Every link that leaves the unit, then every named destination its parts declare; each
-    // with the secret its declaration names.
+    // with the secret its declaration names and `name`, what the target resolves: an external
+    // part's reach (its name, or its address), the unit a crossing goes to, a named
+    // destination's own name.
     let mut egress = Vec::new();
     let secret_of = |from: &str, to: &str| {
         grants::declared_egress(binding, from)
@@ -536,12 +848,20 @@ fn unit(
             continue;
         }
         let name = link_name(l);
-        let mut e = json!({ "link": name, "from": from, "to": to, "carries": text(&l["carries"]) });
+        let mut e = json!({ "link": name, "from": from, "to": to, "carries": text(&l["carries"]), "name": to });
         if plan.external.iter().any(|x| x == to) {
             e["external"] = json!(true);
+            let reach = inputs.packing.reach_of(to);
+            if let Some(a) = reach["address"].as_str() {
+                e["name"] = json!(a);
+                e["address"] = json!(a);
+            } else if let Some(n) = reach["name"].as_str() {
+                e["name"] = json!(n);
+            }
         } else if let Some(c) = plan.crossings.iter().find(|c| c.link == name) {
             e["unit"] = json!(c.to_unit);
             e["transport"] = json!(c.transport);
+            e["name"] = json!(c.to_unit);
         }
         if let Some(s) = secret_of(from, to) {
             e["secret"] = json!(s);
@@ -553,9 +873,13 @@ fn unit(
             if parts.get(&d.to).is_some() {
                 continue;
             }
-            let mut e = json!({ "from": p, "to": d.to, "named": true });
+            let mut e = json!({ "from": p, "to": d.to, "named": true, "name": d.to });
             if let Some(s) = d.secret {
                 e["secret"] = json!(s);
+            }
+            match d.address {
+                Some(a) => e["address"] = a,
+                None => e["unresolved"] = json!(true),
             }
             egress.push(e);
         }
@@ -584,9 +908,10 @@ fn unit(
         })
         .collect();
 
+    let (kind, shape) = agent_shape(&u.kind);
     let mut v = json!({
         "name": u.name,
-        "kind": u.kind,
+        "kind": kind,
         "parts": u.parts,
         "code": code,
         "claims": claims,
@@ -601,29 +926,41 @@ fn unit(
     if let Some(r) = u.replicas {
         v["replicas"] = json!(r);
     }
-    if u.kind == "scheduled"
-        && let Some(s) = schedule(arch, &u.parts)
-    {
-        v["schedule"] = s;
+    if let Some(s) = shape {
+        v["shape"] = json!(s);
+    }
+    if u.kind == "scheduled" {
+        if let Some(c) = clock(arch, &u.parts) {
+            v["clock"] = c;
+        }
+        // Admission refused an `every` no cron rule states, so `Err` does not reach here.
+        if let Ok(Some(cron)) = schedule_of(arch, u) {
+            v["schedule"] = json!(cron);
+        }
     }
     v
 }
 
+/// The kind a unit of a packing kind is written with in a bundle, and its shape: an `agent`,
+/// `job` or `scheduled` unit is an `agent` unit of shape `service`, `job` or `scheduled`; any
+/// other kind is written as it is, without a shape.
+pub fn agent_shape(kind: &str) -> (&str, Option<&'static str>) {
+    match kind {
+        "agent" => ("agent", Some("service")),
+        "job" => ("agent", Some("job")),
+        "scheduled" => ("agent", Some("scheduled")),
+        other => (other, None),
+    }
+}
+
 /// The clock of a scheduled unit: the trigger or schedule that wakes its part, the schedule's
 /// interval and first firing, and the trigger's `policy` and `max_parallel` as the overlap rule.
-fn schedule(arch: &Value, parts: &[String]) -> Option<Value> {
-    let l = arch["links"].as_array()?.iter().find(|l| {
-        text(&l["carries"]) == "trigger"
-            && parts.iter().any(|p| p == text(&l["to"]))
-            && is_clock(arch, text(&l["from"]))
-    })?;
+fn clock(arch: &Value, parts: &[String]) -> Option<Value> {
+    let l = clock_link(arch, parts)?;
     let from = text(&l["from"]);
     let p = &arch["parts"][from];
-    let (trigger, sched) = if p["block"] == "trigger" {
-        (Some(from), value(&p["schedule"]).as_str().unwrap_or(""))
-    } else {
-        (None, from)
-    };
+    let sched = schedule_part(arch, from);
+    let trigger = (p["block"] == "trigger").then_some(from);
     let s = &arch["parts"][sched];
     let mut out = json!({ "schedule": sched });
     if let Some(t) = trigger {

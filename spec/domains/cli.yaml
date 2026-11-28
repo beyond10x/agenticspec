@@ -771,7 +771,10 @@ types:
       summary: >-
         The block panels: one `ess-ui/1` widget per view of `blocks/` in `ui/views/blocks.ui.yaml`,
         a gallery page per block, a fixture per view and a script per channel under
-        `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`.
+        `ui/views/fixtures/`, and the digest of the inputs in `ui/views/blocks.sources.sha256`;
+        beside them `ui/views/serve.fixtures.json`, the fixtures and scripted outcomes of
+        `agenticspec ui serve` in one file with the digest of its sources, which the binary
+        embeds.
     fields:
       - {name: out, type: String}
       - {name: panels, type: Integer}
@@ -818,6 +821,73 @@ types:
       - name: written
         type: Boolean
         summary: The files were written; false with `--check`, where they were found current.
+
+  - name: agenticspec.cli.UiBuildInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: An architecture document (`agenticspec-architecture/1`); the documents its nested parts reference are read too.
+      - name: contract
+        type: String
+        summary: The contract of the architecture (`agenticspec-contract/1`), derived from the ports this binary carries.
+      - name: out
+        type: String
+        summary: The directory to write; a new or empty one, or one an earlier build wrote, which is replaced.
+      - name: api_base
+        type: Optional<String>
+        summary: The base path or URL of the runtime's adapter the UI reads at, written into `config.json`; `/api/` by default.
+      - name: archive
+        type: Boolean
+        summary: Also write `<out>.tar`, the same files as a tar with sorted entries, mode 0644, owner 0 and time 0, and print its sha256.
+
+  - name: agenticspec.cli.UiBuildResult
+    kind: struct
+    naming:
+      summary: >-
+        The static files of an operator UI: `index.html`, `app.js` and `app.css` of the operator
+        app built into the binary, `views.json` (the layout of the derived UI), `contract.json`,
+        `ports.json` and `config.json`; the same inputs give the same bytes.
+    fields:
+      - {name: out, type: String}
+      - {name: files, type: Integer}
+      - {name: bytes, type: Integer}
+      - name: archive
+        type: Optional<String>
+        summary: The tar written with `--archive`.
+      - name: archive_sha256
+        type: Optional<String>
+        summary: The sha256 of the tar, the digest a deployment bundle carries for it.
+
+  - name: agenticspec.cli.UiServeInput
+    kind: struct
+    fields:
+      - name: architecture
+        type: String
+        summary: An architecture document (`agenticspec-architecture/1`); the documents its nested parts reference are read too.
+      - name: contract
+        type: Optional<String>
+        summary: The contract of the architecture (`agenticspec-contract/1`); derived from the architecture when absent.
+      - name: port
+        type: Optional<Integer>
+        summary: The local port; 7430 by default, 0 for one the system picks. The server listens on 127.0.0.1 only.
+      - name: fixtures
+        type: Optional<String>
+        summary: >-
+          A directory of fixtures to answer from instead of those built into the binary: one
+          `<view>.json` per view (`{view, rows}`), the channel scripts in `scripts/`
+          (`{channel, events}`) and the scripted outcomes in `outcomes.json`
+          (`agenticspec-command-outcomes/1`); the last two may be absent.
+
+  - name: agenticspec.cli.UiServeResult
+    kind: struct
+    naming:
+      summary: >-
+        Where the operator UI was served, `http://127.0.0.1:<port>/`, and the root of its runtime
+        interface, `<url>ingress/operator`. The server runs until it is stopped.
+    fields:
+      - {name: url, type: String}
+      - {name: interface, type: String}
 
   - name: agenticspec.cli.SimPortsInput
     kind: struct
@@ -988,7 +1058,8 @@ types:
       - name: source
         type: Optional<String>
         summary: >-
-          The root of a runtime's adapter, `http://host:port`, with the scopes below `/scopes/`;
+          The root of a runtime's adapter, `http://host:port[/path]`, with the scopes below
+          `<root>/scopes/` (`http://127.0.0.1:<port>/ingress/operator` for `agenticspec ui serve`);
           the fixture source of `ui/views/source/` when absent. The bearer token is read from
           `AGENTICSPEC_UI_TOKEN`, else from the plan.
       - name: plan
@@ -996,7 +1067,21 @@ types:
         summary: A conformance plan (`agenticspec-runtime-conformance/1`); `ui/views/source/plan.json` below the root by default.
       - name: root
         type: Optional<String>
-        summary: The repository root that holds `ui/views/`; the current directory by default.
+        summary: >-
+          The repository root that holds `ui/views/`; the current directory by default. With
+          `--architecture` and no `--source`, the server started here answers from the fixtures
+          below it when it is named, and from those built into the binary when it is not.
+      - name: architecture
+        type: Optional<String>
+        summary: >-
+          An architecture document (`agenticspec-architecture/1`): check the source against its
+          default control plane instead of a plan. Each read of each part answers rows of the
+          view's declared shape, a level's channel resumes from a cursor, R4 carries out a command
+          R5 allows and refuses one it withholds, and R5 answers at every scope. With no
+          `--source`, `agenticspec ui serve` of the architecture is started here and checked.
+      - name: contract
+        type: Optional<String>
+        summary: The contract of the architecture with `--architecture`; derived from it when absent.
 
   - name: agenticspec.cli.UiConformCheck
     kind: struct

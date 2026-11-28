@@ -117,6 +117,7 @@ ess ui run --tui --path ui/views/blocks.ui.yaml
 | `views/blocks.ui.yaml` | an `ess-ui/1` document over the system `agentic`: one widget per view, named as the view (`agentic.agent.Agents`), and a gallery page per block that places each of its widgets |
 | `views/fixtures/` | three synthetic rows per view, in the format above, and one script per block channel that plays each event once |
 | `views/blocks.sources.sha256` | the SHA-256 of every input: `ess --version`, `blocks/ess-inputs.yaml` and each file it lists, and the generator's sources |
+| `views/serve.fixtures.json` | what `agenticspec ui serve` answers from, built into the binary: every file of `views/fixtures/` and `views/source/outcomes.json` without whitespace between tokens (`agenticspec-serve-fixtures/1`), with `sources_sha256`, the SHA-256 of one `<sha256>  <path>` line per file read. `ui panels` writes it after the panels; `ui panels --check` fails when its sources changed or it differs from a fresh one, so a change of `views/source/outcomes.json` runs `task ui:panels` |
 
 A panel is a `collection` of its view's rows: one column per field, the first field as row key,
 an enum (the `state` among them) as a badge, a time as a timestamp. It takes a scope, `source`,
@@ -171,3 +172,62 @@ AGENTICSPEC_UI_TOKEN=<token> agenticspec ui conform --source http://127.0.0.1:74
 It checks scoped reads (a row out of scope or left out fails, named by view and key), resuming a
 channel from a cursor, the R3 views, the shape of an answer and a refusal, R5 against the grants
 (and R4 refusing what R5 hides), and a request without credentials. Plain `http://` only.
+
+### Against an architecture, with no plan
+
+`--architecture <file>` checks a running server against the default control plane of an
+architecture instead of a plan: the parts, their pages and the views, commands and feeds of the
+contract's `operator` ingress, derived as `agenticspec ui build` derives them (the contract from
+`--contract`, else derived). It is the check a runtime runs against itself:
+
+```console
+AGENTICSPEC_UI_TOKEN=<token> agenticspec ui conform --architecture <architecture> --source <root>
+agenticspec ui conform --architecture architectures/workstation.yaml   # against ui serve, started here
+```
+
+| check | holds when |
+|---|---|
+| `R1 <view>[?params] at <scope>` | each read of each part's page answers `{"rows": [...]}`, every row with the view's key first and no field the view does not declare |
+| `R3 <view> at <architecture>` | the placement views answer rows of their shape |
+| `R2 resume <channel> at <architecture>` | the level's channel sends events with an `id:`, a qualified name and JSON data, and a reconnect with `Last-Event-ID` gets exactly the events after it |
+| `R5 at <scope>` | the action set of the architecture and of each part is `[{command, allowed}]`, each allowed command naming its grant (skipped on 404) |
+| `R4 allowed <command> at <scope>` | a command R5 allows is carried out, or refused by the model, never by the authority evaluator |
+| `R4 withheld <command> at <scope>` | a command R5 withholds is refused with 422 and the refusal's row |
+| `unauthenticated R1\|R2\|R4\|R5 …` | without credentials the answer is 401 with no row |
+
+R4 posts the input `{}`, which a runtime's model refuses, so nothing changes. A failed check
+makes the command exit non-zero with `conformance_failed` and one line per failed check.
+
+## Served on fixtures
+
+`agenticspec ui serve <architecture> [--contract <file>] [--port <n>] [--fixtures <dir>]` serves
+the operator UI of an architecture over its default control plane on fixtures, with no runtime
+(port 7430 by default, 0 for a free one; 127.0.0.1 only). The fixtures are built into the binary
+(`views/serve.fixtures.json`) and the contract is derived with the ports and KPI catalogue built
+into it, so a released binary serves from any directory and reads no file but the architecture
+and its nested documents:
+
+```console
+agenticspec ui serve architectures/workstation.yaml   # http://127.0.0.1:7430/
+agenticspec ui serve workstation.yaml --fixtures my-fixtures/
+```
+
+`--fixtures <dir>` answers from a directory instead: one `<view>.json` per view
+(`{"view", "rows"}`), the channel scripts in `scripts/` (`{"channel", "events"}`) and the scripted
+outcomes in `outcomes.json` (`agenticspec-command-outcomes/1`); the last two may be absent. A
+directory that cannot be read, holds no view fixture or a file that is not that JSON is refused
+with `fixtures_unreadable`. `ui conform --architecture` without `--source` starts the server on
+the built-in fixtures, or on those below `--root` when it is named.
+
+| path | answers |
+|---|---|
+| `/` | the operator app `agenticspec ui build` writes for the architecture, its `config.json` with `api_base` `/ingress/operator`; the page sets the session cookie |
+| `/ingress/operator/scopes/{scope}/api/views/{view}` | R1: the rows of the fixture of each view of the plane (`views/fixtures/<view>.json`), at every scope |
+| `/ingress/operator/scopes/{scope}/api/channels/{channel}` | R2: a level's channel plays every script of `views/fixtures/scripts/` in turn, a block's channel its own, each event the operator ingress carries, the cursor its position; a reconnect with `Last-Event-ID` gets the events after it |
+| `/ingress/operator/scopes/{scope}/api/commands/{command}` | R4: records the command and answers the outcome `views/source/outcomes.json` scripts for it (per command, optionally per input, the accepted row or the refusal's row with 422), `{"row": null}` when none does |
+| `/ingress/operator/scopes/{scope}/api/actions` | R5: every command of the plane, allowed |
+| `/fixture/commands` | the commands recorded so far, `[{scope, command, input, status}]` |
+
+Every request of the interface carries the token, as `Authorization: Bearer <token>` or the
+session cookie; the token is `AGENTICSPEC_UI_TOKEN`, else a new one printed at start. A request to
+a `Host` other than `127.0.0.1` or `localhost` is refused.

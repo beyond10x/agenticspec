@@ -17,6 +17,7 @@ tasks:
       - task: check:views
       - task: check:examples
       - task: check:elements
+      - task: check:operator
       - task: check:generated
       - task: check:docs
       - task: check:ladder
@@ -227,7 +228,7 @@ tasks:
       - mkdir -p target/spec && ess verify conform synthesize --path spec --out target/spec/suite.json
 
   check:ui:
-    desc: Check the ess-ui document against the specification and run its headless tests on the fixtures; then fail when the block panels (ui/views/) differ from a fresh generation from blocks/ or their digest no longer matches, and check them against blocks/ with no finding.
+    desc: Check the ess-ui document against the specification and run its headless tests on the fixtures; then fail when the block panels (ui/views/) differ from a fresh generation from blocks/ or their digest no longer matches (ui/views/serve.fixtures.json included), and check them against blocks/ with no finding.
     cmds:
       - ess ui check --path ui/agenticspec.ui.yaml --model spec
       - ess ui test --path ui/agenticspec.ui.yaml ui/tests/session.yaml
@@ -259,7 +260,7 @@ tasks:
       - target/debug/agenticspec ui derive --path crates/agenticspec-render/tests/fixtures/large-37.yaml --out ui/views/examples/large-37.ui.yaml
 
   ui:panels:
-    desc: Write the block panels from blocks/ - ui/views/blocks.ui.yaml (one ess-ui/1 widget per view, a gallery page per block), its fixtures in ui/views/fixtures/ and the digest of its inputs, ui/views/blocks.sources.sha256. Never edited by hand.
+    desc: Write the block panels from blocks/ - ui/views/blocks.ui.yaml (one ess-ui/1 widget per view, a gallery page per block), its fixtures in ui/views/fixtures/ and the digest of its inputs, ui/views/blocks.sources.sha256, then ui/views/serve.fixtures.json (the fixtures and ui/views/source/outcomes.json in one compact file with the digest of its sources, which the binary embeds for agenticspec ui serve). Never edited by hand.
     cmds:
       - cargo build --quiet --locked -p agenticspec
       - target/debug/agenticspec ui panels
@@ -301,6 +302,21 @@ tasks:
     desc: The package of ui/views (the block panels, part pages and overviews as Vue components) - its types and unit tests, the bundle of its custom elements into target/views/elements, the React host page into target/views/hosts, then the browser test of the elements in a plain page and a React page over one fixture server (the rows, the host's --kit-accent, the agentic-navigate and agentic-command events). Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-elements.sh.
     cmds:
       - sh scripts/check-elements.sh
+
+  check:operator:
+    desc: The operator UI of agenticspec ui build - the committed build of the operator app (ui/operator/built) against the digest of its sources (ui/operator/built.sources.sha256, no node), the app's types, then agenticspec ui build of the workstation into target/operator/workstation and its browser test over one static server and fixture adapter and over one agenticspec ui serve of the workstation. Playwright ends a test at 60 s and the run at 120 s. The lines are in scripts/check-operator.sh.
+    cmds:
+      - sh scripts/check-operator.sh
+
+  operator:build:
+    desc: Build the operator app of ui/operator with vite into ui/operator/built (index.html, app.js, app.css, which the agenticspec binary embeds) and write the digest of its sources, ui/operator/built.sources.sha256. Run it after a change of ui/operator, ui/kit/src, ui/views/src or the generated panels; never edit the built files.
+    cmds:
+      - sh scripts/operator-app.sh --write
+
+  slow:operator:
+    desc: Slow lane. Build the operator app afresh into target/operator/fresh, compare its bytes with ui/operator/built, and check the digest.
+    cmds:
+      - sh scripts/operator-app.sh --slow
 
   elements:build:
     desc: Build the custom elements of ui/views (agentic-part-panel, agentic-overview, agentic-panel, agentic-block-panels and one element per panel) with Vue into target/views/elements/agentic-views.js and the kit's stylesheet into agentic-views.css; a host page loads both.

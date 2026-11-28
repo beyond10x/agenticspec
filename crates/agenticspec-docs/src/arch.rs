@@ -95,7 +95,10 @@ fn same_file(a: &Path, b: &Path) -> bool {
 /// `experiments/` that names it, run with the docs budget.
 pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
     let experiments = yaml_files(&root.join("experiments"));
-    let mut out = Vec::new();
+    let mut out: Vec<Architecture> = Vec::new();
+    // The short runs, by the index of their architecture: each its own seeded run, so they run
+    // side by side and their results are those of one after another.
+    let mut pending: Vec<(usize, Experiment)> = Vec::new();
     for path in yaml_files(&root.join("architectures")) {
         let name = path
             .file_stem()
@@ -132,7 +135,6 @@ pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
                     s.insert("restarts".into(), Value::from(e.search.restarts));
                 }
             }
-            let result = run(&e, 4).map_err(|err| format!("{file}: {err}"))?;
             experiment = Some(Run {
                 name: edoc["experiment"]
                     .as_str()
@@ -142,8 +144,9 @@ pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
                 budget,
                 seeds,
                 weights: e.search.weights.clone(),
-                result,
+                result: Value::Null,
             });
+            pending.push((out.len(), e));
             break;
         }
         out.push(Architecture {
@@ -157,6 +160,21 @@ pub fn load(root: &Path) -> Result<Vec<Architecture>, String> {
             refusals,
             experiment,
         });
+    }
+    let results: Vec<Result<Value, String>> = std::thread::scope(|s| {
+        let handles: Vec<_> = pending
+            .iter()
+            .map(|(_, e)| s.spawn(move || run(e, 4)))
+            .collect();
+        handles
+            .into_iter()
+            .map(|h| h.join().unwrap_or_else(|p| std::panic::resume_unwind(p)))
+            .collect()
+    });
+    for ((i, _), result) in pending.iter().zip(results) {
+        if let Some(shown) = out[*i].experiment.as_mut() {
+            shown.result = result.map_err(|err| format!("{}: {err}", shown.file))?;
+        }
     }
     Ok(out)
 }
@@ -189,8 +207,10 @@ pub fn load_field(field: &str, files: &[String], root: &Path) -> Result<Vec<Arch
 
 pub fn html(a: &Architecture) -> String {
     match &a.experiment {
-        Some(r) => agenticspec_render::page(&r.result["architecture"], Some(&r.result)),
-        None => agenticspec_render::page(&a.doc, None),
+        Some(r) => {
+            agenticspec_render::architecture::page(&r.result["architecture"], Some(&r.result))
+        }
+        None => agenticspec_render::architecture::page(&a.doc, None),
     }
 }
 

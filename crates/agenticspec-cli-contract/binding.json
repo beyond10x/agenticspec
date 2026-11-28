@@ -3233,6 +3233,103 @@
         }
       }
     },
+    "ui_build": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_build"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiBuildInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "api_base": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "architecture": {
+              "kind": "string"
+            },
+            "archive": {
+              "kind": "boolean"
+            },
+            "contract": {
+              "kind": "string"
+            },
+            "out": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiBuildResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "archive": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "archive_sha256": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "bytes": {
+              "kind": "integer"
+            },
+            "files": {
+              "kind": "integer"
+            },
+            "out": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "out_unwritable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "ui_conform": {
       "target": {
         "kind": "local",
@@ -3244,6 +3341,18 @@
         "shape": {
           "kind": "struct",
           "fields": {
+            "architecture": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "contract": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
             "plan": {
               "kind": "optional",
               "of": {
@@ -3304,6 +3413,28 @@
       },
       "errors": {
         "conformance_failed": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -3592,6 +3723,102 @@
           }
         },
         "panels_stale": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ui_serve": {
+      "target": {
+        "kind": "local",
+        "owner": "agenticspec.cli",
+        "action": "ui_serve"
+      },
+      "input": {
+        "type_ref": "agenticspec.cli.UiServeInput",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "architecture": {
+              "kind": "string"
+            },
+            "contract": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "fixtures": {
+              "kind": "optional",
+              "of": {
+                "kind": "string"
+              }
+            },
+            "port": {
+              "kind": "optional",
+              "of": {
+                "kind": "integer"
+              }
+            }
+          }
+        }
+      },
+      "result": {
+        "type_ref": "agenticspec.cli.UiServeResult",
+        "shape": {
+          "kind": "struct",
+          "fields": {
+            "interface": {
+              "kind": "string"
+            },
+            "url": {
+              "kind": "string"
+            }
+          }
+        }
+      },
+      "errors": {
+        "document_refused": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "document_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "fixtures_unreadable": {
+          "type_ref": "agenticspec.cli.Refusal",
+          "shape": {
+            "kind": "struct",
+            "fields": {
+              "detail": {
+                "kind": "string"
+              }
+            }
+          }
+        },
+        "port_unavailable": {
           "type_ref": "agenticspec.cli.Refusal",
           "shape": {
             "kind": "struct",
@@ -4509,11 +4736,57 @@
     {
       "path": [
         "ui",
+        "build"
+      ],
+      "aliases": [],
+      "callable": "ui_build",
+      "about": "Write the static files of the operator UI of an architecture (the operator app built into this binary, its layout, contract, ports and config.json), and with --archive a reproducible tar beside them with its sha256",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "contract",
+          "source": {
+            "kind": "option",
+            "long": "contract"
+          }
+        },
+        {
+          "field": "out",
+          "source": {
+            "kind": "option",
+            "long": "out"
+          }
+        },
+        {
+          "field": "api_base",
+          "source": {
+            "kind": "option",
+            "long": "api-base"
+          }
+        },
+        {
+          "field": "archive",
+          "source": {
+            "kind": "flag",
+            "long": "archive"
+          }
+        }
+      ]
+    },
+    {
+      "path": [
+        "ui",
         "conform"
       ],
       "aliases": [],
       "callable": "ui_conform",
-      "about": "Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml)",
+      "about": "Check a runtime adapter, or the fixture source, against the runtime interface of the generated UI (ui/runtime.openapi.yaml), by a plan or, with --architecture, against the default control plane of an architecture",
       "arguments": [
         {
           "field": "source",
@@ -4534,6 +4807,20 @@
           "source": {
             "kind": "option",
             "long": "root"
+          }
+        },
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "option",
+            "long": "architecture"
+          }
+        },
+        {
+          "field": "contract",
+          "source": {
+            "kind": "option",
+            "long": "contract"
           }
         }
       ]
@@ -4640,6 +4927,45 @@
           }
         }
       ]
+    },
+    {
+      "path": [
+        "ui",
+        "serve"
+      ],
+      "aliases": [],
+      "callable": "ui_serve",
+      "about": "Serve the operator UI of an architecture and its default control plane on fixtures on 127.0.0.1, with no runtime - R1 from the block fixtures, R2 from the channel scripts, R4 recorded with scripted outcomes, R5 allowing every action; the fixtures are built into the binary, or read from --fixtures",
+      "arguments": [
+        {
+          "field": "architecture",
+          "source": {
+            "kind": "positional",
+            "index": 1
+          }
+        },
+        {
+          "field": "contract",
+          "source": {
+            "kind": "option",
+            "long": "contract"
+          }
+        },
+        {
+          "field": "port",
+          "source": {
+            "kind": "option",
+            "long": "port"
+          }
+        },
+        {
+          "field": "fixtures",
+          "source": {
+            "kind": "option",
+            "long": "fixtures"
+          }
+        }
+      ]
     }
   ],
   "obligations": [
@@ -4669,9 +4995,11 @@
     "handler:sim_scenario: implement the owner-qualified callable and its declared result/error contract",
     "handler:sim_trace: implement the owner-qualified callable and its declared result/error contract",
     "handler:sync: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_build: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_conform: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_derive: implement the owner-qualified callable and its declared result/error contract",
     "handler:ui_generate: implement the owner-qualified callable and its declared result/error contract",
-    "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract"
+    "handler:ui_panels: implement the owner-qualified callable and its declared result/error contract",
+    "handler:ui_serve: implement the owner-qualified callable and its declared result/error contract"
   ]
 }

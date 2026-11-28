@@ -1,6 +1,6 @@
 [package]
 name = "agenticspec-render"
-description = "One self-contained HTML page for an agenticspec architecture and the result of its optimization"
+description = "One self-contained HTML page for a graph in one visual language: a neutral render model, and the agenticspec architecture page drawn through it"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,6 +11,7 @@ test = false
 doctest = false
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }
 serde_json.workspace = true
 
 [dev-dependencies]
