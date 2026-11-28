@@ -100,6 +100,7 @@ pub fn revision_digest(arch: &Value) -> String {
 struct AgentDoc {
     digest: String,
     document: Value,
+    bytes: Vec<u8>,
 }
 
 /// Read every agent document the binding names. A unit that stays an agent (`agent`, `job`,
@@ -150,6 +151,7 @@ fn agent_documents(
             AgentDoc {
                 digest: d,
                 document,
+                bytes,
             },
         );
     }
@@ -223,17 +225,21 @@ pub fn build(inputs: &Inputs) -> Result<Bundle, Vec<Finding>> {
     }
     units.extend(ui_units);
     let mut agents = Map::new();
-    let mut by_digest: BTreeMap<&str, (Vec<&str>, &Value)> = BTreeMap::new();
+    let mut by_digest: BTreeMap<&str, (Vec<&str>, &AgentDoc)> = BTreeMap::new();
     for (part, d) in &docs {
         let e = by_digest
             .entry(d.digest.as_str())
-            .or_insert((Vec::new(), &d.document));
+            .or_insert((Vec::new(), d));
         e.0.push(part);
     }
-    for (d, (parts, document)) in by_digest {
+    for (d, (parts, doc)) in by_digest {
         agents.insert(
             d.to_owned(),
-            json!({ "parts": parts, "document": document }),
+            json!({
+                "parts": parts,
+                "document": doc.document,
+                "content_base64": ui::base64(&doc.bytes),
+            }),
         );
     }
     let mut runtimes = Map::new();
@@ -449,6 +455,48 @@ pub fn served(arch: &Value, binding: &Value, packing: &Packing) -> Vec<Finding> 
     out
 }
 
+/// The refusals only `deploy check` gives, beside those of [`super::ui::CHECK_REFUSALS`].
+pub const CHECK_REFUSALS: &[&str] = &["agent_document_mismatch"];
+
+/// The `agent_document_mismatch` findings of the `agents` of a written bundle: an entry whose
+/// `content_base64` is missing or not standard base64, whose bytes are not the digest it is keyed
+/// by, or whose `document` is not what those bytes parse to.
+fn agent_contents(agents: &Map<String, Value>) -> Vec<Finding> {
+    let mut out = Vec::new();
+    for (d, a) in agents {
+        let detail = match a["content_base64"].as_str().and_then(ui::unbase64) {
+            None => Some(format!(
+                "agents: {d}: carries no `content_base64` in standard base64"
+            )),
+            Some(bytes) => {
+                let got = sha256(&bytes);
+                if got != *d {
+                    Some(format!("agents: {d}: its content_base64 is {got}"))
+                } else if std::str::from_utf8(&bytes)
+                    .map_err(|e| e.to_string())
+                    .and_then(parse_yaml)
+                    .ok()
+                    .as_ref()
+                    != Some(&a["document"])
+                {
+                    Some(format!(
+                        "agents: {d}: `document` is not the document its content_base64 holds"
+                    ))
+                } else {
+                    None
+                }
+            }
+        };
+        if let Some(detail) = detail {
+            out.push(Finding {
+                refusal: "agent_document_mismatch",
+                detail,
+            });
+        }
+    }
+    out
+}
+
 /// The `volume_mount_missing` findings of the units of a written bundle: a volume claim without
 /// a `mount`, or one that is not an absolute path.
 fn unit_volumes(bundle: &Value) -> Vec<Finding> {
@@ -525,7 +573,8 @@ pub enum Refused {
 /// Admit a written bundle again from what it carries, for a reader that did not write it: its
 /// form and digests, then admission of its architecture under its binding and packing
 /// ([`admit`]), its agent documents against the parts that need them and the digests the
-/// binding pins, and the secrets and egress of the binding and of each unit
+/// binding pins, the bytes each agent document carries ([`CHECK_REFUSALS`]), and the secrets and
+/// egress of the binding and of each unit
 /// ([`grants::check`], [`grants::check_units`]), and its UI units ([`ui::check`]).
 pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
     let mut problems = Vec::new();
@@ -622,6 +671,7 @@ pub fn check(bundle: &Value, accepts: &Accepts) -> Result<(), Refused> {
             });
         }
     }
+    findings.extend(agent_contents(&agents));
     findings.extend(served(arch, binding, &packing));
     findings.extend(unit_volumes(bundle));
     findings.extend(grants::check(arch, binding, &packing));
@@ -687,16 +737,18 @@ fn unit(
             .filter_map(|p| docs.get(p).map(|d| json!({ "part": p, "agent": d.digest })))
             .collect();
         let mut c = json!({ "role": "agent-runtime", "agents": agents });
-        if let Some(r) = binding_form::image_reference(binding, "agent") {
+        if let Some(r) = binding_form::image_reference(binding, binding_form::AGENT_RUNTIME) {
             c["runtime"] = json!(r);
         }
         c
     } else {
         match u.kind.as_str() {
-            "core" | "service" => match binding_form::image_reference(binding, "core") {
-                Some(r) => json!({ "runtime": r }),
-                None => json!({ "role": "core-runtime" }),
-            },
+            "core" | "service" => {
+                match binding_form::image_reference(binding, binding_form::CORE_RUNTIME) {
+                    Some(r) => json!({ "runtime": r }),
+                    None => json!({ "role": "core-runtime" }),
+                }
+            }
             "model" => json!({ "role": "model-server" }),
             _ => json!({ "role": "store" }),
         }
@@ -821,9 +873,10 @@ fn unit(
         })
         .collect();
 
+    let (kind, shape) = agent_shape(&u.kind);
     let mut v = json!({
         "name": u.name,
-        "kind": u.kind,
+        "kind": kind,
         "parts": u.parts,
         "code": code,
         "claims": claims,
@@ -838,17 +891,35 @@ fn unit(
     if let Some(r) = u.replicas {
         v["replicas"] = json!(r);
     }
-    if u.kind == "scheduled"
-        && let Some(s) = schedule(arch, &u.parts)
-    {
-        v["schedule"] = s;
+    if let Some(s) = shape {
+        v["shape"] = json!(s);
+    }
+    if u.kind == "scheduled" {
+        if let Some(c) = clock(arch, &u.parts) {
+            v["clock"] = c;
+        }
+        if let Some(cron) = &u.schedule {
+            v["schedule"] = json!(cron);
+        }
     }
     v
 }
 
+/// The kind a unit of a packing kind is written with in a bundle, and its shape: an `agent`,
+/// `job` or `scheduled` unit is an `agent` unit of shape `service`, `job` or `scheduled`; any
+/// other kind is written as it is, without a shape.
+pub fn agent_shape(kind: &str) -> (&str, Option<&'static str>) {
+    match kind {
+        "agent" => ("agent", Some("service")),
+        "job" => ("agent", Some("job")),
+        "scheduled" => ("agent", Some("scheduled")),
+        other => (other, None),
+    }
+}
+
 /// The clock of a scheduled unit: the trigger or schedule that wakes its part, the schedule's
 /// interval and first firing, and the trigger's `policy` and `max_parallel` as the overlap rule.
-fn schedule(arch: &Value, parts: &[String]) -> Option<Value> {
+fn clock(arch: &Value, parts: &[String]) -> Option<Value> {
     let l = arch["links"].as_array()?.iter().find(|l| {
         text(&l["carries"]) == "trigger"
             && parts.iter().any(|p| p == text(&l["to"]))

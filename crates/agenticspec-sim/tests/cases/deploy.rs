@@ -548,12 +548,275 @@ fn a_scheduled_unit_carries_its_clock_and_needs_no_transport_from_it() {
         .iter()
         .find(|u| u["name"] == "sweeper")
         .unwrap();
-    assert_eq!(sweeper["kind"], "scheduled");
+    assert_eq!(sweeper["kind"], "agent");
+    assert_eq!(sweeper["shape"], "scheduled");
     assert!(sweeper.get("replicas").is_none());
+    assert_eq!(sweeper["schedule"], "0 2 * * *");
     assert_eq!(
-        sweeper["schedule"],
+        sweeper["clock"],
         json!({ "trigger": "sweep", "schedule": "nightly", "every": "24h", "next_fire_at": "2h", "policy": "skip", "max_parallel": 1 })
     );
+    let packed = v["packing"]["document"]["units"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|u| u["name"] == "sweeper")
+        .unwrap();
+    assert_eq!(
+        packed["kind"], "scheduled",
+        "the packing keeps its own kinds"
+    );
+    assert_eq!(packed["schedule"], "0 2 * * *");
+}
+
+#[test]
+fn an_agent_unit_carries_its_shape_service_job_or_scheduled() {
+    let v = fixture("workstation.split.yaml");
+    let worker = unit_of(&v, "worker");
+    assert_eq!(
+        (&worker["kind"], &worker["shape"]),
+        (&json!("agent"), &json!("service"))
+    );
+    assert!(worker.get("schedule").is_none() && worker.get("clock").is_none());
+    assert!(unit_of(&v, "core").get("shape").is_none());
+    let dir = scratch("deploy-agent-shape");
+    let doc = load_yaml(&arch("workstation")).unwrap();
+    // `shape: job` is `schedule: job`: a part no clock wakes runs as a job.
+    let p = packing::resolve(&doc, &json!({ "parts": { "worker": { "shape": "job" } } })).unwrap();
+    let w = p.units.iter().find(|u| u.name == "worker").unwrap();
+    assert_eq!(
+        (w.kind.as_str(), w.replicas, &w.schedule),
+        ("job", None, &None)
+    );
+    let file = workstation_binding(
+        &dir,
+        &format!(
+            "parts:\n  worker: {{agent: {}}}\n  gateway: {{state: service}}\n  builds: {{state: service}}\ntransports: {{question: a2a, order: a2a, model_call: http, claim: http}}\npacking:\n  parts:\n    worker: {{shape: job}}\n",
+            repo_root().join("bundles/agents/coder.yaml").display()
+        ),
+    );
+    let out = bundle_with(&arch("workstation"), &file, None, None)
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    let worker = unit_of(&v, "worker");
+    assert_eq!(
+        (&worker["kind"], &worker["shape"]),
+        (&json!("agent"), &json!("job"))
+    );
+    assert!(worker.get("schedule").is_none());
+    // A cron rule makes a part a scheduled unit with it; one of the wrong form is refused.
+    let p = packing::resolve(
+        &doc,
+        &json!({ "parts": { "worker": { "schedule": "*/15 * * * MON-FRI" } } }),
+    )
+    .unwrap();
+    let w = p.units.iter().find(|u| u.name == "worker").unwrap();
+    assert_eq!(w.kind, "scheduled");
+    assert_eq!(w.schedule.as_deref(), Some("*/15 * * * MON-FRI"));
+    let back = packing::resolve(&doc, &parse_yaml(&p.text()).unwrap()["packing"]).unwrap();
+    assert_eq!(
+        back.units, p.units,
+        "the cron reads back from the resolved form"
+    );
+    let e = packing::resolve(
+        &doc,
+        &json!({ "parts": { "worker": { "schedule": "nightly" }, "gateway": { "shape": "job" } } }),
+    )
+    .unwrap_err()
+    .join("\n");
+    for needle in [
+        "worker: `schedule` is not",
+        "`shape: job` is for an agent part",
+    ] {
+        assert!(e.contains(needle), "{needle} in {e}");
+    }
+    let e = packing::resolve(
+        &doc,
+        &json!({ "units": [{ "name": "core", "kind": "core", "parts": [], "schedule": "0 2 * * *" }] }),
+    )
+    .unwrap_err()
+    .join("\n");
+    assert!(e.contains("schedule is a cron rule"), "{e}");
+    assert!(packing::is_cron("0 2 * * *") && !packing::is_cron("0 2 * *"));
+}
+
+#[test]
+fn an_agent_unit_names_the_agent_runtime_the_binding_pins() {
+    let dir = scratch("deploy-agent-runtime");
+    let d = "sha256:00000000000000000000000000000000000000000000000000000000000000a2";
+    let agents = format!(
+        "parts:\n  operator: {{agent: {0}/operator.yaml}}\n  worker: {{agent: {0}/coder.yaml}}\n  gateway: {{state: service}}\n  builds: {{state: service}}\npacking: {{strategy: by_part}}\ntransports: {{question: a2a, order: a2a, model_call: http, claim: http}}\n",
+        repo_root().join("bundles/agents").display()
+    );
+    let file = workstation_binding(
+        &dir,
+        &format!(
+            "{agents}runtimes:\n  agent-runtime: {{image: registry.example/agent-runtime, digest: \"{d}\"}}\n"
+        ),
+    );
+    let out = bundle_with(&arch("workstation"), &file, None, None)
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    let image = format!("registry.example/agent-runtime@{d}");
+    assert_eq!(unit_of(&v, "worker")["code"]["runtime"], json!(image));
+    assert_eq!(unit_of(&v, "worker")["code"]["role"], "agent-runtime");
+    assert_eq!(
+        v["runtimes"][d],
+        json!({ "name": "agent-runtime", "image": image })
+    );
+    assert!(
+        unit_of(&v, "core")["code"].get("runtime").is_none(),
+        "the core runtime is not the agents'"
+    );
+    // From the target's local store: a tag is enough, neither tag nor digest is refused.
+    let file = workstation_binding(
+        &dir,
+        &format!(
+            "{agents}target: {{images: local}}\nruntimes:\n  agent-runtime: {{image: agent-runtime, tag: dev}}\n"
+        ),
+    );
+    let out = bundle_with(&arch("workstation"), &file, None, None)
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    assert_eq!(
+        unit_of(&v, "operator")["code"]["runtime"],
+        "agent-runtime:dev"
+    );
+    let file = workstation_binding(
+        &dir,
+        &format!(
+            "{agents}target: {{images: local}}\nruntimes:\n  agent-runtime: {{image: agent-runtime}}\n"
+        ),
+    );
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(
+        refusal_names(&r.detail),
+        BTreeSet::from(["image_unpinned".to_owned()]),
+        "{}",
+        r.detail
+    );
+    // Without one the target binds the role; the older name `agent` is refused by its new one.
+    let file = workstation_binding(&dir, &agents);
+    let out = bundle_with(&arch("workstation"), &file, None, None).unwrap();
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    assert!(unit_of(&v, "worker")["code"].get("runtime").is_none());
+    let file = workstation_binding(
+        &dir,
+        &format!(
+            "{agents}runtimes:\n  agent: {{image: registry.example/agent-runtime, digest: \"{d}\"}}\n"
+        ),
+    );
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "binding_invalid", "{}", r.detail);
+    assert!(
+        r.detail.contains("`agent` is named `agent-runtime`"),
+        "{}",
+        r.detail
+    );
+}
+
+#[test]
+fn an_agent_document_travels_as_its_exact_bytes_keyed_by_their_digest() {
+    let v = fixture("workstation.split.yaml");
+    let bytes = std::fs::read(repo_root().join("bundles/agents/coder.yaml")).unwrap();
+    let d = agenticspec_sim::deploy::sha256(&bytes);
+    let entry = &v["agents"][&d];
+    assert_eq!(entry["parts"], json!(["worker"]));
+    let carried =
+        agenticspec_sim::deploy::ui::unbase64(entry["content_base64"].as_str().unwrap()).unwrap();
+    assert_eq!(carried, bytes);
+    assert_eq!(
+        entry["document"],
+        parse_yaml(std::str::from_utf8(&bytes).unwrap()).unwrap()
+    );
+    assert_eq!(
+        unit_of(&v, "worker")["code"]["agents"][0]["agent"],
+        json!(d)
+    );
+}
+
+#[test]
+fn deploy_check_refuses_an_agent_document_whose_bytes_do_not_hold() {
+    let dir = scratch("deploy-check-agent-bytes");
+    let coder = agenticspec_sim::deploy::sha256(
+        &std::fs::read(repo_root().join("bundles/agents/coder.yaml")).unwrap(),
+    );
+    let (c1, c2, c3) = (coder.clone(), coder.clone(), coder);
+    let cases: [Edit; 3] = [
+        Box::new(move |v| {
+            v["agents"][&c1]["content_base64"] = json!(agenticspec_sim::deploy::ui::base64(
+                b"format: loom.agent/1\n"
+            ));
+        }),
+        Box::new(move |v| {
+            v["agents"][&c2]
+                .as_object_mut()
+                .unwrap()
+                .remove("content_base64");
+        }),
+        Box::new(move |v| {
+            v["agents"][&c3]["document"]["format"] = json!("loom.agent/2");
+        }),
+    ];
+    for edit in cases {
+        let r = check_text(&dir, &tampered(edit)).unwrap_err();
+        assert_eq!(r.code, "not_admitted", "{}", r.detail);
+        assert_eq!(
+            refusal_names(&r.detail),
+            BTreeSet::from(["agent_document_mismatch".to_owned()]),
+            "{}",
+            r.detail
+        );
+    }
+    assert_eq!(bundle::CHECK_REFUSALS, ["agent_document_mismatch"]);
+}
+
+#[test]
+fn a_part_of_a_pack_block_is_packed_bundled_and_checked_like_any_part() {
+    let path = repo_root().join("fields/coding/architectures/auto-merger.yaml");
+    let doc = load_yaml(&path).unwrap();
+    let pack = ["changes", "checks", "forge", "repo"];
+    for s in STRATEGIES.iter().filter(|s| **s != "groups") {
+        let p = packing::resolve(&doc, &json!({ "strategy": s })).unwrap();
+        every_part_once(&doc, &p);
+        for part in pack {
+            assert_eq!(
+                p.unit_of(part).map(|u| u.kind.as_str()),
+                Some("core"),
+                "{s}: {part}"
+            );
+        }
+    }
+    assert_eq!(cli::packing_default(&path, None).unwrap()["units"], 1);
+    let dir = scratch("deploy-pack-block");
+    let file = dir.join("b.yaml");
+    std::fs::write(
+        &file,
+        "format: agenticspec-binding/1\nbinding: probe\narchitecture: auto-merger\nparts:\n  gateway: {egress: [model]}\n  merger: {egress: [owner]}\n",
+    )
+    .unwrap();
+    let out_file = dir.join("bundle.yaml");
+    bundle_with(&path, &file, None, Some(&out_file))
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = load_yaml(&out_file).unwrap();
+    let core = unit_of(&v, "core");
+    for part in pack {
+        assert!(
+            core["parts"].as_array().unwrap().iter().any(|p| p == part),
+            "{part}"
+        );
+    }
+    assert!(
+        core["ports"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|p| !pack.contains(&p["part"].as_str().unwrap())),
+        "a pack block declares no port of the contract"
+    );
+    let accepts = repo_root().join("bundles/cloudspec-accepts.yaml");
+    cli::deploy_check(&out_file, Some(&accepts))
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
 }
 
 #[test]
@@ -806,7 +1069,7 @@ fn a_runtime_is_pinned_by_image_and_digest_and_refused_without_either() {
     std::fs::write(
         &file,
         format!(
-            "format: agenticspec-binding/1\nbinding: odd\nruntimes:\n  core: {{image: registry.example/core:1.2}}\n  agent: {{digest: \"{d}\"}}\n  extra: {{image: \"registry.example/x@{d}\", digest: \"{d}\"}}\n"
+            "format: agenticspec-binding/1\nbinding: odd\nruntimes:\n  core: {{image: registry.example/core:1.2}}\n  agent-runtime: {{digest: \"{d}\"}}\n  extra: {{image: \"registry.example/x@{d}\", digest: \"{d}\"}}\n"
         ),
     )
     .unwrap();
@@ -815,7 +1078,7 @@ fn a_runtime_is_pinned_by_image_and_digest_and_refused_without_either() {
     for needle in [
         "runtimes: core: `digest:`",
         "runtimes: core: `image:`",
-        "runtimes: agent: `image:`",
+        "runtimes: agent-runtime: `image:`",
         "runtimes: extra: `image:`",
     ] {
         assert!(r.detail.contains(needle), "{needle} in {}", r.detail);

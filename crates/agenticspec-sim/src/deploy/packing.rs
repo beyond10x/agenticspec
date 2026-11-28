@@ -32,6 +32,20 @@ pub struct Unit {
     pub parts: Vec<String>,
     /// The copies that run; `None` for a `job` or `scheduled` unit, which runs on demand.
     pub replicas: Option<u64>,
+    /// The cron rule that starts a `scheduled` unit, when the binding gives one
+    /// (`packing.parts.<p>.schedule: <cron>`, or `schedule:` of a listed unit).
+    pub schedule: Option<String>,
+}
+
+/// A cron rule: five fields separated by spaces (minute, hour, day of month, month, day of
+/// week), each of digits, letters, `*`, `/`, `,` and `-`.
+pub fn is_cron(s: &str) -> bool {
+    let fields: Vec<&str> = s.split_whitespace().collect();
+    fields.len() == 5
+        && fields.iter().all(|f| {
+            f.chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '*' | '/' | ',' | '-'))
+        })
 }
 
 /// A resolved packing: the units, then the parts no target starts.
@@ -98,15 +112,22 @@ enum Place {
     Own(&'static str),
 }
 
-/// The per-part overrides of the section, `parts: { <name>: { external, schedule } }`.
+/// The per-part overrides of the section, `parts: { <name>: { external, schedule, shape } }`.
 struct Overrides<'a>(&'a Value);
 
 impl Overrides<'_> {
     fn external(&self, name: &str) -> Option<bool> {
         self.0[name]["external"].as_bool()
     }
+    /// The cron rule the binding gives the part (`schedule: <cron>`).
+    fn cron(&self, name: &str) -> Option<&str> {
+        self.0[name]["schedule"].as_str().filter(|s| is_cron(s))
+    }
+    /// Whether the part runs until done: `schedule: job`, `shape: job` or a cron rule.
     fn job(&self, name: &str) -> bool {
         self.0[name]["schedule"] == "job"
+            || self.0[name]["shape"] == "job"
+            || self.cron(name).is_some()
     }
 }
 
@@ -119,7 +140,7 @@ fn place(arch: &Value, name: &str, part: &Value, o: &Overrides) -> Place {
         "model" if o.external(name) == Some(false) => Place::Own("model"),
         "model" => Place::External,
         "agent" if o.job(name) => {
-            if woken_by_schedule(arch, name) {
+            if o.cron(name).is_some() || woken_by_schedule(arch, name) {
                 Place::Own("scheduled")
             } else {
                 Place::Own("job")
@@ -236,20 +257,24 @@ pub fn resolve(arch: &Value, section: &Value) -> Result<Packing, Vec<String>> {
                 }
                 let ok = match k.as_str() {
                     "external" => v.is_boolean(),
-                    "schedule" => v == "job",
+                    "schedule" => v == "job" || v.as_str().is_some_and(is_cron),
+                    "shape" => v == "job",
                     _ => false,
                 };
                 if !ok {
                     problems.push(format!(
-                        "packing: parts: {name}: `{k}` is not `external: true|false`, `schedule: job` or `reach: {{address|name}}`"
+                        "packing: parts: {name}: `{k}` is not `external: true|false`, `schedule: job|<cron>`, `shape: job` or `reach: {{address|name}}`"
                     ));
                 }
             }
-            if entry["schedule"] == "job" && parts.get(name).is_some_and(|p| p["block"] != "agent")
-            {
-                problems.push(format!(
-                    "packing: parts: {name}: `schedule: job` is for an agent part"
-                ));
+            if parts.get(name).is_some_and(|p| p["block"] != "agent") {
+                for k in ["schedule", "shape"] {
+                    if let Some(v) = entry[k].as_str() {
+                        problems.push(format!(
+                            "packing: parts: {name}: `{k}: {v}` is for an agent part"
+                        ));
+                    }
+                }
             }
         }
     } else if !overrides.is_null() {
@@ -404,7 +429,7 @@ fn explicit(
             continue;
         };
         for k in m.keys() {
-            if !["name", "kind", "parts", "replicas"].contains(&k.as_str()) {
+            if !["name", "kind", "parts", "replicas", "schedule"].contains(&k.as_str()) {
                 problems.push(format!("packing: units[{i}]: unknown key `{k}`"));
             }
         }
@@ -441,11 +466,22 @@ fn explicit(
                 }
             },
         };
+        let schedule = match &u["schedule"] {
+            Value::Null => None,
+            Value::String(s) if is_cron(s) && kind == "scheduled" => Some(s.clone()),
+            _ => {
+                problems.push(format!(
+                    "packing: unit `{name}`: schedule is a cron rule of five fields, on a scheduled unit"
+                ));
+                None
+            }
+        };
         out.push(Unit {
             name,
             kind,
             parts,
             replicas,
+            schedule,
         });
     }
     out
@@ -535,6 +571,7 @@ fn by_strategy(
         kind: "core".into(),
         parts: sorted(core),
         replicas: Some(1),
+        schedule: None,
     }];
     for (name, (kind, list)) in units {
         let list = sorted(list);
@@ -548,11 +585,15 @@ fn by_strategy(
             [one] => count(&parts[*one]).max(1),
             _ => 1,
         });
+        let schedule = (kind == "scheduled")
+            .then(|| list.iter().find_map(|p| o.cron(p)).map(str::to_owned))
+            .flatten();
         out.push(Unit {
             name,
             kind,
             parts: list,
             replicas,
+            schedule,
         });
     }
     out
@@ -608,6 +649,9 @@ impl Packing {
                 if let Some(r) = u.replicas {
                     m["replicas"] = json!(r);
                 }
+                if let Some(s) = &u.schedule {
+                    m["schedule"] = json!(s);
+                }
                 m
             })
             .collect();
@@ -636,6 +680,9 @@ impl Packing {
             s.push_str(&format!("      parts: {}\n", list(&u.parts)));
             if let Some(r) = u.replicas {
                 s.push_str(&format!("      replicas: {r}\n"));
+            }
+            if let Some(c) = &u.schedule {
+                s.push_str(&format!("      schedule: {}\n", scalar(c)));
             }
         }
         let external: Vec<Value> = self

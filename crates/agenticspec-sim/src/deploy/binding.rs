@@ -39,6 +39,12 @@ const PART_KEYS: &[&str] = &[
 /// The keys of a runtime pinned under `runtimes:`.
 const RUNTIME_KEYS: &[&str] = &["image", "tag", "digest"];
 
+/// The runtime of the core and service units, under `runtimes:`.
+pub const CORE_RUNTIME: &str = "core";
+
+/// The runtime of the agent units, under `runtimes:`: the name of the role it plays.
+pub const AGENT_RUNTIME: &str = "agent-runtime";
+
 /// The isolation levels of agenticspec, lowest first (`agentic.shared.IsolationLevel`).
 pub const ISOLATION: &[&str] = &["none", "process", "container", "user_kernel", "micro_vm"];
 
@@ -222,6 +228,11 @@ pub fn problems(binding: &Value, arch: &Value) -> Vec<String> {
     let local = images(binding) == "local";
     if let Some(r) = binding["runtimes"].as_object() {
         for (name, v) in r {
+            if name == "agent" {
+                out.push(format!(
+                    "runtimes: `agent` is named `{AGENT_RUNTIME}`, the role the agent units' runtime plays"
+                ));
+            }
             let Some(m) = v.as_object() else {
                 out.push(format!("runtimes: `{name}` is a mapping"));
                 continue;

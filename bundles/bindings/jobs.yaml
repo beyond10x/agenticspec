@@ -21,4 +21,4 @@ runtimes:
   core: {image: agenticspec-core, tag: dev}
 packing:
   parts:
-    sweeper: {schedule: job}
+    sweeper: {schedule: "0 2 * * *"}

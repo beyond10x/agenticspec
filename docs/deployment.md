@@ -28,7 +28,7 @@ but `format` and `binding` is optional.
 | `target` | what the target gives each unit: `isolation`, one of `none`, `process`, `container`, `user_kernel`, `micro_vm` (`container` when absent); `images`, where it takes runtime images from, `registry` (the default) or `local` (its own image store); `network_policy`, `enforced` or `not_enforced` (unknown when absent) |
 | `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists) |
 | `transports` | per carried value (`model_call`, `order`, `question`, `claim`, ...), the transport a link that crosses units uses |
-| `runtimes` | runtime images: `core` for the core and service units, `agent` for agent units. Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both |
+| `runtimes` | runtime images: `core` for the core and service units, `agent-runtime` for the agent units (the role it plays; without it the target binds the role, and the older name `agent` is refused). Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both |
 | `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator) |
 | `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below) |
 | `ingress` | per ingress of the contract and per protocol it exports, where it listens: `{operator: {exports: {http: {port: 8080, bind: all}}}}`. `port` (1 to 65535), `bind` (`loopback`, the default, or `all`), `address` (the address it is reached at, text) and `part` (a part of a unit that serves it, when not the control plane of the core) |
@@ -89,8 +89,8 @@ one unit, or is `external`: not started by the target at all.
 | `core` | long, exactly one | the event log, the inner behaviour of the blocks, the control plane and the parts no other unit takes |
 | `agent` | long, replicas | agent parts, with the parts that are `per` one of them (workspace, sandbox) |
 | `service` | long, addressable | a gateway, a pool, a tool, a runtime |
-| `job` | until done, started on demand | an agent part marked `schedule: job` that no clock wakes |
-| `scheduled` | until done, started by a clock | an agent part marked `schedule: job` that a schedule or an `on_schedule` trigger wakes |
+| `job` | until done, started on demand | an agent part marked `schedule: job` (or `shape: job`) that no clock wakes |
+| `scheduled` | until done, started by a clock | an agent part marked `schedule: job` that a schedule or an `on_schedule` trigger wakes, or given a cron rule (`schedule: <cron>`) |
 | `store` | long, keeps state | a shared workspace |
 | `model` | long | a model part served by the target itself (marked `external: false`) |
 
@@ -107,8 +107,9 @@ The `packing:` section names a **strategy**, or lists the units:
 | `by_part` | one unit per part; a part's `count` becomes the unit's replicas |
 | `groups` | the named lists of `groups:` are units; the rest is in `core` |
 
-Per part, `parts: { <part>: { schedule: job } }` puts an agent into a `job` or `scheduled` unit of
-its own, `external: true` or `external: false` overrides where a part goes, and `reach` says where
+Per part, `parts: { <part>: { schedule: job } }` (or `shape: job`) puts an agent into a `job` or
+`scheduled` unit of its own; `schedule: <cron>`, a cron rule of five fields (`"0 2 * * *"`), puts it
+into a `scheduled` unit that carries the rule, which counts as its clock; `external: true` or `external: false` overrides where a part goes, and `reach` says where
 an external part is reached. A part that is `per` another goes with it. A `count` marked for optimization is packed at its built value.
 
 ```yaml
@@ -134,7 +135,7 @@ packing:
 ```
 
 In the resolved form, `units:` lists every unit (`name`, `kind`, `parts`, `replicas` for a unit
-that runs as copies) and `external:` the parts outside, each a part's name or `{part: <name>, reach:
+that runs as copies, `schedule` for a scheduled unit with a cron rule) and `external:` the parts outside, each a part's name or `{part: <name>, reach:
 {...}}`; `strategy`, `groups` and `parts` do not go with it. A section of the wrong form (an unknown key, strategy, kind or part, two units of one
 name) is refused with every problem as `binding_invalid`.
 
@@ -154,7 +155,7 @@ order of the table, and writes nothing.
 | `link_without_transport` | a link crosses two units and the binding names no transport for what it carries. A clock starting a `scheduled` unit needs none: the target's schedule starts it |
 | `isolation_unmet` | a sandbox asks for more isolation than the target gives a unit, and the binding names no sandbox `inside:` it |
 | `network_isolation_unmet` | a part is marked `network: isolated` and the target says `network_policy: not_enforced` |
-| `scheduled_with_inputs` | a `scheduled` unit takes an input other than its clock, or no clock wakes it |
+| `scheduled_with_inputs` | a `scheduled` unit takes an input other than its clock, or neither a clock nor a cron rule of the binding wakes it |
 | `core_count` | the packing has not exactly one `core` unit |
 | `unit_not_hosted` | a unit's kind or one of its roles is not in the accepted list |
 | `agent_document_missing` | an agent, job or scheduled unit holds an agent part the binding names no readable agent document for |
@@ -192,7 +193,7 @@ SHA-256 of the canonical JSON of what it covers (keys sorted, no space).
 | `units` | one entry per unit, below |
 | `ingress` | one entry per export of each ingress of the contract: `ingress`, `protocol`, `audience`, `authenticated`, the `unit` and `part` that serve it (`control`, the control plane in the core unit, unless the binding names a part), `bind` (`loopback` unless the binding says `all`), and `port` and `address` when the binding gives them. An entry without `port` has no entry point on the target |
 | `requirements` | the architecture's `requirements:`, empty when it has none |
-| `agents` | each agent document the binding names, by the digest of its bytes, with the parts it plays |
+| `agents` | each agent document the binding names, keyed by the digest of its file's bytes: the parts it plays, `content_base64`, those exact bytes in standard base64, and `document`, the same document parsed |
 | `runtimes` | each runtime image the binding pins. From a registry: keyed by its digest, with its name and its image reference `<image>@sha256:<digest>`. From the target's local store: what the binding gave, its name, `image`, and `tag`, `digest` or both, keyed by the digest, else by `<image>:<tag>` |
 | `files` | only when the binding asks for a UI: each file a unit names, by its file name, with its `digest`, its `size` in bytes and its bytes in `base64`. A UI unit's archive is carried here |
 | `digest` | the bundle digest, of every member but this one |
@@ -201,13 +202,15 @@ Each unit:
 
 | field | holds |
 |---|---|
-| `name`, `kind`, `parts` | the unit, its kind and its parts |
+| `name`, `kind`, `parts` | the unit, its kind and its parts. The packing's `agent`, `job` and `scheduled` units are all of kind `agent` here, told apart by `shape` |
+| `shape` | an agent unit only: `service` (long-running, the packing's `agent`), `job` (until done, started on demand) or `scheduled` (until done, started by a clock) |
 | `replicas` | the copies that run; absent for a `job` or `scheduled` unit |
-| `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (from a local store `<image>:<tag>`, else its config id). The core and service units run the pinned core runtime, by the same reference, or name the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
+| `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (`runtimes.agent-runtime`) (from a local store `<image>:<tag>`, else its config id). The core and service units run the pinned core runtime, by the same reference, or name the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
 | `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace, with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
-| `schedule` | a scheduled unit's clock: the trigger and schedule that wake it, `every`, `next_fire_at`, and the trigger's `policy` and `max_parallel` as the rule for overlapping runs |
+| `schedule` | a scheduled unit's cron rule, when the binding gives one (`packing.parts.<part>.schedule`) |
+| `clock` | a scheduled unit's clock in the architecture: the trigger and schedule that wake it, `every`, `next_fire_at`, and the trigger's `policy` and `max_parallel` as the rule for overlapping runs |
 | `upstream` | a UI unit only: the unit whose adapter the page reads (`unit`), its `port` when known, and `path`, the `api_base` of the UI's `config.json` (`/api/`) |
 | `secrets` | the secret names its parts declare, never a value |
 | `egress` | every destination its parts declare, each with the part it starts at (`from`), the secret it authenticates with, when declared (`secret`), and `name`, what the target resolves: a link to another unit, with its transport, named by that unit; a link to an external part (`external: true`), named by its reach (its name, or its address, which is then also `address`); or a destination outside the architecture (`named: true`, no link), named by its own name, with the `address` the binding gives it, else `unresolved: true`. Nothing that is not listed is granted |
@@ -232,7 +235,8 @@ architecture's revision, the contract's, the binding's, the packing's) or whose 
 is of the wrong form (a check, a claim or an ingress export the packing or the contract does not
 have among them). Otherwise it admits the architecture under the binding and packing the bundle
 carries, checks that each agent unit carries the agent documents of its agent parts at the digests
-the binding pins, and checks the secrets and egress of the binding and of every unit: a unit's
+the binding pins and that each agent document's `content_base64` decodes to bytes whose SHA-256 is
+its key and which parse to its `document` (`agent_document_mismatch`), and checks the secrets and egress of the binding and of every unit: a unit's
 secret or an egress entry's secret that no part of the unit declares, an egress entry whose part
 does not declare its destination, and a secret value, each by its name. It also refuses what the
 target cannot be asked to serve: a volume without an absolute mount (in the binding or in a unit),

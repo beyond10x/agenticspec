@@ -354,9 +354,10 @@ pub fn admit(
         }
     }
 
-    // A scheduled unit is woken by its clock and takes no other input.
+    // A scheduled unit is woken by its clock and takes no other input. A cron rule the binding
+    // gives it is a clock of the target's.
     for u in packing.units.iter().filter(|u| u.kind == "scheduled") {
-        let mut woken = false;
+        let mut woken = u.schedule.is_some();
         for l in links(arch) {
             let to = text(&l["to"]);
             if !u.parts.iter().any(|p| p == to) {

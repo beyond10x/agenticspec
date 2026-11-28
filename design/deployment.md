@@ -1,7 +1,7 @@
 # Deployment: from an agentic architecture to a running target
 
 Status: approved, every open point (Q1-Q17) at its recommended option; nothing built. Decisions
-K1-K17. Builds on `design/architecture-runtime.md`, `design/ingress.md` (I1-I12),
+K1-K18. Builds on `design/architecture-runtime.md`, `design/ingress.md` (I1-I12),
 `design/control-plane.md` (C1-C8), `design/view-layer.md` (D1-D11) and
 `design/events-and-storage.md` (E1-E10) without repeating them. Heads read: weft `main` at
 `4138723`, cited `weft:<path>:<line>`; Loom `main` at `b4b5de28c`, cited `loom:<path>:<line>`;
@@ -107,7 +107,7 @@ A unit names its least isolation (the highest of its sandboxes); its form is the
 | `by_part` | one unit per part; `count: n` becomes n replicas | independent scaling and failure |
 | `groups` | named lists of parts, the rest in `core` | anything in between |
 
-Per part, `schedule: job` (an agent woken only by `on_schedule` becomes `scheduled`; the trigger's
+Per part, `schedule: job` or `shape: job` (an agent woken only by `on_schedule` becomes `scheduled`; `schedule: <cron>` makes it `scheduled` with that rule, K18; the trigger's
 `policy` and `max_parallel` become the overlap rule) and `external` override the strategy. `per`
 parts follow the part they belong to. A `count` marked `vary` is packed at its built value (`sim.rs`).
 
@@ -124,7 +124,7 @@ the units, their part instances and the links that cross units; a refusal lists 
 | `link_without_transport` | a link crosses units and the binding names no transport for its carry |
 | `isolation_unmet` | a sandbox's isolation exceeds what the target gives a unit and the binding names no sandbox inside it |
 | `network_isolation_unmet` | a part the binding marks `network: isolated` on a target whose `network_policy` is `not_enforced` (an absent policy is unknown and refuses nothing) |
-| `scheduled_with_inputs` | a `scheduled` unit holds a part with an input other than its trigger |
+| `scheduled_with_inputs` | a `scheduled` unit holds a part with an input other than its trigger, or neither a clock nor a cron rule wakes it |
 | `core_count` | not exactly one `core` |
 | `unit_not_hosted` | a unit kind or a role the copy of cloudspec's accepted list (K16) does not hold |
 | `image_unpinned` | with `target.images: local`, a runtime with neither `tag` nor `digest` (with `registry`, the default, a runtime without its repository digest is refused as a binding of the wrong form) |
@@ -151,8 +151,8 @@ with every member inline, each document keyed by its digest (Q2). Same inputs, s
 | `units` | one entry per unit with the fields of K7 | inside the bundle digest |
 | `ingress` | one entry per export of each ingress of the contract: `ingress`, `protocol`, `audience`, `authenticated`; `unit` and `part` that serve it (the binding's `part`, else `control`, the control plane in the core unit; the UI unit for the export a UI serves, K17); `bind` (`loopback` or `all`, `loopback` when the binding names none); `port` (an integer) and `address` when the binding gives them, from `ingress.<name>.exports.<protocol>`. Without a port the entry has no entry point on the target, and nothing is refused | operations inside the contract digest; unit, part, port, bind and address in the binding digest |
 | `requirements` | the `requirements:` of K12, each with the stage it is decided at | inside the bundle digest |
-| `agents` | each `loom.agent/1` document the binding names | its digest (Q12) |
-| `runtimes` | each runtime artifact the binding pins: the core runtime image; an agent runtime image only where the binding pins one (Q8). With `target.images: registry` (the default) by OCI repository digest, `<image>@sha256:<digest>`; with `local`, what the binding gave, `{image, tag, digest}` with a tag, a digest (the image's config id) or both | the image digest, or `<image>:<tag>` for a local image without one |
+| `agents` | each `loom.agent/1` document the binding names: `document`, parsed, and `content_base64`, the file's exact bytes (K18) | the SHA-256 of those bytes (Q12) |
+| `runtimes` | each runtime artifact the binding pins: the core runtime image (`core`); an agent runtime image (`agent-runtime`, K18) only where the binding pins one (Q8). With `target.images: registry` (the default) by OCI repository digest, `<image>@sha256:<digest>`; with `local`, what the binding gave, `{image, tag, digest}` with a tag, a digest (the image's config id) or both | the image digest, or `<image>:<tag>` for a local image without one |
 | `files` | only with a UI unit (K17): each file a unit names, by file name: `{digest, size, base64}`, the bytes inline | its `digest`, the unit's `code.digest` |
 | `digest` | the bundle digest: SHA-256 of the canonical JSON of the document without this member | |
 
@@ -165,14 +165,16 @@ Each entry of `units`:
 
 | field | holds |
 |---|---|
-| `name`, `kind` | the unit's name; its kind (K3) |
+| `name`, `kind` | the unit's name; its kind (K3), `agent` for the packing's `agent`, `job` and `scheduled` units |
+| `shape` | an agent unit's: `service`, `job` or `scheduled` (K18) |
 | `parts` | the part instances, by path |
 | `replicas` | from `count`; `scheduled` and `job` units have none |
 | `code` | the artifact that runs, by digest. An `agent`, `job` or `scheduled` unit stays one agent: its agent document (instructions, tools, model route, authority, harness role) by digest and the role `agent-runtime`, never flattened into a process command; other units name a runtime of `runtimes`; a UI unit (K17) serves static files, `{kind: static, archive, digest}` |
 | `claims` | CPU, memory, accelerators: the unit's `Shape` (`blocks/8-place/runtime.yaml`), plus an accelerator for `model`; `volumes`, one per workspace (Q16), each with its access, size and `mount`, the absolute path from the binding's `parts.<p>.volumes[].mount` of a part of the unit, matched by name (no default path; `volume_mount_missing`) |
 | `isolation` | the least isolation level required, the highest of its sandboxes |
 | `checks` | `startup`, `ready`, `alive`, each with its kind and path or command, and `port` (an integer) where the binding gives one (`checks.<unit>.<check>.port`). An agent unit with `expose.a2a` uses Loom's readiness and liveness probes (`loom:README.md:727`); without it, `b10x-loom agent check` is its startup command |
-| `schedule` | for `scheduled`: the trigger's rule, its `policy` and `max_parallel` as the overlap rule |
+| `schedule` | for `scheduled`: the cron rule the binding gives (K18) |
+| `clock` | for `scheduled`: the trigger and schedule that wake it, its `policy` and `max_parallel` as the overlap rule |
 | `upstream` | for a UI unit (K17): `{unit, port, path}`, the unit whose adapter the page reads and the `api_base` of its `config.json` |
 | `secrets` | every secret by name; never a value |
 | `egress` | every destination by name: another unit's link with transport and protocol, or an `external` dependency. Each entry carries `name`, the string the target resolves: an external part's reach name (or its address, when the reach is one), the target unit's name for a crossing, the declared name for a named destination; and `address` when the binding resolves one (a named destination's `address`, a CIDR block or `<host>:<port>` or `{namespace, labels}`; an external part's reach address). A named destination the binding does not resolve carries `unresolved: true`. Nothing undeclared is granted (`weft:docs/domain-sketch.md:364-365`) |
@@ -272,8 +274,8 @@ granting nothing the bundle does not declare. What agenticspec asks it to map:
 | agentic | cloudspec construct (cloudspec `docs/boundary.md` row) |
 |---|---|
 | `agent` unit | package kind `Agent` over the agent document, its runtime bound by role (on weft: Loom); shape `Service` with the unit's replicas (row 10) |
-| `job` unit | `Job`, started at run time (`agent run`); needs the role "start jobs in the scope" |
-| `scheduled` unit | `Schedule` of a `Job`, overlap from the trigger's `policy` (row 10) |
+| `job` unit | an `agent` unit of shape `job` (K18): `Job`, started at run time (`agent run`); needs the role "start jobs in the scope" |
+| `scheduled` unit | an `agent` unit of shape `scheduled` (K18): `Schedule` of a `Job` on the unit's `schedule` (cron), overlap from the trigger's `policy` (row 10) |
 | `service` unit, `core` unit | `Service`; `core` runs the core runtime image (Q4) |
 | `store` unit | a managed-service binding (row 21) or a volume claim (row 6), by role |
 | store kind | cloudspec's managed-service contracts (its layer 1, epic `service-contracts`): `record` -> relational record store, `key-value` -> key-value store, `semantic` -> semantic store, `artifact` -> artifact store, `graph` -> graph store |
@@ -356,6 +358,31 @@ additions are a unit, the optional member `files` and the unit of one ingress en
 - A UI is one row of a table (`crates/agenticspec-sim/src/deploy/ui.rs`, `KINDS`): its key under
   `ui:`, its role, the ingress and export it serves and how its files are built. A second UI
   (`control-plane-ui`) is a second row of the same shape.
+
+## K18 Agent units, as the translator reads them
+
+Settled with the translator, names exact; the bundle stays `/1`.
+
+- **The agent runtime.** A binding may pin it as `runtimes.agent-runtime: {image, tag, digest}`,
+  named by the role it plays, in the shape of the core runtime and under the same `target.images`
+  rules: from a registry by its repository digest (a tag is refused as a binding of the wrong
+  form), from the local store by tag, config id or both (neither: `image_unpinned`). The bundle's
+  `runtimes` carry it, and each agent unit's `code.runtime` names it beside `code.role:
+  agent-runtime`. Absent, nothing changes: the target binds the role (Q8 A). The earlier name
+  `runtimes.agent` is refused with the new one.
+- **The agent document's bytes.** `agents.<digest>` carries `content_base64`, the exact bytes of
+  the file the binding names, beside `document`, the same file parsed. `<digest>` is the SHA-256 of
+  those bytes; it was already computed over the file's bytes, never over re-serialized YAML, so no
+  digest changed. `deploy check` decodes, hashes and parses them again: bytes that are missing, not
+  the digest, or not the `document` are refused as `agent_document_mismatch` (check only).
+- **Shape.** The packing's `agent`, `job` and `scheduled` units are written as `kind: agent` with
+  `shape: service`, `job` or `scheduled`; the packing document keeps its own kinds. A scheduled
+  unit carries `schedule`, the cron rule (five fields) the binding gives with
+  `packing.parts.<p>.schedule: <cron>`, or a listed unit's `schedule:`; a part given one is packed
+  as a scheduled unit, and the rule counts as its clock (`scheduled_with_inputs` asks for a clock
+  or a rule). Its clock in the architecture, the former `schedule` object, is `clock`.
+  `packing.parts.<p>.shape: job` is another spelling of `schedule: job`. A scheduled unit whose
+  binding gives no cron rule carries only `clock`; a target that needs a rule refuses it.
 
 ## Risks
 

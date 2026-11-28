@@ -478,7 +478,7 @@ contract:
       settings: {}
     ports_digest: c23e3e2e67ee2eb7c6f68cbd3326c9a1060d8e718948fb8e68ed4668a512e5d4
 binding:
-  digest: sha256:84fa64bcd5ee352193623a098ff0f8125d29aabd35c74940921cd88dbfca3a3a
+  digest: sha256:38277983d86061676435359c2dfd647066b6bf400f9eeba544e4069765b90ba6
   document:
     architecture: scheduled-loops
     binding: jobs
@@ -486,7 +486,7 @@ binding:
     packing:
       parts:
         sweeper:
-          schedule: job
+          schedule: 0 2 * * *
     parts:
       builds:
         state: service
@@ -519,7 +519,7 @@ binding:
       question: a2a
   name: jobs
 packing:
-  digest: sha256:4b832ccbc5892042e62906edb1ec42f5a4815c02c0dae3144e5a120eb0eda610
+  digest: sha256:6903a85a7aeca930ff888b77c05bba9e21ede49864337e41981870b3dcc3ce96
   document:
     external:
     - kind: model
@@ -546,6 +546,7 @@ packing:
       name: sweeper
       parts:
       - sweeper
+      schedule: 0 2 * * *
   strategy: single
 units:
 - checks:
@@ -674,6 +675,13 @@ units:
     cpu_millis: 500
     memory_mib: 512
     volumes: []
+  clock:
+    every: 24h
+    max_parallel: 1
+    next_fire_at: 2h
+    policy: skip
+    schedule: nightly
+    trigger: sweep
   code:
     agents:
     - agent: sha256:dfb59051942244abdc7970effb4a67dd774bb643d7f61fe142802244ac8798b8
@@ -701,7 +709,7 @@ units:
     name: owner
     to: owner
   isolation: none
-  kind: scheduled
+  kind: agent
   name: sweeper
   parts:
   - sweeper
@@ -725,14 +733,9 @@ units:
     settings: {}
   roles:
   - agent-runtime
-  schedule:
-    every: 24h
-    max_parallel: 1
-    next_fire_at: 2h
-    policy: skip
-    schedule: nightly
-    trigger: sweep
+  schedule: 0 2 * * *
   secrets: []
+  shape: scheduled
   source:
     parts:
     - sweeper
@@ -776,6 +779,7 @@ ingress:
 requirements: []
 agents:
   sha256:dfb59051942244abdc7970effb4a67dd774bb643d7f61fe142802244ac8798b8:
+    content_base64: Zm9ybWF0OiBsb29tLmFnZW50LzEKYWdlbnQ6CiAgaWQ6IHN3ZWVwZXIKICBuYW1lOiBOaWdodGx5IHN3ZWVwCiAgYnJpZWY6ID4tCiAgICBZb3UgcnVuIG9uY2UgYSBuaWdodC4gTWFrZSBvbmUgdGFzayBmcm9tIHRoZSBuaWdodGx5IHRlbXBsYXRlLCBkbyBpdCwgYW5kIHN0b3AuCm1vZGVsOgogIHJvbGVzOgogICAgLSB7cm9sZTogYWdlbnQsIG1vZGVsOiBmcm9udGllcn0K
     document:
       agent:
         brief: You run once a night. Make one task from the nightly template, do it, and stop.
@@ -793,4 +797,4 @@ runtimes:
     image: agenticspec-core
     name: core
     tag: dev
-digest: sha256:dc0a2249734c7e87b548ca35f02fc591c9b8ebfd5ca8781b43fbab226e3db033
+digest: sha256:6ac8eee6d66e5269e954d9c4970e62ecc7dba9a1382c3a3c5cea57c694a64ccb
