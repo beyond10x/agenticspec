@@ -165,10 +165,14 @@ pub enum Order {
     Set,
 }
 
-/// One expected event.
+/// One expected event, by its full block name (`agentic.work.RunStarted`), or one expected
+/// refusal: the block command refused (`agentic.resource.RequestClaim`), its block error, the
+/// rule of the run that refused it, or any of them.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expect {
-    pub event: String,
+    pub event: Option<String>,
+    pub refusal: Option<String>,
+    pub error: Option<String>,
     pub part: Option<String>,
     pub task: Option<String>,
     pub rule: Option<String>,
@@ -180,6 +184,13 @@ pub struct Expect {
     pub absent: bool,
     /// The expectation as written.
     pub written: Value,
+}
+
+impl Expect {
+    /// Whether it expects a refusal rather than an event.
+    pub fn is_refusal(&self) -> bool {
+        self.event.is_none()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -228,7 +239,8 @@ const TOP: &[&str] = &[
     "then",
 ];
 const EXPECT_KEYS: &[&str] = &[
-    "event", "part", "task", "rule", "options", "option", "channel", "author", "process", "absent",
+    "event", "refusal", "error", "part", "task", "rule", "options", "option", "channel", "author",
+    "process", "absent",
 ];
 
 /// Reads a scenario document; every problem is named by its path.
@@ -497,29 +509,36 @@ fn read_then(r: &mut Reader, v: Option<&Value>) -> Then {
         .unwrap_or(Order::Sequence);
     for (i, e) in r.list(m, "events", "then").iter().enumerate() {
         let p = format!("then.events.{i}");
-        let Some(o) = r.obj(e, &p, EXPECT_KEYS, &["event"]) else {
+        let Some(o) = r.obj(e, &p, EXPECT_KEYS, &[]) else {
             continue;
         };
         let event = r.text(o, "event", &p);
-        if let Some(ev) = &event
-            && events::expected_event(ev).is_none()
-        {
-            let names: Vec<&str> = events::EXPECTABLE.iter().map(|(n, _)| *n).collect();
-            r.err(
-                &format!("{p}.event"),
-                format!(
-                    "`{ev}` is not an expected event; expected one of {}",
-                    names.join(", ")
-                ),
-            );
-            continue;
-        }
+        let refusal = r.text(o, "refusal", &p);
+        let error = r.text(o, "error", &p);
         let rule = r.text(o, "rule", &p);
+        let of_refusal = ["refusal", "error", "rule"]
+            .into_iter()
+            .filter(|k| o.contains_key(*k))
+            .collect::<Vec<_>>();
+        match (o.contains_key("event"), of_refusal.is_empty()) {
+            (true, false) => r.err(
+                &p,
+                format!(
+                    "an expected event has no {}: a refusal is expected by `refusal`, `error` or `rule` alone",
+                    of_refusal.join(", ")
+                ),
+            ),
+            (false, true) => r.err(
+                &p,
+                "an expectation names an `event`, or a refusal by `refusal`, `error` or `rule`",
+            ),
+            _ => {}
+        }
         if let Some(rl) = &rule
-            && !events::RULES.iter().any(|(n, _, _)| n == rl)
+            && !events::RULES.iter().any(|(n, _, _, _)| n == rl)
             && rl != unavailable::RULE
         {
-            let mut names: Vec<&str> = events::RULES.iter().map(|(n, _, _)| *n).collect();
+            let mut names: Vec<&str> = events::RULES.iter().map(|(n, _, _, _)| *n).collect();
             names.push(unavailable::RULE);
             r.err(
                 &format!("{p}.rule"),
@@ -527,7 +546,9 @@ fn read_then(r: &mut Reader, v: Option<&Value>) -> Then {
             );
         }
         let expect = Expect {
-            event: event.unwrap_or_default(),
+            event,
+            refusal,
+            error,
             part: r.text(o, "part", &p),
             task: r.text(o, "task", &p),
             rule,
@@ -656,109 +677,278 @@ fn border(arch: &Value) -> Vec<&str> {
     }
 }
 
+/// The code of a problem that has no code of its own.
+pub const REFUSED: &str = "scenario_refused";
+
+/// The codes a problem of [`problems`] can have, besides [`REFUSED`]: each is also the code of the
+/// refusal of a scenario whose problems all have it.
+pub const CODES: &[(&str, &str)] = &[
+    (
+        "architecture_digest_mismatch",
+        "`architecture.digest` is not the sha256 of the architecture file",
+    ),
+    (
+        "profile_digest_mismatch",
+        "`profile.digest` is not the sha256 of the profile file",
+    ),
+    ("architecture_refused", "the architecture itself is refused"),
+    (
+        "input_not_at_border",
+        "an input is at a part the architecture's `border` does not list",
+    ),
+    (
+        "invalid_row",
+        "a `given` row does not fit the entity the blocks declare",
+    ),
+    (
+        "fixture_without_part",
+        "a fixture names a part the architecture does not have",
+    ),
+    (
+        "unknown_event",
+        "an expected `event` is no event the blocks declare",
+    ),
+    (
+        "unknown_refusal",
+        "an expected `refusal` is no command the blocks declare, or its `error` is no error that command is refused with",
+    ),
+];
+
+/// One problem of a scenario against its architecture and profile, with its code.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Problem {
+    pub code: &'static str,
+    pub text: String,
+}
+
+impl std::fmt::Display for Problem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.code == REFUSED {
+            f.write_str(&self.text)
+        } else {
+            write!(f, "{}: {}", self.code, self.text)
+        }
+    }
+}
+
+/// Every problem of a scenario against its architecture and profile, as text.
+pub fn check(l: &Loaded) -> Vec<String> {
+    problems(l).iter().map(Problem::to_string).collect()
+}
+
+/// The refusal of a scenario with `problems`: the code they share, or [`REFUSED`] when their codes
+/// differ, and every problem.
+pub fn refusal(path: &Path, problems: &[Problem]) -> Refusal {
+    let code = match problems.first() {
+        Some(p) if problems.iter().all(|q| q.code == p.code) => p.code,
+        _ => REFUSED,
+    };
+    let text: Vec<String> = problems.iter().map(Problem::to_string).collect();
+    refused(code, format!("{}: {}", path.display(), text.join("; ")))
+}
+
 /// Every problem of a scenario against its architecture and profile: a digest that does not
 /// match, an architecture the check refuses, an input at a part outside the border, an author
-/// or a fixture's part that is no part of the architecture.
-pub fn check(l: &Loaded) -> Vec<String> {
+/// or a fixture's part that is no part of the architecture, a row that does not fit its entity,
+/// an expected event or refusal the blocks do not declare.
+pub fn problems(l: &Loaded) -> Vec<Problem> {
     let s = &l.scenario;
     let a = &l.architecture;
-    let mut out = Vec::new();
-    for (key, given, actual, path) in [
+    let mut out: Vec<Problem> = Vec::new();
+    let mut push = |code: &'static str, text: String| out.push(Problem { code, text });
+    for (key, code, given, actual, path) in [
         (
             "architecture",
+            "architecture_digest_mismatch",
             &s.architecture.digest,
             &l.architecture_digest,
             &l.architecture_path,
         ),
         (
             "profile",
+            "profile_digest_mismatch",
             &s.profile.digest,
             &l.profile_digest,
             &l.profile_path,
         ),
     ] {
         if given != actual {
-            out.push(format!(
-                "{key}.digest: {given} is not the sha256 of {}, {actual}",
-                path.display()
-            ));
+            push(
+                code,
+                format!(
+                    "{key}.digest: {given} is not the sha256 of {}, {actual}",
+                    path.display()
+                ),
+            );
         }
     }
     for refusal in check_architecture(a) {
-        out.push(format!("architecture: {refusal}"));
+        push("architecture_refused", format!("architecture: {refusal}"));
     }
     let names = parts(a);
     let edge = border(a);
     let is_part = |n: &str| names.contains(&n);
     for (i, input) in s.when.iter().enumerate() {
         if !edge.contains(&input.at.as_str()) {
-            out.push(format!(
-                "when.{i}.at: `{}` is not a border part (border: {})",
-                input.at,
-                if edge.is_empty() {
-                    "none".to_string()
-                } else {
-                    edge.join(", ")
-                }
-            ));
+            push(
+                "input_not_at_border",
+                format!(
+                    "when.{i}.at: `{}` is not a border part (border: {})",
+                    input.at,
+                    if edge.is_empty() {
+                        "none".to_string()
+                    } else {
+                        edge.join(", ")
+                    }
+                ),
+            );
         }
         if !is_part(&input.author) {
-            out.push(format!(
-                "when.{i}.author: `{}` is no part of the architecture",
-                input.author
-            ));
+            push(
+                REFUSED,
+                format!(
+                    "when.{i}.author: `{}` is no part of the architecture",
+                    input.author
+                ),
+            );
         }
     }
     let mut ids = BTreeSet::new();
     for (i, t) in s.given.tasks.iter().enumerate() {
         if !ids.insert(t.id.clone()) {
-            out.push(format!("given.tasks.{i}.id: `{}` is given twice", t.id));
+            push(
+                REFUSED,
+                format!("given.tasks.{i}.id: `{}` is given twice", t.id),
+            );
         }
     }
     for (i, q) in s.given.questions.iter().enumerate() {
         if !ids.insert(q.id.clone()) {
-            out.push(format!("given.questions.{i}.id: `{}` is given twice", q.id));
+            push(
+                REFUSED,
+                format!("given.questions.{i}.id: `{}` is given twice", q.id),
+            );
         }
         if block(a, &q.asked_by) != Some("agent") {
-            out.push(format!(
-                "given.questions.{i}.asked_by: `{}` is no agent part",
-                q.asked_by
-            ));
+            push(
+                REFUSED,
+                format!(
+                    "given.questions.{i}.asked_by: `{}` is no agent part",
+                    q.asked_by
+                ),
+            );
         }
         if !matches!(block(a, &q.addressee), Some("agent" | "principal")) {
-            out.push(format!(
-                "given.questions.{i}.addressee: `{}` is no agent or principal part",
-                q.addressee
-            ));
+            push(
+                REFUSED,
+                format!(
+                    "given.questions.{i}.addressee: `{}` is no agent or principal part",
+                    q.addressee
+                ),
+            );
         }
     }
     let mut rows = BTreeSet::new();
     for (i, row) in s.given.rows.iter().enumerate() {
         let p = format!("given.rows.{i}");
         if !rows.insert((row.entity.as_str(), row.id.as_str())) {
-            out.push(format!(
-                "{p}.id: {} `{}` is given twice",
-                row.entity, row.id
-            ));
+            push(
+                "invalid_row",
+                format!("{p}.id: {} `{}` is given twice", row.entity, row.id),
+            );
         }
-        out.extend(check_row(blocks(), row, &p));
+        for problem in check_row(blocks(), row, &p) {
+            push("invalid_row", problem);
+        }
     }
     for (i, m) in s.fixtures.model.iter().enumerate() {
-        if let Some(p) = &m.part
-            && block(a, p) != Some("agent")
-        {
-            out.push(format!("fixtures.model.{i}.for: `{p}` is no agent part"));
+        if let Some(p) = &m.part {
+            match block(a, p) {
+                None => push(
+                    "fixture_without_part",
+                    format!("fixtures.model.{i}.for: `{p}` is no part of the architecture"),
+                ),
+                Some("agent") => {}
+                Some(_) => push(
+                    REFUSED,
+                    format!("fixtures.model.{i}.for: `{p}` is no agent part"),
+                ),
+            }
         }
     }
     for (i, rp) in s.fixtures.principals.iter().enumerate() {
-        if block(a, &rp.part) != Some("principal") {
-            out.push(format!(
-                "fixtures.principals.{i}.part: `{}` is no principal part",
-                rp.part
-            ));
+        match block(a, &rp.part) {
+            None => push(
+                "fixture_without_part",
+                format!(
+                    "fixtures.principals.{i}.part: `{}` is no part of the architecture",
+                    rp.part
+                ),
+            ),
+            Some("principal") => {}
+            Some(_) => push(
+                REFUSED,
+                format!(
+                    "fixtures.principals.{i}.part: `{}` is no principal part",
+                    rp.part
+                ),
+            ),
         }
     }
+    let declared = unavailable::names();
     for (i, e) in s.then.events.iter().enumerate() {
+        let p = format!("then.events.{i}");
+        if let Some(ev) = &e.event
+            && !declared.events.contains(ev)
+        {
+            let hint = match ev == REFUSAL {
+                true => format!(
+                    "; a refusal is expected by `refusal: <command>` (an input: `refusal: {}`), `error` or `rule`",
+                    events::INPUT_COMMAND
+                ),
+                false => near_event(ev, &declared.events)
+                    .map(|n| format!("; did you mean {n}?"))
+                    .unwrap_or_default(),
+            };
+            push(
+                "unknown_event",
+                format!("{p}.event: `{ev}` is no event of the blocks{hint}"),
+            );
+        }
+        match (&e.refusal, &e.error) {
+            (Some(c), _) if !declared.refusals.contains_key(c) => push(
+                "unknown_refusal",
+                format!("{p}.refusal: `{c}` is no command of the blocks"),
+            ),
+            (Some(c), Some(err)) if !events::refusal_known(c, err, &declared.refusals[c]) => {
+                let mut known: Vec<&str> =
+                    declared.refusals[c].iter().map(String::as_str).collect();
+                for (_, rc, re, _) in events::RULES {
+                    if let Some(re) = re
+                        && rc == c
+                        && !known.contains(re)
+                    {
+                        known.push(re);
+                    }
+                }
+                push(
+                    "unknown_refusal",
+                    format!(
+                        "{p}.error: `{c}` is not refused with `{err}` (it is refused with {})",
+                        if known.is_empty() {
+                            "no error".to_string()
+                        } else {
+                            known.join(", ")
+                        }
+                    ),
+                )
+            }
+            (None, Some(err)) if !declared.errors.contains(err) => push(
+                "unknown_refusal",
+                format!("{p}.error: `{err}` is no error of the blocks"),
+            ),
+            _ => {}
+        }
         for (key, v) in [
             ("part", &e.part),
             ("author", &e.author),
@@ -767,30 +957,64 @@ pub fn check(l: &Loaded) -> Vec<String> {
             if let Some(n) = v
                 && !is_part(n)
             {
-                out.push(format!(
-                    "then.events.{i}.{key}: `{n}` is no part of the architecture"
-                ));
+                push(
+                    REFUSED,
+                    format!("{p}.{key}: `{n}` is no part of the architecture"),
+                );
             }
         }
     }
-    out.extend(unavailable::check(
-        a,
-        s.horizon,
-        &s.unavailable,
-        &s.then.parts,
-    ));
+    for problem in unavailable::check(a, s.horizon, &s.unavailable, &s.then.parts) {
+        push(REFUSED, problem);
+    }
     out
 }
 
-/// Loads and checks a scenario; refuses it with every problem.
+/// The declared event whose short name (after the last `.`) is that of `name` but for case and
+/// `_` (`run_started`), or one edit away from it in the same domain; one the simulator records
+/// first, else the first in order.
+fn near_event<'a>(name: &str, declared: &'a BTreeSet<String>) -> Option<&'a str> {
+    let (domain, short) = name.rsplit_once('.').unwrap_or(("", name));
+    let snake = short.replace('_', "").to_lowercase();
+    let near: Vec<&str> = declared
+        .iter()
+        .filter_map(|d| {
+            let (dd, ds) = d.rsplit_once('.')?;
+            let same = dd == domain || domain.is_empty();
+            let close = ds.to_lowercase() == snake || (dd == domain && one_edit(ds, short));
+            (same && close).then_some(d.as_str())
+        })
+        .collect();
+    near.iter()
+        .find(|d| events::modeled(d))
+        .or(near.first())
+        .copied()
+}
+
+/// Whether `a` becomes `b` by inserting, deleting or replacing one character.
+fn one_edit(a: &str, b: &str) -> bool {
+    let (a, b): (Vec<char>, Vec<char>) = (a.chars().collect(), b.chars().collect());
+    let (short, long) = if a.len() <= b.len() { (a, b) } else { (b, a) };
+    if long.len() - short.len() > 1 {
+        return false;
+    }
+    let mut i = 0;
+    while i < short.len() && short[i] == long[i] {
+        i += 1;
+    }
+    if short.len() == long.len() {
+        short[i..].iter().skip(1).eq(long[i..].iter().skip(1))
+    } else {
+        short[i..] == long[i + 1..]
+    }
+}
+
+/// Loads and checks a scenario; refuses it with every problem, by the code they share.
 pub fn load_checked(path: &Path) -> Result<Loaded, Refusal> {
     let l = load(path)?;
-    let problems = check(&l);
+    let problems = problems(&l);
     if !problems.is_empty() {
-        return Err(refused(
-            "scenario_refused",
-            format!("{}: {}", path.display(), problems.join("; ")),
-        ));
+        return Err(refusal(path, &problems));
     }
     Ok(l)
 }
@@ -840,8 +1064,8 @@ pub struct Traced {
     pub t: f64,
     /// The block event, or `refusal`.
     pub event: &'static str,
-    /// Its expected name (`run_started`).
-    pub name: &'static str,
+    /// The block command a refusal refuses.
+    pub command: Option<&'static str>,
     pub part: String,
     /// The simulator's own kind it was mapped from.
     pub sim: &'static str,
@@ -861,7 +1085,7 @@ impl Traced {
         Traced {
             t,
             event,
-            name: events::name_of(event).unwrap_or(event),
+            command: None,
             part: part.to_string(),
             sim,
             task: None,
@@ -880,7 +1104,9 @@ impl Traced {
         let mut m = Map::new();
         m.insert("t_seconds".into(), json!(self.t));
         m.insert("event".into(), json!(self.event));
-        m.insert("name".into(), json!(self.name));
+        if let Some(c) = self.command {
+            m.insert("command".into(), json!(c));
+        }
         m.insert("part".into(), json!(self.part));
         m.insert("sim".into(), json!(self.sim));
         let opt = |m: &mut Map<String, Value>, k: &str, v: &Option<String>| {
@@ -1071,7 +1297,10 @@ pub fn run(l: &Loaded) -> Result<Ran, Refusal> {
         if let Some(e) = broken {
             *mode = Mode::NotModeled(format!(
                 "the simulator records {} by `{}` at {}s while it is unavailable",
-                e.name, e.part, e.t
+                e.command
+                    .map_or(e.event.to_string(), |c| format!("a refusal of {c}")),
+                e.part,
+                e.t
             ));
         }
     }
@@ -1158,6 +1387,7 @@ fn trace(
         e.channel = a.channel.clone();
         e.input = Some(i);
         if let Some(rule) = a.rule {
+            e.command = Some(events::INPUT_COMMAND);
             e.rule = Some(rule.to_string());
             e.error = events::rule_error(rule).map(str::to_string);
         }
@@ -1250,6 +1480,7 @@ fn trace(
                 }
             }
             if b == REFUSAL {
+                e.command = Some(events::rule_command(st.kind));
                 e.rule = Some(st.kind.to_string());
                 e.error = events::rule_error(st.kind).map(str::to_string);
             }
@@ -1264,41 +1495,55 @@ fn trace(
 
 fn matches(e: &Expect, t: &Traced) -> bool {
     let eq = |want: &Option<String>, have: &Option<String>| want.is_none() || want == have;
-    e.event == t.name
-        && e.part.as_ref().is_none_or(|p| *p == t.part)
+    let what = match &e.event {
+        Some(ev) => t.event != REFUSAL && *ev == t.event,
+        None => {
+            t.event == REFUSAL
+                && e.refusal.as_deref().is_none_or(|c| t.command == Some(c))
+                && eq(&e.error, &t.error)
+                && eq(&e.rule, &t.rule)
+        }
+    };
+    what && e.part.as_ref().is_none_or(|p| *p == t.part)
         && eq(&e.task, &t.task)
-        && eq(&e.rule, &t.rule)
         && eq(&e.option, &t.option)
         && eq(&e.channel, &t.channel)
         && eq(&e.author, &t.author)
         && (e.options.is_none() || e.options == t.options)
 }
 
+/// Why the simulator cannot check `e`: an event it does not record, a refusal of a command it
+/// never refuses, or a process it does not model.
+fn not_simulated(e: &Expect) -> Option<String> {
+    match (&e.event, &e.refusal) {
+        (Some(ev), _) if !events::modeled(ev) => {
+            return Some(format!("the simulator does not record {ev}"));
+        }
+        (None, Some(c)) if !events::refuses(c) => {
+            return Some(format!("the simulator refuses no {c}"));
+        }
+        _ => {}
+    }
+    e.process
+        .as_ref()
+        .map(|_| "the simulator follows no process a task names".to_string())
+}
+
 /// Evaluates the expected events on the trace: in order (each after the one before it) or as a
 /// set (each on its own entry). An `absent` expectation holds when no entry matches it. An
-/// expectation of an event the simulator does not record, or with a key it does not model, is
-/// not checked.
+/// expectation of an event the simulator does not record, of a refusal of a command it never
+/// refuses, or with a key it does not model, is not checked.
 pub fn evaluate(then: &Then, trace: &[Traced]) -> Vec<Verdict> {
     let mut from = 0;
     let mut used = vec![false; trace.len()];
     then.events
         .iter()
         .map(|e| {
-            if !events::modeled(&e.event) {
+            if let Some(why) = not_simulated(e) {
                 return Verdict {
                     status: Status::NotChecked,
                     matched: None,
-                    reason: Some(format!(
-                        "the simulator does not record {}",
-                        events::expected_event(&e.event).unwrap_or(&e.event)
-                    )),
-                };
-            }
-            if e.process.is_some() {
-                return Verdict {
-                    status: Status::NotChecked,
-                    matched: None,
-                    reason: Some("the simulator models no process".into()),
+                    reason: Some(why),
                 };
             }
             if e.absent {
@@ -1345,11 +1590,11 @@ pub fn evaluate(then: &Then, trace: &[Traced]) -> Vec<Verdict> {
 /// The outcome class a run predicts: refused (an input was refused and no task was made),
 /// question, false completion, correct, wrong (a run ended failed), or open.
 pub fn predict(admissions: &[Admission], trace: &[Traced], run: &RunOut) -> Class {
-    let has = |name: &str| trace.iter().any(|t| t.name == name);
+    let has = |event: &str| trace.iter().any(|t| t.event == event);
     let refused = admissions.iter().any(|a| a.rule.is_some());
-    if refused && !has("task_created") && run.tasks.is_empty() {
+    if refused && !has("agentic.work.TaskCreated") && run.tasks.is_empty() {
         Class::Refused
-    } else if has("question_asked") {
+    } else if has("agentic.question.QuestionAsked") {
         Class::Question
     } else if run
         .kpis
@@ -1361,7 +1606,7 @@ pub fn predict(admissions: &[Admission], trace: &[Traced], run: &RunOut) -> Clas
         Class::FalseCompletion
     } else if run.kpis.get("tasks_correct").copied().unwrap_or(0.0) > 0.0 {
         Class::Correct
-    } else if has("run_ended") {
+    } else if has("agentic.work.RunEnded") {
         Class::Wrong
     } else {
         Class::Open

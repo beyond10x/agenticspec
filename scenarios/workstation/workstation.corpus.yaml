@@ -3,15 +3,15 @@ corpus: workstation-examples
 summary: The three example scenarios of the workstation, each with the outcome class it should end in.
 
 entries:
-  - scenario: { ref: prompt-starts-run.scenario.yaml, digest: 87e8411dcc88aada7d94b26b8733f93b42738032abd0020da713a326a27e5eed }
+  - scenario: { ref: prompt-starts-run.scenario.yaml, digest: 1693219af8e7c7c4115db4513575357baf6da2c8665a16e837bf0cc9712ae06d }
     kind: prompt
     input_digest: bf6389fc47f5000b0eb3eca4c2f69587652763cc1470f35f41905fd20d91f8aa
     expected: correct
-  - scenario: { ref: question-answered.scenario.yaml, digest: c41a31c4225f675d2e429f2e155b54c74c2ee866f63851dbf862d73b265f63b5 }
+  - scenario: { ref: question-answered.scenario.yaml, digest: 6c675930da48357e350cc404d4a48704d3474261efbe9785eaa73d103524dd03 }
     kind: prompt
     input_digest: 674bead15a2e6fe07d6bffb0d9e6c35e414ddeb8701cd9b3521840636b2d3d62
     expected: question
-  - scenario: { ref: control-refused.scenario.yaml, digest: d1c8ce92aba0e215e8145b20e0b5c3a6358fca64943160d85a6be1f91f1d069a }
+  - scenario: { ref: control-refused.scenario.yaml, digest: fbabd459df40042cbed07a0bd1b4f223bb43b29a838299a5d2131bac32d65851 }
     kind: control
     input_digest: 30c100fc28b40e6128c414cf0d212ffe1de6554a456e952020749b0eb0fc3071
     expected: refused

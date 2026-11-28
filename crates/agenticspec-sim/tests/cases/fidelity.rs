@@ -1,6 +1,7 @@
 //! Where the simulation follows the architecture instead of a name: the answering agent and the
 //! profile role come from the document, an agent splits its calls over several priced models, a
-//! runtime part executes the runs it is given, and an `on_event` trigger fires on its event.
+//! runtime or process part executes the runs it is given, and an `on_event` trigger fires on its
+//! event.
 
 use super::common::{PROFILE, yaml};
 use agenticspec_sim::check::check;
@@ -93,6 +94,22 @@ links:
   - { from: owner,   to: worker,   carries: prompt }
   - { from: on_done, to: notifier, carries: trigger }
   - { from: worker,  to: model,    carries: model_call }
+"#;
+
+/// Every task a worker ships wakes a process part whose program has two steps.
+const PROCESS: &str = r#"
+format: agenticspec-architecture/1
+architecture: process
+parts:
+  owner:   { block: principal, kind: human }
+  worker:  { block: agent, count: 2 }
+  on_done: { block: trigger, kind: on_event, event_name: agentic.work.TaskCompleted, source: worker, policy: parallel, max_parallel: 4, task_template: notice }
+  release: { block: process, steps: 2, role: notify, count: 4 }
+  model:   { block: model, route: frontier }
+links:
+  - { from: owner,   to: worker,  carries: prompt }
+  - { from: on_done, to: release, carries: trigger }
+  - { from: worker,  to: model,   carries: model_call }
 "#;
 
 /// The common profile in the form these cases need: the answer delay on the role of the agent
@@ -322,6 +339,55 @@ fn a_trigger_may_wake_a_runtime() {
         .map(|r| r.to_string())
         .collect();
     assert!(refusals.is_empty(), "{refusals:?}");
+}
+
+#[test]
+fn a_trigger_wakes_a_process_part_that_runs_the_steps_of_its_program() {
+    let b = base(&yaml(PROCESS));
+    let runs = part(&b, "release", "tasks_started");
+    assert!(runs > 0.0, "the trigger starts runs of the process");
+    assert_eq!(runs, part(&b, "on_done", "firings_started"));
+    assert!(part(&b, "release", "tasks_done") > 0.0, "and they end");
+    assert_eq!(
+        part(&b, "release", "run_steps"),
+        2.0 * runs,
+        "each run executes the two steps of the program"
+    );
+    assert!(
+        b["per_part"]["release"]["agent_time_cost_usd"].is_null(),
+        "a process is not an agent alive"
+    );
+    let mut three = yaml(PROCESS);
+    three["parts"]["release"]["steps"] = json!(3);
+    let t = base(&three);
+    let runs = part(&t, "release", "tasks_started");
+    assert_eq!(part(&t, "release", "run_steps"), 3.0 * runs);
+    let mut unlinked = yaml(PROCESS);
+    unlinked["links"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|l| l["to"] != "release");
+    let u = base(&unlinked);
+    assert!(
+        u["per_part"]["release"]["tasks_started"].is_null(),
+        "a process nothing gives runs to does not run"
+    );
+}
+
+#[test]
+fn a_trigger_may_wake_a_process_and_the_process_names_its_role() {
+    let refusals: Vec<String> = check(&yaml(PROCESS))
+        .iter()
+        .map(|r| r.to_string())
+        .collect();
+    assert!(refusals.is_empty(), "{refusals:?}");
+    let mut a = yaml(PROCESS);
+    a["parts"]["release"]
+        .as_object_mut()
+        .unwrap()
+        .remove("role");
+    let err = try_base(&a, &profile()).unwrap_err();
+    assert!(err.contains("release") && err.contains("role"), "{err}");
 }
 
 #[test]

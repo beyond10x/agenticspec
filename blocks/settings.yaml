@@ -141,7 +141,9 @@ blocks:
 
   - kind: process
     domain: agentic.process
-    settings: []
+    settings:
+      - {name: steps, type: integer, unit: steps, min: 1, default: 1, summary: "The steps of the process's program; a run executes each once."}
+      - {name: role, type: string, summary: "The role of the behaviour profile whose turn_seconds a step of a run takes."}
 
   - kind: delegation
     domain: agentic.delegation

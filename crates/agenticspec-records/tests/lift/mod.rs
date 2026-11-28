@@ -233,11 +233,11 @@ fn the_draft_scenario_holds_the_owners_prompt_and_the_task_and_run_it_started() 
         })
         .collect();
     for want in [
-        ("task_created", "operator", "when.0"),
-        ("run_started", "operator", "when.0"),
-        ("run_started", "worker", "when.0"),
-        ("question_asked", "operator", "when.0"),
-        ("post_sent", "operator", "when.0"),
+        ("agentic.work.TaskCreated", "operator", "when.0"),
+        ("agentic.work.RunStarted", "operator", "when.0"),
+        ("agentic.work.RunStarted", "worker", "when.0"),
+        ("agentic.question.QuestionAsked", "operator", "when.0"),
+        ("agentic.channel.MessageSent", "operator", "when.0"),
     ] {
         let want = (want.0.to_string(), want.1.to_string(), want.2.to_string());
         assert!(events.contains(&want), "{want:?} not in {events:?}");

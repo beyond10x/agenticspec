@@ -1,7 +1,7 @@
 //! The table from the simulator's event kinds to the events of the building blocks.
 
 use super::common::repo_root;
-use agenticspec_sim::events::{self, EXPECTABLE, REFUSAL, RULES, TABLE};
+use agenticspec_sim::events::{self, REFUSAL, RULES, TABLE};
 use std::collections::BTreeSet;
 
 /// Every event kind a source of the simulator records: the string literal that ends each
@@ -75,9 +75,10 @@ fn every_event_kind_the_simulator_records_is_in_the_table() {
 }
 
 #[test]
-fn every_block_event_and_error_of_the_tables_is_declared_by_a_block() {
+fn every_block_event_command_and_error_of_the_tables_is_declared_by_a_block() {
     let evs = declared("events");
     let errors = declared("errors");
+    let commands = declared("commands");
     assert!(evs.contains("agentic.work.RunStarted"));
     for events::Kind {
         kind,
@@ -92,38 +93,40 @@ fn every_block_event_and_error_of_the_tables_is_declared_by_a_block() {
             );
         }
     }
-    for (name, b) in EXPECTABLE {
+    for (rule, command, error, _) in RULES {
         assert!(
-            *b == REFUSAL || evs.contains(*b),
-            "{name}: {b} is no event of blocks/"
+            commands.contains(*command),
+            "{rule}: {command} is no command of blocks/"
         );
-    }
-    for (rule, error, _) in RULES {
         if let Some(e) = error {
             assert!(errors.contains(*e), "{rule}: {e} is no error of blocks/");
         }
     }
+    assert!(commands.contains(events::INPUT_COMMAND));
 }
 
 #[test]
-fn every_block_event_the_table_reaches_has_one_expected_name() {
-    let mut names = BTreeSet::new();
-    let mut meant = BTreeSet::new();
-    for (n, b) in EXPECTABLE {
-        assert!(names.insert(*n), "{n} twice");
-        assert!(meant.insert(*b), "{b} named twice");
-    }
-    for events::Kind {
-        kind,
-        events: blocks,
-        ..
-    } in TABLE
-    {
-        for b in *blocks {
-            let name = events::name_of(b).unwrap_or_else(|| panic!("{kind}: {b} has no name"));
-            assert!(events::modeled(name), "{name}");
+fn the_simulator_records_the_block_events_of_the_table_and_refuses_the_commands_of_its_rules() {
+    let recorded = events::recorded();
+    for events::Kind { events: blocks, .. } in TABLE {
+        for b in blocks.iter().filter(|b| **b != REFUSAL) {
+            assert!(recorded.contains(b), "{b}");
+            assert!(events::modeled(b), "{b}");
         }
     }
+    let unique: BTreeSet<&str> = recorded.iter().copied().collect();
+    assert_eq!(unique.len(), recorded.len(), "each event once");
+    assert!(events::modeled("agentic.work.RunStarted"));
+    assert!(!events::modeled("agentic.workspace.ChangeProposed"));
+    assert!(!events::modeled(REFUSAL));
+    assert!(events::refuses("agentic.channel.SendMessage"));
+    assert!(events::refuses("agentic.channel.TakePost"));
+    assert!(!events::refuses("agentic.resource.RequestClaim"));
+    assert_eq!(
+        events::rule_command("part_unavailable"),
+        events::INPUT_COMMAND,
+        "an input refused for an unavailable part is a refused message"
+    );
     // A refused input carries the rule of its admission; every other refusal is its own rule.
     for events::Kind {
         kind,
@@ -133,13 +136,11 @@ fn every_block_event_the_table_reaches_has_one_expected_name() {
     {
         if blocks.contains(&REFUSAL) && *kind != "input_refused" {
             assert!(
-                RULES.iter().any(|(r, _, _)| r == kind),
+                RULES.iter().any(|(r, _, _, _)| r == kind),
                 "{kind} refuses by no rule"
             );
         }
     }
-    assert!(events::modeled("run_started"));
-    assert!(!events::modeled("proposal_opened"));
     assert_eq!(
         events::block_events("question_forwarded"),
         Some(
@@ -152,17 +153,13 @@ fn every_block_event_the_table_reaches_has_one_expected_name() {
 }
 
 #[test]
-fn the_scenarios_page_names_every_expected_event_and_every_rule() {
+fn the_scenarios_page_names_every_recorded_event_and_every_rule() {
     let page = std::fs::read_to_string(repo_root().join("docs/scenarios.md")).unwrap();
-    for (name, block) in EXPECTABLE {
-        let row = if *block == REFUSAL {
-            format!("| `{name}` |")
-        } else {
-            format!("| `{name}` | `{block}` |")
-        };
+    for block in events::recorded() {
+        let row = format!("| `{block}` |");
         assert!(page.contains(&row), "docs/scenarios.md has no row {row}");
     }
-    for (rule, error, _) in RULES {
+    for (rule, command, error, _) in RULES {
         let cell = match error {
             Some(e) => format!("`{e}`"),
             None => "none".to_string(),
@@ -170,8 +167,8 @@ fn the_scenarios_page_names_every_expected_event_and_every_rule() {
         let row = format!("| `{rule}` |");
         let line = page.lines().find(|l| l.starts_with(&row));
         assert!(
-            line.is_some_and(|l| l.contains(&cell)),
-            "docs/scenarios.md has no row {row} with {cell}"
+            line.is_some_and(|l| l.contains(&cell) && l.contains(&format!("`{command}`"))),
+            "docs/scenarios.md has no row {row} with {cell} and `{command}`"
         );
     }
 }

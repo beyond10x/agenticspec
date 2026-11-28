@@ -19,8 +19,8 @@ when:
 then:
   order: sequence
   events:
-    - { event: refusal, part: operator, author: owner, rule: part_unavailable }
-    - { event: task_created, absent: true }
+    - { refusal: agentic.channel.SendMessage, part: operator, author: owner, rule: part_unavailable }
+    - { event: agentic.work.TaskCreated, absent: true }
   kpis:
     tasks_arrived: { max: 0 }
   parts:

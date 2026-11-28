@@ -114,6 +114,8 @@ A part `process`:
 
 | setting | type | unit | default | contract | what |
 |---|---|---|---|---|---|
+| `steps` | integer of at least 1 | steps | `1` |  | The steps of the process's program; a run executes each once. |
+| `role` | string |  |  |  | The role of the behaviour profile whose turn_seconds a step of a run takes. |
 | `count` | integer of at least 0 |  | `1` |  | How many copies of the part run. |
 | `per` | part |  |  |  | One copy of the part for each copy of the named part. |
 

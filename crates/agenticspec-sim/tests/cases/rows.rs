@@ -92,7 +92,7 @@ fn a_given_row_is_refused_by_the_path_of_each_problem() {
     );
     let path = with_rows(&dir, "rows-refused", &rows);
     let err = cli::scenario("check", &path, None).unwrap_err();
-    assert_eq!(err.code, "scenario_refused");
+    assert_eq!(err.code, "invalid_row");
     for p in [
         "given.rows.0.state: `Waiting` is no state of agentic.resource.Claim",
         "given.rows.0.fields.time_limit_seconds: \"long\" is not of type Integer",

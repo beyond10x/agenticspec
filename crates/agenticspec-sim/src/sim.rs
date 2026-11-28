@@ -223,7 +223,8 @@ struct WorkerKind {
     orchestrates: bool,
     /// The triggers that wake it.
     triggers: Vec<usize>,
-    /// A runtime part that executes runs: its steps are its turns, and it is no agent alive.
+    /// A runtime or process part that executes runs: its steps are its turns, and it is no agent
+    /// alive.
     runtime: bool,
 }
 
@@ -564,8 +565,8 @@ impl Model {
             }
         }
 
-        // A runtime part executes runs when it is given them: a `run` or `order` link, or a
-        // trigger that wakes it.
+        // A runtime or process part executes runs when it is given them: a `run` or `order` link,
+        // or a trigger that wakes it.
         let executes = |name: &str| {
             links.iter().any(|l| {
                 l["to"] == name
@@ -575,7 +576,10 @@ impl Model {
         let mut delegates: Vec<Delegate> = Vec::new();
         let mut workers = Vec::new();
         for (name, p) in arch["parts"].as_object().into_iter().flatten() {
-            let runtime = p["block"] == "runtime";
+            // A process part executes runs like a runtime: each run takes the steps of its
+            // program, each a turn of its role.
+            let process = p["block"] == "process";
+            let runtime = p["block"] == "runtime" || process;
             let agent =
                 p["block"] == "agent" && p.get("acts_for").is_none() && !is_reviewer(arch, name);
             if !(agent || runtime && executes(name)) {
@@ -626,8 +630,13 @@ impl Model {
                 }
                 Some(_) => None,
             };
+            let mut e = exec(name, p, !process)?;
+            if process {
+                let steps = num(crate::check::value(&p["steps"])).unwrap_or(1.0);
+                e.task_turns = Dist::Fixed(steps.round().max(1.0));
+            }
             workers.push(WorkerKind {
-                exec: exec(name, p, true)?,
+                exec: e,
                 question,
                 pool,
                 review,

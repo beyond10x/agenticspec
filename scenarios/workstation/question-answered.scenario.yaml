@@ -21,12 +21,12 @@ fixtures:
 then:
   order: sequence
   events:
-    - { event: run_started, part: worker, task: when.0 }
-    - { event: question_asked, part: worker, task: when.0, options: [A, B] }
-    - { event: question_asked, part: operator, task: when.0 }
-    - { event: post_sent, part: operator, channel: chat }
-    - { event: question_answered, part: owner, task: when.0, option: B }
-    - { event: task_completed, part: worker, task: when.0 }
+    - { event: agentic.work.RunStarted, part: worker, task: when.0 }
+    - { event: agentic.question.QuestionAsked, part: worker, task: when.0, options: [A, B] }
+    - { event: agentic.question.QuestionAsked, part: operator, task: when.0 }
+    - { event: agentic.channel.MessageSent, part: operator, channel: chat }
+    - { event: agentic.question.QuestionAnswered, part: owner, task: when.0, option: B }
+    - { event: agentic.work.TaskCompleted, part: worker, task: when.0 }
   kpis:
     questions_forwarded: { min: 1, max: 1 }
     questions_defaulted: { max: 0 }

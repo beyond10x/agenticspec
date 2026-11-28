@@ -119,6 +119,14 @@ callables:
       document_unreadable: agenticspec.cli.Refusal
       scenario_invalid: agenticspec.cli.Refusal
       scenario_refused: agenticspec.cli.Refusal
+      architecture_digest_mismatch: agenticspec.cli.Refusal
+      profile_digest_mismatch: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      input_not_at_border: agenticspec.cli.Refusal
+      invalid_row: agenticspec.cli.Refusal
+      fixture_without_part: agenticspec.cli.Refusal
+      unknown_event: agenticspec.cli.Refusal
+      unknown_refusal: agenticspec.cli.Refusal
       out_missing: agenticspec.cli.Refusal
       out_unwritable: agenticspec.cli.Refusal
       expectation_failed: agenticspec.cli.Refusal
@@ -131,6 +139,14 @@ callables:
       corpus_invalid: agenticspec.cli.Refusal
       scenario_invalid: agenticspec.cli.Refusal
       scenario_refused: agenticspec.cli.Refusal
+      architecture_digest_mismatch: agenticspec.cli.Refusal
+      profile_digest_mismatch: agenticspec.cli.Refusal
+      architecture_refused: agenticspec.cli.Refusal
+      input_not_at_border: agenticspec.cli.Refusal
+      invalid_row: agenticspec.cli.Refusal
+      fixture_without_part: agenticspec.cli.Refusal
+      unknown_event: agenticspec.cli.Refusal
+      unknown_refusal: agenticspec.cli.Refusal
       corpus_failed: agenticspec.cli.Refusal
   ui_panels:
     target: {kind: local, owner: agenticspec.cli, action: ui_panels}
