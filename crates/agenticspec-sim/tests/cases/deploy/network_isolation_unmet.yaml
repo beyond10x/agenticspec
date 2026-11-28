@@ -1,0 +1,8 @@
+format: agenticspec-binding/1
+binding: network-isolation-unmet
+architecture: workstation
+refines: egress/workstation.yaml
+summary: The coding agents are marked isolated on the network, and the target enforces no network policy.
+target: {network_policy: not_enforced}
+parts:
+  worker: {network: isolated}

@@ -291,9 +291,16 @@ fn a_refusal_lists_every_finding_and_writes_nothing() {
     // Five links cross units: operator to gateway and to worker, worker to builds, gateway and
     // operator; the gateway's rate limit stays in memory; the two agent units name no agent
     // document; seven links leave their unit, the five and two to external parts, and no part
-    // declares its egress.
+    // declares its egress; the coding agents' tree is claimed by their unit and mounted nowhere.
     let findings: Vec<&str> = r.detail.split("; ").collect();
-    assert_eq!(findings.len(), 15, "{}", r.detail);
+    assert_eq!(findings.len(), 16, "{}", r.detail);
+    assert_eq!(
+        findings
+            .iter()
+            .filter(|f| f.starts_with("volume_mount_missing"))
+            .count(),
+        1
+    );
     assert_eq!(
         findings
             .iter()
@@ -412,7 +419,11 @@ fn a_bundle_is_the_same_bytes_on_every_run_and_its_digest_holds() {
         agenticspec_sim::deploy::digest(&v["packing"]["document"])
     );
     assert_eq!(v["nested"], json!({}));
-    assert_eq!(v["ingress"], json!([]));
+    assert_eq!(
+        v["ingress"].as_array().unwrap().len(),
+        5,
+        "one entry per export of the default ingresses"
+    );
     assert!(
         !text.contains(root.to_string_lossy().as_ref()),
         "no host path"
@@ -446,7 +457,7 @@ fn each_unit_of_a_bundle_carries_its_code_claims_isolation_ports_and_roles() {
     assert_eq!(worker["claims"]["cpu_millis"], 2000);
     assert_eq!(
         worker["claims"]["volumes"],
-        json!([{ "name": "tree", "access": "read_write_once", "per_instance": true, "size": "20Gi" }])
+        json!([{ "name": "tree", "access": "read_write_once", "per_instance": true, "size": "20Gi", "mount": "/workspace" }])
     );
     assert_eq!(worker["isolation"], "process");
     assert_eq!(worker["roles"], json!(["agent-runtime"]));
@@ -478,7 +489,13 @@ fn each_unit_of_a_bundle_carries_its_code_claims_isolation_ports_and_roles() {
         .collect();
     assert_eq!(
         egress,
-        [("builds", "http"), ("gateway", "http"), ("operator", "a2a")]
+        [
+            ("docs-mirror", ""),
+            ("builds", "http"),
+            ("gateway", "http"),
+            ("operator", "a2a")
+        ],
+        "a named destination first, then the links"
     );
     let gateway = units["gateway"];
     assert_eq!(gateway["kind"], "service");
@@ -631,13 +648,13 @@ fn secrets_and_egress_are_carried_per_unit_by_name_with_the_part_they_start_at()
     let gateway = unit("gateway");
     assert_eq!(
         gateway["egress"],
-        json!([{ "link": "gateway -> model carries model_call", "from": "gateway", "to": "model", "carries": "model_call", "external": true, "secret": "model-api-key" }])
+        json!([{ "link": "gateway -> model carries model_call", "from": "gateway", "to": "model", "carries": "model_call", "external": true, "secret": "model-api-key", "name": "models.example:443", "address": "models.example:443" }])
     );
     let operator = unit("operator");
     assert_eq!(operator["secrets"], json!(["chat-token"]));
     assert_eq!(
         operator["egress"][0],
-        json!({ "from": "operator", "to": "chat-relay", "named": true, "secret": "chat-token" }),
+        json!({ "from": "operator", "to": "chat-relay", "named": true, "secret": "chat-token", "name": "chat-relay", "address": "chat-relay.example:443" }),
         "a named destination comes first, it has no link"
     );
     let to: Vec<&str> = operator["egress"]
@@ -866,6 +883,419 @@ fn every_part_kind_derives_its_ports_and_sim_check_refuses_any_other_block() {
             r.detail
                 .contains(&format!("block `{odd}` is not a part kind")),
             "{odd}: {}",
+            r.detail
+        );
+    }
+}
+
+/// A committed fixture bundle of `bundles/`, read back.
+fn fixture(file: &str) -> Value {
+    load_yaml(&repo_root().join("bundles").join(file)).unwrap()
+}
+
+fn unit_of<'a>(v: &'a Value, name: &str) -> &'a Value {
+    v["units"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|u| u["name"] == name)
+        .unwrap()
+}
+
+/// A binding written to a scratch file that refines the workstation's refusing base (every
+/// destination declared, the tree mounted), with `extra` after the header.
+fn workstation_binding(dir: &Path, extra: &str) -> PathBuf {
+    let base = cases().join("egress/workstation.yaml");
+    let file = dir.join("b.yaml");
+    std::fs::write(
+        &file,
+        format!(
+            "format: agenticspec-binding/1\nbinding: odd\narchitecture: workstation\nrefines: {}\n{extra}",
+            base.display()
+        ),
+    )
+    .unwrap();
+    file
+}
+
+#[test]
+fn each_export_of_an_ingress_carries_its_unit_part_port_and_bind() {
+    let v = fixture("workstation.split.yaml");
+    let entries = v["ingress"].as_array().unwrap();
+    let find = |ingress: &str, protocol: &str| {
+        entries
+            .iter()
+            .find(|e| e["ingress"] == ingress && e["protocol"] == protocol)
+            .unwrap_or_else(|| panic!("no {ingress} {protocol}"))
+    };
+    assert_eq!(
+        find("operator", "http"),
+        &json!({ "ingress": "operator", "protocol": "http", "audience": "control.operator", "authenticated": true, "unit": "core", "part": "control", "port": 8080, "bind": "all" })
+    );
+    assert_eq!(find("metrics", "metrics_scrape")["port"], 9090);
+    assert_eq!(find("metrics", "metrics_scrape")["authenticated"], false);
+    let tool = find("operator", "tool");
+    assert!(
+        tool.get("port").is_none(),
+        "no port, no entry point: {tool}"
+    );
+    assert_eq!(
+        tool["bind"], "loopback",
+        "loopback unless the binding says all"
+    );
+    for e in fixture("workstation.local.yaml")["ingress"]
+        .as_array()
+        .unwrap()
+    {
+        assert!(e.get("port").is_none(), "{e}");
+        assert_eq!(e["unit"], "core");
+    }
+}
+
+#[test]
+fn an_export_served_by_a_part_is_in_that_parts_unit_and_its_address_is_carried() {
+    let dir = scratch("deploy-export-part");
+    let agents = repo_root().join("bundles/agents");
+    let file = workstation_binding(
+        &dir,
+        &format!(
+            "transports: {{model_call: http, order: a2a, question: a2a, claim: http}}\nparts:\n  gateway: {{state: service, egress: [model]}}\n  builds: {{state: service}}\n  operator: {{agent: {}}}\n  worker: {{agent: {}}}\ningress:\n  operator:\n    exports:\n      tool: {{part: operator, port: 7000, address: tools.example}}\npacking: {{strategy: by_part}}\n",
+            agents.join("operator.yaml").display(),
+            agents.join("coder.yaml").display()
+        ),
+    );
+    let out = bundle_with(&arch("workstation"), &file, None, None)
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    let tool = v["ingress"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["protocol"] == "tool")
+        .unwrap();
+    assert_eq!(tool["unit"], "operator");
+    assert_eq!(tool["part"], "operator");
+    assert_eq!(tool["port"], 7000);
+    assert_eq!(tool["address"], "tools.example");
+}
+
+#[test]
+fn a_check_carries_the_port_the_binding_gives_it() {
+    let v = fixture("workstation.split.yaml");
+    let core = unit_of(&v, "core");
+    assert_eq!(
+        core["checks"]["ready"],
+        json!({ "kind": "http", "path": "/ready", "port": 8080 })
+    );
+    assert_eq!(unit_of(&v, "gateway")["checks"]["alive"]["port"], 8081);
+    let worker = unit_of(&v, "worker");
+    assert!(worker["checks"]["startup"].get("port").is_none());
+}
+
+#[test]
+fn a_volume_carries_its_mount_and_a_relative_mount_is_refused_without_its_text() {
+    let v = fixture("workstation.local.yaml");
+    assert_eq!(
+        unit_of(&v, "core")["claims"]["volumes"][0]["mount"],
+        "/workspace"
+    );
+    let dir = scratch("deploy-mount-relative");
+    let file = workstation_binding(
+        &dir,
+        "parts:\n  tree: {volumes: [{name: tree, mount: work/tree}]}\n",
+    );
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "not_admitted", "{}", r.detail);
+    assert_eq!(
+        refusal_names(&r.detail),
+        BTreeSet::from(["volume_mount_missing".to_owned()]),
+        "{}",
+        r.detail
+    );
+    assert!(r.detail.contains("not an absolute path"), "{}", r.detail);
+    assert!(!r.detail.contains("work/tree"), "{}", r.detail);
+}
+
+#[test]
+fn a_local_image_is_carried_as_the_binding_gave_it() {
+    let v = fixture("scheduled-loops.jobs.yaml");
+    assert_eq!(
+        v["runtimes"]["agenticspec-core:dev"],
+        json!({ "name": "core", "image": "agenticspec-core", "tag": "dev" })
+    );
+    assert_eq!(
+        unit_of(&v, "core")["code"],
+        json!({ "runtime": "agenticspec-core:dev" })
+    );
+    let dir = scratch("deploy-local-image");
+    let id = "sha256:00000000000000000000000000000000000000000000000000000000000000ab";
+    let file = workstation_binding(
+        &dir,
+        &format!(
+            "target: {{images: local}}\nruntimes:\n  core: {{image: agenticspec-core, digest: \"{id}\"}}\n"
+        ),
+    );
+    let out = bundle_with(&arch("workstation"), &file, None, None)
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    assert_eq!(
+        v["runtimes"][id],
+        json!({ "name": "core", "image": "agenticspec-core", "digest": id })
+    );
+    assert_eq!(unit_of(&v, "core")["code"]["runtime"], id);
+    // From a registry the image stays pinned by its digest, and a tag is refused.
+    let file = workstation_binding(
+        &dir,
+        "runtimes:\n  core: {image: agenticspec-core, tag: dev}\n",
+    );
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "binding_invalid", "{}", r.detail);
+    for needle in [
+        "runtimes: core: `digest:`",
+        "runtimes: core: `tag:` goes with",
+    ] {
+        assert!(r.detail.contains(needle), "{needle} in {}", r.detail);
+    }
+}
+
+#[test]
+fn any_part_may_be_external_with_its_kind_and_reach_and_egress_names_what_the_target_resolves() {
+    let dir = scratch("deploy-external-part");
+    let file = workstation_binding(
+        &dir,
+        "parts:\n  operator: {egress: [gateway, owner, worker, {to: metrics-sink, address: {namespace: observability, labels: {app: sink}}}, {to: chat-relay, address: \"10.0.0.0/8\"}]}\npacking:\n  units:\n    - {name: core, kind: core, parts: [box, chat, gateway, operator, tree, worker]}\n  external: [model, owner, {part: builds, reach: {name: build-farm}}]\n",
+    );
+    let out = bundle_with(&arch("workstation"), &file, None, None)
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+    let v = parse_yaml(out["bundle"].as_str().unwrap()).unwrap();
+    assert_eq!(
+        v["packing"]["document"]["external"],
+        json!([
+            { "part": "model", "kind": "model", "reach": { "name": "model" } },
+            { "part": "owner", "kind": "principal", "reach": { "name": "owner" } },
+            { "part": "builds", "kind": "pool", "reach": { "name": "build-farm" } },
+        ]),
+        "in the order written"
+    );
+    let egress = unit_of(&v, "core")["egress"].as_array().unwrap().clone();
+    let to = |t: &str| egress.iter().find(|e| e["to"] == t).unwrap().clone();
+    let builds = to("builds");
+    assert_eq!(builds["external"], true);
+    assert_eq!(builds["name"], "build-farm");
+    assert!(builds.get("address").is_none());
+    assert_eq!(
+        to("model")["name"],
+        "model",
+        "the default reach is the part's name"
+    );
+    assert_eq!(
+        to("metrics-sink")["address"],
+        json!({ "namespace": "observability", "labels": { "app": "sink" } })
+    );
+    assert_eq!(to("chat-relay")["address"], "10.0.0.0/8");
+    assert_eq!(to("chat-relay")["name"], "chat-relay");
+    assert!(to("chat-relay").get("unresolved").is_none());
+    // Read back, the packing with its reach resolves to the same units.
+    let accepts = repo_root().join("bundles/cloudspec-accepts.yaml");
+    let written = dir.join("bundle.yaml");
+    std::fs::write(&written, out["bundle"].as_str().unwrap()).unwrap();
+    cli::deploy_check(&written, Some(&accepts))
+        .unwrap_or_else(|r| panic!("{}: {}", r.code, r.detail));
+}
+
+#[test]
+fn a_crossing_is_named_by_its_unit_and_an_unresolved_destination_says_so() {
+    let v = fixture("workstation.split.yaml");
+    let worker = unit_of(&v, "worker");
+    let to = |t: &str| {
+        worker["egress"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|e| e["to"] == t)
+            .unwrap()
+            .clone()
+    };
+    assert_eq!(to("gateway")["name"], "gateway");
+    assert_eq!(to("gateway")["unit"], "gateway");
+    assert_eq!(
+        to("docs-mirror"),
+        json!({ "from": "worker", "to": "docs-mirror", "named": true, "name": "docs-mirror", "unresolved": true })
+    );
+    let operator = unit_of(&v, "operator");
+    let owner = operator["egress"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["to"] == "owner")
+        .unwrap();
+    assert_eq!(owner["name"], "owner");
+    assert_eq!(owner["external"], true);
+}
+
+#[test]
+fn the_new_binding_keys_of_the_wrong_form_are_refused_before_admission() {
+    let dir = scratch("deploy-served-form");
+    let file = workstation_binding(
+        &dir,
+        concat!(
+            "target: {images: cache, network_policy: strict}\n",
+            "parts:\n",
+            "  operator: {egress: [{to: relay, address: \"relay\"}, {to: owner, address: \"10.0.0.1:80\"}, {to: sink, address: {zone: a}}]}\n",
+            "  worker: {network: open, volumes: [{name: box, mount: /w}, {mount: /x}]}\n",
+            "checks:\n",
+            "  worker: {ready: {port: 80}, readiness: {}}\n",
+            "  gateway: {alive: {port: 0}}\n",
+            "  nowhere: {ready: {port: 80}}\n",
+            "ingress:\n",
+            "  operator:\n",
+            "    exports:\n",
+            "      http: {port: 70000, bind: everywhere}\n",
+            "      cli: {port: 9000}\n",
+            "  public: {exports: {http: {port: 80}}}\n",
+            "packing:\n",
+            "  strategy: by_part\n",
+            "  parts:\n",
+            "    gateway: {reach: {name: gw}}\n",
+            "    model: {reach: {host: models}}\n",
+        ),
+    );
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "binding_invalid", "{}", r.detail);
+    for needle in [
+        "target: images is one of registry, local",
+        "target: network_policy is one of enforced, not_enforced",
+        "egress[0]: address is a CIDR block",
+        "egress[1]: address is for a destination outside the document",
+        "egress[2]: address: unknown key `zone`",
+        "parts: worker: network is `isolated`",
+        "volumes[0]: name names a workspace part",
+        "volumes[1] needs a `name:`",
+        "checks: worker: `readiness` is not one of",
+        "checks: gateway: alive: port is a whole number",
+        "exports: http: port is a whole number",
+        "exports: http: bind is one of loopback, all",
+        "packing: parts: model: `reach` is {address: <text>} or {name: <text>}",
+    ] {
+        assert!(r.detail.contains(needle), "{needle} in {}", r.detail);
+    }
+    // Those that need the packing and the contract: the form above has to pass first.
+    let file = workstation_binding(
+        &dir,
+        concat!(
+            "checks:\n",
+            "  core: {startup: {port: 80}}\n",
+            "  nowhere: {ready: {port: 80}}\n",
+            "ingress:\n",
+            "  operator: {exports: {cli: {port: 9000}, http: {part: model}}}\n",
+            "  public: {exports: {http: {port: 80}}}\n",
+            "packing:\n",
+            "  parts:\n",
+            "    gateway: {reach: {name: gw}}\n",
+        ),
+    );
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "binding_invalid", "{}", r.detail);
+    assert!(
+        r.detail
+            .contains("packing: parts: gateway: `reach` is for an external part"),
+        "{}",
+        r.detail
+    );
+    let file = workstation_binding(
+        &dir,
+        concat!(
+            "checks:\n",
+            "  core: {startup: {port: 80}}\n",
+            "  nowhere: {ready: {port: 80}}\n",
+            "ingress:\n",
+            "  operator: {exports: {cli: {port: 9000}, http: {part: model}}}\n",
+            "  public: {exports: {http: {port: 80}}}\n",
+        ),
+    );
+    let r = bundle_with(&arch("workstation"), &file, None, None).unwrap_err();
+    assert_eq!(r.code, "binding_invalid", "{}", r.detail);
+    for needle in [
+        "checks: core: a core unit has no startup check",
+        "checks: `nowhere` is not a unit of the packing",
+        "ingress: operator: exports: `cli` is not an export of the ingress",
+        "ingress: operator: exports: http: part model is in no unit",
+        "ingress: `public` is not an ingress of the contract",
+    ] {
+        assert!(r.detail.contains(needle), "{needle} in {}", r.detail);
+    }
+}
+
+#[test]
+fn an_address_is_a_cidr_block_or_a_host_and_port() {
+    for ok in [
+        "10.0.0.0/8",
+        "fd00::/8",
+        "chat-relay.example:443",
+        "10.0.0.1:80",
+        "[fd00::1]:8443",
+    ] {
+        assert!(binding::is_address(ok), "{ok}");
+    }
+    for refused in [
+        "relay",
+        "10.0.0.0/33",
+        "relay:0",
+        "relay:99999",
+        "https://relay.example",
+        ":80",
+        "-relay:80",
+        "[relay]:80",
+    ] {
+        assert!(!binding::is_address(refused), "{refused}");
+    }
+}
+
+#[test]
+fn deploy_check_refuses_a_volume_without_a_mount_an_unpinned_local_image_and_unmet_network_isolation()
+ {
+    let dir = scratch("deploy-check-served");
+    let cases: [(&str, Edit); 4] = [
+        (
+            "volume_mount_missing",
+            Box::new(|v| {
+                v["binding"]["document"]["parts"]["worker"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("volumes");
+            }),
+        ),
+        (
+            "volume_mount_missing",
+            Box::new(|v| {
+                unit_mut(v, "worker")["claims"]["volumes"][0]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("mount");
+            }),
+        ),
+        (
+            "image_unpinned",
+            Box::new(|v| {
+                let b = &mut v["binding"]["document"];
+                b["target"]["images"] = json!("local");
+                b["runtimes"]["core"] = json!({ "image": "agenticspec-core" });
+            }),
+        ),
+        (
+            "network_isolation_unmet",
+            Box::new(|v| {
+                v["binding"]["document"]["target"]["network_policy"] = json!("not_enforced");
+            }),
+        ),
+    ];
+    for (name, edit) in cases {
+        let r = check_text(&dir, &tampered(edit)).unwrap_err();
+        assert_eq!(r.code, "not_admitted", "{name}: {}", r.detail);
+        assert_eq!(
+            refusal_names(&r.detail),
+            BTreeSet::from([name.to_owned()]),
+            "{name}: {}",
             r.detail
         );
     }

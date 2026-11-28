@@ -926,12 +926,9 @@ pub fn deploy_bundle(o: &BundleOptions) -> Result<Value, Refusal> {
             None
         }
     };
-    if let (Some(p), Some(claims)) = (&p, b.doc["claims"].as_object()) {
-        for unit in claims.keys() {
-            if !p.units.iter().any(|u| &u.name == unit) {
-                problems.push(format!("claims: `{unit}` is not a unit of the packing"));
-            }
-        }
+    if let Some(p) = &p {
+        let contract_ingress = &contract.to_value()["ingress"];
+        problems.extend(binding::served_problems(&form, contract_ingress, p));
     }
     let Some(p) = p.filter(|_| problems.is_empty()) else {
         return Err(refused(

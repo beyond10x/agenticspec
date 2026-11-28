@@ -3,5 +3,5 @@ binding: local
 architecture: orchestrator-workers
 refines: local.yaml
 parts:
-  workers: {egress: [owner]}
+  workers: {egress: [owner], volumes: [{name: tree, mount: /workspace}]}
   gateway: {egress: [model]}

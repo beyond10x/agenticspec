@@ -5,3 +5,4 @@ refines: local.yaml
 parts:
   operator: {egress: [owner]}
   gateway: {egress: [model]}
+  worker: {volumes: [{name: tree, mount: /workspace}]}

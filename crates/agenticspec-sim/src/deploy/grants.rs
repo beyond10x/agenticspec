@@ -60,6 +60,9 @@ fn text(v: &Value) -> &str {
 pub struct Egress {
     pub to: String,
     pub secret: Option<String>,
+    /// Where the target finds a destination outside the document, when the entry names it: a
+    /// CIDR block or `<host>:<port>`, or `{namespace, labels}`.
+    pub address: Option<Value>,
 }
 
 /// The secret names part `part` declares, those that are names.
@@ -74,7 +77,7 @@ pub fn declared_secrets(binding: &Value, part: &str) -> Vec<String> {
         .collect()
 }
 
-/// The egress entries part `part` declares: a destination by name, or `{to, secret}`.
+/// The egress entries part `part` declares: a destination by name, or `{to, secret, address}`.
 pub fn declared_egress(binding: &Value, part: &str) -> Vec<Egress> {
     let mut out = Vec::new();
     for e in binding["parts"][part]["egress"]
@@ -86,12 +89,14 @@ pub fn declared_egress(binding: &Value, part: &str) -> Vec<Egress> {
             Value::String(to) => out.push(Egress {
                 to: to.clone(),
                 secret: None,
+                address: None,
             }),
             Value::Object(m) => {
                 if let Some(to) = m.get("to").and_then(Value::as_str) {
                     out.push(Egress {
                         to: to.to_owned(),
                         secret: m.get("secret").and_then(Value::as_str).map(str::to_owned),
+                        address: m.get("address").cloned(),
                     });
                 }
             }

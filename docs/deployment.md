@@ -25,11 +25,13 @@ but `format` and `binding` is optional.
 | `binding` | the binding's name |
 | `architecture` | the name of the architecture it is for; any architecture when absent |
 | `refines` | a base binding file, relative to this one. The base's keys are read first and this file's keys go over them, mapping by mapping |
-| `target` | what the target gives each unit: `isolation`, one of `none`, `process`, `container`, `user_kernel`, `micro_vm` (`container` when absent) |
-| `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume) |
+| `target` | what the target gives each unit: `isolation`, one of `none`, `process`, `container`, `user_kernel`, `micro_vm` (`container` when absent); `images`, where it takes runtime images from, `registry` (the default) or `local` (its own image store); `network_policy`, `enforced` or `not_enforced` (unknown when absent) |
+| `parts` | per part: `agent` (the agent document that plays it, a path relative to the binding file), `digest` (that document's `sha256:`, checked), `state` (`memory`, the default, or `service`: where a part with shared state keeps it), `inside` (a sandbox that runs inside the unit), `secrets` (the secret names it needs, never values), `egress` (the destinations it reaches, below), `size` (of a workspace's volume), `volumes` (where the part mounts a workspace's volume: `[{name: <workspace>, mount: <absolute path>}]`), `network: isolated` (the part may reach only what its unit's egress lists) |
 | `transports` | per carried value (`model_call`, `order`, `question`, `claim`, ...), the transport a link that crosses units uses |
-| `runtimes` | runtime images pinned by digest: `core` for the core and service units, `agent` for agent units. Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`), and `digest` (`sha256:` and 64 hex digits); a runtime without either is refused |
+| `runtimes` | runtime images: `core` for the core and service units, `agent` for agent units. Each has `image`, the image name without tag or digest (`registry.example/agenticspec-core`). From a registry it is pinned by `digest` (`sha256:` and 64 hex digits, the repository digest), and a runtime without either, or with a `tag`, is refused. From the target's local store (`target: {images: local}`) it is pinned by `tag`, by `digest` (the image's config id) or both |
 | `claims` | per unit name: `cpu_millis`, `memory_mib`, `accelerators` (500, 512 and 0 when absent; a model unit takes one accelerator) |
+| `checks` | per unit name, the `port` of its `startup`, `ready` or `alive` check: `{core: {ready: {port: 8080}, alive: {port: 8080}}}`. A unit has only the checks of its kind (below) |
+| `ingress` | per ingress of the contract and per protocol it exports, where it listens: `{operator: {exports: {http: {port: 8080, bind: all}}}}`. `port` (1 to 65535), `bind` (`loopback`, the default, or `all`), `address` (the address it is reached at, text) and `part` (a part of a unit that serves it, when not the control plane of the core) |
 | `packing` | the packing section below |
 
 A binding never changes the architecture: promoting a revision to another target is a new binding
@@ -41,8 +43,11 @@ A unit is granted only what its parts declare, each by name. Under `parts:`, `se
 secret names a part needs, and `egress` lists the destinations it reaches: a part of the
 architecture (an external part, or a part in another unit), or a name the target resolves later
 (a host, a registry). An egress entry is the destination's name, or
-`{to: <name>, secret: <secret name>}` when its link authenticates with a secret; that secret must
-be declared by a part of the same unit.
+`{to: <name>, secret: <secret name>, address: <address>}`: `secret` when its link authenticates
+with a secret, which a part of the same unit must declare; `address`, for a destination outside
+the architecture, where the target finds it: a CIDR block (`10.0.0.0/8`) or `<host>:<port>`, or
+`{namespace: <text>, labels: {<text>: <text>}}`. An external part is not given an address here:
+its address is its `reach` (see [packing](#packing)).
 
 ```yaml
 parts:
@@ -51,7 +56,7 @@ parts:
     egress: [{to: model, secret: model-api-key}]
   operator:
     secrets: [chat-token]
-    egress: [gateway, owner, worker, {to: chat-relay, secret: chat-token}]
+    egress: [gateway, owner, worker, {to: chat-relay, secret: chat-token, address: "chat-relay.example:443"}]
 ```
 
 Every link that leaves a unit needs its destination in the `egress` of the part it starts at, also
@@ -88,7 +93,9 @@ one unit, or is `external`: not started by the target at all.
 | `store` | long, keeps state | a shared workspace |
 | `model` | long | a model part served by the target itself (marked `external: false`) |
 
-Principals and model parts are `external` unless marked otherwise.
+Principals and model parts are `external` unless marked otherwise; any part may be marked
+`external`. The target reaches an external part by its `reach`: `{name: <text>}`, a name it
+resolves, or `{address: <text>}`; by the part's own name when the binding gives none.
 
 The `packing:` section names a **strategy**, or lists the units:
 
@@ -100,8 +107,8 @@ The `packing:` section names a **strategy**, or lists the units:
 | `groups` | the named lists of `groups:` are units; the rest is in `core` |
 
 Per part, `parts: { <part>: { schedule: job } }` puts an agent into a `job` or `scheduled` unit of
-its own, and `external: true` or `external: false` overrides where a part goes. A part that is
-`per` another goes with it. A `count` marked for optimization is packed at its built value.
+its own, `external: true` or `external: false` overrides where a part goes, and `reach` says where
+an external part is reached. A part that is `per` another goes with it. A `count` marked for optimization is packed at its built value.
 
 ```yaml
 packing:
@@ -126,8 +133,8 @@ packing:
 ```
 
 In the resolved form, `units:` lists every unit (`name`, `kind`, `parts`, `replicas` for a unit
-that runs as copies) and `external:` the parts outside; `strategy`, `groups` and `parts` do not go
-with it. A section of the wrong form (an unknown key, strategy, kind or part, two units of one
+that runs as copies) and `external:` the parts outside, each a part's name or `{part: <name>, reach:
+{...}}`; `strategy`, `groups` and `parts` do not go with it. A section of the wrong form (an unknown key, strategy, kind or part, two units of one
 name) is refused with every problem as `binding_invalid`.
 
 ## Admission
@@ -145,11 +152,14 @@ order of the table, and writes nothing.
 | `shared_state_split` | a pool, a gateway with a rate limit or an exclusive workspace is reached from two units and its binding keeps its state in memory |
 | `link_without_transport` | a link crosses two units and the binding names no transport for what it carries. A clock starting a `scheduled` unit needs none: the target's schedule starts it |
 | `isolation_unmet` | a sandbox asks for more isolation than the target gives a unit, and the binding names no sandbox `inside:` it |
+| `network_isolation_unmet` | a part is marked `network: isolated` and the target says `network_policy: not_enforced` |
 | `scheduled_with_inputs` | a `scheduled` unit takes an input other than its clock, or no clock wakes it |
 | `core_count` | the packing has not exactly one `core` unit |
 | `unit_not_hosted` | a unit's kind or one of its roles is not in the accepted list |
 | `agent_document_missing` | an agent, job or scheduled unit holds an agent part the binding names no readable agent document for |
 | `agent_document_digest` | an agent document is not the digest the binding pins |
+| `image_unpinned` | a runtime from the target's local store names neither a `tag` nor a `digest` |
+| `volume_mount_missing` | a unit claims a workspace's volume and no part of the unit mounts it, or mounts it at a path that is not absolute; there is no default path |
 | `secret_value` | something that looks like a secret's value stands where a secret name belongs (see [secrets and egress](#secrets-and-egress)) |
 | `secret_undeclared` | an egress entry, or in a written bundle a unit, names a secret that no part of its unit declares |
 | `egress_undeclared` | a link leaves its unit, for an external part or a part of another unit, and the part it starts at does not declare that destination in its `egress` |
@@ -176,12 +186,12 @@ SHA-256 of the canonical JSON of what it covers (keys sorted, no space).
 | `nested` | the documents the architecture names, by digest; empty while architectures do not nest |
 | `contract` | the contract (`agenticspec-contract/1`, see [the contract](contract.md)) and its digest |
 | `binding` | the binding with its `refines:` chain resolved, its name and digest |
-| `packing` | the resolved packing, its strategy and digest |
+| `packing` | the resolved packing, its strategy and digest; its `external` lists each part outside as `{part, kind, reach}`, `kind` the part's block and `reach` the binding's or `{name: <part>}` |
 | `units` | one entry per unit, below |
-| `ingress` | empty for now: who reaches the system from outside, and over what, is not yet part of the contract |
+| `ingress` | one entry per export of each ingress of the contract: `ingress`, `protocol`, `audience`, `authenticated`, the `unit` and `part` that serve it (`control`, the control plane in the core unit, unless the binding names a part), `bind` (`loopback` unless the binding says `all`), and `port` and `address` when the binding gives them. An entry without `port` has no entry point on the target |
 | `requirements` | the architecture's `requirements:`, empty when it has none |
 | `agents` | each agent document the binding names, by the digest of its bytes, with the parts it plays |
-| `runtimes` | each runtime image the binding pins, keyed by its digest, with its name and its image reference `<image>@sha256:<digest>` |
+| `runtimes` | each runtime image the binding pins. From a registry: keyed by its digest, with its name and its image reference `<image>@sha256:<digest>`. From the target's local store: what the binding gave, its name, `image`, and `tag`, `digest` or both, keyed by the digest, else by `<image>:<tag>` |
 | `digest` | the bundle digest, of every member but this one |
 
 Each unit:
@@ -190,13 +200,13 @@ Each unit:
 |---|---|
 | `name`, `kind`, `parts` | the unit, its kind and its parts |
 | `replicas` | the copies that run; absent for a `job` or `scheduled` unit |
-| `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one. The core and service units run the pinned core runtime, by the same reference, or name the role `core-runtime` |
-| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace, with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, and its size when the binding gives one |
+| `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (from a local store `<image>:<tag>`, else its config id). The core and service units run the pinned core runtime, by the same reference, or name the role `core-runtime` |
+| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace, with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
-| `checks` | how the target sees it start and stay up: an agent unit's agent runtime checks its agent document before it runs; the core and service units answer `/ready` and `/alive` |
+| `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
 | `schedule` | a scheduled unit's clock: the trigger and schedule that wake it, `every`, `next_fire_at`, and the trigger's `policy` and `max_parallel` as the rule for overlapping runs |
 | `secrets` | the secret names its parts declare, never a value |
-| `egress` | every destination its parts declare, each with the part it starts at (`from`) and the secret it authenticates with, when declared (`secret`): a link to another unit, with its transport; a link to an external part (`external: true`); or a destination the target resolves (`named: true`, no link). Nothing that is not listed is granted |
+| `egress` | every destination its parts declare, each with the part it starts at (`from`), the secret it authenticates with, when declared (`secret`), and `name`, what the target resolves: a link to another unit, with its transport, named by that unit; a link to an external part (`external: true`), named by its reach (its name, or its address, which is then also `address`); or a destination outside the architecture (`named: true`, no link), named by its own name, with the `address` the binding gives it, else `unresolved: true`. Nothing that is not listed is granted |
 | `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime`, `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls |
 | `ports` | the contract ports its parts use, by their derived names, with their settings and instances |
 | `source` | the unit and its parts, carried into what the translator makes of it |
@@ -215,12 +225,15 @@ architecture.
 carries, for a reader that did not write it. It refuses with `bundle_invalid` a bundle that is not
 `agenticspec-deployment/1`, lacks a member, whose digests do not hold (the bundle's, the
 architecture's revision, the contract's, the binding's, the packing's) or whose binding or packing
-is of the wrong form. Otherwise it admits the architecture under the binding and packing the bundle
+is of the wrong form (a check, a claim or an ingress export the packing or the contract does not
+have among them). Otherwise it admits the architecture under the binding and packing the bundle
 carries, checks that each agent unit carries the agent documents of its agent parts at the digests
 the binding pins, and checks the secrets and egress of the binding and of every unit: a unit's
 secret or an egress entry's secret that no part of the unit declares, an egress entry whose part
-does not declare its destination, and a secret value, each by its name. A refusal exits 1 with
-`not_admitted` and names every finding.
+does not declare its destination, and a secret value, each by its name. It also refuses what the
+target cannot be asked to serve: a volume without an absolute mount (in the binding or in a unit),
+a local runtime image with neither tag nor digest, and a part isolated on the network of a target
+that enforces no network policy. A refusal exits 1 with `not_admitted` and names every finding.
 
 ```sh
 agenticspec deploy check workstation.bundle.yaml
