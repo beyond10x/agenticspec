@@ -180,7 +180,7 @@ Each entry of `units`:
 | `parts` | the part instances, by path |
 | `replicas` | from `count`; `scheduled` and `job` units have none |
 | `code` | the artifact that runs, by digest. An `agent`, `job` or `scheduled` unit stays one agent: its agent document (instructions, tools, model route, authority, harness role) by digest and the role `agent-runtime`, never flattened into a process command; a core or service unit names its image (K19) of `runtimes` as `runtime`, or the role `core-runtime` without one; a UI unit (K17) serves static files, `{kind: static, archive, digest}` |
-| `claims` | CPU, memory, accelerators: the unit's `Shape` (`blocks/8-place/runtime.yaml`), plus an accelerator for `model`; `volumes`, one per workspace (Q16) and one per runtime part with durable state (below), each with its access, size and `mount`, the absolute path from the binding's `parts.<p>.volumes[].mount` of a part of the unit, matched by name (no default path; `volume_mount_missing`) |
+| `claims` | CPU, memory, accelerators: the unit's `Shape` (`blocks/8-place/runtime.yaml`), plus an accelerator for `model`; `volumes`, one per workspace (Q16) and one per runtime part with durable state (below), each with its access (below), size and `mount`, the absolute path from the binding's `parts.<p>.volumes[].mount` of a part of the unit, matched by name (no default path; `volume_mount_missing`) |
 | `isolation` | the least isolation level required, the highest of its sandboxes |
 | `checks` | `startup`, `ready`, `alive`, each with its kind and path or command, and `port` (an integer) where the binding gives one (`checks.<unit>.<check>.port`). An agent unit with `expose.a2a` uses Loom's readiness and liveness probes (`loom:README.md:727`); without it, `b10x-loom agent check` is its startup command |
 | `schedule` | for `scheduled`: the cron rule the binding gives (K18) |
@@ -196,12 +196,26 @@ Each entry of `units`:
 ScratchCopy, Worktree); a service's own durable state, the records it appends and reads back after
 a restart, is none of those. A runtime part declares it with the setting `durable_state: true`
 (`blocks/settings.yaml`, default false). Its unit claims one more volume, named `<part>-state`,
-`read_write_once`, `per_instance` when the part is `per` another, its `size` from the binding's
+its access by the rule below, `per_instance` when the part is `per` another, its `size` from the binding's
 `parts.<part>.size` and its `mount` from `parts.<p>.volumes[]` of a part of the unit naming
 `<part>-state`, as a workspace's volume takes them; without an absolute mount it is refused
 `volume_mount_missing`. A `job` or `scheduled` unit runs until done and a `model` unit serves a
 model the target runs: none of them holds such a volume (`durable_state_unplaceable`). An external
 runtime part is not started by the target, and its state is not the bundle's.
+
+**Volume access follows from who mounts it (R93).** A workspace's `sharing` says how its holders
+use it; a claim's access says how many pods attach it, and a single-node storage provisioner
+refuses `read_write_many`. So the access is derived from the mounts, the same data that gives the
+`mount` and `per_instance`: the parts naming the volume under `parts.<p>.volumes[]` of the binding,
+by unit, and the claiming unit's `replicas`. A `shared_read_only` workspace is `read_only_many`
+(the bundle's only read-only access, for one mounting copy as for many). Any other claim is
+`read_write_once` when no part of another unit names the volume and the claim is `per_instance` or
+the unit has `replicas: 1`; otherwise `read_write_many`. A `job` or `scheduled` unit has no
+`replicas` and its runs may overlap, so a claim there that is not per instance is
+`read_write_many`. The same rule covers a runtime part's `<part>-state`. Links to a workspace do
+not count as mounts: a part that reaches it over a link without naming it under `volumes` does
+not attach the claim. `deploy check` does not re-derive the access; it checks the mounts
+(`volume_mount_missing`).
 
 **Abstract roles.** The bundle names roles, never a provider: a store's kind (record, key-value,
 semantic, graph; E4), a model's kind and its route alias, a capability the unit needs from the

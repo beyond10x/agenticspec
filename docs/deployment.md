@@ -220,7 +220,7 @@ Each unit:
 | `shape` | an agent unit only: `service` (long-running, the packing's `agent`), `job` (until done, started on demand) or `scheduled` (until done, started by a clock) |
 | `replicas` | the copies that run; absent for a `job` or `scheduled` unit |
 | `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (`runtimes.agent-runtime`) (from a local store `<image>:<tag>`, else its config id). A core or service unit runs its image as `runtime`, by the same reference: its own, its parts', or for the core unit the pinned core runtime (`runtimes.core`); a unit without one names the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
-| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace and one per runtime part with durable state ([below](#durable-state)), with its access (`read_write_once` when exclusive, `read_only_many` when shared read-only, `read_write_many` otherwise), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
+| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace and one per runtime part with durable state ([below](#durable-state)), with its access ([below](#volume-access)), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
 | `schedule` | a scheduled unit's cron rule: the one the binding gives (`packing.parts.<part>.schedule`), else the one that states its schedule's `every` exactly ([Packing](#packing)); absent when it has neither |
@@ -231,6 +231,21 @@ Each unit:
 | `roles` | what the unit needs from its target, never a provider: `agent-runtime`, `core-runtime` (a core or service unit without an image), `start-jobs` (the core, when a job unit exists), `model-server`, `store`, `model-route:<route>` for each hosted model route it calls, `operator-ui` for the operator UI's unit, `control-plane-ui` for the control-plane UI's unit |
 | `ports` | the contract ports its parts use, by their derived names, with their settings and instances |
 | `source` | the unit and its parts, carried into what the translator makes of it |
+
+### Volume access
+
+A volume's access follows from who mounts it, not from the workspace's `sharing` alone. A part
+mounts a volume when the binding names it under that part's `volumes:`; the unit that holds the
+workspace (or the runtime part with durable state) carries the claim.
+
+| access | when |
+|---|---|
+| `read_only_many` | the workspace is `sharing: shared_read_only`, however many units or copies mount it |
+| `read_write_once` | every part that mounts the volume is in the unit that claims it, and the claim is one per copy (`per_instance`) or the unit runs one copy (`replicas: 1`), whatever the sharing among those parts |
+| `read_write_many` | a part of another unit mounts it too, or the claim is not one per copy and the unit runs more than one copy; a `job` or `scheduled` unit starts its runs on demand and counts as more than one |
+
+A workspace with `sharing: shared_read_write` that only the parts of one single-copy unit write
+is `read_write_once`, which a single-node storage provisioner can serve.
 
 ### Durable state
 
@@ -243,8 +258,8 @@ parts:
   flow: { block: runtime, role: workflow, durable_state: true }
 ```
 
-Its unit then claims one more volume, `flow-state`, `read_write_once`, one per copy when the part
-is `per` another. The binding gives it a mount and, optionally, a size, as for a workspace:
+Its unit then claims one more volume, `flow-state`, one per copy when the part is `per` another,
+its access by the same rule ([above](#volume-access)): `read_write_once` in a unit of one copy. The binding gives it a mount and, optionally, a size, as for a workspace:
 
 ```yaml
 parts:
