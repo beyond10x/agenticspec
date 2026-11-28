@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest c6c684ca144b5b2e24915b1b858713ed347824a267aeb8635984116e4a40d6d9
+// contract digest c1a0fe3c715228482e26786769e0a9dd27a30d9163a39cb5c95d911e052a8c0d
 // do not edit: regenerate with `ess synthesize`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -8244,6 +8244,8 @@ pub fn encode_view_agenticspec_session_exposures(value: &agenticspec_types::sess
     encode_agenticspec_session_exposure_class(&value.class, out);
     json::member(out, "kind");
     json::push_text(out, &value.kind);
+    json::member(out, "alias");
+    json::push_text(out, &value.alias);
     json::member(out, "verdict");
     encode_agenticspec_session_verdict(&value.verdict, out);
     json::member(out, "state");

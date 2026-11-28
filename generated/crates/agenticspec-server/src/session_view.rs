@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest c6c684ca144b5b2e24915b1b858713ed347824a267aeb8635984116e4a40d6d9
+// contract digest c1a0fe3c715228482e26786769e0a9dd27a30d9163a39cb5c95d911e052a8c0d
 // do not edit: regenerate with `ess synthesize`
 
 //! The `session-view` component of `agenticspec` v1, on the wire.
@@ -49,7 +49,7 @@ pub const ROUTES: &[(&str, &str)] = &[
 /// Everything outside `runtime` is the same in every language this plan is emitted into, and
 /// `cargo xtask synth --check` starts both and compares them.
 pub const STARTUP: &[&str] = &[
-    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"agenticspec\",\"version\":\"v1\",\"model_digest\":\"009133275d589cf8a52c1393699fc6dd9b16c2447f87133034273c29183eaba2\",\"contract_digest\":\"c6c684ca144b5b2e24915b1b858713ed347824a267aeb8635984116e4a40d6d9\",\"components\":[\"session-ir\",\"session-view\"],\"capabilities\":{\"generated\":232,\"obligations\":3,\"refused\":0}",
+    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"agenticspec\",\"version\":\"v1\",\"model_digest\":\"303b9c9728d82b9fcb90e9829b4764e06e67361ac3e767d354dadba826e8962c\",\"contract_digest\":\"c1a0fe3c715228482e26786769e0a9dd27a30d9163a39cb5c95d911e052a8c0d\",\"components\":[\"session-ir\",\"session-view\"],\"capabilities\":{\"generated\":232,\"obligations\":3,\"refused\":0}",
     "{\"log\":\"ess/1\",\"event\":\"surface.serving\",\"component\":\"session-view\",\"reached_by\":\"network\",\"transport\":\"http/1.1\",\"routes\":12,\"paths\":[{\"method\":\"GET\",\"path\":\"/docs\",\"serves\":\"documentation\",\"name\":\"docs\"},{\"method\":\"GET\",\"path\":\"/openapi.json\",\"serves\":\"contract\",\"name\":\"openapi\"},{\"method\":\"GET\",\"path\":\"/view/views/agent-turns\",\"serves\":\"view\",\"name\":\"agenticspec.view.AgentTurns\"},{\"method\":\"GET\",\"path\":\"/view/views/figures\",\"serves\":\"view\",\"name\":\"agenticspec.view.OverviewFigures\"},{\"method\":\"GET\",\"path\":\"/view/views/session\",\"serves\":\"view\",\"name\":\"agenticspec.view.SessionById\"},{\"method\":\"GET\",\"path\":\"/view/views/session-agents\",\"serves\":\"view\",\"name\":\"agenticspec.view.SessionAgents\"},{\"method\":\"GET\",\"path\":\"/view/views/session-checks\",\"serves\":\"view\",\"name\":\"agenticspec.view.SessionChecks\"},{\"method\":\"GET\",\"path\":\"/view/views/session-event-counts\",\"serves\":\"view\",\"name\":\"agenticspec.view.SessionEventCounts\"},{\"method\":\"GET\",\"path\":\"/view/views/session-events\",\"serves\":\"view\",\"name\":\"agenticspec.view.SessionEvents\"},{\"method\":\"GET\",\"path\":\"/view/views/session-list\",\"serves\":\"view\",\"name\":\"agenticspec.view.SessionList\"},{\"method\":\"GET\",\"path\":\"/view/views/session-timeline\",\"serves\":\"view\",\"name\":\"agenticspec.view.SessionTimeline\"},{\"method\":\"GET\",\"path\":\"/view/views/session-turns\",\"serves\":\"view\",\"name\":\"agenticspec.view.SessionTurns\"}]",
     "{\"log\":\"ess/1\",\"event\":\"system.ready\",\"system\":\"agenticspec\",\"surfaces\":2",
 ];

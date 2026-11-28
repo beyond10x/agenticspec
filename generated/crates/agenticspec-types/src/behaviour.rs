@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest c6c684ca144b5b2e24915b1b858713ed347824a267aeb8635984116e4a40d6d9
+// contract digest c1a0fe3c715228482e26786769e0a9dd27a30d9163a39cb5c95d911e052a8c0d
 // do not edit: regenerate with `ess synthesize`
 
 //! What the specification fully determines, generated: the behaviour of every command the plan
@@ -568,6 +568,7 @@ where
                 channel: held.data.channel,
                 class: held.data.class,
                 kind: held.data.kind,
+                alias: held.data.alias,
                 verdict: held.data.verdict,
                 state: held.state,
             })

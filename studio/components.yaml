@@ -13,7 +13,12 @@ components:
       domains:
         - studio.draft
         - studio.session
-        - studio.evaluation
+        # UNMAPPED: no component serves studio.evaluation. `agenticstudio serve` answers a
+        # simulate in the tool call's answer and records no evaluation: it holds no Evaluation
+        # row, serves no Evaluations view and takes none of StartEvaluation, CompleteEvaluation
+        # and FailEvaluation. The studio server owns the domain and accepts its commands once it
+        # records evaluations (story studio-evaluation). Open question for the owner: keep the
+        # domain declared ahead of that code, or remove it until then.
     accepts:
       commands:
         - studio.draft.OpenDraft

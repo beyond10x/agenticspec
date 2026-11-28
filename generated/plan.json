@@ -2,8 +2,8 @@
   "provenance": {
     "system": "agenticspec",
     "specification_version": "v1",
-    "source_digest": "009133275d589cf8a52c1393699fc6dd9b16c2447f87133034273c29183eaba2",
-    "contract_digest": "c6c684ca144b5b2e24915b1b858713ed347824a267aeb8635984116e4a40d6d9"
+    "source_digest": "303b9c9728d82b9fcb90e9829b4764e06e67361ac3e767d354dadba826e8962c",
+    "contract_digest": "c1a0fe3c715228482e26786769e0a9dd27a30d9163a39cb5c95d911e052a8c0d"
   },
   "scope": {
     "profile": "component-skeletons"

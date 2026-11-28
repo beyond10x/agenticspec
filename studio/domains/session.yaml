@@ -293,7 +293,8 @@ views:
       - {name: failure, type: Optional<String>}
       - {name: state, type: studio.session.ToolCall.State}
 
-# Who works in the studio: opens drafts and calls the tools on them from the page.
+# Who works in the studio: the user opens drafts and calls the tools on them from the page, the
+# agent through the agent channel; the studio server records what it carried out.
 actors:
   - name: studio.session.User
     naming:
@@ -304,6 +305,20 @@ actors:
       - studio.session.StartSession
       - studio.session.CloseSession
       - studio.session.CallTool
+  # The studio server records what it carried out itself: no page or agent sends these. It answers
+  # or fails each tool call it ran (`Studio::call`, crates/agenticstudio/src/studio.rs), and records
+  # each revision a draft's architecture committed, by an applied patch or by its source document
+  # changed on disk (`Studio::apply`, `Studio::reload_sources`).
+  - name: studio.session.Server
+    naming:
+      display: Studio server
+      summary: >-
+        `agenticstudio serve` itself, which carries out each tool call and answers or fails it, and
+        records each new revision of a draft.
+    may:
+      - studio.draft.ReviseDraft
+      - studio.session.AnswerToolCall
+      - studio.session.FailToolCall
   - name: studio.session.Agent
     naming:
       display: Agent
