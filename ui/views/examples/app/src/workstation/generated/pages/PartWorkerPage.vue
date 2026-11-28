@@ -5,6 +5,7 @@ import { KitPanel, KitShell, KitStack } from '@kit';
 import { useShell } from '../runtime';
 import AgenticAgentAgentRevisions from '../widgets/AgenticAgentAgentRevisions.vue';
 import AgenticAgentAgents from '../widgets/AgenticAgentAgents.vue';
+import AgenticAgentRevisionUsages from '../widgets/AgenticAgentRevisionUsages.vue';
 import AgenticHarnessHarnessSessions from '../widgets/AgenticHarnessHarnessSessions.vue';
 import AgenticHarnessHarnesses from '../widgets/AgenticHarnessHarnesses.vue';
 import AgenticHarnessPermissionModes from '../widgets/AgenticHarnessPermissionModes.vue';
@@ -45,6 +46,9 @@ const shell = useShell();
         <KitStack :padded="false">
           <KitPanel name="agent_agent_revisions" title="Agent revisions" collapsible>
             <AgenticAgentAgentRevisions :architecture="'workstation'" :channel="'level'" :part="'worker'" />
+          </KitPanel>
+          <KitPanel name="agent_revision_usages" title="Revision usages" collapsible>
+            <AgenticAgentRevisionUsages :architecture="'workstation'" :channel="'level'" :part="'worker'" />
           </KitPanel>
         </KitStack>
       </KitPanel>

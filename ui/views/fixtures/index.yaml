@@ -21,6 +21,7 @@ views:
   agentic.tool.Tools: agentic.tool.Tools.json
   agentic.agent.AgentRevisions: agentic.agent.AgentRevisions.json
   agentic.agent.Agents: agentic.agent.Agents.json
+  agentic.agent.RevisionUsages: agentic.agent.RevisionUsages.json
   agentic.harness.HarnessSessions: agentic.harness.HarnessSessions.json
   agentic.harness.Harnesses: agentic.harness.Harnesses.json
   agentic.harness.PermissionModes: agentic.harness.PermissionModes.json

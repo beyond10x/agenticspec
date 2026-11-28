@@ -3,6 +3,7 @@ views:
   agentic.architecture.Reach: reach.json
   agentic.agent.AgentRevisions: ../../fixtures/agentic.agent.AgentRevisions.json
   agentic.agent.Agents: ../../fixtures/agentic.agent.Agents.json
+  agentic.agent.RevisionUsages: ../../fixtures/agentic.agent.RevisionUsages.json
   agentic.authority.Budgets: ../../fixtures/agentic.authority.Budgets.json
   agentic.authority.Decisions: ../../fixtures/agentic.authority.Decisions.json
   agentic.authority.Grants: ../../fixtures/agentic.authority.Grants.json

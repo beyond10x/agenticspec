@@ -45,6 +45,9 @@ scenarios:
   - scenarios/deployment/install-refusals.yaml
   - scenarios/deployment/deployment-runs-and-degrades.yaml
   - scenarios/deployment/deployment-refused-by-coverage-and-target.yaml
+  - scenarios/deployment/observe-unit-refuses-negative-ready.yaml
+  - scenarios/question/answer-after-deadline.yaml
+  - scenarios/agent/use-leaves-revision-unchanged.yaml
   - scenarios/harness/restart-lineage.yaml
   - scenarios/resource/claim-withdrawn-from-queue.yaml
   - scenarios/trigger/schedule-queue-and-skip.yaml

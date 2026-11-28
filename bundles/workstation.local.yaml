@@ -120,7 +120,7 @@ architecture:
   sha256: sha256:9f48c790a19597559396e9cb96d13e753d6d7b427c48eaf6bd9a91cd49fdfe99
 nested: {}
 contract:
-  digest: sha256:feb7f4d2d077e302da4f83590b530c440e6a0a8038209cfb39593088e03decf0
+  digest: sha256:ce5938c88532bcaafc39c9a3d4412c67ac32148013ec6ed7c16a808e5f037bb1
   document:
     architecture: workstation
     border:
@@ -180,6 +180,8 @@ contract:
         name: agentic.agent.AgentRevisions
       - kind: view
         name: agentic.agent.Agents
+      - kind: view
+        name: agentic.agent.RevisionUsages
       - kind: view
         name: agentic.channel.ChannelMessages
       - kind: view
@@ -512,7 +514,7 @@ contract:
       port: resource.claim
       protocol: RequestClaim (GrantClaim (ExpireClaim | KillClaim | ReleaseClaim) | WithdrawClaim)
       settings: {}
-    ports_digest: b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1
+    ports_digest: b257c8de9607627a0d6f6d4b6786198c766bb2811aee55627f8a1c1c1b09e99e
 binding:
   digest: sha256:95621f1e0291cd9c2c2d22feae9af2020f0c0de0a551e382dfc3cc4d478cc61f
   document:
@@ -725,4 +727,4 @@ ingress:
 requirements: []
 agents: {}
 runtimes: {}
-digest: sha256:d74c10bb0019303656b115f5079621852c1c11e7f5f1a109d24afcfecb5013ec
+digest: sha256:41653f1e0d4f1d52bc50f4061878bc6eb55af16bfda5f9e99ff344dc3a734a66

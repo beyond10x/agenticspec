@@ -735,7 +735,6 @@ widgets:
           on:
             - agentic.agent.AgentRevisionPublished
             - agentic.agent.AgentRevisionRetired
-            - agentic.agent.AgentRevisionUsed
           effect: refetch
           coalesce: 1s
         columns:
@@ -749,7 +748,6 @@ widgets:
           - {field: knowledge, as: list}
           - {field: budget, as: json}
           - {field: published_at, as: timestamp}
-          - {field: last_used_at, as: timestamp}
           - {field: state, as: badge}
   agentic.agent.Agents:
     summary: "Rows of the view agentic.agent.Agents over Agent, keyed by agent_id."
@@ -776,6 +774,30 @@ widgets:
           - principal_id
           - name
           - {field: defined_at, as: timestamp}
+          - {field: state, as: badge}
+  agentic.agent.RevisionUsages:
+    summary: "Rows of the view agentic.agent.RevisionUsages over RevisionUsage, keyed by usage_id."
+    params:
+      source: {type: {optional: string}, note: "the base URL of the runtime adapter that answers this scope; absent, the renderer's own"}
+      architecture: {type: {optional: ArchitectureId}, note: "the architecture the rows are scoped to; the runtime narrows the rows, not this document"}
+      part: {type: {optional: string}, note: "the path of the part within the architecture, such as team.lead"}
+      instance: {type: {optional: integer}, note: the copy of a part that runs more than one}
+      channel: {type: {ref: channel}, required: true, note: "the channel of the page; it carries the events the panel takes"}
+    body:
+      - name: rows
+        component: collection
+        style: table
+        reads: {view: agentic.agent.RevisionUsages, key: usage_id}
+        live:
+          channel: args.channel
+          on:
+            - agentic.agent.AgentRevisionUsed
+          effect: refetch
+          coalesce: 1s
+        columns:
+          - usage_id
+          - agent_revision_id
+          - {field: used_at, as: timestamp}
           - {field: state, as: badge}
   agentic.harness.HarnessSessions:
     summary: "Rows of the view agentic.harness.HarnessSessions over HarnessSession, keyed by harness_session_id."
@@ -2118,7 +2140,7 @@ pages:
         grid: [[area_instances], [area_agent], [area_gateway], [area_store], [area_harness], [area_channel]]
         place:
           area_instances: [agent_agents]
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_gateway: {sections: [gateway_calls, gateway_gateways, gateway_upstreams], frame: shared, title: Gateway, collapsed: true}
           area_store: {sections: [store_artifacts, store_present_records, store_queries, store_reads, store_records, store_stores], frame: shared, title: Store, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
@@ -2131,6 +2153,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'architect'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'architect'", channel: level}
       - name: gateway_calls
         title: Calls
@@ -2342,7 +2368,7 @@ pages:
         place:
           area_instances: [agent_agents]
           area_per: {sections: [per_trees_workspace_workspaces], frame: shared, title: "One per builders: trees"}
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_gateway: {sections: [gateway_calls, gateway_gateways, gateway_upstreams], frame: shared, title: Gateway, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_work: {sections: [work_assignments, work_deliverables, work_runs, work_steps, work_tasks], frame: shared, title: Work, collapsed: true}
@@ -2361,6 +2387,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'builders'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'builders'", channel: level}
       - name: gateway_calls
         title: Calls
@@ -2886,7 +2916,7 @@ pages:
         place:
           area_instances: [agent_agents]
           area_per: {sections: [per_box_sandbox_sandboxes], frame: shared, title: "One per night: box"}
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_gateway: {sections: [gateway_calls, gateway_gateways, gateway_upstreams], frame: shared, title: Gateway, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_work: {sections: [work_assignments, work_deliverables, work_runs, work_steps, work_tasks], frame: shared, title: Work, collapsed: true}
@@ -2905,6 +2935,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'night'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'night'", channel: level}
       - name: gateway_calls
         title: Calls
@@ -3012,7 +3046,7 @@ pages:
         place:
           area_instances: [agent_agents]
           area_per: {sections: [per_repo_workspace_workspaces], frame: shared, title: "One per operator: repo"}
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_channel: {sections: [channel_channel_messages, channel_channel_posts, channel_channels, channel_messages, channel_posts, channel_subscriptions], frame: shared, title: Channel, collapsed: true}
           area_question: {sections: [question_open_questions, question_questions], frame: shared, title: Question, collapsed: true}
@@ -3029,6 +3063,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'operator'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'operator'", channel: level}
       - name: harness_harness_sessions
         title: Harness sessions
@@ -3139,7 +3177,7 @@ pages:
         grid: [[area_instances], [area_agent], [area_harness], [area_channel]]
         place:
           area_instances: [agent_agents]
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_channel: {sections: [channel_channel_messages, channel_channel_posts, channel_channels, channel_messages, channel_posts, channel_subscriptions], frame: shared, title: Channel, collapsed: true}
     sections:
@@ -3150,6 +3188,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'planner'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'planner'", channel: level}
       - name: harness_harness_sessions
         title: Harness sessions
@@ -3204,7 +3246,7 @@ pages:
         grid: [[area_instances], [area_agent], [area_store], [area_harness], [area_authority], [area_question]]
         place:
           area_instances: [agent_agents]
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_store: {sections: [store_artifacts, store_present_records, store_queries, store_reads, store_records, store_stores], frame: shared, title: Store, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_authority: {sections: [authority_budgets, authority_decisions, authority_grants, authority_open_approvals], frame: shared, title: Authority, collapsed: true}
@@ -3217,6 +3259,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'release'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'release'", channel: level}
       - name: store_artifacts
         title: Artifacts
@@ -3318,7 +3364,7 @@ pages:
         grid: [[area_instances], [area_agent], [area_gateway], [area_store], [area_harness], [area_question]]
         place:
           area_instances: [agent_agents]
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_gateway: {sections: [gateway_calls, gateway_gateways, gateway_upstreams], frame: shared, title: Gateway, collapsed: true}
           area_store: {sections: [store_artifacts, store_present_records, store_queries, store_reads, store_records, store_stores], frame: shared, title: Store, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
@@ -3331,6 +3377,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'reviewers'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'reviewers'", channel: level}
       - name: gateway_calls
         title: Calls
@@ -3537,7 +3587,7 @@ pages:
         grid: [[area_instances], [area_agent], [area_gateway], [area_store], [area_harness], [area_authority], [area_channel], [area_resource]]
         place:
           area_instances: [agent_agents]
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_gateway: {sections: [gateway_calls, gateway_gateways, gateway_upstreams], frame: shared, title: Gateway, collapsed: true}
           area_store: {sections: [store_artifacts, store_present_records, store_queries, store_reads, store_records, store_stores], frame: shared, title: Store, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
@@ -3552,6 +3602,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'testers'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'testers'", channel: level}
       - name: gateway_calls
         title: Calls
@@ -3725,7 +3779,7 @@ pages:
         grid: [[area_instances], [area_agent], [area_gateway], [area_harness], [area_authority], [area_question]]
         place:
           area_instances: [agent_agents]
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_gateway: {sections: [gateway_calls, gateway_gateways, gateway_upstreams], frame: shared, title: Gateway, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_authority: {sections: [authority_budgets, authority_decisions, authority_grants, authority_open_approvals], frame: shared, title: Authority, collapsed: true}
@@ -3738,6 +3792,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'triage'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'triage'", channel: level}
       - name: gateway_calls
         title: Calls
@@ -3804,7 +3862,7 @@ pages:
         grid: [[area_instances], [area_agent], [area_gateway], [area_harness], [area_resource]]
         place:
           area_instances: [agent_agents]
-          area_agent: {sections: [agent_agent_revisions], frame: shared, title: Agent, collapsed: true}
+          area_agent: {sections: [agent_agent_revisions, agent_revision_usages], frame: shared, title: Agent, collapsed: true}
           area_gateway: {sections: [gateway_calls, gateway_gateways, gateway_upstreams], frame: shared, title: Gateway, collapsed: true}
           area_harness: {sections: [harness_harness_sessions, harness_harnesses, harness_permission_modes, harness_tool_calls, harness_turns], frame: shared, title: Harness, collapsed: true}
           area_resource: {sections: [resource_claims, resource_pools, resource_queue], frame: shared, title: Resource, collapsed: true}
@@ -3816,6 +3874,10 @@ pages:
       - name: agent_agent_revisions
         title: Agent revisions
         component: agentic.agent.AgentRevisions
+        args: {architecture: "'large-37'", part: "'writer'", channel: level}
+      - name: agent_revision_usages
+        title: Revision usages
+        component: agentic.agent.RevisionUsages
         args: {architecture: "'large-37'", part: "'writer'", channel: level}
       - name: gateway_calls
         title: Calls

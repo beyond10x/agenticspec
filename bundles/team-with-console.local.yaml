@@ -93,7 +93,7 @@ nested:
     - console
     sha256: sha256:330bd69675b94a9461baed62f67557b88ecf6c349f975fbea5fff5f0daa59623
 contract:
-  digest: sha256:c3f7e5b5ff0cd6c92db4564d7edf7b23ea6e8e65444d7d1d2e641c2995e1da59
+  digest: sha256:fdb210ef8b4019c7f68578922ec99d2d40b7741e8c2d73ea204956a51014558f
   document:
     architecture: team-with-console
     border:
@@ -145,6 +145,8 @@ contract:
         name: agentic.agent.AgentRevisions
       - kind: view
         name: agentic.agent.Agents
+      - kind: view
+        name: agentic.agent.RevisionUsages
       - kind: view
         name: agentic.gateway.Calls
       - kind: view
@@ -371,7 +373,7 @@ contract:
       port: question.question
       protocol: Ask (Answer | RecordUnreadableAnswer | TakeDefault | Withdraw)
       settings: {}
-    ports_digest: b80e563c5d7d4eec3d3f4eb20446eaef1cddb133ff7414950f5767e1f9c397c1
+    ports_digest: b257c8de9607627a0d6f6d4b6786198c766bb2811aee55627f8a1c1c1b09e99e
 binding:
   digest: sha256:a65be2f086046338aa5009f363582c2ccf730350224595c398240e4eef53097c
   document:
@@ -563,4 +565,4 @@ ingress:
 requirements: []
 agents: {}
 runtimes: {}
-digest: sha256:acefab7b6af7927c8ce1d35931be20cb624d3f128377cf98f9f728414dff3444
+digest: sha256:1d6ecd0cb5d79e560c4043c93d26c03b7dd8282b8fa8d3d00b4d7de20920cae0

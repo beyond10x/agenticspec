@@ -3,6 +3,7 @@ views:
   agentic.architecture.Reach: reach.json
   agentic.agent.AgentRevisions: ../../fixtures/agentic.agent.AgentRevisions.json
   agentic.agent.Agents: ../../fixtures/agentic.agent.Agents.json
+  agentic.agent.RevisionUsages: ../../fixtures/agentic.agent.RevisionUsages.json
   agentic.architecture.Architectures: ../../fixtures/agentic.architecture.Architectures.json
   agentic.architecture.Contracts: ../../fixtures/agentic.architecture.Contracts.json
   agentic.architecture.Ingresses: ../../fixtures/agentic.architecture.Ingresses.json

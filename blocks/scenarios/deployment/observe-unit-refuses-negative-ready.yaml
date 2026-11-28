@@ -1,0 +1,77 @@
+# A unit never holds a negative ready count (DeploymentUnit's invariant `ready >= 0`). The target
+# observes a mapped unit with two ready replicas, then reports minus one: the observation is
+# refused, nothing is emitted and the unit keeps the two it last held.
+type: ess-scenario/7
+domain: agentic.deployment
+scenario: observe-unit-refuses-negative-ready
+summary: An observation with a negative ready count is refused and the unit keeps its last count.
+
+arrange:
+  - instance: d1
+    entity: agentic.deployment.Deployment
+  - instance: core
+    entity: agentic.deployment.DeploymentUnit
+
+timeline:
+  - at: 2026-11-28T10:00:00Z
+    command: agentic.deployment.RequestDeployment
+    input:
+      architecture_id: 00000000-0000-4000-8000-000000000401
+      revision_id: 00000000-0000-4000-8000-000000000402
+      in_process: false
+      target: lab
+      scope: observed
+      contract_digest: sha256:c0
+      binding_digest: sha256:b0
+      packing_digest: sha256:p0
+      findings: []
+    outcome: requested
+    capture: {instance: d1, event: agentic.deployment.DeploymentRequested, field: deployment_id}
+
+  - at: 2026-11-28T10:00:01Z
+    command: agentic.deployment.RecordBundle
+    input: {deployment_id: {$instance: d1}, bundle_digest: sha256:d0}
+    outcome: bundled
+
+  - at: 2026-11-28T10:00:02Z
+    command: agentic.deployment.RecordUnit
+    input:
+      deployment_id: {$instance: d1}
+      name: core
+      kind: Core
+      parts: [gateway]
+      replicas: 2
+    outcome: recorded
+    capture: {instance: core, event: agentic.deployment.UnitRecorded, field: unit_id}
+
+  - at: 2026-11-28T10:00:03Z
+    command: agentic.deployment.RecordTranslation
+    input: {deployment_id: {$instance: d1}, translation_digest: sha256:t0}
+    outcome: translated
+
+  - at: 2026-11-28T10:00:04Z
+    command: agentic.deployment.MapUnit
+    input: {unit_id: {$instance: core}, target_object: workload/core}
+    outcome: mapped
+
+  - at: 2026-11-28T10:00:05Z
+    command: agentic.deployment.ObserveUnit
+    input: {unit_id: {$instance: core}, ready: 2}
+    outcome: observed
+
+  - at: 2026-11-28T10:00:06Z
+    command: agentic.deployment.ObserveUnit
+    input: {unit_id: {$instance: core}, ready: -1}
+    outcome: negative-ready
+    error:
+      name: agentic.deployment.NegativeReady
+    no_events: [agentic.deployment.UnitObserved]
+
+assert:
+  - view: agentic.deployment.Units
+    params:
+      deployment_id: {$instance: d1}
+    contains:
+      unit_id: {$instance: core}
+      ready: 2
+      state: Mapped

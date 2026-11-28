@@ -138,7 +138,7 @@ Ingresses: who reaches the architecture from outside, what each audience may use
 | ingress | audience | authenticated | exports | commands | views | feeds | metrics |
 |---|---|---|---|---|---|---|---|
 | **metrics** | `control.monitor` | no | `metrics_scrape` | 0 | 0 | 0 | 9 |
-| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 9 | 25 | 66 | 0 |
+| **operator** | `control.operator` | yes | `http`, `event_stream`, `ui`, `tool` | 9 | 26 | 66 | 0 |
 
 - **metrics**: `cache_bust_count`, `cache_hit_share`, `context_size_p90_tokens`, `cost_usd`, `human_prompt_share`, `owner_wait_share`, `priced_message_share`, `sub_agents_started`, `subagent_cost_share`
 - **operator**: `agentic.gateway.DetachUpstream`, `agentic.gateway.DrainGateway`, `agentic.gateway.StopGateway`, `agentic.question.Answer`, `agentic.trigger.DisableSchedule`, `agentic.trigger.DisableTrigger`, `agentic.trigger.EnableSchedule`, `agentic.trigger.EnableTrigger`, `agentic.trigger.PassScheduleChecks`
