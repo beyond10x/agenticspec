@@ -104,14 +104,6 @@ const SUB_KEYS: [&str; 6] = [
     "provider",
 ];
 
-/// The subtitle of a part drawn inside another: its first property when nothing else names it.
-fn child_sub(p: &Part) -> String {
-    match (p.kind.is_none() && sub_prop(p).is_none(), p.props.first()) {
-        (true, Some((_, v))) => format!("{} · {v}", p.block),
-        _ => subtitle(p),
-    }
-}
-
 /// The accessible name of a part's card.
 fn label_for(arch: &Architecture, p: &Part) -> String {
     let mut s = format!("{}, {}", p.name, subtitle(p));
@@ -142,22 +134,6 @@ fn resolve<'a>(arch: &'a Architecture, name: &str) -> Option<&'a Part> {
             .iter()
             .find(|p| p.name == head && p.nested.as_ref().is_some_and(|n| !n.ports.is_empty()))
     })
-}
-
-/// Whether part `p` is drawn inside another part's card.
-fn drawn_inside(arch: &Architecture, p: &Part) -> bool {
-    let mut cur = p;
-    let mut host = None;
-    for _ in 0..8 {
-        match cur.per.as_deref().and_then(|x| resolve(arch, x)) {
-            Some(next) if next.name != p.name => {
-                host = Some(next);
-                cur = next;
-            }
-            _ => break,
-        }
-    }
-    host.is_some()
 }
 
 /// A marked place as a chip: its field, its value (at baseline when a result holds one), the best
@@ -230,16 +206,17 @@ pub fn to_page(arch: &Architecture, o: Option<&Outcome>) -> (Page, Decor) {
                     value: c.clone(),
                 })
                 .collect(),
-            region: p.per.clone(),
+            region: p
+                .per
+                .as_deref()
+                .and_then(|x| resolve(arch, x))
+                .map(|h| h.name.clone())
+                .or_else(|| p.per.clone()),
         });
         decor.nodes.push((
             p.name.clone(),
             NodeDecor {
-                subtitle: Some(if drawn_inside(arch, p) {
-                    child_sub(p)
-                } else {
-                    subtitle(p)
-                }),
+                subtitle: Some(subtitle(p)),
                 icon: Some(icon(&p.block)),
                 properties,
                 outline: border.then(|| "border".to_string()),
@@ -257,6 +234,8 @@ pub fn to_page(arch: &Architecture, o: Option<&Outcome>) -> (Page, Decor) {
                 kind: "border part".to_string(),
                 direction: Direction::Both,
                 contract: None,
+                via: None,
+                unresolved: false,
             });
         }
         for pl in &p.places {

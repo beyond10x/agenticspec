@@ -148,6 +148,13 @@ pub struct Port {
     pub direction: Direction,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub contract: Option<String>,
+    /// Text on the port row after its name, such as the protocols it runs over.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub via: Option<String>,
+    /// The port names a target that does not resolve: a dashed stub leaves its row and reaches
+    /// nothing; a refusal mark on the port names why.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub unresolved: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -403,7 +410,9 @@ fn legend(page: &Page) -> String {
         );
     }
     if page.nodes.iter().any(|n| n.region.is_some()) {
-        h.push_str("<li><span class=\"swatch per-sample\"></span>drawn inside its region</li>");
+        h.push_str(
+            "<li><span class=\"swatch per-sample\"></span>a region, framed around its nodes</li>",
+        );
     }
     if page.marks.iter().any(|m| m.level == Level::Refusal) {
         h.push_str("<li><span class=\"swatch refusal-sample\"></span>refused</li>");

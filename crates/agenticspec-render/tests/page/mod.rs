@@ -88,10 +88,12 @@ fn full() -> Page {
         kind: "http".to_string(),
         direction: Direction::In,
         contract: Some("charge/1".to_string()),
+        via: Some("sip + rtp".to_string()),
+        unresolved: true,
     }];
     p.edges[0].to = "pay.charge".to_string();
     p.edges[0].count = Some(2);
-    p.marks[0].target.port = Some("charge".to_string());
+    p.marks[0] = mark("pay", Some("charge"), "use_unresolved", Level::Refusal);
     p
 }
 
@@ -135,7 +137,7 @@ fn a_refusal_rings_its_card_and_port_and_information_does_not() {
     assert!(html.contains("<g class=\"chip refusal\""));
     assert!(html.contains("<g class=\"chip\"><title>budget: budget detail</title>"));
     let html = render(&full());
-    assert!(html.contains("<g class=\"port refused\" data-port=\"pay.charge\""));
+    assert!(html.contains("<g class=\"port refused unresolved\" data-port=\"pay.charge\""));
     assert!(
         !card_of(&html, "pay").contains("refused"),
         "a refused port, not its card"
@@ -152,16 +154,115 @@ fn a_refusal_rings_its_card_and_port_and_information_does_not() {
 }
 
 #[test]
-fn a_node_in_a_region_is_drawn_inside_the_card_of_its_outermost_region() {
+fn a_node_in_a_region_is_drawn_inside_the_frame_of_its_region() {
     let html = render(&full());
     assert!(
-        html.contains("class=\"node region per f-other\" data-part=\"zone\""),
-        "the region that is no node is a card of its own"
+        html.contains("<g class=\"region per f-other\" data-region=\"zone\">"),
+        "the region that is no node is a frame of its own"
     );
-    assert!(html.contains("class=\"node child f-"), "db is a child card");
+    assert!(
+        html.contains("<g class=\"region per f-other\" data-region=\"rack\">"),
+        "the region inside it is a frame inside it"
+    );
+    assert!(html.find("data-region=\"zone\"") < html.find("data-region=\"rack\""));
+    assert!(html.contains("data-part=\"db\""), "db is a card of its own");
     assert!(
         html.contains(">per tenant<"),
         "headed by the outermost region"
+    );
+}
+
+/// The markup of the port row of `address`, from its group's opening tag to its end.
+fn port_row(html: &str, address: &str) -> String {
+    let start = html
+        .find(&format!("data-port=\"{address}\""))
+        .unwrap_or_else(|| panic!("port {address} is drawn"));
+    let open = html[..start].rfind("<g ").expect("the row's group");
+    let end = start + html[start..].find("</g>").expect("the row ends");
+    html[open..end].to_string()
+}
+
+#[test]
+fn an_unresolved_port_leaves_its_row_as_a_dashed_stub_named_by_its_refusal() {
+    let html = render(&full());
+    let row = port_row(&html, "pay.charge");
+    assert!(
+        row.starts_with("<g class=\"port refused unresolved\""),
+        "{row}"
+    );
+    assert!(
+        row.contains("<path class=\"unresolved-end\" d=\"M"),
+        "{row}"
+    );
+    assert!(
+        row.contains("<tspan class=\"rule\">use_unresolved</tspan>"),
+        "{row}"
+    );
+    let mut page = full();
+    page.ports[0].unresolved = false;
+    let row = port_row(&render(&page), "pay.charge");
+    assert!(row.starts_with("<g class=\"port refused\""), "{row}");
+    assert!(!row.contains("unresolved-end") && !row.contains("class=\"rule\""));
+}
+
+#[test]
+fn the_via_of_a_port_is_drawn_on_its_row_after_its_name() {
+    let html = render(&full());
+    let row = port_row(&html, "pay.charge");
+    let name = row.find("charge").expect("the port's name");
+    let via = row
+        .find("<tspan class=\"via\">sip + rtp</tspan>")
+        .unwrap_or_else(|| panic!("{row}"));
+    assert!(name < via, "{row}");
+    let mut page = full();
+    page.ports[0].via = None;
+    assert!(!port_row(&render(&page), "pay.charge").contains("class=\"via\""));
+}
+
+/// The box `x y w h` of the card of node `id`.
+fn box_of(html: &str, id: &str) -> [f64; 4] {
+    let start = html
+        .find(&format!("data-part=\"{id}\""))
+        .unwrap_or_else(|| panic!("{id} is drawn"));
+    let at = start + html[start..].find("data-box=\"").expect("a box") + 10;
+    let nums: Vec<f64> = html[at..at + html[at..].find('"').expect("box ends")]
+        .split(' ')
+        .map(|n| n.parse().expect("a number"))
+        .collect();
+    [nums[0], nums[1], nums[2], nums[3]]
+}
+
+#[test]
+fn an_edge_to_a_node_inside_a_region_lands_on_the_node_card() {
+    let html = render(&full());
+    let tag = "<path class=\"edge\" d=\"";
+    let at = html
+        .match_indices(tag)
+        .map(|(i, _)| i + tag.len())
+        .find(|&i| {
+            html[i..].contains("data-to=\"db\"") && {
+                let line = &html[i..i + html[i..].find('>').expect("tag ends")];
+                line.contains("data-from=\"pay\" data-to=\"db\"")
+            }
+        })
+        .expect("the edge pay -> db");
+    let d = &html[at..at + html[at..].find('"').expect("d ends")];
+    let nums: Vec<f64> = d
+        .split(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-'))
+        .filter(|s| !s.is_empty())
+        .map(|s| s.parse().expect("a number"))
+        .collect();
+    let (ex, ey) = (nums[nums.len() - 2], nums[nums.len() - 1]);
+    let [x, y, w, h] = box_of(&html, "db");
+    assert!(
+        x <= ex && ex <= x + w,
+        "end x {ex} within db's card {x}..{}",
+        x + w
+    );
+    assert!(
+        (ey - y).abs() <= 8.0 || (ey - (y + h)).abs() <= 8.0,
+        "end y {ey} at db's card top {y} or bottom {}, not at its frame",
+        y + h
     );
 }
 
@@ -284,6 +385,7 @@ fn check(root: &Value, s: &Value, v: &Value, at: &str, all: bool, errs: &mut Vec
             "integer" => v.is_u64() || v.is_i64(),
             "object" => v.is_object(),
             "array" => v.is_array(),
+            "boolean" => v.is_boolean(),
             other => panic!("type {other} is not in the subset"),
         };
         if !ok {

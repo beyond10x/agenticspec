@@ -179,7 +179,7 @@ fn legend(arch: &Architecture) -> String {
     }
     if arch.parts.iter().any(|p| p.per.is_some()) {
         h.push_str(
-            "<li><span class=\"swatch per-sample\"></span>one per owner, drawn inside it</li>",
+            "<li><span class=\"swatch per-sample\"></span>one per owner, framed with it</li>",
         );
     }
     if arch.places().next().is_some() {

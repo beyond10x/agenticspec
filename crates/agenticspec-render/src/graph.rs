@@ -21,9 +21,6 @@ const ICON: f64 = 30.0;
 const HEAD: f64 = 52.0;
 const PROP: f64 = 17.0;
 const CHIP: f64 = 25.0;
-const CHILD_HEAD: f64 = 18.0;
-const CHILD: f64 = 38.0;
-const CHILD_GAP: f64 = 6.0;
 const MIN_W: f64 = 168.0;
 const LINE_GAP: f64 = 12.0;
 const ROW_GAP: f64 = 20.0;
@@ -408,15 +405,41 @@ struct Part {
     badges: Vec<String>,
     outline: Option<String>,
     refused: bool,
-    /// ` region` or ` region per` for the card of a region that is no node.
-    class: &'static str,
+    /// A region that is no node: drawn only as the frame around what it holds.
+    frame_only: bool,
     props: Vec<(String, String)>,
     description: String,
     region: Option<String>,
     row: usize,
-    /// Full address `node.port`, the port's own name, its title, whether a refusal marks it.
-    ports: Vec<(String, String, String, bool)>,
+    ports: Vec<PortRow>,
     chips: Vec<Chip>,
+}
+
+/// A port as one row of its card.
+struct PortRow {
+    /// `node.port`.
+    address: String,
+    own: String,
+    title: String,
+    refused: bool,
+    via: Option<String>,
+    unresolved: bool,
+    /// The names of the refusals that mark the port.
+    refusals: Vec<String>,
+}
+
+impl PortRow {
+    /// The text after `port`.
+    fn text(&self) -> String {
+        let mut s = self.own.clone();
+        if let Some(v) = &self.via {
+            s.push_str(&format!(" {v}"));
+        }
+        if self.unresolved && !self.refusals.is_empty() {
+            s.push_str(&format!(" {}", self.refusals.join(", ")));
+        }
+        s
+    }
 }
 
 /// An edge as the layout reads it.
@@ -433,13 +456,26 @@ struct Link {
 struct Scene {
     parts: Vec<Part>,
     links: Vec<Link>,
-    /// Each region with the region it lies in and the heading of the nodes inside it.
-    regions: Vec<(String, Option<String>, String)>,
+    /// Each region with the region it lies in, the heading of what it holds and whether it reads
+    /// "per".
+    regions: Vec<(String, Option<String>, String, bool)>,
+    /// The part whose frame each part is drawn in.
+    parent: Vec<Option<usize>>,
 }
 
 impl Scene {
     fn part(&self, id: &str) -> Option<&Part> {
         self.parts.iter().find(|p| p.id == id)
+    }
+
+    /// The part an edge end names: a node, or the node of the port `<node>.<port>`.
+    fn index(&self, name: &str) -> Option<usize> {
+        self.parts.iter().position(|p| p.id == name).or_else(|| {
+            let (head, _) = name.split_once('.')?;
+            self.parts
+                .iter()
+                .position(|p| p.id == head && !p.ports.is_empty())
+        })
     }
 
     fn read(page: &Page, decor: &Decor) -> Self {
@@ -458,7 +494,7 @@ impl Scene {
                     }
                 })
         };
-        let regions: Vec<(String, Option<String>, String)> = all_regions(page)
+        let regions: Vec<(String, Option<String>, String, bool)> = all_regions(page)
             .into_iter()
             .map(|(r, parent)| {
                 let heading = match (&r.per, &r.r#in) {
@@ -466,7 +502,7 @@ impl Scene {
                     (None, Some(i)) => format!("in {i}"),
                     (None, None) => format!("in {}", r.label),
                 };
-                (r.id.clone(), parent, heading)
+                (r.id.clone(), parent, heading, r.per.is_some())
             })
             .collect();
         let rows = rows(page, &decor.groups);
@@ -511,7 +547,7 @@ impl Scene {
                     badges,
                     outline: d.outline.clone(),
                     refused: false,
-                    class: "",
+                    frame_only: false,
                     props: d.properties.clone(),
                     region: n.region.clone(),
                     row,
@@ -520,52 +556,25 @@ impl Scene {
                 }
             })
             .collect();
-        // An outermost region that is no node is drawn as a card of its own, in the top row of
-        // the nodes it holds.
-        let top = |id: &str| -> String {
-            let mut cur = id.to_string();
-            for _ in 0..16 {
-                match regions
-                    .iter()
-                    .find(|r| r.0 == cur)
-                    .and_then(|r| r.1.clone())
-                {
-                    Some(p) => cur = p,
-                    None => break,
-                }
-            }
-            cur
-        };
+        // A region that is no node is a frame of its own, inside the region it lies in.
         for (r, parent) in all_regions(page) {
-            if parent.is_some() || page.nodes.iter().any(|n| n.id == r.id) {
+            if parts.iter().any(|p| p.id == r.id) {
                 continue;
             }
-            let row = page
-                .nodes
-                .iter()
-                .zip(&rows)
-                .filter(|(n, _)| n.region.as_deref().is_some_and(|x| top(x) == r.id))
-                .map(|(_, &row)| row)
-                .min()
-                .unwrap_or(0);
             parts.push(Part {
                 id: r.id.clone(),
                 label: r.label.clone(),
                 slot: "other",
                 icon: icon("frame"),
-                description: format!("{}, region", r.label),
-                subtitle: "region".to_string(),
+                description: r.label.clone(),
+                subtitle: String::new(),
                 badges: Vec::new(),
                 outline: None,
                 refused: false,
-                class: if r.per.is_some() {
-                    " region per"
-                } else {
-                    " region"
-                },
+                frame_only: true,
                 props: Vec::new(),
-                region: None,
-                row,
+                region: parent,
+                row: usize::MAX,
                 ports: Vec::new(),
                 chips: Vec::new(),
             });
@@ -588,7 +597,21 @@ impl Scene {
             if let Some(c) = &port.contract {
                 title.push_str(&format!(", contract {c}"));
             }
-            p.ports.push((address, port.name.clone(), title, false));
+            if let Some(v) = &port.via {
+                title.push_str(&format!(", via {v}"));
+            }
+            if port.unresolved {
+                title.push_str(", unresolved");
+            }
+            p.ports.push(PortRow {
+                address,
+                own: port.name.clone(),
+                title,
+                refused: false,
+                via: port.via.clone(),
+                unresolved: port.unresolved,
+                refusals: Vec::new(),
+            });
         }
         for (i, m) in page.marks.iter().enumerate() {
             let Some(p) = parts.iter_mut().find(|p| p.id == m.target.node) else {
@@ -597,8 +620,9 @@ impl Scene {
             if m.level == page::Level::Refusal {
                 match &m.target.port {
                     Some(name) => {
-                        for port in p.ports.iter_mut().filter(|x| x.1 == *name) {
-                            port.3 = true;
+                        for port in p.ports.iter_mut().filter(|x| x.own == *name) {
+                            port.refused = true;
+                            port.refusals.push(m.name.clone());
                         }
                     }
                     None => p.refused = true,
@@ -610,6 +634,47 @@ impl Scene {
                 .and_then(|c| c.clone())
                 .unwrap_or_else(|| Chip::of(m));
             p.chips.push(chip);
+        }
+        // The frame each part is drawn in: the part its region names, never itself, and no
+        // chain that comes back to where it started.
+        let n = parts.len();
+        let mut parent: Vec<Option<usize>> = (0..n)
+            .map(|i| {
+                let r = parts[i].region.as_deref()?;
+                parts.iter().position(|p| p.id == r).filter(|&j| j != i)
+            })
+            .collect();
+        for i in 0..n {
+            let mut cur = i;
+            for _ in 0..=n {
+                match parent[cur] {
+                    Some(j) if j == i => {
+                        parent[i] = None;
+                        break;
+                    }
+                    Some(j) => cur = j,
+                    None => break,
+                }
+            }
+        }
+        // A frame of its own sits in the top row of what it holds.
+        for _ in 0..n {
+            for i in 0..n {
+                if !parts[i].frame_only {
+                    continue;
+                }
+                let r = (0..n)
+                    .filter(|&c| parent[c] == Some(i))
+                    .map(|c| parts[c].row)
+                    .min()
+                    .unwrap_or(usize::MAX);
+                parts[i].row = r;
+            }
+        }
+        for p in &mut parts {
+            if p.row == usize::MAX {
+                p.row = 0;
+            }
         }
         let links = page
             .edges
@@ -630,16 +695,31 @@ impl Scene {
             parts,
             links,
             regions,
+            parent,
         }
     }
 
-    /// The heading of the nodes drawn inside container `c`.
-    fn heading(&self, c: usize) -> String {
+    /// The heading of what the frame of part `c` holds, and whether it reads "per".
+    fn heading(&self, c: usize) -> (String, bool) {
         let p = &self.parts[c];
         match self.regions.iter().find(|r| r.0 == p.id) {
-            Some((_, _, heading)) => heading.clone(),
-            None => format!("in {}", p.label),
+            Some((_, _, heading, per)) => (heading.clone(), *per),
+            None => (format!("in {}", p.label), false),
         }
+    }
+
+    /// Whether part `c` is drawn as a frame: a region that is no node, or a node others are in.
+    fn framed(&self, c: usize) -> bool {
+        self.parts[c].frame_only || self.parent.contains(&Some(c))
+    }
+
+    /// The outermost part whose frame part `i` is drawn in.
+    fn top(&self, i: usize) -> usize {
+        let mut cur = i;
+        while let Some(j) = self.parent[cur] {
+            cur = j;
+        }
+        cur
     }
 }
 
@@ -719,74 +799,160 @@ fn rows(page: &Page, groups: &[(String, String, u32)]) -> Vec<usize> {
     row
 }
 
+/// Padding of a frame, the height of its heading and the gap between what it holds.
+const FPAD: f64 = 10.0;
+const FHEAD: f64 = 24.0;
+const FGAP: f64 = 16.0;
+
+/// The size of the card of node `p`.
+fn node_size(sc: &Scene, p: usize) -> (f64, f64) {
+    let p = &sc.parts[p];
+    let name_w = text_w(&p.label, 13.5, true);
+    let badge: f64 = p.badges.iter().map(|b| badge_w(b) + 8.0).sum();
+    let tag = p.outline.as_ref().map(|t| tag_w(t) + 8.0).unwrap_or(0.0);
+    let head = ICON + 10.0 + (name_w + badge).max(text_w(&p.subtitle, 11.5, false) + tag);
+    let mut inner = head;
+    for (k, v) in &p.props {
+        inner = inner.max(text_w(k, 11.5, false) + 6.0 + text_w(v, 11.5, false));
+    }
+    for port in &p.ports {
+        inner = inner.max(text_w(&format!("port {}", port.text()), 11.5, false) + 8.0);
+    }
+    for c in &p.chips {
+        inner = inner.max(c.width());
+    }
+    let w = (inner + 2.0 * PAD).max(MIN_W).ceil();
+    let mut h = HEAD;
+    h += p.props.len() as f64 * PROP;
+    h += p.ports.len() as f64 * PROP;
+    h += p.chips.len() as f64 * CHIP;
+    let h = if h == HEAD { HEAD } else { h + 6.0 };
+    (w, h)
+}
+
+/// One item of a row: a node's card, or the frame of a region with the cards and frames it
+/// holds side by side.
 struct Card {
-    part: usize,
     w: f64,
     h: f64,
-    children: Vec<usize>,
-    heading: String,
-    border: bool,
     row: usize,
+    /// Each node card: its part, its offset from the item's top left and its size.
+    nodes: Vec<(usize, f64, f64, f64, f64)>,
+    /// Each frame, outermost first: its part, offset and size.
+    frames: Vec<(usize, f64, f64, f64, f64)>,
+    /// Two node cards side by side in one frame: their parts and the gap's left and right edge
+    /// and top, from the item's top left.
+    gaps: Vec<(usize, usize, f64, f64, f64)>,
 }
 
 impl Card {
-    fn new(sc: &Scene, part: usize, children: Vec<usize>) -> Self {
-        let p = &sc.parts[part];
-        let border = p.outline.is_some();
-        let heading = if children.is_empty() {
-            String::new()
-        } else {
-            sc.heading(part)
+    fn new(sc: &Scene, part: usize) -> Self {
+        let mut c = Card {
+            w: 0.0,
+            h: 0.0,
+            row: sc.parts[part].row,
+            nodes: Vec::new(),
+            frames: Vec::new(),
+            gaps: Vec::new(),
         };
-        let name_w = text_w(&p.label, 13.5, true);
-        let badge: f64 = p.badges.iter().map(|b| badge_w(b) + 8.0).sum();
-        let tag = p.outline.as_ref().map(|t| tag_w(t) + 8.0).unwrap_or(0.0);
-        let head = ICON + 10.0 + (name_w + badge).max(text_w(&p.subtitle, 11.5, false) + tag);
-        let mut inner = head;
-        for (k, v) in &p.props {
-            inner = inner.max(text_w(k, 11.5, false) + 6.0 + text_w(v, 11.5, false));
+        let (w, h) = place(sc, part, 0.0, 0.0, &mut c);
+        c.w = w;
+        c.h = h;
+        c
+    }
+
+    /// The node card of part `p`: its offset and size.
+    fn node(&self, p: usize) -> Option<(f64, f64, f64, f64)> {
+        self.nodes
+            .iter()
+            .find(|n| n.0 == p)
+            .map(|n| (n.1, n.2, n.3, n.4))
+    }
+
+    /// Whether the item is one node card alone.
+    fn single(&self) -> bool {
+        self.frames.is_empty()
+    }
+
+    /// Mirrors what the frames hold left to right.
+    fn mirror(&mut self) {
+        let w = self.w;
+        for n in self.nodes.iter_mut().chain(self.frames.iter_mut()) {
+            n.1 = w - n.1 - n.3;
         }
-        for (_, own, _, _) in &p.ports {
-            inner = inner.max(text_w(&format!("port {own}"), 11.5, false) + 8.0);
-        }
-        for c in &p.chips {
-            inner = inner.max(c.width());
-        }
-        for &c in &children {
-            let cp = &sc.parts[c];
-            let w = 8.0
-                + 20.0
-                + 8.0
-                + text_w(&cp.label, 12.0, true).max(text_w(&cp.subtitle, 11.0, false))
-                + 10.0;
-            inner = inner.max(w);
-            for ch in &cp.chips {
-                inner = inner.max(ch.width() + 16.0);
-            }
-        }
-        inner = inner.max(text_w(&heading, 11.0, false));
-        let w = (inner + 2.0 * PAD).max(MIN_W).ceil();
-        let mut h = HEAD;
-        h += p.props.len() as f64 * PROP;
-        h += p.ports.len() as f64 * PROP;
-        h += p.chips.len() as f64 * CHIP;
-        if !children.is_empty() {
-            h += CHILD_HEAD;
-            for &c in &children {
-                h += CHILD + sc.parts[c].chips.len() as f64 * CHIP + CHILD_GAP;
-            }
-        }
-        let h = if h == HEAD { HEAD } else { h + 6.0 };
-        Card {
-            part,
-            w,
-            h,
-            children,
-            heading,
-            border,
-            row: p.row,
+        for g in &mut self.gaps {
+            *g = (g.1, g.0, w - g.3, w - g.2, g.4);
         }
     }
+}
+
+/// The text over a frame: the region's label when it is no node, then its heading.
+fn frame_head(sc: &Scene, p: usize) -> (Option<String>, String, bool) {
+    let (heading, per) = sc.heading(p);
+    let label = sc.parts[p].frame_only.then(|| sc.parts[p].label.clone());
+    (label, heading, per)
+}
+
+fn frame_head_w(sc: &Scene, p: usize) -> f64 {
+    let (label, heading, _) = frame_head(sc, p);
+    label.map(|l| text_w(&l, 12.0, true) + 8.0).unwrap_or(0.0) + text_w(&heading, 11.0, false)
+}
+
+/// Lays out part `p` with its top left at `x`, `y`: its node card, or its frame holding its own
+/// card first and then each part drawn in it, side by side. Returns the size.
+fn place(sc: &Scene, p: usize, x: f64, y: f64, card: &mut Card) -> (f64, f64) {
+    if !sc.framed(p) {
+        let (w, h) = node_size(sc, p);
+        card.nodes.push((p, x, y, w, h));
+        return (w, h);
+    }
+    let fi = card.frames.len();
+    card.frames.push((p, x, y, 0.0, 0.0));
+    let mut members: Vec<usize> = Vec::new();
+    if !sc.parts[p].frame_only {
+        members.push(p);
+    }
+    members.extend((0..sc.parts.len()).filter(|&c| sc.parent[c] == Some(p)));
+    let top = y + FHEAD;
+    let mut cx = x + FPAD;
+    let mut h: f64 = 0.0;
+    let mut prev: Option<usize> = None;
+    let plain = |m: usize| m == p || !sc.framed(m);
+    for &m in &members {
+        let left = cx;
+        if let Some(a) = prev {
+            let widest = if plain(a) && plain(m) {
+                sc.links
+                    .iter()
+                    .filter(|l| {
+                        let (f, t) = (sc.index(&l.from), sc.index(&l.to));
+                        (f == Some(a) && t == Some(m)) || (f == Some(m) && t == Some(a))
+                    })
+                    .map(|l| text_w(&edge_label(sc, l, false), 11.5, false) + 18.0 + 24.0)
+                    .fold(0.0, f64::max)
+            } else {
+                0.0
+            };
+            cx += FGAP.max(widest);
+            if plain(a) && plain(m) {
+                card.gaps.push((a, m, left, cx, top));
+            }
+        }
+        let (mw, mh) = if m == p {
+            let (w, h) = node_size(sc, p);
+            card.nodes.push((p, cx, top, w, h));
+            (w, h)
+        } else {
+            place(sc, m, cx, top, card)
+        };
+        cx += mw;
+        h = h.max(mh);
+        prev = Some(m);
+    }
+    let w = (cx - x + FPAD).max(frame_head_w(sc, p) + 2.0 * FPAD).ceil();
+    let h = FHEAD + h.max(20.0) + FPAD;
+    card.frames[fi] = (p, x, y, w, h);
+    (w, h)
 }
 
 fn badge_w(text: &str) -> f64 {
@@ -835,6 +1001,8 @@ struct Bundle {
 /// the label row next to its other card, so the edges draw as a comb, not as parallel lines.
 struct Fan {
     card: usize,
+    /// The node card of the item the edges meet at.
+    member: Option<usize>,
     at_lower: bool,
     label: String,
     /// The label row next to the card, where the label sits.
@@ -898,7 +1066,7 @@ fn port_of<'a>(sc: &Scene, end: &'a str) -> Option<&'a str> {
     sc.part(head)?
         .ports
         .iter()
-        .any(|p| p.0 == end)
+        .any(|p| p.address == end)
         .then_some(own)
 }
 
@@ -954,53 +1122,29 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
     let sc = &scene;
     let n = sc.parts.len();
     // An edge end `<node>.<port>` lands on the card of the node with that port.
-    let index = |name: &str| {
-        sc.parts.iter().position(|p| p.id == name).or_else(|| {
-            let (head, _) = name.split_once('.')?;
-            sc.parts
-                .iter()
-                .position(|p| p.id == head && !p.ports.is_empty())
-        })
-    };
+    let index = |name: &str| sc.index(name);
     let endpoints: Vec<&str> = sc
         .links
         .iter()
         .flat_map(|l| [l.from.as_str(), l.to.as_str()])
         .collect();
 
-    // A node in a region is drawn inside the card of the outermost region it lies in: a node of
-    // that id, or the card of a region that is no node.
-    let mut host: Vec<Option<usize>> = vec![None; n];
-    for (i, p) in sc.parts.iter().enumerate() {
-        let Some(mut cur) = p.region.clone() else {
-            continue;
-        };
-        for _ in 0..8 {
-            let next = match index(&cur) {
-                Some(j) if j != i => {
-                    host[i] = Some(j);
-                    sc.parts[j].region.clone()
-                }
-                Some(_) => None,
-                None => sc
-                    .regions
-                    .iter()
-                    .find(|r| r.0 == cur)
-                    .and_then(|r| r.1.clone()),
-            };
-            match next {
-                Some(x) => cur = x,
-                None => break,
-            }
-        }
-    }
+    // A node in a region is drawn inside the frame of the outermost region it lies in; that frame
+    // is one item of its row.
+    let host: Vec<Option<usize>> = (0..n)
+        .map(|i| Some(sc.top(i)).filter(|&t| t != i))
+        .collect();
     let row_of = |i: usize| sc.parts[i].row;
     let resolve = |name: &str| index(name).map(|i| host[i].unwrap_or(i));
 
     // A node that is only ever passed through by edges between two rows is drawn on those edges.
     let mut on_edge = vec![false; n];
     for (i, p) in sc.parts.iter().enumerate() {
-        if host[i].is_some() || p.region.is_some() || endpoints.contains(&p.id.as_str()) {
+        if host[i].is_some()
+            || p.region.is_some()
+            || sc.framed(i)
+            || endpoints.contains(&p.id.as_str())
+        {
             continue;
         }
         on_edge[i] = sc.links.iter().any(|l| {
@@ -1026,13 +1170,7 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
             order.push(i);
         }
     }
-    let mut cards: Vec<Card> = order
-        .iter()
-        .map(|&i| {
-            let children = (0..n).filter(|&c| host[c] == Some(i)).collect();
-            Card::new(sc, i, children)
-        })
-        .collect();
+    let mut cards: Vec<Card> = order.iter().map(|&i| Card::new(sc, i)).collect();
     let card_of = |part: usize| order.iter().position(|&c| c == part);
 
     // A card that two or more cards of its own row send to moves to a row of its own just
@@ -1130,27 +1268,27 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
     // card share one label beside that card, and their lines meet there.
     let mut fans: Vec<Fan> = Vec::new();
     for at_end in [true, false] {
-        let mut keys: Vec<(usize, bool, String, usize)> = Vec::new();
+        let mut keys: Vec<(usize, bool, String, usize, Option<usize>)> = Vec::new();
         for (bi, bd) in bundles.iter().enumerate() {
             if bd.channel.is_some() || bd.fan.is_some() {
                 continue;
             }
             let l = &sc.links[bd.links[0]];
-            let Some(c) = resolve(if at_end { &l.to } else { &l.from }).and_then(card_of) else {
+            let end = if at_end { &l.to } else { &l.from };
+            let Some(c) = resolve(end).and_then(card_of) else {
                 continue;
             };
-            keys.push((c, c == bd.lower, edge_label(sc, l, false), bi));
+            keys.push((c, c == bd.lower, edge_label(sc, l, false), bi, index(end)));
         }
-        for &(c, at_lower, ref label, _) in &keys {
-            if fans
-                .iter()
-                .any(|f| f.card == c && f.at_lower == at_lower && f.label == *label)
-            {
+        for &(c, at_lower, ref label, _, member) in &keys {
+            if fans.iter().any(|f| {
+                f.card == c && f.member == member && f.at_lower == at_lower && f.label == *label
+            }) {
                 continue;
             }
             let members: Vec<usize> = keys
                 .iter()
-                .filter(|k| k.0 == c && k.1 == at_lower && k.2 == *label)
+                .filter(|k| k.0 == c && k.4 == member && k.1 == at_lower && k.2 == *label)
                 .map(|k| k.3)
                 .filter(|&bi| bundles[bi].fan.is_none())
                 .collect();
@@ -1167,6 +1305,7 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
             }
             fans.push(Fan {
                 card: c,
+                member,
                 at_lower,
                 label: label.clone(),
                 layer,
@@ -1390,6 +1529,29 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
             }
             done.push(g);
             k += len.max(1);
+        }
+    }
+    // A frame draws its own node card first, on the left. When it has more links within the row
+    // to its right neighbour than to its left one, it is mirrored, so that card faces them.
+    for layer in &layers {
+        for (k, &it) in layer.iter().enumerate() {
+            if it >= cards.len() || cards[it].single() {
+                continue;
+            }
+            let count = |o: Option<&usize>| -> usize {
+                o.map(|&o| {
+                    levels
+                        .iter()
+                        .filter(|v| (v.a == it && v.b == o) || (v.a == o && v.b == it))
+                        .map(|v| v.links.len())
+                        .sum()
+                })
+                .unwrap_or(0)
+            };
+            let left = k.checked_sub(1).and_then(|j| layer.get(j));
+            if count(layer.get(k + 1)) > count(left) {
+                cards[it].mirror();
+            }
         }
     }
 
@@ -1663,6 +1825,31 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
             });
         }
     }
+    // The card of the node an edge end lands on inside an item: its centre x, top, bottom and
+    // width.
+    let node_box = |ci: usize, part: Option<usize>| -> (f64, f64, f64, f64) {
+        let it = &items[ci];
+        let c = &cards[ci];
+        if c.single() {
+            return (it.x, it.y - it.h / 2.0, it.y + it.h / 2.0, c.w);
+        }
+        let (x0, y0) = (it.x - c.w / 2.0, it.y - c.h / 2.0);
+        match part.and_then(|p| c.node(p)) {
+            Some((dx, dy, w, h)) => (x0 + dx + w / 2.0, y0 + dy, y0 + dy + h, w),
+            None => (it.x, y0, y0 + c.h, c.w),
+        }
+    };
+    // The node an end of a route lands on.
+    let end_node = |ri: usize, upper_end: bool| -> Option<usize> {
+        let bd = &bundles[routes[ri].bundle];
+        let l = &sc.links[routes[ri].link];
+        let from_upper = resolve(&l.from).and_then(card_of) == Some(bd.upper);
+        index(if from_upper == upper_end {
+            &l.from
+        } else {
+            &l.to
+        })
+    };
     // Ports: the ends of edges on one side of a card, spread in the order of where they go.
     // The links of a fan share one port at the fan's card: its key is past the routes'.
     let port_key = |ri: usize, upper_end: bool| -> usize {
@@ -1673,7 +1860,8 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
             _ => ri,
         }
     };
-    let mut ports: Vec<(usize, bool, usize, f64)> = Vec::new(); // card, bottom side, key, toward x
+    // card, bottom side, key, toward x, node
+    let mut ports: Vec<(usize, bool, usize, f64, Option<usize>)> = Vec::new();
     for (ri, r) in routes.iter().enumerate() {
         let bd = &bundles[r.bundle];
         let first = r.pts.first().map(|p| p.0).unwrap_or(items[bd.lower].x);
@@ -1681,29 +1869,40 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
         for (card, side, toward) in [(bd.upper, true, first), (bd.lower, false, last)] {
             let key = port_key(ri, side);
             if !ports.iter().any(|p| p.2 == key && p.1 == side) {
-                ports.push((card, side, key, toward));
+                ports.push((card, side, key, toward, end_node(ri, side)));
             }
         }
     }
     let mut port_x: Vec<(usize, bool, f64)> = Vec::new(); // port key, upper end, x
     for ci in 0..cards.len() {
         for side in [true, false] {
-            let mut ends: Vec<&(usize, bool, usize, f64)> =
-                ports.iter().filter(|p| p.0 == ci && p.1 == side).collect();
-            ends.sort_by(|a, b| a.3.total_cmp(&b.3).then(a.2.cmp(&b.2)));
-            let m = ends.len();
-            let span = if m > 1 {
-                (cards[ci].w - 40.0).min(26.0 * (m as f64 - 1.0))
-            } else {
-                0.0
-            };
-            for (j, e) in ends.iter().enumerate() {
-                let x = if m > 1 {
-                    items[ci].x - span / 2.0 + span * j as f64 / (m as f64 - 1.0)
+            let mut nodes: Vec<Option<usize>> = Vec::new();
+            for p in ports.iter().filter(|p| p.0 == ci && p.1 == side) {
+                if !nodes.contains(&p.4) {
+                    nodes.push(p.4);
+                }
+            }
+            for node in nodes {
+                let (cx, _, _, w) = node_box(ci, node);
+                let mut ends: Vec<&(usize, bool, usize, f64, Option<usize>)> = ports
+                    .iter()
+                    .filter(|p| p.0 == ci && p.1 == side && p.4 == node)
+                    .collect();
+                ends.sort_by(|a, b| a.3.total_cmp(&b.3).then(a.2.cmp(&b.2)));
+                let m = ends.len();
+                let span = if m > 1 {
+                    (w - 40.0).min(26.0 * (m as f64 - 1.0))
                 } else {
-                    items[ci].x
+                    0.0
                 };
-                port_x.push((e.2, side, x));
+                for (j, e) in ends.iter().enumerate() {
+                    let x = if m > 1 {
+                        cx - span / 2.0 + span * j as f64 / (m as f64 - 1.0)
+                    } else {
+                        cx
+                    };
+                    port_x.push((e.2, side, x));
+                }
             }
         }
     }
@@ -1744,7 +1943,7 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
         // between rows, never beside a taller card of the same row.
         let (lu, ll) = (items[bd.upper].layer, items[bd.lower].layer);
         let row_bottom = layer_top[lu] + layer_h[lu];
-        let upper_bottom = items[bd.upper].y + items[bd.upper].h / 2.0;
+        let upper_bottom = node_box(bd.upper, end_node(ri, true)).2;
         let mut pts = vec![(ux, upper_bottom)];
         if row_bottom - upper_bottom > 0.5 {
             pts.push((ux, row_bottom));
@@ -1762,7 +1961,7 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
         {
             pts.push((lx, ty));
         }
-        let lower_top = items[bd.lower].y - items[bd.lower].h / 2.0 - 1.0;
+        let lower_top = node_box(bd.lower, end_node(ri, false)).1 - 1.0;
         if lower_top - layer_top[ll] > 0.5 {
             pts.push((lx, layer_top[ll]));
         }
@@ -1812,7 +2011,49 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
             let link = &sc.links[li];
             let from_left = resolve(&link.from).and_then(card_of) == Some(l);
             let label = edge_label(sc, link, false);
-            if adjacent {
+            // Two items side by side, one of them a frame: the edge runs straight when the node
+            // card at each end faces the other item and the two cards share the height of the
+            // lanes.
+            let straight = (adjacent && !(cards[l].single() && cards[r].single()))
+                .then(|| {
+                    let (ln, rn) = if from_left {
+                        (index(&link.from), index(&link.to))
+                    } else {
+                        (index(&link.to), index(&link.from))
+                    };
+                    let edge_x = |ci: usize, part: Option<usize>, right: bool| -> Option<f64> {
+                        let it = &items[ci];
+                        let c = &cards[ci];
+                        if c.single() {
+                            return Some(it.x + if right { it.w / 2.0 } else { -it.w / 2.0 });
+                        }
+                        let (dx, _, w, _) = c.node(part?)?;
+                        let x0 = it.x - c.w / 2.0;
+                        let faces = if right {
+                            c.nodes.iter().all(|n| n.1 + n.3 <= dx + w + 0.5)
+                        } else {
+                            c.nodes.iter().all(|n| n.1 >= dx - 0.5)
+                        };
+                        faces.then_some(x0 + if right { dx + w } else { dx })
+                    };
+                    let x1 = edge_x(l, ln, true)?;
+                    let x2 = edge_x(r, rn, false)?;
+                    let (_, lt, lb, _) = node_box(l, ln);
+                    let (_, rt, rb, _) = node_box(r, rn);
+                    let (top, bottom) = (lt.max(rt), lb.min(rb));
+                    let half = (m - 1.0) / 2.0 * 26.0;
+                    (bottom - top >= 2.0 * half + 24.0).then(|| {
+                        let y = (top + bottom) / 2.0 + (k as f64 - (m - 1.0) / 2.0) * 26.0;
+                        (x1 + 1.0, x2 - 1.0, y)
+                    })
+                })
+                .flatten();
+            if let Some((x1, x2, y)) = straight {
+                let (sx, ex) = if from_left { (x1, x2) } else { (x2, x1) };
+                let d = format!("M{} {}L{} {}", px(sx), px(y), px(ex), px(y));
+                edge_path(&mut svg, &d, link);
+                row_labels.push(((x1 + x2) / 2.0, y, label));
+            } else if adjacent && cards[l].single() && cards[r].single() {
                 let y = items[l].y + (k as f64 - (m - 1.0) / 2.0) * 26.0;
                 let x1 = items[l].x + items[l].w / 2.0 + 1.0;
                 let x2 = items[r].x - items[r].w / 2.0 - 1.0;
@@ -1825,26 +2066,73 @@ pub(crate) fn render(page: &Page, decor: &Decor) -> Graph {
                 let j = arcs[items[a].layer];
                 arcs[items[a].layer] += 1;
                 let lift = 46.0 + 28.0 * j as f64;
-                let (sx, ex) = if from_left {
-                    (items[l].x, items[r].x)
+                // An arc leaves the top of the node card it starts at and lands on the top of
+                // the one it ends at, inside a frame or not.
+                let (sx, sy, ex, ey) = if cards[l].single() && cards[r].single() {
+                    let (sx, ex) = if from_left {
+                        (items[l].x, items[r].x)
+                    } else {
+                        (items[r].x, items[l].x)
+                    };
+                    (sx, top, ex, top)
                 } else {
-                    (items[r].x, items[l].x)
+                    let (fc, tc) = if from_left { (l, r) } else { (r, l) };
+                    let (sx, sy, _, _) = node_box(fc, index(&link.from));
+                    let (ex, ey, _, _) = node_box(tc, index(&link.to));
+                    (sx, sy, ex, ey)
                 };
                 let d = format!(
                     "M{} {}C{} {} {} {} {} {}",
                     px(sx),
-                    px(top),
+                    px(sy),
                     px(sx),
                     px(top - lift),
                     px(ex),
                     px(top - lift),
                     px(ex),
-                    px(top - 1.0)
+                    px(ey - 1.0)
                 );
                 edge_path(&mut svg, &d, link);
-                row_labels.push(((items[l].x + items[r].x) / 2.0, top - lift * 0.75, label));
+                row_labels.push(((sx + ex) / 2.0, top - lift * 0.75, label));
             }
         }
+    }
+    // Edges between two node cards side by side in one frame run straight across the gap.
+    let mut in_gap: Vec<usize> = Vec::new();
+    for link in &sc.links {
+        let (Some(ca), Some(cb)) = (
+            resolve(&link.from).and_then(card_of),
+            resolve(&link.to).and_then(card_of),
+        ) else {
+            continue;
+        };
+        let (Some(pa), Some(pb)) = (index(&link.from), index(&link.to)) else {
+            continue;
+        };
+        if ca != cb || pa == pb {
+            continue;
+        }
+        let Some(g) = cards[ca]
+            .gaps
+            .iter()
+            .position(|g| (g.0 == pa && g.1 == pb) || (g.0 == pb && g.1 == pa))
+        else {
+            continue;
+        };
+        let (_, _, gl, gr, gt) = cards[ca].gaps[g];
+        let k = in_gap.iter().filter(|&&x| x == g + 1000 * ca).count() as f64;
+        in_gap.push(g + 1000 * ca);
+        let x0 = items[ca].x - cards[ca].w / 2.0;
+        let y = items[ca].y - cards[ca].h / 2.0 + gt + 26.0 + k * 26.0;
+        let (x1, x2) = (x0 + gl + 1.0, x0 + gr - 1.0);
+        let (sx, ex) = if cards[ca].gaps[g].0 == pa {
+            (x1, x2)
+        } else {
+            (x2, x1)
+        };
+        let d = format!("M{} {}L{} {}", px(sx), px(y), px(ex), px(y));
+        edge_path(&mut svg, &d, link);
+        row_labels.push(((x1 + x2) / 2.0, y, edge_label(sc, link, false)));
     }
     svg.push_str("</g>");
 
@@ -2010,35 +2298,76 @@ fn channel_card(svg: &mut String, sc: &Scene, c: usize, x: f64, y: f64, w: f64, 
 }
 
 fn draw_card(svg: &mut String, sc: &Scene, card: &Card, x: f64, y: f64) {
-    let p = &sc.parts[card.part];
+    // Frames first, outermost first, so the cards they hold sit on them.
+    for &(p, dx, dy, w, h) in &card.frames {
+        let (label, heading, per) = frame_head(sc, p);
+        let part = &sc.parts[p];
+        let (fx, fy) = (x + dx, y + dy);
+        let _ = write!(
+            svg,
+            "<g class=\"region{} f-{}\" data-region=\"{}\"><rect class=\"region-bg\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"12\"/>",
+            if per { " per" } else { "" },
+            part.slot,
+            esc(&part.id),
+            px(fx),
+            px(fy),
+            px(w),
+            px(h)
+        );
+        let mut tx = fx + FPAD;
+        if let Some(l) = label {
+            let _ = write!(
+                svg,
+                "<text class=\"region-name\" x=\"{}\" y=\"{}\">{}</text>",
+                px(tx),
+                px(fy + 16.0),
+                esc(&l)
+            );
+            tx += text_w(&l, 12.0, true) + 8.0;
+        }
+        let _ = write!(
+            svg,
+            "<text class=\"region-sub\" x=\"{}\" y=\"{}\">{}</text></g>",
+            px(tx),
+            px(fy + 16.0),
+            esc(&heading)
+        );
+    }
+    for &(p, dx, dy, w, h) in &card.nodes {
+        draw_node(svg, sc, p, x + dx, y + dy, w, h);
+    }
+}
+
+fn draw_node(svg: &mut String, sc: &Scene, part: usize, x: f64, y: f64, w: f64, h: f64) {
+    let p = &sc.parts[part];
+    let border = p.outline.is_some();
     let _ = write!(
         svg,
-        "<g class=\"node{} f-{}{}{}\" data-part=\"{}\">",
-        p.class,
+        "<g class=\"node f-{}{}{}\" data-part=\"{}\">",
         p.slot,
-        if card.border { " on-border" } else { "" },
+        if border { " on-border" } else { "" },
         if p.refused { " refused" } else { "" },
         esc(&p.id),
     );
-    if card.border {
+    if border {
         let _ = write!(
             svg,
             "<rect class=\"border-mark\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"14\"/>",
             px(x - 5.0),
             px(y - 5.0),
-            px(card.w + 10.0),
-            px(card.h + 10.0)
+            px(w + 10.0),
+            px(h + 10.0)
         );
     }
     if p.refused {
-        let off = if card.border { 9.0 } else { 5.0 };
+        let off = if border { 9.0 } else { 5.0 };
         let _ = write!(
             svg,
             "<rect class=\"refusal-ring\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"{}\"/>",
             px(x - off),
             px(y - off),
-            px(card.w + 2.0 * off),
-            px(card.h + 2.0 * off),
+            px(w + 2.0 * off),
+            px(h + 2.0 * off),
             px(10.0 + off)
         );
     }
@@ -2048,12 +2377,12 @@ fn draw_card(svg: &mut String, sc: &Scene, card: &Card, x: f64, y: f64) {
         esc(&p.description),
         px(x),
         px(y),
-        px(card.w),
-        px(card.h),
+        px(w),
+        px(h),
         px(x),
         px(y),
-        px(card.w),
-        px(card.h)
+        px(w),
+        px(h)
     );
     icon_tile(svg, p.icon, x + PAD, y + PAD, ICON);
     let tx = x + PAD + ICON + 10.0;
@@ -2068,7 +2397,7 @@ fn draw_card(svg: &mut String, sc: &Scene, card: &Card, x: f64, y: f64) {
         esc(&p.subtitle)
     );
     // Badges sit at the top right, the last one rightmost.
-    let mut right = x + card.w - PAD;
+    let mut right = x + w - PAD;
     for t in p.badges.iter().rev() {
         let bw = badge_w(t);
         let bx = right - bw;
@@ -2086,7 +2415,7 @@ fn draw_card(svg: &mut String, sc: &Scene, card: &Card, x: f64, y: f64) {
     }
     if let Some(tag) = &p.outline {
         let tw = tag_w(tag);
-        let bx = x + card.w - PAD - tw;
+        let bx = x + w - PAD - tw;
         let _ = write!(
             svg,
             "<g class=\"tag\"><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"16\" rx=\"8\"/><text x=\"{}\" y=\"{}\" text-anchor=\"middle\">{}</text></g>",
@@ -2110,80 +2439,56 @@ fn draw_card(svg: &mut String, sc: &Scene, card: &Card, x: f64, y: f64) {
         );
         cy += PROP;
     }
-    // The ports of a node sit on the left edge of its card, one row each.
-    for (address, own, title, refused) in &p.ports {
+    // The ports of a node sit on the left edge of its card, one row each. An unresolved port
+    // leaves its row as a dashed stub that reaches nothing, named by the refusals on it.
+    for port in &p.ports {
+        let mut class = String::from("port");
+        if port.refused {
+            class.push_str(" refused");
+        }
+        if port.unresolved {
+            class.push_str(" unresolved");
+        }
         let _ = write!(
             svg,
-            "<g class=\"port{}\" data-port=\"{}\"><title>{}</title><rect class=\"port-mark\" x=\"{}\" y=\"{}\" width=\"10\" height=\"10\" rx=\"2\"/><text class=\"prop\" x=\"{}\" y=\"{}\"><tspan class=\"prop-k\">port</tspan> {}</text></g>",
-            if *refused { " refused" } else { "" },
-            esc(address),
-            esc(title),
+            "<g class=\"{class}\" data-port=\"{}\"><title>{}</title>",
+            esc(&port.address),
+            esc(&port.title),
+        );
+        if port.unresolved {
+            let _ = write!(
+                svg,
+                "<path class=\"unresolved-end\" d=\"M{} {}H{}\"/>",
+                px(x - 5.0),
+                px(cy + 8.5),
+                px(x - 21.0)
+            );
+        }
+        let _ = write!(
+            svg,
+            "<rect class=\"port-mark\" x=\"{}\" y=\"{}\" width=\"10\" height=\"10\" rx=\"2\"/><text class=\"prop\" x=\"{}\" y=\"{}\"><tspan class=\"prop-k\">port</tspan> {}",
             px(x - 5.0),
             px(cy + 3.5),
             px(x + PAD),
             px(cy + 12.0),
-            esc(own)
+            esc(&port.own)
         );
+        if let Some(v) = &port.via {
+            let _ = write!(svg, " <tspan class=\"via\">{}</tspan>", esc(v));
+        }
+        if port.unresolved && !port.refusals.is_empty() {
+            let _ = write!(
+                svg,
+                " <tspan class=\"rule\">{}</tspan>",
+                esc(&port.refusals.join(", "))
+            );
+        }
+        svg.push_str("</text></g>");
         cy += PROP;
     }
     for chip in &p.chips {
         chip.svg(svg, x + PAD, cy + 2.0);
         cy += CHIP;
-    }
-    if !card.children.is_empty() {
-        let _ = write!(
-            svg,
-            "<text class=\"per-head\" x=\"{}\" y=\"{}\">{}</text>",
-            px(x + PAD),
-            px(cy + 12.0),
-            esc(&card.heading)
-        );
-        cy += CHILD_HEAD;
-        for &c in &card.children {
-            let cp = &sc.parts[c];
-            let h = CHILD + cp.chips.len() as f64 * CHIP;
-            let w = card.w - 2.0 * PAD;
-            let _ = write!(
-                svg,
-                "<g class=\"node child f-{}{}\" data-part=\"{}\"><rect class=\"child-bg\" tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"8\"/>",
-                cp.slot,
-                if cp.refused { " refused" } else { "" },
-                esc(&cp.id),
-                esc(&cp.description),
-                px(x + PAD),
-                px(cy),
-                px(w),
-                px(h)
-            );
-            if cp.refused {
-                let _ = write!(
-                    svg,
-                    "<rect class=\"refusal-ring\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"10\"/>",
-                    px(x + PAD - 3.0),
-                    px(cy - 3.0),
-                    px(w + 6.0),
-                    px(h + 6.0)
-                );
-            }
-            icon_tile(svg, cp.icon, x + PAD + 8.0, cy + 9.0, 20.0);
-            let _ = write!(
-                svg,
-                "<text class=\"name xs\" x=\"{}\" y=\"{}\">{}</text><text class=\"sub xs\" x=\"{}\" y=\"{}\">{}</text>",
-                px(x + PAD + 36.0),
-                px(cy + 16.0),
-                esc(&cp.label),
-                px(x + PAD + 36.0),
-                px(cy + 30.0),
-                esc(&cp.subtitle)
-            );
-            let mut chy = cy + CHILD;
-            for chip in &cp.chips {
-                chip.svg(svg, x + PAD + 8.0, chy);
-                chy += CHIP;
-            }
-            svg.push_str("</g>");
-            cy += h + CHILD_GAP;
-        }
     }
     svg.push_str("</g>");
 }

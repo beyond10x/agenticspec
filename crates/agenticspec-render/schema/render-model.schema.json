@@ -64,7 +64,9 @@
         "name": { "type": "string" },
         "kind": { "type": "string" },
         "direction": { "enum": ["in", "out", "both"] },
-        "contract": { "type": "string" }
+        "contract": { "type": "string" },
+        "via": { "type": "string" },
+        "unresolved": { "type": "boolean", "default": false }
       }
     },
     "Edge": {

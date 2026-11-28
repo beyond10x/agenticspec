@@ -55,38 +55,22 @@ fn numbers(s: &str) -> Vec<f64> {
         .collect()
 }
 
-/// The box of the card each part is drawn in (a part drawn inside its owner maps to the owner's
-/// card), and the channel cards drawn on edges.
+/// The box of the card of each part, and the channel cards drawn on edges.
 fn cards(svg: &str) -> (BTreeMap<String, [f64; 4]>, Vec<String>) {
     let mut boxes = BTreeMap::new();
     let mut channels = Vec::new();
-    let mut host: Option<[f64; 4]> = None;
     for piece in svg.split("<g class=\"node").skip(1) {
         let head = &piece[..piece.find('>').expect("tag ends")];
         let Some(part) = attr(head, "data-part") else {
             continue;
         };
         let part = part.to_string();
-        let rect = &piece[piece.find("<rect").unwrap_or(0)..];
-        let rect = &rect[..rect.find("/>").unwrap_or(rect.len())];
-        if head.starts_with(" child") {
-            if let Some(b) = host {
-                boxes.insert(part, b);
-            }
-            continue;
-        }
-        let rect = if rect.contains("border-mark") {
-            let rest = &piece[piece.find("card-bg").expect("a card background")..];
-            &rest[..rest.find("/>").expect("rect ends")]
-        } else {
-            rect
-        };
+        let rest = &piece[piece.find(" data-box=").expect("a card carries its box")..];
+        let rect = &rest[..rest.find("/>").expect("rect ends")];
         let b = numbers(attr(rect, "data-box").expect("a card carries its box"));
         let b = [b[0], b[1], b[2], b[3]];
         if head.starts_with(" channel") {
             channels.push(part.clone());
-        } else {
-            host = Some(b);
         }
         boxes.insert(part, b);
     }
