@@ -257,7 +257,7 @@ Each unit:
 | `shape` | an agent unit only: `service` (long-running, the packing's `agent`), `job` (until done, started on demand) or `scheduled` (until done, started by a clock) |
 | `replicas` | the copies that run; absent for a `job` or `scheduled` unit |
 | `code` | what runs. An agent, job or scheduled unit stays an agent: the role `agent-runtime` and its agent documents by digest, never a process command, and the pinned agent runtime as `<image>@sha256:<digest>` when the binding pins one (`runtimes.agent-runtime`) (from a local store `<image>:<tag>`, else its config id). A core or service unit runs its image as `runtime`, by the same reference: its own, its parts', or for the core unit the pinned core runtime (`runtimes.core`); a unit without one names the role `core-runtime`. A UI unit serves static files: `{kind: static, archive, digest}`, the file name of its archive in `files` and its `sha256:` |
-| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace and one per runtime part with durable state ([below](#durable-state)), with its access ([below](#volume-access)), whether there is one per copy of its part, its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
+| `claims` | `cpu_millis`, `memory_mib`, `accelerators`, and `volumes`: one per workspace and one per runtime part with durable state ([below](#durable-state)), with its access ([below](#volume-access)), whether there is one per copy of its part, the programs outside the runtime that also write a durable state (`writers`, when its part names any), its size when the binding gives one, and its `mount`, the absolute path a part of the unit mounts it at |
 | `isolation` | the highest isolation its sandboxes ask for, in agenticspec's own levels |
 | `checks` | how the target sees it start and stay up: an agent, job or scheduled unit has a `startup` check (its agent runtime checks its agent document before it runs); the core and service units answer `/ready` and `/alive` over HTTP; a model unit has a `ready` check. Each check carries the `port` the binding gives it |
 | `schedule` | a scheduled unit's cron rule: the one the binding gives (`packing.parts.<part>.schedule`), else the one that states its schedule's `every` exactly ([Packing](#packing)); absent when it has neither |
@@ -308,6 +308,28 @@ Without an absolute mount it is refused `volume_mount_missing`. A `job` or `sche
 until done and a `model` unit serves a model, so a runtime part with durable state in one of them
 is refused `durable_state_unplaceable`; place it in a core, service, agent or store unit. A runtime
 part marked `external` is not started by the target, and the bundle claims nothing for it.
+
+When programs outside the runtime write the same state too, such as a backup job or an indexer on
+the same host, name them with `state_writers`, a non-empty list of texts, beside
+`durable_state: true`:
+
+```yaml
+parts:
+  flow: { block: runtime, role: workflow, durable_state: true, state_writers: [backup, indexer] }
+```
+
+The state is still the runtime's one volume, with the same access, and no workspace part, so the
+contract asks for no `workspace.lease` or `workspace.proposal` port. The claim names the writers,
+and the architecture page lists them with the part:
+
+```yaml
+volumes:
+  - {name: flow-state, access: read_write_once, per_instance: false, writers: [backup, indexer], mount: /var/lib/flow}
+```
+
+`agenticspec sim check` refuses `state_writers` that is not a non-empty list of texts, or that
+stands without `durable_state: true` (`setting_invalid`). Without `state_writers` the claim has no
+`writers` key.
 
 The bundle carries no secret value, host, provider or target name. It copies the architecture as
 written, so an address in the architecture would land in the bundle: a key `address`, `host`,

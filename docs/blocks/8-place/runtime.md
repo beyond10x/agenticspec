@@ -268,6 +268,7 @@ A part `runtime`:
 | `kind` | string |  |  | every port | What kind of runtime the part is. |
 | `role` | string |  |  |  | The role of the behaviour profile the runtime's runs play. |
 | `durable_state` | boolean |  | `false` |  | Whether the runtime keeps durable state of its own, records it writes and reads back after a restart; in a deployment bundle its unit claims an exclusive volume for it, `<part>-state`. |
+| `state_writers` | string list |  |  |  | The programs outside the runtime that also write its durable state, by name; only beside `durable_state: true`. The state stays the runtime's one volume, with no workspace lease or proposal port, and the bundle's claim of it names these writers. |
 | `model_share` | shares |  |  |  | The share of the runtime's model calls each model part it reaches gets; without it, equal shares. |
 | `per_day_usd` | number of at least 0 | USD |  |  | The spend cap of the runtime's runs per calendar day; without it, no cap. |
 | `per_month_usd` | number of at least 0 | USD |  |  | The spend cap of the runtime's runs per calendar month; without it, no cap. |

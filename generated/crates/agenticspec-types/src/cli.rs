@@ -1,5 +1,5 @@
 // generated from agenticspec v1
-// contract digest 8c5843f8412f29eddc22aa450de14862be977e412547fd1a08517178bd5b81bc
+// contract digest ca4c9e75228ab9679330c21f51ee71fa5ca55f4b89546af413be40d991d1a07f
 // do not edit: regenerate with `ess synthesize`
 
 //! cli — `agenticspec.cli`.
@@ -1413,6 +1413,8 @@ pub struct UiGenerateInput {
     pub path: String,
     /// `out` — `String`.
     pub out: String,
+    /// `project` — `Boolean`.
+    pub project: bool,
 }
 
 /// UiGenerateResult — `agenticspec.cli.UiGenerateResult`.

@@ -792,6 +792,17 @@ pub fn durable_state(part: &Value) -> bool {
         && *crate::check::value(&part["durable_state"]) == Value::Bool(true)
 }
 
+/// The setting of a runtime part that names the programs outside the runtime that also write its
+/// durable state (R109); only beside `durable_state: true`.
+pub const STATE_WRITERS: &str = "state_writers";
+
+/// The outside writers of a runtime part's durable state (`state_writers`, a marked place judged
+/// by its value), when it keeps durable state and names any.
+pub fn state_writers(part: &Value) -> Option<&Value> {
+    let w = crate::check::value(&part[STATE_WRITERS]);
+    (durable_state(part) && w.as_array().is_some_and(|xs| !xs.is_empty())).then_some(w)
+}
+
 /// The name of the volume that holds the durable state of runtime part `part`: `<part>-state`.
 pub fn state_volume(part: &str) -> String {
     format!("{part}-state")
