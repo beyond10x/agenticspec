@@ -1,6 +1,7 @@
 format: agenticspec-experiment/1
 experiment: orchestrator-workers-tuning
 architecture: orchestrator-workers.yaml
+field: coding
 profile: coding.yaml
 horizon: 24h
 seeds: 8

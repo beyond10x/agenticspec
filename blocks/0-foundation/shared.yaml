@@ -33,6 +33,7 @@ types:
   - {name: agentic.shared.AgentRevisionId, kind: newtype, of: Uuid}
   - {name: agentic.shared.HarnessId, kind: newtype, of: Uuid}
   - {name: agentic.shared.HarnessSessionId, kind: newtype, of: Uuid}
+  - {name: agentic.shared.PermissionModeId, kind: newtype, of: Uuid}
   - {name: agentic.shared.TurnId, kind: newtype, of: Uuid}
   - {name: agentic.shared.ToolCallId, kind: newtype, of: Uuid}
 

@@ -1405,10 +1405,11 @@
         "part": "owner"
       }
     ],
+    "field": "coding",
     "format": "agenticspec-experiment/1",
     "horizon": "24h",
     "optimize": "marked",
-    "profile": "../profiles/coding.yaml",
+    "profile": "../fields/coding/profiles/coding.yaml",
     "search": {
       "gates": [
         "unreachable_parts",

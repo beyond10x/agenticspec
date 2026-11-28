@@ -1,6 +1,7 @@
 format: agenticspec-experiment/1
 experiment: scope-partition-tuning
 architecture: scope-partition.yaml
+field: coding
 profile: coding.yaml
 horizon: 24h
 seeds: 8

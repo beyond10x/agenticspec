@@ -24,3 +24,49 @@ Agents that change software: they read and edit files, run commands, and bring t
 ## Architectures
 
 - [auto-merger](auto-merger.md): An agent that watches the change requests of one repository on a forge and merges each one whose checks passed at the head a reviewer approved, acting under a grant its owner issued.
+
+## Behaviour profiles
+
+The simulator's input for this field: how long turns and answers take, how often work fails and what model calls cost. The experiments of the [catalog](../../catalog/index.md) that name this field run under them.
+
+- [coding.yaml](https://github.com/beyond10x/agenticspec/blob/main/fields/coding/profiles/coding.yaml)
+
+## KPIs
+
+The field's own catalogue, [fields/coding/kpis.yaml](https://github.com/beyond10x/agenticspec/blob/main/fields/coding/kpis.yaml). Each KPI names the core block whose events it reads; the core's [KPI catalogue](../../kpis-catalogue.md) holds none of them.
+
+### [knowledge](../../blocks/3-capability/knowledge.md)
+
+| KPI | unit | better | gate | status |
+|---|---|---|---|---|
+| `docs_changed_with_code_share`<br/>Share of merged code changes that also change the documentation they affect.<br/><small>How: ProposalMerged events whose proposal writes source paths and also writes a documentation path or revises an entry, divided by merged proposals that write source paths.</small> | share | higher | – | planned<br/><small>source: research/2610.27381</small> |
+
+### [work](../../blocks/5-work/work.md)
+
+| KPI | unit | better | gate | status |
+|---|---|---|---|---|
+| `false_completions_shipped`<br/>Tasks reported done, incorrect, and accepted.<br/><small>How: Tasks claimed done minus tasks correct, restricted to deliverables that were accepted and merged. Must be 0.</small> | count | lower | <span className="as-tag as-tag--gate">gate</span> | simulated<br/><small>source: research/2610.04375</small> |
+| `task_to_merge_seconds`<br/>Time from task start to merge of its change.<br/><small>How: Seconds between TaskCreated and the ProposalMerged of the task's deliverable, median and 90th percentile.</small> | seconds | lower | – | planned<br/><small>source: design</small> |
+
+### [workspace](../../blocks/8-place/workspace.md)
+
+| KPI | unit | better | gate | status |
+|---|---|---|---|---|
+| `proposals_merged_share`<br/>Proposals merged of proposals made.<br/><small>How: ProposalMerged events divided by ChangeProposed events. Superseded and rejected proposals stay in the divisor.</small> | share | higher | – | planned<br/><small>source: design</small> |
+| `revert_rate`<br/>Share of merged proposals that a later proposal reverts.<br/><small>How: ProposalMerged events whose changes are undone by a later merged proposal, divided by ProposalMerged events, per author kind (agent, human). A rate, so not a gate.</small> | share | lower | – | planned<br/><small>source: research/2609.17598</small> |
+| `open_to_merge_seconds`<br/>Time from a proposal to its merge.<br/><small>How: Seconds between ChangeProposed and ProposalMerged of one proposal, median and 90th percentile.</small> | seconds | lower | – | planned<br/><small>source: research/2610.28683</small> |
+| `merge_conflicts`<br/>Merges that touched a scope another merge changed since the work started.<br/><small>How: ProposalMerged events whose scope another merge touched after the proposal's work began. The simulator counts them per partitioned part; under a mesh the conflict costs a round of rework, without one the merge lands broken.</small> | count | lower | – | simulated<br/><small>source: design</small> |
+
+### verification
+
+| KPI | unit | better | gate | status |
+|---|---|---|---|---|
+| `vacuous_check_share`<br/>Share of checks that pass on a change that touches nothing relevant.<br/><small>How: Run each accepted check against a commit that does not touch what the check covers; checks that pass divided by checks run. A check needs a negative case.</small> | share | lower | – | planned<br/><small>source: research/2611.13709</small> |
+
+## Rows of core catalogs
+
+What the field registers in catalogs of the core when it is installed ([fields/coding/rows.yaml](https://github.com/beyond10x/agenticspec/blob/main/fields/coding/rows.yaml)); the core itself names none of these.
+
+| command | row |
+|---|---|
+| `harness.RegisterPermissionMode` | `accept-edits`: Takes edits of files in the session's workspace without asking and asks for every other action. |

@@ -125,15 +125,14 @@ entities:
         type: Optional<agentic.workspace.Revision>
       - name: superseded_by
         type: Optional<agentic.shared.ProposalId>
-      - name: branch
-        type: Optional<String>
-        summary: The branch the change was handed back on.
       - name: head_revision
         type: Optional<agentic.workspace.Revision>
         summary: The revision the change ends at when it was proposed.
-      - name: review_ref
+      - name: handback
         type: Optional<String>
-        summary: Where the change is reviewed, as the forge names it (a merge or pull request).
+        summary: >-
+          Where the change was handed back for review, as the place that takes it names it; a field
+          of work says what that is.
       - name: merged_under
         type: Optional<agentic.shared.GrantId>
         summary: The standing grant under which it was merged without asking, when one was.
@@ -312,7 +311,7 @@ commands:
       summary: A requested lease goes live; an exclusive workspace is held by it.
     # The workspace is read through the lease's stored reference, not named again in the input.
     # RequestLease, the only writer of Lease.workspace_id, refuses an unknown workspace and nothing
-    # deletes a workspace, so no missing-workspace branch is declared (ess/30). An input naming the
+    # deletes a workspace, so no missing-workspace outcome is declared (ess/30). An input naming the
     # workspace again, refused when it differs from the lease's, made ESS 0.99.2 synthesize grant
     # scenarios whose input names another workspace than the lease's, which then failed.
     input:
@@ -469,9 +468,8 @@ commands:
       - {name: lease_id, type: agentic.shared.LeaseId}
       - {name: base_revision, type: agentic.workspace.Revision}
       - {name: change, type: agentic.shared.Content}
-      - {name: branch, type: Optional<String>}
       - {name: head_revision, type: Optional<agentic.workspace.Revision>}
-      - {name: review_ref, type: Optional<String>}
+      - {name: handback, type: Optional<String>}
     outcomes:
       - name: no-lease
         when_related:
@@ -494,9 +492,8 @@ commands:
           proposed_by: {caller: party}
           base_revision: input.base_revision
           change: input.change
-          branch: input.branch
           head_revision: input.head_revision
-          review_ref: input.review_ref
+          handback: input.handback
         emits: [agentic.workspace.ChangeProposed]
         payload:
           agentic.workspace.ChangeProposed:
@@ -504,9 +501,8 @@ commands:
             lease_id: input.lease_id
             proposed_by: {caller: party}
             base_revision: input.base_revision
-            branch: input.branch
             head_revision: input.head_revision
-            review_ref: input.review_ref
+            handback: input.handback
 
   - name: agentic.workspace.MergeProposal
     naming:
@@ -641,9 +637,8 @@ events:
       - {name: lease_id, type: agentic.shared.LeaseId}
       - {name: proposed_by, type: agentic.channel.PartyId}
       - {name: base_revision, type: agentic.workspace.Revision}
-      - {name: branch, type: Optional<String>}
       - {name: head_revision, type: Optional<agentic.workspace.Revision>}
-      - {name: review_ref, type: Optional<String>}
+      - {name: handback, type: Optional<String>}
 
   - name: agentic.workspace.ProposalMerged
     fields:
@@ -701,9 +696,8 @@ views:
       - {name: change, type: agentic.shared.Content}
       - {name: merged_revision, type: Optional<agentic.workspace.Revision>}
       - {name: superseded_by, type: Optional<agentic.shared.ProposalId>}
-      - {name: branch, type: Optional<String>}
       - {name: head_revision, type: Optional<agentic.workspace.Revision>}
-      - {name: review_ref, type: Optional<String>}
+      - {name: handback, type: Optional<String>}
       - {name: merged_under, type: Optional<agentic.shared.GrantId>}
       - {name: state, type: agentic.workspace.Proposal.State}
     naming:

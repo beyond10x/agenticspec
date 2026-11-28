@@ -82,7 +82,7 @@ types:
       - {name: value, type: Decimal}
 
 entities:
-  # `profile_id` is the behaviour profile of the simulation (the design names `profile: profiles/coding.yaml`:
+  # `profile_id` is the behaviour profile of the simulation (a field's profile, `fields/<field>/profiles/`:
   # distributions fitted from the store, turns per task, tokens per turn, answer delay of a human).
   # `work_mode_id` is the KPI direction set (autonomous, pairing, review) of agentic.kpi, which gives
   # the directions the search weighs.

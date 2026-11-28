@@ -240,6 +240,52 @@ fn every_pack_block_and_field_architecture_has_a_linked_page() {
     );
 }
 
+/// The catalog groups its entries by the field their experiment names, the field's page lists its
+/// profile, its KPIs under the core block each reads and its rows of core catalogs, and the core
+/// KPI catalogue holds none of the field's KPIs.
+#[test]
+fn the_catalog_groups_by_field_and_the_field_page_holds_its_data() {
+    let g = generate(&root(), None).expect("the pages generate");
+    let index = &g.files["docs/catalog/index.md"];
+    let coding = index.find("\n## Coding\n").expect("a Coding group");
+    for (_, name) in experiments() {
+        let card = index
+            .find(&format!("\"to\":\"/docs/catalog/{name}\""))
+            .unwrap_or_else(|| panic!("{name} has a card"));
+        assert!(card > coding, "{name} is under Coding");
+    }
+    let field = &g.files["docs/fields/coding/index.md"];
+    assert!(field.contains("fields/coding/profiles/coding.yaml"));
+    assert!(field.contains("### [workspace](../../blocks/8-place/workspace.md)"));
+    assert!(field.contains("`merge_conflicts`"));
+    assert!(field.contains("`accept-edits`"));
+    let core = &g.files["docs/kpis-catalogue.md"];
+    for id in [
+        "merge_conflicts",
+        "false_completions_shipped",
+        "revert_rate",
+    ] {
+        assert!(!core.contains(&format!("`{id}`")), "{id} is not a core KPI");
+    }
+}
+
+/// An experiment that names no field, or a field that does not exist, is refused.
+#[test]
+fn an_experiment_without_a_field_is_refused() {
+    let tmp = copy_inputs("docs-no-field");
+    let exp = tmp.join("experiments/shared-board-tuning.yaml");
+    let text = std::fs::read_to_string(&exp)
+        .unwrap()
+        .replace("field: coding\n", "field: nowhere\n");
+    std::fs::write(&exp, text).unwrap();
+    let err = generate(&tmp, Some(fixture())).expect_err("an unknown field is refused");
+    assert!(
+        err.contains("experiments/shared-board-tuning.yaml"),
+        "{err}"
+    );
+    assert!(err.contains("needs `field`"), "{err}");
+}
+
 /// SUF-002: on an architecture with an experiment, the search result (the marked places with their
 /// best values and the KPIs that moved) comes before the graph.
 #[test]
@@ -351,7 +397,6 @@ fn copy_inputs(name: &str) -> PathBuf {
         "blocks",
         "architectures",
         "experiments",
-        "profiles",
         "kpis",
         "crates/agenticspec-sim/src",
         "packs",

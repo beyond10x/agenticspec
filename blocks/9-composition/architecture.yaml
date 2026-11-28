@@ -894,7 +894,7 @@ commands:
   # true}`, error DryRunCommits) beside `no-such-revision` validates, and synthesis arranges the
   # `no-such-revision` scenario on a dry-run application, where the held-state refusal answers
   # first by the precedence rule; the interpreted target answers `dry-run-commits` and the
-  # scenario fails. Until synthesis honours the earlier branch, the applier keeps that rule.
+  # scenario fails. Until synthesis honours the earlier outcome, the applier keeps that rule.
   - name: agentic.architecture.RecordPatchApplied
     naming:
       display: Record an applied patch

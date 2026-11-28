@@ -95,7 +95,7 @@ pub fn generate(root: &Path, core_catalogue: &Catalogue) -> Result<Option<Output
         let archs = arch::load_field(&f.name, &f.architectures, root)?;
         files.insert(
             format!("docs/fields/{}/index.md", f.name),
-            field_page(f, &packs, &archs),
+            field_page(f, &packs, &core, &archs, root)?,
         );
         let mut items = Vec::new();
         for a in &archs {
@@ -269,7 +269,21 @@ it adds a block only for a concept no other field shares, and never depends on a
     s
 }
 
-fn field_page(f: &Field, packs: &[Pack], archs: &[arch::Architecture]) -> String {
+/// A `## title` after one blank line, whatever the text before it ends with.
+fn heading(s: &mut String, title: &str) {
+    while s.ends_with('\n') {
+        s.pop();
+    }
+    let _ = write!(s, "\n\n## {title}\n\n");
+}
+
+fn field_page(
+    f: &Field,
+    packs: &[Pack],
+    core: &[Block],
+    archs: &[arch::Architecture],
+    root: &Path,
+) -> Result<String, String> {
     let mut s = String::new();
     let source = format!("fields/{}/", f.name);
     front(
@@ -317,5 +331,61 @@ fn field_page(f: &Field, packs: &[Pack], archs: &[arch::Architecture]) -> String
             text(&first_sentence(summary))
         );
     }
-    s
+    if !f.profiles.is_empty() {
+        heading(&mut s, "Behaviour profiles");
+        s.push_str("The simulator's input for this field: how long turns and answers take, how often work fails and what model calls cost. The experiments of the [catalog](../../catalog/index.md) that name this field run under them.\n\n");
+        for p in &f.profiles {
+            let name = p.rsplit('/').next().unwrap_or(p);
+            let _ = writeln!(s, "- [{}]({SOURCE_BASE}{p})", text(name));
+        }
+    }
+    if let Some(rel) = &f.kpis {
+        let text_of = std::fs::read_to_string(root.join(rel)).map_err(|e| format!("{rel}: {e}"))?;
+        let catalogue = Catalogue::parse(&text_of).map_err(|e| format!("{rel}: {e}"))?;
+        heading(&mut s, "KPIs");
+        let _ = writeln!(
+            s,
+            "The field's own catalogue, [{rel}]({SOURCE_BASE}{rel}). Each KPI names the core block whose events it reads; the core's [KPI catalogue](../../kpis-catalogue.md) holds none of them.\n"
+        );
+        let mut names: Vec<&str> = Vec::new();
+        for k in &catalogue.kpis {
+            if !names.contains(&k.block.as_str()) {
+                names.push(&k.block);
+            }
+        }
+        for name in names {
+            match core.iter().find(|b| b.name == name) {
+                Some(b) => {
+                    let _ = writeln!(s, "### [{name}](../../blocks/{}/{}.md)\n", b.dir, b.page);
+                }
+                None => {
+                    let _ = writeln!(s, "### {name}\n");
+                }
+            }
+            let kpis: Vec<_> = catalogue.kpis.iter().filter(|k| k.block == name).collect();
+            blocks::kpi_table(&mut s, &kpis);
+        }
+    }
+    if let Some(rel) = &f.rows {
+        let doc = model::read_yaml(root, rel)?;
+        heading(&mut s, "Rows of core catalogs");
+        let _ = writeln!(
+            s,
+            "What the field registers in catalogs of the core when it is installed ([{rel}]({SOURCE_BASE}{rel})); the core itself names none of these.\n"
+        );
+        s.push_str("| command | row |\n|---|---|\n");
+        for r in doc["rows"].as_array().into_iter().flatten() {
+            let command = r["command"].as_str().unwrap_or("");
+            let name = r["input"]["name"].as_str().unwrap_or("");
+            let summary = r["input"]["summary"].as_str().unwrap_or("");
+            let _ = writeln!(
+                s,
+                "| `{}` | `{}`: {} |",
+                command.strip_prefix("agentic.").unwrap_or(command),
+                text(name),
+                text(summary)
+            );
+        }
+    }
+    Ok(s)
 }

@@ -46,12 +46,14 @@
     },
     "find-harness-kpis@1280x800": {
       "screen_only.actions": {
-        "value": 5,
-        "tolerance": 0
+        "value": 6,
+        "tolerance": 0,
+        "decision": "story field-packs: the harness block gains the registered PermissionMode entity, its two commands, two errors, two events and a view, so its page is longer; open decision for the owner, default A: take the longer page"
       },
       "screen_only.looks": {
-        "value": 6,
-        "tolerance": 0
+        "value": 7,
+        "tolerance": 0,
+        "decision": "story field-packs: the harness block gains the registered PermissionMode entity, its two commands, two errors, two events and a view, so its page is longer; open decision for the owner, default A: take the longer page"
       },
       "screen_only.steers": {
         "value": 0,
@@ -420,8 +422,9 @@
         "tolerance": 20.15
       },
       "reading_load.median": {
-        "value": 293,
-        "tolerance": 14.65
+        "value": 310,
+        "tolerance": 15.5,
+        "decision": "story field-packs: the harness block gains the registered PermissionMode entity, its two commands, two errors, two events and a view, so its page is longer; open decision for the owner, default A: take the longer page"
       },
       "layout_shift.score": {
         "value": 0,
@@ -458,8 +461,9 @@
         "tolerance": 21.05
       },
       "reading_load.median": {
-        "value": 253,
-        "tolerance": 12.65
+        "value": 274,
+        "tolerance": 13.7,
+        "decision": "story field-packs: the harness block gains the registered PermissionMode entity, its two commands, two errors, two events and a view, so its page is longer; open decision for the owner, default A: take the longer page"
       },
       "layout_shift.score": {
         "value": 0,

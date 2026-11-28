@@ -1,6 +1,7 @@
 format: agenticspec-experiment/1
 experiment: scheduled-loops-tuning
 architecture: scheduled-loops.yaml
+field: coding
 profile: coding.yaml
 horizon: 24h
 seeds: 8

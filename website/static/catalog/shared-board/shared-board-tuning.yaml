@@ -1,6 +1,7 @@
 format: agenticspec-experiment/1
 experiment: shared-board-tuning
 architecture: shared-board.yaml
+field: coding
 profile: coding.yaml
 horizon: 24h
 seeds: 8

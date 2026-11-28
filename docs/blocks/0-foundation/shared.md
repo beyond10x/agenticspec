@@ -29,7 +29,7 @@ Nothing: this block is the foundation.
 - [knowledge](../3-capability/knowledge.md) · layer 3 · 7 references
 - [tool](../3-capability/tool.md) · layer 3 · 8 references
 - [agent](../4-agent/agent.md) · layer 4 · 9 references
-- [harness](../4-agent/harness.md) · layer 4 · 22 references
+- [harness](../4-agent/harness.md) · layer 4 · 26 references
 - [process](../5-work/process.md) · layer 5 · 4 references
 - [work](../5-work/work.md) · layer 5 · 11 references
 - [authority](../6-governance/authority.md) · layer 6 · 16 references
@@ -82,6 +82,7 @@ Nothing: this block is the foundation.
 | `PartId` | an identifier or value | `uuid` |
 | `PatchApplicationId` | an identifier or value | `uuid` |
 | `PatchId` | an identifier or value | `uuid` |
+| `PermissionModeId` | an identifier or value | `uuid` |
 | `PoolId` | an identifier or value | `uuid` |
 | `PostId` | an identifier or value | `uuid` |
 | `PrincipalId` | an identifier or value | `uuid` |

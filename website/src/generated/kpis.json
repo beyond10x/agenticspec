@@ -515,28 +515,6 @@
       "unit": "share"
     },
     {
-      "block": "knowledge",
-      "direction": "higher",
-      "family": "capability",
-      "gate": false,
-      "how": "ProposalMerged events whose proposal writes source paths and also writes a documentation path or revises an entry, divided by merged proposals that write source paths.",
-      "id": "docs_changed_with_code_share",
-      "kind": "completeness",
-      "layer": 3,
-      "modes": [],
-      "planned": false,
-      "reads": [
-        "agentic.workspace.ProposalMerged",
-        "agentic.workspace.PathWritten",
-        "agentic.knowledge.KnowledgeRevised"
-      ],
-      "route": "/docs/blocks/3-capability/knowledge#kpis",
-      "source": "research/2610.27381",
-      "status": "planned",
-      "summary": "Share of merged code changes that also change the documentation they affect.",
-      "unit": "share"
-    },
-    {
       "block": "agent",
       "direction": "lower",
       "family": "agent",
@@ -823,28 +801,6 @@
       "block": "work",
       "direction": "lower",
       "family": "work",
-      "gate": true,
-      "how": "Tasks claimed done minus tasks correct, restricted to deliverables that were accepted and merged. Must be 0.",
-      "id": "false_completions_shipped",
-      "kind": "correctness",
-      "layer": 5,
-      "modes": [],
-      "planned": false,
-      "reads": [
-        "agentic.work.DeliverableSubmitted",
-        "agentic.work.DeliverableAccepted",
-        "agentic.work.TaskCompleted"
-      ],
-      "route": "/docs/blocks/5-work/work#kpis",
-      "source": "research/2610.04375",
-      "status": "simulated",
-      "summary": "Tasks reported done, incorrect, and accepted.",
-      "unit": "count"
-    },
-    {
-      "block": "work",
-      "direction": "lower",
-      "family": "work",
       "gate": false,
       "how": "ModelTurnRecorded events of a run after its DeliverableRejected or after a failed check, up to the next DeliverableSubmitted.",
       "id": "rework_turns",
@@ -917,27 +873,6 @@
       "source": "design",
       "status": "simulated",
       "summary": "90th percentile of the time a task waits in the backlog of its worker before starting.",
-      "unit": "seconds"
-    },
-    {
-      "block": "work",
-      "direction": "lower",
-      "family": "work",
-      "gate": false,
-      "how": "Seconds between TaskCreated and the ProposalMerged of the task's deliverable, median and 90th percentile.",
-      "id": "task_to_merge_seconds",
-      "kind": "quality",
-      "layer": 5,
-      "modes": [],
-      "planned": false,
-      "reads": [
-        "agentic.work.TaskCreated",
-        "agentic.workspace.ProposalMerged"
-      ],
-      "route": "/docs/blocks/5-work/work#kpis",
-      "source": "design",
-      "status": "planned",
-      "summary": "Time from task start to merge of its change.",
       "unit": "seconds"
     },
     {
@@ -1422,29 +1357,6 @@
     },
     {
       "block": "workspace",
-      "direction": "higher",
-      "family": "place",
-      "gate": false,
-      "how": "ProposalMerged events divided by ChangeProposed events. Superseded and rejected proposals stay in the divisor.",
-      "id": "proposals_merged_share",
-      "kind": "completeness",
-      "layer": 8,
-      "modes": [],
-      "planned": false,
-      "reads": [
-        "agentic.workspace.ChangeProposed",
-        "agentic.workspace.ProposalMerged",
-        "agentic.workspace.ProposalRejected",
-        "agentic.workspace.ProposalSuperseded"
-      ],
-      "route": "/docs/blocks/8-place/workspace#kpis",
-      "source": "design",
-      "status": "planned",
-      "summary": "Proposals merged of proposals made.",
-      "unit": "share"
-    },
-    {
-      "block": "workspace",
       "direction": "lower",
       "family": "place",
       "gate": true,
@@ -1465,48 +1377,6 @@
       "status": "planned",
       "summary": "Writes to a workspace by a holder with no live lease.",
       "unit": "count"
-    },
-    {
-      "block": "workspace",
-      "direction": "lower",
-      "family": "place",
-      "gate": false,
-      "how": "ProposalMerged events whose changes are undone by a later merged proposal, divided by ProposalMerged events, per author kind (agent, human). A rate, so not a gate.",
-      "id": "revert_rate",
-      "kind": "correctness",
-      "layer": 8,
-      "modes": [],
-      "planned": false,
-      "reads": [
-        "agentic.workspace.ProposalMerged",
-        "agentic.workspace.ChangeProposed"
-      ],
-      "route": "/docs/blocks/8-place/workspace#kpis",
-      "source": "research/2609.17598",
-      "status": "planned",
-      "summary": "Share of merged proposals that a later proposal reverts.",
-      "unit": "share"
-    },
-    {
-      "block": "workspace",
-      "direction": "lower",
-      "family": "place",
-      "gate": false,
-      "how": "Seconds between ChangeProposed and ProposalMerged of one proposal, median and 90th percentile.",
-      "id": "open_to_merge_seconds",
-      "kind": "quality",
-      "layer": 8,
-      "modes": [],
-      "planned": false,
-      "reads": [
-        "agentic.workspace.ChangeProposed",
-        "agentic.workspace.ProposalMerged"
-      ],
-      "route": "/docs/blocks/8-place/workspace#kpis",
-      "source": "research/2610.28683",
-      "status": "planned",
-      "summary": "Time from a proposal to its merge.",
-      "unit": "seconds"
     },
     {
       "block": "sandbox",
@@ -2163,7 +2033,7 @@
       "direction": "lower",
       "family": "other",
       "gate": false,
-      "how": "Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. The shipped count is false_completions_shipped; this rate is not a gate.",
+      "how": "Runs that failed the independent oracle and ended with a completion claim, divided by failed runs. This rate is not a gate.",
       "id": "false_completion_claim_share",
       "kind": "correctness",
       "layer": null,
@@ -2177,26 +2047,6 @@
       "source": "research/2610.04375",
       "status": "planned",
       "summary": "Share of failed runs that reported done.",
-      "unit": "share"
-    },
-    {
-      "block": "verification",
-      "direction": "lower",
-      "family": "other",
-      "gate": false,
-      "how": "Run each accepted check against a commit that does not touch what the check covers; checks that pass divided by checks run. A check needs a negative case.",
-      "id": "vacuous_check_share",
-      "kind": "correctness",
-      "layer": null,
-      "modes": [],
-      "planned": true,
-      "reads": [
-        "agentic.work.DeliverableAccepted"
-      ],
-      "route": "/docs/blocks/planned#verification",
-      "source": "research/2611.13709",
-      "status": "planned",
-      "summary": "Share of checks that pass on a change that touches nothing relevant.",
       "unit": "share"
     },
     {
@@ -2627,7 +2477,7 @@
       "direction": "lower",
       "family": "other",
       "gate": false,
-      "how": "Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate, like false_completions_shipped.",
+      "how": "Finished tasks whose origin had already shipped; the second is dropped. The simulator counts them when it ships. A gate candidate, not a default gate.",
       "id": "duplicate_runs",
       "kind": "correctness",
       "layer": 7,
@@ -2702,27 +2552,6 @@
       "source": "design",
       "status": "simulated",
       "summary": "Messages a copy of a mesh sends to the other started copies when it starts a task.",
-      "unit": "count"
-    },
-    {
-      "block": "workspace",
-      "direction": "lower",
-      "family": "place",
-      "gate": false,
-      "how": "ProposalMerged events whose scope another merge touched after the proposal's work began. The simulator counts them per partitioned part; under a mesh the conflict costs a round of rework, without one the merge lands broken.",
-      "id": "merge_conflicts",
-      "kind": "quality",
-      "layer": 8,
-      "modes": [],
-      "planned": false,
-      "reads": [
-        "agentic.workspace.ChangeProposed",
-        "agentic.workspace.ProposalMerged"
-      ],
-      "route": "/docs/blocks/8-place/workspace#kpis",
-      "source": "design",
-      "status": "simulated",
-      "summary": "Merges that touched a scope another merge changed since the work started.",
       "unit": "count"
     }
   ]

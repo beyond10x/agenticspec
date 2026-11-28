@@ -3056,7 +3056,7 @@
   ],
   "simulation": {
     "horizon": "24h",
-    "profile": "../profiles/coding.yaml",
+    "profile": "../fields/coding/profiles/coding.yaml",
     "seed": 1,
     "seeds": 4,
     "tasks_per_hour_per_worker": 1.5

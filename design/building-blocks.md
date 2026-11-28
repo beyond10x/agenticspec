@@ -332,7 +332,7 @@ experiment.
 format: agenticspec-experiment/1
 experiment: workstation-tuning
 architecture: ../architectures/workstation.yaml
-profile: ../profiles/coding.yaml
+profile: ../fields/coding/profiles/coding.yaml
 horizon: 24h
 seeds: 8
 seed: 1
@@ -368,7 +368,7 @@ search:
 - A weight or a gate naming an unknown KPI is refused.
 - `capacity_drop` lowers a pool's capacity or a gateway's rate to `to` in its window.
 
-Format `agenticspec-profile/1` (`profiles/coding.yaml`):
+Format `agenticspec-profile/1` (`fields/coding/profiles/coding.yaml`):
 
 - `roles.<harness>`: `task_turns`, `turn_seconds`, `tokens_per_turn` by class, `builds_per_task`,
   `build_seconds`, `questions_per_task`, `question_needs_owner` (a share).
@@ -391,7 +391,7 @@ Format `agenticspec-profile/1` (`profiles/coding.yaml`):
   - `claim_window_seconds`: how long a claim stays unseen by the other readers (default 0);
   - `mesh_read_calls`: model calls to read one mesh message (default 1);
   - `scope_overlap`: the chance that a task touches one given other scope (default 0).
-- Roles `planner`, `executor` and `orchestrator` in `profiles/coding.yaml`. The planner takes one
+- Roles `planner`, `executor` and `orchestrator` in `fields/coding/profiles/coding.yaml`. The planner takes one
   turn per task (2610.29870: under 2% of the executor's tokens). The executor has a higher pass rate
   after a failed step (0.212), so that its share of correct tasks rises by the ratio 65.0/50.2 of
   2610.29870. The orchestrator spends 3 calls per task, an estimate.
@@ -594,7 +594,7 @@ Commands and output:
 - Search modes: `exhaustive` (every combination, refused above a limit) and `fit` (hill climbing
   over neighbour points with random restarts within a budget).
 - A variant is feasible only when every gate KPI is 0. Fitness is the weighted sum of KPIs.
-- Example files: `architectures/workstation.yaml`, `profiles/coding.yaml`,
+- Example files: `architectures/workstation.yaml`, `fields/coding/profiles/coding.yaml`,
   `experiments/workstation-tuning.yaml`.
 
 ### Rendering
@@ -709,7 +709,7 @@ the block it belongs to and the events it reads. A correctness KPI is a gate by 
 - `blocks/`: a second ESS system holding the blocks, one directory per layer.
 - `blocks/protocols/`, `blocks/surfaces/`: the channel protocols and the runtime API.
 - `architectures/`: architecture documents, each checked by the gate.
-- `experiments/`, `profiles/`: experiment files and fitted behaviour profiles.
+- `experiments/`: experiment files; fitted behaviour profiles are a field's, `fields/<field>/profiles/`.
 - `crates/agenticspec-sim`: the simulator and the search, a library and a binary.
 
 Two systems, because the tool's generated crates are synthesized from its system. weft's 23

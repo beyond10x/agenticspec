@@ -237,7 +237,7 @@ commands:
 
   # The isolation of the sandbox is compared with the runtime's minimum. ESS refuses an ordering
   # comparison of enum variants at every format, even over the ordered IsolationLevel, so each
-  # sandbox level is refused against the minimums above it, one branch per level.
+  # sandbox level is refused against the minimums above it, one outcome per level.
   - name: agentic.runtime.DefineWorkload
     naming:
       wire: define-workload

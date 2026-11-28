@@ -1,7 +1,8 @@
 format: agenticspec-experiment/1
 experiment: workstation-tuning
 architecture: ../architectures/workstation.yaml
-profile: ../profiles/coding.yaml
+field: coding
+profile: ../fields/coding/profiles/coding.yaml
 horizon: 24h
 seeds: 8
 seed: 1
